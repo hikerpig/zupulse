@@ -6,5 +6,6 @@ export * from "./score/identity";
 export * from "./score/session";
 export * from "./bridge/types";
 export * from "./bridge/mockNativeBridge";
+export * from "./bridge/openFileFlow";
 export * from "./storage/sidecar";
 export * from "./storage/sqliteSchema";

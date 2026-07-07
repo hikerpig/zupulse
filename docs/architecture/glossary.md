@@ -83,3 +83,15 @@ Web Viewer Core 到平台原生音频引擎的桥。后续可接 AVAudioEngine�
 ## Web Viewer Core
 
 共享 Web 渲染核心。承载 GP 渲染、MIDI 视图、播放跟随、练习交互、sidecar 应用和跨端复用逻辑。
+
+## ViewerSession
+
+Web Core 打开某份谱后的会话对象。它聚合 `ScoreIdentity`、文件来源摘要、平台 capabilities 和 sidecar payload。
+
+## Capability Discovery
+
+Web Core 启动或打开文件前询问 Native Shell 支持哪些能力的过程。第一版能力包括文件访问、SQLite/sidecar 存储、同步 provider 和音频后端。
+
+## MockNativeBridge
+
+Web Core 测试用 Native Bridge。它模拟 capability discovery、文件打开、文件字节读取和事件记录，不代表真实平台实现。

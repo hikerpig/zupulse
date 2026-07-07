@@ -1,0 +1,4 @@
+node_modules/
+*.tsbuildinfo
+web-core/src/**/*.js
+web-core/src/**/*.d.ts

@@ -5,3 +5,5 @@ export * from "./score/format";
 export * from "./score/identity";
 export * from "./bridge/types";
 export * from "./bridge/mockNativeBridge";
+export * from "./storage/sidecar";
+export * from "./storage/sqliteSchema";

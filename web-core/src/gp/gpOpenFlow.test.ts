@@ -54,4 +54,29 @@ describe("openGpThroughBridge", () => {
       }),
     ).rejects.toThrow("Expected GP score but received format: midi");
   });
+
+  it("reads GP bytes using the file token returned by native open", async () => {
+    const bridge = new MockNativeBridge();
+    bridge.registerFile("external-ref", {
+      fileToken: "native-token",
+      fileName: "token-song.gp",
+      sizeBytes: 2,
+    });
+    bridge.registerFileBytes("native-token", {
+      fileName: "token-song.gp",
+      bytes: new Uint8Array([8, 9]),
+    });
+
+    const result = await openGpThroughBridge({
+      bridge,
+      fileRef: "external-ref",
+      mode: "external-reference",
+      loader: bytes => {
+        expect([...bytes]).toEqual([8, 9]);
+        return { title: "Token Song" };
+      },
+    });
+
+    expect(result.summary.title).toBe("Token Song");
+  });
 });

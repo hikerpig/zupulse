@@ -1,9 +1,9 @@
-import { createHash } from "node:crypto";
 import { detectScoreFormat } from "./format";
 import type { ScoreIdentity } from "./types";
 
 export async function createContentHash(bytes: Uint8Array): Promise<string> {
-  return createHash("sha256").update(bytes).digest("hex");
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", toArrayBuffer(bytes));
+  return bytesToHex(new Uint8Array(digest));
 }
 
 export async function createScoreIdentity(input: {
@@ -42,4 +42,14 @@ export async function createScoreIdentity(input: {
   identity.sourceHints = sourceHints;
 
   return identity;
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return [...bytes].map(byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy.buffer;
 }

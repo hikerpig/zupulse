@@ -11,3 +11,4 @@ export * from "./storage/sidecar";
 export * from "./storage/sqliteSchema";
 export * from "./gp/alphaTabAdapter";
 export * from "./gp/alphaTabBrowser";
+export * from "./gp/gpOpenFlow";

@@ -45,7 +45,7 @@ npm run check
 
 后续应继续拆分以下实现计划：
 
-- GP Adapter + alphaTab vertical slice。
+- Browser demo + alphaTab DOM rendering。
 - MIDI Analyzer heuristic + 测试素材。
 - SwiftUI / WKWebView Apple Shell。
 - CloudKit Sync Adapter。

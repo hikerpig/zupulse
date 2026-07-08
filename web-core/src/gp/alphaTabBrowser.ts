@@ -8,6 +8,8 @@ export type AlphaTabPositionEvent = {
 
 export type AlphaTabApiLike = {
   play?: () => unknown;
+  destroy?: () => void;
+  load?: (scoreData: unknown, trackIndexes?: number[]) => boolean;
   playerPositionChanged?: {
     on(handler: (arg: unknown) => void): () => void;
   };
@@ -21,6 +23,10 @@ export function createAlphaTabApi(
   factory: AlphaTabApiFactory = defaultAlphaTabApiFactory,
 ): AlphaTabApiLike {
   return factory(element, options);
+}
+
+export function loadAlphaTabBytes(api: AlphaTabApiLike, bytes: Uint8Array): boolean {
+  return api.load?.(bytes) ?? false;
 }
 
 export function attachAlphaTabPositionEvents(

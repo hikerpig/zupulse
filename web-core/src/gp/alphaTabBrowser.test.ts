@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attachAlphaTabPositionEvents, createAlphaTabApi } from "./alphaTabBrowser";
+import { attachAlphaTabPositionEvents, createAlphaTabApi, loadAlphaTabBytes } from "./alphaTabBrowser";
 
 describe("createAlphaTabApi", () => {
   it("uses an injectable factory so tests do not require a browser DOM", () => {
@@ -44,5 +44,23 @@ describe("attachAlphaTabPositionEvents", () => {
       },
     ]);
     expect(detached).toBe(true);
+  });
+});
+
+describe("loadAlphaTabBytes", () => {
+  it("delegates bytes to AlphaTabApi.load", () => {
+    const bytes = new Uint8Array([1, 2, 3]);
+    const api = {
+      load(scoreData: unknown) {
+        expect(scoreData).toBe(bytes);
+        return true;
+      },
+    };
+
+    expect(loadAlphaTabBytes(api, bytes)).toBe(true);
+  });
+
+  it("returns false when load is unavailable", () => {
+    expect(loadAlphaTabBytes({}, new Uint8Array([1]))).toBe(false);
   });
 });

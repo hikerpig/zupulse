@@ -3,6 +3,9 @@
   "references": [
     {
       "path": "./web-core"
+    },
+    {
+      "path": "./web-demo"
     }
   ]
 }

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tab Viewer Demo</title>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="toolbar">
+        <label class="file-picker">
+          <span>选择 GP 文件</span>
+          <input id="score-file" type="file" accept=".gp3,.gp4,.gp5,.gpx,.gp" />
+        </label>
+        <p id="status" role="status">等待选择文件</p>
+      </section>
+      <section id="summary" class="summary" aria-live="polite"></section>
+      <section id="alpha-tab" class="score-viewer" aria-label="乐谱预览"></section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

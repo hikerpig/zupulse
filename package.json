@@ -6,14 +6,19 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -b",
-    "check": "npm run typecheck && npm test"
+    "check": "npm run typecheck && npm test",
+    "demo:dev": "npm --workspace @tab-viewer/web-demo run dev",
+    "demo:build": "npm --workspace @tab-viewer/web-demo run build"
   },
   "workspaces": [
-    "web-core"
+    "web-core",
+    "web-demo"
   ],
   "devDependencies": {
     "@types/node": "^20.14.0",
+    "jsdom": "^24.1.0",
     "typescript": "^5.5.0",
+    "vite": "^5.4.0",
     "vitest": "^2.0.0"
   }
 }

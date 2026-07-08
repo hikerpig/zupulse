@@ -50,3 +50,13 @@ npm run check
 - SwiftUI / WKWebView Apple Shell。
 - CloudKit Sync Adapter。
 - Playback Engine + Web Audio MVP。
+
+## GP alphaTab 竖切
+
+GP 第一条竖切已经接入 `@coderline/alphatab@1.8.4`：
+
+- `web-core/src/gp/alphaTabAdapter.ts`
+- `web-core/src/gp/alphaTabBrowser.ts`
+- `web-core/src/gp/gpOpenFlow.ts`
+
+当前实现验证 Web Core 可以通过 Bridge 获取 GP 文件字节、交给 alphaTab loader，并提取稳定 summary。真实浏览器页面、SoundFont、播放 UI 和 Apple 壳层仍在后续计划中。

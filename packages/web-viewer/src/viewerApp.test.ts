@@ -52,6 +52,66 @@ describe("mountViewerApp", () => {
     expect(order).toEqual(["start-1", "destroy-1", "start-2"]);
   });
 
+  it("serializes concurrent public openScore calls and retains only the latest session", async () => {
+    renderViewerShell(document);
+    const firstSessionGate = deferred<void>();
+    const order: string[] = [];
+    let session = 0;
+    const hostOpen = vi.fn(async () => ({ fileName: "song.gp5", bytes: new Uint8Array([1]) }));
+    const app = mountViewerApp(document, {
+      host: { openScore: hostOpen, subscribe: () => () => undefined },
+      openSession: async () => {
+        const current = ++session;
+        order.push(`start-${current}`);
+        if (current === 1) await firstSessionGate.promise;
+        return {
+          pauseAndFlush: async () => undefined,
+          destroy: async () => { order.push(`destroy-${current}`); },
+        };
+      },
+    });
+
+    const firstOpen = app.openScore();
+    const secondOpen = app.openScore();
+    await vi.waitFor(() => expect(order).toEqual(["start-1"]));
+    expect(hostOpen).toHaveBeenCalledOnce();
+
+    firstSessionGate.resolve();
+    await Promise.all([firstOpen, secondOpen]);
+    expect(order).toEqual(["start-1", "destroy-1", "start-2"]);
+
+    await app.destroy();
+    expect(order).toEqual(["start-1", "destroy-1", "start-2", "destroy-2"]);
+  });
+
+  it("rejects new opens after destroy starts and cleans an already accepted open", async () => {
+    renderViewerShell(document);
+    const sessionGate = deferred<void>();
+    const destroySession = vi.fn(async () => undefined);
+    const openSession = vi.fn(async () => {
+      await sessionGate.promise;
+      return { pauseAndFlush: vi.fn(), destroy: destroySession };
+    });
+    const app = mountViewerApp(document, {
+      host: {
+        openScore: async () => ({ fileName: "song.gp5", bytes: new Uint8Array([1]) }),
+        subscribe: () => () => undefined,
+      },
+      openSession,
+    });
+
+    const acceptedOpen = app.openScore();
+    await vi.waitFor(() => expect(openSession).toHaveBeenCalledOnce());
+    const destroying = app.destroy();
+    await expect(app.openScore()).rejects.toThrow("Viewer app is being destroyed");
+
+    sessionGate.resolve();
+    await acceptedOpen;
+    await destroying;
+    expect(openSession).toHaveBeenCalledOnce();
+    expect(destroySession).toHaveBeenCalledOnce();
+  });
+
   it("continues the queued open flow after openSession rejects", async () => {
     renderViewerShell(document);
     const openSession = vi.fn()
@@ -94,6 +154,23 @@ describe("mountViewerApp", () => {
     await app.destroy();
   });
 
+  it("clears a queued UI error after a successful public open", async () => {
+    renderViewerShell(document);
+    const openScore = vi.fn()
+      .mockRejectedValueOnce(new Error("picker failed"))
+      .mockResolvedValueOnce({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
+    const app = mountViewerApp(document, {
+      host: { openScore, subscribe: () => () => undefined },
+      openSession: async () => ({ pauseAndFlush: vi.fn(), destroy: vi.fn() }),
+    });
+
+    document.querySelector<HTMLButtonElement>("#open-score")?.click();
+    await vi.waitFor(() => expect(openScore).toHaveBeenCalledOnce());
+    await app.openScore();
+
+    await expect(app.destroy()).resolves.toBeUndefined();
+  });
+
   it("clears a previous session reference before awaiting its failing destroy", async () => {
     renderViewerShell(document);
     const failure = new Error("session cleanup failed");
@@ -134,6 +211,30 @@ describe("mountViewerApp", () => {
     expect(destroySession).toHaveBeenCalledOnce();
     await expect(app.destroy()).rejects.toBe(failure);
     expect(destroySession).toHaveBeenCalledOnce();
+  });
+
+  it("aggregates queued open and active cleanup failures during destroy", async () => {
+    renderViewerShell(document);
+    const openFailure = new Error("host failed");
+    const cleanupFailure = new Error("session destroy failed");
+    const openScore = vi.fn()
+      .mockResolvedValueOnce({ fileName: "song.gp5", bytes: new Uint8Array([1]) })
+      .mockRejectedValueOnce(openFailure);
+    const app = mountViewerApp(document, {
+      host: { openScore, subscribe: () => () => undefined },
+      openSession: async () => ({
+        pauseAndFlush: vi.fn(),
+        destroy: async () => { throw cleanupFailure; },
+      }),
+    });
+    await app.openScore();
+    document.querySelector<HTMLButtonElement>("#open-score")?.click();
+    await vi.waitFor(() => expect(openScore).toHaveBeenCalledTimes(2));
+
+    const error = await rejectionOf(app.destroy()) as AggregateError;
+
+    expect(error).toBeInstanceOf(AggregateError);
+    expect(error.errors).toEqual([openFailure, cleanupFailure]);
   });
 });
 
@@ -181,6 +282,41 @@ describe("createDefaultOpenSession cleanup", () => {
       expect(document.querySelector("#status")?.textContent).toBe(failure.message);
     },
   );
+
+  it("preserves initialization and controller cleanup failures", async () => {
+    renderViewerShell(document);
+    const initializeFailure = new Error("initialize failed");
+    const cleanupFailure = new Error("controller destroy failed");
+    const dependencies: DefaultOpenSessionDependencies = {
+      createApi: () => ({}),
+      createAdapter: () => ({ destroy: vi.fn() } as never),
+      presentFile: async () => ({
+        status: "ready",
+        message: "已加载 Song",
+        identity: { contentHash: "hash", format: "gp" },
+        summary: { title: "Song", trackCount: 1, masterBarCount: 1 },
+      }),
+      waitForScore: async () => ({} as never),
+      extractModel: () => ({
+        tracks: [{ id: "track-0", sourceIndex: 0, name: "Lead" }],
+        timeline: { durationTicks: 0, durationMs: 0, measures: [] },
+      }),
+      createController: () => ({
+        initialize: async () => { throw initializeFailure; },
+        destroy: async () => { throw cleanupFailure; },
+      } as never),
+      mountControls: () => () => undefined,
+    };
+    const openSession = createDefaultOpenSession(document, {} as never, dependencies);
+
+    const error = await rejectionOf(openSession({
+      fileName: "song.gp5",
+      bytes: new Uint8Array([1]),
+    })) as AggregateError;
+
+    expect(error).toBeInstanceOf(AggregateError);
+    expect(error.errors).toEqual([initializeFailure, cleanupFailure]);
+  });
 });
 
 describe("renderViewerState", () => {
@@ -218,3 +354,18 @@ describe("renderViewerState", () => {
     expect(summary.textContent).toBe("");
   });
 });
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>(resolvePromise => { resolve = resolvePromise; });
+  return { promise, resolve };
+}
+
+async function rejectionOf(promise: Promise<unknown>): Promise<unknown> {
+  try {
+    await promise;
+  } catch (error) {
+    return error;
+  }
+  throw new Error("Expected promise to reject");
+}

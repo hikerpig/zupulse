@@ -57,7 +57,8 @@ export function mountViewerApp(
   let chain = Promise.resolve();
   let queuedError: unknown;
   let destroyPromise: Promise<void> | undefined;
-  const openScore = async () => {
+  let destroying = false;
+  const openOnce = async () => {
     const file = await dependencies.host.openScore();
     if (!file) return;
     const previous = active;
@@ -65,15 +66,21 @@ export function mountViewerApp(
     await previous?.destroy();
     active = await dependencies.openSession(file);
   };
-  const enqueueOpen = () => {
-    chain = chain.then(async () => {
-      try {
-        await openScore();
+  const scheduleOpen = (recordErrorForDestroy: boolean): Promise<void> => {
+    if (destroying) return Promise.reject(new Error("Viewer app is being destroyed"));
+    const operation = chain.then(openOnce);
+    chain = operation.then(
+      () => {
         queuedError = undefined;
-      } catch (error) {
-        queuedError = error;
-      }
-    });
+      },
+      error => {
+        if (recordErrorForDestroy) queuedError = error;
+      },
+    );
+    return operation;
+  };
+  const enqueueOpen = () => {
+    void scheduleOpen(true).catch(() => undefined);
   };
   const onHostEvent = (event: ViewerHostEvent) => {
     if (event.type === "open-score") enqueueOpen();
@@ -83,11 +90,12 @@ export function mountViewerApp(
   openButton.addEventListener("click", enqueueOpen);
   const unsubscribe = dependencies.host.subscribe(onHostEvent);
   const destroy = (): Promise<void> => {
+    destroying = true;
     destroyPromise ??= destroyOnce();
     return destroyPromise;
   };
   return {
-    openScore,
+    openScore: () => scheduleOpen(false),
     pauseAndFlush: async () => { await active?.pauseAndFlush(); },
     destroy,
   };
@@ -171,8 +179,19 @@ export function createDefaultOpenSession(
         },
       };
     } catch (error) {
-      if (controller) await controller.destroy();
-      else adapter.destroy();
+      let cleanupError: unknown;
+      try {
+        if (controller) await controller.destroy();
+        else adapter.destroy();
+      } catch (caughtCleanupError) {
+        cleanupError = caughtCleanupError;
+      }
+      if (cleanupError !== undefined) {
+        throw new AggregateError(
+          [error, cleanupError],
+          "Viewer session initialization and cleanup both failed",
+        );
+      }
       renderViewerState(status, summary, {
         status: "error",
         message: error instanceof Error ? error.message : "加载失败",

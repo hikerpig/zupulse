@@ -43,8 +43,11 @@ input[type="range"] {
 }
 
 .app-shell {
+  width: 100%;
+  min-width: 0;
   min-height: 100vh;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto auto minmax(0, 1fr);
 }
 
@@ -62,8 +65,32 @@ input[type="range"] {
 .file-picker {
   display: inline-flex;
   align-items: center;
+  flex: 1 1 280px;
+  flex-wrap: wrap;
+  min-width: 0;
   gap: 10px;
   font-weight: 600;
+}
+
+.file-picker input {
+  flex: 1 1 220px;
+  width: min(100%, 320px);
+  min-width: 0;
+}
+
+.file-picker > span,
+.transport button,
+.time-readout {
+  white-space: nowrap;
+}
+
+.transport button {
+  min-width: 58px;
+}
+
+#status {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .summary {
@@ -79,6 +106,10 @@ input[type="range"] {
   top: 0;
   z-index: 2;
   flex-wrap: wrap;
+}
+
+.transport > * {
+  min-width: 0;
 }
 
 .time-readout {
@@ -102,6 +133,7 @@ input[type="range"] {
 }
 
 .workspace {
+  min-width: 0;
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
@@ -117,12 +149,14 @@ input[type="range"] {
 }
 
 .inspector {
+  min-width: 0;
   overflow: auto;
   background: #f8f9fa;
   border-left: 1px solid #d8dbe0;
 }
 
 .inspector details {
+  min-width: 0;
   border-bottom: 1px solid #d8dbe0;
 }
 
@@ -134,6 +168,7 @@ input[type="range"] {
 }
 
 .panel-content {
+  min-width: 0;
   display: grid;
   gap: 12px;
   padding: 0 14px 14px;
@@ -143,6 +178,12 @@ input[type="range"] {
   display: grid;
   gap: 6px;
   font-size: 13px;
+}
+
+.panel-content select,
+.panel-content input[type="range"] {
+  width: 100%;
+  min-width: 0;
 }
 
 .toggle-row,
@@ -158,6 +199,45 @@ input[type="range"] {
 
 .item-list {
   min-width: 0;
+}
+
+.loop-row,
+.track-row {
+  display: grid;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid #e1e3e6;
+}
+
+.loop-row {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.loop-row span,
+.loop-row input[type="number"] {
+  font-size: 12px;
+}
+
+.track-row {
+  grid-template-columns: repeat(4, auto);
+  align-items: center;
+}
+
+.track-row strong,
+.track-row input[type="range"] {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.track-row strong {
+  overflow-wrap: anywhere;
+}
+
+.track-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .persistence-status {
@@ -180,6 +260,14 @@ input[type="range"] {
 }
 
 @media (max-width: 800px) {
+  .file-picker {
+    flex-basis: 100%;
+  }
+
+  .progress-control {
+    flex-basis: 100%;
+  }
+
   .workspace {
     grid-template-columns: minmax(0, 1fr);
   }

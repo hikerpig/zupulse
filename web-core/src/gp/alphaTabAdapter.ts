@@ -3,7 +3,7 @@ import * as alphaTab from "@coderline/alphatab";
 export type AlphaTabScoreLike = {
   title?: string;
   artist?: string;
-  tracks?: unknown[];
+  tracks?: Array<{ name?: string }>;
   masterBars?: unknown[];
   tempo?: number;
 };

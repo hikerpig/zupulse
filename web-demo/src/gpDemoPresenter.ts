@@ -1,5 +1,6 @@
 import {
   createScoreIdentity,
+  detectGpEncoding,
   detectScoreFormat,
   loadAlphaTabBytes,
   loadGpScore,
@@ -7,6 +8,7 @@ import {
   type AlphaTabApiLike,
   type AlphaTabScoreLoader,
   type GpScoreSummary,
+  type AlphaTabScoreLike,
   type ScoreIdentity,
 } from "@tab-viewer/web-core";
 
@@ -17,6 +19,8 @@ export type DemoState = {
   message: string;
   identity?: ScoreIdentity;
   summary?: GpScoreSummary;
+  bytes?: Uint8Array;
+  score?: AlphaTabScoreLike;
 };
 
 export type DemoFileLike = {
@@ -37,6 +41,10 @@ export async function presentGpFile(input: {
   }
 
   const bytes = new Uint8Array(await input.file.arrayBuffer());
+  if (input.api.settings?.importer) {
+    input.api.settings.importer.encoding = detectGpEncoding(bytes);
+    input.api.updateSettings?.();
+  }
   const loaded = loadAlphaTabBytes(input.api, bytes);
   if (!loaded) {
     return {
@@ -47,11 +55,14 @@ export async function presentGpFile(input: {
 
   const score = loadGpScore(bytes, input.loader);
   const summary = summarizeGpScore(score);
+  const trackNames = (score.tracks ?? [])
+    .map(track => track.name?.trim())
+    .filter((name): name is string => Boolean(name));
   const identityInput: Parameters<typeof createScoreIdentity>[0] = {
     fileName: input.file.name,
     bytes,
     title: summary.title,
-    trackNames: [],
+    trackNames,
   };
   if (summary.artist !== undefined) {
     identityInput.artist = summary.artist;
@@ -66,5 +77,7 @@ export async function presentGpFile(input: {
     message: `已加载 ${summary.title}`,
     identity,
     summary,
+    bytes,
+    score,
   };
 }

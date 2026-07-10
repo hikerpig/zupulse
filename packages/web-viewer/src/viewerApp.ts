@@ -170,7 +170,7 @@ export function createDefaultOpenSession(
       renderViewerState(status, summary, state);
       return {
         async pauseAndFlush() {
-          await sessionController.dispatch({ type: "stop" });
+          await sessionController.dispatch({ type: "pause" });
           await sessionController.flush();
         },
         async destroy() {

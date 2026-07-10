@@ -76,6 +76,7 @@ export type PlaybackState = {
 
 export type PlaybackCommand =
   | { type: "toggle-playback" }
+  | { type: "pause" }
   | { type: "stop" }
   | { type: "retry-soundfont" }
   | { type: "seek"; position: MusicalPosition }

@@ -239,6 +239,42 @@ describe("mountViewerApp", () => {
 });
 
 describe("createDefaultOpenSession cleanup", () => {
+  it("pauses and flushes the active playback controller", async () => {
+    renderViewerShell(document);
+    const dispatch = vi.fn(async () => undefined);
+    const flush = vi.fn(async () => undefined);
+    const dependencies: DefaultOpenSessionDependencies = {
+      createApi: () => ({}),
+      createAdapter: () => ({ destroy: vi.fn() } as never),
+      presentFile: async () => ({
+        status: "ready",
+        message: "已加载 Song",
+        identity: { contentHash: "a".repeat(64), format: "gp" },
+        summary: { title: "Song", trackCount: 1, masterBarCount: 1 },
+      }),
+      waitForScore: async () => ({} as never),
+      extractModel: () => ({
+        tracks: [{ id: "track-0", sourceIndex: 0, name: "Lead" }],
+        timeline: { durationTicks: 0, durationMs: 0, measures: [] },
+      }),
+      createController: () => ({
+        initialize: async () => undefined,
+        dispatch,
+        flush,
+        destroy: async () => undefined,
+      } as never),
+      mountControls: () => () => undefined,
+    };
+    const openSession = createDefaultOpenSession(document, {} as never, dependencies);
+    const session = await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
+
+    await session.pauseAndFlush();
+
+    expect(dispatch).toHaveBeenCalledWith({ type: "pause" });
+    expect(flush).toHaveBeenCalledOnce();
+    expect(dispatch.mock.invocationCallOrder[0]).toBeLessThan(flush.mock.invocationCallOrder[0] ?? 0);
+  });
+
   it.each(["initialize", "mount-controls"] as const)(
     "destroys the controller when %s fails",
     async failurePoint => {

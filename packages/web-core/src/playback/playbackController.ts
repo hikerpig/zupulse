@@ -115,6 +115,11 @@ export class PlaybackController {
       case "toggle-playback":
         if (this.state.soundFont === "ready") this.options.engine.playPause();
         return;
+      case "pause":
+        if (this.state.transport === "playing") this.options.engine.playPause();
+        this.resumeDirty = true;
+        await this.queueResumeWrite();
+        return;
       case "stop":
         this.stop();
         await this.queueResumeWrite();
@@ -501,7 +506,7 @@ export class PlaybackController {
     this.sidecarDirty = true;
     this.updateState({ persistence: "unsaved" });
     if (this.sidecarTimer !== undefined) this.schedule.clear(this.sidecarTimer);
-    this.sidecarTimer = this.schedule.set(300, () => {
+    this.sidecarTimer = this.schedule.set(500, () => {
       this.sidecarTimer = undefined;
       void this.queueSidecarWrite();
     });
@@ -534,6 +539,10 @@ export class PlaybackController {
   }
 
   private queueResumeWrite(): Promise<void> {
+    if (this.resumeTimer !== undefined) {
+      this.schedule.clear(this.resumeTimer);
+      this.resumeTimer = undefined;
+    }
     this.resumeWriteChain = this.resumeWriteChain.then(async () => {
       if (!this.resumeDirty) return;
       const resume = {

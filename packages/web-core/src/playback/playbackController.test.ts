@@ -27,6 +27,38 @@ const timeline: PlaybackTimelineMap = {
 };
 
 describe("PlaybackController", () => {
+  it("debounces sidecar writes for 500 ms", async () => {
+    const schedule = new ManualSchedule();
+    const persistence = new FakePersistence();
+    const controller = createController(
+      new FakeEngine({ soundFont: "ready", transport: "stopped" }),
+      persistence,
+      schedule,
+    );
+    await controller.initialize();
+
+    await controller.dispatch({ type: "set-score-speed", speed: 0.75 });
+    schedule.advanceBy(499);
+    await flushPromises();
+    expect(persistence.sidecarWrites).toHaveLength(0);
+    schedule.advanceBy(1);
+    await flushPromises();
+    expect(persistence.sidecarWrites).toHaveLength(1);
+  });
+
+  it("pauses and immediately saves resume state", async () => {
+    const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" });
+    const persistence = new FakePersistence();
+    const controller = createController(engine, persistence);
+    await controller.initialize();
+    engine.emit({ type: "transport", state: "playing" });
+
+    await controller.dispatch({ type: "pause" });
+
+    expect(engine.calls.filter(([name]) => name === "playPause")).toHaveLength(1);
+    expect(persistence.resumeWrites).toHaveLength(1);
+  });
+
   it("restores persisted settings and resume without autoplay", async () => {
     const sidecar = createDefaultSidecar(identity, "2026-07-10T00:00:00Z");
     sidecar.practice.playback.scoreSpeed.value = 0.75;
@@ -181,7 +213,14 @@ describe("PlaybackController", () => {
   });
 });
 
-function createController(engine: FakeEngine, persistence: FakePersistence) {
+function createController(
+  engine: FakeEngine,
+  persistence: FakePersistence,
+  schedule: { set(delayMs: number, callback: () => void): unknown; clear(handle: unknown): void } = {
+    set: () => 1,
+    clear: () => undefined,
+  },
+) {
   return new PlaybackController({
     sessionId: "session-1",
     identity,
@@ -192,11 +231,39 @@ function createController(engine: FakeEngine, persistence: FakePersistence) {
     timeline,
     clock: { now: () => "2026-07-10T04:00:00Z" },
     ids: { next: () => "loop-1" },
-    schedule: {
-      set: () => 1,
-      clear: () => undefined,
-    },
+    schedule,
   });
+}
+
+async function flushPromises(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
+class ManualSchedule {
+  private now = 0;
+  private nextId = 1;
+  private readonly tasks = new Map<number, { dueAt: number; callback: () => void }>();
+
+  set(delayMs: number, callback: () => void): number {
+    const id = this.nextId++;
+    this.tasks.set(id, { dueAt: this.now + delayMs, callback });
+    return id;
+  }
+
+  clear(handle: unknown): void {
+    if (typeof handle === "number") this.tasks.delete(handle);
+  }
+
+  advanceBy(delayMs: number): void {
+    this.now += delayMs;
+    for (const [id, task] of [...this.tasks]) {
+      if (task.dueAt <= this.now) {
+        this.tasks.delete(id);
+        task.callback();
+      }
+    }
+  }
 }
 
 function position(tick: number, cachedTimeMs: number) {

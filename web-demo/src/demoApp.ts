@@ -1,4 +1,4 @@
-import { createAlphaTabApi } from "@tab-viewer/web-core";
+import { createAlphaTabApi, detectGpEncoding } from "@tab-viewer/web-core";
 import { presentGpFile, type DemoState } from "./gpDemoPresenter";
 
 export type DemoTargets = {
@@ -16,6 +16,11 @@ export function mountDemoApp(ownerDocument: Document): void {
     throw new Error("Demo DOM is missing required elements");
   }
 
+  const chineseSerifFonts =
+    "Georgia, 'Songti SC', 'STSong', SimSun, 'Noto Serif SC', serif";
+  const chineseSansFonts =
+    "Arial, 'PingFang SC', 'Microsoft YaHei', 'Heiti SC', 'Noto Sans SC', sans-serif";
+
   const api = createAlphaTabApi(alphaTabHost, {
     core: {
       useWorkers: false,
@@ -24,6 +29,21 @@ export function mountDemoApp(ownerDocument: Document): void {
     },
     display: {
       scale: 1,
+      resources: {
+        titleFont: `32px ${chineseSerifFonts}`,
+        subTitleFont: `20px ${chineseSerifFonts}`,
+        wordsFont: `15px ${chineseSansFonts}`,
+        tablatureFont: `13px ${chineseSansFonts}`,
+        graceFont: `11px ${chineseSansFonts}`,
+        barNumberFont: `11px ${chineseSansFonts}`,
+        copyrightFont: `bold 12px ${chineseSansFonts}`,
+        markerFont: `bold 14px ${chineseSerifFonts}`,
+        directionsFont: `14px ${chineseSerifFonts}`,
+        timerFont: `12px ${chineseSerifFonts}`,
+        fretboardNumberFont: `11px ${chineseSansFonts}`,
+        numberedNotationFont: `14px ${chineseSansFonts}`,
+        numberedNotationGraceFont: `16px ${chineseSansFonts}`,
+      },
     },
   });
 
@@ -35,7 +55,15 @@ export function mountDemoApp(ownerDocument: Document): void {
     }
 
     renderDemoState({ status, summary }, { status: "loading", message: "正在加载文件" });
-    void presentGpFile({ file, api })
+    void file.arrayBuffer().then(buffer => {
+      const bytes = new Uint8Array(buffer);
+      const encoding = detectGpEncoding(bytes);
+      if (api.settings?.importer) {
+        api.settings.importer.encoding = encoding;
+        api.updateSettings?.();
+      }
+      return presentGpFile({ file, api });
+    })
       .then(state => renderDemoState({ status, summary }, state))
       .catch(error => {
         renderDemoState(

@@ -10,6 +10,12 @@ export type AlphaTabApiLike = {
   play?: () => unknown;
   destroy?: () => void;
   load?: (scoreData: unknown, trackIndexes?: number[]) => boolean;
+  settings?: {
+    importer?: {
+      encoding?: string;
+    };
+  };
+  updateSettings?: () => void;
   playerPositionChanged?: {
     on(handler: (arg: unknown) => void): () => void;
   };

@@ -44,6 +44,34 @@ Web Viewer Core 到平台原生音频引擎的桥。后续可接 AVAudioEngine�
 
 播放引擎抽象。负责 play、pause、seek、tempo、loop、metronome、count-in 等行为。
 
+## Playback Controller
+
+Web Core 中播放练习状态的单一入口。它接收 UI 领域命令，维护 transport、位置、速度、循环和轨道状态，并通过 Playback Engine 驱动具体播放器。
+
+## Loop Region
+
+用户保存的命名 AB 循环区间。音乐位置是权威边界，毫秒位置只作为快速定位缓存；区间可以覆盖全谱默认速度。
+
+## Musical Position
+
+附着在谱面时间轴上的定位，由小节、拍和 tick 表达。它用于跨播放速度和时间缓存稳定表示循环边界。
+
+## Track Playback State
+
+轨道的显示与播放设置。主显示轨道和附加显示轨道控制谱面渲染，静音、独奏和音量独立控制音频。
+
+## Practice Playback Sidecar
+
+Sidecar 中保存播放练习设置的版本化子结构。第一版保存全谱速度、命名循环、显示轨道、静音和音量，不保存播放位置、transport 或独奏。
+
+## Local Playback Resume
+
+按 Score Identity 保存在本机的上次播放位置。它用于重新打开谱面时恢复阅读进度，不写入 sidecar，也不参与跨设备同步。
+
+## SoundFont
+
+供合成器把乐谱事件转换成音频的采样音色库。第一版从锁定版本的 alphaTab 依赖复制 `sonivox.sf3` 与许可证，并随 Web/App 资源离线分发。
+
 ## Playback Timeline
 
 统一播放时间轴。负责映射乐谱时间、真实时间、tempo map、循环区间和当前播放位置。

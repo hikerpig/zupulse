@@ -17,3 +17,4 @@ export * from "./playback/loopRegions";
 export * from "./playback/playbackSidecar";
 export * from "./playback/playbackPersistence";
 export * from "./playback/alphaTabPlaybackAdapter";
+export * from "./playback/playbackController";

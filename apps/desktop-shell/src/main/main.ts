@@ -1,6 +1,8 @@
 import path from "node:path";
 import { app, BrowserWindow, ipcMain, protocol, session } from "electron";
 import { dispatchBridgeRequest } from "./bridge";
+import { FileTokenStore } from "./fileTokens";
+import { openGpFile, readGpFileBytes } from "./files";
 import { registerAppProtocol } from "./protocol";
 
 protocol.registerSchemesAsPrivileged([{
@@ -13,6 +15,8 @@ protocol.registerSchemesAsPrivileged([{
     bypassCSP: false,
   },
 }]);
+
+const fileTokens = new FileTokenStore();
 
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -44,6 +48,10 @@ void app.whenReady().then(() => {
   }, {
     appVersion: __APP_VERSION__,
     rendererBuildHash: __RENDERER_BUILD_HASH__,
+    handlers: {
+      "file.open": () => openGpFile(fileTokens),
+      "file.readBytes": request => readGpFileBytes(fileTokens, request.payload.fileToken),
+    },
   }));
   createMainWindow();
 });

@@ -70,6 +70,7 @@
 - Move: `web-core/` → `packages/web-core/`
 - Move: `web-demo/` → `apps/web-demo/`
 - Modify: `package.json`
+- Modify: `pnpm-workspace.yaml`
 - Modify: `tsconfig.json`
 - Modify: `.gitignore`
 - Modify: `apps/web-demo/rspack.config.mjs`
@@ -100,6 +101,14 @@ git mv web-demo apps/web-demo
 "workspaces": ["packages/*", "apps/*"]
 ```
 
+`pnpm-workspace.yaml` 同步替换为：
+
+```yaml
+packages:
+  - packages/*
+  - apps/*
+```
+
 `tsconfig.json` 中替换为：
 
 ```json
@@ -112,7 +121,7 @@ git mv web-demo apps/web-demo
 }
 ```
 
-`apps/web-demo/rspack.config.mjs` 中 alphaTab 依赖路径从 `../node_modules` 改为 `../../node_modules`。`.gitignore` 使用：
+`apps/web-demo/rspack.config.mjs` 保留基于 `createRequire` 的依赖解析，把解析基准从 `../web-core/package.json` 改为 `../../packages/web-core/package.json`；不得恢复硬编码 `node_modules` 路径。`.gitignore` 使用：
 
 ```gitignore
 node_modules/
@@ -132,7 +141,7 @@ Expected: 命令全部通过；`git status --short` 不包含生成的 `dist/`�
 - [ ] **Step 5: 提交目录迁移**
 
 ```bash
-git add package.json pnpm-lock.yaml tsconfig.json .gitignore packages apps
+git add package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.json .gitignore packages apps
 git commit -m "chore: organize workspaces under packages and apps"
 ```
 
@@ -194,7 +203,7 @@ describe("mountViewerApp", () => {
 
 - [ ] **Step 2: 运行测试确认缺少共享包**
 
-Run: `npx vitest run packages/web-viewer/src/viewerApp.test.ts`
+Run: `pnpm exec vitest run packages/web-viewer/src/viewerApp.test.ts`
 
 Expected: FAIL，提示 `viewerApp` 或 `viewerShell` 不存在。
 
@@ -349,6 +358,7 @@ git commit -m "refactor: extract shared viewer app"
 - Create: `scripts/generate-gp-fixtures.mjs`
 - Create: `scripts/verify-gp-fixtures.mjs`
 - Modify: `package.json`
+- Modify: `pnpm-lock.yaml`
 - Modify: `docs/architecture/gp-playback-practice-acceptance.md`
 
 **Interfaces:**
@@ -406,6 +416,14 @@ await writeFile("test-fixtures/gp/generated/desktop-acceptance.gp", bytes);
 "fixtures:gp": "node scripts/generate-gp-fixtures.mjs && node scripts/verify-gp-fixtures.mjs"
 ```
 
+生成器位于根 `scripts/` 并直接导入 alphaTab，因此同时运行：
+
+```bash
+pnpm add --save-dev --save-exact -w @coderline/alphatab@1.8.4
+```
+
+确保根包显式声明该依赖，不依赖 pnpm 的偶然提升布局。
+
 - [ ] **Step 4: 生成、验证并记录准入结果**
 
 Run: `pnpm fixtures:gp && pnpm check && pnpm demo:build`
@@ -415,7 +433,7 @@ Expected: 生成器和验证器通过；Browser Demo 对 GP5 与派生 GP 都能
 - [ ] **Step 5: 提交 fixture 基线**
 
 ```bash
-git add test-fixtures scripts package.json docs/architecture/gp-playback-practice-acceptance.md
+git add test-fixtures scripts package.json pnpm-lock.yaml docs/architecture/gp-playback-practice-acceptance.md
 git commit -m "test: add deterministic GP acceptance fixtures"
 ```
 
@@ -468,7 +486,7 @@ describe("bridge schemas", () => {
 
 - [ ] **Step 2: 运行测试确认 schema 尚不存在**
 
-Run: `npx vitest run packages/web-core/src/bridge/schemas.test.ts`
+Run: `pnpm exec vitest run packages/web-core/src/bridge/schemas.test.ts`
 
 Expected: FAIL，提示无法导入 `./schemas`。
 
@@ -680,7 +698,7 @@ it("pauses and flushes resume state", async () => {
 
 - [ ] **Step 2: 运行测试确认当前 300 ms 与缺少 pause command**
 
-Run: `npx vitest run packages/web-core/src/playback/playbackController.test.ts`
+Run: `pnpm exec vitest run packages/web-core/src/playback/playbackController.test.ts`
 
 Expected: FAIL：499 ms 前已经写入，且 `pause` 不属于 `PlaybackCommand`。
 
@@ -756,7 +774,7 @@ describe("resolveAppAsset", () => {
 
 - [ ] **Step 2: 运行测试确认 Electron app 尚不存在**
 
-Run: `npx vitest run apps/desktop-shell/src/main/protocol.test.ts`
+Run: `pnpm exec vitest run apps/desktop-shell/src/main/protocol.test.ts`
 
 Expected: FAIL，提示模块不存在。
 
@@ -779,8 +797,8 @@ Expected: FAIL，提示模块不存在。
     "make": "pnpm build && electron-forge make"
   },
   "dependencies": {
-    "@tab-viewer/web-core": "0.1.0",
-    "@tab-viewer/web-viewer": "0.1.0"
+    "@tab-viewer/web-core": "workspace:*",
+    "@tab-viewer/web-viewer": "workspace:*"
   },
   "devDependencies": {
     "@electron-forge/cli": "7.11.2",
@@ -802,6 +820,14 @@ import { net, protocol } from "electron";
 import { pathToFileURL } from "node:url";
 
 export function resolveAppAsset(root: string, rawUrl: string): string {
+  const rawPathStart = rawUrl.indexOf("/", rawUrl.indexOf("//") + 2);
+  const rawPath = (rawPathStart < 0 ? "/" : rawUrl.slice(rawPathStart)).split(/[?#]/, 1)[0];
+  let decodedPath: string;
+  try { decodedPath = decodeURIComponent(rawPath); }
+  catch { throw new Error("APP_PROTOCOL_INVALID_PATH"); }
+  if (decodedPath.split("/").some(segment => segment === "." || segment === "..")) {
+    throw new Error("APP_PROTOCOL_PATH_OUTSIDE_ROOT");
+  }
   const url = new URL(rawUrl);
   if (url.protocol !== "tab-viewer:" || url.host !== "app") throw new Error("APP_PROTOCOL_INVALID_ORIGIN");
   const candidate = path.resolve(root, `.${decodeURIComponent(url.pathname)}`);
@@ -886,7 +912,7 @@ it("rejects unknown bridge messages before dispatch", async () => {
 
 - [ ] **Step 2: 运行测试确认 dispatcher 不存在**
 
-Run: `npx vitest run apps/desktop-shell/src/main/bridge.test.ts`
+Run: `pnpm exec vitest run apps/desktop-shell/src/main/bridge.test.ts`
 
 Expected: FAIL，提示 `dispatchBridgeRequest` 不存在。
 
@@ -964,7 +990,7 @@ it("rejects files larger than 64 MiB", () => {
 
 - [ ] **Step 2: 运行测试确认文件模块不存在**
 
-Run: `npx vitest run apps/desktop-shell/src/main/fileTokens.test.ts apps/desktop-shell/src/main/files.test.ts`
+Run: `pnpm exec vitest run apps/desktop-shell/src/main/fileTokens.test.ts apps/desktop-shell/src/main/files.test.ts`
 
 Expected: FAIL，提示模块不存在。
 
@@ -1032,7 +1058,7 @@ git commit -m "feat: open GP files through one-time desktop tokens"
 ```ts
 it("quarantines invalid JSON and returns no value", async () => {
   await mkdir(join(root, "sidecars"), { recursive: true });
-  await writeFile(join(root, "sidecars", "abc.json"), "not-json", { recursive: false });
+  await writeFile(join(root, "sidecars", "abc.json"), "not-json");
   const warnings: string[] = [];
   const store = new JsonStore(root, "sidecars", sidecarPayloadSchema, code => warnings.push(code));
   expect(await store.read("abc")).toBeUndefined();
@@ -1048,7 +1074,7 @@ it("serializes writes per identity", async () => {
 
 - [ ] **Step 2: 运行测试确认 storage 不存在**
 
-Run: `npx vitest run apps/desktop-shell/src/main/storage.test.ts`
+Run: `pnpm exec vitest run apps/desktop-shell/src/main/storage.test.ts`
 
 Expected: FAIL，提示 `JsonStore` 不存在。
 
@@ -1159,7 +1185,7 @@ it("waits for prepare-close acknowledgement", async () => {
 
 - [ ] **Step 2: 运行测试确认 coordinator 不存在**
 
-Run: `npx vitest run apps/desktop-shell/src/main/lifecycle.test.ts`
+Run: `pnpm exec vitest run apps/desktop-shell/src/main/lifecycle.test.ts`
 
 Expected: FAIL，提示模块不存在。
 
@@ -1233,8 +1259,10 @@ git commit -m "feat: coordinate desktop app and playback lifecycle"
 import { test, expect, _electron as electron } from "@playwright/test";
 
 test("starts offline with an isolated renderer", async () => {
-  const app = await electron.launch({ args: ["apps/desktop-shell"], offline: true });
+  const app = await electron.launch({ args: ["apps/desktop-shell"] });
   const window = await app.firstWindow();
+  await app.context().setOffline(true);
+  await window.reload();
   await expect(window.locator("#open-score")).toBeVisible();
   expect(await window.evaluate(() => ({
     require: typeof (globalThis as { require?: unknown }).require,

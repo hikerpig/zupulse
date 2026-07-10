@@ -6,19 +6,61 @@ export type AlphaTabPositionEvent = {
   tickPosition?: number;
 };
 
+export type AlphaTabEvent<T> = {
+  on(handler: (arg: T) => void): () => void;
+};
+
+export type AlphaTabVoidEvent = {
+  on(handler: () => void): () => void;
+};
+
+export type AlphaTabBrowserTrackLike = {
+  index: number;
+  name?: string;
+};
+
+export type AlphaTabBrowserScoreLike = {
+  tracks: AlphaTabBrowserTrackLike[];
+  masterBars: Array<{
+    index: number;
+    start: number;
+    timeSignatureNumerator?: number;
+    calculateDuration(respectAnacrusis?: boolean): number;
+  }>;
+};
+
 export type AlphaTabApiLike = {
   play?: () => unknown;
   destroy?: () => void;
   load?: (scoreData: unknown, trackIndexes?: number[]) => boolean;
+  score?: AlphaTabBrowserScoreLike | null;
+  scoreLoaded?: AlphaTabEvent<AlphaTabBrowserScoreLike>;
   settings?: {
     importer?: {
       encoding?: string;
     };
   };
   updateSettings?: () => void;
-  playerPositionChanged?: {
-    on(handler: (arg: unknown) => void): () => void;
-  };
+  playPause?: () => void;
+  stop?: () => void;
+  tickPosition?: number;
+  timePosition?: number;
+  endTick?: number;
+  endTime?: number;
+  playbackSpeed?: number;
+  playbackRange?: { startTick: number; endTick: number } | null;
+  isLooping?: boolean;
+  renderTracks?: (tracks: AlphaTabBrowserTrackLike[]) => void;
+  changeTrackMute?: (tracks: AlphaTabBrowserTrackLike[], muted: boolean) => void;
+  changeTrackSolo?: (tracks: AlphaTabBrowserTrackLike[], solo: boolean) => void;
+  changeTrackVolume?: (tracks: AlphaTabBrowserTrackLike[], volume: number) => void;
+  playerReady?: AlphaTabVoidEvent;
+  playerStateChanged?: AlphaTabEvent<unknown>;
+  playerPositionChanged?: AlphaTabEvent<unknown>;
+  soundFontLoaded?: AlphaTabVoidEvent;
+  soundFontLoad?: AlphaTabEvent<{ loaded?: number; total?: number }>;
+  error?: AlphaTabEvent<unknown>;
+  loadSoundFontFromUrl?: (url: string, append: boolean) => void;
 };
 
 export type AlphaTabApiFactory = (element: HTMLElement, options: unknown) => AlphaTabApiLike;
@@ -57,5 +99,5 @@ export function attachAlphaTabPositionEvents(
 }
 
 function defaultAlphaTabApiFactory(element: HTMLElement, options: unknown): AlphaTabApiLike {
-  return new alphaTab.AlphaTabApi(element, options as alphaTab.Settings);
+  return new alphaTab.AlphaTabApi(element, options as alphaTab.Settings) as unknown as AlphaTabApiLike;
 }

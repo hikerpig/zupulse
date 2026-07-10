@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "rspack serve --host 127.0.0.1",
-    "build": "rspack build"
+    "build": "rspack build && node ./scripts/verify-assets.mjs"
   },
   "dependencies": {
     "@tab-viewer/web-core": "0.1.0"

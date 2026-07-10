@@ -1,4 +1,4 @@
-import { HtmlRspackPlugin } from "@rspack/core";
+import { CopyRspackPlugin, HtmlRspackPlugin } from "@rspack/core";
 import { fileURLToPath } from "node:url";
 
 const demoRoot = fileURLToPath(new URL(".", import.meta.url));
@@ -13,6 +13,10 @@ const config = {
     clean: true,
     filename: "[name].[contenthash].js",
     path: fileURLToPath(new URL("./dist/", import.meta.url)),
+  },
+  performance: {
+    maxAssetSize: 2 * 1024 * 1024,
+    maxEntrypointSize: 2 * 1024 * 1024,
   },
   resolve: {
     extensions: [".ts", ".js"],
@@ -56,6 +60,41 @@ const config = {
   plugins: [
     new HtmlRspackPlugin({
       template: "./index.html",
+    }),
+    new CopyRspackPlugin({
+      patterns: [
+        {
+          from: fileURLToPath(
+            new URL("../node_modules/@coderline/alphatab/dist/alphaTab.mjs", import.meta.url),
+          ),
+          to: "alphatab/alphaTab.mjs",
+        },
+        {
+          from: fileURLToPath(
+            new URL("../node_modules/@coderline/alphatab/dist/font/", import.meta.url),
+          ),
+          to: "alphatab/font/",
+        },
+        {
+          from: fileURLToPath(
+            new URL(
+              "../node_modules/@coderline/alphatab/dist/soundfont/sonivox.sf3",
+              import.meta.url,
+            ),
+          ),
+          to: "alphatab/soundfont/sonivox.sf3",
+        },
+        {
+          from: fileURLToPath(
+            new URL(
+              "../node_modules/@coderline/alphatab/dist/soundfont/LICENSE",
+              import.meta.url,
+            ),
+          ),
+          to: "alphatab/soundfont/LICENSE",
+          toType: "file",
+        },
+      ],
     }),
   ],
 };

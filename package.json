@@ -10,7 +10,11 @@
     "check": "pnpm typecheck && pnpm test",
     "fixtures:gp": "node scripts/generate-gp-fixtures.mjs && node scripts/verify-gp-fixtures.mjs",
     "demo:dev": "pnpm --filter @tab-viewer/web-demo dev",
-    "demo:build": "pnpm --filter @tab-viewer/web-demo build"
+    "demo:build": "pnpm --filter @tab-viewer/web-demo build",
+    "desktop:dev": "pnpm --filter @tab-viewer/desktop-shell dev",
+    "desktop:build": "pnpm --filter @tab-viewer/desktop-shell build",
+    "desktop:start": "pnpm --filter @tab-viewer/desktop-shell start",
+    "desktop:package": "pnpm --filter @tab-viewer/desktop-shell package"
   },
   "workspaces": [
     "packages/*",

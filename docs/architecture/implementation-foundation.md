@@ -45,8 +45,8 @@
 运行：
 
 ```bash
-rtk npm run check
-rtk npm run demo:build
+npm run check
+npm run demo:build
 ```
 
 预期结果：
@@ -82,13 +82,13 @@ GP 第一条竖切已经接入 `@coderline/alphatab@1.8.4`：
 运行：
 
 ```bash
-rtk npm run demo:dev
+npm run demo:dev
 ```
 
 构建：
 
 ```bash
-rtk npm run demo:build
+npm run demo:build
 ```
 
 真实文件验收矩阵见 `docs/architecture/gp-playback-practice-acceptance.md`。

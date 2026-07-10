@@ -5,13 +5,24 @@ import {
   sidecarPayloadSchema,
 } from "@tab-viewer/web-core";
 import { randomUUID } from "node:crypto";
-import { app, BrowserWindow, ipcMain, protocol, session, shell } from "electron";
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  Menu,
+  powerMonitor,
+  protocol,
+  session,
+  shell,
+  type MenuItemConstructorOptions,
+} from "electron";
 import { dispatchBridgeRequest } from "./bridge";
 import { DiagnosticLogger } from "./diagnostics";
 import { FileTokenStore } from "./fileTokens";
 import { openGpFile, readGpFileBytes } from "./files";
 import { registerAppProtocol } from "./protocol";
 import { JsonStore } from "./storage";
+import { DesktopLifecycleCoordinator } from "./lifecycle";
 
 protocol.registerSchemesAsPrivileged([{
   scheme: "tab-viewer",
@@ -26,6 +37,7 @@ protocol.registerSchemesAsPrivileged([{
 
 const fileTokens = new FileTokenStore();
 let mainWindow: BrowserWindow | undefined;
+let lifecycle: DesktopLifecycleCoordinator | undefined;
 
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -45,7 +57,20 @@ function createMainWindow(): BrowserWindow {
   return window;
 }
 
-void app.whenReady().then(() => {
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  });
+  void app.whenReady().then(startDesktopApp);
+}
+
+async function startDesktopApp(): Promise<void> {
   const rendererRoot = path.join(__dirname, "../renderer");
   const userData = app.getPath("userData");
   const logDirectory = path.join(userData, "logs");
@@ -71,6 +96,10 @@ void app.whenReady().then(() => {
     sendStorageWarning("resume"),
   );
   const diagnostics = new DiagnosticLogger(logDirectory);
+  const openDiagnosticsDirectory = async () => {
+    const error = await shell.openPath(logDirectory);
+    if (error) throw new Error("DIAGNOSTICS_OPEN_DIRECTORY_FAILED");
+  };
   registerAppProtocol(rendererRoot);
   session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
     callback(false);
@@ -103,13 +132,77 @@ void app.whenReady().then(() => {
         return {};
       },
       "diagnostics.openDirectory": async () => {
-        const error = await shell.openPath(logDirectory);
-        if (error) throw new Error("DIAGNOSTICS_OPEN_DIRECTORY_FAILED");
+        await openDiagnosticsDirectory();
+        return {};
+      },
+      "app.lifecycleAck": request => {
+        lifecycle?.acknowledge(request.payload.state);
         return {};
       },
     },
   }));
   mainWindow = createMainWindow();
-});
+  const sendEvent = (event: ReturnType<typeof createBridgeEvent>) => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    mainWindow.webContents.send("tab-viewer:event", event);
+  };
+  lifecycle = new DesktopLifecycleCoordinator(sendEvent, {
+    timeoutMs: 5000,
+    onTimeout: code => {
+      void diagnostics.write({ code }).catch(() => undefined);
+    },
+  });
+  installLifecycle(mainWindow, lifecycle);
+  installMenu(sendEvent, openDiagnosticsDirectory);
+}
+
+function installLifecycle(
+  window: BrowserWindow,
+  coordinator: DesktopLifecycleCoordinator,
+): void {
+  let closeRequested = false;
+  window.on("close", event => {
+    if (closeRequested) {
+      event.preventDefault();
+      return;
+    }
+    event.preventDefault();
+    closeRequested = true;
+    void coordinator.prepareClose().finally(() => {
+      fileTokens.clear();
+      window.destroy();
+      app.quit();
+    });
+  });
+  powerMonitor.on("suspend", () => { void coordinator.request("suspend"); });
+  powerMonitor.on("lock-screen", () => { void coordinator.request("suspend"); });
+}
+
+function installMenu(
+  sendEvent: (event: ReturnType<typeof createBridgeEvent>) => void,
+  openDiagnosticsDirectory: () => Promise<void>,
+): void {
+  const command = (value: "open-score" | "toggle-playback") => () => {
+    sendEvent(createBridgeEvent("app.command", randomUUID(), { command: value }));
+  };
+  const template: MenuItemConstructorOptions[] = [
+    {
+      label: "文件",
+      submenu: [
+        { label: "打开 GP 文件…", accelerator: "CmdOrCtrl+O", click: command("open-score") },
+        { label: "打开日志目录", click: () => { void openDiagnosticsDirectory().catch(() => undefined); } },
+        { type: "separator" },
+        { role: "quit" },
+      ],
+    },
+    {
+      label: "播放",
+      submenu: [
+        { label: "播放/暂停", accelerator: "Space", click: command("toggle-playback") },
+      ],
+    },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
 
 app.on("window-all-closed", () => app.quit());

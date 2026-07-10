@@ -84,6 +84,7 @@ export function mountViewerApp(
   };
   const onHostEvent = (event: ViewerHostEvent) => {
     if (event.type === "open-score") enqueueOpen();
+    if (event.type === "toggle-playback" && active) void active.togglePlayback().catch(() => undefined);
     if (event.type === "suspend" && active) void active.pauseAndFlush().catch(() => undefined);
     if (event.type === "prepare-close") void destroy().catch(() => undefined);
   };
@@ -96,6 +97,7 @@ export function mountViewerApp(
   };
   return {
     openScore: () => scheduleOpen(false),
+    togglePlayback: async () => { await active?.togglePlayback(); },
     pauseAndFlush: async () => { await active?.pauseAndFlush(); },
     destroy,
   };
@@ -169,6 +171,9 @@ export function createDefaultOpenSession(
       );
       renderViewerState(status, summary, state);
       return {
+        async togglePlayback() {
+          await sessionController.dispatch({ type: "toggle-playback" });
+        },
         async pauseAndFlush() {
           await sessionController.dispatch({ type: "pause" });
           await sessionController.flush();
@@ -213,7 +218,11 @@ export function renderViewerState(status: HTMLElement, summary: HTMLElement, sta
 }
 
 function emptySession(): ViewerSessionHandle {
-  return { pauseAndFlush: async () => undefined, destroy: async () => undefined };
+  return {
+    togglePlayback: async () => undefined,
+    pauseAndFlush: async () => undefined,
+    destroy: async () => undefined,
+  };
 }
 
 function required<T extends HTMLElement>(ownerDocument: Document, id: string): T {

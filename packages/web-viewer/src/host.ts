@@ -9,6 +9,7 @@ export interface ViewerHost {
   subscribe(listener: (event: ViewerHostEvent) => void): () => void;
 }
 export type ViewerSessionHandle = {
+  togglePlayback(): Promise<void>;
   pauseAndFlush(): Promise<void>;
   destroy(): Promise<void>;
 };

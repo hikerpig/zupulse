@@ -9,6 +9,30 @@ import {
 import { renderViewerShell } from "./viewerShell";
 
 describe("mountViewerApp", () => {
+  it("forwards toggle-playback host commands to the active session", async () => {
+    renderViewerShell(document);
+    let hostListener: ((event: { type: "toggle-playback" }) => void) | undefined;
+    const togglePlayback = vi.fn(async () => undefined);
+    const app = mountViewerApp(document, {
+      host: {
+        openScore: async () => ({ fileName: "song.gp5", bytes: new Uint8Array([1]) }),
+        subscribe: listener => {
+          hostListener = listener as typeof hostListener;
+          return () => undefined;
+        },
+      },
+      openSession: async () => ({
+        togglePlayback,
+        pauseAndFlush: async () => undefined,
+        destroy: async () => undefined,
+      }),
+    });
+    await app.openScore();
+
+    hostListener?.({ type: "toggle-playback" });
+    await vi.waitFor(() => expect(togglePlayback).toHaveBeenCalledOnce());
+  });
+
   it("opens through the injected host and destroys the active session", async () => {
     renderViewerShell(document);
     const openScore = vi.fn(async () => ({
@@ -18,7 +42,7 @@ describe("mountViewerApp", () => {
     const destroySession = vi.fn(async () => undefined);
     const app = mountViewerApp(document, {
       host: { openScore, subscribe: () => () => undefined },
-      openSession: async () => ({ destroy: destroySession, pauseAndFlush: vi.fn() }),
+      openSession: async () => ({ destroy: destroySession, pauseAndFlush: vi.fn(), togglePlayback: vi.fn() }),
     });
 
     document.querySelector<HTMLButtonElement>("#open-score")?.click();
@@ -41,6 +65,7 @@ describe("mountViewerApp", () => {
         const current = ++session;
         order.push(`start-${current}`);
         return {
+          togglePlayback: async () => undefined,
           pauseAndFlush: async () => undefined,
           destroy: async () => { order.push(`destroy-${current}`); },
         };
@@ -65,6 +90,7 @@ describe("mountViewerApp", () => {
         order.push(`start-${current}`);
         if (current === 1) await firstSessionGate.promise;
         return {
+          togglePlayback: async () => undefined,
           pauseAndFlush: async () => undefined,
           destroy: async () => { order.push(`destroy-${current}`); },
         };
@@ -90,7 +116,7 @@ describe("mountViewerApp", () => {
     const destroySession = vi.fn(async () => undefined);
     const openSession = vi.fn(async () => {
       await sessionGate.promise;
-      return { pauseAndFlush: vi.fn(), destroy: destroySession };
+      return { togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: destroySession };
     });
     const app = mountViewerApp(document, {
       host: {
@@ -116,7 +142,7 @@ describe("mountViewerApp", () => {
     renderViewerShell(document);
     const openSession = vi.fn()
       .mockRejectedValueOnce(new Error("first open failed"))
-      .mockResolvedValueOnce({ pauseAndFlush: vi.fn(), destroy: vi.fn() });
+      .mockResolvedValueOnce({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() });
     const app = mountViewerApp(document, {
       host: {
         openScore: async () => ({ fileName: "song.gp5", bytes: new Uint8Array([1]) }),
@@ -139,7 +165,7 @@ describe("mountViewerApp", () => {
     const openScore = vi.fn()
       .mockRejectedValueOnce(new Error("picker failed"))
       .mockResolvedValueOnce({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
-    const openSession = vi.fn(async () => ({ pauseAndFlush: vi.fn(), destroy: vi.fn() }));
+    const openSession = vi.fn(async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() }));
     const app = mountViewerApp(document, {
       host: { openScore, subscribe: () => () => undefined },
       openSession,
@@ -161,7 +187,7 @@ describe("mountViewerApp", () => {
       .mockResolvedValueOnce({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
     const app = mountViewerApp(document, {
       host: { openScore, subscribe: () => () => undefined },
-      openSession: async () => ({ pauseAndFlush: vi.fn(), destroy: vi.fn() }),
+      openSession: async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() }),
     });
 
     document.querySelector<HTMLButtonElement>("#open-score")?.click();
@@ -181,7 +207,7 @@ describe("mountViewerApp", () => {
     ];
     const app = mountViewerApp(document, {
       host: { openScore: async () => files.shift(), subscribe: () => () => undefined },
-      openSession: async () => ({ pauseAndFlush: vi.fn(), destroy: destroySession }),
+      openSession: async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: destroySession }),
     });
     await app.openScore();
 
@@ -200,7 +226,7 @@ describe("mountViewerApp", () => {
       .mockRejectedValueOnce(failure);
     const app = mountViewerApp(document, {
       host: { openScore, subscribe: () => () => undefined },
-      openSession: async () => ({ pauseAndFlush: vi.fn(), destroy: destroySession }),
+      openSession: async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: destroySession }),
     });
     await app.openScore();
 
@@ -223,6 +249,7 @@ describe("mountViewerApp", () => {
     const app = mountViewerApp(document, {
       host: { openScore, subscribe: () => () => undefined },
       openSession: async () => ({
+        togglePlayback: vi.fn(),
         pauseAndFlush: vi.fn(),
         destroy: async () => { throw cleanupFailure; },
       }),

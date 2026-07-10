@@ -8,6 +8,7 @@ import {
   createDefaultOpenSession,
   mountViewerApp,
   renderViewerShell,
+  type ViewerAppHandle,
   type ViewerHost,
 } from "@tab-viewer/web-viewer";
 import "@tab-viewer/web-viewer/styles.css";
@@ -26,16 +27,27 @@ async function start(): Promise<void> {
     throw new Error("BRIDGE_VERSION_MISMATCH");
   }
 
-  const host = createElectronHost(bridge);
+  let appHandle: ViewerAppHandle | undefined;
+  const acknowledgeLifecycle = async (state: "suspend" | "prepare-close") => {
+    if (!appHandle) throw new Error("VIEWER_NOT_READY");
+    if (state === "suspend") await appHandle.pauseAndFlush();
+    else await appHandle.destroy();
+    const ack = createBridgeRequest("app.lifecycleAck", crypto.randomUUID(), { state });
+    parseBridgeResponse(ack.type, await bridge.request(ack));
+  };
+  const host = createElectronHost(bridge, acknowledgeLifecycle);
   const persistence = new BridgePlaybackPersistence(bridge);
   renderViewerShell(document);
-  mountViewerApp(document, {
+  appHandle = mountViewerApp(document, {
     host,
     openSession: createDefaultOpenSession(document, persistence),
   });
 }
 
-function createElectronHost(bridge: NonNullable<Window["tabViewerBridge"]>): ViewerHost {
+function createElectronHost(
+  bridge: NonNullable<Window["tabViewerBridge"]>,
+  acknowledgeLifecycle: (state: "suspend" | "prepare-close") => Promise<void>,
+): ViewerHost {
   let storageWarningShown = false;
   return {
     async openScore() {
@@ -62,7 +74,14 @@ function createElectronHost(bridge: NonNullable<Window["tabViewerBridge"]>): Vie
       return bridge.subscribe(value => {
         const event = bridgeEventSchema.parse(value);
         if (event.type === "app.command") listener({ type: event.payload.command });
-        if (event.type === "app.lifecycle") listener({ type: event.payload.state });
+        if (event.type === "app.lifecycle") {
+          void acknowledgeLifecycle(event.payload.state).catch(error => {
+            const status = document.querySelector<HTMLElement>("#status");
+            if (status) status.textContent = error instanceof Error
+              ? `生命周期保存失败：${error.message}`
+              : "生命周期保存失败";
+          });
+        }
         if (event.type === "storage.warning" && !storageWarningShown) {
           storageWarningShown = true;
           const status = document.querySelector<HTMLElement>("#status");

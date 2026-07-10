@@ -6,6 +6,16 @@ const identity = { contentHash: "a".repeat(64), format: "gp" as const };
 const now = "2026-07-10T00:00:00.000Z";
 
 describe("storage schemas", () => {
+  it.each([
+    ["short", "a".repeat(63)],
+    ["non-hex", "g".repeat(64)],
+    ["long", "a".repeat(65)],
+  ])("rejects a %s content hash", (_name, contentHash) => {
+    expect(() => sidecarPayloadSchema.parse(
+      createDefaultSidecar({ ...identity, contentHash }, now),
+    )).toThrow();
+  });
+
   it("accepts valid sidecar and resume payloads", () => {
     expect(sidecarPayloadSchema.parse(createDefaultSidecar(identity, now)).identity).toEqual(identity);
     expect(localPlaybackResumeSchema.parse({

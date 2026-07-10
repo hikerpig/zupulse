@@ -60,6 +60,18 @@ describe("MockNativeBridge", () => {
     }]);
   });
 
+  it("rejects event messages that fail the runtime schema", () => {
+    const bridge = new MockNativeBridge();
+
+    expect(() => bridge.emit({
+      bridgeVersion: "1.0.0",
+      correlationId: "event-1",
+      type: "app.command",
+      payload: { command: "toggle-playback", path: "/tmp/score.gp" },
+    } as never)).toThrow();
+    expect(bridge.events()).toEqual([]);
+  });
+
   it("returns empty storage responses for unknown identities", async () => {
     const bridge = new MockNativeBridge();
     const identity = { contentHash: "a".repeat(64), format: "gp" as const };

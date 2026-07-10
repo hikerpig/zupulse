@@ -1,6 +1,7 @@
 import type { SidecarPayload } from "../storage/sidecar";
 import {
   BRIDGE_SCHEMA_VERSION,
+  bridgeEventSchema,
   bridgeRequestSchema,
   capabilitiesSchema,
   parseBridgeResponse,
@@ -121,7 +122,7 @@ export class MockNativeBridge {
   }
 
   emit(event: BridgeEvent): void {
-    this.eventMessages.push(event);
+    this.eventMessages.push(bridgeEventSchema.parse(event));
   }
 
   events(): BridgeEvent[] {

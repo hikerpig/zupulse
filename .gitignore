@@ -1,5 +1,6 @@
 node_modules/
 *.tsbuildinfo
-web-core/src/**/*.js
-web-core/src/**/*.d.ts
-web-demo/dist/
+.DS_Store
+packages/*/dist/
+apps/*/dist/
+apps/*/out/

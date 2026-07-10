@@ -1,11 +1,7 @@
 {
   "files": [],
   "references": [
-    {
-      "path": "./web-core"
-    },
-    {
-      "path": "./web-demo"
-    }
+    { "path": "./packages/web-core" },
+    { "path": "./apps/web-demo" }
   ]
 }

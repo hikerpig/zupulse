@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const demoRoot = fileURLToPath(new URL(".", import.meta.url));
 const requireFromWebCore = createRequire(
-  new URL("../web-core/package.json", import.meta.url),
+  new URL("../../packages/web-core/package.json", import.meta.url),
 );
 const alphaTabDist = dirname(requireFromWebCore.resolve("@coderline/alphatab"));
 

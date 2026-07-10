@@ -30,17 +30,17 @@ importers:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@20.19.43)(jsdom@24.1.3)
 
-  web-core:
+  apps/web-demo:
+    dependencies:
+      '@tab-viewer/web-core':
+        specifier: workspace:*
+        version: link:../../packages/web-core
+
+  packages/web-core:
     dependencies:
       '@coderline/alphatab':
         specifier: ^1.8.4
         version: 1.8.4
-
-  web-demo:
-    dependencies:
-      '@tab-viewer/web-core':
-        specifier: workspace:*
-        version: link:../web-core
 
 packages:
 

@@ -1,9 +1,17 @@
 import path from "node:path";
-import { app, BrowserWindow, ipcMain, protocol, session } from "electron";
+import {
+  createBridgeEvent,
+  localPlaybackResumeSchema,
+  sidecarPayloadSchema,
+} from "@tab-viewer/web-core";
+import { randomUUID } from "node:crypto";
+import { app, BrowserWindow, ipcMain, protocol, session, shell } from "electron";
 import { dispatchBridgeRequest } from "./bridge";
+import { DiagnosticLogger } from "./diagnostics";
 import { FileTokenStore } from "./fileTokens";
 import { openGpFile, readGpFileBytes } from "./files";
 import { registerAppProtocol } from "./protocol";
+import { JsonStore } from "./storage";
 
 protocol.registerSchemesAsPrivileged([{
   scheme: "tab-viewer",
@@ -17,6 +25,7 @@ protocol.registerSchemesAsPrivileged([{
 }]);
 
 const fileTokens = new FileTokenStore();
+let mainWindow: BrowserWindow | undefined;
 
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -38,6 +47,30 @@ function createMainWindow(): BrowserWindow {
 
 void app.whenReady().then(() => {
   const rendererRoot = path.join(__dirname, "../renderer");
+  const userData = app.getPath("userData");
+  const logDirectory = path.join(userData, "logs");
+  const sendStorageWarning = (category: "sidecar" | "resume") =>
+    (code: "CORRUPT_PERSISTED_DATA") => {
+      if (!mainWindow || mainWindow.isDestroyed()) return;
+      mainWindow.webContents.send("tab-viewer:event", createBridgeEvent(
+        "storage.warning",
+        randomUUID(),
+        { code, category },
+      ));
+    };
+  const sidecarStore = new JsonStore(
+    userData,
+    "sidecars",
+    sidecarPayloadSchema,
+    sendStorageWarning("sidecar"),
+  );
+  const resumeStore = new JsonStore(
+    userData,
+    "resume",
+    localPlaybackResumeSchema,
+    sendStorageWarning("resume"),
+  );
+  const diagnostics = new DiagnosticLogger(logDirectory);
   registerAppProtocol(rendererRoot);
   session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
     callback(false);
@@ -51,9 +84,32 @@ void app.whenReady().then(() => {
     handlers: {
       "file.open": () => openGpFile(fileTokens),
       "file.readBytes": request => readGpFileBytes(fileTokens, request.payload.fileToken),
+      "sidecar.read": async request => ({
+        payload: await sidecarStore.read(request.payload.identity.contentHash),
+      }),
+      "sidecar.write": async request => {
+        await sidecarStore.write(request.payload.identity.contentHash, request.payload.payload);
+        return {};
+      },
+      "playbackResume.read": async request => ({
+        resume: await resumeStore.read(request.payload.identity.contentHash),
+      }),
+      "playbackResume.write": async request => {
+        await resumeStore.write(request.payload.identity.contentHash, request.payload.resume);
+        return {};
+      },
+      "diagnostics.write": async request => {
+        await diagnostics.write(request.payload);
+        return {};
+      },
+      "diagnostics.openDirectory": async () => {
+        const error = await shell.openPath(logDirectory);
+        if (error) throw new Error("DIAGNOSTICS_OPEN_DIRECTORY_FAILED");
+        return {};
+      },
     },
   }));
-  createMainWindow();
+  mainWindow = createMainWindow();
 });
 
 app.on("window-all-closed", () => app.quit());

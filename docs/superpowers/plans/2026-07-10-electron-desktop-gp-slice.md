@@ -1110,7 +1110,7 @@ export class JsonStore<T> {
     return next.finally(() => { if (this.chains.get(contentHash) === next) this.chains.delete(contentHash); });
   }
   private path(contentHash: string): string {
-    if (!/^[a-f0-9]{16,128}$/i.test(contentHash)) throw new Error("INVALID_CONTENT_HASH");
+    if (!/^[a-f0-9]{64}$/i.test(contentHash)) throw new Error("INVALID_CONTENT_HASH");
     return join(this.userData, this.category, `${contentHash}.json`);
   }
 }

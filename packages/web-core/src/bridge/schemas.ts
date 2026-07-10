@@ -38,6 +38,12 @@ export const capabilitiesSchema = z.object({
   }).strict(),
 }).strict();
 
+export const diagnosticEventSchema = z.object({
+  code: idSchema,
+  durationMs: z.number().nonnegative().optional(),
+  contentHashPrefix: z.string().max(16).optional(),
+}).strict();
+
 export const bridgeRequestSchema = z.discriminatedUnion("type", [
   envelope("app.handshake", z.object({
     appVersion: z.string(),
@@ -58,11 +64,7 @@ export const bridgeRequestSchema = z.discriminatedUnion("type", [
   envelope("app.lifecycleAck", z.object({
     state: z.enum(["suspend", "prepare-close"]),
   }).strict()),
-  envelope("diagnostics.write", z.object({
-    code: idSchema,
-    durationMs: z.number().nonnegative().optional(),
-    contentHashPrefix: z.string().max(16).optional(),
-  }).strict()),
+  envelope("diagnostics.write", diagnosticEventSchema),
   envelope("diagnostics.openDirectory", z.object({}).strict()),
 ]);
 
@@ -118,6 +120,8 @@ export type BridgeResponse<T extends BridgeRequestType> = z.infer<
 >;
 
 type RequestFor<T extends BridgeRequestType> = Extract<BridgeRequest, { type: T }>;
+type BridgeEventType = BridgeEvent["type"];
+type EventFor<T extends BridgeEventType> = Extract<BridgeEvent, { type: T }>;
 
 export function createBridgeRequest<T extends BridgeRequestType>(
   type: T,
@@ -137,4 +141,17 @@ export function parseBridgeResponse<T extends BridgeRequestType>(
   value: unknown,
 ): BridgeResponse<T> {
   return bridgeResponseSchemas[type].parse(value) as BridgeResponse<T>;
+}
+
+export function createBridgeEvent<T extends BridgeEventType>(
+  type: T,
+  correlationId: string,
+  payload: EventFor<T>["payload"],
+): EventFor<T> {
+  return bridgeEventSchema.parse({
+    bridgeVersion: BRIDGE_SCHEMA_VERSION,
+    correlationId,
+    type,
+    payload,
+  }) as EventFor<T>;
 }

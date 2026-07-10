@@ -36,6 +36,7 @@ async function start(): Promise<void> {
 }
 
 function createElectronHost(bridge: NonNullable<Window["tabViewerBridge"]>): ViewerHost {
+  let storageWarningShown = false;
   return {
     async openScore() {
       try {
@@ -62,6 +63,11 @@ function createElectronHost(bridge: NonNullable<Window["tabViewerBridge"]>): Vie
         const event = bridgeEventSchema.parse(value);
         if (event.type === "app.command") listener({ type: event.payload.command });
         if (event.type === "app.lifecycle") listener({ type: event.payload.state });
+        if (event.type === "storage.warning" && !storageWarningShown) {
+          storageWarningShown = true;
+          const status = document.querySelector<HTMLElement>("#status");
+          if (status) status.textContent = "本地练习数据损坏，已隔离并使用默认设置";
+        }
       });
     },
   };

@@ -1,4 +1,5 @@
-import { CopyRspackPlugin, HtmlRspackPlugin } from "@rspack/core";
+import { CopyRspackPlugin, DefinePlugin, HtmlRspackPlugin } from "@rspack/core";
+import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,6 +9,14 @@ const requireFromWebCore = createRequire(
   new URL("../../packages/web-core/package.json", import.meta.url),
 );
 const alphaTabDist = dirname(requireFromWebCore.resolve("@coderline/alphatab"));
+const appVersion = "0.1.0";
+const rendererBuildHash = createHash("sha256")
+  .update(`${appVersion}:desktop-renderer`)
+  .digest("hex");
+const buildDefinitions = {
+  __APP_VERSION__: JSON.stringify(appVersion),
+  __RENDERER_BUILD_HASH__: JSON.stringify(rendererBuildHash),
+};
 
 const swcRule = {
   test: /\.ts$/,
@@ -29,6 +38,7 @@ const main = {
   },
   resolve: { extensions: [".ts", ".js"] },
   module: { rules: [swcRule] },
+  plugins: [new DefinePlugin(buildDefinitions)],
 };
 
 const preload = {
@@ -65,6 +75,7 @@ const renderer = {
     rules: [swcRule, { test: /\.css$/, type: "css" }],
   },
   plugins: [
+    new DefinePlugin(buildDefinitions),
     new HtmlRspackPlugin({ template: "./index.html" }),
     new CopyRspackPlugin({
       patterns: [

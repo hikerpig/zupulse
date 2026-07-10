@@ -1,5 +1,6 @@
 import path from "node:path";
-import { app, BrowserWindow, protocol, session } from "electron";
+import { app, BrowserWindow, ipcMain, protocol, session } from "electron";
+import { dispatchBridgeRequest } from "./bridge";
 import { registerAppProtocol } from "./protocol";
 
 protocol.registerSchemesAsPrivileged([{
@@ -37,6 +38,13 @@ void app.whenReady().then(() => {
   session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
     callback(false);
   });
+  ipcMain.handle("tab-viewer:request", (event, value: unknown) => dispatchBridgeRequest({
+    senderUrl: event.senderFrame?.url ?? event.sender.getURL(),
+    value,
+  }, {
+    appVersion: __APP_VERSION__,
+    rendererBuildHash: __RENDERER_BUILD_HASH__,
+  }));
   createMainWindow();
 });
 

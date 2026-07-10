@@ -1,7 +1,13 @@
 import { CopyRspackPlugin, HtmlRspackPlugin } from "@rspack/core";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const demoRoot = fileURLToPath(new URL(".", import.meta.url));
+const requireFromWebCore = createRequire(
+  new URL("../web-core/package.json", import.meta.url),
+);
+const alphaTabDist = dirname(requireFromWebCore.resolve("@coderline/alphatab"));
 
 /** @type {import("@rspack/core").Configuration} */
 const config = {
@@ -50,9 +56,7 @@ const config = {
     port: 5173,
     static: [
       {
-        directory: fileURLToPath(
-          new URL("../node_modules/@coderline/alphatab/dist/", import.meta.url),
-        ),
+        directory: alphaTabDist,
         publicPath: "/alphatab/",
       },
     ],
@@ -64,33 +68,19 @@ const config = {
     new CopyRspackPlugin({
       patterns: [
         {
-          from: fileURLToPath(
-            new URL("../node_modules/@coderline/alphatab/dist/alphaTab.mjs", import.meta.url),
-          ),
+          from: join(alphaTabDist, "alphaTab.mjs"),
           to: "alphatab/alphaTab.mjs",
         },
         {
-          from: fileURLToPath(
-            new URL("../node_modules/@coderline/alphatab/dist/font/", import.meta.url),
-          ),
+          from: join(alphaTabDist, "font"),
           to: "alphatab/font/",
         },
         {
-          from: fileURLToPath(
-            new URL(
-              "../node_modules/@coderline/alphatab/dist/soundfont/sonivox.sf3",
-              import.meta.url,
-            ),
-          ),
+          from: join(alphaTabDist, "soundfont/sonivox.sf3"),
           to: "alphatab/soundfont/sonivox.sf3",
         },
         {
-          from: fileURLToPath(
-            new URL(
-              "../node_modules/@coderline/alphatab/dist/soundfont/LICENSE",
-              import.meta.url,
-            ),
-          ),
+          from: join(alphaTabDist, "soundfont/LICENSE"),
           to: "alphatab/soundfont/LICENSE",
           toType: "file",
         },

@@ -5,8 +5,8 @@
 执行：
 
 ```bash
-npm run check
-npm run demo:build
+pnpm check
+pnpm demo:build
 ```
 
 当前结果：
@@ -38,7 +38,7 @@ Desktop Shell 开始集成前的最小准入素材由该 GP5 样本、通过 alp
 
 ## 人工验收步骤
 
-1. 运行 `npm run demo:dev`。
+1. 运行 `pnpm demo:dev`。
 2. 打开 `http://127.0.0.1:5173`。
 3. 选择矩阵中的真实文件。
 4. 等待谱面和 SoundFont 状态稳定。

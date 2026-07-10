@@ -121,7 +121,7 @@ Create `package.json`:
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -b",
-    "check": "npm run typecheck && npm test"
+    "check": "pnpm typecheck && pnpm test"
   },
   "workspaces": [
     "web-core"
@@ -189,8 +189,8 @@ Create `web-core/tsconfig.json`:
 Run:
 
 ```bash
-npm install
-npm test -- web-core/src/index.test.ts
+pnpm install
+pnpm test -- web-core/src/index.test.ts
 ```
 
 Expected: FAIL with an import error because `web-core/src/index.ts` does not export `WEB_CORE_VERSION`.
@@ -208,7 +208,7 @@ export const WEB_CORE_VERSION = "0.1.0";
 Run:
 
 ```bash
-npm run check
+pnpm check
 ```
 
 Expected: PASS. Vitest reports `1 passed`; TypeScript exits with code 0.
@@ -216,7 +216,7 @@ Expected: PASS. Vitest reports `1 passed`; TypeScript exits with code 0.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add package.json package-lock.json tsconfig.json web-core/package.json web-core/tsconfig.json web-core/src/index.ts web-core/src/index.test.ts
+git add package.json pnpm-lock.yaml tsconfig.json web-core/package.json web-core/tsconfig.json web-core/src/index.ts web-core/src/index.test.ts
 git commit -m "chore: scaffold web core workspace"
 ```
 
@@ -284,7 +284,7 @@ describe("isSupportedScoreFile", () => {
 Run:
 
 ```bash
-npm test -- web-core/src/score/format.test.ts
+pnpm test -- web-core/src/score/format.test.ts
 ```
 
 Expected: FAIL with module not found for `./format`.
@@ -484,7 +484,7 @@ export * from "./score/format";
 Run:
 
 ```bash
-npm run check
+pnpm check
 ```
 
 Expected: PASS. Format tests pass and TypeScript exits with code 0.
@@ -560,7 +560,7 @@ describe("createScoreIdentity", () => {
 Run:
 
 ```bash
-npm test -- web-core/src/score/identity.test.ts
+pnpm test -- web-core/src/score/identity.test.ts
 ```
 
 Expected: FAIL with module not found for `./identity`.
@@ -632,7 +632,7 @@ export * from "./score/identity";
 Run:
 
 ```bash
-npm run check
+pnpm check
 ```
 
 Expected: PASS. Identity tests pass and TypeScript exits with code 0.
@@ -751,7 +751,7 @@ describe("MockNativeBridge", () => {
 Run:
 
 ```bash
-npm test -- web-core/src/bridge/mockNativeBridge.test.ts
+pnpm test -- web-core/src/bridge/mockNativeBridge.test.ts
 ```
 
 Expected: FAIL with module not found for `./mockNativeBridge`.
@@ -933,7 +933,7 @@ export * from "./bridge/mockNativeBridge";
 Run:
 
 ```bash
-npm run check
+pnpm check
 ```
 
 Expected: PASS. Bridge tests pass and TypeScript exits with code 0.
@@ -1051,7 +1051,7 @@ describe("SQLITE_SCHEMA", () => {
 Run:
 
 ```bash
-npm test -- web-core/src/storage/sidecar.test.ts web-core/src/storage/sqliteSchema.test.ts
+pnpm test -- web-core/src/storage/sidecar.test.ts web-core/src/storage/sqliteSchema.test.ts
 ```
 
 Expected: FAIL with module not found for `./sidecar` and `./sqliteSchema`.
@@ -1212,7 +1212,7 @@ export * from "./storage/sqliteSchema";
 Run:
 
 ```bash
-npm run check
+pnpm check
 ```
 
 Expected: PASS. Storage tests pass and TypeScript exits with code 0.
@@ -1317,7 +1317,7 @@ describe("createViewerSession", () => {
 Run:
 
 ```bash
-npm test -- web-core/src/score/session.test.ts
+pnpm test -- web-core/src/score/session.test.ts
 ```
 
 Expected: FAIL with module not found for `./session`.
@@ -1383,7 +1383,7 @@ export * from "./storage/sqliteSchema";
 Run:
 
 ```bash
-npm run check
+pnpm check
 ```
 
 Expected: PASS. Session tests pass and TypeScript exits with code 0.
@@ -1448,7 +1448,7 @@ describe("openFileThroughBridge", () => {
 Run:
 
 ```bash
-npm test -- web-core/src/bridge/openFileFlow.test.ts
+pnpm test -- web-core/src/bridge/openFileFlow.test.ts
 ```
 
 Expected: FAIL because `openFileFlow` does not exist and `MockNativeBridge.registerFileBytes` does not exist.
@@ -1597,7 +1597,7 @@ export * from "./storage/sqliteSchema";
 Run:
 
 ```bash
-npm run check
+pnpm check
 ```
 
 Expected: PASS. All tests pass and TypeScript exits with code 0.
@@ -1665,7 +1665,7 @@ Create `docs/architecture/implementation-foundation.md`:
 运行：
 
 ```bash
-npm run check
+pnpm check
 ```
 
 预期结果：
@@ -1710,10 +1710,10 @@ Run:
 ```bash
 PATTERN='TO''DO|TB''D|待''定|占''位|FIX''ME'
 rg -n "$PATTERN" docs web-core
-npm run check
+pnpm check
 ```
 
-Expected: `rg` exits with code 1 because no placeholder text is found. `npm run check` exits with code 0.
+Expected: `rg` exits with code 1 because no placeholder text is found. `pnpm check` exits with code 0.
 
 - [ ] **Step 4: Commit**
 

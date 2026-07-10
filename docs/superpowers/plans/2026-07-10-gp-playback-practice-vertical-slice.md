@@ -208,7 +208,7 @@ describe("createLoopRegion", () => {
 Run:
 
 ```bash
-npm test -- web-core/src/playback/loopRegions.test.ts
+pnpm test -- web-core/src/playback/loopRegions.test.ts
 ```
 
 Expected: FAIL because `./loopRegions` and `./types` do not exist.
@@ -463,8 +463,8 @@ export * from "./playback/loopRegions";
 Run:
 
 ```bash
-npm test -- web-core/src/playback/loopRegions.test.ts
-npm run typecheck
+pnpm test -- web-core/src/playback/loopRegions.test.ts
+pnpm typecheck
 ```
 
 Expected: focused tests PASS and TypeScript build PASS.
@@ -568,7 +568,7 @@ Extend `web-core/src/storage/sidecar.test.ts` with one test that decodes a liter
 - [ ] **Step 2: Run tests and verify failure**
 
 ```bash
-npm test -- web-core/src/playback/playbackSidecar.test.ts web-core/src/storage/sidecar.test.ts
+pnpm test -- web-core/src/playback/playbackSidecar.test.ts web-core/src/storage/sidecar.test.ts
 ```
 
 Expected: FAIL because the playback sidecar module and schema migration do not exist.
@@ -673,8 +673,8 @@ from `web-core/src/index.ts`.
 Run:
 
 ```bash
-npm test -- web-core/src/playback/playbackSidecar.test.ts web-core/src/storage/sidecar.test.ts web-core/src/score/session.test.ts
-npm run typecheck
+pnpm test -- web-core/src/playback/playbackSidecar.test.ts web-core/src/storage/sidecar.test.ts web-core/src/score/session.test.ts
+pnpm typecheck
 ```
 
 Expected: all focused tests PASS and TypeScript build PASS.
@@ -728,7 +728,7 @@ Add a mock bridge test proving unknown identities return `undefined` for both re
 - [ ] **Step 2: Run tests and verify failure**
 
 ```bash
-npm test -- web-core/src/playback/playbackPersistence.test.ts web-core/src/bridge/mockNativeBridge.test.ts
+pnpm test -- web-core/src/playback/playbackPersistence.test.ts web-core/src/bridge/mockNativeBridge.test.ts
 ```
 
 Expected: FAIL because playback persistence RPCs do not exist.
@@ -809,8 +809,8 @@ Export `BridgePlaybackPersistence` and related types from `web-core/src/index.ts
 Run:
 
 ```bash
-npm test -- web-core/src/playback/playbackPersistence.test.ts web-core/src/bridge/mockNativeBridge.test.ts
-npm run typecheck
+pnpm test -- web-core/src/playback/playbackPersistence.test.ts web-core/src/bridge/mockNativeBridge.test.ts
+pnpm typecheck
 ```
 
 Expected: focused tests PASS and TypeScript build PASS.
@@ -859,7 +859,7 @@ Use a plain object fake API and event emitters. Tests must prove:
 - [ ] **Step 2: Run tests and verify failure**
 
 ```bash
-npm test -- web-core/src/playback/alphaTabPlaybackAdapter.test.ts
+pnpm test -- web-core/src/playback/alphaTabPlaybackAdapter.test.ts
 ```
 
 Expected: FAIL because `AlphaTabPlaybackAdapter` does not exist.
@@ -954,8 +954,8 @@ export * from "./playback/alphaTabPlaybackAdapter";
 to `web-core/src/index.ts`, then run:
 
 ```bash
-npm test -- web-core/src/playback/alphaTabPlaybackAdapter.test.ts web-core/src/gp/alphaTabBrowser.test.ts
-npm run typecheck
+pnpm test -- web-core/src/playback/alphaTabPlaybackAdapter.test.ts web-core/src/gp/alphaTabBrowser.test.ts
+pnpm typecheck
 ```
 
 Expected: focused tests PASS and TypeScript build PASS.
@@ -1040,7 +1040,7 @@ Tests must assert:
 - [ ] **Step 5: Run the complete controller test and verify failure**
 
 ```bash
-npm test -- web-core/src/playback/playbackController.test.ts
+pnpm test -- web-core/src/playback/playbackController.test.ts
 ```
 
 Expected: FAIL because `PlaybackController` does not exist.
@@ -1115,8 +1115,8 @@ export * from "./playback/playbackController";
 to `web-core/src/index.ts`, then run:
 
 ```bash
-npm test -- web-core/src/playback/playbackController.test.ts
-npm run check
+pnpm test -- web-core/src/playback/playbackController.test.ts
+pnpm check
 ```
 
 Expected: all repository tests PASS and TypeScript build PASS.
@@ -1140,7 +1140,7 @@ git commit -m "feat: add playback controller state machine"
 - Create: `web-demo/src/playbackAssets.test.ts`
 
 **Interfaces:**
-- Consumes: alphaTab distribution files from the locked npm dependency.
+- Consumes: alphaTab distribution files from the locked pnpm dependency.
 - Produces:
   - `/alphatab/alphaTab.mjs`
   - `/alphatab/font/*`
@@ -1170,7 +1170,7 @@ describe("alphaTab playback assets", () => {
 - [ ] **Step 2: Run the test and verify failure**
 
 ```bash
-npm test -- web-demo/src/playbackAssets.test.ts
+pnpm test -- web-demo/src/playbackAssets.test.ts
 ```
 
 Expected: FAIL because `playbackAssets.ts` does not exist.
@@ -1219,8 +1219,8 @@ Change the demo build script to:
 - [ ] **Step 5: Verify tests and production build**
 
 ```bash
-npm test -- web-demo/src/playbackAssets.test.ts
-npm run demo:build
+pnpm test -- web-demo/src/playbackAssets.test.ts
+pnpm demo:build
 ```
 
 Expected: test PASS; build PASS; verifier confirms script, fonts, SoundFont and license in `web-demo/dist/alphatab/`.
@@ -1264,7 +1264,7 @@ Tests must verify:
 - [ ] **Step 2: Run tests and verify failure**
 
 ```bash
-npm test -- web-demo/src/playbackPresenter.test.ts
+pnpm test -- web-demo/src/playbackPresenter.test.ts
 ```
 
 Expected: FAIL because the presenter does not exist.
@@ -1333,8 +1333,8 @@ Use a three-row shell: file/summary header, fixed transport toolbar, and viewer 
 - [ ] **Step 6: Verify presenter and current UI tests**
 
 ```bash
-npm test -- web-demo/src/playbackPresenter.test.ts web-demo/src/demoApp.test.ts
-npm run typecheck
+pnpm test -- web-demo/src/playbackPresenter.test.ts web-demo/src/demoApp.test.ts
+pnpm typecheck
 ```
 
 Expected: presenter tests PASS; existing Demo tests remain PASS; TypeScript build PASS.
@@ -1379,7 +1379,7 @@ With jsdom and a fake controller, assert:
 - [ ] **Step 2: Run tests and verify failure**
 
 ```bash
-npm test -- web-demo/src/playbackControls.test.ts
+pnpm test -- web-demo/src/playbackControls.test.ts
 ```
 
 Expected: FAIL because control binding does not exist.
@@ -1444,9 +1444,9 @@ Update `gpDemoPresenter.test.ts` for returned bytes, score and track names.
 - [ ] **Step 8: Verify the complete Web Demo slice**
 
 ```bash
-npm test -- web-demo/src/playbackControls.test.ts web-demo/src/demoApp.test.ts web-demo/src/gpDemoPresenter.test.ts
-npm run check
-npm run demo:build
+pnpm test -- web-demo/src/playbackControls.test.ts web-demo/src/demoApp.test.ts web-demo/src/gpDemoPresenter.test.ts
+pnpm check
+pnpm demo:build
 ```
 
 Expected: all tests PASS; typecheck PASS; production build and asset verification PASS.
@@ -1476,10 +1476,10 @@ git commit -m "feat: connect GP playback practice controls"
 Document these exact commands:
 
 ```bash
-npm install
-npm run check
-npm run demo:build
-npm run demo:dev
+pnpm install
+pnpm check
+pnpm demo:build
+pnpm demo:dev
 ```
 
 State that the dev server defaults to `http://127.0.0.1:5173`, files remain local in the browser, and the bundled SoundFont supports offline playback after app assets load.
@@ -1503,8 +1503,8 @@ Columns must be: format/sample, render, SoundFont ready, play/pause/stop, seek, 
 - [ ] **Step 3: Run automated verification**
 
 ```bash
-npm run check
-npm run demo:build
+pnpm check
+pnpm demo:build
 ```
 
 Expected: TypeScript PASS, all Vitest tests PASS, Rspack build PASS, asset verifier PASS.
@@ -1512,7 +1512,7 @@ Expected: TypeScript PASS, all Vitest tests PASS, Rspack build PASS, asset verif
 - [ ] **Step 4: Start the demo and perform real-file checks**
 
 ```bash
-npm run demo:dev
+pnpm demo:dev
 ```
 
 Open `http://127.0.0.1:5173`. For every available fixture row, exercise all applicable columns and replace `未执行` with `通过` or `失败`. For unavailable fixture formats, leave `未执行` and state the missing sample in notes. Verify no browser console errors during a passing row.
@@ -1538,8 +1538,8 @@ git commit -m "docs: add GP playback practice acceptance guide"
 
 ## Final Verification Checklist
 
-- [ ] `npm run check` passes.
-- [ ] `npm run demo:build` passes and verifies offline assets.
+- [ ] `pnpm check` passes.
+- [ ] `pnpm demo:build` passes and verifies offline assets.
 - [ ] SoundFont and license exist in `web-demo/dist/alphatab/soundfont/` but are not committed as duplicate source assets.
 - [ ] Playback never starts without a user action.
 - [ ] Selecting a loop seeks to A and enables looping without starting from rest.

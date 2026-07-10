@@ -65,7 +65,7 @@ test-fixtures/
   midi/           后续 MIDI 竖切素材
 ```
 
-继续使用 npm workspaces、根 `package-lock.json` 和 TypeScript project references：
+继续使用 pnpm workspace、根 `pnpm-lock.yaml` 和 TypeScript project references：
 
 ```json
 {
@@ -73,7 +73,7 @@ test-fixtures/
 }
 ```
 
-不引入 pnpm、Turborepo、Nx 或第二套 Renderer bundler。Rspack 构建 Browser Demo 与 Electron Renderer；Electron Forge 负责 package、maker 和后续签名生命周期。
+不引入 Turborepo、Nx 或第二套 Renderer bundler。Rspack 构建 Browser Demo 与 Electron Renderer；Electron Forge 负责 package、maker 和后续签名生命周期。
 
 `test-fixtures/` 不进入 Browser Demo 或 Desktop Shell 的生产资源。应用不内置示例曲目。
 
@@ -294,7 +294,7 @@ Electron Forge 负责：
 - 应用名、图标和版本元数据。
 - 后续签名与公证 hook。
 
-首个里程碑只要求内部可安装验收包。`dist/`、`out/` 和其他生成物不提交 Git。Electron、Zod 与打包工具精确锁定在 `package-lock.json`；公开发布前再升级到当时受支持的稳定 Electron，并单独设计签名、公证、更新与回滚。
+首个里程碑只要求内部可安装验收包。`dist/`、`out/` 和其他生成物不提交 Git。Electron、Zod 与打包工具精确锁定在 `pnpm-lock.yaml`；公开发布前再升级到当时受支持的稳定 Electron，并单独设计签名、公证、更新与回滚。
 
 ## 测试策略
 

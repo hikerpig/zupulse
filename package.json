@@ -3,12 +3,13 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "packageManager": "pnpm@9.3.0",
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -b",
-    "check": "npm run typecheck && npm test",
-    "demo:dev": "npm --workspace @tab-viewer/web-demo run dev",
-    "demo:build": "npm --workspace @tab-viewer/web-demo run build"
+    "check": "pnpm typecheck && pnpm test",
+    "demo:dev": "pnpm --filter @tab-viewer/web-demo dev",
+    "demo:build": "pnpm --filter @tab-viewer/web-demo build"
   },
   "workspaces": [
     "web-core",

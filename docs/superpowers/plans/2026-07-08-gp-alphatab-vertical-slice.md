@@ -59,7 +59,7 @@
 
 **Files:**
 - Modify: `web-core/package.json`
-- Modify: `package-lock.json`
+- Modify: `pnpm-lock.yaml`
 - Test: `web-core/src/gp/alphaTabDependency.test.ts`
 
 **Interfaces:**
@@ -88,7 +88,7 @@ describe("alphaTab dependency", () => {
 Run:
 
 ```bash
-npm test -- web-core/src/gp/alphaTabDependency.test.ts
+pnpm test -- web-core/src/gp/alphaTabDependency.test.ts
 ```
 
 Expected: PASS when `@coderline/alphatab@1.8.4` is installed.
@@ -98,7 +98,7 @@ Expected: PASS when `@coderline/alphatab@1.8.4` is installed.
 Run:
 
 ```bash
-npm run check
+pnpm check
 ```
 
 Expected: PASS.
@@ -106,7 +106,7 @@ Expected: PASS.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add web-core/package.json package-lock.json web-core/src/gp/alphaTabDependency.test.ts
+git add web-core/package.json pnpm-lock.yaml web-core/src/gp/alphaTabDependency.test.ts
 git commit -m "feat: add alphatab dependency boundary"
 ```
 
@@ -187,7 +187,7 @@ describe("summarizeGpScore", () => {
 Run:
 
 ```bash
-npm test -- web-core/src/gp/alphaTabAdapter.test.ts
+pnpm test -- web-core/src/gp/alphaTabAdapter.test.ts
 ```
 
 Expected: FAIL with module not found for `./alphaTabAdapter`.
@@ -266,7 +266,7 @@ export * from "./gp/alphaTabAdapter";
 Run:
 
 ```bash
-npm run check
+pnpm check
 ```
 
 Expected: PASS.
@@ -353,7 +353,7 @@ describe("attachAlphaTabPositionEvents", () => {
 Run:
 
 ```bash
-npm test -- web-core/src/gp/alphaTabBrowser.test.ts
+pnpm test -- web-core/src/gp/alphaTabBrowser.test.ts
 ```
 
 Expected: FAIL with module not found for `./alphaTabBrowser`.
@@ -431,7 +431,7 @@ export * from "./gp/alphaTabBrowser";
 Run:
 
 ```bash
-npm run check
+pnpm check
 ```
 
 Expected: PASS.
@@ -529,7 +529,7 @@ describe("openGpThroughBridge", () => {
 Run:
 
 ```bash
-npm test -- web-core/src/gp/gpOpenFlow.test.ts
+pnpm test -- web-core/src/gp/gpOpenFlow.test.ts
 ```
 
 Expected: FAIL with module not found for `./gpOpenFlow`.
@@ -601,7 +601,7 @@ export * from "./gp/gpOpenFlow";
 Run:
 
 ```bash
-npm run check
+pnpm check
 ```
 
 Expected: PASS.
@@ -681,10 +681,10 @@ PATTERN='TO''DO|TB''D|待''定|占''位|FIX''ME'
 rg -n "$PATTERN" docs web-core
 rg_status=$?
 if [ "$rg_status" -ne 1 ]; then exit "$rg_status"; fi
-npm run check
+pnpm check
 ```
 
-Expected: `rg` exits with code 1 because no unfinished markers are found. `npm run check` exits with code 0.
+Expected: `rg` exits with code 1 because no unfinished markers are found. `pnpm check` exits with code 0.
 
 - [ ] **Step 4: Commit**
 

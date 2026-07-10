@@ -81,12 +81,12 @@
 
 **Interfaces:**
 - Consumes:
-  - Root npm workspace.
+  - Root pnpm workspace.
 - Produces:
   - `web-demo` workspace.
   - Root scripts:
-    - `npm run demo:dev`
-    - `npm run demo:build`
+    - `pnpm demo:dev`
+    - `pnpm demo:build`
 
 - [ ] **Step 1: Write the failing smoke test**
 
@@ -116,9 +116,9 @@ Modify root `package.json`:
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -b",
-    "check": "npm run typecheck && npm test",
-    "demo:dev": "npm --workspace @tab-viewer/web-demo run dev",
-    "demo:build": "npm --workspace @tab-viewer/web-demo run build"
+    "check": "pnpm typecheck && pnpm test",
+    "demo:dev": "pnpm --filter @tab-viewer/web-demo dev",
+    "demo:build": "pnpm --filter @tab-viewer/web-demo build"
   },
   "workspaces": [
     "web-core",
@@ -302,27 +302,27 @@ body {
 Run:
 
 ```bash
-npm test -- web-demo/src/main.test.ts
+pnpm test -- web-demo/src/main.test.ts
 ```
 
-Expected: FAIL if dependencies/workspace links are not installed yet, or PASS after `npm install`. If it fails only because `web-demo` workspace is not installed, continue to Step 5.
+Expected: FAIL if dependencies/workspace links are not installed yet, or PASS after `pnpm install`. If it fails only because `web-demo` workspace is not installed, continue to Step 5.
 
 - [ ] **Step 5: Install and run checks**
 
 Run:
 
 ```bash
-npm install
-npm run check
-npm run demo:build
+pnpm install
+pnpm check
+pnpm demo:build
 ```
 
-Expected: `npm run check` passes. `npm run demo:build` creates a Vite production build successfully.
+Expected: `pnpm check` passes. `pnpm demo:build` creates a Vite production build successfully.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add package.json package-lock.json tsconfig.json web-demo/package.json web-demo/tsconfig.json web-demo/index.html web-demo/src/main.ts web-demo/src/main.test.ts web-demo/src/styles.css
+git add package.json pnpm-lock.yaml tsconfig.json web-demo/package.json web-demo/tsconfig.json web-demo/index.html web-demo/src/main.ts web-demo/src/main.test.ts web-demo/src/styles.css
 git commit -m "feat: scaffold browser demo workspace"
 ```
 
@@ -372,7 +372,7 @@ describe("loadAlphaTabBytes", () => {
 Run:
 
 ```bash
-npm test -- web-core/src/gp/alphaTabBrowser.test.ts
+pnpm test -- web-core/src/gp/alphaTabBrowser.test.ts
 ```
 
 Expected: FAIL because `loadAlphaTabBytes` is not exported.
@@ -444,7 +444,7 @@ function defaultAlphaTabApiFactory(element: HTMLElement, options: unknown): Alph
 Run:
 
 ```bash
-npm run check
+pnpm check
 ```
 
 Expected: PASS.
@@ -563,7 +563,7 @@ function fileLike(name: string, bytes: Uint8Array) {
 Run:
 
 ```bash
-npm test -- web-demo/src/gpDemoPresenter.test.ts
+pnpm test -- web-demo/src/gpDemoPresenter.test.ts
 ```
 
 Expected: FAIL because `gpDemoPresenter.ts` does not exist.
@@ -645,7 +645,7 @@ export async function presentGpFile(input: {
 Run:
 
 ```bash
-npm run check
+pnpm check
 ```
 
 Expected: PASS.
@@ -740,7 +740,7 @@ describe("renderDemoState", () => {
 Run:
 
 ```bash
-npm test -- web-demo/src/demoApp.test.ts
+pnpm test -- web-demo/src/demoApp.test.ts
 ```
 
 Expected: FAIL because `demoApp.ts` does not exist.
@@ -829,8 +829,8 @@ if (typeof document !== "undefined") {
 Run:
 
 ```bash
-npm run check
-npm run demo:build
+pnpm check
+pnpm demo:build
 ```
 
 Expected: PASS. Vite build succeeds.
@@ -850,8 +850,8 @@ git commit -m "feat: bind browser demo ui"
 
 **Interfaces:**
 - Consumes:
-  - `npm run demo:dev`
-  - `npm run demo:build`
+  - `pnpm demo:dev`
+  - `pnpm demo:build`
 - Produces:
   - Clear instructions for trying the browser demo locally.
 
@@ -869,15 +869,15 @@ Create `docs/architecture/browser-demo-alphatab-dom-rendering.md`:
 ## 构建
 
 ```bash
-npm install
-npm run check
-npm run demo:build
+pnpm install
+pnpm check
+pnpm demo:build
 ```
 
 ## 试用
 
 ```bash
-npm run demo:dev
+pnpm demo:dev
 ```
 
 打开 Vite 输出的本地地址，选择 `.gp3`、`.gp4`、`.gp5`、`.gpx` 或 `.gp` 文件。
@@ -912,13 +912,13 @@ Append to `docs/architecture/implementation-foundation.md`:
 运行：
 
 ```bash
-npm run demo:dev
+pnpm demo:dev
 ```
 
 构建：
 
 ```bash
-npm run demo:build
+pnpm demo:build
 ```
 ```
 
@@ -931,8 +931,8 @@ PATTERN='TO''DO|TB''D|待''定|占''位|FIX''ME'
 rg -n "$PATTERN" docs web-core web-demo
 rg_status=$?
 if [ "$rg_status" -ne 1 ]; then exit "$rg_status"; fi
-npm run check
-npm run demo:build
+pnpm check
+pnpm demo:build
 ```
 
 Expected: placeholder scan finds nothing. Typecheck, tests, and Vite build pass.

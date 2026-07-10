@@ -4,15 +4,15 @@
 
 **Goal:** 保留 Browser Demo，并交付可在 macOS arm64 与 Windows x64 验收的 Electron GP 查看与播放练习桌面应用。
 
-**Architecture:** 先把领域核心、共享 Viewer UI 和两个应用宿主整理为 npm workspaces，再以 Zod schema 作为 Bridge 与持久 payload 的唯一真相源。Electron Main 独占文件、存储、协议和生命周期，sandboxed Preload 暴露固定领域 Bridge，Renderer 只运行共享 Viewer UI。
+**Architecture:** 先把领域核心、共享 Viewer UI 和两个应用宿主整理为 pnpm workspace，再以 Zod schema 作为 Bridge 与持久 payload 的唯一真相源。Electron Main 独占文件、存储、协议和生命周期，sandboxed Preload 暴露固定领域 Bridge，Renderer 只运行共享 Viewer UI。
 
-**Tech Stack:** TypeScript 5.5、npm workspaces、Rspack 2.1、Vitest 2、alphaTab 1.8.4、Electron 43.1.0、Electron Forge 7.11.2、Zod 4.4.3、Playwright 1.61.1。
+**Tech Stack:** TypeScript 5.5、pnpm workspace、Rspack 2.1、Vitest 2、alphaTab 1.8.4、Electron 43.1.0、Electron Forge 7.11.2、Zod 4.4.3、Playwright 1.61.1。
 
 ## Global Constraints
 
 - 开始 Electron 集成前必须先完成 GP 准入素材生成与自动化验证；派生 fixture 不代表完整 GP 兼容矩阵通过。
 - 工作区固定为 `packages/web-core`、`packages/web-viewer`、`apps/web-demo`、`apps/desktop-shell`，测试素材固定放在根 `test-fixtures/`。
-- 继续使用 npm、根 `package-lock.json`、TypeScript project references 和 Rspack；不引入 pnpm、Turborepo、Nx 或第二套 Renderer bundler。
+- 继续使用 pnpm workspace、根 `pnpm-lock.yaml`、TypeScript project references 和 Rspack；不引入 Turborepo、Nx 或第二套 Renderer bundler。
 - 首版只开放 GP3、GP4、GP5、GPX 与 `.gp`；不开放 MIDI、SQLite、同步、文件关联、拖放、多窗口、自动更新或遥测。
 - Electron Renderer 必须保持 `nodeIntegration: false`、`contextIsolation: true`、`sandbox: true`。
 - Renderer 只能加载 `tab-viewer://app/` 内置资源；不使用 `file://`，不加载远程代码，不启用 `bypassCSP`。
@@ -75,12 +75,12 @@
 - Modify: `apps/web-demo/rspack.config.mjs`
 
 **Interfaces:**
-- Consumes: 现有 npm 包名 `@tab-viewer/web-core`、`@tab-viewer/web-demo`。
+- Consumes: 现有 pnpm 包名 `@tab-viewer/web-core`、`@tab-viewer/web-demo`。
 - Produces: 稳定的 `packages/*`、`apps/*` workspace 路径；包名和运行命令保持不变。
 
 - [ ] **Step 1: 记录迁移前基线**
 
-Run: `npm run check && npm run demo:build`
+Run: `pnpm check && pnpm demo:build`
 
 Expected: TypeScript、全部 Vitest 测试和 Browser Demo 生产构建通过。
 
@@ -125,14 +125,14 @@ apps/*/out/
 
 - [ ] **Step 4: 重装 workspace 链接并验证迁移**
 
-Run: `npm install && npm run check && npm run demo:build`
+Run: `pnpm install && pnpm check && pnpm demo:build`
 
 Expected: 命令全部通过；`git status --short` 不包含生成的 `dist/`、`out/` 或 `.DS_Store`。
 
 - [ ] **Step 5: 提交目录迁移**
 
 ```bash
-git add package.json package-lock.json tsconfig.json .gitignore packages apps
+git add package.json pnpm-lock.yaml tsconfig.json .gitignore packages apps
 git commit -m "chore: organize workspaces under packages and apps"
 ```
 
@@ -328,14 +328,14 @@ export function createBrowserHost(ownerDocument: Document): ViewerHost & { bridg
 
 - [ ] **Step 6: 验证共享 UI 与 Browser 回归**
 
-Run: `npm run check && npm run demo:build`
+Run: `pnpm check && pnpm demo:build`
 
 Expected: 所有原测试迁移后通过；Demo 构建仍包含 alphaTab、字体、SoundFont 和许可证。
 
 - [ ] **Step 7: 提交共享 Viewer**
 
 ```bash
-git add packages/web-viewer apps/web-demo package.json package-lock.json tsconfig.json
+git add packages/web-viewer apps/web-demo package.json pnpm-lock.yaml tsconfig.json
 git commit -m "refactor: extract shared viewer app"
 ```
 
@@ -353,7 +353,7 @@ git commit -m "refactor: extract shared viewer app"
 
 **Interfaces:**
 - Consumes: `@coderline/alphatab` `importer.ScoreLoader` 与 `exporter.Gp7Exporter`。
-- Produces: `test-fixtures/gp/generated/desktop-acceptance.gp` 和可重复运行的 `npm run fixtures:gp`。
+- Produces: `test-fixtures/gp/generated/desktop-acceptance.gp` 和可重复运行的 `pnpm fixtures:gp`。
 
 - [ ] **Step 1: 写失败的 fixture 验证器**
 
@@ -408,7 +408,7 @@ await writeFile("test-fixtures/gp/generated/desktop-acceptance.gp", bytes);
 
 - [ ] **Step 4: 生成、验证并记录准入结果**
 
-Run: `npm run fixtures:gp && npm run check && npm run demo:build`
+Run: `pnpm fixtures:gp && pnpm check && pnpm demo:build`
 
 Expected: 生成器和验证器通过；Browser Demo 对 GP5 与派生 GP 都能解析。更新验收文档对应行，但只有实际人工执行过的单元格才能写“通过”。
 
@@ -632,14 +632,14 @@ export interface RpcBridge {
 
 - [ ] **Step 6: 安装 Zod 并运行完整验证**
 
-Run: `npm install --workspace @tab-viewer/web-core zod@4.4.3 --save-exact && npm run check && npm run demo:build`
+Run: `pnpm --filter @tab-viewer/web-core add --save-exact zod@4.4.3 && pnpm check && pnpm demo:build`
 
 Expected: 所有 schema、迁移、mock bridge 和 Browser 回归测试通过。
 
 - [ ] **Step 7: 提交合约迁移**
 
 ```bash
-git add packages/web-core packages/web-viewer apps/web-demo package.json package-lock.json
+git add packages/web-core packages/web-viewer apps/web-demo package.json pnpm-lock.yaml
 git commit -m "refactor: derive bridge contracts from Zod schemas"
 ```
 
@@ -703,7 +703,7 @@ case "pause":
 
 - [ ] **Step 4: 验证领域与 UI 生命周期**
 
-Run: `npm run check && npm run demo:build`
+Run: `pnpm check && pnpm demo:build`
 
 Expected: 自动保存、显式暂停、destroy flush 与 Browser 回归全部通过。
 
@@ -775,8 +775,8 @@ Expected: FAIL，提示模块不存在。
     "dev": "rspack build --watch",
     "build": "rspack build",
     "start": "electron .",
-    "package": "npm run build && electron-forge package",
-    "make": "npm run build && electron-forge make"
+    "package": "pnpm build && electron-forge package",
+    "make": "pnpm build && electron-forge make"
   },
   "dependencies": {
     "@tab-viewer/web-core": "0.1.0",
@@ -843,14 +843,14 @@ new BrowserWindow({
 
 - [ ] **Step 6: 安装依赖并验证安全构建**
 
-Run: `npm install && npm run check && npm run desktop:build`
+Run: `pnpm install && pnpm check && pnpm desktop:build`
 
 Expected: 协议测试通过；产物包含 main/preload/renderer，且 Renderer build 不包含 test fixtures。
 
 - [ ] **Step 7: 提交 Desktop Shell 基线**
 
 ```bash
-git add apps/desktop-shell package.json package-lock.json tsconfig.json
+git add apps/desktop-shell package.json pnpm-lock.yaml tsconfig.json
 git commit -m "feat: add secure Electron desktop shell"
 ```
 
@@ -919,7 +919,7 @@ contextBridge.exposeInMainWorld("tabViewerBridge", {
 
 - [ ] **Step 6: 验证 Bridge 暴露面**
 
-Run: `npm run check && npm run desktop:build`
+Run: `pnpm check && pnpm desktop:build`
 
 Expected: 测试确认只有 `request/subscribe`，未知 channel、未知 type、错误 sender 和版本漂移全部被拒绝。
 
@@ -1000,7 +1000,7 @@ Renderer host 的 `openScore()` 先请求 `file.open`；cancelled 返回 `undefi
 
 - [ ] **Step 5: 验证文件边界与 Browser 回归**
 
-Run: `npm run check && npm run demo:build && npm run desktop:build`
+Run: `pnpm check && pnpm demo:build && pnpm desktop:build`
 
 Expected: token 重用、超时、超限、非 GP 和取消路径均通过；两个宿主仍可构建。
 
@@ -1118,7 +1118,7 @@ export class DiagnosticLogger {
 
 - [ ] **Step 6: 验证持久化与日志**
 
-Run: `npm run check && npm run desktop:build`
+Run: `pnpm check && pnpm desktop:build`
 
 Expected: 原子写入、顺序、missing、corrupt、权限、日志轮转和敏感字段拒绝测试全部通过。
 
@@ -1198,7 +1198,7 @@ Renderer 收到 suspend 时调用 `ViewerAppHandle.pauseAndFlush()`，完成后�
 
 - [ ] **Step 6: 验证生命周期**
 
-Run: `npm run check && npm run desktop:build`
+Run: `pnpm check && pnpm desktop:build`
 
 Expected: 单实例、菜单事件、suspend、无自动恢复、关闭 ack、超时降级与换谱 destroy 顺序测试全部通过。
 
@@ -1225,7 +1225,7 @@ git commit -m "feat: coordinate desktop app and playback lifecycle"
 
 **Interfaces:**
 - Consumes: 可启动 Desktop Shell、固定 fixture、Forge package。
-- Produces: `npm run desktop:test:e2e`、`desktop:package` 和 macOS/Windows 验收记录入口。
+- Produces: `pnpm desktop:test:e2e`、`desktop:package` 和 macOS/Windows 验收记录入口。
 
 - [ ] **Step 1: 写启动与安全 smoke**
 
@@ -1247,13 +1247,13 @@ test("starts offline with an isolated renderer", async () => {
 
 - [ ] **Step 2: 运行 smoke 确认 Playwright 尚未安装**
 
-Run: `npm run desktop:test:e2e`
+Run: `pnpm desktop:test:e2e`
 
 Expected: FAIL，提示缺少 `@playwright/test` 或脚本。
 
 - [ ] **Step 3: 安装 Playwright 并补关键跨进程场景**
 
-Run: `npm install --workspace @tab-viewer/desktop-shell --save-dev --save-exact @playwright/test@1.61.1`
+Run: `pnpm --filter @tab-viewer/desktop-shell add --save-dev --save-exact @playwright/test@1.61.1`
 
 `apps/desktop-shell/package.json` 增加：
 
@@ -1264,7 +1264,7 @@ Run: `npm install --workspace @tab-viewer/desktop-shell --save-dev --save-exact 
 根 `package.json` 增加：
 
 ```json
-"desktop:test:e2e": "npm --workspace @tab-viewer/desktop-shell run test:e2e"
+"desktop:test:e2e": "pnpm --filter @tab-viewer/desktop-shell test:e2e"
 ```
 
 在同一 spec 中通过 `electronApp.evaluate(({dialog}), filePath => { dialog.showOpenDialog = async () => ({canceled:false,filePaths:[filePath]}); }, fixture)` 固定系统文件选择器，验证打开 GP、保存速度/循环、关闭、使用同一 userData 重启、重新选择后恢复。另测 `will-navigate`、`window.open`、未知 IPC 和网络请求被拒绝。
@@ -1275,7 +1275,7 @@ Run: `npm install --workspace @tab-viewer/desktop-shell --save-dev --save-exact 
 
 - [ ] **Step 5: 运行最终自动化门槛**
 
-Run: `npm run fixtures:gp && npm run check && npm run demo:build && npm run desktop:build && npm run desktop:test:e2e && npm run desktop:package`
+Run: `pnpm fixtures:gp && pnpm check && pnpm demo:build && pnpm desktop:build && pnpm desktop:test:e2e && pnpm desktop:package`
 
 Expected: 全部命令通过；当前平台生成对应架构的 Internal Acceptance Build；package 验证器通过。
 
@@ -1286,7 +1286,7 @@ Expected: 全部命令通过；当前平台生成对应架构的 Internal Accept
 - [ ] **Step 7: 更新实现说明并提交竖切**
 
 ```bash
-git add apps/desktop-shell package.json package-lock.json docs/architecture
+git add apps/desktop-shell package.json pnpm-lock.yaml docs/architecture
 git commit -m "test: verify Electron desktop GP slice"
 ```
 
@@ -1294,17 +1294,17 @@ git commit -m "test: verify Electron desktop GP slice"
 
 ## Final Verification
 
-- [ ] Run: `npm run fixtures:gp`
+- [ ] Run: `pnpm fixtures:gp`
   - Expected: 原始 GP5 与派生现代 GP 均能解析，中文元数据保持不变。
-- [ ] Run: `npm run check`
+- [ ] Run: `pnpm check`
   - Expected: TypeScript project references 和全部 Vitest 测试通过。
-- [ ] Run: `npm run demo:build`
+- [ ] Run: `pnpm demo:build`
   - Expected: Browser Demo 构建通过，离线 alphaTab 资产与许可证齐全。
-- [ ] Run: `npm run desktop:build`
+- [ ] Run: `pnpm desktop:build`
   - Expected: Main、Preload、Renderer 三个目标构建通过。
-- [ ] Run: `npm run desktop:test:e2e`
+- [ ] Run: `pnpm desktop:test:e2e`
   - Expected: 启动、隔离、文件打开、持久化恢复和安全 smoke 通过。
-- [ ] Run: `npm run desktop:package`
+- [ ] Run: `pnpm desktop:package`
   - Expected: 当前平台内部验收包生成并通过资源/排除项校验。
 - [ ] Run: `git diff --check && git status --short`
   - Expected: 无 whitespace 错误；只保留预期源文件改动和明确忽略的生成物。

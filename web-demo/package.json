@@ -8,7 +8,7 @@
     "build": "rspack build && node ./scripts/verify-assets.mjs"
   },
   "dependencies": {
-    "@tab-viewer/web-core": "0.1.0"
+    "@tab-viewer/web-core": "workspace:*"
   },
   "devDependencies": {}
 }

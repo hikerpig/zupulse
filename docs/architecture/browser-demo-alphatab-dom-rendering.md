@@ -7,15 +7,15 @@
 ## 构建
 
 ```bash
-npm install
-npm run check
-npm run demo:build
+pnpm install
+pnpm check
+pnpm demo:build
 ```
 
 ## 试用
 
 ```bash
-npm run demo:dev
+pnpm demo:dev
 ```
 
 默认打开 `http://127.0.0.1:5173`，选择 `.gp3`、`.gp4`、`.gp5`、`.gpx` 或 `.gp` 文件。谱文件只在当前浏览器进程中读取，不会上传。
@@ -52,4 +52,4 @@ Rspack 从锁定版本的 `@coderline/alphatab` 依赖复制以下资源：
 - `sonivox.sf3`
 - SoundFont 许可证
 
-`npm run demo:build` 会在构建后验证关键资源存在且非空。资源缺失时构建失败。
+`pnpm demo:build` 会在构建后验证关键资源存在且非空。资源缺失时构建失败。

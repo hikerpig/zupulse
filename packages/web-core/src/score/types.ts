@@ -9,18 +9,10 @@ export type SupportedExtension =
   | ".mid"
   | ".midi";
 
-export type ScoreIdentity = {
-  contentHash: string;
-  format: ScoreFormat;
-  title?: string;
-  artist?: string;
-  durationMs?: number;
-  sourceHints?: {
-    fileName?: string;
-    trackNames?: string[];
-    tempoSummary?: string;
-  };
-};
+import type { z } from "zod";
+import type { scoreIdentitySchema } from "./schemas";
+
+export type ScoreIdentity = z.infer<typeof scoreIdentitySchema>;
 
 export type ScoreSource = {
   fileName: string;

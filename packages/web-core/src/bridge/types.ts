@@ -1,109 +1,16 @@
-import type { ScoreIdentity } from "../score/types";
-import type { SidecarPayload } from "../storage/sidecar";
-import type { MusicalPosition } from "../playback/types";
+import type { z } from "zod";
+import type { localPlaybackResumeSchema } from "../storage/schemas";
+import type {
+  BridgeRequest,
+  BridgeResponse,
+} from "./schemas";
 
-export type BridgeMessage<TPayload> = {
-  bridgeVersion: string;
-  type: string;
-  correlationId: string;
-  payload: TPayload;
-};
-
-export type BridgeError = {
-  code: string;
-  message: string;
-  recoverable: boolean;
-  details?: unknown;
-};
-
-export type Capabilities = {
-  fileAccess: {
-    externalReferences: boolean;
-    securityBookmarks: boolean;
-    localLibraryImport: boolean;
-  };
-  storage: {
-    sqliteIndex: boolean;
-    sidecarPayload: boolean;
-  };
-  sync: {
-    available: boolean;
-    provider: "cloudkit" | "none" | "custom";
-  };
-  audio: {
-    webAudio: boolean;
-    nativeBridge: boolean;
-  };
-};
-
-export type OpenFileRequest = {
-  fileRef: string;
-  mode: "external-reference" | "local-library-copy";
-};
-
-export type OpenFileResponse = {
-  fileToken: string;
-  fileName: string;
-  sizeBytes: number;
-  contentHash?: string;
-};
-
-export type ReadSidecarRequest = {
-  identity: ScoreIdentity;
-};
-
-export type WriteSidecarRequest = {
-  identity: ScoreIdentity;
-  payload: SidecarPayload;
-};
-
-export type ReadSidecarResponse = {
-  payload?: SidecarPayload;
-};
-
-export type LocalPlaybackResume = {
-  position: MusicalPosition;
-  updatedAt: string;
-};
-
-export type ReadPlaybackResumeRequest = {
-  identity: ScoreIdentity;
-};
-
-export type ReadPlaybackResumeResponse = {
-  resume?: LocalPlaybackResume;
-};
-
-export type WritePlaybackResumeRequest = {
-  identity: ScoreIdentity;
-  resume: LocalPlaybackResume;
-};
-
-export type SyncRequest = {
-  identity?: ScoreIdentity;
-  reason: "startup" | "manual" | "sidecar-updated";
-};
-
-export type PlaybackStateEvent = {
-  state: "idle" | "loading" | "playing" | "paused" | "stopped" | "error";
-  positionMs: number;
-  currentMeasureId?: string;
-  currentNoteIds?: string[];
-};
-
-export type SyncStateEvent = {
-  state: "idle" | "syncing" | "conflict" | "error";
-  lastSyncedAt?: string;
-  identity?: ScoreIdentity;
-};
-
-export type ViewerInteractionEvent = {
-  action:
-    | "section-created"
-    | "loop-changed"
-    | "annotation-updated"
-    | "midi-quantization-updated"
-    | "midi-measure-corrected";
-  identity: ScoreIdentity;
-  payload: unknown;
-};
+export type { BridgeError, BridgeEvent, BridgeRequest, Capabilities } from "./schemas";
+export type OpenFileResponse = BridgeResponse<"file.open">;
+export type ReadSidecarRequest = Extract<BridgeRequest, { type: "sidecar.read" }>["payload"];
+export type WriteSidecarRequest = Extract<BridgeRequest, { type: "sidecar.write" }>["payload"];
+export type ReadSidecarResponse = BridgeResponse<"sidecar.read">;
+export type LocalPlaybackResume = z.infer<typeof localPlaybackResumeSchema>;
+export type ReadPlaybackResumeRequest = Extract<BridgeRequest, { type: "playbackResume.read" }>["payload"];
+export type ReadPlaybackResumeResponse = BridgeResponse<"playbackResume.read">;
+export type WritePlaybackResumeRequest = Extract<BridgeRequest, { type: "playbackResume.write" }>["payload"];

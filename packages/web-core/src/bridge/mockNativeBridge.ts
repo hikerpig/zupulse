@@ -1,122 +1,130 @@
-import type {
-  BridgeMessage,
-  Capabilities,
-  LocalPlaybackResume,
-  OpenFileRequest,
-  OpenFileResponse,
-  ReadPlaybackResumeRequest,
-  ReadSidecarRequest,
-  WritePlaybackResumeRequest,
-  WriteSidecarRequest,
-} from "./types";
 import type { SidecarPayload } from "../storage/sidecar";
+import {
+  BRIDGE_SCHEMA_VERSION,
+  bridgeRequestSchema,
+  capabilitiesSchema,
+  parseBridgeResponse,
+  type BridgeEvent,
+  type BridgeRequest,
+  type Capabilities,
+} from "./schemas";
+import type { LocalPlaybackResume, OpenFileResponse } from "./types";
 
 export type NativeFileBytes = {
   fileName: string;
   bytes: Uint8Array;
 };
 
-const DEFAULT_CAPABILITIES: Capabilities = {
+const DEFAULT_CAPABILITIES: Capabilities = capabilitiesSchema.parse({
   fileAccess: {
-    externalReferences: true,
-    securityBookmarks: true,
-    localLibraryImport: true,
+    openExternalFile: true,
+    persistentFileReferences: false,
+    localLibraryImport: false,
   },
   storage: {
-    sqliteIndex: true,
+    sqliteIndex: false,
     sidecarPayload: true,
   },
   sync: {
-    available: true,
-    provider: "cloudkit",
+    available: false,
+    provider: "none",
   },
   audio: {
     webAudio: true,
     nativeBridge: false,
   },
-};
+});
 
 export class MockNativeBridge {
-  private readonly fileResponses = new Map<string, OpenFileResponse>();
+  private readonly fileResponses = new Map<string, Extract<OpenFileResponse, { status: "opened" }>>();
+  private readonly pendingFiles: Extract<OpenFileResponse, { status: "opened" }>[] = [];
   private readonly fileBytes = new Map<string, NativeFileBytes>();
-  private readonly eventMessages: BridgeMessage<unknown>[] = [];
+  private readonly eventMessages: BridgeEvent[] = [];
   private readonly sidecars = new Map<string, SidecarPayload>();
   private readonly playbackResumes = new Map<string, LocalPlaybackResume>();
   private nextId = 1;
 
-  registerFile(fileRef: string, response: OpenFileResponse): void {
-    this.fileResponses.set(fileRef, response);
+  constructor(private readonly capabilities: Capabilities = DEFAULT_CAPABILITIES) {}
+
+  registerFile(fileRef: string, response: Omit<Extract<OpenFileResponse, { status: "opened" }>, "status">): void {
+    const opened = parseBridgeResponse("file.open", { status: "opened", ...response });
+    if (opened.status !== "opened") return;
+    this.fileResponses.set(fileRef, opened);
+    this.pendingFiles.push(opened);
   }
 
-  registerFileBytes(fileRef: string, file: NativeFileBytes): void {
-    this.fileBytes.set(fileRef, file);
-    this.fileResponses.set(fileRef, {
-      fileToken: fileRef,
-      fileName: file.fileName,
-      sizeBytes: file.bytes.byteLength,
-    });
-  }
-
-  async rpc<TResponse>(type: string, payload: unknown): Promise<TResponse> {
-    if (type === "capabilities.get") {
-      return DEFAULT_CAPABILITIES as TResponse;
-    }
-
-    if (type === "file.open") {
-      const request = payload as OpenFileRequest;
-      const response = this.fileResponses.get(request.fileRef);
-      if (response === undefined) {
-        throw new Error(`No mock file registered for ref: ${request.fileRef}`);
+  registerFileBytes(fileToken: string, file: NativeFileBytes): void {
+    this.fileBytes.set(fileToken, file);
+    if (!this.fileResponses.has(fileToken)) {
+      const opened = parseBridgeResponse("file.open", {
+        status: "opened",
+        fileToken,
+        fileName: file.fileName,
+        sizeBytes: file.bytes.byteLength,
+      });
+      if (opened.status === "opened") {
+        this.fileResponses.set(fileToken, opened);
+        this.pendingFiles.push(opened);
       }
-      return response as TResponse;
     }
+  }
 
-    if (type === "file.readBytes") {
-      const request = payload as { fileToken: string };
-      const response = this.fileBytes.get(request.fileToken);
-      if (response === undefined) {
-        throw new Error(`No mock file bytes registered for token: ${request.fileToken}`);
+  async request(message: BridgeRequest): Promise<unknown> {
+    const request = bridgeRequestSchema.parse(message);
+
+    switch (request.type) {
+      case "app.handshake":
+        return parseBridgeResponse(request.type, {
+          appVersion: request.payload.appVersion,
+          bridgeVersion: BRIDGE_SCHEMA_VERSION,
+          rendererBuildHash: request.payload.rendererBuildHash,
+          capabilities: this.capabilities,
+        });
+      case "file.open":
+        return parseBridgeResponse(request.type, this.pendingFiles.shift() ?? { status: "cancelled" });
+      case "file.readBytes": {
+        const response = this.fileBytes.get(request.payload.fileToken);
+        if (response === undefined) {
+          throw new Error(`No mock file bytes registered for token: ${request.payload.fileToken}`);
+        }
+        return parseBridgeResponse(request.type, response);
       }
-      return response as TResponse;
+      case "sidecar.read": {
+        const saved = this.sidecars.get(request.payload.identity.contentHash);
+        return parseBridgeResponse(request.type, saved === undefined
+          ? {}
+          : { payload: structuredClone(saved) });
+      }
+      case "sidecar.write":
+        this.sidecars.set(
+          request.payload.identity.contentHash,
+          structuredClone(request.payload.payload),
+        );
+        return parseBridgeResponse(request.type, {});
+      case "playbackResume.read": {
+        const saved = this.playbackResumes.get(request.payload.identity.contentHash);
+        return parseBridgeResponse(request.type, saved === undefined
+          ? {}
+          : { resume: structuredClone(saved) });
+      }
+      case "playbackResume.write":
+        this.playbackResumes.set(
+          request.payload.identity.contentHash,
+          structuredClone(request.payload.resume),
+        );
+        return parseBridgeResponse(request.type, {});
+      case "app.lifecycleAck":
+      case "diagnostics.write":
+      case "diagnostics.openDirectory":
+        return parseBridgeResponse(request.type, {});
     }
-
-    if (type === "sidecar.read") {
-      const request = payload as ReadSidecarRequest;
-      const saved = this.sidecars.get(request.identity.contentHash);
-      return (saved === undefined ? {} : { payload: structuredClone(saved) }) as TResponse;
-    }
-
-    if (type === "sidecar.write") {
-      const request = payload as WriteSidecarRequest;
-      this.sidecars.set(request.identity.contentHash, structuredClone(request.payload));
-      return undefined as TResponse;
-    }
-
-    if (type === "playbackResume.read") {
-      const request = payload as ReadPlaybackResumeRequest;
-      const saved = this.playbackResumes.get(request.identity.contentHash);
-      return (saved === undefined ? {} : { resume: structuredClone(saved) }) as TResponse;
-    }
-
-    if (type === "playbackResume.write") {
-      const request = payload as WritePlaybackResumeRequest;
-      this.playbackResumes.set(request.identity.contentHash, structuredClone(request.resume));
-      return undefined as TResponse;
-    }
-
-    throw new Error(`Unsupported mock RPC: ${type}`);
   }
 
-  emit<TPayload>(type: string, payload: TPayload): void {
-    this.eventMessages.push({
-      bridgeVersion: "0.1.0",
-      type,
-      correlationId: `mock-${this.nextId++}`,
-      payload,
-    });
+  emit(event: BridgeEvent): void {
+    this.eventMessages.push(event);
   }
 
-  events(): BridgeMessage<unknown>[] {
+  events(): BridgeEvent[] {
     return [...this.eventMessages];
   }
 }

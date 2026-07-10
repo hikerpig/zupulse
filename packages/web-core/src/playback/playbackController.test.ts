@@ -12,7 +12,7 @@ import type {
   PlaybackTrack,
 } from "./types";
 
-const identity: ScoreIdentity = { contentHash: "score-1", format: "gp" };
+const identity: ScoreIdentity = { contentHash: "a".repeat(64), format: "gp" };
 const tracks: PlaybackTrack[] = [
   { id: "track-0", sourceIndex: 0, name: "Lead" },
   { id: "track-1", sourceIndex: 1, name: "Bass" },

@@ -1,63 +1,20 @@
+import type { z } from "zod";
 import type { ScoreIdentity, Section } from "../score/types";
 import {
   createDefaultPlaybackSidecar,
-  validatePlaybackSidecar,
-  type PracticePlaybackSidecar,
 } from "../playback/playbackSidecar";
+import { sidecarPayloadSchema } from "./schemas";
 
 export const SIDECAR_SCHEMA_VERSION = "0.2.0" as const;
 const LEGACY_SIDECAR_SCHEMA_VERSION = "0.1.0" as const;
 const LEGACY_TIMESTAMP = "1970-01-01T00:00:00.000Z";
 
-export type LoopRange = {
-  id: string;
-  startTick: number;
-  endTick: number;
-};
-
-export type Annotation = {
-  id: string;
-  tick: number;
-  text: string;
-  updatedAt: string;
-};
-
-export type TrackOverride = {
-  muted?: boolean;
-  solo?: boolean;
-  volume?: number;
-  instrument?: string;
-};
-
-export type QuantizationSettings = {
-  grid: "1/8" | "1/16" | "1/32";
-  swing: boolean;
-};
-
-export type MidiMeasureCorrection = {
-  measureId: string;
-  quantization?: QuantizationSettings;
-  handAssignments?: Record<string, "left" | "right" | "unknown">;
-};
-
-export type SidecarPayload = {
-  schemaVersion: typeof SIDECAR_SCHEMA_VERSION;
-  identity: ScoreIdentity;
-  practice: {
-    tempoOverride?: number;
-    transpose?: number;
-    loops: LoopRange[];
-    sections: Section[];
-    annotations: Annotation[];
-    playback: PracticePlaybackSidecar;
-  };
-  tracks: Record<string, TrackOverride>;
-  midi?: {
-    quantization: QuantizationSettings;
-    handAssignments: Record<string, "left" | "right" | "unknown">;
-    measureCorrections: Record<string, MidiMeasureCorrection>;
-  };
-};
+export type SidecarPayload = z.infer<typeof sidecarPayloadSchema>;
+export type LoopRange = SidecarPayload["practice"]["loops"][number];
+export type Annotation = SidecarPayload["practice"]["annotations"][number];
+export type TrackOverride = SidecarPayload["tracks"][string];
+export type QuantizationSettings = NonNullable<SidecarPayload["midi"]>["quantization"];
+export type MidiMeasureCorrection = NonNullable<SidecarPayload["midi"]>["measureCorrections"][string];
 
 export function createDefaultSidecar(
   identity: ScoreIdentity,
@@ -77,19 +34,17 @@ export function createDefaultSidecar(
 }
 
 export function encodeSidecar(payload: SidecarPayload): string {
-  return JSON.stringify(payload, null, 2);
+  return JSON.stringify(sidecarPayloadSchema.parse(payload), null, 2);
 }
 
 export function decodeSidecar(json: string): SidecarPayload {
   const parsed = JSON.parse(json) as { schemaVersion?: unknown };
 
   if (parsed.schemaVersion === LEGACY_SIDECAR_SCHEMA_VERSION) {
-    return migrateLegacySidecar(parsed as LegacySidecarPayload);
+    return sidecarPayloadSchema.parse(migrateLegacySidecar(parsed as LegacySidecarPayload));
   }
   if (parsed.schemaVersion === SIDECAR_SCHEMA_VERSION) {
-    const current = parsed as SidecarPayload;
-    validatePlaybackSidecar(current.practice.playback);
-    return current;
+    return sidecarPayloadSchema.parse(parsed);
   }
 
   throw new Error(`Unsupported sidecar schema version: ${String(parsed.schemaVersion)}`);

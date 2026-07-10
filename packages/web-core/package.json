@@ -6,6 +6,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "@coderline/alphatab": "^1.8.4"
+    "@coderline/alphatab": "^1.8.4",
+    "zod": "4.4.3"
   }
 }

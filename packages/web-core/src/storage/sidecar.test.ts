@@ -3,7 +3,7 @@ import { createDefaultSidecar, decodeSidecar, encodeSidecar } from "./sidecar";
 import type { ScoreIdentity } from "../score/types";
 
 const identity: ScoreIdentity = {
-  contentHash: "abc123",
+  contentHash: "a".repeat(64),
   format: "midi",
   title: "Etude",
   sourceHints: {

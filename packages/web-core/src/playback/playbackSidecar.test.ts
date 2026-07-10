@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   createDefaultPlaybackSidecar,
   mergePlaybackSidecar,
-  validatePlaybackSidecar,
 } from "./playbackSidecar";
+import { practicePlaybackSidecarSchema } from "./schemas";
 import type { LoopRegion } from "./types";
 
 describe("playback sidecar", () => {
@@ -58,7 +58,7 @@ describe("playback sidecar", () => {
     const sidecar = createDefaultPlaybackSidecar("2026-07-10T00:00:00Z");
     sidecar.scoreSpeed.value = 3;
 
-    expect(() => validatePlaybackSidecar(sidecar)).toThrow("Invalid playback score speed");
+    expect(() => practicePlaybackSidecarSchema.parse(sidecar)).toThrow();
   });
 });
 

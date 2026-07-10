@@ -1,5 +1,6 @@
-import type { MockNativeBridge, NativeFileBytes } from "../bridge/mockNativeBridge";
-import type { Capabilities, OpenFileResponse } from "../bridge/types";
+import type { BridgeHandshakeInput } from "../bridge/openFileFlow";
+import { createBridgeRequest, parseBridgeResponse } from "../bridge/schemas";
+import type { RpcBridge } from "../playback/playbackPersistence";
 import { createViewerSession } from "../score/session";
 import type { ViewerSession } from "../score/session";
 import { loadGpScore, summarizeGpScore, type AlphaTabScoreLoader, type GpScoreSummary } from "./alphaTabAdapter";
@@ -10,23 +11,26 @@ export type GpOpenResult = {
 };
 
 export async function openGpThroughBridge(input: {
-  bridge: MockNativeBridge;
-  fileRef: string;
-  mode: "external-reference" | "local-library-copy";
+  bridge: RpcBridge;
+  handshake: BridgeHandshakeInput;
   loader?: AlphaTabScoreLoader;
-}): Promise<GpOpenResult> {
-  const capabilities = await input.bridge.rpc<Capabilities>("capabilities.get", {});
-  const opened = await input.bridge.rpc<OpenFileResponse>("file.open", {
-    fileRef: input.fileRef,
-    mode: input.mode,
-  });
-  const file = await input.bridge.rpc<NativeFileBytes>("file.readBytes", {
+}): Promise<GpOpenResult | undefined> {
+  const handshakeRequest = createBridgeRequest("app.handshake", "gp-handshake", input.handshake);
+  const handshake = parseBridgeResponse(
+    handshakeRequest.type,
+    await input.bridge.request(handshakeRequest),
+  );
+  const openRequest = createBridgeRequest("file.open", "gp-open", {});
+  const opened = parseBridgeResponse(openRequest.type, await input.bridge.request(openRequest));
+  if (opened.status === "cancelled") return undefined;
+  const bytesRequest = createBridgeRequest("file.readBytes", "gp-read", {
     fileToken: opened.fileToken,
   });
+  const file = parseBridgeResponse(bytesRequest.type, await input.bridge.request(bytesRequest));
   const session = await createViewerSession({
     fileName: file.fileName,
     bytes: file.bytes,
-    capabilities,
+    capabilities: handshake.capabilities,
   });
 
   if (session.identity.format !== "gp") {

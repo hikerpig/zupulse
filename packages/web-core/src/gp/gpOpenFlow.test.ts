@@ -12,8 +12,7 @@ describe("openGpThroughBridge", () => {
 
     const result = await openGpThroughBridge({
       bridge,
-      fileRef: "gp-file",
-      mode: "external-reference",
+      handshake: { appVersion: "0.1.0", rendererBuildHash: "a".repeat(64) },
       loader: bytes => {
         expect([...bytes]).toEqual([1, 2, 3]);
         return {
@@ -26,8 +25,8 @@ describe("openGpThroughBridge", () => {
       },
     });
 
-    expect(result.session.identity.format).toBe("gp");
-    expect(result.summary).toEqual({
+    expect(result?.session.identity.format).toBe("gp");
+    expect(result?.summary).toEqual({
       title: "Song",
       artist: "Artist",
       trackCount: 2,
@@ -46,8 +45,7 @@ describe("openGpThroughBridge", () => {
     await expect(
       openGpThroughBridge({
         bridge,
-        fileRef: "midi-file",
-        mode: "external-reference",
+        handshake: { appVersion: "0.1.0", rendererBuildHash: "a".repeat(64) },
         loader: () => {
           throw new Error("loader should not run");
         },
@@ -69,14 +67,13 @@ describe("openGpThroughBridge", () => {
 
     const result = await openGpThroughBridge({
       bridge,
-      fileRef: "external-ref",
-      mode: "external-reference",
+      handshake: { appVersion: "0.1.0", rendererBuildHash: "a".repeat(64) },
       loader: bytes => {
         expect([...bytes]).toEqual([8, 9]);
         return { title: "Token Song" };
       },
     });
 
-    expect(result.summary.title).toBe("Token Song");
+    expect(result?.summary.title).toBe("Token Song");
   });
 });

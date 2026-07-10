@@ -12,13 +12,19 @@ describe("openFileThroughBridge", () => {
 
     const session = await openFileThroughBridge({
       bridge,
-      fileRef: "file-1",
-      mode: "external-reference",
+      handshake: { appVersion: "0.1.0", rendererBuildHash: "a".repeat(64) },
     });
 
-    expect(session.source.fileName).toBe("practice.mid");
-    expect(session.identity.format).toBe("midi");
-    expect(session.capabilities.storage.sqliteIndex).toBe(true);
-    expect(session.sidecar.schemaVersion).toBe("0.2.0");
+    expect(session?.source.fileName).toBe("practice.mid");
+    expect(session?.identity.format).toBe("midi");
+    expect(session?.capabilities.storage.sqliteIndex).toBe(false);
+    expect(session?.sidecar.schemaVersion).toBe("0.2.0");
+  });
+
+  it("returns undefined when native file selection is cancelled", async () => {
+    await expect(openFileThroughBridge({
+      bridge: new MockNativeBridge(),
+      handshake: { appVersion: "0.1.0", rendererBuildHash: "a".repeat(64) },
+    })).resolves.toBeUndefined();
   });
 });

@@ -1,4 +1,5 @@
-import type { LoopRegion } from "./types";
+import type { z } from "zod";
+import type { practicePlaybackSidecarSchema } from "./schemas";
 
 export type TimedValue<T> = {
   value: T;
@@ -12,16 +13,7 @@ export type PersistedTrackMix = {
   volumeUpdatedAt: string;
 };
 
-export type PracticePlaybackSidecar = {
-  scoreSpeed: TimedValue<number>;
-  loops: LoopRegion[];
-  visibility: {
-    primaryTrackId?: string;
-    additionalTrackIds: string[];
-    updatedAt: string;
-  };
-  tracks: Record<string, PersistedTrackMix>;
-};
+export type PracticePlaybackSidecar = z.infer<typeof practicePlaybackSidecarSchema>;
 
 export function createDefaultPlaybackSidecar(now: string): PracticePlaybackSidecar {
   return {
@@ -30,26 +22,6 @@ export function createDefaultPlaybackSidecar(now: string): PracticePlaybackSidec
     visibility: { additionalTrackIds: [], updatedAt: now },
     tracks: {},
   };
-}
-
-export function validatePlaybackSidecar(value: PracticePlaybackSidecar): void {
-  if (!Number.isFinite(value.scoreSpeed.value)
-    || value.scoreSpeed.value < 0.25
-    || value.scoreSpeed.value > 2) {
-    throw new Error("Invalid playback score speed");
-  }
-
-  for (const loop of value.loops) {
-    if (loop.start.tick >= loop.end.tick) {
-      throw new Error(`Invalid playback loop: ${loop.id}`);
-    }
-  }
-
-  for (const [trackId, track] of Object.entries(value.tracks)) {
-    if (!Number.isFinite(track.volume) || track.volume < 0 || track.volume > 1) {
-      throw new Error(`Invalid playback track volume: ${trackId}`);
-    }
-  }
 }
 
 export function mergePlaybackSidecar(

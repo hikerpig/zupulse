@@ -1,24 +1,33 @@
+import type { RpcBridge } from "../playback/playbackPersistence";
 import { createViewerSession, type ViewerSession } from "../score/session";
-import type { Capabilities, OpenFileResponse } from "./types";
-import type { MockNativeBridge, NativeFileBytes } from "./mockNativeBridge";
+import { createBridgeRequest, parseBridgeResponse } from "./schemas";
+
+export type BridgeHandshakeInput = {
+  appVersion: string;
+  rendererBuildHash: string;
+};
 
 export async function openFileThroughBridge(input: {
-  bridge: MockNativeBridge;
-  fileRef: string;
-  mode: "external-reference" | "local-library-copy";
-}): Promise<ViewerSession> {
-  const capabilities = await input.bridge.rpc<Capabilities>("capabilities.get", {});
-  const opened = await input.bridge.rpc<OpenFileResponse>("file.open", {
-    fileRef: input.fileRef,
-    mode: input.mode,
-  });
-  const file = await input.bridge.rpc<NativeFileBytes>("file.readBytes", {
+  bridge: RpcBridge;
+  handshake: BridgeHandshakeInput;
+}): Promise<ViewerSession | undefined> {
+  const handshakeRequest = createBridgeRequest("app.handshake", "open-handshake", input.handshake);
+  const handshake = parseBridgeResponse(
+    handshakeRequest.type,
+    await input.bridge.request(handshakeRequest),
+  );
+  const openRequest = createBridgeRequest("file.open", "open-file", {});
+  const opened = parseBridgeResponse(openRequest.type, await input.bridge.request(openRequest));
+  if (opened.status === "cancelled") return undefined;
+
+  const bytesRequest = createBridgeRequest("file.readBytes", "read-file", {
     fileToken: opened.fileToken,
   });
+  const file = parseBridgeResponse(bytesRequest.type, await input.bridge.request(bytesRequest));
 
   return createViewerSession({
     fileName: file.fileName,
     bytes: file.bytes,
-    capabilities,
+    capabilities: handshake.capabilities,
   });
 }

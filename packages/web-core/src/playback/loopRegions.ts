@@ -71,7 +71,7 @@ export function createLoopRegion(input: {
 
 export function getEffectivePlaybackSpeed(
   scoreSpeed: number,
-  loop: { speedOverride?: number },
+  loop: { speedOverride?: number | undefined },
 ): number {
   return normalizePlaybackSpeed(loop.speedOverride ?? scoreSpeed);
 }

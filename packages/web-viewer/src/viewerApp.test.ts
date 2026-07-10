@@ -252,7 +252,7 @@ describe("createDefaultOpenSession cleanup", () => {
         presentFile: async () => ({
           status: "ready",
           message: "已加载 Song",
-          identity: { contentHash: "hash", format: "gp" },
+          identity: { contentHash: "a".repeat(64), format: "gp" },
           summary: { title: "Song", trackCount: 1, masterBarCount: 1 },
         }),
         waitForScore: async () => ({} as never),
@@ -293,7 +293,7 @@ describe("createDefaultOpenSession cleanup", () => {
       presentFile: async () => ({
         status: "ready",
         message: "已加载 Song",
-        identity: { contentHash: "hash", format: "gp" },
+        identity: { contentHash: "a".repeat(64), format: "gp" },
         summary: { title: "Song", trackCount: 1, masterBarCount: 1 },
       }),
       waitForScore: async () => ({} as never),

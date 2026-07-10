@@ -6,17 +6,17 @@ import type { Capabilities } from "../bridge/types";
 
 const capabilities: Capabilities = {
   fileAccess: {
-    externalReferences: true,
-    securityBookmarks: true,
-    localLibraryImport: true,
+    openExternalFile: true,
+    persistentFileReferences: false,
+    localLibraryImport: false,
   },
   storage: {
-    sqliteIndex: true,
+    sqliteIndex: false,
     sidecarPayload: true,
   },
   sync: {
-    available: true,
-    provider: "cloudkit",
+    available: false,
+    provider: "none",
   },
   audio: {
     webAudio: true,
@@ -41,7 +41,7 @@ describe("createViewerSession", () => {
       format: "gp",
     });
     expect(session.sidecar.identity).toEqual(session.identity);
-    expect(session.capabilities.sync.provider).toBe("cloudkit");
+    expect(session.capabilities.sync.provider).toBe("none");
   });
 
   it("uses an existing sidecar when provided", async () => {

@@ -5,7 +5,7 @@ import { createDefaultSidecar } from "../storage/sidecar";
 import { BridgePlaybackPersistence } from "./playbackPersistence";
 
 const identity: ScoreIdentity = {
-  contentHash: "score-123",
+  contentHash: "a".repeat(64),
   format: "gp",
   title: "Practice",
 };

@@ -1,75 +1,71 @@
 import { describe, expect, it } from "vitest";
+import { createBridgeRequest, parseBridgeResponse } from "./schemas";
 import { MockNativeBridge } from "./mockNativeBridge";
-import type { Capabilities, OpenFileResponse } from "./types";
 
 describe("MockNativeBridge", () => {
-  it("responds to capability discovery with platform-neutral capabilities", async () => {
+  it("returns Desktop GP Slice capabilities from handshake", async () => {
     const bridge = new MockNativeBridge();
+    const request = createBridgeRequest("app.handshake", "handshake-1", {
+      appVersion: "0.1.0",
+      rendererBuildHash: "a".repeat(64),
+    });
 
-    const capabilities = await bridge.rpc<Capabilities>("capabilities.get", {});
+    const response = parseBridgeResponse(request.type, await bridge.request(request));
 
-    expect(capabilities).toEqual({
+    expect(response.capabilities).toEqual({
       fileAccess: {
-        externalReferences: true,
-        securityBookmarks: true,
-        localLibraryImport: true,
+        openExternalFile: true,
+        persistentFileReferences: false,
+        localLibraryImport: false,
       },
-      storage: {
-        sqliteIndex: true,
-        sidecarPayload: true,
-      },
-      sync: {
-        available: true,
-        provider: "cloudkit",
-      },
-      audio: {
-        webAudio: true,
-        nativeBridge: false,
-      },
+      storage: { sqliteIndex: false, sidecarPayload: true },
+      sync: { available: false, provider: "none" },
+      audio: { webAudio: true, nativeBridge: false },
     });
   });
 
-  it("can return a registered file response", async () => {
+  it("consumes an explicitly queued file selection", async () => {
     const bridge = new MockNativeBridge();
     bridge.registerFile("file-1", {
       fileToken: "file-1",
       fileName: "riff.gp5",
       sizeBytes: 16,
     });
+    const request = createBridgeRequest("file.open", "open-1", {});
 
-    const response = await bridge.rpc<OpenFileResponse>("file.open", {
-      fileRef: "file-1",
-      mode: "external-reference",
-    });
+    const response = parseBridgeResponse(request.type, await bridge.request(request));
 
-    expect(response.fileName).toBe("riff.gp5");
+    expect(response).toMatchObject({ status: "opened", fileName: "riff.gp5" });
   });
 
-  it("records event messages with correlation ids", () => {
+  it("returns cancelled when no file selection is queued", async () => {
     const bridge = new MockNativeBridge();
-
-    bridge.emit("playback.state", {
-      state: "paused",
-      positionMs: 1200,
-    });
-
-    expect(bridge.events()).toHaveLength(1);
-    expect(bridge.events()[0]).toMatchObject({
-      bridgeVersion: "0.1.0",
-      type: "playback.state",
-      payload: {
-        state: "paused",
-        positionMs: 1200,
-      },
-    });
-    expect(bridge.events()[0]?.correlationId).toMatch(/^mock-/);
+    const request = createBridgeRequest("file.open", "open-1", {});
+    await expect(bridge.request(request)).resolves.toEqual({ status: "cancelled" });
   });
 
-  it("returns empty playback storage responses for unknown identities", async () => {
+  it("records only schema-defined event messages", () => {
     const bridge = new MockNativeBridge();
-    const identity = { contentHash: "missing", format: "gp" as const };
+    bridge.emit({
+      bridgeVersion: "1.0.0",
+      correlationId: "event-1",
+      type: "app.command",
+      payload: { command: "toggle-playback" },
+    });
+    expect(bridge.events()).toEqual([{
+      bridgeVersion: "1.0.0",
+      correlationId: "event-1",
+      type: "app.command",
+      payload: { command: "toggle-playback" },
+    }]);
+  });
 
-    await expect(bridge.rpc("sidecar.read", { identity })).resolves.toEqual({});
-    await expect(bridge.rpc("playbackResume.read", { identity })).resolves.toEqual({});
+  it("returns empty storage responses for unknown identities", async () => {
+    const bridge = new MockNativeBridge();
+    const identity = { contentHash: "a".repeat(64), format: "gp" as const };
+    const sidecar = createBridgeRequest("sidecar.read", "read-1", { identity });
+    const resume = createBridgeRequest("playbackResume.read", "read-2", { identity });
+    await expect(bridge.request(sidecar)).resolves.toEqual({});
+    await expect(bridge.request(resume)).resolves.toEqual({});
   });
 });

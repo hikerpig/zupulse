@@ -9,13 +9,10 @@ export type TransportState =
 
 export type LoopSnapMode = "off" | "beat" | "measure";
 
-export type MusicalPosition = {
-  measureId: string;
-  measureIndex: number;
-  beatIndex: number;
-  tick: number;
-  cachedTimeMs: number;
-};
+import type { z } from "zod";
+import type { loopRegionSchema, musicalPositionSchema } from "./schemas";
+
+export type MusicalPosition = z.infer<typeof musicalPositionSchema>;
 
 export type MeasureTimeline = {
   id: string;
@@ -31,18 +28,7 @@ export type PlaybackTimelineMap = {
   measures: MeasureTimeline[];
 };
 
-export type LoopRegion = {
-  id: string;
-  label: string;
-  labelSource: "generated" | "user";
-  start: MusicalPosition;
-  end: MusicalPosition;
-  snapMode: LoopSnapMode;
-  speedOverride?: number;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string;
-};
+export type LoopRegion = z.infer<typeof loopRegionSchema>;
 
 export type LoopDraft = {
   start?: MusicalPosition;

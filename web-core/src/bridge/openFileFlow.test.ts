@@ -19,6 +19,6 @@ describe("openFileThroughBridge", () => {
     expect(session.source.fileName).toBe("practice.mid");
     expect(session.identity.format).toBe("midi");
     expect(session.capabilities.storage.sqliteIndex).toBe(true);
-    expect(session.sidecar.schemaVersion).toBe("0.1.0");
+    expect(session.sidecar.schemaVersion).toBe("0.2.0");
   });
 });

@@ -13,13 +13,25 @@ const identity: ScoreIdentity = {
 
 describe("sidecar codec", () => {
   it("creates default sidecar payload bound to score identity", () => {
-    expect(createDefaultSidecar(identity)).toEqual({
-      schemaVersion: "0.1.0",
+    expect(createDefaultSidecar(identity, "2026-07-10T00:00:00.000Z")).toEqual({
+      schemaVersion: "0.2.0",
       identity,
       practice: {
         loops: [],
         sections: [],
         annotations: [],
+        playback: {
+          scoreSpeed: {
+            value: 1,
+            updatedAt: "2026-07-10T00:00:00.000Z",
+          },
+          loops: [],
+          visibility: {
+            additionalTrackIds: [],
+            updatedAt: "2026-07-10T00:00:00.000Z",
+          },
+          tracks: {},
+        },
       },
       tracks: {},
     });
@@ -39,5 +51,26 @@ describe("sidecar codec", () => {
     });
 
     expect(() => decodeSidecar(json)).toThrow("Unsupported sidecar schema version: 9.9.9");
+  });
+
+  it("migrates 0.1.0 loop ranges into playback loop regions", () => {
+    const decoded = decodeSidecar(JSON.stringify({
+      schemaVersion: "0.1.0",
+      identity,
+      practice: {
+        loops: [{ id: "legacy-loop", startTick: 120, endTick: 960 }],
+        sections: [],
+        annotations: [],
+      },
+      tracks: {},
+    }));
+
+    expect(decoded.schemaVersion).toBe("0.2.0");
+    expect(decoded.practice.playback.loops[0]).toMatchObject({
+      id: "legacy-loop",
+      start: { measureId: "legacy", tick: 120 },
+      end: { measureId: "legacy", tick: 960 },
+      snapMode: "off",
+    });
   });
 });

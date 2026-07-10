@@ -14,3 +14,4 @@ export * from "./gp/alphaTabBrowser";
 export * from "./gp/gpOpenFlow";
 export * from "./playback/types";
 export * from "./playback/loopRegions";
+export * from "./playback/playbackSidecar";

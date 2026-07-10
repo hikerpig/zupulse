@@ -5,6 +5,7 @@ import {
   createDefaultSidecar,
   extractAlphaTabPlaybackModel,
   waitForAlphaTabScore,
+  type AlphaTabApiLike,
   type BridgePlaybackPersistence,
 } from "@tab-viewer/web-core";
 import type {
@@ -23,45 +24,99 @@ export type ViewerAppDependencies = {
   openSession(file: ViewerFile): Promise<ViewerSessionHandle>;
 };
 
+export type DefaultOpenSessionDependencies = {
+  createApi: typeof createAlphaTabApi;
+  createAdapter(api: AlphaTabApiLike): AlphaTabPlaybackAdapter;
+  presentFile: typeof presentGpFile;
+  waitForScore: typeof waitForAlphaTabScore;
+  extractModel: typeof extractAlphaTabPlaybackModel;
+  createController(
+    options: ConstructorParameters<typeof PlaybackController>[0],
+  ): PlaybackController;
+  mountControls: typeof mountPlaybackControls;
+};
+
+const defaultOpenSessionDependencies: DefaultOpenSessionDependencies = {
+  createApi: createAlphaTabApi,
+  createAdapter: api => new AlphaTabPlaybackAdapter(api, ALPHATAB_ASSETS.soundFont),
+  presentFile: presentGpFile,
+  waitForScore: waitForAlphaTabScore,
+  extractModel: extractAlphaTabPlaybackModel,
+  createController: options => new PlaybackController(options),
+  mountControls: mountPlaybackControls,
+};
+
 export function mountViewerApp(
   ownerDocument: Document,
   dependencies: ViewerAppDependencies,
 ): ViewerAppHandle {
-  const openButton = ownerDocument.querySelector<HTMLButtonElement>("#open-score");
-  if (!openButton) throw new Error("Viewer DOM is missing #open-score");
+  const queriedOpenButton = ownerDocument.querySelector<HTMLButtonElement>("#open-score");
+  if (!queriedOpenButton) throw new Error("Viewer DOM is missing #open-score");
+  const openButton = queriedOpenButton;
   let active: ViewerSessionHandle | undefined;
   let chain = Promise.resolve();
+  let queuedError: unknown;
+  let destroyPromise: Promise<void> | undefined;
   const openScore = async () => {
     const file = await dependencies.host.openScore();
     if (!file) return;
-    await active?.destroy();
+    const previous = active;
+    active = undefined;
+    await previous?.destroy();
     active = await dependencies.openSession(file);
   };
-  const enqueueOpen = () => { chain = chain.then(openScore); };
+  const enqueueOpen = () => {
+    chain = chain.then(async () => {
+      try {
+        await openScore();
+        queuedError = undefined;
+      } catch (error) {
+        queuedError = error;
+      }
+    });
+  };
   const onHostEvent = (event: ViewerHostEvent) => {
     if (event.type === "open-score") enqueueOpen();
-    if (event.type === "suspend") void active?.pauseAndFlush();
-    if (event.type === "prepare-close") void destroy();
+    if (event.type === "suspend" && active) void active.pauseAndFlush().catch(() => undefined);
+    if (event.type === "prepare-close") void destroy().catch(() => undefined);
   };
   openButton.addEventListener("click", enqueueOpen);
   const unsubscribe = dependencies.host.subscribe(onHostEvent);
-  const destroy = async () => {
-    openButton.removeEventListener("click", enqueueOpen);
-    unsubscribe();
-    await chain;
-    await active?.destroy();
-    active = undefined;
+  const destroy = (): Promise<void> => {
+    destroyPromise ??= destroyOnce();
+    return destroyPromise;
   };
   return {
     openScore,
     pauseAndFlush: async () => { await active?.pauseAndFlush(); },
     destroy,
   };
+
+  async function destroyOnce(): Promise<void> {
+    openButton.removeEventListener("click", enqueueOpen);
+    unsubscribe();
+    await chain;
+    const openError = queuedError;
+    const session = active;
+    active = undefined;
+    let cleanupError: unknown;
+    try {
+      await session?.destroy();
+    } catch (error) {
+      cleanupError = error;
+    }
+    if (openError !== undefined && cleanupError !== undefined) {
+      throw new AggregateError([openError, cleanupError], "Viewer open and cleanup both failed");
+    }
+    if (openError !== undefined) throw openError;
+    if (cleanupError !== undefined) throw cleanupError;
+  }
 }
 
 export function createDefaultOpenSession(
   ownerDocument: Document,
   persistence: BridgePlaybackPersistence,
+  dependencies: DefaultOpenSessionDependencies = defaultOpenSessionDependencies,
 ): (file: ViewerFile) => Promise<ViewerSessionHandle> {
   const alphaTabHost = required<HTMLElement>(ownerDocument, "alpha-tab");
   const status = required<HTMLElement>(ownerDocument, "status");
@@ -69,10 +124,11 @@ export function createDefaultOpenSession(
 
   return async file => {
     renderViewerState(status, summary, { status: "loading", message: "正在加载文件" });
-    const api = createAlphaTabApi(alphaTabHost, alphaTabSettings());
-    const adapter = new AlphaTabPlaybackAdapter(api, ALPHATAB_ASSETS.soundFont);
+    const api = dependencies.createApi(alphaTabHost, alphaTabSettings());
+    const adapter = dependencies.createAdapter(api);
+    let controller: PlaybackController | undefined;
     try {
-      const state = await presentGpFile({
+      const state = await dependencies.presentFile({
         file: {
           name: file.fileName,
           async arrayBuffer() { return file.bytes.slice().buffer; },
@@ -85,9 +141,9 @@ export function createDefaultOpenSession(
         return emptySession();
       }
 
-      await waitForAlphaTabScore(api);
-      const model = extractAlphaTabPlaybackModel(api);
-      const controller = new PlaybackController({
+      await dependencies.waitForScore(api);
+      const model = dependencies.extractModel(api);
+      const sessionController = dependencies.createController({
         sessionId: crypto.randomUUID(),
         identity: state.identity,
         engine: adapter,
@@ -96,21 +152,27 @@ export function createDefaultOpenSession(
         tracks: model.tracks,
         timeline: model.timeline,
       });
-      await controller.initialize();
-      const cleanupControls = mountPlaybackControls(ownerDocument, controller, model.timeline);
+      controller = sessionController;
+      await sessionController.initialize();
+      const cleanupControls = dependencies.mountControls(
+        ownerDocument,
+        sessionController,
+        model.timeline,
+      );
       renderViewerState(status, summary, state);
       return {
         async pauseAndFlush() {
-          await controller.dispatch({ type: "stop" });
-          await controller.flush();
+          await sessionController.dispatch({ type: "stop" });
+          await sessionController.flush();
         },
         async destroy() {
           cleanupControls();
-          await controller.destroy();
+          await sessionController.destroy();
         },
       };
     } catch (error) {
-      adapter.destroy();
+      if (controller) await controller.destroy();
+      else adapter.destroy();
       renderViewerState(status, summary, {
         status: "error",
         message: error instanceof Error ? error.message : "加载失败",

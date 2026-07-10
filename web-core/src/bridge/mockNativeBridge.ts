@@ -1,4 +1,15 @@
-import type { BridgeMessage, Capabilities, OpenFileRequest, OpenFileResponse } from "./types";
+import type {
+  BridgeMessage,
+  Capabilities,
+  LocalPlaybackResume,
+  OpenFileRequest,
+  OpenFileResponse,
+  ReadPlaybackResumeRequest,
+  ReadSidecarRequest,
+  WritePlaybackResumeRequest,
+  WriteSidecarRequest,
+} from "./types";
+import type { SidecarPayload } from "../storage/sidecar";
 
 export type NativeFileBytes = {
   fileName: string;
@@ -29,6 +40,8 @@ export class MockNativeBridge {
   private readonly fileResponses = new Map<string, OpenFileResponse>();
   private readonly fileBytes = new Map<string, NativeFileBytes>();
   private readonly eventMessages: BridgeMessage<unknown>[] = [];
+  private readonly sidecars = new Map<string, SidecarPayload>();
+  private readonly playbackResumes = new Map<string, LocalPlaybackResume>();
   private nextId = 1;
 
   registerFile(fileRef: string, response: OpenFileResponse): void {
@@ -65,6 +78,30 @@ export class MockNativeBridge {
         throw new Error(`No mock file bytes registered for token: ${request.fileToken}`);
       }
       return response as TResponse;
+    }
+
+    if (type === "sidecar.read") {
+      const request = payload as ReadSidecarRequest;
+      const saved = this.sidecars.get(request.identity.contentHash);
+      return (saved === undefined ? {} : { payload: structuredClone(saved) }) as TResponse;
+    }
+
+    if (type === "sidecar.write") {
+      const request = payload as WriteSidecarRequest;
+      this.sidecars.set(request.identity.contentHash, structuredClone(request.payload));
+      return undefined as TResponse;
+    }
+
+    if (type === "playbackResume.read") {
+      const request = payload as ReadPlaybackResumeRequest;
+      const saved = this.playbackResumes.get(request.identity.contentHash);
+      return (saved === undefined ? {} : { resume: structuredClone(saved) }) as TResponse;
+    }
+
+    if (type === "playbackResume.write") {
+      const request = payload as WritePlaybackResumeRequest;
+      this.playbackResumes.set(request.identity.contentHash, structuredClone(request.resume));
+      return undefined as TResponse;
     }
 
     throw new Error(`Unsupported mock RPC: ${type}`);

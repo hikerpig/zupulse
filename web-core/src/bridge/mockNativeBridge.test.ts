@@ -64,4 +64,12 @@ describe("MockNativeBridge", () => {
     });
     expect(bridge.events()[0]?.correlationId).toMatch(/^mock-/);
   });
+
+  it("returns empty playback storage responses for unknown identities", async () => {
+    const bridge = new MockNativeBridge();
+    const identity = { contentHash: "missing", format: "gp" as const };
+
+    await expect(bridge.rpc("sidecar.read", { identity })).resolves.toEqual({});
+    await expect(bridge.rpc("playbackResume.read", { identity })).resolves.toEqual({});
+  });
 });

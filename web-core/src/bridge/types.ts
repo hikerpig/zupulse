@@ -1,4 +1,6 @@
 import type { ScoreIdentity } from "../score/types";
+import type { SidecarPayload } from "../storage/sidecar";
+import type { MusicalPosition } from "../playback/types";
 
 export type BridgeMessage<TPayload> = {
   bridgeVersion: string;
@@ -52,7 +54,29 @@ export type ReadSidecarRequest = {
 
 export type WriteSidecarRequest = {
   identity: ScoreIdentity;
-  payload: unknown;
+  payload: SidecarPayload;
+};
+
+export type ReadSidecarResponse = {
+  payload?: SidecarPayload;
+};
+
+export type LocalPlaybackResume = {
+  position: MusicalPosition;
+  updatedAt: string;
+};
+
+export type ReadPlaybackResumeRequest = {
+  identity: ScoreIdentity;
+};
+
+export type ReadPlaybackResumeResponse = {
+  resume?: LocalPlaybackResume;
+};
+
+export type WritePlaybackResumeRequest = {
+  identity: ScoreIdentity;
+  resume: LocalPlaybackResume;
 };
 
 export type SyncRequest = {

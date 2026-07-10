@@ -18,6 +18,22 @@ const timeline: PlaybackTimelineMap = {
 };
 
 describe("mountPlaybackControls", () => {
+  it("renders loop draft ranges from authoritative ticks before durationMs is ready", () => {
+    document.body.innerHTML = controlsHtml();
+    const state = playbackState();
+    state.durationMs = 0;
+    state.loopDraft = {
+      snapMode: "beat",
+      start: { measureId: "measure-0", measureIndex: 0, beatIndex: 0, tick: 0, cachedTimeMs: 0 },
+      end: { measureId: "measure-1", measureIndex: 1, beatIndex: 0, tick: 1920, cachedTimeMs: 0 },
+    };
+
+    mountPlaybackControls(document, new FakeController(state), timeline);
+
+    expect((document.querySelector("#loop-start") as HTMLInputElement).value).toBe("0");
+    expect((document.querySelector("#loop-end") as HTMLInputElement).value).toBe("500");
+  });
+
   it("dispatches transport, progress, speed, and loop commands", () => {
     document.body.innerHTML = controlsHtml();
     const controller = new FakeController(playbackState());

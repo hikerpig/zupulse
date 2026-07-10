@@ -34,6 +34,9 @@ export function extractAlphaTabPlaybackModel(api: AlphaTabApiLike): {
     };
   });
   const finalMeasure = measures.at(-1);
+  const scoreDurationTicks = finalMeasure
+    ? finalMeasure.startTick + finalMeasure.durationTicks
+    : 0;
 
   return {
     tracks: score.tracks.map(track => ({
@@ -42,9 +45,7 @@ export function extractAlphaTabPlaybackModel(api: AlphaTabApiLike): {
       name: track.name?.trim() || `轨道 ${track.index + 1}`,
     })),
     timeline: {
-      durationTicks: api.endTick ?? (
-        finalMeasure ? finalMeasure.startTick + finalMeasure.durationTicks : 0
-      ),
+      durationTicks: api.endTick && api.endTick > 0 ? api.endTick : scoreDurationTicks,
       durationMs: api.endTime ?? 0,
       measures,
     },

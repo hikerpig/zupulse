@@ -146,14 +146,32 @@ export function mountPlaybackControls(
     elements.playSpeed.value = String(view.speedPercent);
     elements.playSpeedValue.textContent = `${view.speedPercent}%`;
     elements.loopEnabled.checked = view.looping;
-    elements.loopStart.value = String(Math.round(view.loopDraftStart * 1000));
-    elements.loopEnd.value = String(Math.round(view.loopDraftEnd * 1000));
+    elements.loopStart.value = rangeValueFromTick(
+      state.loopDraft.start?.tick ?? 0,
+      elements.loopStart,
+      timeline,
+    );
+    elements.loopEnd.value = rangeValueFromTick(
+      state.loopDraft.end?.tick ?? 0,
+      elements.loopEnd,
+      timeline,
+    );
     elements.loopSnapMode.value = view.loopSnapMode;
     elements.soundFontRetry.hidden = !view.soundFontRetryVisible;
     elements.persistenceStatus.textContent = view.persistenceMessage;
     renderLoops(ownerDocument, elements.loopList, view.loops);
     renderTracks(ownerDocument, elements.trackList, view.tracks);
   }
+}
+
+function rangeValueFromTick(
+  tick: number,
+  input: HTMLInputElement,
+  timeline: PlaybackTimelineMap,
+): string {
+  const maximum = Number(input.max) || 1000;
+  const ratio = timeline.durationTicks > 0 ? tick / timeline.durationTicks : 0;
+  return String(Math.round(Math.min(1, Math.max(0, ratio)) * maximum));
 }
 
 function positionFromRange(

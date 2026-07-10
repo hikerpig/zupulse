@@ -14,6 +14,7 @@
     "desktop:dev": "pnpm --filter @tab-viewer/desktop-shell dev",
     "desktop:build": "pnpm --filter @tab-viewer/desktop-shell build",
     "desktop:start": "pnpm --filter @tab-viewer/desktop-shell start",
+    "desktop:test:e2e": "pnpm --filter @tab-viewer/desktop-shell test:e2e",
     "desktop:package": "pnpm --filter @tab-viewer/desktop-shell package"
   },
   "workspaces": [

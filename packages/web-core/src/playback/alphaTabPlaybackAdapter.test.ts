@@ -41,6 +41,13 @@ describe("extractAlphaTabPlaybackModel", () => {
       },
     });
   });
+
+  it("falls back to the score timeline while alphaTab endTick is still zero", () => {
+    const api = createApi();
+    api.endTick = 0;
+
+    expect(extractAlphaTabPlaybackModel(api).timeline.durationTicks).toBe(3840);
+  });
 });
 
 describe("AlphaTabPlaybackAdapter", () => {

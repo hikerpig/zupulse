@@ -4,3 +4,5 @@ node_modules/
 packages/*/dist/
 apps/*/dist/
 apps/*/out/
+apps/*/test-results/
+apps/*/playwright-report/

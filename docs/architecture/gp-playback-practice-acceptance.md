@@ -8,17 +8,22 @@
 pnpm fixtures:gp
 pnpm check
 pnpm demo:build
+pnpm desktop:build
+pnpm desktop:test:e2e
+pnpm desktop:package
 ```
 
 当前结果：
 
 - TypeScript project references 通过。
-- 24 个 Vitest 文件、86 项测试通过。
-- Rspack 生产构建通过。
+- TypeScript project references、33 个 Vitest 文件中的 131 项测试，以及 Browser/Desktop Rspack 生产构建通过。
 - `Treasure.gp5` 与确定性派生的 `generated/desktop-acceptance.gp` 均通过 alphaTab 解析校验；派生谱标题为“桌面验收谱”，首轨名为“主音吉他”。
 - alphaTab script、Bravura 字体、`sonivox.sf3` 和许可证校验通过。
 - Browser Demo 空状态在 `1280×720` 和 `390×844` 视口下无横向溢出。
 - 浏览器控制台无 error。
+- macOS arm64 Electron smoke 通过：离线启动、Renderer 隔离、未知 IPC/网络/新窗口拒绝、打开派生 GP、75% 变速、命名循环和使用同一 userData 重启后恢复。
+- macOS arm64 Forge `app.asar` 生成并通过产物校验；Renderer、alphaTab、Bravura、SoundFont、许可证和 CSP 均存在，且不含 fixture、source map 或 MockNativeBridge。
+- Windows x64 尚未在 Windows 主机执行，保持“未执行”。
 
 ## 真实文件矩阵
 
@@ -32,7 +37,7 @@ Desktop Shell 开始集成前的最小准入素材由该 GP5 样本、通过 alp
 | GP4 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 缺少样本 |
 | GP5，多轨 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 候选样本：`test-fixtures/gp/Treasure.gp5`；自动解析通过，待人工执行并记录 |
 | GPX | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 缺少样本 |
-| GP | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 派生样本：`test-fixtures/gp/generated/desktop-acceptance.gp`；中文标题与首轨名自动校验通过，待人工执行并记录 |
+| GP | 通过（自动化） | 未执行 | 未执行 | 未执行 | 通过（自动化） | 通过（自动化） | 未执行 | 未执行 | 通过（自动化） | 部分通过 | macOS arm64 Electron E2E：派生样本成功打开，75% 速度、单个命名循环及重启重新选文件后的恢复通过；其余项目待人工执行 |
 | 简单单轨谱 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 缺少样本 |
 | 至少三轨的合奏谱 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 缺少样本 |
 | 中文文件名 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 未执行 | 缺少样本 |
@@ -40,8 +45,8 @@ Desktop Shell 开始集成前的最小准入素材由该 GP5 样本、通过 alp
 
 ## 人工验收步骤
 
-1. 运行 `pnpm demo:dev`。
-2. 打开 `http://127.0.0.1:5173`。
+1. Browser 验收运行 `pnpm demo:dev` 并打开 `http://127.0.0.1:5173`；Desktop 验收运行 `pnpm desktop:build && pnpm desktop:start`，或启动 `apps/desktop-shell/out/` 下的当前平台内部验收包。
+2. 在 macOS arm64 与 Windows x64 分别记录应用版本、平台和架构；Windows 未实际复验前不得沿用 macOS 结论。
 3. 选择矩阵中的真实文件。
 4. 等待谱面和 SoundFont 状态稳定。
 5. 依次验证播放、停止、定位、`25%–200%` 变速和音高保持。
@@ -49,4 +54,4 @@ Desktop Shell 开始集成前的最小准入素材由该 GP5 样本、通过 alp
 7. 验证主显示轨道、附加显示轨道与静音/独奏/音量互不耦合。
 8. 重新选择同一文件，验证 sidecar 设置和本机播放位置通过 mock Bridge 恢复。
 9. 检查浏览器控制台；通过项目不得出现 error。
-10. 把每个单元格更新为“通过”“失败”或“不适用”，并在备注中记录文件来源和失败现象。
+10. 把每个单元格更新为“通过”“失败”或“不适用”，并在备注中记录文件来源、平台、应用版本、稳定错误码和失败现象。

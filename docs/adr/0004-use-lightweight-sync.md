@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0031
+---
+
 # ADR 0004：第一版采用轻量同步
 
 ## 状态

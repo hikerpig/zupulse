@@ -4,7 +4,7 @@
 
 在现有 Browser Demo 和 alphaTab GP 渲染能力上，增加一条可实际练习的播放竖切：离线 SoundFont 播放、播放进度、变速、多个命名 AB 循环、轨道显示与混音，以及通过 Bridge/mock storage 验证的 sidecar 持久化。
 
-这条竖切先稳定 Web Core 的领域边界和交互语义。macOS/iOS WKWebView、音频会话、SQLite 和 CloudKit 在后续独立计划中实现。
+这条竖切先稳定 Web Core 的领域边界和交互语义。后续桌面宿主已改为 Electron，详见 `2026-07-10-electron-desktop-gp-slice-design.md`；SQLite、MIDI 和同步继续作为独立阶段。
 
 ## 范围
 
@@ -280,11 +280,4 @@ Browser Demo 使用工作台布局：
 
 ## 后续计划边界
 
-本设计完成后再单独设计 Apple Shell 集成，重点覆盖：
-
-- SwiftUI 与 WKWebView 生命周期。
-- App Bundle 中 Web 资源和 SoundFont 的加载。
-- iOS/macOS 文件访问与安全书签。
-- `AVAudioSession` 中断、静音开关、耳机和后台行为。
-- 真实 SQLite sidecar adapter。
-- CloudKit 对象级同步和冲突可视化。
+本设计完成后的桌面宿主采用 Electron，具体边界见 `2026-07-10-electron-desktop-gp-slice-design.md`。真实 SQLite、本地曲库、MIDI Analyzer、公开发布和跨平台同步继续拆分为独立竖切；移动端形态另行设计。

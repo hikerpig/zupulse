@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0031
+---
+
 # ADR 0008：采用 SQLite、JSON sidecar 与 CloudKit 同步适配器
 
 ## 状态

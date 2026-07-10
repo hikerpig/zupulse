@@ -1,3 +1,4 @@
+// Migrated with the shared presenter.
 import { describe, expect, it } from "vitest";
 import type { PlaybackState } from "@tab-viewer/web-core";
 import { presentPlayback } from "./playbackPresenter";

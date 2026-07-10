@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+// Migrated with the shared controls.
 import { describe, expect, it } from "vitest";
 import type {
   PlaybackCommand,

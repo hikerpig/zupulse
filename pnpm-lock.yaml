@@ -35,12 +35,21 @@ importers:
       '@tab-viewer/web-core':
         specifier: workspace:*
         version: link:../../packages/web-core
+      '@tab-viewer/web-viewer':
+        specifier: workspace:*
+        version: link:../../packages/web-viewer
 
   packages/web-core:
     dependencies:
       '@coderline/alphatab':
         specifier: ^1.8.4
         version: 1.8.4
+
+  packages/web-viewer:
+    dependencies:
+      '@tab-viewer/web-core':
+        specifier: workspace:*
+        version: link:../web-core
 
 packages:
 

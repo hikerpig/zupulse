@@ -2,6 +2,7 @@
   "files": [],
   "references": [
     { "path": "./packages/web-core" },
+    { "path": "./packages/web-viewer" },
     { "path": "./apps/web-demo" }
   ]
 }

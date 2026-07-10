@@ -1,3 +1,4 @@
+// Shared viewer playback presentation.
 import type { PlaybackState } from "@tab-viewer/web-core";
 
 export type PlaybackViewModel = {

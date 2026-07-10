@@ -1,3 +1,4 @@
+// Migrated with the shared asset configuration.
 import { describe, expect, it } from "vitest";
 import { ALPHATAB_ASSETS } from "./playbackAssets";
 

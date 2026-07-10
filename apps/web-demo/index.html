@@ -3,78 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; connect-src 'self' blob:; media-src 'self' blob:; img-src 'self' data: blob:; font-src 'self' data:" />
     <title>Tab Viewer Demo</title>
   </head>
-  <body>
-    <main class="app-shell">
-      <header class="file-bar">
-        <label class="file-picker">
-          <span>选择 GP 文件</span>
-          <input id="score-file" type="file" accept=".gp3,.gp4,.gp5,.gpx,.gp" />
-        </label>
-        <p id="status" role="status">等待选择文件</p>
-      </header>
-      <section id="summary" class="summary" aria-live="polite"></section>
-      <section class="transport" aria-label="播放控制">
-        <button id="play-toggle" type="button" disabled>播放</button>
-        <button id="play-stop" type="button" disabled>停止</button>
-        <span class="time-readout">
-          <span id="play-current-time">0:00</span>
-          <span aria-hidden="true">/</span>
-          <span id="play-duration">0:00</span>
-        </span>
-        <label class="progress-control">
-          <span class="sr-only">播放进度</span>
-          <input id="play-progress" type="range" min="0" max="1000" step="1" value="0" />
-        </label>
-        <label class="speed-control">
-          <span>速度</span>
-          <input id="play-speed" type="range" min="25" max="200" step="5" value="100" />
-          <output id="play-speed-value" for="play-speed">100%</output>
-        </label>
-        <button id="soundfont-retry" type="button" hidden>重试音频</button>
-      </section>
-      <section class="workspace">
-        <section id="alpha-tab" class="score-viewer" aria-label="乐谱预览"></section>
-        <aside class="inspector" aria-label="练习设置">
-          <details open>
-            <summary>循环区间</summary>
-            <div class="panel-content">
-              <label class="toggle-row">
-                <input id="loop-enabled" type="checkbox" />
-                <span>启用循环</span>
-              </label>
-              <div class="button-row">
-                <button id="loop-set-a" type="button">设为 A</button>
-                <button id="loop-set-b" type="button">设为 B</button>
-                <button id="loop-save" type="button">保存区间</button>
-              </div>
-              <label>
-                <span>边界吸附</span>
-                <select id="loop-snap-mode">
-                  <option value="off">关闭</option>
-                  <option value="beat" selected>按拍</option>
-                  <option value="measure">按小节</option>
-                </select>
-              </label>
-              <label>
-                <span>A 点</span>
-                <input id="loop-start" type="range" min="0" max="1000" step="1" value="0" />
-              </label>
-              <label>
-                <span>B 点</span>
-                <input id="loop-end" type="range" min="0" max="1000" step="1" value="0" />
-              </label>
-              <div id="loop-list" class="item-list"></div>
-            </div>
-          </details>
-          <details open>
-            <summary>轨道</summary>
-            <div id="track-list" class="panel-content item-list"></div>
-          </details>
-          <p id="playback-persistence-status" class="persistence-status" aria-live="polite"></p>
-        </aside>
-      </section>
-    </main>
-  </body>
+  <body></body>
 </html>

@@ -1,3 +1,4 @@
+// Shared GP file presentation.
 import {
   createScoreIdentity,
   detectGpEncoding,

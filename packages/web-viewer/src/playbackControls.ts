@@ -1,3 +1,4 @@
+// Shared viewer playback controls.
 import {
   musicalPositionFromTick,
   type PlaybackCommand,

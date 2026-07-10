@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "vite build"
+    "dev": "rspack serve --host 127.0.0.1",
+    "build": "rspack build"
   },
   "dependencies": {
     "@tab-viewer/web-core": "0.1.0"

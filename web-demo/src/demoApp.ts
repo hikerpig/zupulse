@@ -17,6 +17,11 @@ export function mountDemoApp(ownerDocument: Document): void {
   }
 
   const api = createAlphaTabApi(alphaTabHost, {
+    core: {
+      useWorkers: false,
+      scriptFile: "/alphatab/alphaTab.mjs",
+      fontDirectory: "/alphatab/font/",
+    },
     display: {
       scale: 1,
     },

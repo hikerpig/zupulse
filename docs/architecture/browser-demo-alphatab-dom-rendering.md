@@ -18,7 +18,7 @@ npm run demo:build
 npm run demo:dev
 ```
 
-打开 Vite 输出的本地地址，选择 `.gp3`、`.gp4`、`.gp5`、`.gpx` 或 `.gp` 文件。
+打开 Rspack dev server 输出的本地地址，选择 `.gp3`、`.gp4`、`.gp5`、`.gpx` 或 `.gp` 文件。
 
 ## 当前能力
 

@@ -298,6 +298,55 @@ describe("mountViewerApp", () => {
 });
 
 describe("createDefaultOpenSession cleanup", () => {
+  it("clears the empty state before alphaTab establishes its cursor coordinate system", async () => {
+    renderViewerShell(document);
+    const createApi = vi.fn((element: HTMLElement) => {
+      expect(element.querySelector(".score-empty-state")).toBeNull();
+      expect(element.childElementCount).toBe(0);
+      return { load: () => false };
+    });
+    const openSession = createDefaultOpenSession(document, {} as never, {
+      createApi,
+      createAdapter: () => ({ destroy: vi.fn() } as never),
+      presentFile: async () => ({ status: "error", message: "stop after host check" }),
+      waitForScore: async () => ({} as never),
+      extractModel: () => ({ tracks: [], timeline: { durationTicks: 0, durationMs: 0, measures: [] } }),
+      createController: () => ({} as never),
+      mountControls: () => () => undefined,
+    });
+
+    await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
+
+    expect(createApi).toHaveBeenCalledOnce();
+  });
+
+  it("enables alphaTab playback cursors and element highlighting", async () => {
+    renderViewerShell(document);
+    const createApi = vi.fn((_element: HTMLElement, _settings: unknown) => ({ load: () => false }));
+    const openSession = createDefaultOpenSession(document, {} as never, {
+      createApi,
+      createAdapter: () => ({ destroy: vi.fn() } as never),
+      presentFile: async () => ({ status: "error", message: "stop after settings" }),
+      waitForScore: async () => ({} as never),
+      extractModel: () => ({ tracks: [], timeline: { durationTicks: 0, durationMs: 0, measures: [] } }),
+      createController: () => ({} as never),
+      mountControls: () => () => undefined,
+    });
+
+    await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
+
+    const [alphaTabHost, settings] = createApi.mock.calls[0] as [HTMLElement, {
+      player: { scrollElement: HTMLElement };
+    }];
+    expect(settings.player).toEqual(expect.objectContaining({
+      enablePlayer: true,
+      enableCursor: true,
+      enableAnimatedBeatCursor: true,
+      enableElementHighlighting: true,
+    }));
+    expect(settings.player.scrollElement).toBe(alphaTabHost);
+  });
+
   it("pauses and flushes the active playback controller", async () => {
     renderViewerShell(document);
     const dispatch = vi.fn(async () => undefined);

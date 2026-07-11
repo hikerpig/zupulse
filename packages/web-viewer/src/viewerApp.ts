@@ -143,7 +143,8 @@ export function createDefaultOpenSession(
 
   return async file => {
     renderViewerState(status, summary, { status: "loading", message: "正在加载文件" });
-    const api = dependencies.createApi(alphaTabHost, alphaTabSettings());
+    alphaTabHost.replaceChildren();
+    const api = dependencies.createApi(alphaTabHost, alphaTabSettings(alphaTabHost));
     const adapter = dependencies.createAdapter(api);
     let controller: PlaybackController | undefined;
     try {
@@ -239,12 +240,19 @@ function required<T extends HTMLElement>(ownerDocument: Document, id: string): T
   return element as T;
 }
 
-function alphaTabSettings(): unknown {
+function alphaTabSettings(scrollElement: HTMLElement): unknown {
   const chineseSerifFonts = "Georgia, 'Songti SC', 'STSong', SimSun, 'Noto Serif SC', serif";
   const chineseSansFonts = "Arial, 'PingFang SC', 'Microsoft YaHei', 'Heiti SC', 'Noto Sans SC', sans-serif";
   return {
     core: { useWorkers: false, scriptFile: ALPHATAB_ASSETS.scriptFile, fontDirectory: ALPHATAB_ASSETS.fontDirectory },
-    player: { enablePlayer: true, soundFont: ALPHATAB_ASSETS.soundFont },
+    player: {
+      enablePlayer: true,
+      enableCursor: true,
+      enableAnimatedBeatCursor: true,
+      enableElementHighlighting: true,
+      scrollElement,
+      soundFont: ALPHATAB_ASSETS.soundFont,
+    },
     display: {
       scale: 1,
       resources: {

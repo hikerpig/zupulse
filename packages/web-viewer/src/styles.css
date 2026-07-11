@@ -337,6 +337,7 @@ input[type="range"] {
 .score-stage-frame {
   height: 100%;
   min-height: 0;
+  overflow: auto;
   padding: 18px;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
@@ -349,7 +350,7 @@ input[type="range"] {
   height: 100%;
   min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
   padding: 24px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
@@ -575,6 +576,7 @@ button:focus-visible {
   .score-stage-frame {
     height: auto;
     min-height: 72vh;
+    overflow: visible;
   }
 
   .score-viewer {

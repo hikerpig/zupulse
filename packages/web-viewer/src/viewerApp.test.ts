@@ -344,7 +344,7 @@ describe("createDefaultOpenSession cleanup", () => {
       enableAnimatedBeatCursor: true,
       enableElementHighlighting: true,
     }));
-    expect(settings.player.scrollElement).toBe(alphaTabHost);
+    expect(settings.player.scrollElement).toBe(alphaTabHost.parentElement);
   });
 
   it("pauses and flushes the active playback controller", async () => {

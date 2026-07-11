@@ -138,13 +138,15 @@ export function createDefaultOpenSession(
   dependencies: DefaultOpenSessionDependencies = defaultOpenSessionDependencies,
 ): (file: ViewerFile) => Promise<ViewerSessionHandle> {
   const alphaTabHost = required<HTMLElement>(ownerDocument, "alpha-tab");
+  const scoreScrollElement = alphaTabHost.parentElement;
+  if (!scoreScrollElement) throw new Error("Viewer DOM is missing the score scroll container");
   const status = required<HTMLElement>(ownerDocument, "status");
   const summary = required<HTMLElement>(ownerDocument, "summary");
 
   return async file => {
     renderViewerState(status, summary, { status: "loading", message: "正在加载文件" });
     alphaTabHost.replaceChildren();
-    const api = dependencies.createApi(alphaTabHost, alphaTabSettings(alphaTabHost));
+    const api = dependencies.createApi(alphaTabHost, alphaTabSettings(scoreScrollElement));
     const adapter = dependencies.createAdapter(api);
     let controller: PlaybackController | undefined;
     try {

@@ -10,12 +10,12 @@
 - 页面根节点不承担桌面端谱面滚动。
 - `.workspace` 占满第三行并设置 `min-height: 0`，防止长谱面撑开视口。
 - `.score-stage`、`.score-stage-frame` 和 `.score-viewer` 逐层传递可用高度。
-- `.score-viewer` 使用 `overflow: auto`，成为唯一的谱面滚动容器。
+- `.score-stage-frame` 使用 `overflow: auto`，成为唯一的谱面滚动容器；`.score-viewer` 只负责 alphaTab 渲染。
 - `.practice-panel` 保持在工作区右栏；当自身内容超过可用高度时独立滚动。
 
 ## alphaTab 播放跟随
 
-初始化 alphaTab 时，将 `player.scrollElement` 指向当前实例的 `.score-viewer` 元素。alphaTab 的小节定位和播放自动跟随因此只更新谱面容器的 `scrollTop`，不滚动文档，也不需要通过固定像素偏移补偿顶部栏。
+初始化 alphaTab 时，将 `player.scrollElement` 指向当前实例的 `.score-stage-frame` 元素。不能把 alphaTab 宿主本身同时作为滚动元素：alphaTab 1.8.4 的连续滚动计算会重复加入宿主的当前 `scrollTop`，导致越滚越过头。使用现有父层作为滚动容器后，小节定位和播放自动跟随只更新谱面区域的 `scrollTop`，不滚动文档，也不需要通过固定像素偏移补偿顶部栏。
 
 游标层与谱面层继续共享同一个 alphaTab 宿主节点。此前移除空状态节点的处理保持不变，避免再次引入坐标原点偏移。
 
@@ -36,7 +36,7 @@
 
 ## 测试与验收
 
-- 单元测试验证传给 alphaTab 的 `player.scrollElement` 是谱面宿主元素。
+- 单元测试验证传给 alphaTab 的 `player.scrollElement` 是谱面宿主的父级滚动框架。
 - CSS 回归测试验证桌面端视口高度、工作区收缩、谱面内部滚动及窄屏降级规则。
 - 在桌面视口真实加载 GP 文件并播放，验证：
   - 文档滚动位置不随播放变化。

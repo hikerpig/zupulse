@@ -5,8 +5,13 @@ export function renderViewerShell(ownerDocument: Document): void {
         <div class="context-main">
           <p class="app-kicker">Tab Viewer</p>
           <h1 id="summary" class="context-title" aria-live="polite">未打开乐谱</h1>
+          <p class="context-subtitle">Studio-style practice workspace for score reading, playback, and loop training.</p>
         </div>
         <div class="context-actions">
+          <div class="theme-toggle" role="group" aria-label="主题切换">
+            <button id="theme-light" class="theme-toggle-button" type="button" aria-pressed="false">Light</button>
+            <button id="theme-dark" class="theme-toggle-button" type="button" aria-pressed="true">Dark</button>
+          </div>
           <p id="status" class="status-chip" role="status">等待选择文件</p>
           <button id="open-score" class="primary-button" type="button">打开 GP 文件</button>
         </div>

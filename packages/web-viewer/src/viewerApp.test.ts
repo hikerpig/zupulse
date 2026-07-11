@@ -16,8 +16,29 @@ describe("mountViewerApp", () => {
     expect(document.querySelector(".transport-bar")).not.toBeNull();
     expect(document.querySelector(".score-stage")).not.toBeNull();
     expect(document.querySelector(".practice-panel")).not.toBeNull();
+    expect(document.querySelector(".theme-toggle")).not.toBeNull();
     expect(document.getElementById("open-score")?.textContent).toContain("打开 GP 文件");
     expect(document.querySelector(".empty-title")?.textContent).toBe("打开一份 Guitar Pro 乐谱开始练习");
+  });
+
+  it("switches between dark and light theme", async () => {
+    renderViewerShell(document);
+
+    const handle = mountViewerApp(document, {
+      host: { openScore: async () => undefined, subscribe: () => () => undefined },
+      openSession: async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() }),
+    });
+
+    expect(document.documentElement.dataset.theme).toBe("dark");
+
+    document.getElementById("theme-light")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(document.getElementById("theme-light")?.getAttribute("aria-pressed")).toBe("true");
+
+    document.getElementById("theme-dark")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(document.documentElement.dataset.theme).toBe("dark");
+
+    await handle.destroy();
   });
 
   it("forwards toggle-playback host commands to the active session", async () => {

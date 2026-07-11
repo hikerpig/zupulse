@@ -1,0 +1,119 @@
+{
+  "library": "tab-viewer-te-braun-theme",
+  "themeIntent": "Braun-like order with a cleaner screen-first workstation palette, orange-red primary focus, charcoal structure, and sparse coded accents.",
+  "components": {
+    "primaryButton": {
+      "role": "主操作",
+      "background": "--tab-viewer-primary-500",
+      "hoverBackground": "--tab-viewer-primary-600",
+      "foreground": "#ffffff",
+      "radius": "--radius-sm",
+      "style": "平面高对比主信号",
+      "notes": [
+        "主按钮始终使用橙红主色",
+        "不允许用辅助 accent 替代主 CTA"
+      ]
+    },
+    "secondaryButton": {
+      "role": "次级动作",
+      "backgroundLight": "--surface-container",
+      "backgroundDark": "--surface-container-low",
+      "border": "--color-border",
+      "foreground": "--color-foreground",
+      "style": "清洁离白表面上的克制工具按钮"
+    },
+    "panel": {
+      "role": "功能分区",
+      "background": "--color-surface",
+      "innerBackground": "--color-surface-container-low",
+      "border": "--color-border",
+      "shadow": "--shadow-1",
+      "style": "屏幕结构块",
+      "notes": [
+        "结构面保持离白与炭灰关系",
+        "辅助 accent 只能出现在细线、小点、刻度或标签中"
+      ]
+    },
+    "statusChip": {
+      "ready": "--color-success",
+      "warning": "--color-warning",
+      "error": "--color-error",
+      "info": "--color-info",
+      "neutral": "--color-on-surface-variant",
+      "notes": [
+        "状态芯片使用语义色体系",
+        "signal pink 和 signal purple 不承担状态语义"
+      ]
+    },
+    "trackRow": {
+      "background": "--surface-container-low",
+      "activeAccent": "--color-primary",
+      "codedAccentUsage": "可用单一辅助 accent 做轨道家族编码"
+    },
+    "loopSegment": {
+      "activeAccent": "--color-primary",
+      "activeContainer": "--color-primary-container",
+      "codedAccentUsage": "signal yellow 仅用于拍点、刻度或轻量提醒"
+    },
+    "scoreStage": {
+      "shell": "--bg-score-shell",
+      "surface": "--bg-score"
+    }
+  },
+  "codedAccents": {
+    "principle": "辅助色只用于 coded rhythm 与分类提示，不替代主橙红。",
+    "priorityModel": [
+      "primary-orange-first",
+      "semantic-status-second",
+      "coded-accents-third"
+    ],
+    "palette": {
+      "blue": {
+        "token": "--color-signal-blue",
+        "usage": [
+          "数据选择",
+          "技术提示",
+          "次级仪表",
+          "链接型编码"
+        ]
+      },
+      "pink": {
+        "token": "--color-signal-pink",
+        "usage": [
+          "轨道家族提示",
+          "乐句层编码",
+          "合成器分组"
+        ]
+      },
+      "purple": {
+        "token": "--color-signal-purple",
+        "usage": [
+          "效果层",
+          "调制提示",
+          "并行结构分层"
+        ]
+      },
+      "yellow": {
+        "token": "--color-signal-yellow",
+        "usage": [
+          "节拍提示",
+          "定位刻度",
+          "轻量时间提醒"
+        ]
+      }
+    },
+    "constraints": [
+      "仅用于小面积条带、细线、圆点、刻度、标签或片段高亮",
+      "不得作为主按钮、主激活区或大面积容器底色",
+      "同一界面建议同时只出现 1 到 2 种辅助 accent",
+      "辅助 accent 的视觉优先级必须低于主橙红"
+    ]
+  },
+  "rules": [
+    "橙色只用于主操作、当前激活、关键焦点",
+    "离白用于清洁工作底板和大面积背景",
+    "黑色结构层用于承托信息密度和功能分区",
+    "蓝粉紫黄仅作为稀疏 coded accents",
+    "辅助 accent 只形成节奏与分类，不替代主橙红"
+  ]
+}

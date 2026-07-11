@@ -53,11 +53,16 @@ export function mountViewerApp(
   const queriedOpenButton = ownerDocument.querySelector<HTMLButtonElement>("#open-score");
   if (!queriedOpenButton) throw new Error("Viewer DOM is missing #open-score");
   const openButton = queriedOpenButton;
+  const lightThemeButton = required<HTMLButtonElement>(ownerDocument, "theme-light");
+  const darkThemeButton = required<HTMLButtonElement>(ownerDocument, "theme-dark");
   let active: ViewerSessionHandle | undefined;
   let chain = Promise.resolve();
   let queuedError: unknown;
   let destroyPromise: Promise<void> | undefined;
   let destroying = false;
+  applyTheme(ownerDocument, readInitialTheme(ownerDocument));
+  const onLightTheme = () => applyTheme(ownerDocument, "light");
+  const onDarkTheme = () => applyTheme(ownerDocument, "dark");
   const openOnce = async () => {
     const file = await dependencies.host.openScore();
     if (!file) return;
@@ -89,6 +94,8 @@ export function mountViewerApp(
     if (event.type === "prepare-close") void destroy().catch(() => undefined);
   };
   openButton.addEventListener("click", enqueueOpen);
+  lightThemeButton.addEventListener("click", onLightTheme);
+  darkThemeButton.addEventListener("click", onDarkTheme);
   const unsubscribe = dependencies.host.subscribe(onHostEvent);
   const destroy = (): Promise<void> => {
     destroying = true;
@@ -104,6 +111,8 @@ export function mountViewerApp(
 
   async function destroyOnce(): Promise<void> {
     openButton.removeEventListener("click", enqueueOpen);
+    lightThemeButton.removeEventListener("click", onLightTheme);
+    darkThemeButton.removeEventListener("click", onDarkTheme);
     unsubscribe();
     await chain;
     const openError = queuedError;
@@ -255,4 +264,21 @@ function alphaTabSettings(): unknown {
       },
     },
   };
+}
+
+type ViewerTheme = "light" | "dark";
+
+function readInitialTheme(ownerDocument: Document): ViewerTheme {
+  const stored = ownerDocument.defaultView?.localStorage.getItem("tab-viewer-theme");
+  return stored === "light" ? "light" : "dark";
+}
+
+function applyTheme(ownerDocument: Document, theme: ViewerTheme): void {
+  ownerDocument.documentElement.dataset.theme = theme;
+  ownerDocument.defaultView?.localStorage.setItem("tab-viewer-theme", theme);
+
+  const lightThemeButton = ownerDocument.getElementById("theme-light");
+  const darkThemeButton = ownerDocument.getElementById("theme-dark");
+  lightThemeButton?.setAttribute("aria-pressed", String(theme === "light"));
+  darkThemeButton?.setAttribute("aria-pressed", String(theme === "dark"));
 }

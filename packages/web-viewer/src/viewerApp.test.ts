@@ -9,6 +9,17 @@ import {
 import { renderViewerShell } from "./viewerShell";
 
 describe("mountViewerApp", () => {
+  it("renders the redesigned workspace shell", () => {
+    renderViewerShell(document);
+
+    expect(document.querySelector(".context-bar")).not.toBeNull();
+    expect(document.querySelector(".transport-bar")).not.toBeNull();
+    expect(document.querySelector(".score-stage")).not.toBeNull();
+    expect(document.querySelector(".practice-panel")).not.toBeNull();
+    expect(document.getElementById("open-score")?.textContent).toContain("打开 GP 文件");
+    expect(document.querySelector(".empty-title")?.textContent).toBe("打开一份 Guitar Pro 乐谱开始练习");
+  });
+
   it("forwards toggle-playback host commands to the active session", async () => {
     renderViewerShell(document);
     let hostListener: ((event: { type: "toggle-playback" }) => void) | undefined;
@@ -401,7 +412,7 @@ describe("renderViewerState", () => {
     });
 
     expect(status.textContent).toBe("已加载 Song");
-    expect(summary.textContent).toContain("2 tracks");
+    expect(summary.textContent).toBe("<img src=x onerror=alert(1)>");
     expect(summary.querySelector("img")).toBeNull();
   });
 
@@ -414,7 +425,7 @@ describe("renderViewerState", () => {
     renderViewerState(status, summary, { status: "error", message: "请选择 Guitar Pro 文件" });
 
     expect(status.textContent).toBe("请选择 Guitar Pro 文件");
-    expect(summary.textContent).toBe("");
+    expect(summary.textContent).toBe("未打开乐谱");
   });
 });
 

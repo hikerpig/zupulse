@@ -112,6 +112,17 @@ describe("mountPlaybackControls", () => {
     expect(controller.commands).toContainEqual({ type: "set-track-volume", trackId: "track-0", volume: 0.45 });
   });
 
+  it("renders audio status from the playback state", () => {
+    document.body.innerHTML = controlsHtml();
+    const state = playbackState();
+    state.soundFont = "error";
+
+    mountPlaybackControls(document, new FakeController(state), timeline);
+
+    expect(document.querySelector("#audio-status")?.textContent).toBe("音频初始化失败");
+    expect(document.querySelector("#audio-status")?.className).toContain("error");
+  });
+
   it("removes DOM and controller listeners during cleanup", () => {
     document.body.innerHTML = controlsHtml();
     const controller = new FakeController(playbackState());
@@ -212,7 +223,7 @@ function controlsHtml(): string {
     <button id="play-toggle"></button><button id="play-stop"></button>
     <span id="play-current-time"></span><span id="play-duration"></span>
     <input id="play-progress" type="range" min="0" max="1000"><input id="play-speed" type="range" min="25" max="200">
-    <output id="play-speed-value"></output><button id="soundfont-retry"></button>
+    <output id="play-speed-value"></output><p id="audio-status"></p><button id="soundfont-retry"></button>
     <input id="loop-enabled" type="checkbox"><button id="loop-set-a"></button>
     <button id="loop-set-b"></button><button id="loop-save"></button>
     <select id="loop-snap-mode"><option value="beat">beat</option><option value="measure">measure</option></select>

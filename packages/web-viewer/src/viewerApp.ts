@@ -209,13 +209,12 @@ export function createDefaultOpenSession(
 export function renderViewerState(status: HTMLElement, summary: HTMLElement, state: DemoState): void {
   status.textContent = state.message;
   if (state.status !== "ready" || !state.summary) {
-    summary.textContent = "";
+    summary.textContent = "未打开乐谱";
     return;
   }
-  const artist = state.summary.artist ? ` · ${state.summary.artist}` : "";
-  const tempo = state.summary.tempo === undefined ? "" : ` · ${state.summary.tempo} bpm`;
-  summary.textContent = `${state.summary.title}${artist} · ${state.summary.trackCount} tracks · ${state.summary.masterBarCount} bars${tempo}`;
+  summary.textContent = state.summary.title;
 }
+
 
 function emptySession(): ViewerSessionHandle {
   return {

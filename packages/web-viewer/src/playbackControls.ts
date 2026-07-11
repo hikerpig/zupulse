@@ -157,6 +157,8 @@ export function mountPlaybackControls(
       timeline,
     );
     elements.loopSnapMode.value = view.loopSnapMode;
+    elements.audioStatus.textContent = audioStatusText(state.soundFont);
+    elements.audioStatus.className = `status-chip ${audioStatusTone(state.soundFont)}`;
     elements.soundFontRetry.hidden = !view.soundFontRetryVisible;
     elements.persistenceStatus.textContent = view.persistenceMessage;
     renderLoops(ownerDocument, elements.loopList, view.loops);
@@ -311,6 +313,7 @@ function queryElements(ownerDocument: Document) {
     playProgress: required<HTMLInputElement>(ownerDocument, "play-progress"),
     playSpeed: required<HTMLInputElement>(ownerDocument, "play-speed"),
     playSpeedValue: required<HTMLOutputElement>(ownerDocument, "play-speed-value"),
+    audioStatus: required<HTMLElement>(ownerDocument, "audio-status"),
     soundFontRetry: required<HTMLButtonElement>(ownerDocument, "soundfont-retry"),
     loopEnabled: required<HTMLInputElement>(ownerDocument, "loop-enabled"),
     loopSetA: required<HTMLButtonElement>(ownerDocument, "loop-set-a"),
@@ -323,6 +326,18 @@ function queryElements(ownerDocument: Document) {
     trackList: required<HTMLElement>(ownerDocument, "track-list"),
     persistenceStatus: required<HTMLElement>(ownerDocument, "playback-persistence-status"),
   };
+}
+
+function audioStatusText(soundFont: PlaybackState["soundFont"]): string {
+  if (soundFont === "ready") return "音频已就绪";
+  if (soundFont === "error") return "音频初始化失败";
+  return "音频准备中";
+}
+
+function audioStatusTone(soundFont: PlaybackState["soundFont"]): "ready" | "error" | "subtle" {
+  if (soundFont === "ready") return "ready";
+  if (soundFont === "error") return "error";
+  return "subtle";
 }
 
 function required<T extends HTMLElement>(ownerDocument: Document, id: string): T {

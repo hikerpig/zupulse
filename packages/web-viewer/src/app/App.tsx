@@ -43,7 +43,7 @@ function ViewerShell({ notFound = false }: { notFound?: boolean }) {
   }, [navigate, snapshot.currentLibraryScoreId]);
 
   useEffect(() => {
-    if (application.hasLibrary() && libraryScoreId && snapshot.currentLibraryScoreId !== libraryScoreId)
+    if (application.hasLibrary() && libraryScoreId && !application.hasSession(libraryScoreId))
       void application.openLibraryScore(libraryScoreId).catch(() => undefined);
   }, [application, libraryScoreId, snapshot.currentLibraryScoreId]);
 
@@ -129,7 +129,8 @@ function LibraryShell() {
       application={application}
       {...library}
       onOpen={(id) => {
-        void application.openLibraryScore(id).then(() => navigate(`/viewer/${id}`));
+        application.selectLibraryScore(id);
+        void navigate(`/viewer/${id}`);
       }}
     />
   );

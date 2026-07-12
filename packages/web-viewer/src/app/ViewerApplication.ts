@@ -97,7 +97,7 @@ export class ViewerApplication implements ViewerAppHandle {
     await this.refreshLibrary();
     if (!multiple) {
       const result = results.find((item) => item.status === "created" || item.status === "existing");
-      if (result && result.status !== "failed") await this.openLibraryScore(result.score.id);
+      if (result && result.status !== "failed") this.selectLibraryScore(result.score.id);
     }
   }
 
@@ -110,6 +110,10 @@ export class ViewerApplication implements ViewerAppHandle {
     await previous?.destroy();
     this.active = await this.openSession(file, id);
     this.setSnapshot({ ...this.snapshot, currentSessionId: crypto.randomUUID(), currentLibraryScoreId: id });
+  }
+
+  selectLibraryScore(id: string): void {
+    this.setSnapshot({ ...this.snapshot, currentLibraryScoreId: id });
   }
 
   async exportLibraryScore(id: string): Promise<void> {

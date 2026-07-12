@@ -37,7 +37,7 @@ test("starts offline with an isolated renderer", async () => {
     const window = await app.firstWindow();
     await app.context().setOffline(true);
     await window.reload();
-    await expect(window.locator("#open-score")).toBeVisible();
+    await expect(window.getByRole("button", { name: "导入曲谱" })).toBeVisible();
     expect(
       await window.evaluate(() => ({
         require: typeof (globalThis as { require?: unknown }).require,
@@ -79,7 +79,7 @@ test("opens a GP file and restores persisted practice state", async () => {
   try {
     await chooseFixture(app);
     let window = await app.firstWindow();
-    await window.locator("#open-score").click();
+    await window.getByRole("button", { name: "导入曲谱" }).first().click();
     await expect(window.locator("#summary")).toContainText("桌面验收谱");
     await expect(window.getByText("音频已就绪")).toBeVisible();
     await expect(window.getByRole("button", { name: "播放" })).toBeEnabled();
@@ -98,7 +98,7 @@ test("opens a GP file and restores persisted practice state", async () => {
     app = await launch(userData);
     await chooseFixture(app);
     window = await app.firstWindow();
-    await window.locator("#open-score").click();
+    await window.getByRole("button", { name: "导入曲谱" }).first().click();
     await expect(window.locator("#summary")).toContainText("桌面验收谱");
     await expect(window.getByRole("slider", { name: "速度" })).toHaveValue("75");
     await openPracticeSettings(window);
@@ -114,13 +114,13 @@ test("opens MusicXML and MXL through the unified score entry", async () => {
   const app = await launch(userData);
   try {
     const window = await app.firstWindow();
-    await expect(window.locator("#open-score")).toContainText("打开乐谱");
+    await expect(window.getByRole("button", { name: "导入曲谱" })).toBeVisible();
     await chooseFixture(app, musicXmlFixture);
-    await window.locator("#open-score").click();
+    await window.getByRole("button", { name: "导入曲谱" }).first().click();
     await expect(window.locator("#summary")).toContainText("Single Voice");
 
     await chooseFixture(app, mxlFixture);
-    await window.locator("#open-score").click();
+    await window.getByRole("button", { name: "导入曲谱" }).first().click();
     await expect(window.locator("#summary")).toContainText("Single Voice");
   } finally {
     await app.close();

@@ -32,6 +32,7 @@ const libraryScoreSchema = z
     metadata: libraryMetadataSchema,
   })
   .strict();
+const libraryScoreSummarySchema = libraryScoreSchema.omit({ parsedTitle: true, parsedArtist: true, metadata: true });
 const libraryDraftSchema = z
   .object({
     id: libraryScoreIdSchema,
@@ -225,7 +226,7 @@ export const bridgeResponseSchemas = {
     })
     .strict(),
   "file.save": z.object({ status: z.enum(["saved", "cancelled"]) }).strict(),
-  "library.list": z.object({ scores: z.array(libraryScoreSchema) }).strict(),
+  "library.list": z.object({ scores: z.array(libraryScoreSummarySchema) }).strict(),
   "library.get": z.object({ score: libraryScoreSchema.optional() }).strict(),
   "library.find": z.object({ score: libraryScoreSchema.optional() }).strict(),
   "library.add": z.object({ status: z.enum(["created", "existing"]), score: libraryScoreSchema }).strict(),

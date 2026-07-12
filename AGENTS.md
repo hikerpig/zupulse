@@ -7,8 +7,6 @@
 - `apps/web-demo`：Browser 适配器，使用 IndexedDB；不得泄漏文件路径。
 - `apps/desktop-shell`：Electron 主进程、SQLite 和托管文件；Renderer 只能通过受 Zod 校验的 Bridge 访问本地能力。
 
-曲谱库设计与验收标准在 `docs/superpowers/specs/2026-07-12-sheet-library-design.md`，实施顺序在 `tasks/plan.md` 和 `tasks/todo.md`。
-
 ## 领域边界
 
 - Library Score ID 是 UUID；馆藏去重键是小写 SHA-256 内容哈希。
@@ -33,9 +31,3 @@
 - Desktop 构建：`rtk pnpm desktop:build`
 - Desktop E2E：`rtk pnpm desktop:test:e2e`
 - 格式：`rtk pnpm format:check`（仓库存在历史格式债务时，报告未触及文件，不要批量重写）
-
-## 当前实现状态（2026-07-12）
-
-- 已提交 `be01558`：共享 Library 契约和导入用例、Browser IndexedDB 竖切及初始 Desktop SQLite schema。
-- 工作区中尚未提交：Desktop managed copy/reconciliation、Library Bridge v2、Desktop Renderer adapters。`pnpm check`、`pnpm demo:build` 和 `pnpm desktop:build` 已在这些改动上通过。
-- 后续优先项：把练习 sidecar/resume 改为以 `libraryScoreId` 归属，完善批量 Desktop 选择、元数据编辑/删除对话框、韧性与 E2E 验收。

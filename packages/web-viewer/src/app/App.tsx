@@ -1,9 +1,10 @@
-import { createContext, useContext, useEffect, useMemo, useSyncExternalStore } from 'react';
-import { flushSync } from 'react-dom';
-import { createHashRouter, RouterProvider, useNavigate, useParams } from 'react-router';
-import type { ViewerApplication } from './ViewerApplication';
-import { AppStoreProvider, useAppStore, useApplyTheme } from './appStore';
-import { PlaybackWorkspace } from '../features/PlaybackWorkspace';
+import { createContext, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
+import { flushSync } from "react-dom";
+import { createHashRouter, RouterProvider, useNavigate, useParams } from "react-router";
+import type { ViewerApplication } from "./ViewerApplication";
+import { AppStoreProvider, useAppStore, useApplyTheme } from "./appStore";
+import { PlaybackWorkspace } from "../features/PlaybackWorkspace";
+import { SheetLibrary } from "../features/SheetLibrary";
 
 const ApplicationContext = createContext<ViewerApplication | null>(null);
 
@@ -11,9 +12,9 @@ export function App({ application }: { application: ViewerApplication }) {
   const router = useMemo(
     () =>
       createHashRouter([
-        { path: '/', element: <ViewerShell /> },
-        { path: '/viewer/:sessionId', element: <ViewerShell /> },
-        { path: '*', element: <ViewerShell notFound /> },
+        { path: "/", element: <LibraryShell /> },
+        { path: "/viewer/:libraryScoreId", element: <ViewerShell /> },
+        { path: "*", element: <ViewerShell notFound /> },
       ]),
     [],
   );
@@ -30,16 +31,21 @@ function ViewerShell({ notFound = false }: { notFound?: boolean }) {
   const application = useApplication();
   const snapshot = useSyncExternalStore(application.subscribe, application.getSnapshot);
   const navigate = useNavigate();
-  const { sessionId } = useParams();
+  const { libraryScoreId } = useParams();
   const theme = useApplyTheme();
   const setTheme = useAppStore((state) => state.setTheme);
-  const invalidSession = Boolean(sessionId && !application.hasSession(sessionId));
+  const invalidSession = Boolean(libraryScoreId && !application.hasSession(libraryScoreId));
 
   useEffect(() => {
-    if (snapshot.currentSessionId && !navigator.userAgent.includes('jsdom')) {
-      void navigate(`/viewer/${snapshot.currentSessionId}`);
+    if (snapshot.currentLibraryScoreId && !navigator.userAgent.includes("jsdom")) {
+      void navigate(`/viewer/${snapshot.currentLibraryScoreId}`);
     }
-  }, [navigate, snapshot.currentSessionId]);
+  }, [navigate, snapshot.currentLibraryScoreId]);
+
+  useEffect(() => {
+    if (application.hasLibrary() && libraryScoreId && snapshot.currentLibraryScoreId !== libraryScoreId)
+      void application.openLibraryScore(libraryScoreId).catch(() => undefined);
+  }, [application, libraryScoreId, snapshot.currentLibraryScoreId]);
 
   return (
     <main className="app-shell">
@@ -59,8 +65,8 @@ function ViewerShell({ notFound = false }: { notFound?: boolean }) {
               id="theme-light"
               className="theme-toggle-button"
               type="button"
-              aria-pressed={theme === 'light'}
-              onClick={() => flushSync(() => setTheme('light'))}
+              aria-pressed={theme === "light"}
+              onClick={() => flushSync(() => setTheme("light"))}
             >
               Light
             </button>
@@ -68,18 +74,14 @@ function ViewerShell({ notFound = false }: { notFound?: boolean }) {
               id="theme-dark"
               className="theme-toggle-button"
               type="button"
-              aria-pressed={theme === 'dark'}
-              onClick={() => flushSync(() => setTheme('dark'))}
+              aria-pressed={theme === "dark"}
+              onClick={() => flushSync(() => setTheme("dark"))}
             >
               Dark
             </button>
           </div>
           <p id="status" className="status-chip" role="status">
-            {notFound
-              ? '页面不存在'
-              : invalidSession
-                ? '会话已结束，请重新打开乐谱'
-                : '等待选择文件'}
+            {notFound ? "页面不存在" : invalidSession ? "会话已结束，请重新打开乐谱" : "等待选择文件"}
           </p>
           <button
             id="open-score"
@@ -87,7 +89,7 @@ function ViewerShell({ notFound = false }: { notFound?: boolean }) {
             type="button"
             onClick={() => application.requestOpenScore()}
           >
-            打开乐谱
+            {application.hasLibrary() ? "导入曲谱" : "打开乐谱"}
           </button>
         </div>
       </header>
@@ -97,9 +99,7 @@ function ViewerShell({ notFound = false }: { notFound?: boolean }) {
             <section id="alpha-tab" className="score-viewer" aria-label="乐谱预览">
               <div className="score-empty-state">
                 <p className="empty-title">打开一份乐谱开始练习</p>
-                <p className="empty-copy">
-                  支持 Guitar Pro、.musicxml 与 .mxl，本地读取，不上传文件。
-                </p>
+                <p className="empty-copy">支持 Guitar Pro、.musicxml 与 .mxl，本地读取，不上传文件。</p>
               </div>
             </section>
           </div>
@@ -109,8 +109,34 @@ function ViewerShell({ notFound = false }: { notFound?: boolean }) {
   );
 }
 
+function LibraryShell() {
+  const application = useApplication();
+  const snapshot = useSyncExternalStore(application.subscribe, application.getSnapshot);
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (application.hasLibrary() && snapshot.currentLibraryScoreId)
+      void navigate(`/viewer/${snapshot.currentLibraryScoreId}`);
+  }, [application, navigate, snapshot.currentLibraryScoreId]);
+  useEffect(() => {
+    const refresh = () => void application.refreshLibrary();
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
+  }, [application]);
+  if (!application.hasLibrary()) return <ViewerShell />;
+  const library = snapshot.library ?? { scores: [], loading: true };
+  return (
+    <SheetLibrary
+      application={application}
+      {...library}
+      onOpen={(id) => {
+        void application.openLibraryScore(id).then(() => navigate(`/viewer/${id}`));
+      }}
+    />
+  );
+}
+
 function useApplication(): ViewerApplication {
   const application = useContext(ApplicationContext);
-  if (!application) throw new Error('ViewerApplication is unavailable');
+  if (!application) throw new Error("ViewerApplication is unavailable");
   return application;
 }

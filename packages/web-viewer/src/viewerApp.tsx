@@ -7,20 +7,22 @@ import {
   waitForAlphaTabScore,
   type AlphaTabApiLike,
   type BridgePlaybackPersistence,
-} from '@tab-viewer/web-core';
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { flushSync } from 'react-dom';
-import type { ViewerAppHandle, ViewerFile, ViewerHost, ViewerSessionHandle } from './host';
-import { App } from './app/App';
-import { ViewerApplication } from './app/ViewerApplication';
-import { ALPHATAB_ASSETS } from './playbackAssets';
-import { type DemoState } from './gpDemoPresenter';
-import { presentScoreFile } from './importPresenter';
+} from "@tab-viewer/web-core";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { flushSync } from "react-dom";
+import type { ViewerAppHandle, ViewerFile, ViewerHost, ViewerSessionHandle } from "./host";
+import { App } from "./app/App";
+import { ViewerApplication } from "./app/ViewerApplication";
+import type { ScoreFileGateway, ScoreFormatAdapter, SheetLibraryRepository } from "@tab-viewer/web-core";
+import { ALPHATAB_ASSETS } from "./playbackAssets";
+import { type DemoState } from "./gpDemoPresenter";
+import { presentScoreFile } from "./importPresenter";
 
 export type ViewerAppDependencies = {
   host: ViewerHost;
   openSession(file: ViewerFile): Promise<ViewerSessionHandle>;
+  library?: { repository: SheetLibraryRepository; gateway: ScoreFileGateway; adapters: readonly ScoreFormatAdapter[] };
 };
 
 export type DefaultOpenSessionDependencies = {
@@ -43,7 +45,7 @@ const defaultOpenSessionDependencies: DefaultOpenSessionDependencies = {
 
 export function mountViewerApp(rootElement: HTMLElement, dependencies: ViewerAppDependencies): ViewerAppHandle {
   const root = createRoot(rootElement);
-  const application = new ViewerApplication(dependencies.host, dependencies.openSession);
+  const application = new ViewerApplication(dependencies.host, dependencies.openSession, dependencies.library);
   flushSync(() =>
     root.render(
       <StrictMode>
@@ -66,12 +68,12 @@ export function createDefaultOpenSession(
   dependencies: DefaultOpenSessionDependencies = defaultOpenSessionDependencies,
 ): (file: ViewerFile) => Promise<ViewerSessionHandle> {
   return async (file) => {
-    const alphaTabHost = required<HTMLElement>(ownerDocument, 'alpha-tab');
+    const alphaTabHost = required<HTMLElement>(ownerDocument, "alpha-tab");
     const scoreScrollElement = alphaTabHost.parentElement;
-    if (!scoreScrollElement) throw new Error('Viewer DOM is missing the score scroll container');
-    const status = required<HTMLElement>(ownerDocument, 'status');
-    const summary = required<HTMLElement>(ownerDocument, 'summary');
-    renderViewerState(status, summary, { status: 'loading', message: '正在加载文件' });
+    if (!scoreScrollElement) throw new Error("Viewer DOM is missing the score scroll container");
+    const status = required<HTMLElement>(ownerDocument, "status");
+    const summary = required<HTMLElement>(ownerDocument, "summary");
+    renderViewerState(status, summary, { status: "loading", message: "正在加载文件" });
     alphaTabHost.replaceChildren();
     const api = dependencies.createApi(alphaTabHost, alphaTabSettings(scoreScrollElement));
     const adapter = dependencies.createAdapter(api);
@@ -86,7 +88,7 @@ export function createDefaultOpenSession(
         },
         api,
       });
-      if (state.status !== 'ready' || !state.identity) {
+      if (state.status !== "ready" || !state.identity) {
         adapter.destroy();
         renderViewerState(status, summary, state);
         return emptySession();
@@ -124,10 +126,10 @@ export function createDefaultOpenSession(
           timeline: model.timeline,
         },
         async togglePlayback() {
-          await sessionController.dispatch({ type: 'toggle-playback' });
+          await sessionController.dispatch({ type: "toggle-playback" });
         },
         async pauseAndFlush() {
-          await sessionController.dispatch({ type: 'pause' });
+          await sessionController.dispatch({ type: "pause" });
           await sessionController.flush();
         },
         async destroy() {
@@ -145,11 +147,11 @@ export function createDefaultOpenSession(
         cleanupError = caughtCleanupError;
       }
       if (cleanupError !== undefined) {
-        throw new AggregateError([error, cleanupError], 'Viewer session initialization and cleanup both failed');
+        throw new AggregateError([error, cleanupError], "Viewer session initialization and cleanup both failed");
       }
       renderViewerState(status, summary, {
-        status: 'error',
-        message: error instanceof Error ? error.message : '加载失败',
+        status: "error",
+        message: error instanceof Error ? error.message : "加载失败",
       });
       return emptySession();
     }
@@ -158,8 +160,8 @@ export function createDefaultOpenSession(
 
 export function renderViewerState(status: HTMLElement, summary: HTMLElement, state: DemoState): void {
   status.textContent = state.message;
-  if (state.status !== 'ready' || !state.summary) {
-    summary.textContent = '未打开乐谱';
+  if (state.status !== "ready" || !state.summary) {
+    summary.textContent = "未打开乐谱";
     return;
   }
   summary.textContent = state.summary.title;
@@ -199,7 +201,7 @@ function alphaTabSettings(scrollElement: HTMLElement): unknown {
     display: {
       scale: 1,
       resources: {
-        secondaryGlyphColor: '#000000',
+        secondaryGlyphColor: "#000000",
         titleFont: `32px ${chineseSerifFonts}`,
         subTitleFont: `20px ${chineseSerifFonts}`,
         wordsFont: `15px ${chineseSansFonts}`,

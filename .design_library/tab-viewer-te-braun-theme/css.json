@@ -143,16 +143,16 @@
         "opacity": "1"
       },
       "tab-viewer-error-600": {
-        "hex": "#bf351a",
+        "hex": "#c42814",
         "opacity": "1"
       },
       "tab-viewer-error-500": {
-        "hex": "#e54827",
+        "hex": "#e02e18",
         "opacity": "1",
         "isPrimary": true
       },
       "tab-viewer-error-400": {
-        "hex": "#ff6947",
+        "hex": "#f09888",
         "opacity": "1"
       },
       "tab-viewer-error-300": {
@@ -174,31 +174,31 @@
     },
     "dark": {
       "surface-dim": {
-        "hex": "#101010",
-        "opacity": "1"
-      },
-      "inverse-on-surface": {
         "hex": "#141414",
         "opacity": "1"
       },
+      "inverse-on-surface": {
+        "hex": "#1a1a1a",
+        "opacity": "1"
+      },
       "surface-container": {
-        "hex": "#292826",
+        "hex": "#2e2e2d",
         "opacity": "1"
       },
       "surface-container-highest": {
-        "hex": "#46413c",
+        "hex": "#4a4a4a",
         "opacity": "1"
       },
       "color-outline-variant": {
-        "hex": "#625b53",
+        "hex": "#5a5a5a",
         "opacity": "1"
       },
       "muted-foreground": {
-        "hex": "#a89f94",
+        "hex": "#9e9a95",
         "opacity": "1"
       },
       "accent-hover": {
-        "hex": "#ff9b72",
+        "hex": "#f89880",
         "opacity": "1",
         "isPrimary": true
       },
@@ -207,7 +207,7 @@
         "opacity": "1"
       },
       "fg": {
-        "hex": "#efebe4",
+        "hex": "#eae6e0",
         "opacity": "1"
       },
       "on-error": {
@@ -217,44 +217,44 @@
     },
     "tab-viewer-primary": {
       "tab-viewer-primary-900": {
-        "hex": "#611f14",
+        "hex": "#5e261a",
         "opacity": "1"
       },
       "tab-viewer-primary-800": {
-        "hex": "#8f2b15",
+        "hex": "#8c3525",
         "opacity": "1"
       },
       "tab-viewer-primary-700": {
-        "hex": "#bb3711",
+        "hex": "#b84530",
         "opacity": "1"
       },
       "tab-viewer-primary-600": {
-        "hex": "#e64814",
+        "hex": "#d85a3f",
         "opacity": "1"
       },
       "tab-viewer-primary-500": {
-        "hex": "#ff5a1f",
+        "hex": "#f26b4f",
         "opacity": "1",
         "isPrimary": true
       },
       "tab-viewer-primary-400": {
-        "hex": "#ff6f3d",
+        "hex": "#f5826a",
         "opacity": "1"
       },
       "tab-viewer-primary-300": {
-        "hex": "#ff9b72",
+        "hex": "#f89880",
         "opacity": "1"
       },
       "tab-viewer-primary-200": {
-        "hex": "#ffc2a7",
+        "hex": "#ffc4ad",
         "opacity": "1"
       },
       "tab-viewer-primary-100": {
-        "hex": "#ffe1d2",
+        "hex": "#ffe0d6",
         "opacity": "1"
       },
       "tab-viewer-primary-50": {
-        "hex": "#fff3ed",
+        "hex": "#fff2ee",
         "opacity": "1"
       }
     },
@@ -264,73 +264,73 @@
         "opacity": "1"
       },
       "tab-viewer-neutral-800": {
-        "hex": "#2a2927",
+        "hex": "#2e2e2d",
         "opacity": "1"
       },
       "tab-viewer-neutral-700": {
-        "hex": "#46413c",
+        "hex": "#4a4a4a",
         "opacity": "1"
       },
       "tab-viewer-neutral-600": {
-        "hex": "#625b53",
+        "hex": "#5a5a5a",
         "opacity": "1"
       },
       "tab-viewer-neutral-500": {
-        "hex": "#857c71",
+        "hex": "#7a7a7a",
         "opacity": "1",
         "isPrimary": true
       },
       "tab-viewer-neutral-400": {
-        "hex": "#a89f94",
+        "hex": "#9e9a95",
         "opacity": "1"
       },
       "tab-viewer-neutral-300": {
-        "hex": "#c5beb4",
+        "hex": "#bfb9b3",
         "opacity": "1"
       },
       "tab-viewer-neutral-200": {
-        "hex": "#ddd7cf",
+        "hex": "#d5d0ca",
         "opacity": "1"
       },
       "tab-viewer-neutral-100": {
-        "hex": "#efebe4",
+        "hex": "#e5e1db",
         "opacity": "1"
       },
       "tab-viewer-neutral-50": {
-        "hex": "#f8f6f1",
+        "hex": "#f0ede8",
         "opacity": "1"
       }
     },
     "primary": {
       "primary": {
-        "hex": "#ff5a1f",
+        "hex": "#f26b4f",
         "opacity": "1",
         "isPrimary": true
       },
       "color-primary-container": {
-        "hex": "#ffe1d2",
+        "hex": "#ffe0d6",
         "opacity": "1"
       }
     },
     "signal-blue": {
       "tab-viewer-signal-blue": {
-        "hex": "#2aa8ff",
+        "hex": "#5dade2",
         "opacity": "1",
         "isPrimary": true
       },
       "color-signal-blue": {
-        "hex": "#2aa8ff",
+        "hex": "#5dade2",
         "opacity": "1"
       }
     },
     "signal-pink": {
       "tab-viewer-signal-pink": {
-        "hex": "#ff3f98",
+        "hex": "#f04a8a",
         "opacity": "1",
         "isPrimary": true
       },
       "color-signal-pink": {
-        "hex": "#ff3f98",
+        "hex": "#f04a8a",
         "opacity": "1"
       }
     },

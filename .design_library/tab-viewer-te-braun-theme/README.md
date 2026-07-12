@@ -13,7 +13,7 @@ This system is written for a dashboard-oriented practice environment with a futu
 ## What this design system covers
 
 - **Foundations** — color scales, semantic aliases, typography, spacing, size, radius, shadow, motion, and layout tokens.
-- **Brand narrative** — the visual tone is defined as clean off-white working surfaces, charcoal structural blocks, a vivid orange-red primary action accent, sparse coded accents in blue, pink, purple, and yellow, Braun-like order, Teenage Engineering rhythmic color placement, and a low-metal, screen-first digital studio feel.
+- **Brand narrative** — the visual tone is defined as clean off-white working surfaces, charcoal structural blocks, a vivid coral primary action accent, sparse coded accents in blue, pink, purple, and yellow, Braun-like order, Teenage Engineering rhythmic color placement, and a low-metal, screen-first digital studio feel.
 - **Documentation scope** — this README focuses on token and documentation guidance for designers, so the most actionable material here is how to use the foundations consistently.
 
 ## CONTENT FUNDAMENTALS
@@ -41,13 +41,13 @@ This system is written for a dashboard-oriented practice environment with a futu
 
 ### Color
 
-主品牌色是一条完整的橙红色 10 阶色阶，从 `#fff3ed` 到 `#611f14`，其中主动作色落在 `--tab-viewer-primary-500: #ff5a1f`。这比上一版更干净、更锐利，也更像屏幕里的高能操作信号，而不是偏材质化的暖工业橙。浅色主题下，它与 `--surface: #fcfaf6`、`--surface-container-low: #f5f1eb`、`--surface-container: #ece7df` 一起工作，形成“净白工作台 + 炭黑结构件 + 橙红主操作”的清晰层级；深色主题中主色切换到 `--tab-viewer-primary-400: #ff6f3d`，继续保持高可见度与快速响应感。
+主品牌色是一条完整的珊瑚色 10 阶色阶，从 `#fff3ed` 到 `#611f14`，其中主动作色落在 `--tab-viewer-primary-500: #f26b4f`。这比上一版更干净、更锐利，也更像屏幕里的高能操作信号，而不是偏材质化的暖工业橙。浅色主题下，它与 `--surface: #f5f2ed`、`--surface-container-low: #eae6e0`、`--surface-container: #e0dbd5` 一起工作，形成"净白工作台 + 炭黑结构件 + 珊瑚主操作"的清晰层级；深色主题中主色切换到 `--tab-viewer-primary-400: #f5826a`，继续保持高可见度与快速响应感。
 
-中性色是另一条 10 阶色阶，从 `#f8f6f1` 到 `#141414`。真正主导界面质感的不是纸感暖白，而是更清洁的屏幕白与更明确的炭灰结构：`#fcfaf6`、`#f5f1eb`、`#ece7df` 负责底板与卡面，`#46413c`、`#2a2927`、`#141414` 负责导航、轨道结构、控制框架和高密度信息区。这让工作台保留 Braun 式秩序，但整体观感从“暖金属台面”转向“低金属、先屏幕后材质”的数字设备界面。
+中性色是另一条 10 阶色阶，从 `#f0ede8` 到 `#141414`。真正主导界面质感的不是纸感暖白，而是更清洁的屏幕白与更明确的炭灰结构：`#f5f2ed`、`#eae6e0`、`#e0dbd5` 负责底板与卡面，`#4a4a4a`、`#2e2e2d`、`#141414` 负责导航、轨道结构、控制框架和高密度信息区。这让工作台保留 Braun 式秩序，但整体观感从"暖金属台面"转向"低金属、先屏幕后材质"的数字设备界面，冷灰底色更克制、更沉稳，减少 AI 生成的浮夸感。
 
-语义色保持清晰分工，并延续系统的理性组织方式。成功色主值是 `#2c9f69`，语义别名使用 `--success: #1f8254`；警告色主值是 `#f0a000`，语义别名使用 `--warning: #c98300`；错误色主值是 `#e54827`，语义别名使用 `--error: #bf351a`；信息色主值是 `#008ff5`，语义别名使用 `--info: #0072ca`。除此之外，系统还定义了四个稀疏的 coded accents：`--color-signal-blue: #2aa8ff`、`--color-signal-pink: #ff3f98`、`--color-signal-purple: #a972ff`、`--color-signal-yellow: #ffbe1a`。这些颜色用于轨道编码、节奏标记、层级分组和参数提示，只负责形成节奏与分类感，不可替代主橙红承担主要 CTA、主要激活态或品牌识别。
+语义色保持清晰分工，并延续系统的理性组织方式。成功色主值是 `#2c9f69`，语义别名使用 `--success: #1f8254`；警告色主值是 `#f0a000`，语义别名使用 `--warning: #c98300`；错误色主值是 `#e02e18`，语义别名使用 `--error: #c42814`；信息色主值是 `#008ff5`，语义别名使用 `--info: #0072ca`。除此之外，系统还定义了四个稀疏的 coded accents：`--color-signal-blue: #5dade2`、`--color-signal-pink: #f04a8a`、`--color-signal-purple: #a972ff`、`--color-signal-yellow: #ffbe1a`。这些颜色用于轨道编码、节奏标记、层级分组和参数提示，只负责形成节奏与分类感，不可替代主珊瑚承担主要 CTA、主要激活态或品牌识别。
 
-整体色彩氛围来自“清洁离白表面 + 深炭结构块 + 橙红主信号 + 少量编码色点亮”的组合。它依然保留 Braun 的秩序与 Teenage Engineering 的节拍感，但不再强调器材金属感，而是把它们压缩进一个更锋利、更平面、更像数字工作站的屏幕语言里：基础层始终安静，结构层始终明确，主操作始终由橙红统领，辅助色只在需要编码节奏时出现。
+整体色彩氛围来自"清洁离白表面 + 深炭结构块 + 珊瑚主信号 + 少量编码色点亮"的组合。它依然保留 Braun 的秩序与 Teenage Engineering 的节拍感，但不再强调器材金属感，而是把它们压缩进一个更锋利、更平面、更像数字工作站的屏幕语言里：基础层始终安静，结构层始终明确，主操作始终由珊瑚统领，辅助色只在需要编码节奏时出现。
 
 ### Typography
 
@@ -77,14 +77,14 @@ This system is written for a dashboard-oriented practice environment with a futu
 
 ### Borders
 
-- 轮廓线主值来自 `--rule: var(--tab-viewer-neutral-200)`，也就是暖灰 `#ddd2c1` 这一层。
-- 常规描边使用 `--color-outline` 与 `--color-border`，都落在这条暖中性色谱上，而不是纯黑透明线。
+- 轮廓线主值来自 `--rule: var(--tab-viewer-neutral-200)`，也就是冷灰 `#d5d0ca` 这一层。
+- 常规描边使用 `--color-outline` 与 `--color-border`，都落在这条冷中性色谱上，而不是纯黑透明线。
 - 深色主题下 outline 变为 `--tab-viewer-neutral-700`，保持同样的结构逻辑但提升暗底可见性。
 
 ### Backgrounds
 
-- 浅色背景以 `#f8f6f1`、`#fcfaf6`、`#f5f1eb`、`#ece7df` 为主，强调干净、低反光、接近软件工作台的离白屏幕层次。
-- 深色背景以 `#181818` 为底，并配合 `#20201f`、`#252422`、`#302d2a`、`#3c3834` 做层级抬升。
+- 浅色背景以 `#f0ede8`、`#f5f2ed`、`#eae6e0`、`#e0dbd5` 为主，强调干净、低反光、接近软件工作台的离白屏幕层次。
+- 深色背景以 `#181818` 为底，并配合 `#272727`、`#2e2e2d`、`#383837`、`#4a4a4a` 做层级抬升。
 - `--inverse-surface` 与 `--inverse-on-surface` 明确了浅深模式之间的反转逻辑，适合做高对比提示区。
 
 ### Animation
@@ -98,7 +98,7 @@ This system is written for a dashboard-oriented practice environment with a futu
 - 图标尺寸采用 `12 / 16 / 20 / 24px` 四档，对应从微型状态提示到标准操作图标的完整范围。
 - 等宽字与 tabular 数字是系统的重要“编码细节”，应优先用于速度、计数、时间、参数和轨道类信息。
 - `--color-signal-blue`、`--color-signal-pink`、`--color-signal-purple`、`--color-signal-yellow` 只应作为轨道、层、节拍、参数的小面积编码信号出现，形成可扫描的节奏感。
-- 无论这些 coded accents 如何出现，主按钮、主激活、主焦点始终由橙红通道负责；辅助色不能升级为第二主品牌色。
+- 无论这些 coded accents 如何出现，主按钮、主激活、主焦点始终由珊瑚通道负责；辅助色不能升级为第二主品牌色。
 
 ## Index
 

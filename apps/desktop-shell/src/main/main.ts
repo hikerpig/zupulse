@@ -1,10 +1,6 @@
-import path from "node:path";
-import {
-  createBridgeEvent,
-  localPlaybackResumeSchema,
-  sidecarPayloadSchema,
-} from "@tab-viewer/web-core";
-import { randomUUID } from "node:crypto";
+import path from 'node:path';
+import { createBridgeEvent, localPlaybackResumeSchema, sidecarPayloadSchema } from '@tab-viewer/web-core';
+import { randomUUID } from 'node:crypto';
 import {
   app,
   BrowserWindow,
@@ -15,25 +11,27 @@ import {
   session,
   shell,
   type MenuItemConstructorOptions,
-} from "electron";
-import { dispatchBridgeRequest } from "./bridge";
-import { DiagnosticLogger } from "./diagnostics";
-import { FileTokenStore } from "./fileTokens";
-import { openScoreFile, readScoreFileBytes } from "./files";
-import { registerAppProtocol } from "./protocol";
-import { JsonStore } from "./storage";
-import { DesktopLifecycleCoordinator } from "./lifecycle";
+} from 'electron';
+import { dispatchBridgeRequest } from './bridge';
+import { DiagnosticLogger } from './diagnostics';
+import { FileTokenStore } from './fileTokens';
+import { openScoreFile, readScoreFileBytes } from './files';
+import { registerAppProtocol } from './protocol';
+import { JsonStore } from './storage';
+import { DesktopLifecycleCoordinator } from './lifecycle';
 
-protocol.registerSchemesAsPrivileged([{
-  scheme: "tab-viewer",
-  privileges: {
-    standard: true,
-    secure: true,
-    supportFetchAPI: true,
-    stream: true,
-    bypassCSP: false,
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'tab-viewer',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      stream: true,
+      bypassCSP: false,
+    },
   },
-}]);
+]);
 
 const fileTokens = new FileTokenStore();
 let mainWindow: BrowserWindow | undefined;
@@ -43,17 +41,20 @@ function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
     width: 1280,
     height: 800,
+    titleBarStyle: 'hiddenInset',
+    trafficLightPosition: { x: 18, y: 20 },
+    backgroundColor: '#1a1a1a',
     webPreferences: {
-      preload: path.join(__dirname, "../preload/preload.cjs"),
+      preload: path.join(__dirname, '../preload/preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
       webSecurity: true,
     },
   });
-  window.webContents.on("will-navigate", event => event.preventDefault());
-  window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
-  void window.loadURL("tab-viewer://app/index.html");
+  window.webContents.on('will-navigate', (event) => event.preventDefault());
+  window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  void window.loadURL('tab-viewer://app/index.html');
   return window;
 }
 
@@ -61,7 +62,7 @@ const hasSingleInstanceLock = app.requestSingleInstanceLock();
 if (!hasSingleInstanceLock) {
   app.quit();
 } else {
-  app.on("second-instance", () => {
+  app.on('second-instance', () => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
     if (mainWindow.isMinimized()) mainWindow.restore();
     mainWindow.show();
@@ -71,84 +72,77 @@ if (!hasSingleInstanceLock) {
 }
 
 async function startDesktopApp(): Promise<void> {
-  const rendererRoot = path.join(__dirname, "../renderer");
-  const userData = app.getPath("userData");
-  const logDirectory = path.join(userData, "logs");
-  const sendStorageWarning = (category: "sidecar" | "resume") =>
-    (code: "CORRUPT_PERSISTED_DATA") => {
-      if (!mainWindow || mainWindow.isDestroyed()) return;
-      mainWindow.webContents.send("tab-viewer:event", createBridgeEvent(
-        "storage.warning",
-        randomUUID(),
-        { code, category },
-      ));
-    };
-  const sidecarStore = new JsonStore(
-    userData,
-    "sidecars",
-    sidecarPayloadSchema,
-    sendStorageWarning("sidecar"),
-  );
-  const resumeStore = new JsonStore(
-    userData,
-    "resume",
-    localPlaybackResumeSchema,
-    sendStorageWarning("resume"),
-  );
+  const rendererRoot = path.join(__dirname, '../renderer');
+  const userData = app.getPath('userData');
+  const logDirectory = path.join(userData, 'logs');
+  const sendStorageWarning = (category: 'sidecar' | 'resume') => (code: 'CORRUPT_PERSISTED_DATA') => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    mainWindow.webContents.send(
+      'tab-viewer:event',
+      createBridgeEvent('storage.warning', randomUUID(), { code, category }),
+    );
+  };
+  const sidecarStore = new JsonStore(userData, 'sidecars', sidecarPayloadSchema, sendStorageWarning('sidecar'));
+  const resumeStore = new JsonStore(userData, 'resume', localPlaybackResumeSchema, sendStorageWarning('resume'));
   const diagnostics = new DiagnosticLogger(logDirectory);
   const openDiagnosticsDirectory = async () => {
     const error = await shell.openPath(logDirectory);
-    if (error) throw new Error("DIAGNOSTICS_OPEN_DIRECTORY_FAILED");
+    if (error) throw new Error('DIAGNOSTICS_OPEN_DIRECTORY_FAILED');
   };
   registerAppProtocol(rendererRoot);
   session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
     callback(false);
   });
-  ipcMain.handle("tab-viewer:request", (event, value: unknown) => dispatchBridgeRequest({
-    senderUrl: event.senderFrame?.url ?? event.sender.getURL(),
-    value,
-  }, {
-    appVersion: __APP_VERSION__,
-    rendererBuildHash: __RENDERER_BUILD_HASH__,
-    handlers: {
-    "file.open": () => openScoreFile(fileTokens),
-    "file.readBytes": request => readScoreFileBytes(fileTokens, request.payload.fileToken),
-      "sidecar.read": async request => ({
-        payload: await sidecarStore.read(request.payload.identity.contentHash),
-      }),
-      "sidecar.write": async request => {
-        await sidecarStore.write(request.payload.identity.contentHash, request.payload.payload);
-        return {};
+  ipcMain.handle('tab-viewer:request', (event, value: unknown) =>
+    dispatchBridgeRequest(
+      {
+        senderUrl: event.senderFrame?.url ?? event.sender.getURL(),
+        value,
       },
-      "playbackResume.read": async request => ({
-        resume: await resumeStore.read(request.payload.identity.contentHash),
-      }),
-      "playbackResume.write": async request => {
-        await resumeStore.write(request.payload.identity.contentHash, request.payload.resume);
-        return {};
+      {
+        appVersion: __APP_VERSION__,
+        rendererBuildHash: __RENDERER_BUILD_HASH__,
+        handlers: {
+          'file.open': () => openScoreFile(fileTokens),
+          'file.readBytes': (request) => readScoreFileBytes(fileTokens, request.payload.fileToken),
+          'sidecar.read': async (request) => ({
+            payload: await sidecarStore.read(request.payload.identity.contentHash),
+          }),
+          'sidecar.write': async (request) => {
+            await sidecarStore.write(request.payload.identity.contentHash, request.payload.payload);
+            return {};
+          },
+          'playbackResume.read': async (request) => ({
+            resume: await resumeStore.read(request.payload.identity.contentHash),
+          }),
+          'playbackResume.write': async (request) => {
+            await resumeStore.write(request.payload.identity.contentHash, request.payload.resume);
+            return {};
+          },
+          'diagnostics.write': async (request) => {
+            await diagnostics.write(request.payload);
+            return {};
+          },
+          'diagnostics.openDirectory': async () => {
+            await openDiagnosticsDirectory();
+            return {};
+          },
+          'app.lifecycleAck': (request) => {
+            lifecycle?.acknowledge(request.payload.state);
+            return {};
+          },
+        },
       },
-      "diagnostics.write": async request => {
-        await diagnostics.write(request.payload);
-        return {};
-      },
-      "diagnostics.openDirectory": async () => {
-        await openDiagnosticsDirectory();
-        return {};
-      },
-      "app.lifecycleAck": request => {
-        lifecycle?.acknowledge(request.payload.state);
-        return {};
-      },
-    },
-  }));
+    ),
+  );
   mainWindow = createMainWindow();
   const sendEvent = (event: ReturnType<typeof createBridgeEvent>) => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
-    mainWindow.webContents.send("tab-viewer:event", event);
+    mainWindow.webContents.send('tab-viewer:event', event);
   };
   lifecycle = new DesktopLifecycleCoordinator(sendEvent, {
     timeoutMs: 5000,
-    onTimeout: code => {
+    onTimeout: (code) => {
       void diagnostics.write({ code }).catch(() => undefined);
     },
   });
@@ -156,12 +150,9 @@ async function startDesktopApp(): Promise<void> {
   installMenu(sendEvent, openDiagnosticsDirectory);
 }
 
-function installLifecycle(
-  window: BrowserWindow,
-  coordinator: DesktopLifecycleCoordinator,
-): void {
+function installLifecycle(window: BrowserWindow, coordinator: DesktopLifecycleCoordinator): void {
   let closeRequested = false;
-  window.on("close", event => {
+  window.on('close', (event) => {
     if (closeRequested) {
       event.preventDefault();
       return;
@@ -174,35 +165,42 @@ function installLifecycle(
       app.quit();
     });
   });
-  powerMonitor.on("suspend", () => { void coordinator.request("suspend"); });
-  powerMonitor.on("lock-screen", () => { void coordinator.request("suspend"); });
+  powerMonitor.on('suspend', () => {
+    void coordinator.request('suspend');
+  });
+  powerMonitor.on('lock-screen', () => {
+    void coordinator.request('suspend');
+  });
 }
 
 function installMenu(
   sendEvent: (event: ReturnType<typeof createBridgeEvent>) => void,
   openDiagnosticsDirectory: () => Promise<void>,
 ): void {
-  const command = (value: "open-score" | "toggle-playback") => () => {
-    sendEvent(createBridgeEvent("app.command", randomUUID(), { command: value }));
+  const command = (value: 'open-score' | 'toggle-playback') => () => {
+    sendEvent(createBridgeEvent('app.command', randomUUID(), { command: value }));
   };
   const template: MenuItemConstructorOptions[] = [
     {
-      label: "文件",
+      label: '文件',
       submenu: [
-        { label: "打开 GP 文件…", accelerator: "CmdOrCtrl+O", click: command("open-score") },
-        { label: "打开日志目录", click: () => { void openDiagnosticsDirectory().catch(() => undefined); } },
-        { type: "separator" },
-        { role: "quit" },
+        { label: '打开 GP 文件…', accelerator: 'CmdOrCtrl+O', click: command('open-score') },
+        {
+          label: '打开日志目录',
+          click: () => {
+            void openDiagnosticsDirectory().catch(() => undefined);
+          },
+        },
+        { type: 'separator' },
+        { role: 'quit' },
       ],
     },
     {
-      label: "播放",
-      submenu: [
-        { label: "播放/暂停", accelerator: "Space", click: command("toggle-playback") },
-      ],
+      label: '播放',
+      submenu: [{ label: '播放/暂停', accelerator: 'Space', click: command('toggle-playback') }],
     },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
-app.on("window-all-closed", () => app.quit());
+app.on('window-all-closed', () => app.quit());

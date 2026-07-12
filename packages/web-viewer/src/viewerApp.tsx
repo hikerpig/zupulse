@@ -29,9 +29,7 @@ export type DefaultOpenSessionDependencies = {
   presentFile: typeof presentScoreFile;
   waitForScore: typeof waitForAlphaTabScore;
   extractModel: typeof extractAlphaTabPlaybackModel;
-  createController(
-    options: ConstructorParameters<typeof PlaybackController>[0],
-  ): PlaybackController;
+  createController(options: ConstructorParameters<typeof PlaybackController>[0]): PlaybackController;
 };
 
 const defaultOpenSessionDependencies: DefaultOpenSessionDependencies = {
@@ -43,10 +41,7 @@ const defaultOpenSessionDependencies: DefaultOpenSessionDependencies = {
   createController: (options) => new PlaybackController(options),
 };
 
-export function mountViewerApp(
-  rootElement: HTMLElement,
-  dependencies: ViewerAppDependencies,
-): ViewerAppHandle {
+export function mountViewerApp(rootElement: HTMLElement, dependencies: ViewerAppDependencies): ViewerAppHandle {
   const root = createRoot(rootElement);
   const application = new ViewerApplication(dependencies.host, dependencies.openSession);
   flushSync(() =>
@@ -150,10 +145,7 @@ export function createDefaultOpenSession(
         cleanupError = caughtCleanupError;
       }
       if (cleanupError !== undefined) {
-        throw new AggregateError(
-          [error, cleanupError],
-          'Viewer session initialization and cleanup both failed',
-        );
+        throw new AggregateError([error, cleanupError], 'Viewer session initialization and cleanup both failed');
       }
       renderViewerState(status, summary, {
         status: 'error',
@@ -164,11 +156,7 @@ export function createDefaultOpenSession(
   };
 }
 
-export function renderViewerState(
-  status: HTMLElement,
-  summary: HTMLElement,
-  state: DemoState,
-): void {
+export function renderViewerState(status: HTMLElement, summary: HTMLElement, state: DemoState): void {
   status.textContent = state.message;
   if (state.status !== 'ready' || !state.summary) {
     summary.textContent = '未打开乐谱';
@@ -193,8 +181,7 @@ function required<T extends HTMLElement>(ownerDocument: Document, id: string): T
 
 function alphaTabSettings(scrollElement: HTMLElement): unknown {
   const chineseSerifFonts = "Georgia, 'Songti SC', 'STSong', SimSun, 'Noto Serif SC', serif";
-  const chineseSansFonts =
-    "Arial, 'PingFang SC', 'Microsoft YaHei', 'Heiti SC', 'Noto Sans SC', sans-serif";
+  const chineseSansFonts = "Arial, 'PingFang SC', 'Microsoft YaHei', 'Heiti SC', 'Noto Sans SC', sans-serif";
   return {
     core: {
       useWorkers: false,
@@ -212,6 +199,7 @@ function alphaTabSettings(scrollElement: HTMLElement): unknown {
     display: {
       scale: 1,
       resources: {
+        secondaryGlyphColor: '#000000',
         titleFont: `32px ${chineseSerifFonts}`,
         subTitleFont: `20px ${chineseSerifFonts}`,
         wordsFont: `15px ${chineseSansFonts}`,

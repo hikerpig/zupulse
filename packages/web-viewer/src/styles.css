@@ -222,6 +222,15 @@ input[type='range'] {
   border-bottom: 1px solid var(--border-default);
 }
 
+:root.desktop-shell .context-bar {
+  padding-left: 88px;
+  -webkit-app-region: drag;
+}
+
+:root.desktop-shell .context-actions {
+  -webkit-app-region: no-drag;
+}
+
 .context-main,
 .context-actions,
 .transport-actions,

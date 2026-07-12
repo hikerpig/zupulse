@@ -32,15 +32,11 @@ describe('mountViewerApp', () => {
 
     expect(document.documentElement.dataset.theme).toBe('dark');
 
-    document
-      .getElementById('theme-light')
-      ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    document.getElementById('theme-light')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(document.documentElement.dataset.theme).toBe('light');
     expect(document.getElementById('theme-light')?.getAttribute('aria-pressed')).toBe('true');
 
-    document
-      .getElementById('theme-dark')
-      ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    document.getElementById('theme-dark')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(document.documentElement.dataset.theme).toBe('dark');
 
     await handle.destroy();
@@ -381,6 +377,7 @@ describe('createDefaultOpenSession cleanup', () => {
       HTMLElement,
       {
         player: { scrollElement: HTMLElement };
+        display: { resources: { secondaryGlyphColor: string } };
       },
     ];
     expect(settings.player).toEqual(
@@ -392,6 +389,7 @@ describe('createDefaultOpenSession cleanup', () => {
       }),
     );
     expect(settings.player.scrollElement).toBe(alphaTabHost.parentElement);
+    expect(settings.display.resources.secondaryGlyphColor).toBe('#000000');
   });
 
   it('pauses and flushes the active playback controller', async () => {
@@ -429,56 +427,51 @@ describe('createDefaultOpenSession cleanup', () => {
 
     expect(dispatch).toHaveBeenCalledWith({ type: 'pause' });
     expect(flush).toHaveBeenCalledOnce();
-    expect(dispatch.mock.invocationCallOrder[0]).toBeLessThan(
-      flush.mock.invocationCallOrder[0] ?? 0,
-    );
+    expect(dispatch.mock.invocationCallOrder[0]).toBeLessThan(flush.mock.invocationCallOrder[0] ?? 0);
   });
 
-  it.each(['initialize'] as const)(
-    'destroys the controller when %s fails',
-    async (failurePoint) => {
-      renderSessionFixture(document);
-      const adapterDestroy = vi.fn();
-      const controllerDestroy = vi.fn(async () => undefined);
-      const failure = new Error(`${failurePoint} failed`);
-      const dependencies: DefaultOpenSessionDependencies = {
-        createApi: () => ({}),
-        createAdapter: () => ({ destroy: adapterDestroy }) as never,
-        presentFile: async () => ({
-          status: 'ready',
-          message: '已加载 Song',
-          identity: { contentHash: 'a'.repeat(64), format: 'gp' },
-          summary: { title: 'Song', trackCount: 1, masterBarCount: 1 },
-        }),
-        waitForScore: async () => ({}) as never,
-        extractModel: () => ({
-          tracks: [{ id: 'track-0', sourceIndex: 0, name: 'Lead' }],
-          timeline: { durationTicks: 0, durationMs: 0, measures: [] },
-        }),
-        createController: () =>
-          ({
-            initialize:
-              failurePoint === 'initialize'
-                ? async () => {
-                    throw failure;
-                  }
-                : async () => undefined,
-            getState: () => ({ sessionId: 'session' }),
-            subscribe: () => () => undefined,
-            dispatch: async () => undefined,
-            flush: async () => undefined,
-            destroy: controllerDestroy,
-          }) as never,
-      };
-      const openSession = createDefaultOpenSession(document, {} as never, dependencies);
+  it.each(['initialize'] as const)('destroys the controller when %s fails', async (failurePoint) => {
+    renderSessionFixture(document);
+    const adapterDestroy = vi.fn();
+    const controllerDestroy = vi.fn(async () => undefined);
+    const failure = new Error(`${failurePoint} failed`);
+    const dependencies: DefaultOpenSessionDependencies = {
+      createApi: () => ({}),
+      createAdapter: () => ({ destroy: adapterDestroy }) as never,
+      presentFile: async () => ({
+        status: 'ready',
+        message: '已加载 Song',
+        identity: { contentHash: 'a'.repeat(64), format: 'gp' },
+        summary: { title: 'Song', trackCount: 1, masterBarCount: 1 },
+      }),
+      waitForScore: async () => ({}) as never,
+      extractModel: () => ({
+        tracks: [{ id: 'track-0', sourceIndex: 0, name: 'Lead' }],
+        timeline: { durationTicks: 0, durationMs: 0, measures: [] },
+      }),
+      createController: () =>
+        ({
+          initialize:
+            failurePoint === 'initialize'
+              ? async () => {
+                  throw failure;
+                }
+              : async () => undefined,
+          getState: () => ({ sessionId: 'session' }),
+          subscribe: () => () => undefined,
+          dispatch: async () => undefined,
+          flush: async () => undefined,
+          destroy: controllerDestroy,
+        }) as never,
+    };
+    const openSession = createDefaultOpenSession(document, {} as never, dependencies);
 
-      await openSession({ fileName: 'song.gp5', bytes: new Uint8Array([1]) });
+    await openSession({ fileName: 'song.gp5', bytes: new Uint8Array([1]) });
 
-      expect(controllerDestroy).toHaveBeenCalledOnce();
-      expect(adapterDestroy).not.toHaveBeenCalled();
-      expect(document.querySelector('#status')?.textContent).toBe(failure.message);
-    },
-  );
+    expect(controllerDestroy).toHaveBeenCalledOnce();
+    expect(adapterDestroy).not.toHaveBeenCalled();
+    expect(document.querySelector('#status')?.textContent).toBe(failure.message);
+  });
 
   it('preserves initialization and controller cleanup failures', async () => {
     renderSessionFixture(document);

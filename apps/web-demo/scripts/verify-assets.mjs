@@ -1,4 +1,4 @@
-import { stat } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 const requiredAssets = [
@@ -18,4 +18,13 @@ for (const relativePath of requiredAssets) {
   } catch {
     throw new Error(`Missing playback asset: ${relativePath.replace("../dist/", "")}`);
   }
+}
+
+const bundleFiles = (await readdir(fileURLToPath(new URL("../dist/", import.meta.url)))).filter((file) => file.endsWith(".js"));
+const bundles = await Promise.all(
+  bundleFiles.map((file) => readFile(fileURLToPath(new URL(`../dist/${file}`, import.meta.url)), "utf8")),
+);
+
+if (bundles.some((bundle) => bundle.includes("file:///"))) {
+  throw new Error("alphaTab must be imported from /alphatab/, not bundled from a local file URL");
 }

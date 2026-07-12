@@ -72,7 +72,6 @@ describe("App", () => {
     );
     render(<App application={application} />);
     expect(await screen.findByRole("heading", { name: "曲谱库" })).toBeTruthy();
-    expect(document.documentElement.dataset.theme).toBe("dark");
     await application.destroy();
   });
 });

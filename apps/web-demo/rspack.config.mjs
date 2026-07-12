@@ -22,6 +22,10 @@ const config = {
   experiments: {
     outputModule: true,
   },
+  externalsType: "module-import",
+  externals: {
+    "@coderline/alphatab": "/alphatab/alphaTab.mjs",
+  },
   performance: {
     maxAssetSize: 2 * 1024 * 1024,
     maxEntrypointSize: 2 * 1024 * 1024,

@@ -17,6 +17,9 @@ try {
     "dist/preload/preload.cjs",
     "dist/renderer/index.html",
     "dist/renderer/alphatab/alphaTab.mjs",
+    "dist/renderer/alphatab/alphaTab.core.mjs",
+    "dist/renderer/alphatab/alphaTab.worker.mjs",
+    "dist/renderer/alphatab/alphaTab.worklet.mjs",
     "dist/renderer/alphatab/font/Bravura.woff2",
     "dist/renderer/alphatab/soundfont/sonivox.sf3",
     "dist/renderer/alphatab/soundfont/LICENSE",
@@ -64,7 +67,7 @@ async function listFiles(root) {
   const files = [];
   for (const entry of await readdir(root, { withFileTypes: true })) {
     const child = join(root, entry.name);
-    if (entry.isDirectory()) files.push(...await listFiles(child));
+    if (entry.isDirectory()) files.push(...(await listFiles(child)));
     else files.push(child);
   }
   return files;

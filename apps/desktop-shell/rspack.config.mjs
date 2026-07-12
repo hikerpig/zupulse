@@ -5,14 +5,10 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const shellRoot = fileURLToPath(new URL(".", import.meta.url));
-const requireFromWebCore = createRequire(
-  new URL("../../packages/web-core/package.json", import.meta.url),
-);
+const requireFromWebCore = createRequire(new URL("../../packages/web-core/package.json", import.meta.url));
 const alphaTabDist = dirname(requireFromWebCore.resolve("@coderline/alphatab"));
 const appVersion = "0.1.0";
-const rendererBuildHash = createHash("sha256")
-  .update(`${appVersion}:desktop-renderer`)
-  .digest("hex");
+const rendererBuildHash = createHash("sha256").update(`${appVersion}:desktop-renderer`).digest("hex");
 const buildDefinitions = {
   __APP_VERSION__: JSON.stringify(appVersion),
   __RENDERER_BUILD_HASH__: JSON.stringify(rendererBuildHash),
@@ -75,6 +71,10 @@ const renderer = {
     maxAssetSize: 2 * 1024 * 1024,
     maxEntrypointSize: 2 * 1024 * 1024,
   },
+  externalsType: "module-import",
+  externals: {
+    "@coderline/alphatab": "/alphatab/alphaTab.mjs",
+  },
   resolve: { extensions: [".tsx", ".ts", ".js"] },
   module: {
     rules: [swcRule, { test: /\.css$/, type: "css" }],
@@ -84,10 +84,20 @@ const renderer = {
     new HtmlRspackPlugin({ template: "./index.html" }),
     new CopyRspackPlugin({
       patterns: [
-        { from: join(alphaTabDist, "alphaTab.mjs"), to: "alphatab/alphaTab.mjs" },
+        {
+          from: join(alphaTabDist, "alphaTab*.mjs"),
+          to: "alphatab/[name][ext]",
+        },
         { from: join(alphaTabDist, "font"), to: "alphatab/font/" },
-        { from: join(alphaTabDist, "soundfont/sonivox.sf3"), to: "alphatab/soundfont/sonivox.sf3" },
-        { from: join(alphaTabDist, "soundfont/LICENSE"), to: "alphatab/soundfont/LICENSE", toType: "file" },
+        {
+          from: join(alphaTabDist, "soundfont/sonivox.sf3"),
+          to: "alphatab/soundfont/sonivox.sf3",
+        },
+        {
+          from: join(alphaTabDist, "soundfont/LICENSE"),
+          to: "alphatab/soundfont/LICENSE",
+          toType: "file",
+        },
       ],
     }),
   ],

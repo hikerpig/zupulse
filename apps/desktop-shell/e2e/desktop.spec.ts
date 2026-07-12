@@ -4,15 +4,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const fixture = fileURLToPath(
-  new URL("../../../test-fixtures/gp/generated/desktop-acceptance.gp", import.meta.url),
-);
+const fixture = fileURLToPath(new URL("../../../test-fixtures/gp/generated/desktop-acceptance.gp", import.meta.url));
 const musicXmlFixture = fileURLToPath(
   new URL("../../../test-fixtures/musicxml/generated/single-voice.musicxml", import.meta.url),
 );
-const mxlFixture = fileURLToPath(
-  new URL("../../../test-fixtures/musicxml/generated/simple.mxl", import.meta.url),
-);
+const mxlFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/generated/simple.mxl", import.meta.url));
 
 async function launch(userData: string): Promise<ElectronApplication> {
   return electron.launch({ args: [".", `--user-data-dir=${userData}`] });
@@ -24,10 +20,7 @@ async function chooseFixture(app: ElectronApplication, filePath = fixture): Prom
   }, filePath);
 }
 
-async function setRange(
-  locator: import("@playwright/test").Locator,
-  value: string,
-): Promise<void> {
+async function setRange(locator: import("@playwright/test").Locator, value: string): Promise<void> {
   await locator.fill(value);
   await locator.blur();
 }
@@ -40,28 +33,34 @@ test("starts offline with an isolated renderer", async () => {
     await app.context().setOffline(true);
     await window.reload();
     await expect(window.locator("#open-score")).toBeVisible();
-    expect(await window.evaluate(() => ({
-      require: typeof (globalThis as { require?: unknown }).require,
-      process: typeof (globalThis as { process?: unknown }).process,
-      api: Object.keys(window.tabViewerBridge ?? {}).sort(),
-    }))).toEqual({ require: "undefined", process: "undefined", api: ["request", "subscribe"] });
+    expect(
+      await window.evaluate(() => ({
+        require: typeof (globalThis as { require?: unknown }).require,
+        process: typeof (globalThis as { process?: unknown }).process,
+        api: Object.keys(window.tabViewerBridge ?? {}).sort(),
+      })),
+    ).toEqual({ require: "undefined", process: "undefined", api: ["request", "subscribe"] });
 
-    await expect(window.evaluate(async () => {
-      try {
-        await window.tabViewerBridge?.request({ type: "fs.read", payload: {} });
-        return "accepted";
-      } catch {
-        return "rejected";
-      }
-    })).resolves.toBe("rejected");
-    await expect(window.evaluate(async () => {
-      try {
-        await fetch("https://example.com/");
-        return "accepted";
-      } catch {
-        return "rejected";
-      }
-    })).resolves.toBe("rejected");
+    await expect(
+      window.evaluate(async () => {
+        try {
+          await window.tabViewerBridge?.request({ type: "fs.read", payload: {} });
+          return "accepted";
+        } catch {
+          return "rejected";
+        }
+      }),
+    ).resolves.toBe("rejected");
+    await expect(
+      window.evaluate(async () => {
+        try {
+          await fetch("https://example.com/");
+          return "accepted";
+        } catch {
+          return "rejected";
+        }
+      }),
+    ).resolves.toBe("rejected");
     expect(await window.evaluate(() => window.open("https://example.com/") === null)).toBe(true);
   } finally {
     await app.close();
@@ -77,6 +76,8 @@ test("opens a GP file and restores persisted practice state", async () => {
     let window = await app.firstWindow();
     await window.locator("#open-score").click();
     await expect(window.locator("#summary")).toContainText("桌面验收谱");
+    await expect(window.getByText("音频已就绪")).toBeVisible();
+    await expect(window.getByRole("button", { name: "播放" })).toBeEnabled();
 
     await setRange(window.getByRole("slider", { name: "速度" }), "75");
     await window.getByRole("combobox", { name: "边界吸附" }).selectOption("off");

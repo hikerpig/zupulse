@@ -63,7 +63,7 @@ export function SheetLibrary({
       <header className="context-bar">
         <div className="context-main">
           <p className="app-kicker">Tab Viewer</p>
-          <h1 className="context-title">曲谱库</h1>
+          <h1 className="context-title library-title">曲谱库</h1>
           <p className="context-subtitle">曲谱保存在这台设备上，可离线使用。</p>
         </div>
         <div className="context-actions">
@@ -102,6 +102,7 @@ export function SheetLibrary({
           {visible.map((score) => (
             <li key={score.id} className="library-row">
               <button className="library-open" onClick={() => onOpen(score.id)}>
+                <span className={`library-format library-format-${score.format}`}>{score.format.toUpperCase()}</span>
                 <strong>{score.title}</strong>
                 <span>
                   {score.artist ?? "未知艺术家"} · {score.format.toUpperCase()}

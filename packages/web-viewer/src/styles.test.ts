@@ -2,6 +2,12 @@ import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
 describe('alphaTab playback cursor styles', () => {
+  it('does not load stylesheets that violate the offline CSP', async () => {
+    const css = await readFile(new URL('./styles.css', import.meta.url), 'utf8');
+
+    expect(css).not.toMatch(/@import\s+url\(['"]?https?:\/\//);
+  });
+
   it('makes cursors, played elements, and selections visible', async () => {
     const css = await readFile(new URL('./styles.css', import.meta.url), 'utf8');
 
@@ -17,9 +23,7 @@ describe('alphaTab playback cursor styles', () => {
     expect(css).toMatch(/\.app-shell\s*{[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden;/s);
     expect(css).toMatch(/\.workspace\s*{[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/s);
     expect(css).toMatch(/\.score-stage-frame\s*{[^}]*height:\s*100%;[^}]*overflow:\s*auto;/s);
-    expect(css).toMatch(
-      /\.score-viewer\s*{[^}]*height:\s*100%;[^}]*min-height:\s*0;[^}]*overflow:\s*visible;/s,
-    );
+    expect(css).toMatch(/\.score-viewer\s*{[^}]*height:\s*100%;[^}]*min-height:\s*0;[^}]*overflow:\s*visible;/s);
     expect(css).toMatch(/\.practice-panel\s*{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;/s);
     expect(css).toMatch(
       /@media \(max-width:\s*960px\)[\s\S]*?\.app-shell\s*{[^}]*height:\s*auto;[^}]*overflow:\s*visible;/s,

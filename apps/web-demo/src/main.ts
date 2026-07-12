@@ -1,5 +1,4 @@
-import { createGpFormatAdapter, createMusicXmlAdapter } from "@tab-viewer/web-core";
-import { createDefaultOpenSession, mountViewerApp } from "@tab-viewer/web-viewer";
+import { mountViewerApp } from "@tab-viewer/web-viewer/src/mountViewerApp";
 import "@tab-viewer/web-viewer/styles.css";
 import { createBrowserHost } from "./browserHost";
 import { BrowserSheetLibraryRepository } from "./library/BrowserSheetLibraryRepository";
@@ -16,11 +15,28 @@ if (typeof document !== "undefined") {
   void navigator.storage?.persist?.().catch(() => false);
   mountViewerApp(root, {
     host,
-    openSession: createDefaultOpenSession(document, new BrowserLibraryPlaybackPersistence(repository)),
+    openSession: async (file, libraryScoreId) => {
+      const { createDefaultOpenSession } = await import("@tab-viewer/web-viewer/src/viewerApp");
+      return createDefaultOpenSession(document, new BrowserLibraryPlaybackPersistence(repository))(
+        file,
+        libraryScoreId,
+      );
+    },
     library: {
       repository,
       gateway: new BrowserScoreFileGateway(document),
-      adapters: [createGpFormatAdapter(), createMusicXmlAdapter()],
+      adapters: [
+        {
+          format: "gp",
+          parse: async (input) =>
+            (await import("@tab-viewer/web-core/src/gp/gpFormatAdapter")).createGpFormatAdapter().parse(input),
+        },
+        {
+          format: "musicxml",
+          parse: async (input) =>
+            (await import("@tab-viewer/web-core/src/musicxml/musicXmlAdapter")).createMusicXmlAdapter().parse(input),
+        },
+      ],
     },
   });
 }

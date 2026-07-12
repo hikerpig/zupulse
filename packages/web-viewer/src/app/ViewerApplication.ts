@@ -1,10 +1,10 @@
 import type { ViewerAppHandle, ViewerFile, ViewerHost, ViewerHostEvent, ViewerSessionHandle } from "../host";
-import {
-  importLibraryScores,
-  type ScoreFileGateway,
-  type ScoreFormatAdapter,
-  type SheetLibraryRepository,
-  type LibraryScoreSummary,
+import { importLibraryScores } from "@tab-viewer/web-core/src/library/importLibraryScores";
+import type {
+  ScoreFileGateway,
+  ScoreFormatAdapter,
+  SheetLibraryRepository,
+  LibraryScoreSummary,
 } from "@tab-viewer/web-core";
 
 export type ViewerApplicationSnapshot = {

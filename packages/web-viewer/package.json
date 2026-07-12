@@ -7,7 +7,9 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles.css",
+    "./src/mountViewerApp": "./src/mountViewerApp.tsx",
+    "./src/viewerApp": "./src/viewerApp.tsx"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

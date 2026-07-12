@@ -1,4 +1,4 @@
-import { MockNativeBridge } from "@tab-viewer/web-core";
+import { MockNativeBridge } from "@tab-viewer/web-core/src/bridge/mockNativeBridge";
 import type { ViewerFile, ViewerHost } from "@tab-viewer/web-viewer";
 
 export function createBrowserHost(ownerDocument: Document): ViewerHost & { bridge: MockNativeBridge } {

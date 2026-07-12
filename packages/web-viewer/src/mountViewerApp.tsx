@@ -1,0 +1,32 @@
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { flushSync } from "react-dom";
+import type { ViewerAppHandle, ViewerFile, ViewerHost, ViewerSessionHandle } from "./host";
+import { App } from "./app/App";
+import { ViewerApplication } from "./app/ViewerApplication";
+import type { ScoreFileGateway, ScoreFormatAdapter, SheetLibraryRepository } from "@tab-viewer/web-core";
+
+export type ViewerAppDependencies = {
+  host: ViewerHost;
+  openSession(file: ViewerFile, libraryScoreId?: string): Promise<ViewerSessionHandle>;
+  library?: { repository: SheetLibraryRepository; gateway: ScoreFileGateway; adapters: readonly ScoreFormatAdapter[] };
+};
+
+export function mountViewerApp(rootElement: HTMLElement, dependencies: ViewerAppDependencies): ViewerAppHandle {
+  const root = createRoot(rootElement);
+  const application = new ViewerApplication(dependencies.host, dependencies.openSession, dependencies.library);
+  flushSync(() =>
+    root.render(
+      <StrictMode>
+        <App application={application} />
+      </StrictMode>,
+    ),
+  );
+  let destroyPromise: Promise<void> | undefined;
+  return {
+    openScore: () => application.openScore(),
+    togglePlayback: () => application.togglePlayback(),
+    pauseAndFlush: () => application.pauseAndFlush(),
+    destroy: () => (destroyPromise ??= application.destroy().finally(() => root.unmount())),
+  };
+}

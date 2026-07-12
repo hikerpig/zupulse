@@ -1,4 +1,5 @@
-import { musicalPositionFromTick, type PlaybackCommand } from "@tab-viewer/web-core";
+import { musicalPositionFromTick } from "@tab-viewer/web-core/src/playback/loopRegions";
+import type { PlaybackCommand } from "@tab-viewer/web-core";
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import type { ViewerSessionHandle } from "../host";
 import { presentPlayback } from "../playbackPresenter";

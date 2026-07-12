@@ -16,7 +16,11 @@ const config = {
   output: {
     clean: true,
     filename: "[name].[contenthash].js",
+    module: true,
     path: fileURLToPath(new URL("./dist/", import.meta.url)),
+  },
+  experiments: {
+    outputModule: true,
   },
   performance: {
     maxAssetSize: 2 * 1024 * 1024,
@@ -24,10 +28,6 @@ const config = {
   },
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
-  },
-  externalsType: "module-import",
-  externals: {
-    "@coderline/alphatab": "/alphatab/alphaTab.mjs",
   },
   module: {
     rules: [
@@ -68,6 +68,7 @@ const config = {
   plugins: [
     new HtmlRspackPlugin({
       template: "./index.html",
+      scriptLoading: "module",
     }),
     new CopyRspackPlugin({
       patterns: [

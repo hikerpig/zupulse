@@ -1,11 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
-import {
-  createDefaultOpenSession,
-  mountViewerApp,
-  renderViewerState,
-  type DefaultOpenSessionDependencies,
-} from "./viewerApp";
+import { createDefaultOpenSession, renderViewerState, type DefaultOpenSessionDependencies } from "./viewerApp";
+import { mountViewerApp } from "./mountViewerApp";
 
 function renderSessionFixture(ownerDocument: Document): void {
   ownerDocument.body.innerHTML =

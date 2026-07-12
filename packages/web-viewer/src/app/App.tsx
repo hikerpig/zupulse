@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
+import { createContext, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { createHashRouter, RouterProvider, useNavigate, useParams } from "react-router";
 import type { ViewerApplication } from "./ViewerApplication";
@@ -21,10 +21,17 @@ export function App({ application }: { application: ViewerApplication }) {
   return (
     <ApplicationContext.Provider value={application}>
       <AppStoreProvider>
-        <RouterProvider router={router} />
+        <ThemeApplicator>
+          <RouterProvider router={router} />
+        </ThemeApplicator>
       </AppStoreProvider>
     </ApplicationContext.Provider>
   );
+}
+
+function ThemeApplicator({ children }: { children: ReactNode }) {
+  useApplyTheme();
+  return children;
 }
 
 function ViewerShell({ notFound = false }: { notFound?: boolean }) {
@@ -32,7 +39,7 @@ function ViewerShell({ notFound = false }: { notFound?: boolean }) {
   const snapshot = useSyncExternalStore(application.subscribe, application.getSnapshot);
   const navigate = useNavigate();
   const { libraryScoreId } = useParams();
-  const theme = useApplyTheme();
+  const theme = useAppStore((state) => state.theme);
   const setTheme = useAppStore((state) => state.setTheme);
   const invalidSession = Boolean(libraryScoreId && !application.hasSession(libraryScoreId));
 

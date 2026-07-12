@@ -25,7 +25,7 @@ export class DesktopLifecycleCoordinator {
     if (existing) return existing.promise;
 
     let acknowledge = () => undefined;
-    const promise = new Promise<LifecycleResult>(resolve => {
+    const promise = new Promise<LifecycleResult>((resolve) => {
       const timer = setTimeout(() => {
         this.pending.delete(state);
         this.options.onTimeout?.("LIFECYCLE_ACK_TIMEOUT", state);

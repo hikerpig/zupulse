@@ -3,9 +3,17 @@ import { createImportDiagnostic } from "../import/diagnostics";
 import type { Track } from "../score/types";
 
 type RuntimeScore = {
-  title?: string; artist?: string; tempo?: number;
+  title?: string;
+  artist?: string;
+  tempo?: number;
   tracks?: Array<{ name?: string; shortName?: string; playbackInfo?: { isPercussion?: boolean }; staves?: unknown[] }>;
-  masterBars?: Array<{ index?: number; start?: number; duration?: number; timeSignatureNumerator?: number; timeSignatureDenominator?: number }>;
+  masterBars?: Array<{
+    index?: number;
+    start?: number;
+    duration?: number;
+    timeSignatureNumerator?: number;
+    timeSignatureDenominator?: number;
+  }>;
 };
 
 export function projectAlphaTabScore(score: RuntimeScore): Omit<AdapterOutput, "runtime"> {
@@ -14,7 +22,10 @@ export function projectAlphaTabScore(score: RuntimeScore): Omit<AdapterOutput, "
   const tracks: Track[] = runtimeTracks.map((track, index) => ({
     id: `track-${index + 1}`,
     name: track.name || track.shortName || `Part ${index + 1}`,
-    staves: (track.staves ?? []).map((_, staffIndex) => ({ id: `track-${index + 1}-staff-${staffIndex + 1}`, measures: [] })),
+    staves: (track.staves ?? []).map((_, staffIndex) => ({
+      id: `track-${index + 1}-staff-${staffIndex + 1}`,
+      measures: [],
+    })),
     playback: { muted: false, solo: false, volume: 1 },
   }));
   const durationTicks = masterBars.reduce((max, bar) => Math.max(max, (bar.start ?? 0) + (bar.duration ?? 0)), 0);
@@ -37,6 +48,6 @@ export function projectAlphaTabScore(score: RuntimeScore): Omit<AdapterOutput, "
 export function getDefaultVisibleTrackIds(score: RuntimeScore): string[] {
   const tracks = score.tracks ?? [];
   if (tracks.length <= 4) return tracks.map((_, index) => `track-${index + 1}`);
-  const index = tracks.findIndex(track => !track.playbackInfo?.isPercussion);
+  const index = tracks.findIndex((track) => !track.playbackInfo?.isPercussion);
   return [`track-${(index < 0 ? 0 : index) + 1}`];
 }

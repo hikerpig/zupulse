@@ -31,7 +31,7 @@ describe("loadGpScore", () => {
       tempo: 128,
     };
 
-    const loaded = loadGpScore(bytes, input => {
+    const loaded = loadGpScore(bytes, (input) => {
       expect(input).toEqual(bytes);
       return score;
     });

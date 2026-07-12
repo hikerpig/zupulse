@@ -6,10 +6,12 @@ describe("DesktopLifecycleCoordinator", () => {
     const sendEvent = vi.fn();
     const coordinator = new DesktopLifecycleCoordinator(sendEvent, { timeoutMs: 5000 });
     const closing = coordinator.prepareClose();
-    expect(sendEvent).toHaveBeenCalledWith(expect.objectContaining({
-      type: "app.lifecycle",
-      payload: { state: "prepare-close" },
-    }));
+    expect(sendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "app.lifecycle",
+        payload: { state: "prepare-close" },
+      }),
+    );
     coordinator.acknowledge("prepare-close");
     await expect(closing).resolves.toBe("acknowledged");
   });

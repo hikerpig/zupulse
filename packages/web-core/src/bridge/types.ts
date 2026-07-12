@@ -1,9 +1,6 @@
 import type { z } from "zod";
 import type { localPlaybackResumeSchema } from "../storage/schemas";
-import type {
-  BridgeRequest,
-  BridgeResponse,
-} from "./schemas";
+import type { BridgeRequest, BridgeResponse } from "./schemas";
 
 export type { BridgeError, BridgeEvent, BridgeRequest, Capabilities } from "./schemas";
 export type OpenFileResponse = BridgeResponse<"file.open">;

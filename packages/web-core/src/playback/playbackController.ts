@@ -81,7 +81,7 @@ export class PlaybackController {
   async initialize(): Promise<void> {
     if (this.initialized) return;
     const sessionId = this.options.sessionId;
-    this.detachEngine = this.options.engine.subscribe(event => {
+    this.detachEngine = this.options.engine.subscribe((event) => {
       if (this.destroyed || this.state.sessionId !== sessionId) return;
       this.reduceEngineEvent(event);
     });
@@ -201,15 +201,13 @@ export class PlaybackController {
   private createState(sidecar: SidecarPayload): PlaybackState {
     const now = this.clock.now();
     const playback = sidecar.practice.playback;
-    const validTrackIds = new Set(this.options.tracks.map(track => track.id));
+    const validTrackIds = new Set(this.options.tracks.map((track) => track.id));
     const fallbackPrimary = this.options.tracks[0]?.id ?? "";
-    const primary = playback.visibility.primaryTrackId
-      && validTrackIds.has(playback.visibility.primaryTrackId)
-      ? playback.visibility.primaryTrackId
-      : fallbackPrimary;
-    const additional = playback.visibility.additionalTrackIds.filter(
-      id => id !== primary && validTrackIds.has(id),
-    );
+    const primary =
+      playback.visibility.primaryTrackId && validTrackIds.has(playback.visibility.primaryTrackId)
+        ? playback.visibility.primaryTrackId
+        : fallbackPrimary;
+    const additional = playback.visibility.additionalTrackIds.filter((id) => id !== primary && validTrackIds.has(id));
     const settings: Record<string, TrackMixState> = {};
     for (const track of this.options.tracks) {
       const persisted = playback.tracks[track.id];
@@ -278,11 +276,7 @@ export class PlaybackController {
         if (event.state !== "playing") void this.queueResumeWrite();
         return;
       case "position":
-        this.state.position = musicalPositionFromTick(
-          event.tick,
-          event.positionMs,
-          this.options.timeline,
-        );
+        this.state.position = musicalPositionFromTick(event.tick, event.positionMs, this.options.timeline);
         this.state.durationMs = event.endMs;
         this.markResumeDirty();
         this.notify();
@@ -296,9 +290,8 @@ export class PlaybackController {
   private stop(): void {
     this.options.engine.stop();
     const loop = this.activeLoop();
-    this.state.position = this.state.looping && loop
-      ? loop.start
-      : musicalPositionFromTick(0, 0, this.options.timeline);
+    this.state.position =
+      this.state.looping && loop ? loop.start : musicalPositionFromTick(0, 0, this.options.timeline);
     this.markResumeDirty();
     this.notify();
   }
@@ -314,11 +307,7 @@ export class PlaybackController {
   }
 
   private setLoopBoundary(boundary: "start" | "end", position: PlaybackState["position"]): void {
-    const snapped = snapMusicalPosition(
-      position,
-      this.state.loopDraft.snapMode,
-      this.options.timeline,
-    );
+    const snapped = snapMusicalPosition(position, this.state.loopDraft.snapMode, this.options.timeline);
     this.state.loopDraft = { ...this.state.loopDraft, [boundary]: snapped };
     this.notify();
   }
@@ -377,7 +366,7 @@ export class PlaybackController {
   private renameLoop(loopId: string, label: string): void {
     const normalized = label.trim();
     if (!normalized) throw new Error("Loop label cannot be empty");
-    this.replaceLoop(loopId, loop => ({
+    this.replaceLoop(loopId, (loop) => ({
       ...loop,
       label: normalized,
       labelSource: "user",
@@ -387,7 +376,7 @@ export class PlaybackController {
 
   private deleteLoop(loopId: string): void {
     const now = this.clock.now();
-    this.replaceLoop(loopId, loop => ({ ...loop, updatedAt: now, deletedAt: now }));
+    this.replaceLoop(loopId, (loop) => ({ ...loop, updatedAt: now, deletedAt: now }));
     if (this.state.activeLoopId === loopId) {
       delete this.state.activeLoopId;
       this.state.looping = false;
@@ -398,7 +387,7 @@ export class PlaybackController {
   }
 
   private setLoopSpeed(loopId: string, speed?: number): void {
-    this.replaceLoop(loopId, loop => {
+    this.replaceLoop(loopId, (loop) => {
       const updated = { ...loop, updatedAt: this.clock.now() };
       if (speed === undefined) {
         delete updated.speedOverride;
@@ -415,7 +404,7 @@ export class PlaybackController {
 
   private replaceLoop(loopId: string, update: (loop: LoopRegion) => LoopRegion): void {
     this.requireLoop(loopId);
-    this.state.loops = this.state.loops.map(loop => loop.id === loopId ? update(loop) : loop);
+    this.state.loops = this.state.loops.map((loop) => (loop.id === loopId ? update(loop) : loop));
     this.sidecar.practice.playback.loops = structuredClone(this.state.loops);
     this.markSidecarDirty();
     this.notify();
@@ -427,17 +416,14 @@ export class PlaybackController {
     this.state.trackState = {
       ...this.state.trackState,
       primaryVisibleTrackId: trackId,
-      additionalVisibleTrackIds: this.state.trackState.additionalVisibleTrackIds
-        .filter(id => id !== trackId),
+      additionalVisibleTrackIds: this.state.trackState.additionalVisibleTrackIds.filter((id) => id !== trackId),
       visibilityUpdatedAt: now,
     };
     this.persistVisibility(now);
   }
 
   private setAdditionalTracks(trackIds: string[]): void {
-    const unique = [...new Set(trackIds)].filter(
-      id => id !== this.state.trackState.primaryVisibleTrackId,
-    );
+    const unique = [...new Set(trackIds)].filter((id) => id !== this.state.trackState.primaryVisibleTrackId);
     for (const id of unique) this.requireTrack(id);
     const now = this.clock.now();
     this.state.trackState = {
@@ -569,17 +555,17 @@ export class PlaybackController {
   private activeLoop(): LoopRegion | undefined {
     return this.state.activeLoopId === undefined
       ? undefined
-      : this.state.loops.find(loop => loop.id === this.state.activeLoopId && !loop.deletedAt);
+      : this.state.loops.find((loop) => loop.id === this.state.activeLoopId && !loop.deletedAt);
   }
 
   private requireLoop(loopId: string): LoopRegion {
-    const loop = this.state.loops.find(item => item.id === loopId && !item.deletedAt);
+    const loop = this.state.loops.find((item) => item.id === loopId && !item.deletedAt);
     if (!loop) throw new Error(`Unknown playback loop: ${loopId}`);
     return loop;
   }
 
   private requireTrack(trackId: string): void {
-    if (!this.options.tracks.some(track => track.id === trackId)) {
+    if (!this.options.tracks.some((track) => track.id === trackId)) {
       throw new Error(`Unknown playback track: ${trackId}`);
     }
   }

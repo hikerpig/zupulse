@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  UnsupportedScoreFormatError,
-  detectScoreFormat,
-  getScoreFormatHint,
-  isSupportedScoreFile,
-} from "./format";
+import { UnsupportedScoreFormatError, detectScoreFormat, getScoreFormatHint, isSupportedScoreFile } from "./format";
 
 describe("detectScoreFormat", () => {
   it("detects supported Guitar Pro extensions case-insensitively", () => {

@@ -83,12 +83,14 @@
 ### Task 1: Playback Domain Model And Loop Rules
 
 **Files:**
+
 - Create: `web-core/src/playback/types.ts`
 - Create: `web-core/src/playback/loopRegions.ts`
 - Create: `web-core/src/playback/loopRegions.test.ts`
 - Modify: `web-core/src/index.ts`
 
 **Interfaces:**
+
 - Consumes: no runtime dependencies outside TypeScript standard APIs.
 - Produces:
   - `MusicalPosition`
@@ -190,10 +192,10 @@ describe("createLoopRegion", () => {
       cachedTimeMs: 7000,
     };
 
-    expect(() => createLoopRegion({ id: "bad", start: end, end: start, now: "2026-07-10T00:00:00Z" }))
-      .toThrow("Loop start must be before loop end");
-    expect(createLoopRegion({ id: "loop-1", start, end, now: "2026-07-10T00:00:00Z" }).label)
-      .toBe("小节 1–2");
+    expect(() => createLoopRegion({ id: "bad", start: end, end: start, now: "2026-07-10T00:00:00Z" })).toThrow(
+      "Loop start must be before loop end",
+    );
+    expect(createLoopRegion({ id: "loop-1", start, end, now: "2026-07-10T00:00:00Z" }).label).toBe("小节 1–2");
   });
 
   it("uses a loop speed override before the score speed", () => {
@@ -218,14 +220,7 @@ Expected: FAIL because `./loopRegions` and `./types` do not exist.
 Create `web-core/src/playback/types.ts` with these exact public shapes:
 
 ```ts
-export type TransportState =
-  | "idle"
-  | "loading"
-  | "ready"
-  | "playing"
-  | "paused"
-  | "stopped"
-  | "error";
+export type TransportState = "idle" | "loading" | "ready" | "playing" | "paused" | "stopped" | "error";
 
 export type LoopSnapMode = "off" | "beat" | "measure";
 
@@ -364,12 +359,7 @@ export interface PlaybackEngine {
 Create `web-core/src/playback/loopRegions.ts`. Implement the following rules without touching alphaTab:
 
 ```ts
-import type {
-  LoopRegion,
-  LoopSnapMode,
-  MusicalPosition,
-  PlaybackTimelineMap,
-} from "./types";
+import type { LoopRegion, LoopSnapMode, MusicalPosition, PlaybackTimelineMap } from "./types";
 
 export function normalizePlaybackSpeed(value: number): number {
   const clamped = Math.min(2, Math.max(0.25, value));
@@ -382,13 +372,15 @@ export function snapMusicalPosition(
   timeline: PlaybackTimelineMap,
 ): MusicalPosition {
   if (mode === "off") return position;
-  const measure = timeline.measures.find(item => item.id === position.measureId)
-    ?? timeline.measures.find(item => item.index === position.measureIndex);
+  const measure =
+    timeline.measures.find((item) => item.id === position.measureId) ??
+    timeline.measures.find((item) => item.index === position.measureIndex);
   if (!measure) return position;
   const candidates = mode === "measure" ? [measure.startTick] : measure.beatTicks;
-  const tick = candidates.reduce((best, candidate) =>
-    Math.abs(candidate - position.tick) < Math.abs(best - position.tick) ? candidate : best,
-  candidates[0] ?? measure.startTick);
+  const tick = candidates.reduce(
+    (best, candidate) => (Math.abs(candidate - position.tick) < Math.abs(best - position.tick) ? candidate : best),
+    candidates[0] ?? measure.startTick,
+  );
   const beatIndex = Math.max(0, measure.beatTicks.indexOf(tick));
   return { ...position, measureId: measure.id, measureIndex: measure.index, beatIndex, tick };
 }
@@ -428,18 +420,12 @@ export function getEffectivePlaybackSpeed(
   return normalizePlaybackSpeed(loop.speedOverride ?? scoreSpeed);
 }
 
-export function musicalPositionFromTick(
-  tick: number,
-  timeMs: number,
-  timeline: PlaybackTimelineMap,
-): MusicalPosition {
-  const measure = [...timeline.measures].reverse()
-    .find(item => item.startTick <= tick) ?? timeline.measures[0];
+export function musicalPositionFromTick(tick: number, timeMs: number, timeline: PlaybackTimelineMap): MusicalPosition {
+  const measure = [...timeline.measures].reverse().find((item) => item.startTick <= tick) ?? timeline.measures[0];
   if (!measure) {
     return { measureId: "measure-0", measureIndex: 0, beatIndex: 0, tick, cachedTimeMs: timeMs };
   }
-  const reversedIndex = [...measure.beatTicks].reverse()
-    .findIndex(beatTick => beatTick <= tick);
+  const reversedIndex = [...measure.beatTicks].reverse().findIndex((beatTick) => beatTick <= tick);
   const beatIndex = reversedIndex < 0 ? 0 : measure.beatTicks.length - 1 - reversedIndex;
   return {
     measureId: measure.id,
@@ -481,6 +467,7 @@ git commit -m "feat: add playback practice domain model"
 ### Task 2: Versioned Playback Sidecar And Merge Rules
 
 **Files:**
+
 - Create: `web-core/src/playback/playbackSidecar.ts`
 - Create: `web-core/src/playback/playbackSidecar.test.ts`
 - Modify: `web-core/src/storage/sidecar.ts`
@@ -489,6 +476,7 @@ git commit -m "feat: add playback practice domain model"
 - Modify: `web-core/src/index.ts`
 
 **Interfaces:**
+
 - Consumes: `LoopRegion`, `TrackPlaybackState`, `ScoreIdentity`.
 - Produces:
   - `PracticePlaybackSidecar`
@@ -503,10 +491,7 @@ Create tests that prove all persistence decisions:
 
 ```ts
 import { describe, expect, it } from "vitest";
-import {
-  createDefaultPlaybackSidecar,
-  mergePlaybackSidecar,
-} from "./playbackSidecar";
+import { createDefaultPlaybackSidecar, mergePlaybackSidecar } from "./playbackSidecar";
 
 describe("playback sidecar", () => {
   it("does not contain transport, resume position, or solo", () => {
@@ -522,12 +507,13 @@ describe("playback sidecar", () => {
     const local = createDefaultPlaybackSidecar("2026-07-10T00:00:00Z");
     const remote = createDefaultPlaybackSidecar("2026-07-10T00:00:00Z");
     local.loops = [loop("loop-1", "2026-07-10T01:00:00Z")];
-    remote.loops = [{
-      ...loop("loop-1", "2026-07-10T02:00:00Z"),
-      deletedAt: "2026-07-10T02:00:00Z",
-    }];
-    expect(mergePlaybackSidecar(local, remote).loops[0]?.deletedAt)
-      .toBe("2026-07-10T02:00:00Z");
+    remote.loops = [
+      {
+        ...loop("loop-1", "2026-07-10T02:00:00Z"),
+        deletedAt: "2026-07-10T02:00:00Z",
+      },
+    ];
+    expect(mergePlaybackSidecar(local, remote).loops[0]?.deletedAt).toBe("2026-07-10T02:00:00Z");
   });
 });
 ```
@@ -616,7 +602,7 @@ export function mergePlaybackSidecar(
   local: PracticePlaybackSidecar,
   remote: PracticePlaybackSidecar,
 ): PracticePlaybackSidecar {
-  const loopMap = new Map(local.loops.map(loop => [loop.id, loop]));
+  const loopMap = new Map(local.loops.map((loop) => [loop.id, loop]));
   for (const loop of remote.loops) {
     const current = loopMap.get(loop.id);
     if (!current || loop.updatedAt > current.updatedAt) loopMap.set(loop.id, loop);
@@ -626,8 +612,14 @@ export function mergePlaybackSidecar(
   for (const id of trackIds) {
     const left = local.tracks[id];
     const right = remote.tracks[id];
-    if (!left) { if (right) tracks[id] = right; continue; }
-    if (!right) { tracks[id] = left; continue; }
+    if (!left) {
+      if (right) tracks[id] = right;
+      continue;
+    }
+    if (!right) {
+      tracks[id] = left;
+      continue;
+    }
     tracks[id] = {
       muted: right.muteUpdatedAt > left.muteUpdatedAt ? right.muted : left.muted,
       muteUpdatedAt: right.muteUpdatedAt > left.muteUpdatedAt ? right.muteUpdatedAt : left.muteUpdatedAt,
@@ -636,11 +628,9 @@ export function mergePlaybackSidecar(
     };
   }
   return {
-    scoreSpeed: remote.scoreSpeed.updatedAt > local.scoreSpeed.updatedAt
-      ? remote.scoreSpeed : local.scoreSpeed,
+    scoreSpeed: remote.scoreSpeed.updatedAt > local.scoreSpeed.updatedAt ? remote.scoreSpeed : local.scoreSpeed,
     loops: [...loopMap.values()].sort((a, b) => a.start.tick - b.start.tick),
-    visibility: remote.visibility.updatedAt > local.visibility.updatedAt
-      ? remote.visibility : local.visibility,
+    visibility: remote.visibility.updatedAt > local.visibility.updatedAt ? remote.visibility : local.visibility,
     tracks,
   };
 }
@@ -691,6 +681,7 @@ git commit -m "feat: persist playback practice settings in sidecar"
 ### Task 3: Bridge Playback Persistence And Local Resume
 
 **Files:**
+
 - Create: `web-core/src/playback/playbackPersistence.ts`
 - Create: `web-core/src/playback/playbackPersistence.test.ts`
 - Modify: `web-core/src/bridge/types.ts`
@@ -699,6 +690,7 @@ git commit -m "feat: persist playback practice settings in sidecar"
 - Modify: `web-core/src/index.ts`
 
 **Interfaces:**
+
 - Consumes: `ScoreIdentity`, `SidecarPayload`, `MusicalPosition`, generic `rpc<T>()` bridge capability.
 - Produces:
   - `LocalPlaybackResume`
@@ -762,11 +754,7 @@ Create `web-core/src/playback/playbackPersistence.ts`:
 ```ts
 import type { ScoreIdentity } from "../score/types";
 import type { SidecarPayload } from "../storage/sidecar";
-import type {
-  LocalPlaybackResume,
-  ReadPlaybackResumeResponse,
-  ReadSidecarResponse,
-} from "../bridge/types";
+import type { LocalPlaybackResume, ReadPlaybackResumeResponse, ReadSidecarResponse } from "../bridge/types";
 
 export interface RpcBridge {
   rpc<TResponse>(type: string, payload: unknown): Promise<TResponse>;
@@ -827,6 +815,7 @@ git commit -m "feat: add bridge playback persistence"
 ### Task 4: AlphaTab Playback Engine Adapter
 
 **Files:**
+
 - Create: `web-core/src/playback/alphaTabPlaybackAdapter.ts`
 - Create: `web-core/src/playback/alphaTabPlaybackAdapter.test.ts`
 - Modify: `web-core/src/gp/alphaTabBrowser.ts`
@@ -834,6 +823,7 @@ git commit -m "feat: add bridge playback persistence"
 - Modify: `web-core/src/index.ts`
 
 **Interfaces:**
+
 - Consumes: `AlphaTabApiLike`, `PlaybackEngine`, alphaTab public player and track APIs.
 - Produces:
   - `AlphaTabPlaybackAdapter implements PlaybackEngine`
@@ -887,7 +877,6 @@ export type AlphaTabBrowserScoreLike = {
     calculateDuration(respectAnacrusis?: boolean): number;
   }>;
 };
-
 ```
 
 Add the remaining API members:
@@ -972,11 +961,13 @@ git commit -m "feat: adapt alphatab playback engine"
 ### Task 5: Playback Controller State Machine
 
 **Files:**
+
 - Create: `web-core/src/playback/playbackController.ts`
 - Create: `web-core/src/playback/playbackController.test.ts`
 - Modify: `web-core/src/index.ts`
 
 **Interfaces:**
+
 - Consumes: `PlaybackEngine`, `PlaybackPersistence`, `SidecarPayload`, `PlaybackTimelineMap`, `PlaybackTrack`, `ScoreIdentity`.
 - Produces:
   - `PlaybackController`
@@ -1133,6 +1124,7 @@ git commit -m "feat: add playback controller state machine"
 ### Task 6: Offline AlphaTab And SoundFont Assets
 
 **Files:**
+
 - Modify: `web-demo/rspack.config.mjs`
 - Create: `web-demo/scripts/verify-assets.mjs`
 - Modify: `web-demo/package.json`
@@ -1140,6 +1132,7 @@ git commit -m "feat: add playback controller state machine"
 - Create: `web-demo/src/playbackAssets.test.ts`
 
 **Interfaces:**
+
 - Consumes: alphaTab distribution files from the locked pnpm dependency.
 - Produces:
   - `/alphatab/alphaTab.mjs`
@@ -1201,7 +1194,7 @@ new CopyRspackPlugin({
       to: "alphatab/soundfont/LICENSE",
     },
   ],
-})
+});
 ```
 
 Keep the existing dev-server static mapping so development and production use identical URLs.
@@ -1237,12 +1230,14 @@ git commit -m "build: bundle offline alphatab playback assets"
 ### Task 7: Playback Presenter And Workbench Markup
 
 **Files:**
+
 - Create: `web-demo/src/playbackPresenter.ts`
 - Create: `web-demo/src/playbackPresenter.test.ts`
 - Modify: `web-demo/index.html`
 - Modify: `web-demo/src/styles.css`
 
 **Interfaces:**
+
 - Consumes: `PlaybackState`.
 - Produces:
   - `PlaybackViewModel`
@@ -1351,6 +1346,7 @@ git commit -m "feat: add playback practice workbench ui"
 ### Task 8: Bind GP Loading, Controller, And UI Commands
 
 **Files:**
+
 - Create: `web-demo/src/playbackControls.ts`
 - Create: `web-demo/src/playbackControls.test.ts`
 - Modify: `web-demo/src/demoApp.ts`
@@ -1359,6 +1355,7 @@ git commit -m "feat: add playback practice workbench ui"
 - Modify: `web-demo/src/gpDemoPresenter.test.ts`
 
 **Interfaces:**
+
 - Consumes: `PlaybackController`, `AlphaTabPlaybackAdapter`, `BridgePlaybackPersistence`, `MockNativeBridge`, `presentPlayback`, `ALPHATAB_ASSETS`.
 - Produces:
   - `mountPlaybackControls(document, controller, timeline): () => void`
@@ -1463,11 +1460,13 @@ git commit -m "feat: connect GP playback practice controls"
 ### Task 9: Documentation And Real-File Acceptance
 
 **Files:**
+
 - Modify: `docs/architecture/browser-demo-alphatab-dom-rendering.md`
 - Modify: `docs/architecture/implementation-foundation.md`
 - Create: `docs/architecture/gp-playback-practice-acceptance.md`
 
 **Interfaces:**
+
 - Consumes: completed Browser Demo behavior and build commands.
 - Produces: reproducible build/try instructions and a recorded real-file acceptance matrix.
 

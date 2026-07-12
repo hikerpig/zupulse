@@ -41,4 +41,3 @@ MIDI 导入与处理采用三层模型：
 - 每个 Analysis Revision 必须记录输入内容身份、算法版本和分析参数。
 - User Corrections 必须能追溯到其目标 revision 或稳定的原始音乐位置。
 - 原始 MIDI 文件仍保持只读；练习数据和修正写入 sidecar 或本地存储。
-

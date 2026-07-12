@@ -19,9 +19,10 @@ export default {
       /^\/(?:forge\.config\.mjs|playwright\.config\.ts|rspack\.config\.mjs|tsconfig\.json)$/,
     ],
   },
-  makers: process.platform === "darwin"
-    ? [new MakerZIP({}, ["darwin"])]
-    : process.platform === "win32"
-      ? [new MakerSquirrel({})]
-      : [],
+  makers:
+    process.platform === "darwin"
+      ? [new MakerZIP({}, ["darwin"])]
+      : process.platform === "win32"
+        ? [new MakerSquirrel({})]
+        : [],
 };

@@ -9,10 +9,7 @@
       "foreground": "#ffffff",
       "radius": "--radius-sm",
       "style": "平面高对比主信号",
-      "notes": [
-        "主按钮始终使用橙红主色",
-        "不允许用辅助 accent 替代主 CTA"
-      ]
+      "notes": ["主按钮始终使用橙红主色", "不允许用辅助 accent 替代主 CTA"]
     },
     "secondaryButton": {
       "role": "次级动作",
@@ -29,10 +26,7 @@
       "border": "--color-border",
       "shadow": "--shadow-1",
       "style": "屏幕结构块",
-      "notes": [
-        "结构面保持离白与炭灰关系",
-        "辅助 accent 只能出现在细线、小点、刻度或标签中"
-      ]
+      "notes": ["结构面保持离白与炭灰关系", "辅助 accent 只能出现在细线、小点、刻度或标签中"]
     },
     "statusChip": {
       "ready": "--color-success",
@@ -40,10 +34,7 @@
       "error": "--color-error",
       "info": "--color-info",
       "neutral": "--color-on-surface-variant",
-      "notes": [
-        "状态芯片使用语义色体系",
-        "signal pink 和 signal purple 不承担状态语义"
-      ]
+      "notes": ["状态芯片使用语义色体系", "signal pink 和 signal purple 不承担状态语义"]
     },
     "trackRow": {
       "background": "--surface-container-low",
@@ -62,44 +53,23 @@
   },
   "codedAccents": {
     "principle": "辅助色只用于 coded rhythm 与分类提示，不替代主橙红。",
-    "priorityModel": [
-      "primary-orange-first",
-      "semantic-status-second",
-      "coded-accents-third"
-    ],
+    "priorityModel": ["primary-orange-first", "semantic-status-second", "coded-accents-third"],
     "palette": {
       "blue": {
         "token": "--color-signal-blue",
-        "usage": [
-          "数据选择",
-          "技术提示",
-          "次级仪表",
-          "链接型编码"
-        ]
+        "usage": ["数据选择", "技术提示", "次级仪表", "链接型编码"]
       },
       "pink": {
         "token": "--color-signal-pink",
-        "usage": [
-          "轨道家族提示",
-          "乐句层编码",
-          "合成器分组"
-        ]
+        "usage": ["轨道家族提示", "乐句层编码", "合成器分组"]
       },
       "purple": {
         "token": "--color-signal-purple",
-        "usage": [
-          "效果层",
-          "调制提示",
-          "并行结构分层"
-        ]
+        "usage": ["效果层", "调制提示", "并行结构分层"]
       },
       "yellow": {
         "token": "--color-signal-yellow",
-        "usage": [
-          "节拍提示",
-          "定位刻度",
-          "轻量时间提醒"
-        ]
+        "usage": ["节拍提示", "定位刻度", "轻量时间提醒"]
       }
     },
     "constraints": [

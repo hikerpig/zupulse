@@ -80,10 +80,10 @@ describe("createLoopRegion", () => {
       cachedTimeMs: 7000,
     };
 
-    expect(() => createLoopRegion({ id: "bad", start: end, end: start, now: "2026-07-10T00:00:00Z" }))
-      .toThrow("Loop start must be before loop end");
-    expect(createLoopRegion({ id: "loop-1", start, end, now: "2026-07-10T00:00:00Z" }).label)
-      .toBe("小节 1–2");
+    expect(() => createLoopRegion({ id: "bad", start: end, end: start, now: "2026-07-10T00:00:00Z" })).toThrow(
+      "Loop start must be before loop end",
+    );
+    expect(createLoopRegion({ id: "loop-1", start, end, now: "2026-07-10T00:00:00Z" }).label).toBe("小节 1–2");
   });
 
   it("uses a loop speed override before the score speed", () => {

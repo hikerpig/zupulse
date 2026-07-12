@@ -8,8 +8,16 @@ for (let i = 0; i < 30; i++) {
   const bytes = await readFile(file);
   const source = new TextDecoder().decode(bytes);
   if (!/<score-(partwise|timewise)\b/.test(source)) throw new Error("Unsupported benchmark fixture");
-  source.match(/<note\b/g); source.match(/<part\b/g); source.match(/<measure\b/g);
+  source.match(/<note\b/g);
+  source.match(/<part\b/g);
+  source.match(/<measure\b/g);
   samples.push(performance.now() - start);
 }
 samples.sort((a, b) => a - b);
-console.log(JSON.stringify({ file, samples: samples.length, preflightP95Ms: Number(samples[Math.ceil(samples.length * .95) - 1].toFixed(2)) }, null, 2));
+console.log(
+  JSON.stringify(
+    { file, samples: samples.length, preflightP95Ms: Number(samples[Math.ceil(samples.length * 0.95) - 1].toFixed(2)) },
+    null,
+    2,
+  ),
+);

@@ -26,12 +26,18 @@ const definitions: Record<ImportDiagnosticCode, Omit<ImportDiagnostic, "code" | 
   "core-structure-mismatch": { severity: "error", summary: "导入后的核心音乐结构与源文件不一致。" },
 };
 
-export function createImportDiagnostic(code: ImportDiagnosticCode, context?: ImportDiagnostic["context"]): ImportDiagnostic {
+export function createImportDiagnostic(
+  code: ImportDiagnosticCode,
+  context?: ImportDiagnostic["context"],
+): ImportDiagnostic {
   return context === undefined ? { code, ...definitions[code] } : { code, ...definitions[code], context };
 }
 
 export class ImportPreflightError extends Error {
-  constructor(public readonly code: ImportDiagnosticCode, message = code) {
+  constructor(
+    public readonly code: ImportDiagnosticCode,
+    message = code,
+  ) {
     super(message);
     this.name = "ImportPreflightError";
   }

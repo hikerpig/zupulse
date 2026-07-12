@@ -81,6 +81,7 @@
 ## Task 1: TypeScript Web Core Workspace
 
 **Files:**
+
 - Create: `package.json`
 - Create: `tsconfig.json`
 - Create: `web-core/package.json`
@@ -89,6 +90,7 @@
 - Test: `web-core/src/index.test.ts`
 
 **Interfaces:**
+
 - Consumes: 无。
 - Produces:
   - `const WEB_CORE_VERSION: string`
@@ -123,9 +125,7 @@ Create `package.json`:
     "typecheck": "tsc -b",
     "check": "pnpm typecheck && pnpm test"
   },
-  "workspaces": [
-    "web-core"
-  ],
+  "workspaces": ["web-core"],
   "devDependencies": {
     "@types/node": "^20.14.0",
     "typescript": "^5.5.0",
@@ -173,14 +173,9 @@ Create `web-core/tsconfig.json`:
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "skipLibCheck": true,
-    "types": [
-      "node",
-      "vitest"
-    ]
+    "types": ["node", "vitest"]
   },
-  "include": [
-    "src/**/*.ts"
-  ]
+  "include": ["src/**/*.ts"]
 }
 ```
 
@@ -223,12 +218,14 @@ git commit -m "chore: scaffold web core workspace"
 ## Task 2: Score Types And Format Detection
 
 **Files:**
+
 - Create: `web-core/src/score/types.ts`
 - Create: `web-core/src/score/format.ts`
 - Modify: `web-core/src/index.ts`
 - Test: `web-core/src/score/format.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `WEB_CORE_VERSION: string`
 - Produces:
@@ -244,11 +241,7 @@ Create `web-core/src/score/format.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
-import {
-  UnsupportedScoreFormatError,
-  detectScoreFormat,
-  isSupportedScoreFile,
-} from "./format";
+import { UnsupportedScoreFormatError, detectScoreFormat, isSupportedScoreFile } from "./format";
 
 describe("detectScoreFormat", () => {
   it("detects supported Guitar Pro extensions case-insensitively", () => {
@@ -296,14 +289,7 @@ Create `web-core/src/score/types.ts`:
 ```ts
 export type ScoreFormat = "gp" | "midi";
 
-export type SupportedExtension =
-  | ".gp3"
-  | ".gp4"
-  | ".gp5"
-  | ".gpx"
-  | ".gp"
-  | ".mid"
-  | ".midi";
+export type SupportedExtension = ".gp3" | ".gp4" | ".gp5" | ".gpx" | ".gp" | ".mid" | ".midi";
 
 export type ScoreIdentity = {
   contentHash: string;
@@ -499,11 +485,13 @@ git commit -m "feat: add score format detection"
 ## Task 3: Score Identity From Content Fingerprint
 
 **Files:**
+
 - Create: `web-core/src/score/identity.ts`
 - Modify: `web-core/src/index.ts`
 - Test: `web-core/src/score/identity.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `detectScoreFormat(fileName: string): ScoreFormat`
   - `type ScoreIdentity`
@@ -647,12 +635,14 @@ git commit -m "feat: create score identity from content hash"
 ## Task 4: Bridge API Types And Mock Native Bridge
 
 **Files:**
+
 - Create: `web-core/src/bridge/types.ts`
 - Create: `web-core/src/bridge/mockNativeBridge.ts`
 - Modify: `web-core/src/index.ts`
 - Test: `web-core/src/bridge/mockNativeBridge.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `type ScoreIdentity`
 - Produces:
@@ -838,11 +828,7 @@ export type SyncStateEvent = {
 
 export type ViewerInteractionEvent = {
   action:
-    | "section-created"
-    | "loop-changed"
-    | "annotation-updated"
-    | "midi-quantization-updated"
-    | "midi-measure-corrected";
+    "section-created" | "loop-changed" | "annotation-updated" | "midi-quantization-updated" | "midi-measure-corrected";
   identity: ScoreIdentity;
   payload: unknown;
 };
@@ -948,6 +934,7 @@ git commit -m "feat: define bridge api contract"
 ## Task 5: Sidecar Codec And SQLite Schema Contract
 
 **Files:**
+
 - Create: `web-core/src/storage/sidecar.ts`
 - Create: `web-core/src/storage/sqliteSchema.ts`
 - Modify: `web-core/src/index.ts`
@@ -955,6 +942,7 @@ git commit -m "feat: define bridge api contract"
 - Test: `web-core/src/storage/sqliteSchema.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `type ScoreIdentity`
   - `type Section`
@@ -1227,11 +1215,13 @@ git commit -m "feat: add sidecar and storage schema contracts"
 ## Task 6: Viewer Session Vertical Slice
 
 **Files:**
+
 - Create: `web-core/src/score/session.ts`
 - Modify: `web-core/src/index.ts`
 - Test: `web-core/src/score/session.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `createScoreIdentity(input): Promise<ScoreIdentity>`
   - `createDefaultSidecar(identity: ScoreIdentity): SidecarPayload`
@@ -1398,12 +1388,14 @@ git commit -m "feat: add viewer session foundation"
 ## Task 7: Mock Open File Flow Through Bridge
 
 **Files:**
+
 - Modify: `web-core/src/bridge/mockNativeBridge.ts`
 - Create: `web-core/src/bridge/openFileFlow.ts`
 - Modify: `web-core/src/index.ts`
 - Test: `web-core/src/bridge/openFileFlow.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `MockNativeBridge.rpc<TResponse>(type: string, payload: unknown): Promise<TResponse>`
   - `createViewerSession(input): Promise<ViewerSession>`
@@ -1612,11 +1604,13 @@ git commit -m "feat: add mock open file bridge flow"
 ## Task 8: Architecture Foundation Documentation Check
 
 **Files:**
+
 - Create: `docs/architecture/implementation-foundation.md`
 - Modify: `docs/architecture/glossary.md`
 - Test: `docs/superpowers/plans/2026-07-07-architecture-foundation.md`
 
 **Interfaces:**
+
 - Consumes:
   - `WEB_CORE_VERSION`
   - Score Model types from `web-core/src/score/types.ts`
@@ -1629,7 +1623,7 @@ git commit -m "feat: add mock open file bridge flow"
 
 Create `docs/architecture/implementation-foundation.md`:
 
-```markdown
+````markdown
 # 架构基础实现说明
 
 ## 范围
@@ -1667,6 +1661,7 @@ Create `docs/architecture/implementation-foundation.md`:
 ```bash
 pnpm check
 ```
+````
 
 预期结果：
 
@@ -1682,7 +1677,8 @@ pnpm check
 - SwiftUI / WKWebView Apple Shell。
 - CloudKit Sync Adapter。
 - Playback Engine + Web Audio MVP。
-```
+
+````
 
 - [ ] **Step 2: Update glossary with implementation terms**
 
@@ -1701,7 +1697,7 @@ Web Core 启动或打开文件前询问 Native Shell 支持哪些能力的过程
 ## MockNativeBridge
 
 Web Core 测试用 Native Bridge。它模拟 capability discovery、文件打开、文件字节读取和事件记录，不代表真实平台实现。
-```
+````
 
 - [ ] **Step 3: Run documentation and placeholder checks**
 

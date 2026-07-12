@@ -48,4 +48,3 @@ MusicXML 导入后，alphaTab `Score` 是当前 Viewer Session 中渲染与播�
 ## 与既有决策的关系
 
 本 ADR 细化 ADR 0006 对 MusicXML 的模型厚度和所有权解释，不取消共享 Score Model。
-

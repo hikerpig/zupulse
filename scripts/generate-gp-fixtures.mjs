@@ -2,9 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { exporter, importer, Settings } from "@coderline/alphatab";
 
 const settings = new Settings();
-const source = new Uint8Array(
-  await readFile("test-fixtures/gp/Treasure.gp5"),
-);
+const source = new Uint8Array(await readFile("test-fixtures/gp/Treasure.gp5"));
 const score = importer.ScoreLoader.loadScoreFromBytes(source, settings);
 score.title = "桌面验收谱";
 if (!score.tracks[0]) {

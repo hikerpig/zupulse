@@ -16,10 +16,7 @@ export async function openGpThroughBridge(input: {
   loader?: AlphaTabScoreLoader;
 }): Promise<GpOpenResult | undefined> {
   const handshakeRequest = createBridgeRequest("app.handshake", "gp-handshake", input.handshake);
-  const handshake = parseBridgeResponse(
-    handshakeRequest.type,
-    await input.bridge.request(handshakeRequest),
-  );
+  const handshake = parseBridgeResponse(handshakeRequest.type, await input.bridge.request(handshakeRequest));
   const openRequest = createBridgeRequest("file.open", "gp-open", {});
   const opened = parseBridgeResponse(openRequest.type, await input.bridge.request(openRequest));
   if (opened.status === "cancelled") return undefined;

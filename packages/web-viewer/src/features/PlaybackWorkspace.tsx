@@ -1,8 +1,8 @@
-import { musicalPositionFromTick, type PlaybackCommand } from '@tab-viewer/web-core';
-import { useState, useSyncExternalStore, type ReactNode } from 'react';
-import type { ViewerSessionHandle } from '../host';
-import { presentPlayback } from '../playbackPresenter';
-import { Slider } from '../components/Slider';
+import { musicalPositionFromTick, type PlaybackCommand } from "@tab-viewer/web-core";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
+import type { ViewerSessionHandle } from "../host";
+import { presentPlayback } from "../playbackPresenter";
+import { Slider } from "../components/Slider";
 
 export function PlaybackWorkspace({
   session,
@@ -14,7 +14,7 @@ export function PlaybackWorkspace({
   return <PlaybackLayout playback={session?.playback}>{children}</PlaybackLayout>;
 }
 
-function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle['playback']; children: ReactNode }) {
+function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle["playback"]; children: ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const state = useSyncExternalStore(
     (listener) => playback?.subscribe(() => listener()) ?? (() => undefined),
@@ -38,11 +38,11 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
             className="primary-button"
             type="button"
             disabled={view.playDisabled}
-            onClick={() => dispatch({ type: 'toggle-playback' })}
+            onClick={() => dispatch({ type: "toggle-playback" })}
           >
             {view.playLabel}
           </button>
-          <button type="button" disabled={view.stopDisabled} onClick={() => dispatch({ type: 'stop' })}>
+          <button type="button" disabled={view.stopDisabled} onClick={() => dispatch({ type: "stop" })}>
             停止
           </button>
         </div>
@@ -54,7 +54,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
             label="播放进度"
             max={1000}
             value={Math.round(view.progress * 1000)}
-            onValueChange={(value) => dispatch({ type: 'seek', position: position(value / 1000) })}
+            onValueChange={(value) => dispatch({ type: "seek", position: position(value / 1000) })}
           />
         </div>
         <div className="transport-tools">
@@ -66,13 +66,13 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
               max={200}
               step={5}
               value={view.speedPercent}
-              onValueChange={(value) => dispatch({ type: 'set-score-speed', speed: value / 100 })}
+              onValueChange={(value) => dispatch({ type: "set-score-speed", speed: value / 100 })}
             />
             <output>{view.speedPercent}%</output>
           </label>
           <p className={`status-chip ${audioTone(state.soundFont)}`}>{audioText(state.soundFont)}</p>
           {view.soundFontRetryVisible && (
-            <button type="button" onClick={() => dispatch({ type: 'retry-soundfont' })}>
+            <button type="button" onClick={() => dispatch({ type: "retry-soundfont" })}>
               重试音频
             </button>
           )}
@@ -104,7 +104,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                   <input
                     type="checkbox"
                     checked={view.looping}
-                    onChange={(event) => dispatch({ type: 'set-loop-enabled', enabled: event.currentTarget.checked })}
+                    onChange={(event) => dispatch({ type: "set-loop-enabled", enabled: event.currentTarget.checked })}
                   />
                   <span>启用循环</span>
                 </label>
@@ -115,8 +115,8 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                     type="button"
                     onClick={() =>
                       dispatch({
-                        type: 'set-loop-boundary',
-                        boundary: 'start',
+                        type: "set-loop-boundary",
+                        boundary: "start",
                         position: state.position,
                       })
                     }
@@ -127,15 +127,15 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                     type="button"
                     onClick={() =>
                       dispatch({
-                        type: 'set-loop-boundary',
-                        boundary: 'end',
+                        type: "set-loop-boundary",
+                        boundary: "end",
                         position: state.position,
                       })
                     }
                   >
                     设为 B
                   </button>
-                  <button type="button" onClick={() => dispatch({ type: 'save-loop' })}>
+                  <button type="button" onClick={() => dispatch({ type: "save-loop" })}>
                     保存区间
                   </button>
                 </div>
@@ -145,7 +145,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                     value={view.loopSnapMode}
                     onChange={(event) =>
                       dispatch({
-                        type: 'set-loop-snap',
+                        type: "set-loop-snap",
                         mode: event.currentTarget.value as typeof view.loopSnapMode,
                       })
                     }
@@ -163,8 +163,8 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                     value={loopValue(state.loopDraft.start?.tick, playback.timeline.durationTicks)}
                     onValueChange={(value) =>
                       dispatch({
-                        type: 'set-loop-boundary',
-                        boundary: 'start',
+                        type: "set-loop-boundary",
+                        boundary: "start",
                         position: position(value / 1000),
                       })
                     }
@@ -178,8 +178,8 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                     value={loopValue(state.loopDraft.end?.tick, playback.timeline.durationTicks)}
                     onValueChange={(value) =>
                       dispatch({
-                        type: 'set-loop-boundary',
-                        boundary: 'end',
+                        type: "set-loop-boundary",
+                        boundary: "end",
                         position: position(value / 1000),
                       })
                     }
@@ -188,15 +188,15 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                 <div className="item-list">
                   {view.loops.map((loop) => (
                     <div className="loop-row" key={loop.id}>
-                      <button type="button" onClick={() => dispatch({ type: 'select-loop', loopId: loop.id })}>
-                        {loop.selected ? '当前' : '选择'}
+                      <button type="button" onClick={() => dispatch({ type: "select-loop", loopId: loop.id })}>
+                        {loop.selected ? "当前" : "选择"}
                       </button>
                       <input
                         aria-label="循环名称"
                         value={loop.label}
                         onChange={(event) =>
                           dispatch({
-                            type: 'rename-loop',
+                            type: "rename-loop",
                             loopId: loop.id,
                             label: event.currentTarget.value,
                           })
@@ -208,12 +208,12 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                         min="25"
                         max="200"
                         step="5"
-                        value={loop.speedPercent ?? ''}
+                        value={loop.speedPercent ?? ""}
                         placeholder="默认"
                         aria-label="循环速度百分比"
                         onChange={(event) => dispatch(loopSpeedCommand(loop.id, event.currentTarget.value))}
                       />
-                      <button type="button" onClick={() => dispatch({ type: 'delete-loop', loopId: loop.id })}>
+                      <button type="button" onClick={() => dispatch({ type: "delete-loop", loopId: loop.id })}>
                         删除
                       </button>
                     </div>
@@ -234,14 +234,14 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                       type="radio"
                       name="primary-track"
                       checked={track.primary}
-                      onChange={() => dispatch({ type: 'set-primary-track', trackId: track.id })}
+                      onChange={() => dispatch({ type: "set-primary-track", trackId: track.id })}
                     />
                     <Check
                       label="显示"
                       checked={track.additional}
                       onChange={(checked) =>
                         dispatch({
-                          type: 'set-additional-tracks',
+                          type: "set-additional-tracks",
                           trackIds: checked
                             ? [...new Set([...state.trackState.additionalVisibleTrackIds, track.id])]
                             : state.trackState.additionalVisibleTrackIds.filter((id) => id !== track.id),
@@ -251,12 +251,12 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                     <Check
                       label="静音"
                       checked={track.muted}
-                      onChange={(muted) => dispatch({ type: 'set-track-mute', trackId: track.id, muted })}
+                      onChange={(muted) => dispatch({ type: "set-track-mute", trackId: track.id, muted })}
                     />
                     <Check
                       label="独奏"
                       checked={track.solo}
-                      onChange={(solo) => dispatch({ type: 'set-track-solo', trackId: track.id, solo })}
+                      onChange={(solo) => dispatch({ type: "set-track-solo", trackId: track.id, solo })}
                     />
                     <input
                       type="range"
@@ -266,7 +266,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                       aria-label={`${track.name} 音量`}
                       onChange={(event) =>
                         dispatch({
-                          type: 'set-track-volume',
+                          type: "set-track-volume",
                           trackId: track.id,
                           volume: Number(event.currentTarget.value) / 100,
                         })
@@ -290,13 +290,13 @@ function Check({
   label,
   checked,
   onChange,
-  type = 'checkbox',
+  type = "checkbox",
   name,
 }: {
   label: string;
   checked: boolean;
   onChange(value: boolean): void;
-  type?: 'checkbox' | 'radio';
+  type?: "checkbox" | "radio";
   name?: string;
 }) {
   return (
@@ -368,21 +368,21 @@ function DrawerToggle({ open, onClick }: { open: boolean; onClick(): void }) {
       aria-expanded={open}
       onClick={onClick}
     >
-      {open ? '收起设置' : '练习设置'}
+      {open ? "收起设置" : "练习设置"}
     </button>
   );
 }
 
-function audioText(soundFont: 'idle' | 'loading' | 'ready' | 'error') {
-  return soundFont === 'ready' ? '音频已就绪' : soundFont === 'error' ? '音频初始化失败' : '音频准备中';
+function audioText(soundFont: "idle" | "loading" | "ready" | "error") {
+  return soundFont === "ready" ? "音频已就绪" : soundFont === "error" ? "音频初始化失败" : "音频准备中";
 }
-function audioTone(soundFont: 'idle' | 'loading' | 'ready' | 'error') {
-  return soundFont === 'ready' ? 'ready' : soundFont === 'error' ? 'error' : 'subtle';
+function audioTone(soundFont: "idle" | "loading" | "ready" | "error") {
+  return soundFont === "ready" ? "ready" : soundFont === "error" ? "error" : "subtle";
 }
 function loopSpeedCommand(loopId: string, value: string): PlaybackCommand {
-  return value === ''
-    ? { type: 'set-loop-speed', loopId }
-    : { type: 'set-loop-speed', loopId, speed: Number(value) / 100 };
+  return value === ""
+    ? { type: "set-loop-speed", loopId }
+    : { type: "set-loop-speed", loopId, speed: Number(value) / 100 };
 }
 
 function loopValue(tick: number | undefined, durationTicks: number): number {

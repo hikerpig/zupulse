@@ -1,15 +1,15 @@
-import { readFile } from 'node:fs/promises';
-import { describe, expect, it } from 'vitest';
+import { readFile } from "node:fs/promises";
+import { describe, expect, it } from "vitest";
 
-describe('alphaTab playback cursor styles', () => {
-  it('does not load stylesheets that violate the offline CSP', async () => {
-    const css = await readFile(new URL('./styles.css', import.meta.url), 'utf8');
+describe("alphaTab playback cursor styles", () => {
+  it("does not load stylesheets that violate the offline CSP", async () => {
+    const css = await readFile(new URL("./styles.css", import.meta.url), "utf8");
 
     expect(css).not.toMatch(/@import\s+url\(['"]?https?:\/\//);
   });
 
-  it('makes cursors, played elements, and selections visible', async () => {
-    const css = await readFile(new URL('./styles.css', import.meta.url), 'utf8');
+  it("makes cursors, played elements, and selections visible", async () => {
+    const css = await readFile(new URL("./styles.css", import.meta.url), "utf8");
 
     expect(css).toMatch(/\.at-cursor-bar\s*{[^}]*background:/s);
     expect(css).toMatch(/\.at-cursor-beat\s*{[^}]*width:\s*3px;[^}]*background:/s);
@@ -17,8 +17,8 @@ describe('alphaTab playback cursor styles', () => {
     expect(css).toMatch(/\.at-selection div\s*{[^}]*background:/s);
   });
 
-  it('contains score scrolling within the desktop viewport and restores mobile document flow', async () => {
-    const css = await readFile(new URL('./styles.css', import.meta.url), 'utf8');
+  it("contains score scrolling within the desktop viewport and restores mobile document flow", async () => {
+    const css = await readFile(new URL("./styles.css", import.meta.url), "utf8");
 
     expect(css).toMatch(/\.app-shell\s*{[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden;/s);
     expect(css).toMatch(/\.workspace\s*{[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/s);

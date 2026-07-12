@@ -92,27 +92,17 @@ export class MockNativeBridge {
       }
       case "sidecar.read": {
         const saved = this.sidecars.get(request.payload.identity.contentHash);
-        return parseBridgeResponse(request.type, saved === undefined
-          ? {}
-          : { payload: structuredClone(saved) });
+        return parseBridgeResponse(request.type, saved === undefined ? {} : { payload: structuredClone(saved) });
       }
       case "sidecar.write":
-        this.sidecars.set(
-          request.payload.identity.contentHash,
-          structuredClone(request.payload.payload),
-        );
+        this.sidecars.set(request.payload.identity.contentHash, structuredClone(request.payload.payload));
         return parseBridgeResponse(request.type, {});
       case "playbackResume.read": {
         const saved = this.playbackResumes.get(request.payload.identity.contentHash);
-        return parseBridgeResponse(request.type, saved === undefined
-          ? {}
-          : { resume: structuredClone(saved) });
+        return parseBridgeResponse(request.type, saved === undefined ? {} : { resume: structuredClone(saved) });
       }
       case "playbackResume.write":
-        this.playbackResumes.set(
-          request.payload.identity.contentHash,
-          structuredClone(request.payload.resume),
-        );
+        this.playbackResumes.set(request.payload.identity.contentHash, structuredClone(request.payload.resume));
         return parseBridgeResponse(request.type, {});
       case "app.lifecycleAck":
       case "diagnostics.write":

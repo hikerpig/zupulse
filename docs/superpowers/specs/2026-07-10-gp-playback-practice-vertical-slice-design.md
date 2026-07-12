@@ -127,13 +127,16 @@ type TrackPlaybackState = {
   primaryVisibleTrackId: string;
   additionalVisibleTrackIds: string[];
   visibilityUpdatedAt: string;
-  settings: Record<string, {
-    muted: boolean;
-    solo: boolean;
-    volume: number;
-    muteUpdatedAt: string;
-    volumeUpdatedAt: string;
-  }>;
+  settings: Record<
+    string,
+    {
+      muted: boolean;
+      solo: boolean;
+      volume: number;
+      muteUpdatedAt: string;
+      volumeUpdatedAt: string;
+    }
+  >;
 };
 ```
 

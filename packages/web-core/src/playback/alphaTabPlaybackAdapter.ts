@@ -1,8 +1,4 @@
-import type {
-  AlphaTabApiLike,
-  AlphaTabBrowserScoreLike,
-  AlphaTabBrowserTrackLike,
-} from "../gp/alphaTabBrowser";
+import type { AlphaTabApiLike, AlphaTabBrowserScoreLike, AlphaTabBrowserTrackLike } from "../gp/alphaTabBrowser";
 import type {
   PlaybackEngine,
   PlaybackEngineEvent,
@@ -18,7 +14,7 @@ export function extractAlphaTabPlaybackModel(api: AlphaTabApiLike): {
   const score = api.score;
   if (!score) throw new Error("alphaTab score is not loaded");
 
-  const measures = score.masterBars.map(masterBar => {
+  const measures = score.masterBars.map((masterBar) => {
     const durationTicks = masterBar.calculateDuration(true);
     const beatCount = Math.max(1, masterBar.timeSignatureNumerator ?? 4);
     const beatDuration = durationTicks / beatCount;
@@ -27,19 +23,14 @@ export function extractAlphaTabPlaybackModel(api: AlphaTabApiLike): {
       index: masterBar.index,
       startTick: masterBar.start,
       durationTicks,
-      beatTicks: Array.from(
-        { length: beatCount },
-        (_, beatIndex) => masterBar.start + beatDuration * beatIndex,
-      ),
+      beatTicks: Array.from({ length: beatCount }, (_, beatIndex) => masterBar.start + beatDuration * beatIndex),
     };
   });
   const finalMeasure = measures.at(-1);
-  const scoreDurationTicks = finalMeasure
-    ? finalMeasure.startTick + finalMeasure.durationTicks
-    : 0;
+  const scoreDurationTicks = finalMeasure ? finalMeasure.startTick + finalMeasure.durationTicks : 0;
 
   return {
-    tracks: score.tracks.map(track => ({
+    tracks: score.tracks.map((track) => ({
       id: trackId(track.index),
       sourceIndex: track.index,
       name: track.name?.trim() || `轨道 ${track.index + 1}`,
@@ -56,8 +47,8 @@ export function waitForAlphaTabScore(api: AlphaTabApiLike): Promise<AlphaTabBrow
   if (api.score) return Promise.resolve(api.score);
   if (!api.scoreLoaded) return Promise.reject(new Error("alphaTab scoreLoaded event is unavailable"));
 
-  return new Promise(resolve => {
-    const detach = api.scoreLoaded?.on(score => {
+  return new Promise((resolve) => {
+    const detach = api.scoreLoaded?.on((score) => {
       detach?.();
       resolve(score);
     });
@@ -119,7 +110,7 @@ export class AlphaTabPlaybackAdapter implements PlaybackEngine {
   }
 
   setVisibleTracks(trackIds: string[]): void {
-    this.api.renderTracks?.(trackIds.map(id => this.getTrack(id)));
+    this.api.renderTracks?.(trackIds.map((id) => this.getTrack(id)));
   }
 
   setTrackMute(trackIdValue: string, muted: boolean): void {
@@ -144,15 +135,15 @@ export class AlphaTabPlaybackAdapter implements PlaybackEngine {
   }
 
   private attachEvents(): void {
-    this.attach(this.api.scoreLoaded, score => this.refreshTracks(score));
+    this.attach(this.api.scoreLoaded, (score) => this.refreshTracks(score));
     this.attachVoid(this.api.playerReady, () => this.emit({ type: "ready" }));
-    this.attach(this.api.playerStateChanged, value => {
+    this.attach(this.api.playerStateChanged, (value) => {
       const event = value as { state?: number; stopped?: boolean };
       const state = event.state === 1 ? "playing" : event.stopped ? "stopped" : "paused";
       this.snapshot = { ...this.snapshot, transport: state };
       this.emit({ type: "transport", state });
     });
-    this.attach(this.api.playerPositionChanged, value => {
+    this.attach(this.api.playerPositionChanged, (value) => {
       const event = value as { currentTime?: number; endTime?: number; tickPosition?: number };
       this.emit({
         type: "position",
@@ -169,7 +160,7 @@ export class AlphaTabPlaybackAdapter implements PlaybackEngine {
       this.snapshot = { ...this.snapshot, soundFont: "ready" };
       this.emit({ type: "soundfont-ready" });
     });
-    this.attach(this.api.error, value => {
+    this.attach(this.api.error, (value) => {
       const error = asError(value, "alphaTab playback error");
       if (this.snapshot.soundFont !== "ready") {
         this.snapshot = { ...this.snapshot, soundFont: "error" };
@@ -180,7 +171,10 @@ export class AlphaTabPlaybackAdapter implements PlaybackEngine {
     });
   }
 
-  private attach<T>(event: { on(handler: (value: T) => void): () => void } | undefined, handler: (value: T) => void): void {
+  private attach<T>(
+    event: { on(handler: (value: T) => void): () => void } | undefined,
+    handler: (value: T) => void,
+  ): void {
     const detach = event?.on(handler);
     if (detach) this.detachEvents.push(detach);
   }

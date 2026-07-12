@@ -1,8 +1,6 @@
 import type { z } from "zod";
 import type { ScoreIdentity, Section } from "../score/types";
-import {
-  createDefaultPlaybackSidecar,
-} from "../playback/playbackSidecar";
+import { createDefaultPlaybackSidecar } from "../playback/playbackSidecar";
 import { sidecarPayloadSchema } from "./schemas";
 
 export const SIDECAR_SCHEMA_VERSION = "0.2.0" as const;
@@ -16,10 +14,7 @@ export type TrackOverride = SidecarPayload["tracks"][string];
 export type QuantizationSettings = NonNullable<SidecarPayload["midi"]>["quantization"];
 export type MidiMeasureCorrection = NonNullable<SidecarPayload["midi"]>["measureCorrections"][string];
 
-export function createDefaultSidecar(
-  identity: ScoreIdentity,
-  now = new Date().toISOString(),
-): SidecarPayload {
+export function createDefaultSidecar(identity: ScoreIdentity, now = new Date().toISOString()): SidecarPayload {
   return {
     schemaVersion: SIDECAR_SCHEMA_VERSION,
     identity,
@@ -66,7 +61,7 @@ type LegacySidecarPayload = {
 
 function migrateLegacySidecar(legacy: LegacySidecarPayload): SidecarPayload {
   const playback = createDefaultPlaybackSidecar(LEGACY_TIMESTAMP);
-  playback.loops = legacy.practice.loops.map(loop => ({
+  playback.loops = legacy.practice.loops.map((loop) => ({
     id: loop.id,
     label: `循环 ${loop.id}`,
     labelSource: "generated",

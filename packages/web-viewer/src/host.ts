@@ -1,9 +1,6 @@
 export type ViewerFile = { fileName: string; bytes: Uint8Array };
 export type ViewerHostEvent =
-  | { type: 'open-score' }
-  | { type: 'toggle-playback' }
-  | { type: 'suspend' }
-  | { type: 'prepare-close' };
+  { type: "open-score" } | { type: "toggle-playback" } | { type: "suspend" } | { type: "prepare-close" };
 export interface ViewerHost {
   openScore(): Promise<ViewerFile | undefined>;
   subscribe(listener: (event: ViewerHostEvent) => void): () => void;
@@ -20,4 +17,4 @@ export type ViewerSessionHandle = {
   destroy(): Promise<void>;
 };
 export type ViewerAppHandle = ViewerSessionHandle & { openScore(): Promise<void> };
-import type { PlaybackCommand, PlaybackState, PlaybackTimelineMap } from '@tab-viewer/web-core';
+import type { PlaybackCommand, PlaybackState, PlaybackTimelineMap } from "@tab-viewer/web-core";

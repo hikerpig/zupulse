@@ -22,9 +22,11 @@ describe("openFileThroughBridge", () => {
   });
 
   it("returns undefined when native file selection is cancelled", async () => {
-    await expect(openFileThroughBridge({
-      bridge: new MockNativeBridge(),
-      handshake: { appVersion: "0.1.0", rendererBuildHash: "a".repeat(64) },
-    })).resolves.toBeUndefined();
+    await expect(
+      openFileThroughBridge({
+        bridge: new MockNativeBridge(),
+        handshake: { appVersion: "0.1.0", rendererBuildHash: "a".repeat(64) },
+      }),
+    ).resolves.toBeUndefined();
   });
 });

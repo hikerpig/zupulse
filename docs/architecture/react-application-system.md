@@ -107,14 +107,14 @@ Radix Primitives 与 React Aria 都是可行备选。Radix 的历史和社区示
 
 状态按“谁拥有事实”分类，避免把所有内容塞进一个 store：
 
-| 状态 | 归属 | 示例 |
-|---|---|---|
-| 组件私有状态 | React `useState` / reducer | 菜单开关、临时输入、展开面板 |
-| 可导航状态 | React Router URL | 当前页面、设置 tab、库过滤条件 |
-| 跨树客户端状态 | Zustand | 主题、侧栏宽度、最近使用的 Viewer 布局 |
-| Viewer 会话状态 | `PlaybackController` + adapter hook | 播放、tempo、loop、当前小节 |
-| 持久化领域状态 | Bridge / sidecar | 练习设置、批注、进度、文件索引 |
-| alphaTab 内部状态 | alphaTab adapter | score 渲染、光标、音频运行时 |
+| 状态              | 归属                                | 示例                                   |
+| ----------------- | ----------------------------------- | -------------------------------------- |
+| 组件私有状态      | React `useState` / reducer          | 菜单开关、临时输入、展开面板           |
+| 可导航状态        | React Router URL                    | 当前页面、设置 tab、库过滤条件         |
+| 跨树客户端状态    | Zustand                             | 主题、侧栏宽度、最近使用的 Viewer 布局 |
+| Viewer 会话状态   | `PlaybackController` + adapter hook | 播放、tempo、loop、当前小节            |
+| 持久化领域状态    | Bridge / sidecar                    | 练习设置、批注、进度、文件索引         |
+| alphaTab 内部状态 | alphaTab adapter                    | score 渲染、光标、音频运行时           |
 
 `viewerSessionAdapter` 对 React 暴露不可变 snapshot，并用 `useSyncExternalStore` 订阅 controller。组件发送 domain command，不直接修改 snapshot：
 
@@ -159,19 +159,19 @@ Session 初始化失败后仍保留在 registry 和当前 route，以结构化 s
 
 当前选择 Zustand 管理少量、边界明确的应用级状态。首批只迁移跨 route 使用的 `theme`；vanilla store 按应用实例创建，并通过 React Context 注入，保证 Electron 多窗口和测试实例隔离。
 
-| 方案 | 适合的问题 | 对本项目的判断 |
-|---|---|---|
-| React state / reducer / Context | 组件私有或局部共享状态 | 默认起点；不为简单状态引入库 |
-| Zustand | 少量应用级状态、具名 action、selector、React 外订阅 | 首选；按应用实例创建，不使用 module singleton |
-| Jotai | 大量独立原子和复杂派生状态图 | 备选；若 UI 变成细粒度编辑器状态，可替换 Zustand，不与其并存 |
-| Redux Toolkit | 强约束 action 日志、中间件、多人协作规范 | 当前偏重，且会复制 controller 已有的 command 模型 |
-| MobX | 深层可变领域对象、computed 和自动依赖追踪 | 当前不选；会与 controller、Bridge、alphaTab 的状态所有权重叠 |
-| XState | 有限状态、并发任务、取消、重试和错误恢复 | 仅在复杂文件导入工作流中局部采用，不存普通 UI 状态 |
-| Valtio / Legend-State | proxy 或 signal 驱动的深层细粒度响应式 | 范式侵入较深；内建同步还会与 sidecar/Bridge 重叠 |
-| Effector | event/store/effect 构成的响应式业务流 | 与现有 Bridge event 和 controller command 形成第三套事件模型 |
-| TanStack Store | 框架无关的 immutable reactive store | 方向合适但当前仍为 alpha，不作为基础依赖 |
-| RxJS | 连续事件流、合并、节流和设备输入 | 未来可用于 MIDI/播放事件流，不作为应用 store |
-| TanStack Query | 异步资源缓存、失效、重试和 mutation | 文件库出现后引入；它不是客户端 UI 状态库 |
+| 方案                            | 适合的问题                                          | 对本项目的判断                                               |
+| ------------------------------- | --------------------------------------------------- | ------------------------------------------------------------ |
+| React state / reducer / Context | 组件私有或局部共享状态                              | 默认起点；不为简单状态引入库                                 |
+| Zustand                         | 少量应用级状态、具名 action、selector、React 外订阅 | 首选；按应用实例创建，不使用 module singleton                |
+| Jotai                           | 大量独立原子和复杂派生状态图                        | 备选；若 UI 变成细粒度编辑器状态，可替换 Zustand，不与其并存 |
+| Redux Toolkit                   | 强约束 action 日志、中间件、多人协作规范            | 当前偏重，且会复制 controller 已有的 command 模型            |
+| MobX                            | 深层可变领域对象、computed 和自动依赖追踪           | 当前不选；会与 controller、Bridge、alphaTab 的状态所有权重叠 |
+| XState                          | 有限状态、并发任务、取消、重试和错误恢复            | 仅在复杂文件导入工作流中局部采用，不存普通 UI 状态           |
+| Valtio / Legend-State           | proxy 或 signal 驱动的深层细粒度响应式              | 范式侵入较深；内建同步还会与 sidecar/Bridge 重叠             |
+| Effector                        | event/store/effect 构成的响应式业务流               | 与现有 Bridge event 和 controller command 形成第三套事件模型 |
+| TanStack Store                  | 框架无关的 immutable reactive store                 | 方向合适但当前仍为 alpha，不作为基础依赖                     |
+| RxJS                            | 连续事件流、合并、节流和设备输入                    | 未来可用于 MIDI/播放事件流，不作为应用 store                 |
+| TanStack Query                  | 异步资源缓存、失效、重试和 mutation                 | 文件库出现后引入；它不是客户端 UI 状态库                     |
 
 MobX 在产品转向复杂制谱编辑器时值得重新评估。例如大量 note、selection、inspector 和 computed 属性共同组成可编辑对象图时，observable class 能减少手写派生与更新代码。当前 Viewer 则已有清晰的命令式领域核心；将其复制进 MobX 会制造双份状态，将其改写为 MobX 又会让 `web-core` 依赖 UI 响应式范式，因此收益不足。
 

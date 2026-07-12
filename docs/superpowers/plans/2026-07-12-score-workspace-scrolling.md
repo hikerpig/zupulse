@@ -20,6 +20,7 @@
 ### Task 1: Bind alphaTab Playback Following to the Score Host
 
 **Files:**
+
 - Modify: `packages/web-viewer/src/viewerApp.ts:147,243-258`
 - Test: `packages/web-viewer/src/viewerApp.test.ts:323-350`
 
@@ -28,16 +29,21 @@
 Capture the host and settings from the existing `createApi` spy, then assert identity rather than merely checking a selector string:
 
 ```ts
-const [alphaTabHost, settings] = createApi.mock.calls[0] as [HTMLElement, {
-  player: { scrollElement: HTMLElement };
-}];
+const [alphaTabHost, settings] = createApi.mock.calls[0] as [
+  HTMLElement,
+  {
+    player: { scrollElement: HTMLElement };
+  },
+];
 
-expect(settings.player).toEqual(expect.objectContaining({
-  enablePlayer: true,
-  enableCursor: true,
-  enableAnimatedBeatCursor: true,
-  enableElementHighlighting: true,
-}));
+expect(settings.player).toEqual(
+  expect.objectContaining({
+    enablePlayer: true,
+    enableCursor: true,
+    enableAnimatedBeatCursor: true,
+    enableElementHighlighting: true,
+  }),
+);
 expect(settings.player.scrollElement).toBe(alphaTabHost.parentElement);
 ```
 
@@ -99,6 +105,7 @@ rtk git commit -m "fix: scroll score during alphaTab playback"
 ### Task 2: Constrain the Desktop Workbench to the Viewport
 
 **Files:**
+
 - Modify: `packages/web-viewer/src/styles.css:101-410`
 - Test: `packages/web-viewer/src/styles.test.ts`
 
@@ -115,8 +122,12 @@ it("contains score scrolling within the desktop viewport and restores mobile doc
   expect(css).toMatch(/\.score-stage-frame\s*{[^}]*height:\s*100%;[^}]*overflow:\s*auto;/s);
   expect(css).toMatch(/\.score-viewer\s*{[^}]*height:\s*100%;[^}]*min-height:\s*0;[^}]*overflow:\s*visible;/s);
   expect(css).toMatch(/\.practice-panel\s*{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;/s);
-  expect(css).toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.app-shell\s*{[^}]*height:\s*auto;[^}]*overflow:\s*visible;/s);
-  expect(css).toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.score-stage-frame\s*{[^}]*height:\s*auto;[^}]*overflow:\s*visible;/s);
+  expect(css).toMatch(
+    /@media \(max-width:\s*960px\)[\s\S]*?\.app-shell\s*{[^}]*height:\s*auto;[^}]*overflow:\s*visible;/s,
+  );
+  expect(css).toMatch(
+    /@media \(max-width:\s*960px\)[\s\S]*?\.score-stage-frame\s*{[^}]*height:\s*auto;[^}]*overflow:\s*visible;/s,
+  );
 });
 ```
 
@@ -255,6 +266,7 @@ rtk git commit -m "feat: contain score scrolling in viewer workspace"
 ### Task 3: Verify Playback, Responsive Layout, and the Full Repository
 
 **Files:**
+
 - Verify only; no production files expected
 
 - [ ] **Step 1: Start or reuse the demo server**
@@ -278,7 +290,7 @@ Using the browser automation workflow, load `test-fixtures/gp/Treasure.gp5`, sta
   scoreClientHeight: document.querySelector("#alpha-tab").clientHeight,
   scoreScrollHeight: document.querySelector("#alpha-tab").scrollHeight,
   practiceRect: document.querySelector(".practice-panel").getBoundingClientRect(),
-})
+});
 ```
 
 Expected:

@@ -48,10 +48,12 @@
 ## Task 1: Rebuild The Static Viewer Shell
 
 **Files:**
+
 - Modify: `packages/web-viewer/src/viewerShell.ts`
 - Test: `packages/web-viewer/src/viewerApp.test.ts`
 
 **Interfaces:**
+
 - Consumes: `mountViewerApp()` requires `#open-score`; `createDefaultOpenSession()` requires `#alpha-tab`, `#status`, and `#summary`.
 - Produces:
   - Shell IDs kept for session wiring: `open-score`, `status`, `summary`, `alpha-tab`
@@ -76,10 +78,8 @@ it("renders the redesigned workspace shell", () => {
 it("renders a productized empty score stage before a file opens", () => {
   renderViewerShell(document);
 
-  expect(document.getElementById("alpha-tab-empty-title")?.textContent)
-    .toBe("打开一份 Guitar Pro 乐谱开始练习");
-  expect(document.getElementById("alpha-tab-empty-copy")?.textContent)
-    .toContain(".gp3 .gp4 .gp5 .gpx .gp");
+  expect(document.getElementById("alpha-tab-empty-title")?.textContent).toBe("打开一份 Guitar Pro 乐谱开始练习");
+  expect(document.getElementById("alpha-tab-empty-copy")?.textContent).toContain(".gp3 .gp4 .gp5 .gpx .gp");
 });
 ```
 
@@ -199,12 +199,14 @@ git commit -m "feat: rebuild viewer shell layout"
 ### Task 2: Present Context, Audio, And Session Summary State
 
 **Files:**
+
 - Modify: `packages/web-viewer/src/viewerApp.ts`
 - Modify: `packages/web-viewer/src/playbackPresenter.ts`
 - Test: `packages/web-viewer/src/playbackPresenter.test.ts`
 - Test: `packages/web-viewer/src/viewerApp.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `DemoState` from `presentGpFile()`
   - `PlaybackState` from `PlaybackController`
@@ -223,11 +225,13 @@ Extend `packages/web-viewer/src/playbackPresenter.test.ts` with:
 
 ```ts
 it("presents audio, persistence, and session facts for the redesigned shell", () => {
-  const view = presentPlayback(playbackState({
-    soundFont: "ready",
-    persistence: "saving",
-    activeLoopId: "loop-1",
-  }));
+  const view = presentPlayback(
+    playbackState({
+      soundFont: "ready",
+      persistence: "saving",
+      activeLoopId: "loop-1",
+    }),
+  );
 
   expect(view.audioStatusLabel).toBe("音频已就绪");
   expect(view.audioStatusTone).toBe("ready");
@@ -294,8 +298,10 @@ export type PlaybackViewModel = {
 Fill the new fields inside `presentPlayback()`:
 
 ```ts
-const primaryTrack = state.tracks.find(track => track.id === state.trackState.primaryVisibleTrackId)?.name ?? "未选择";
-const activeLoop = state.loops.find(loop => loop.id === state.activeLoopId && loop.deletedAt === undefined)?.label ?? "未启用";
+const primaryTrack =
+  state.tracks.find((track) => track.id === state.trackState.primaryVisibleTrackId)?.name ?? "未选择";
+const activeLoop =
+  state.loops.find((loop) => loop.id === state.activeLoopId && loop.deletedAt === undefined)?.label ?? "未启用";
 
 return {
   ...existingFields,
@@ -344,8 +350,7 @@ export function renderViewerState(status: HTMLElement, summary: HTMLElement, sta
   const artist = state.summary.artist ? ` · ${state.summary.artist}` : "";
   const tempo = state.summary.tempo === undefined ? "" : ` · ${state.summary.tempo} bpm`;
   summary.textContent = state.summary.title;
-  contextCaption.textContent =
-    `${state.summary.trackCount} tracks · ${state.summary.masterBarCount} bars${artist}${tempo}`;
+  contextCaption.textContent = `${state.summary.trackCount} tracks · ${state.summary.masterBarCount} bars${artist}${tempo}`;
 }
 ```
 
@@ -365,10 +370,12 @@ git commit -m "feat: present viewer session context"
 ### Task 3: Render The Redesigned Loop, Tracks, And Session Regions
 
 **Files:**
+
 - Modify: `packages/web-viewer/src/playbackControls.ts`
 - Test: `packages/web-viewer/src/playbackControls.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `presentPlayback(state)` with `audioStatusLabel`, `audioStatusTone`, `sessionSummary`, and `sessionFacts`
   - existing `PlaybackCommand` command names
@@ -427,21 +434,23 @@ In `packages/web-viewer/src/playbackControls.ts`, update `render()`:
 elements.audioStatus.textContent = view.audioStatusLabel;
 elements.audioStatus.className = `status-badge ${view.audioStatusTone}`;
 elements.sessionSummary.textContent = view.sessionSummary;
-elements.sessionStrip.replaceChildren(...view.sessionFacts.map(fact => {
-  const item = ownerDocument.createElement("div");
-  item.className = "session-fact";
+elements.sessionStrip.replaceChildren(
+  ...view.sessionFacts.map((fact) => {
+    const item = ownerDocument.createElement("div");
+    item.className = "session-fact";
 
-  const label = ownerDocument.createElement("span");
-  label.className = "session-fact-label";
-  label.textContent = fact.label;
+    const label = ownerDocument.createElement("span");
+    label.className = "session-fact-label";
+    label.textContent = fact.label;
 
-  const value = ownerDocument.createElement("strong");
-  value.className = "session-fact-value";
-  value.textContent = fact.value;
+    const value = ownerDocument.createElement("strong");
+    value.className = "session-fact-value";
+    value.textContent = fact.value;
 
-  item.append(label, value);
-  return item;
-}));
+    item.append(label, value);
+    return item;
+  }),
+);
 ```
 
 Update `renderLoops()` to wrap each row as a card:
@@ -516,12 +525,14 @@ git commit -m "feat: redesign practice panel rendering"
 ### Task 4: Apply Calm Precision Styling And Verify The Full Demo
 
 **Files:**
+
 - Modify: `packages/web-viewer/src/styles.css`
 - Verify: `packages/web-viewer/src/viewerApp.test.ts`
 - Verify: `packages/web-viewer/src/playbackPresenter.test.ts`
 - Verify: `packages/web-viewer/src/playbackControls.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - shell class names from `viewerShell.ts`
   - control-render class names from `playbackControls.ts`
@@ -558,15 +569,19 @@ Update `packages/web-viewer/src/styles.css` around these blocks:
 :root {
   color: #182028;
   background: #f3f5f7;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 }
 
 body {
   margin: 0;
   color: #182028;
-  background:
-    radial-gradient(circle at top left, rgba(31, 122, 107, 0.08), transparent 24%),
-    #f3f5f7;
+  background: radial-gradient(circle at top left, rgba(31, 122, 107, 0.08), transparent 24%), #f3f5f7;
 }
 
 .app-shell {

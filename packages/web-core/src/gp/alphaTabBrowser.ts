@@ -81,7 +81,7 @@ export function attachAlphaTabPositionEvents(
   api: AlphaTabApiLike,
   emit: (event: AlphaTabPositionEvent) => void,
 ): () => void {
-  const detach = api.playerPositionChanged?.on(arg => {
+  const detach = api.playerPositionChanged?.on((arg) => {
     const event = arg as { currentTime?: number; endTime?: number; tickPosition?: number };
     const mapped: AlphaTabPositionEvent = {
       positionMs: event.currentTime ?? 0,

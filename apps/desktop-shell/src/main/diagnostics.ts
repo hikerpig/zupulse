@@ -12,21 +12,21 @@ export class DiagnosticLogger {
 
   async write(value: unknown): Promise<void> {
     const event = diagnosticEventSchema.parse(value);
-    const operation = this.chain.catch(() => undefined).then(async () => {
-      await mkdir(this.directory, { recursive: true });
-      const current = join(this.directory, "desktop.log");
-      const previous = join(this.directory, "desktop.log.1");
-      const size = await stat(current).then(info => info.size).catch(() => 0);
-      if (size >= this.maxBytes) {
-        await rm(previous, { force: true });
-        await rename(current, previous);
-      }
-      await appendFile(
-        current,
-        `${JSON.stringify({ at: new Date().toISOString(), ...event })}\n`,
-        { mode: 0o600 },
-      );
-    });
+    const operation = this.chain
+      .catch(() => undefined)
+      .then(async () => {
+        await mkdir(this.directory, { recursive: true });
+        const current = join(this.directory, "desktop.log");
+        const previous = join(this.directory, "desktop.log.1");
+        const size = await stat(current)
+          .then((info) => info.size)
+          .catch(() => 0);
+        if (size >= this.maxBytes) {
+          await rm(previous, { force: true });
+          await rename(current, previous);
+        }
+        await appendFile(current, `${JSON.stringify({ at: new Date().toISOString(), ...event })}\n`, { mode: 0o600 });
+      });
     this.chain = operation;
     return operation;
   }

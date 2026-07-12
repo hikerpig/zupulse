@@ -54,16 +54,18 @@ describe("sidecar codec", () => {
   });
 
   it("migrates 0.1.0 loop ranges into playback loop regions", () => {
-    const decoded = decodeSidecar(JSON.stringify({
-      schemaVersion: "0.1.0",
-      identity,
-      practice: {
-        loops: [{ id: "legacy-loop", startTick: 120, endTick: 960 }],
-        sections: [],
-        annotations: [],
-      },
-      tracks: {},
-    }));
+    const decoded = decodeSidecar(
+      JSON.stringify({
+        schemaVersion: "0.1.0",
+        identity,
+        practice: {
+          loops: [{ id: "legacy-loop", startTick: 120, endTick: 960 }],
+          sections: [],
+          annotations: [],
+        },
+        tracks: {},
+      }),
+    );
 
     expect(decoded.schemaVersion).toBe("0.2.0");
     expect(decoded.practice.playback.loops[0]).toMatchObject({

@@ -1,15 +1,6 @@
 export type ScoreFormat = "gp" | "musicxml" | "midi";
 
-export type SupportedExtension =
-  | ".gp3"
-  | ".gp4"
-  | ".gp5"
-  | ".gpx"
-  | ".gp"
-  | ".musicxml"
-  | ".mxl"
-  | ".mid"
-  | ".midi";
+export type SupportedExtension = ".gp3" | ".gp4" | ".gp5" | ".gpx" | ".gp" | ".musicxml" | ".mxl" | ".mid" | ".midi";
 
 import type { z } from "zod";
 import type { scoreIdentitySchema } from "./schemas";

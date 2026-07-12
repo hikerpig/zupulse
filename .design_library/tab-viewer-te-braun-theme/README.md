@@ -24,11 +24,11 @@ This system is written for a dashboard-oriented practice environment with a futu
 
 ### Concrete copy examples
 
-- 播放控制：*"播放"*
-- 重复模式：*"循环"*
-- 轨道维度：*"轨道"*
-- 练习参数：*"速度"*
-- 文件入口：*"打开乐谱"*
+- 播放控制：_"播放"_
+- 重复模式：_"循环"_
+- 轨道维度：_"轨道"_
+- 练习参数：_"速度"_
+- 文件入口：_"打开乐谱"_
 
 ### When generating copy
 

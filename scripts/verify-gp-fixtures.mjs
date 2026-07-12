@@ -1,10 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { importer, Settings } from "@coderline/alphatab";
 
-for (const file of [
-  "test-fixtures/gp/Treasure.gp5",
-  "test-fixtures/gp/generated/desktop-acceptance.gp",
-]) {
+for (const file of ["test-fixtures/gp/Treasure.gp5", "test-fixtures/gp/generated/desktop-acceptance.gp"]) {
   const bytes = new Uint8Array(await readFile(file));
   const score = importer.ScoreLoader.loadScoreFromBytes(bytes, new Settings());
   if (!score.tracks.length || !score.masterBars.length) {

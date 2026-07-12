@@ -32,7 +32,7 @@ describe("attachAlphaTabPositionEvents", () => {
     };
     const events: unknown[] = [];
 
-    const detach = attachAlphaTabPositionEvents(api, event => events.push(event));
+    const detach = attachAlphaTabPositionEvents(api, (event) => events.push(event));
     handler?.({ currentTime: 1250, endTime: 5000, tickPosition: 240 });
     detach();
 

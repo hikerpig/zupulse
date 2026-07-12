@@ -247,4 +247,3 @@ pnpm desktop:test:e2e
 - Base UI 只承担已使用 Slider 的复杂交互；普通 CSS 和原生控件保持简单。
 - 所有旧共享 Viewer DOM mount 代码被删除，没有长期兼容层。
 - 不要求本轮完成 Windows 人工验收；该项仍属于 Desktop Shell MVP 发布流程。
-

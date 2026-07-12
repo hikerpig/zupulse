@@ -7,7 +7,7 @@ import { DiagnosticLogger } from "./diagnostics";
 const roots: string[] = [];
 
 afterEach(async () => {
-  await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true })));
+  await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
 
 async function tempRoot(): Promise<string> {

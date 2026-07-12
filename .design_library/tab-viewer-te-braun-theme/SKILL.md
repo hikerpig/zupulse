@@ -10,6 +10,7 @@ user-invocable: true
 先用 `css.json` 理解 token，再用 `colors_and_type.css` 接入运行时变量。
 
 ## Quick map
+
 - `css.json` — 结构化 token 理解源。
 - `colors_and_type.css` — 运行时颜色、字体、间距、圆角、阴影变量源。
 - `specs/reference-braun.png` — Braun-like order 参考。
@@ -17,6 +18,7 @@ user-invocable: true
 - `library-consumption.json` — 推荐读取顺序。
 
 ## Essentials at a glance
+
 - 主色是 `#f26b4f`，珊瑚色动作信号；保持 future-facing、restrained、precise，不要改成冷蓝或渐变主视觉。
 - 基础中性色从 `#f0ede8` 到 `#181818`；默认背景 `#f0ede8`，前景 `#181818`，表面 `#f5f2ed`，形成 warm-industrial 的灰暖白哑光与炭灰结构块。
 - 字体以 `Space Grotesk` 为 display、heading、body；`IBM Plex Mono` 只给 mono、数字、节拍与参数读数。

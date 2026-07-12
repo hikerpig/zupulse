@@ -1,9 +1,4 @@
-import type {
-  LoopRegion,
-  LoopSnapMode,
-  MusicalPosition,
-  PlaybackTimelineMap,
-} from "./types";
+import type { LoopRegion, LoopSnapMode, MusicalPosition, PlaybackTimelineMap } from "./types";
 
 export function normalizePlaybackSpeed(value: number): number {
   const clamped = Math.min(2, Math.max(0.25, value));
@@ -17,15 +12,14 @@ export function snapMusicalPosition(
 ): MusicalPosition {
   if (mode === "off") return position;
 
-  const measure = timeline.measures.find(item => item.id === position.measureId)
-    ?? timeline.measures.find(item => item.index === position.measureIndex);
+  const measure =
+    timeline.measures.find((item) => item.id === position.measureId) ??
+    timeline.measures.find((item) => item.index === position.measureIndex);
   if (!measure) return position;
 
   const candidates = mode === "measure" ? [measure.startTick] : measure.beatTicks;
   const tick = candidates.reduce(
-    (best, candidate) => Math.abs(candidate - position.tick) < Math.abs(best - position.tick)
-      ? candidate
-      : best,
+    (best, candidate) => (Math.abs(candidate - position.tick) < Math.abs(best - position.tick) ? candidate : best),
     candidates[0] ?? measure.startTick,
   );
 
@@ -69,20 +63,12 @@ export function createLoopRegion(input: {
   return region;
 }
 
-export function getEffectivePlaybackSpeed(
-  scoreSpeed: number,
-  loop: { speedOverride?: number | undefined },
-): number {
+export function getEffectivePlaybackSpeed(scoreSpeed: number, loop: { speedOverride?: number | undefined }): number {
   return normalizePlaybackSpeed(loop.speedOverride ?? scoreSpeed);
 }
 
-export function musicalPositionFromTick(
-  tick: number,
-  timeMs: number,
-  timeline: PlaybackTimelineMap,
-): MusicalPosition {
-  const measure = [...timeline.measures].reverse()
-    .find(item => item.startTick <= tick) ?? timeline.measures[0];
+export function musicalPositionFromTick(tick: number, timeMs: number, timeline: PlaybackTimelineMap): MusicalPosition {
+  const measure = [...timeline.measures].reverse().find((item) => item.startTick <= tick) ?? timeline.measures[0];
 
   if (!measure) {
     return {
@@ -94,8 +80,7 @@ export function musicalPositionFromTick(
     };
   }
 
-  const reversedIndex = [...measure.beatTicks].reverse()
-    .findIndex(beatTick => beatTick <= tick);
+  const reversedIndex = [...measure.beatTicks].reverse().findIndex((beatTick) => beatTick <= tick);
   const beatIndex = reversedIndex < 0 ? 0 : measure.beatTicks.length - 1 - reversedIndex;
 
   return {

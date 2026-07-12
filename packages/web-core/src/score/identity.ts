@@ -47,7 +47,7 @@ export async function createScoreIdentity(input: {
 }
 
 function bytesToHex(bytes: Uint8Array): string {
-  return [...bytes].map(byte => byte.toString(16).padStart(2, "0")).join("");
+  return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {

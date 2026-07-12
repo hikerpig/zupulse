@@ -58,11 +58,13 @@
 ## Task 1: alphaTab Dependency Boundary
 
 **Files:**
+
 - Modify: `web-core/package.json`
 - Modify: `pnpm-lock.yaml`
 - Test: `web-core/src/gp/alphaTabDependency.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `@coderline/alphatab@1.8.4` 可被 TypeScript 导入。
 
@@ -113,11 +115,13 @@ git commit -m "feat: add alphatab dependency boundary"
 ## Task 2: GP Score Loader And Summary
 
 **Files:**
+
 - Create: `web-core/src/gp/alphaTabAdapter.ts`
 - Modify: `web-core/src/index.ts`
 - Test: `web-core/src/gp/alphaTabAdapter.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `type AlphaTabScoreLike`
   - `type GpScoreSummary`
@@ -144,7 +148,7 @@ describe("loadGpScore", () => {
       tempo: 128,
     };
 
-    const loaded = loadGpScore(bytes, input => {
+    const loaded = loadGpScore(bytes, (input) => {
       expect(input).toEqual(bytes);
       return score;
     });
@@ -281,11 +285,13 @@ git commit -m "feat: add gp alphatab adapter"
 ## Task 3: Browser alphaTab API Facade
 
 **Files:**
+
 - Create: `web-core/src/gp/alphaTabBrowser.ts`
 - Modify: `web-core/src/index.ts`
 - Test: `web-core/src/gp/alphaTabBrowser.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `type AlphaTabApiLike`
   - `type AlphaTabApiFactory`
@@ -332,7 +338,7 @@ describe("attachAlphaTabPositionEvents", () => {
     };
     const events: unknown[] = [];
 
-    const detach = attachAlphaTabPositionEvents(api, event => events.push(event));
+    const detach = attachAlphaTabPositionEvents(api, (event) => events.push(event));
     handler?.({ currentTime: 1250, endTime: 5000, tickPosition: 240 });
     detach();
 
@@ -391,7 +397,7 @@ export function attachAlphaTabPositionEvents(
   api: AlphaTabApiLike,
   emit: (event: AlphaTabPositionEvent) => void,
 ): () => void {
-  const detach = api.playerPositionChanged?.on(arg => {
+  const detach = api.playerPositionChanged?.on((arg) => {
     const event = arg as { currentTime?: number; endTime?: number; tickPosition?: number };
     emit({
       positionMs: event.currentTime ?? 0,
@@ -446,11 +452,13 @@ git commit -m "feat: add alphatab browser facade"
 ## Task 4: GP Open Flow Through Bridge
 
 **Files:**
+
 - Create: `web-core/src/gp/gpOpenFlow.ts`
 - Modify: `web-core/src/index.ts`
 - Test: `web-core/src/gp/gpOpenFlow.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `MockNativeBridge`
   - `openFileThroughBridge`
@@ -481,7 +489,7 @@ describe("openGpThroughBridge", () => {
       bridge,
       fileRef: "gp-file",
       mode: "external-reference",
-      loader: bytes => {
+      loader: (bytes) => {
         expect([...bytes]).toEqual([1, 2, 3]);
         return {
           title: "Song",
@@ -616,10 +624,12 @@ git commit -m "feat: add gp bridge open flow"
 ## Task 5: Document GP Vertical Slice
 
 **Files:**
+
 - Create: `docs/architecture/gp-alphatab-vertical-slice.md`
 - Modify: `docs/architecture/implementation-foundation.md`
 
 **Interfaces:**
+
 - Consumes:
   - GP API exported from `web-core/src/gp/`.
 - Produces:
@@ -660,7 +670,6 @@ Create `docs/architecture/gp-alphatab-vertical-slice.md`:
 Append to `docs/architecture/implementation-foundation.md`:
 
 ```markdown
-
 ## GP alphaTab 竖切
 
 GP 第一条竖切已经接入 `@coderline/alphatab@1.8.4`：

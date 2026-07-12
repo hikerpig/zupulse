@@ -11,36 +11,49 @@ describe("storage schemas", () => {
     ["non-hex", "g".repeat(64)],
     ["long", "a".repeat(65)],
   ])("rejects a %s content hash", (_name, contentHash) => {
-    expect(() => sidecarPayloadSchema.parse(
-      createDefaultSidecar({ ...identity, contentHash }, now),
-    )).toThrow();
+    expect(() => sidecarPayloadSchema.parse(createDefaultSidecar({ ...identity, contentHash }, now))).toThrow();
   });
 
   it("accepts valid sidecar and resume payloads", () => {
     expect(sidecarPayloadSchema.parse(createDefaultSidecar(identity, now)).identity).toEqual(identity);
-    expect(localPlaybackResumeSchema.parse({
-      position: {
-        measureId: "m1",
-        measureIndex: 0,
-        beatIndex: 0,
-        tick: 0,
-        cachedTimeMs: 0,
-      },
-      updatedAt: now,
-    }).updatedAt).toBe(now);
+    expect(
+      localPlaybackResumeSchema.parse({
+        position: {
+          measureId: "m1",
+          measureIndex: 0,
+          beatIndex: 0,
+          tick: 0,
+          cachedTimeMs: 0,
+        },
+        updatedAt: now,
+      }).updatedAt,
+    ).toBe(now);
   });
 
   it.each([
-    ["score speed", (payload: ReturnType<typeof createDefaultSidecar>) => { payload.practice.playback.scoreSpeed.value = 2.01; }],
-    ["track volume", (payload: ReturnType<typeof createDefaultSidecar>) => {
-      payload.practice.playback.tracks.guitar = {
-        muted: false,
-        volume: -0.01,
-        muteUpdatedAt: now,
-        volumeUpdatedAt: now,
-      };
-    }],
-    ["timestamp", (payload: ReturnType<typeof createDefaultSidecar>) => { payload.practice.playback.scoreSpeed.updatedAt = "yesterday"; }],
+    [
+      "score speed",
+      (payload: ReturnType<typeof createDefaultSidecar>) => {
+        payload.practice.playback.scoreSpeed.value = 2.01;
+      },
+    ],
+    [
+      "track volume",
+      (payload: ReturnType<typeof createDefaultSidecar>) => {
+        payload.practice.playback.tracks.guitar = {
+          muted: false,
+          volume: -0.01,
+          muteUpdatedAt: now,
+          volumeUpdatedAt: now,
+        };
+      },
+    ],
+    [
+      "timestamp",
+      (payload: ReturnType<typeof createDefaultSidecar>) => {
+        payload.practice.playback.scoreSpeed.updatedAt = "yesterday";
+      },
+    ],
   ])("rejects invalid %s", (_name, mutate) => {
     const payload = createDefaultSidecar(identity, now);
     mutate(payload);

@@ -12,10 +12,7 @@ export async function openFileThroughBridge(input: {
   handshake: BridgeHandshakeInput;
 }): Promise<ViewerSession | undefined> {
   const handshakeRequest = createBridgeRequest("app.handshake", "open-handshake", input.handshake);
-  const handshake = parseBridgeResponse(
-    handshakeRequest.type,
-    await input.bridge.request(handshakeRequest),
-  );
+  const handshake = parseBridgeResponse(handshakeRequest.type, await input.bridge.request(handshakeRequest));
   const openRequest = createBridgeRequest("file.open", "open-file", {});
   const opened = parseBridgeResponse(openRequest.type, await input.bridge.request(openRequest));
   if (opened.status === "cancelled") return undefined;

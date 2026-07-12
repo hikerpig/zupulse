@@ -1,11 +1,4 @@
-export type TransportState =
-  | "idle"
-  | "loading"
-  | "ready"
-  | "playing"
-  | "paused"
-  | "stopped"
-  | "error";
+export type TransportState = "idle" | "loading" | "ready" | "playing" | "paused" | "stopped" | "error";
 
 export type LoopSnapMode = "off" | "beat" | "measure";
 

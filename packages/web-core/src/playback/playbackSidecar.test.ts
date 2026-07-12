@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  createDefaultPlaybackSidecar,
-  mergePlaybackSidecar,
-} from "./playbackSidecar";
+import { createDefaultPlaybackSidecar, mergePlaybackSidecar } from "./playbackSidecar";
 import { practicePlaybackSidecarSchema } from "./schemas";
 import type { LoopRegion } from "./types";
 
@@ -21,13 +18,14 @@ describe("playback sidecar", () => {
     const local = createDefaultPlaybackSidecar("2026-07-10T00:00:00Z");
     const remote = createDefaultPlaybackSidecar("2026-07-10T00:00:00Z");
     local.loops = [loop("loop-1", "2026-07-10T01:00:00Z")];
-    remote.loops = [{
-      ...loop("loop-1", "2026-07-10T02:00:00Z"),
-      deletedAt: "2026-07-10T02:00:00Z",
-    }];
+    remote.loops = [
+      {
+        ...loop("loop-1", "2026-07-10T02:00:00Z"),
+        deletedAt: "2026-07-10T02:00:00Z",
+      },
+    ];
 
-    expect(mergePlaybackSidecar(local, remote).loops[0]?.deletedAt)
-      .toBe("2026-07-10T02:00:00Z");
+    expect(mergePlaybackSidecar(local, remote).loops[0]?.deletedAt).toBe("2026-07-10T02:00:00Z");
   });
 
   it("merges mute and volume independently", () => {

@@ -43,4 +43,3 @@ Web Core 使用 `PlaybackController` 维护播放练习领域状态，并通过�
 - 引擎事件必须关联 `sessionId`。
 - UI 不直接调用 alphaTab 播放和轨道混音 API。
 - 原生音频桥在出现真实平台需求后单独设计。
-

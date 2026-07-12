@@ -43,4 +43,3 @@ ADR 0035 定义的 MIDI 三层模型继续有效，并作为后续 MIDI 阶段�
 - 细化 ADR 0002 的实施顺序，不取消 MIDI 产品目标。
 - 延续 ADR 0006 的中等厚度共享 Score Model。
 - 延续 ADR 0035 的不可变 Raw MIDI、Analysis Revision 与 User Corrections 模型。
-

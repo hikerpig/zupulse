@@ -27,4 +27,3 @@ Practice Sidecar 中附着于谱面内容的数据默认保存 Written Position�
 - 批注不会因为反复展开而重复存储。
 - 现有 Musical Position 和 loop schema 需要版本化扩展。
 - repeat/jump 结构改变后，旧的 occurrence 可能失效，需要明确回退规则。
-

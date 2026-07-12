@@ -12,41 +12,49 @@ const hash = "a".repeat(64);
 
 describe("bridge schemas", () => {
   it("rejects unknown message types", () => {
-    expect(() => bridgeRequestSchema.parse({
-      bridgeVersion: BRIDGE_SCHEMA_VERSION,
-      correlationId: "x",
-      type: "electron.send",
-      payload: {},
-    })).toThrow();
+    expect(() =>
+      bridgeRequestSchema.parse({
+        bridgeVersion: BRIDGE_SCHEMA_VERSION,
+        correlationId: "x",
+        type: "electron.send",
+        payload: {},
+      }),
+    ).toThrow();
   });
 
   it("rejects additional envelope and payload fields", () => {
-    expect(() => bridgeRequestSchema.parse({
-      bridgeVersion: BRIDGE_SCHEMA_VERSION,
-      correlationId: "x",
-      type: "file.open",
-      payload: { fileRef: "legacy" },
-    })).toThrow();
-    expect(() => bridgeRequestSchema.parse({
-      bridgeVersion: BRIDGE_SCHEMA_VERSION,
-      correlationId: "x",
-      type: "file.open",
-      payload: {},
-      channel: "legacy",
-    })).toThrow();
+    expect(() =>
+      bridgeRequestSchema.parse({
+        bridgeVersion: BRIDGE_SCHEMA_VERSION,
+        correlationId: "x",
+        type: "file.open",
+        payload: { fileRef: "legacy" },
+      }),
+    ).toThrow();
+    expect(() =>
+      bridgeRequestSchema.parse({
+        bridgeVersion: BRIDGE_SCHEMA_VERSION,
+        correlationId: "x",
+        type: "file.open",
+        payload: {},
+        channel: "legacy",
+      }),
+    ).toThrow();
   });
 
   it("models temporary file access without platform mechanisms", () => {
-    expect(capabilitiesSchema.parse({
-      fileAccess: {
-        openExternalFile: true,
-        persistentFileReferences: false,
-        localLibraryImport: false,
-      },
-      storage: { sqliteIndex: false, sidecarPayload: true },
-      sync: { available: false, provider: "none" },
-      audio: { webAudio: true, nativeBridge: false },
-    }).fileAccess.persistentFileReferences).toBe(false);
+    expect(
+      capabilitiesSchema.parse({
+        fileAccess: {
+          openExternalFile: true,
+          persistentFileReferences: false,
+          localLibraryImport: false,
+        },
+        storage: { sqliteIndex: false, sidecarPayload: true },
+        sync: { available: false, provider: "none" },
+        audio: { webAudio: true, nativeBridge: false },
+      }).fileAccess.persistentFileReferences,
+    ).toBe(false);
   });
 
   it("creates typed envelopes and parses the response selected by request type", () => {
@@ -59,35 +67,41 @@ describe("bridge schemas", () => {
     expect(parseBridgeResponse("file.open", { status: "cancelled" })).toEqual({
       status: "cancelled",
     });
-    expect(() => parseBridgeResponse("file.open", {
-      status: "opened",
-      fileToken: "token",
-      fileName: "score.gp",
-      sizeBytes: 3,
-      legacyPath: "/tmp/score.gp",
-    })).toThrow();
+    expect(() =>
+      parseBridgeResponse("file.open", {
+        status: "opened",
+        fileToken: "token",
+        fileName: "score.gp",
+        sizeBytes: 3,
+        legacyPath: "/tmp/score.gp",
+      }),
+    ).toThrow();
   });
 
   it("validates handshake and byte responses", () => {
-    expect(bridgeResponseSchemas["app.handshake"].parse({
-      appVersion: "0.1.0",
-      bridgeVersion: BRIDGE_SCHEMA_VERSION,
-      rendererBuildHash: hash,
-      capabilities: {
-        fileAccess: {
-          openExternalFile: true,
-          persistentFileReferences: false,
-          localLibraryImport: false,
+    expect(
+      bridgeResponseSchemas["app.handshake"].parse({
+        appVersion: "0.1.0",
+        bridgeVersion: BRIDGE_SCHEMA_VERSION,
+        rendererBuildHash: hash,
+        capabilities: {
+          fileAccess: {
+            openExternalFile: true,
+            persistentFileReferences: false,
+            localLibraryImport: false,
+          },
+          storage: { sqliteIndex: false, sidecarPayload: true },
+          sync: { available: false, provider: "none" },
+          audio: { webAudio: true, nativeBridge: false },
         },
-        storage: { sqliteIndex: false, sidecarPayload: true },
-        sync: { available: false, provider: "none" },
-        audio: { webAudio: true, nativeBridge: false },
-      },
-    }).rendererBuildHash).toBe(hash);
-    expect(bridgeResponseSchemas["file.readBytes"].parse({
-      fileName: "score.gp",
-      bytes: new Uint8Array([1]),
-    }).bytes).toBeInstanceOf(Uint8Array);
+      }).rendererBuildHash,
+    ).toBe(hash);
+    expect(
+      bridgeResponseSchemas["file.readBytes"].parse({
+        fileName: "score.gp",
+        bytes: new Uint8Array([1]),
+      }).bytes,
+    ).toBeInstanceOf(Uint8Array);
   });
 
   it("round-trips MusicXML identities through sidecar requests", () => {
@@ -96,7 +110,6 @@ describe("bridge schemas", () => {
       format: "musicxml" as const,
       sourceHints: { fileName: "score.musicxml", trackNames: ["Piano"] },
     };
-    expect(createBridgeRequest("sidecar.read", "sidecar-1", { identity }).payload.identity)
-      .toEqual(identity);
+    expect(createBridgeRequest("sidecar.read", "sidecar-1", { identity }).payload.identity).toEqual(identity);
   });
 });

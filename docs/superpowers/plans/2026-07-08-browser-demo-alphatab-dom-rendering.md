@@ -70,6 +70,7 @@
 ## Task 1: Demo Workspace And Vite Skeleton
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `tsconfig.json`
 - Create: `web-demo/package.json`
@@ -80,6 +81,7 @@
 - Test: `web-demo/src/main.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - Root pnpm workspace.
 - Produces:
@@ -120,10 +122,7 @@ Modify root `package.json`:
     "demo:dev": "pnpm --filter @tab-viewer/web-demo dev",
     "demo:build": "pnpm --filter @tab-viewer/web-demo build"
   },
-  "workspaces": [
-    "web-core",
-    "web-demo"
-  ],
+  "workspaces": ["web-core", "web-demo"],
   "devDependencies": {
     "@types/node": "^20.14.0",
     "jsdom": "^24.1.0",
@@ -183,23 +182,15 @@ Create `web-demo/tsconfig.json`:
     "exactOptionalPropertyTypes": true,
     "noEmit": true,
     "skipLibCheck": true,
-    "lib": [
-      "ES2022",
-      "DOM"
-    ],
-    "types": [
-      "node",
-      "vitest"
-    ]
+    "lib": ["ES2022", "DOM"],
+    "types": ["node", "vitest"]
   },
   "references": [
     {
       "path": "../web-core"
     }
   ],
-  "include": [
-    "src/**/*.ts"
-  ]
+  "include": ["src/**/*.ts"]
 }
 ```
 
@@ -252,7 +243,13 @@ Create `web-demo/src/styles.css`:
 :root {
   color: #1d1d1f;
   background: #f7f7f4;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 }
 
 body {
@@ -329,10 +326,12 @@ git commit -m "feat: scaffold browser demo workspace"
 ## Task 2: Extend alphaTab Browser Facade For Loading
 
 **Files:**
+
 - Modify: `web-core/src/gp/alphaTabBrowser.ts`
 - Modify: `web-core/src/gp/alphaTabBrowser.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - Existing `AlphaTabApiLike`
   - Existing `createAlphaTabApi`
@@ -417,7 +416,7 @@ export function attachAlphaTabPositionEvents(
   api: AlphaTabApiLike,
   emit: (event: AlphaTabPositionEvent) => void,
 ): () => void {
-  const detach = api.playerPositionChanged?.on(arg => {
+  const detach = api.playerPositionChanged?.on((arg) => {
     const event = arg as { currentTime?: number; endTime?: number; tickPosition?: number };
     const mapped: AlphaTabPositionEvent = {
       positionMs: event.currentTime ?? 0,
@@ -459,10 +458,12 @@ git commit -m "feat: expose alphatab byte loading"
 ## Task 3: Demo Presenter For File Validation And Rendering
 
 **Files:**
+
 - Create: `web-demo/src/gpDemoPresenter.ts`
 - Test: `web-demo/src/gpDemoPresenter.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `detectScoreFormat(fileName: string): ScoreFormat`
   - `createScoreIdentity(input): Promise<ScoreIdentity>`
@@ -506,7 +507,7 @@ describe("presentGpFile", () => {
           return true;
         },
       },
-      loader: input => {
+      loader: (input) => {
         expect(input).toEqual(bytes);
         return {
           title: "Song",
@@ -660,11 +661,13 @@ git commit -m "feat: add gp demo presenter"
 ## Task 4: DOM App Binding
 
 **Files:**
+
 - Create: `web-demo/src/demoApp.ts`
 - Test: `web-demo/src/demoApp.test.ts`
 - Modify: `web-demo/src/main.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `createAlphaTabApi(element, options)`
   - `presentGpFile(input)`
@@ -783,15 +786,18 @@ export function mountDemoApp(ownerDocument: Document): void {
 
     renderDemoState({ status, summary }, { status: "loading", message: "正在加载文件" });
     void presentGpFile({ file, api })
-      .then(state => renderDemoState({ status, summary }, state))
-      .catch(error => {
-        renderDemoState({
-          status,
-          summary,
-        }, {
-          status: "error",
-          message: error instanceof Error ? error.message : "加载失败",
-        });
+      .then((state) => renderDemoState({ status, summary }, state))
+      .catch((error) => {
+        renderDemoState(
+          {
+            status,
+            summary,
+          },
+          {
+            status: "error",
+            message: error instanceof Error ? error.message : "加载失败",
+          },
+        );
       });
   });
 }
@@ -845,10 +851,12 @@ git commit -m "feat: bind browser demo ui"
 ## Task 5: Demo Usage Documentation
 
 **Files:**
+
 - Create: `docs/architecture/browser-demo-alphatab-dom-rendering.md`
 - Modify: `docs/architecture/implementation-foundation.md`
 
 **Interfaces:**
+
 - Consumes:
   - `pnpm demo:dev`
   - `pnpm demo:build`
@@ -859,7 +867,7 @@ git commit -m "feat: bind browser demo ui"
 
 Create `docs/architecture/browser-demo-alphatab-dom-rendering.md`:
 
-```markdown
+````markdown
 # Browser Demo alphaTab DOM Rendering
 
 ## 范围
@@ -873,6 +881,7 @@ pnpm install
 pnpm check
 pnpm demo:build
 ```
+````
 
 ## 试用
 
@@ -897,7 +906,8 @@ pnpm demo:dev
 - 不保存 sidecar。
 - 不同步文件或元数据。
 - 不支持 MIDI。
-```
+
+````
 
 - [ ] **Step 2: Update implementation foundation doc**
 
@@ -913,14 +923,15 @@ Append to `docs/architecture/implementation-foundation.md`:
 
 ```bash
 pnpm demo:dev
-```
+````
 
 构建：
 
 ```bash
 pnpm demo:build
 ```
-```
+
+````
 
 - [ ] **Step 3: Run final checks**
 
@@ -933,7 +944,7 @@ rg_status=$?
 if [ "$rg_status" -ne 1 ]; then exit "$rg_status"; fi
 pnpm check
 pnpm demo:build
-```
+````
 
 Expected: placeholder scan finds nothing. Typecheck, tests, and Vite build pass.
 

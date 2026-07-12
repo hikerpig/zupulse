@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from "vitest";
 import {
   createDefaultOpenSession,
   mountViewerApp,
   renderViewerState,
   type DefaultOpenSessionDependencies,
-} from './viewerApp';
+} from "./viewerApp";
 
 function renderSessionFixture(ownerDocument: Document): void {
   ownerDocument.body.innerHTML =
@@ -14,11 +14,11 @@ function renderSessionFixture(ownerDocument: Document): void {
 
 function testRoot(): HTMLElement {
   document.body.innerHTML = '<div id="root"></div>';
-  return document.getElementById('root') as HTMLElement;
+  return document.getElementById("root") as HTMLElement;
 }
 
-describe('mountViewerApp', () => {
-  it('switches between dark and light theme', async () => {
+describe("mountViewerApp", () => {
+  it("switches between dark and light theme", async () => {
     renderSessionFixture(document);
 
     const handle = mountViewerApp(testRoot(), {
@@ -30,25 +30,25 @@ describe('mountViewerApp', () => {
       }),
     });
 
-    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(document.documentElement.dataset.theme).toBe("dark");
 
-    document.getElementById('theme-light')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(document.documentElement.dataset.theme).toBe('light');
-    expect(document.getElementById('theme-light')?.getAttribute('aria-pressed')).toBe('true');
+    document.getElementById("theme-light")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(document.getElementById("theme-light")?.getAttribute("aria-pressed")).toBe("true");
 
-    document.getElementById('theme-dark')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(document.documentElement.dataset.theme).toBe('dark');
+    document.getElementById("theme-dark")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(document.documentElement.dataset.theme).toBe("dark");
 
     await handle.destroy();
   });
 
-  it('forwards toggle-playback host commands to the active session', async () => {
+  it("forwards toggle-playback host commands to the active session", async () => {
     renderSessionFixture(document);
-    let hostListener: ((event: { type: 'toggle-playback' }) => void) | undefined;
+    let hostListener: ((event: { type: "toggle-playback" }) => void) | undefined;
     const togglePlayback = vi.fn(async () => undefined);
     const app = mountViewerApp(testRoot(), {
       host: {
-        openScore: async () => ({ fileName: 'song.gp5', bytes: new Uint8Array([1]) }),
+        openScore: async () => ({ fileName: "song.gp5", bytes: new Uint8Array([1]) }),
         subscribe: (listener) => {
           hostListener = listener as typeof hostListener;
           return () => undefined;
@@ -62,14 +62,14 @@ describe('mountViewerApp', () => {
     });
     await app.openScore();
 
-    hostListener?.({ type: 'toggle-playback' });
+    hostListener?.({ type: "toggle-playback" });
     await vi.waitFor(() => expect(togglePlayback).toHaveBeenCalledOnce());
   });
 
-  it('opens through the injected host and destroys the active session', async () => {
+  it("opens through the injected host and destroys the active session", async () => {
     renderSessionFixture(document);
     const openScore = vi.fn(async () => ({
-      fileName: 'song.gp5',
+      fileName: "song.gp5",
       bytes: new Uint8Array([1]),
     }));
     const destroySession = vi.fn(async () => undefined);
@@ -82,17 +82,17 @@ describe('mountViewerApp', () => {
       }),
     });
 
-    document.querySelector<HTMLButtonElement>('#open-score')?.click();
+    document.querySelector<HTMLButtonElement>("#open-score")?.click();
     await vi.waitFor(() => expect(openScore).toHaveBeenCalledOnce());
     await app.destroy();
     expect(destroySession).toHaveBeenCalledOnce();
   });
 
-  it('destroys the previous session before opening the next score', async () => {
+  it("destroys the previous session before opening the next score", async () => {
     renderSessionFixture(document);
     const files = [
-      { fileName: 'first.gp5', bytes: new Uint8Array([1]) },
-      { fileName: 'second.gp5', bytes: new Uint8Array([2]) },
+      { fileName: "first.gp5", bytes: new Uint8Array([1]) },
+      { fileName: "second.gp5", bytes: new Uint8Array([2]) },
     ];
     const order: string[] = [];
     let session = 0;
@@ -113,15 +113,15 @@ describe('mountViewerApp', () => {
 
     await app.openScore();
     await app.openScore();
-    expect(order).toEqual(['start-1', 'destroy-1', 'start-2']);
+    expect(order).toEqual(["start-1", "destroy-1", "start-2"]);
   });
 
-  it('serializes concurrent public openScore calls and retains only the latest session', async () => {
+  it("serializes concurrent public openScore calls and retains only the latest session", async () => {
     renderSessionFixture(document);
     const firstSessionGate = deferred<void>();
     const order: string[] = [];
     let session = 0;
-    const hostOpen = vi.fn(async () => ({ fileName: 'song.gp5', bytes: new Uint8Array([1]) }));
+    const hostOpen = vi.fn(async () => ({ fileName: "song.gp5", bytes: new Uint8Array([1]) }));
     const app = mountViewerApp(testRoot(), {
       host: { openScore: hostOpen, subscribe: () => () => undefined },
       openSession: async () => {
@@ -140,18 +140,18 @@ describe('mountViewerApp', () => {
 
     const firstOpen = app.openScore();
     const secondOpen = app.openScore();
-    await vi.waitFor(() => expect(order).toEqual(['start-1']));
+    await vi.waitFor(() => expect(order).toEqual(["start-1"]));
     expect(hostOpen).toHaveBeenCalledOnce();
 
     firstSessionGate.resolve();
     await Promise.all([firstOpen, secondOpen]);
-    expect(order).toEqual(['start-1', 'destroy-1', 'start-2']);
+    expect(order).toEqual(["start-1", "destroy-1", "start-2"]);
 
     await app.destroy();
-    expect(order).toEqual(['start-1', 'destroy-1', 'start-2', 'destroy-2']);
+    expect(order).toEqual(["start-1", "destroy-1", "start-2", "destroy-2"]);
   });
 
-  it('rejects new opens after destroy starts and cleans an already accepted open', async () => {
+  it("rejects new opens after destroy starts and cleans an already accepted open", async () => {
     renderSessionFixture(document);
     const sessionGate = deferred<void>();
     const destroySession = vi.fn(async () => undefined);
@@ -161,7 +161,7 @@ describe('mountViewerApp', () => {
     });
     const app = mountViewerApp(testRoot(), {
       host: {
-        openScore: async () => ({ fileName: 'song.gp5', bytes: new Uint8Array([1]) }),
+        openScore: async () => ({ fileName: "song.gp5", bytes: new Uint8Array([1]) }),
         subscribe: () => () => undefined,
       },
       openSession,
@@ -170,7 +170,7 @@ describe('mountViewerApp', () => {
     const acceptedOpen = app.openScore();
     await vi.waitFor(() => expect(openSession).toHaveBeenCalledOnce());
     const destroying = app.destroy();
-    await expect(app.openScore()).rejects.toThrow('Viewer app is being destroyed');
+    await expect(app.openScore()).rejects.toThrow("Viewer app is being destroyed");
 
     sessionGate.resolve();
     await acceptedOpen;
@@ -179,20 +179,20 @@ describe('mountViewerApp', () => {
     expect(destroySession).toHaveBeenCalledOnce();
   });
 
-  it('continues the queued open flow after openSession rejects', async () => {
+  it("continues the queued open flow after openSession rejects", async () => {
     renderSessionFixture(document);
     const openSession = vi
       .fn()
-      .mockRejectedValueOnce(new Error('first open failed'))
+      .mockRejectedValueOnce(new Error("first open failed"))
       .mockResolvedValueOnce({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() });
     const app = mountViewerApp(testRoot(), {
       host: {
-        openScore: async () => ({ fileName: 'song.gp5', bytes: new Uint8Array([1]) }),
+        openScore: async () => ({ fileName: "song.gp5", bytes: new Uint8Array([1]) }),
         subscribe: () => () => undefined,
       },
       openSession,
     });
-    const button = document.querySelector<HTMLButtonElement>('#open-score') as HTMLButtonElement;
+    const button = document.querySelector<HTMLButtonElement>("#open-score") as HTMLButtonElement;
 
     button.click();
     await vi.waitFor(() => expect(openSession).toHaveBeenCalledTimes(1));
@@ -202,12 +202,12 @@ describe('mountViewerApp', () => {
     await app.destroy();
   });
 
-  it('continues the queued open flow after the host rejects', async () => {
+  it("continues the queued open flow after the host rejects", async () => {
     renderSessionFixture(document);
     const openScore = vi
       .fn()
-      .mockRejectedValueOnce(new Error('picker failed'))
-      .mockResolvedValueOnce({ fileName: 'song.gp5', bytes: new Uint8Array([1]) });
+      .mockRejectedValueOnce(new Error("picker failed"))
+      .mockResolvedValueOnce({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
     const openSession = vi.fn(async () => ({
       togglePlayback: vi.fn(),
       pauseAndFlush: vi.fn(),
@@ -217,7 +217,7 @@ describe('mountViewerApp', () => {
       host: { openScore, subscribe: () => () => undefined },
       openSession,
     });
-    const button = document.querySelector<HTMLButtonElement>('#open-score') as HTMLButtonElement;
+    const button = document.querySelector<HTMLButtonElement>("#open-score") as HTMLButtonElement;
 
     button.click();
     await vi.waitFor(() => expect(openScore).toHaveBeenCalledTimes(1));
@@ -227,12 +227,12 @@ describe('mountViewerApp', () => {
     await app.destroy();
   });
 
-  it('clears a queued UI error after a successful public open', async () => {
+  it("clears a queued UI error after a successful public open", async () => {
     renderSessionFixture(document);
     const openScore = vi
       .fn()
-      .mockRejectedValueOnce(new Error('picker failed'))
-      .mockResolvedValueOnce({ fileName: 'song.gp5', bytes: new Uint8Array([1]) });
+      .mockRejectedValueOnce(new Error("picker failed"))
+      .mockResolvedValueOnce({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
     const app = mountViewerApp(testRoot(), {
       host: { openScore, subscribe: () => () => undefined },
       openSession: async () => ({
@@ -242,22 +242,22 @@ describe('mountViewerApp', () => {
       }),
     });
 
-    document.querySelector<HTMLButtonElement>('#open-score')?.click();
+    document.querySelector<HTMLButtonElement>("#open-score")?.click();
     await vi.waitFor(() => expect(openScore).toHaveBeenCalledOnce());
     await app.openScore();
 
     await expect(app.destroy()).resolves.toBeUndefined();
   });
 
-  it('clears a previous session reference before awaiting its failing destroy', async () => {
+  it("clears a previous session reference before awaiting its failing destroy", async () => {
     renderSessionFixture(document);
-    const failure = new Error('session cleanup failed');
+    const failure = new Error("session cleanup failed");
     const destroySession = vi.fn(async () => {
       throw failure;
     });
     const files = [
-      { fileName: 'first.gp5', bytes: new Uint8Array([1]) },
-      { fileName: 'second.gp5', bytes: new Uint8Array([2]) },
+      { fileName: "first.gp5", bytes: new Uint8Array([1]) },
+      { fileName: "second.gp5", bytes: new Uint8Array([2]) },
     ];
     const app = mountViewerApp(testRoot(), {
       host: { openScore: async () => files.shift(), subscribe: () => () => undefined },
@@ -275,13 +275,13 @@ describe('mountViewerApp', () => {
     expect(destroySession).toHaveBeenCalledOnce();
   });
 
-  it('cleans the active session before propagating a queued host failure from destroy', async () => {
+  it("cleans the active session before propagating a queued host failure from destroy", async () => {
     renderSessionFixture(document);
-    const failure = new Error('host failed');
+    const failure = new Error("host failed");
     const destroySession = vi.fn(async () => undefined);
     const openScore = vi
       .fn()
-      .mockResolvedValueOnce({ fileName: 'song.gp5', bytes: new Uint8Array([1]) })
+      .mockResolvedValueOnce({ fileName: "song.gp5", bytes: new Uint8Array([1]) })
       .mockRejectedValueOnce(failure);
     const app = mountViewerApp(testRoot(), {
       host: { openScore, subscribe: () => () => undefined },
@@ -293,7 +293,7 @@ describe('mountViewerApp', () => {
     });
     await app.openScore();
 
-    document.querySelector<HTMLButtonElement>('#open-score')?.click();
+    document.querySelector<HTMLButtonElement>("#open-score")?.click();
     await vi.waitFor(() => expect(openScore).toHaveBeenCalledTimes(2));
 
     await expect(app.destroy()).rejects.toBe(failure);
@@ -302,13 +302,13 @@ describe('mountViewerApp', () => {
     expect(destroySession).toHaveBeenCalledOnce();
   });
 
-  it('aggregates queued open and active cleanup failures during destroy', async () => {
+  it("aggregates queued open and active cleanup failures during destroy", async () => {
     renderSessionFixture(document);
-    const openFailure = new Error('host failed');
-    const cleanupFailure = new Error('session destroy failed');
+    const openFailure = new Error("host failed");
+    const cleanupFailure = new Error("session destroy failed");
     const openScore = vi
       .fn()
-      .mockResolvedValueOnce({ fileName: 'song.gp5', bytes: new Uint8Array([1]) })
+      .mockResolvedValueOnce({ fileName: "song.gp5", bytes: new Uint8Array([1]) })
       .mockRejectedValueOnce(openFailure);
     const app = mountViewerApp(testRoot(), {
       host: { openScore, subscribe: () => () => undefined },
@@ -321,7 +321,7 @@ describe('mountViewerApp', () => {
       }),
     });
     await app.openScore();
-    document.querySelector<HTMLButtonElement>('#open-score')?.click();
+    document.querySelector<HTMLButtonElement>("#open-score")?.click();
     await vi.waitFor(() => expect(openScore).toHaveBeenCalledTimes(2));
 
     const error = (await rejectionOf(app.destroy())) as AggregateError;
@@ -331,18 +331,18 @@ describe('mountViewerApp', () => {
   });
 });
 
-describe('createDefaultOpenSession cleanup', () => {
-  it('clears the empty state before alphaTab establishes its cursor coordinate system', async () => {
+describe("createDefaultOpenSession cleanup", () => {
+  it("clears the empty state before alphaTab establishes its cursor coordinate system", async () => {
     renderSessionFixture(document);
     const createApi = vi.fn((element: HTMLElement) => {
-      expect(element.querySelector('.score-empty-state')).toBeNull();
+      expect(element.querySelector(".score-empty-state")).toBeNull();
       expect(element.childElementCount).toBe(0);
       return { load: () => false };
     });
     const openSession = createDefaultOpenSession(document, {} as never, {
       createApi,
       createAdapter: () => ({ destroy: vi.fn() }) as never,
-      presentFile: async () => ({ status: 'error', message: 'stop after host check' }),
+      presentFile: async () => ({ status: "error", message: "stop after host check" }),
       waitForScore: async () => ({}) as never,
       extractModel: () => ({
         tracks: [],
@@ -351,18 +351,18 @@ describe('createDefaultOpenSession cleanup', () => {
       createController: () => ({}) as never,
     });
 
-    await openSession({ fileName: 'song.gp5', bytes: new Uint8Array([1]) });
+    await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
 
     expect(createApi).toHaveBeenCalledOnce();
   });
 
-  it('enables alphaTab playback cursors and element highlighting', async () => {
+  it("enables alphaTab playback cursors and element highlighting", async () => {
     renderSessionFixture(document);
     const createApi = vi.fn((_element: HTMLElement, _settings: unknown) => ({ load: () => false }));
     const openSession = createDefaultOpenSession(document, {} as never, {
       createApi,
       createAdapter: () => ({ destroy: vi.fn() }) as never,
-      presentFile: async () => ({ status: 'error', message: 'stop after settings' }),
+      presentFile: async () => ({ status: "error", message: "stop after settings" }),
       waitForScore: async () => ({}) as never,
       extractModel: () => ({
         tracks: [],
@@ -371,7 +371,7 @@ describe('createDefaultOpenSession cleanup', () => {
       createController: () => ({}) as never,
     });
 
-    await openSession({ fileName: 'song.gp5', bytes: new Uint8Array([1]) });
+    await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
 
     const [alphaTabHost, settings] = createApi.mock.calls[0] as [
       HTMLElement,
@@ -389,10 +389,10 @@ describe('createDefaultOpenSession cleanup', () => {
       }),
     );
     expect(settings.player.scrollElement).toBe(alphaTabHost.parentElement);
-    expect(settings.display.resources.secondaryGlyphColor).toBe('#000000');
+    expect(settings.display.resources.secondaryGlyphColor).toBe("#000000");
   });
 
-  it('pauses and flushes the active playback controller', async () => {
+  it("pauses and flushes the active playback controller", async () => {
     renderSessionFixture(document);
     const dispatch = vi.fn(async () => undefined);
     const flush = vi.fn(async () => undefined);
@@ -400,20 +400,20 @@ describe('createDefaultOpenSession cleanup', () => {
       createApi: () => ({}),
       createAdapter: () => ({ destroy: vi.fn() }) as never,
       presentFile: async () => ({
-        status: 'ready',
-        message: '已加载 Song',
-        identity: { contentHash: 'a'.repeat(64), format: 'gp' },
-        summary: { title: 'Song', trackCount: 1, masterBarCount: 1 },
+        status: "ready",
+        message: "已加载 Song",
+        identity: { contentHash: "a".repeat(64), format: "gp" },
+        summary: { title: "Song", trackCount: 1, masterBarCount: 1 },
       }),
       waitForScore: async () => ({}) as never,
       extractModel: () => ({
-        tracks: [{ id: 'track-0', sourceIndex: 0, name: 'Lead' }],
+        tracks: [{ id: "track-0", sourceIndex: 0, name: "Lead" }],
         timeline: { durationTicks: 0, durationMs: 0, measures: [] },
       }),
       createController: () =>
         ({
           initialize: async () => undefined,
-          getState: () => ({ sessionId: 'session' }),
+          getState: () => ({ sessionId: "session" }),
           subscribe: () => () => undefined,
           dispatch,
           flush,
@@ -421,16 +421,16 @@ describe('createDefaultOpenSession cleanup', () => {
         }) as never,
     };
     const openSession = createDefaultOpenSession(document, {} as never, dependencies);
-    const session = await openSession({ fileName: 'song.gp5', bytes: new Uint8Array([1]) });
+    const session = await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
 
     await session.pauseAndFlush();
 
-    expect(dispatch).toHaveBeenCalledWith({ type: 'pause' });
+    expect(dispatch).toHaveBeenCalledWith({ type: "pause" });
     expect(flush).toHaveBeenCalledOnce();
     expect(dispatch.mock.invocationCallOrder[0]).toBeLessThan(flush.mock.invocationCallOrder[0] ?? 0);
   });
 
-  it.each(['initialize'] as const)('destroys the controller when %s fails', async (failurePoint) => {
+  it.each(["initialize"] as const)("destroys the controller when %s fails", async (failurePoint) => {
     renderSessionFixture(document);
     const adapterDestroy = vi.fn();
     const controllerDestroy = vi.fn(async () => undefined);
@@ -439,25 +439,25 @@ describe('createDefaultOpenSession cleanup', () => {
       createApi: () => ({}),
       createAdapter: () => ({ destroy: adapterDestroy }) as never,
       presentFile: async () => ({
-        status: 'ready',
-        message: '已加载 Song',
-        identity: { contentHash: 'a'.repeat(64), format: 'gp' },
-        summary: { title: 'Song', trackCount: 1, masterBarCount: 1 },
+        status: "ready",
+        message: "已加载 Song",
+        identity: { contentHash: "a".repeat(64), format: "gp" },
+        summary: { title: "Song", trackCount: 1, masterBarCount: 1 },
       }),
       waitForScore: async () => ({}) as never,
       extractModel: () => ({
-        tracks: [{ id: 'track-0', sourceIndex: 0, name: 'Lead' }],
+        tracks: [{ id: "track-0", sourceIndex: 0, name: "Lead" }],
         timeline: { durationTicks: 0, durationMs: 0, measures: [] },
       }),
       createController: () =>
         ({
           initialize:
-            failurePoint === 'initialize'
+            failurePoint === "initialize"
               ? async () => {
                   throw failure;
                 }
               : async () => undefined,
-          getState: () => ({ sessionId: 'session' }),
+          getState: () => ({ sessionId: "session" }),
           subscribe: () => () => undefined,
           dispatch: async () => undefined,
           flush: async () => undefined,
@@ -466,29 +466,29 @@ describe('createDefaultOpenSession cleanup', () => {
     };
     const openSession = createDefaultOpenSession(document, {} as never, dependencies);
 
-    await openSession({ fileName: 'song.gp5', bytes: new Uint8Array([1]) });
+    await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
 
     expect(controllerDestroy).toHaveBeenCalledOnce();
     expect(adapterDestroy).not.toHaveBeenCalled();
-    expect(document.querySelector('#status')?.textContent).toBe(failure.message);
+    expect(document.querySelector("#status")?.textContent).toBe(failure.message);
   });
 
-  it('preserves initialization and controller cleanup failures', async () => {
+  it("preserves initialization and controller cleanup failures", async () => {
     renderSessionFixture(document);
-    const initializeFailure = new Error('initialize failed');
-    const cleanupFailure = new Error('controller destroy failed');
+    const initializeFailure = new Error("initialize failed");
+    const cleanupFailure = new Error("controller destroy failed");
     const dependencies: DefaultOpenSessionDependencies = {
       createApi: () => ({}),
       createAdapter: () => ({ destroy: vi.fn() }) as never,
       presentFile: async () => ({
-        status: 'ready',
-        message: '已加载 Song',
-        identity: { contentHash: 'a'.repeat(64), format: 'gp' },
-        summary: { title: 'Song', trackCount: 1, masterBarCount: 1 },
+        status: "ready",
+        message: "已加载 Song",
+        identity: { contentHash: "a".repeat(64), format: "gp" },
+        summary: { title: "Song", trackCount: 1, masterBarCount: 1 },
       }),
       waitForScore: async () => ({}) as never,
       extractModel: () => ({
-        tracks: [{ id: 'track-0', sourceIndex: 0, name: 'Lead' }],
+        tracks: [{ id: "track-0", sourceIndex: 0, name: "Lead" }],
         timeline: { durationTicks: 0, durationMs: 0, measures: [] },
       }),
       createController: () =>
@@ -505,7 +505,7 @@ describe('createDefaultOpenSession cleanup', () => {
 
     const error = (await rejectionOf(
       openSession({
-        fileName: 'song.gp5',
+        fileName: "song.gp5",
         bytes: new Uint8Array([1]),
       }),
     )) as AggregateError;
@@ -515,39 +515,39 @@ describe('createDefaultOpenSession cleanup', () => {
   });
 });
 
-describe('renderViewerState', () => {
-  it('renders ready metadata without interpreting user-provided text as HTML', () => {
+describe("renderViewerState", () => {
+  it("renders ready metadata without interpreting user-provided text as HTML", () => {
     renderSessionFixture(document);
-    const status = document.querySelector('#status') as HTMLElement;
-    const summary = document.querySelector('#summary') as HTMLElement;
+    const status = document.querySelector("#status") as HTMLElement;
+    const summary = document.querySelector("#summary") as HTMLElement;
 
     renderViewerState(status, summary, {
-      status: 'ready',
-      message: '已加载 Song',
+      status: "ready",
+      message: "已加载 Song",
       summary: {
-        title: '<img src=x onerror=alert(1)>',
-        artist: 'Artist',
+        title: "<img src=x onerror=alert(1)>",
+        artist: "Artist",
         trackCount: 2,
         masterBarCount: 3,
         tempo: 120,
       },
     });
 
-    expect(status.textContent).toBe('已加载 Song');
-    expect(summary.textContent).toBe('<img src=x onerror=alert(1)>');
-    expect(summary.querySelector('img')).toBeNull();
+    expect(status.textContent).toBe("已加载 Song");
+    expect(summary.textContent).toBe("<img src=x onerror=alert(1)>");
+    expect(summary.querySelector("img")).toBeNull();
   });
 
-  it('clears stale summary for an error state', () => {
+  it("clears stale summary for an error state", () => {
     renderSessionFixture(document);
-    const status = document.querySelector('#status') as HTMLElement;
-    const summary = document.querySelector('#summary') as HTMLElement;
-    summary.textContent = 'old summary';
+    const status = document.querySelector("#status") as HTMLElement;
+    const summary = document.querySelector("#summary") as HTMLElement;
+    summary.textContent = "old summary";
 
-    renderViewerState(status, summary, { status: 'error', message: '请选择 Guitar Pro 文件' });
+    renderViewerState(status, summary, { status: "error", message: "请选择 Guitar Pro 文件" });
 
-    expect(status.textContent).toBe('请选择 Guitar Pro 文件');
-    expect(summary.textContent).toBe('未打开乐谱');
+    expect(status.textContent).toBe("请选择 Guitar Pro 文件");
+    expect(summary.textContent).toBe("未打开乐谱");
   });
 });
 
@@ -565,5 +565,5 @@ async function rejectionOf(promise: Promise<unknown>): Promise<unknown> {
   } catch (error) {
     return error;
   }
-  throw new Error('Expected promise to reject');
+  throw new Error("Expected promise to reject");
 }

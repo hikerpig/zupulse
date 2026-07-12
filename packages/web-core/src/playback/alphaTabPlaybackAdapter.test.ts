@@ -1,14 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type {
-  AlphaTabApiLike,
-  AlphaTabBrowserScoreLike,
-  AlphaTabBrowserTrackLike,
-} from "../gp/alphaTabBrowser";
-import {
-  AlphaTabPlaybackAdapter,
-  extractAlphaTabPlaybackModel,
-  waitForAlphaTabScore,
-} from "./alphaTabPlaybackAdapter";
+import type { AlphaTabApiLike, AlphaTabBrowserScoreLike, AlphaTabBrowserTrackLike } from "../gp/alphaTabBrowser";
+import { AlphaTabPlaybackAdapter, extractAlphaTabPlaybackModel, waitForAlphaTabScore } from "./alphaTabPlaybackAdapter";
 
 describe("extractAlphaTabPlaybackModel", () => {
   it("maps source tracks and master bars to stable playback data", () => {
@@ -85,7 +77,7 @@ describe("AlphaTabPlaybackAdapter", () => {
     const api = createApi({ events });
     const adapter = new AlphaTabPlaybackAdapter(api, "/soundfont.sf3");
     const received: unknown[] = [];
-    adapter.subscribe(event => received.push(event));
+    adapter.subscribe((event) => received.push(event));
 
     events.playerStateChanged.emit({ state: 1, stopped: false });
     events.position.emit({ currentTime: 1200, endTime: 8000, tickPosition: 576 });
@@ -114,12 +106,8 @@ describe("AlphaTabPlaybackAdapter", () => {
 
     adapter.retrySoundFont();
 
-    expect(calls).toContainEqual([
-      "loadSoundFont",
-      { url: "/soundfont.sf3", append: false },
-    ]);
-    expect(() => adapter.setTrackMute("track-99", true))
-      .toThrow("Unknown alphaTab track: track-99");
+    expect(calls).toContainEqual(["loadSoundFont", { url: "/soundfont.sf3", append: false }]);
+    expect(() => adapter.setTrackMute("track-99", true)).toThrow("Unknown alphaTab track: track-99");
   });
 
   it("detaches alphaTab events before destroying the API", () => {
@@ -130,7 +118,7 @@ describe("AlphaTabPlaybackAdapter", () => {
 
     adapter.destroy();
 
-    expect(events.all.every(event => event.listenerCount === 0)).toBe(true);
+    expect(events.all.every((event) => event.listenerCount === 0)).toBe(true);
     expect(calls.at(-1)).toEqual(["destroy", undefined]);
   });
 });
@@ -205,24 +193,13 @@ function createEvents() {
     soundFontLoaded,
     soundFontLoad,
     error,
-    all: [
-      scoreLoaded,
-      playerReady,
-      playerStateChanged,
-      position,
-      soundFontLoaded,
-      soundFontLoad,
-      error,
-    ],
+    all: [scoreLoaded, playerReady, playerStateChanged, position, soundFontLoaded, soundFontLoad, error],
   };
 }
 
 function createScore(): AlphaTabBrowserScoreLike {
   return {
-    tracks: [
-      { index: 0, name: "Lead" },
-      { index: 1 },
-    ],
+    tracks: [{ index: 0, name: "Lead" }, { index: 1 }],
     masterBars: [
       { index: 0, start: 0, timeSignatureNumerator: 4, calculateDuration: () => 1920 },
       { index: 1, start: 1920, timeSignatureNumerator: 4, calculateDuration: () => 1920 },
@@ -230,10 +207,12 @@ function createScore(): AlphaTabBrowserScoreLike {
   };
 }
 
-function createApi(input: {
-  calls?: Array<[string, unknown]>;
-  events?: ReturnType<typeof createEvents>;
-} = {}): AlphaTabApiLike {
+function createApi(
+  input: {
+    calls?: Array<[string, unknown]>;
+    events?: ReturnType<typeof createEvents>;
+  } = {},
+): AlphaTabApiLike {
   const calls = input.calls ?? [];
   const events = input.events ?? createEvents();
   const score = createScore();
@@ -250,23 +229,11 @@ function createApi(input: {
     error: events.error,
     playPause: () => calls.push(["playPause", undefined]),
     stop: () => calls.push(["stop", undefined]),
-    renderTracks: tracks => calls.push(["renderTracks", tracks.map(track => track.index)]),
-    changeTrackMute: (tracks, value) => calls.push([
-      "mute",
-      { tracks: tracks.map(track => track.index), value },
-    ]),
-    changeTrackSolo: (tracks, value) => calls.push([
-      "solo",
-      { tracks: tracks.map(track => track.index), value },
-    ]),
-    changeTrackVolume: (tracks, value) => calls.push([
-      "volume",
-      { tracks: tracks.map(track => track.index), value },
-    ]),
-    loadSoundFontFromUrl: (url, append) => calls.push([
-      "loadSoundFont",
-      { url, append },
-    ]),
+    renderTracks: (tracks) => calls.push(["renderTracks", tracks.map((track) => track.index)]),
+    changeTrackMute: (tracks, value) => calls.push(["mute", { tracks: tracks.map((track) => track.index), value }]),
+    changeTrackSolo: (tracks, value) => calls.push(["solo", { tracks: tracks.map((track) => track.index), value }]),
+    changeTrackVolume: (tracks, value) => calls.push(["volume", { tracks: tracks.map((track) => track.index), value }]),
+    loadSoundFontFromUrl: (url, append) => calls.push(["loadSoundFont", { url, append }]),
     destroy: () => calls.push(["destroy", undefined]),
   };
 }

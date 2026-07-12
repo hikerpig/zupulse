@@ -13,7 +13,7 @@ describe("openGpThroughBridge", () => {
     const result = await openGpThroughBridge({
       bridge,
       handshake: { appVersion: "0.1.0", rendererBuildHash: "a".repeat(64) },
-      loader: bytes => {
+      loader: (bytes) => {
         expect([...bytes]).toEqual([1, 2, 3]);
         return {
           title: "Song",
@@ -68,7 +68,7 @@ describe("openGpThroughBridge", () => {
     const result = await openGpThroughBridge({
       bridge,
       handshake: { appVersion: "0.1.0", rendererBuildHash: "a".repeat(64) },
-      loader: bytes => {
+      loader: (bytes) => {
         expect([...bytes]).toEqual([8, 9]);
         return { title: "Token Song" };
       },

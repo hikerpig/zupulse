@@ -307,15 +307,27 @@ class FakeEngine implements PlaybackEngine {
     this.listener?.(event);
   }
 
-  playPause(): void { this.calls.push(["playPause", undefined]); }
-  stop(): void { this.calls.push(["stop", undefined]); }
-  retrySoundFont(): void { this.calls.push(["retrySoundFont", undefined]); }
-  seekTick(tick: number): void { this.calls.push(["seek", tick]); }
-  setSpeed(speed: number): void { this.calls.push(["speed", speed]); }
+  playPause(): void {
+    this.calls.push(["playPause", undefined]);
+  }
+  stop(): void {
+    this.calls.push(["stop", undefined]);
+  }
+  retrySoundFont(): void {
+    this.calls.push(["retrySoundFont", undefined]);
+  }
+  seekTick(tick: number): void {
+    this.calls.push(["seek", tick]);
+  }
+  setSpeed(speed: number): void {
+    this.calls.push(["speed", speed]);
+  }
   setLoop(range: { startTick: number; endTick: number } | null, enabled: boolean): void {
     this.calls.push(["loop", { range, enabled }]);
   }
-  setVisibleTracks(trackIds: string[]): void { this.calls.push(["visible", trackIds]); }
+  setVisibleTracks(trackIds: string[]): void {
+    this.calls.push(["visible", trackIds]);
+  }
   setTrackMute(trackId: string, muted: boolean): void {
     this.calls.push(["mute", { trackId, value: muted }]);
   }
@@ -325,7 +337,9 @@ class FakeEngine implements PlaybackEngine {
   setTrackVolume(trackId: string, volume: number): void {
     this.calls.push(["volume", { trackId, value: volume }]);
   }
-  destroy(): void { this.destroyed = true; }
+  destroy(): void {
+    this.destroyed = true;
+  }
 }
 
 class FakePersistence implements PlaybackPersistence {

@@ -11,7 +11,7 @@ export function resolveAppAsset(root: string, rawUrl: string): string {
   } catch {
     throw new Error("APP_PROTOCOL_INVALID_PATH");
   }
-  if (decodedPath.split("/").some(segment => segment === "." || segment === "..")) {
+  if (decodedPath.split("/").some((segment) => segment === "." || segment === "..")) {
     throw new Error("APP_PROTOCOL_PATH_OUTSIDE_ROOT");
   }
 
@@ -28,7 +28,5 @@ export function resolveAppAsset(root: string, rawUrl: string): string {
 }
 
 export function registerAppProtocol(root: string): void {
-  protocol.handle("tab-viewer", request =>
-    net.fetch(pathToFileURL(resolveAppAsset(root, request.url)).href),
-  );
+  protocol.handle("tab-viewer", (request) => net.fetch(pathToFileURL(resolveAppAsset(root, request.url)).href));
 }

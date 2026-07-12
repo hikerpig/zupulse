@@ -67,6 +67,7 @@
 ### Task 1: 迁移 monorepo 目录而不改变行为
 
 **Files:**
+
 - Move: `web-core/` → `packages/web-core/`
 - Move: `web-demo/` → `apps/web-demo/`
 - Modify: `package.json`
@@ -76,6 +77,7 @@
 - Modify: `apps/web-demo/rspack.config.mjs`
 
 **Interfaces:**
+
 - Consumes: 现有 pnpm 包名 `@tab-viewer/web-core`、`@tab-viewer/web-demo`。
 - Produces: 稳定的 `packages/*`、`apps/*` workspace 路径；包名和运行命令保持不变。
 
@@ -114,10 +116,7 @@ packages:
 ```json
 {
   "files": [],
-  "references": [
-    { "path": "./packages/web-core" },
-    { "path": "./apps/web-demo" }
-  ]
+  "references": [{ "path": "./packages/web-core" }, { "path": "./apps/web-demo" }]
 }
 ```
 
@@ -150,6 +149,7 @@ git commit -m "chore: organize workspaces under packages and apps"
 ### Task 2: 提取共享 web-viewer，同时保持 Browser Demo 可运行
 
 **Files:**
+
 - Create: `packages/web-viewer/package.json`
 - Create: `packages/web-viewer/tsconfig.json`
 - Create: `packages/web-viewer/src/index.ts`
@@ -168,6 +168,7 @@ git commit -m "chore: organize workspaces under packages and apps"
 - Test: `apps/web-demo/src/browserHost.test.ts`
 
 **Interfaces:**
+
 - Consumes: `PlaybackController`, `BridgePlaybackPersistence`, alphaTab adapters from `@tab-viewer/web-core`。
 - Produces: `ViewerHost`, `ViewerFile`, `ViewerAppHandle`, `mountViewerApp()` and `renderViewerShell()`。
 
@@ -213,10 +214,7 @@ Expected: FAIL，提示 `viewerApp` 或 `viewerShell` 不存在。
 // packages/web-viewer/src/host.ts
 export type ViewerFile = { fileName: string; bytes: Uint8Array };
 export type ViewerHostEvent =
-  | { type: "open-score" }
-  | { type: "toggle-playback" }
-  | { type: "suspend" }
-  | { type: "prepare-close" };
+  { type: "open-score" } | { type: "toggle-playback" } | { type: "suspend" } | { type: "prepare-close" };
 
 export interface ViewerHost {
   openScore(): Promise<ViewerFile | undefined>;
@@ -268,10 +266,7 @@ export type ViewerAppDependencies = {
   openSession(file: { fileName: string; bytes: Uint8Array }): Promise<ViewerSessionHandle>;
 };
 
-export function mountViewerApp(
-  ownerDocument: Document,
-  dependencies: ViewerAppDependencies,
-): ViewerAppHandle {
+export function mountViewerApp(ownerDocument: Document, dependencies: ViewerAppDependencies): ViewerAppHandle {
   const openButton = ownerDocument.querySelector<HTMLButtonElement>("#open-score");
   if (!openButton) throw new Error("Viewer DOM is missing #open-score");
   let active: ViewerSessionHandle | undefined;
@@ -282,7 +277,9 @@ export function mountViewerApp(
     await active?.destroy();
     active = await dependencies.openSession(file);
   };
-  const enqueueOpen = () => { chain = chain.then(openScore); };
+  const enqueueOpen = () => {
+    chain = chain.then(openScore);
+  };
   const onHostEvent = (event: ViewerHostEvent) => {
     if (event.type === "open-score") enqueueOpen();
     if (event.type === "suspend") void active?.pauseAndFlush();
@@ -299,7 +296,9 @@ export function mountViewerApp(
   };
   return {
     openScore,
-    pauseAndFlush: async () => { await active?.pauseAndFlush(); },
+    pauseAndFlush: async () => {
+      await active?.pauseAndFlush();
+    },
     destroy,
   };
 }
@@ -323,7 +322,7 @@ export function createBrowserHost(ownerDocument: Document): ViewerHost & { bridg
       const input = ownerDocument.createElement("input");
       input.type = "file";
       input.accept = ".gp3,.gp4,.gp5,.gpx,.gp";
-      const file = await new Promise<File | undefined>(resolve => {
+      const file = await new Promise<File | undefined>((resolve) => {
         input.addEventListener("change", () => resolve(input.files?.[0]), { once: true });
         input.click();
       });
@@ -353,6 +352,7 @@ git commit -m "refactor: extract shared viewer app"
 ### Task 3: 生成并验证 GP 准入 fixture
 
 **Files:**
+
 - Move: `apps/web-demo/data/Treasure.gp5` → `test-fixtures/gp/Treasure.gp5`
 - Move: `apps/web-demo/data/README.md` → `test-fixtures/gp/README.md`
 - Create: `scripts/generate-gp-fixtures.mjs`
@@ -362,6 +362,7 @@ git commit -m "refactor: extract shared viewer app"
 - Modify: `docs/architecture/gp-playback-practice-acceptance.md`
 
 **Interfaces:**
+
 - Consumes: `@coderline/alphatab` `importer.ScoreLoader` 与 `exporter.Gp7Exporter`。
 - Produces: `test-fixtures/gp/generated/desktop-acceptance.gp` 和可重复运行的 `pnpm fixtures:gp`。
 
@@ -372,15 +373,14 @@ git commit -m "refactor: extract shared viewer app"
 import { readFile } from "node:fs/promises";
 import { importer, Settings } from "@coderline/alphatab";
 
-for (const file of [
-  "test-fixtures/gp/Treasure.gp5",
-  "test-fixtures/gp/generated/desktop-acceptance.gp",
-]) {
+for (const file of ["test-fixtures/gp/Treasure.gp5", "test-fixtures/gp/generated/desktop-acceptance.gp"]) {
   const bytes = new Uint8Array(await readFile(file));
   const score = importer.ScoreLoader.loadScoreFromBytes(bytes, new Settings());
   if (!score.tracks.length || !score.masterBars.length) throw new Error(`Invalid fixture: ${file}`);
-  if (file.endsWith("desktop-acceptance.gp")
-    && (score.title !== "桌面验收谱" || score.tracks[0]?.name !== "主音吉他")) {
+  if (
+    file.endsWith("desktop-acceptance.gp") &&
+    (score.title !== "桌面验收谱" || score.tracks[0]?.name !== "主音吉他")
+  ) {
     throw new Error("Generated fixture lost Chinese metadata");
   }
 }
@@ -442,6 +442,7 @@ git commit -m "test: add deterministic GP acceptance fixtures"
 ### Task 4: 用 Zod schema 统一 Bridge 与持久 payload
 
 **Files:**
+
 - Create: `packages/web-core/src/score/schemas.ts`
 - Create: `packages/web-core/src/playback/schemas.ts`
 - Create: `packages/web-core/src/storage/schemas.ts`
@@ -457,6 +458,7 @@ git commit -m "test: add deterministic GP acceptance fixtures"
 - Test: `packages/web-core/src/storage/schemas.test.ts`
 
 **Interfaces:**
+
 - Consumes: 现有 ScoreIdentity、MusicalPosition、SidecarPayload 结构。
 - Produces: `bridgeRequestSchema`、`bridgeEventSchema`、`bridgeResponseSchemas`、`capabilitiesSchema`、`sidecarPayloadSchema`、`localPlaybackResumeSchema` 及其推导类型。
 
@@ -468,18 +470,25 @@ import { bridgeRequestSchema, capabilitiesSchema } from "./schemas";
 
 describe("bridge schemas", () => {
   it("rejects unknown message types", () => {
-    expect(() => bridgeRequestSchema.parse({
-      bridgeVersion: "1.0.0", correlationId: "x", type: "electron.send", payload: {},
-    })).toThrow();
+    expect(() =>
+      bridgeRequestSchema.parse({
+        bridgeVersion: "1.0.0",
+        correlationId: "x",
+        type: "electron.send",
+        payload: {},
+      }),
+    ).toThrow();
   });
 
   it("models temporary file access without platform mechanisms", () => {
-    expect(capabilitiesSchema.parse({
-      fileAccess: { openExternalFile: true, persistentFileReferences: false, localLibraryImport: false },
-      storage: { sqliteIndex: false, sidecarPayload: true },
-      sync: { available: false, provider: "none" },
-      audio: { webAudio: true, nativeBridge: false },
-    }).fileAccess.persistentFileReferences).toBe(false);
+    expect(
+      capabilitiesSchema.parse({
+        fileAccess: { openExternalFile: true, persistentFileReferences: false, localLibraryImport: false },
+        storage: { sqliteIndex: false, sidecarPayload: true },
+        sync: { available: false, provider: "none" },
+        audio: { webAudio: true, nativeBridge: false },
+      }).fileAccess.persistentFileReferences,
+    ).toBe(false);
   });
 });
 ```
@@ -500,19 +509,34 @@ import { localPlaybackResumeSchema, sidecarPayloadSchema } from "../storage/sche
 
 export const BRIDGE_SCHEMA_VERSION = "1.0.0" as const;
 const id = z.string().min(1).max(128);
-const envelope = <T extends string, S extends z.ZodType>(type: T, payload: S) => z.object({
-  bridgeVersion: z.literal(BRIDGE_SCHEMA_VERSION), correlationId: id, type: z.literal(type), payload,
-}).strict();
+const envelope = <T extends string, S extends z.ZodType>(type: T, payload: S) =>
+  z
+    .object({
+      bridgeVersion: z.literal(BRIDGE_SCHEMA_VERSION),
+      correlationId: id,
+      type: z.literal(type),
+      payload,
+    })
+    .strict();
 
-export const bridgeErrorSchema = z.object({
-  code: z.string().min(1), message: z.string(), recoverable: z.boolean(), details: z.unknown().optional(),
-}).strict();
-export const capabilitiesSchema = z.object({
-  fileAccess: z.object({ openExternalFile: z.boolean(), persistentFileReferences: z.boolean(), localLibraryImport: z.boolean() }).strict(),
-  storage: z.object({ sqliteIndex: z.boolean(), sidecarPayload: z.boolean() }).strict(),
-  sync: z.object({ available: z.boolean(), provider: z.enum(["none", "custom"]) }).strict(),
-  audio: z.object({ webAudio: z.boolean(), nativeBridge: z.boolean() }).strict(),
-}).strict();
+export const bridgeErrorSchema = z
+  .object({
+    code: z.string().min(1),
+    message: z.string(),
+    recoverable: z.boolean(),
+    details: z.unknown().optional(),
+  })
+  .strict();
+export const capabilitiesSchema = z
+  .object({
+    fileAccess: z
+      .object({ openExternalFile: z.boolean(), persistentFileReferences: z.boolean(), localLibraryImport: z.boolean() })
+      .strict(),
+    storage: z.object({ sqliteIndex: z.boolean(), sidecarPayload: z.boolean() }).strict(),
+    sync: z.object({ available: z.boolean(), provider: z.enum(["none", "custom"]) }).strict(),
+    audio: z.object({ webAudio: z.boolean(), nativeBridge: z.boolean() }).strict(),
+  })
+  .strict();
 export const bridgeRequestSchema = z.discriminatedUnion("type", [
   envelope("app.handshake", z.object({ appVersion: z.string(), rendererBuildHash: id }).strict()),
   envelope("file.open", z.object({}).strict()),
@@ -520,15 +544,30 @@ export const bridgeRequestSchema = z.discriminatedUnion("type", [
   envelope("sidecar.read", z.object({ identity: scoreIdentitySchema }).strict()),
   envelope("sidecar.write", z.object({ identity: scoreIdentitySchema, payload: sidecarPayloadSchema }).strict()),
   envelope("playbackResume.read", z.object({ identity: scoreIdentitySchema }).strict()),
-  envelope("playbackResume.write", z.object({ identity: scoreIdentitySchema, resume: localPlaybackResumeSchema }).strict()),
+  envelope(
+    "playbackResume.write",
+    z.object({ identity: scoreIdentitySchema, resume: localPlaybackResumeSchema }).strict(),
+  ),
   envelope("app.lifecycleAck", z.object({ state: z.enum(["suspend", "prepare-close"]) }).strict()),
-  envelope("diagnostics.write", z.object({ code: id, durationMs: z.number().nonnegative().optional(), contentHashPrefix: z.string().max(16).optional() }).strict()),
+  envelope(
+    "diagnostics.write",
+    z
+      .object({
+        code: id,
+        durationMs: z.number().nonnegative().optional(),
+        contentHashPrefix: z.string().max(16).optional(),
+      })
+      .strict(),
+  ),
   envelope("diagnostics.openDirectory", z.object({}).strict()),
 ]);
 export const bridgeEventSchema = z.discriminatedUnion("type", [
   envelope("app.command", z.object({ command: z.enum(["open-score", "toggle-playback"]) }).strict()),
   envelope("app.lifecycle", z.object({ state: z.enum(["suspend", "prepare-close"]) }).strict()),
-  envelope("storage.warning", z.object({ code: z.literal("CORRUPT_PERSISTED_DATA"), category: z.enum(["sidecar", "resume"]) }).strict()),
+  envelope(
+    "storage.warning",
+    z.object({ code: z.literal("CORRUPT_PERSISTED_DATA"), category: z.enum(["sidecar", "resume"]) }).strict(),
+  ),
 ]);
 export type BridgeRequest = z.infer<typeof bridgeRequestSchema>;
 export type BridgeEvent = z.infer<typeof bridgeEventSchema>;
@@ -540,17 +579,24 @@ export type BridgeError = z.infer<typeof bridgeErrorSchema>;
 
 ```ts
 export const bridgeResponseSchemas = {
-  "app.handshake": z.object({
-    appVersion: z.string(),
-    bridgeVersion: z.literal(BRIDGE_SCHEMA_VERSION),
-    rendererBuildHash: id,
-    capabilities: capabilitiesSchema,
-  }).strict(),
+  "app.handshake": z
+    .object({
+      appVersion: z.string(),
+      bridgeVersion: z.literal(BRIDGE_SCHEMA_VERSION),
+      rendererBuildHash: id,
+      capabilities: capabilitiesSchema,
+    })
+    .strict(),
   "file.open": z.discriminatedUnion("status", [
     z.object({ status: z.literal("cancelled") }).strict(),
-    z.object({
-      status: z.literal("opened"), fileToken: id, fileName: z.string().min(1), sizeBytes: z.number().int().nonnegative(),
-    }).strict(),
+    z
+      .object({
+        status: z.literal("opened"),
+        fileToken: id,
+        fileName: z.string().min(1),
+        sizeBytes: z.number().int().nonnegative(),
+      })
+      .strict(),
   ]),
   "file.readBytes": z.object({ fileName: z.string().min(1), bytes: z.instanceof(Uint8Array) }).strict(),
   "sidecar.read": z.object({ payload: sidecarPayloadSchema.optional() }).strict(),
@@ -570,14 +616,23 @@ export const bridgeResponseSchemas = {
 ```ts
 // packages/web-core/src/score/schemas.ts
 import { z } from "zod";
-export const scoreIdentitySchema = z.object({
-  contentHash: z.string().regex(/^[a-f0-9]{64}$/i, "Content hash must be a 64-character hexadecimal SHA-256"),
-  format: z.enum(["gp", "midi"]),
-  title: z.string().optional(), artist: z.string().optional(), durationMs: z.number().nonnegative().optional(),
-  sourceHints: z.object({
-    fileName: z.string().optional(), trackNames: z.array(z.string()).optional(), tempoSummary: z.string().optional(),
-  }).strict().optional(),
-}).strict();
+export const scoreIdentitySchema = z
+  .object({
+    contentHash: z.string().regex(/^[a-f0-9]{64}$/i, "Content hash must be a 64-character hexadecimal SHA-256"),
+    format: z.enum(["gp", "midi"]),
+    title: z.string().optional(),
+    artist: z.string().optional(),
+    durationMs: z.number().nonnegative().optional(),
+    sourceHints: z
+      .object({
+        fileName: z.string().optional(),
+        trackNames: z.array(z.string()).optional(),
+        tempoSummary: z.string().optional(),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
 ```
 
 ```ts
@@ -585,46 +640,99 @@ export const scoreIdentitySchema = z.object({
 import { z } from "zod";
 import { scoreIdentitySchema } from "../score/schemas";
 const timestamp = z.iso.datetime();
-export const musicalPositionSchema = z.object({
-  measureId: z.string(), measureIndex: z.number().int(), beatIndex: z.number().int(),
-  tick: z.number().int().nonnegative(), cachedTimeMs: z.number().nonnegative(),
-}).strict();
-const loopRegionSchema = z.object({
-  id: z.string(), label: z.string(), labelSource: z.enum(["generated", "user"]),
-  start: musicalPositionSchema, end: musicalPositionSchema, snapMode: z.enum(["off", "beat", "measure"]),
-  speedOverride: z.number().min(0.25).max(2).optional(), createdAt: timestamp, updatedAt: timestamp,
-  deletedAt: timestamp.optional(),
-}).strict().refine(value => value.start.tick < value.end.tick, "Loop start must precede end");
-const playbackSchema = z.object({
-  scoreSpeed: z.object({ value: z.number().min(0.25).max(2), updatedAt: timestamp }).strict(),
-  loops: z.array(loopRegionSchema),
-  visibility: z.object({ primaryTrackId: z.string().optional(), additionalTrackIds: z.array(z.string()), updatedAt: timestamp }).strict(),
-  tracks: z.record(z.string(), z.object({
-    muted: z.boolean(), volume: z.number().min(0).max(1), muteUpdatedAt: timestamp, volumeUpdatedAt: timestamp,
-  }).strict()),
-}).strict();
+export const musicalPositionSchema = z
+  .object({
+    measureId: z.string(),
+    measureIndex: z.number().int(),
+    beatIndex: z.number().int(),
+    tick: z.number().int().nonnegative(),
+    cachedTimeMs: z.number().nonnegative(),
+  })
+  .strict();
+const loopRegionSchema = z
+  .object({
+    id: z.string(),
+    label: z.string(),
+    labelSource: z.enum(["generated", "user"]),
+    start: musicalPositionSchema,
+    end: musicalPositionSchema,
+    snapMode: z.enum(["off", "beat", "measure"]),
+    speedOverride: z.number().min(0.25).max(2).optional(),
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    deletedAt: timestamp.optional(),
+  })
+  .strict()
+  .refine((value) => value.start.tick < value.end.tick, "Loop start must precede end");
+const playbackSchema = z
+  .object({
+    scoreSpeed: z.object({ value: z.number().min(0.25).max(2), updatedAt: timestamp }).strict(),
+    loops: z.array(loopRegionSchema),
+    visibility: z
+      .object({ primaryTrackId: z.string().optional(), additionalTrackIds: z.array(z.string()), updatedAt: timestamp })
+      .strict(),
+    tracks: z.record(
+      z.string(),
+      z
+        .object({
+          muted: z.boolean(),
+          volume: z.number().min(0).max(1),
+          muteUpdatedAt: timestamp,
+          volumeUpdatedAt: timestamp,
+        })
+        .strict(),
+    ),
+  })
+  .strict();
 const quantizationSchema = z.object({ grid: z.enum(["1/8", "1/16", "1/32"]), swing: z.boolean() }).strict();
-export const sidecarPayloadSchema = z.object({
-  schemaVersion: z.literal("0.2.0"), identity: scoreIdentitySchema,
-  practice: z.object({
-    tempoOverride: z.number().optional(), transpose: z.number().optional(),
-    loops: z.array(z.object({ id: z.string(), startTick: z.number(), endTick: z.number() }).strict()),
-    sections: z.array(z.object({ id: z.string(), name: z.string(), startTick: z.number(), endTick: z.number() }).strict()),
-    annotations: z.array(z.object({ id: z.string(), tick: z.number(), text: z.string(), updatedAt: timestamp }).strict()),
-    playback: playbackSchema,
-  }).strict(),
-  tracks: z.record(z.string(), z.object({
-    muted: z.boolean().optional(), solo: z.boolean().optional(), volume: z.number().min(0).max(1).optional(), instrument: z.string().optional(),
-  }).strict()),
-  midi: z.object({
-    quantization: quantizationSchema,
-    handAssignments: z.record(z.string(), z.enum(["left", "right", "unknown"])),
-    measureCorrections: z.record(z.string(), z.object({
-      measureId: z.string(), quantization: quantizationSchema.optional(),
-      handAssignments: z.record(z.string(), z.enum(["left", "right", "unknown"])).optional(),
-    }).strict()),
-  }).strict().optional(),
-}).strict();
+export const sidecarPayloadSchema = z
+  .object({
+    schemaVersion: z.literal("0.2.0"),
+    identity: scoreIdentitySchema,
+    practice: z
+      .object({
+        tempoOverride: z.number().optional(),
+        transpose: z.number().optional(),
+        loops: z.array(z.object({ id: z.string(), startTick: z.number(), endTick: z.number() }).strict()),
+        sections: z.array(
+          z.object({ id: z.string(), name: z.string(), startTick: z.number(), endTick: z.number() }).strict(),
+        ),
+        annotations: z.array(
+          z.object({ id: z.string(), tick: z.number(), text: z.string(), updatedAt: timestamp }).strict(),
+        ),
+        playback: playbackSchema,
+      })
+      .strict(),
+    tracks: z.record(
+      z.string(),
+      z
+        .object({
+          muted: z.boolean().optional(),
+          solo: z.boolean().optional(),
+          volume: z.number().min(0).max(1).optional(),
+          instrument: z.string().optional(),
+        })
+        .strict(),
+    ),
+    midi: z
+      .object({
+        quantization: quantizationSchema,
+        handAssignments: z.record(z.string(), z.enum(["left", "right", "unknown"])),
+        measureCorrections: z.record(
+          z.string(),
+          z
+            .object({
+              measureId: z.string(),
+              quantization: quantizationSchema.optional(),
+              handAssignments: z.record(z.string(), z.enum(["left", "right", "unknown"])).optional(),
+            })
+            .strict(),
+        ),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
 export const localPlaybackResumeSchema = z.object({ position: musicalPositionSchema, updatedAt: timestamp }).strict();
 ```
 
@@ -666,6 +774,7 @@ git commit -m "refactor: derive bridge contracts from Zod schemas"
 ### Task 5: 对齐自动保存与宿主生命周期接口
 
 **Files:**
+
 - Modify: `packages/web-core/src/playback/types.ts`
 - Modify: `packages/web-core/src/playback/playbackController.ts`
 - Modify: `packages/web-core/src/playback/playbackController.test.ts`
@@ -673,6 +782,7 @@ git commit -m "refactor: derive bridge contracts from Zod schemas"
 - Modify: `packages/web-viewer/src/viewerApp.test.ts`
 
 **Interfaces:**
+
 - Consumes: `PlaybackController.dispatch()` 与 `ViewerAppHandle`。
 - Produces: `{ type: "pause" }` command、500 ms sidecar debounce、`pauseAndFlush()`。
 
@@ -737,6 +847,7 @@ git commit -m "feat: align playback persistence lifecycle"
 ### Task 6: 建立安全的 Electron Shell 与内置资源协议
 
 **Files:**
+
 - Create: `apps/desktop-shell/package.json`
 - Create: `apps/desktop-shell/tsconfig.json`
 - Create: `apps/desktop-shell/index.html`
@@ -751,6 +862,7 @@ git commit -m "feat: align playback persistence lifecycle"
 - Modify: `tsconfig.json`
 
 **Interfaces:**
+
 - Consumes: `@tab-viewer/web-viewer` Renderer 入口与离线 alphaTab 资源。
 - Produces: `resolveAppAsset(root, url)`、secure BrowserWindow、`desktop:dev/build/package` scripts。
 
@@ -762,12 +874,12 @@ import { resolveAppAsset } from "./protocol";
 
 describe("resolveAppAsset", () => {
   it("resolves assets inside the renderer root", () => {
-    expect(resolveAppAsset("/app/renderer", "tab-viewer://app/index.html"))
-      .toBe("/app/renderer/index.html");
+    expect(resolveAppAsset("/app/renderer", "tab-viewer://app/index.html")).toBe("/app/renderer/index.html");
   });
   it("rejects traversal", () => {
-    expect(() => resolveAppAsset("/app/renderer", "tab-viewer://app/%2e%2e/secret"))
-      .toThrow("APP_PROTOCOL_PATH_OUTSIDE_ROOT");
+    expect(() => resolveAppAsset("/app/renderer", "tab-viewer://app/%2e%2e/secret")).toThrow(
+      "APP_PROTOCOL_PATH_OUTSIDE_ROOT",
+    );
   });
 });
 ```
@@ -823,9 +935,12 @@ export function resolveAppAsset(root: string, rawUrl: string): string {
   const rawPathStart = rawUrl.indexOf("/", rawUrl.indexOf("//") + 2);
   const rawPath = (rawPathStart < 0 ? "/" : rawUrl.slice(rawPathStart)).split(/[?#]/, 1)[0];
   let decodedPath: string;
-  try { decodedPath = decodeURIComponent(rawPath); }
-  catch { throw new Error("APP_PROTOCOL_INVALID_PATH"); }
-  if (decodedPath.split("/").some(segment => segment === "." || segment === "..")) {
+  try {
+    decodedPath = decodeURIComponent(rawPath);
+  } catch {
+    throw new Error("APP_PROTOCOL_INVALID_PATH");
+  }
+  if (decodedPath.split("/").some((segment) => segment === "." || segment === "..")) {
     throw new Error("APP_PROTOCOL_PATH_OUTSIDE_ROOT");
   }
   const url = new URL(rawUrl);
@@ -837,7 +952,7 @@ export function resolveAppAsset(root: string, rawUrl: string): string {
 }
 
 export function registerAppProtocol(root: string): void {
-  protocol.handle("tab-viewer", request => net.fetch(pathToFileURL(resolveAppAsset(root, request.url)).href));
+  protocol.handle("tab-viewer", (request) => net.fetch(pathToFileURL(resolveAppAsset(root, request.url)).href));
 }
 ```
 
@@ -864,7 +979,10 @@ new BrowserWindow({
 阻止 `will-navigate` 和 `setWindowOpenHandler`，拒绝全部 permission request。`rspack.config.mjs` 导出 Main(`electron-main`)、Preload(`electron-preload`) 与 Renderer(`web`) 三个 config；Renderer 复制 alphaTab、字体、SoundFont、许可证并生成 contenthash 文件。`index.html` 使用 CSP：
 
 ```html
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; media-src 'self'; worker-src 'self' blob:; img-src 'self' data:">
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; media-src 'self'; worker-src 'self' blob:; img-src 'self' data:"
+/>
 ```
 
 - [ ] **Step 6: 安装依赖并验证安全构建**
@@ -885,6 +1003,7 @@ git commit -m "feat: add secure Electron desktop shell"
 ### Task 7: 接通严格校验的 Preload Bridge 与握手
 
 **Files:**
+
 - Create: `apps/desktop-shell/src/main/bridge.ts`
 - Create: `apps/desktop-shell/src/main/bridge.test.ts`
 - Modify: `apps/desktop-shell/src/preload.ts`
@@ -893,6 +1012,7 @@ git commit -m "feat: add secure Electron desktop shell"
 - Create: `apps/desktop-shell/src/global.d.ts`
 
 **Interfaces:**
+
 - Consumes: `bridgeRequestSchema`、`bridgeEventSchema`、`bridgeResponseSchemas`。
 - Produces: 固定 IPC channel `tab-viewer:request`、`tab-viewer:event` 和 `window.tabViewerBridge`。
 
@@ -900,13 +1020,15 @@ git commit -m "feat: add secure Electron desktop shell"
 
 ```ts
 it("rejects requests from a non-app sender", async () => {
-  await expect(dispatchBridgeRequest({ senderUrl: "https://evil.example/", value: validHandshake }))
-    .rejects.toMatchObject({ code: "INVALID_BRIDGE_SENDER" });
+  await expect(
+    dispatchBridgeRequest({ senderUrl: "https://evil.example/", value: validHandshake }),
+  ).rejects.toMatchObject({ code: "INVALID_BRIDGE_SENDER" });
 });
 
 it("rejects unknown bridge messages before dispatch", async () => {
-  await expect(dispatchBridgeRequest({ senderUrl: "tab-viewer://app/index.html", value: { type: "fs.read", payload: {} } }))
-    .rejects.toMatchObject({ code: "INVALID_BRIDGE_MESSAGE" });
+  await expect(
+    dispatchBridgeRequest({ senderUrl: "tab-viewer://app/index.html", value: { type: "fs.read", payload: {} } }),
+  ).rejects.toMatchObject({ code: "INVALID_BRIDGE_MESSAGE" });
 });
 ```
 
@@ -961,6 +1083,7 @@ git commit -m "feat: connect validated Electron preload bridge"
 ### Task 8: 实现系统文件选择与一次性 token
 
 **Files:**
+
 - Create: `apps/desktop-shell/src/main/fileTokens.ts`
 - Create: `apps/desktop-shell/src/main/fileTokens.test.ts`
 - Create: `apps/desktop-shell/src/main/files.ts`
@@ -969,6 +1092,7 @@ git commit -m "feat: connect validated Electron preload bridge"
 - Test: `apps/desktop-shell/src/main/files.test.ts`
 
 **Interfaces:**
+
 - Consumes: `file.open` 与 `file.readBytes` Bridge schema。
 - Produces: `FileTokenStore.issue(path, metadata)`、`FileTokenStore.consume(token)`、`openGpFile()`。
 
@@ -983,8 +1107,9 @@ it("consumes a token exactly once", () => {
 });
 
 it("rejects files larger than 64 MiB", () => {
-  expect(() => assertReadableGp({ fileName: "huge.gp", sizeBytes: 64 * 1024 * 1024 + 1, isFile: true }))
-    .toThrow("FILE_TOO_LARGE");
+  expect(() => assertReadableGp({ fileName: "huge.gp", sizeBytes: 64 * 1024 * 1024 + 1, isFile: true })).toThrow(
+    "FILE_TOO_LARGE",
+  );
 });
 ```
 
@@ -1014,7 +1139,9 @@ export class FileTokenStore {
     if (!entry || entry.expiresAt < this.options.now()) throw new Error("FILE_TOKEN_INVALID");
     return entry;
   }
-  clear(): void { this.entries.clear(); }
+  clear(): void {
+    this.entries.clear();
+  }
 }
 ```
 
@@ -1042,6 +1169,7 @@ git commit -m "feat: open GP files through one-time desktop tokens"
 ### Task 9: 实现原子 JSON 持久化、损坏隔离与本地日志
 
 **Files:**
+
 - Create: `apps/desktop-shell/src/main/storage.ts`
 - Create: `apps/desktop-shell/src/main/storage.test.ts`
 - Create: `apps/desktop-shell/src/main/diagnostics.ts`
@@ -1050,6 +1178,7 @@ git commit -m "feat: open GP files through one-time desktop tokens"
 - Modify: `apps/desktop-shell/src/renderer.ts`
 
 **Interfaces:**
+
 - Consumes: `sidecarPayloadSchema`、`localPlaybackResumeSchema`、Bridge storage/diagnostics request。
 - Produces: `JsonStore<T>.read/write()`、`DiagnosticLogger.write()`、真实 `BridgePlaybackPersistence`。
 
@@ -1060,10 +1189,10 @@ it("quarantines invalid JSON and returns no value", async () => {
   await mkdir(join(root, "sidecars"), { recursive: true });
   await writeFile(join(root, "sidecars", "abc.json"), "not-json");
   const warnings: string[] = [];
-  const store = new JsonStore(root, "sidecars", sidecarPayloadSchema, code => warnings.push(code));
+  const store = new JsonStore(root, "sidecars", sidecarPayloadSchema, (code) => warnings.push(code));
   expect(await store.read("abc")).toBeUndefined();
   expect(warnings).toEqual(["CORRUPT_PERSISTED_DATA"]);
-  expect((await readdir(join(root, "sidecars"))).some(name => name.includes(".corrupt"))).toBe(true);
+  expect((await readdir(join(root, "sidecars"))).some((name) => name.includes(".corrupt"))).toBe(true);
 });
 
 it("serializes writes per identity", async () => {
@@ -1091,8 +1220,9 @@ export class JsonStore<T> {
   ) {}
   async read(contentHash: string): Promise<T | undefined> {
     const file = this.path(contentHash);
-    try { return this.schema.parse(JSON.parse(await readFile(file, "utf8"))); }
-    catch (error) {
+    try {
+      return this.schema.parse(JSON.parse(await readFile(file, "utf8")));
+    } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
       await rename(file, `${file}.${Date.now()}.corrupt`);
       this.warn("CORRUPT_PERSISTED_DATA");
@@ -1101,13 +1231,16 @@ export class JsonStore<T> {
   }
   write(contentHash: string, value: T): Promise<void> {
     const next = (this.chains.get(contentHash) ?? Promise.resolve()).then(async () => {
-      const file = this.path(contentHash); const temp = `${file}.${crypto.randomUUID()}.tmp`;
+      const file = this.path(contentHash);
+      const temp = `${file}.${crypto.randomUUID()}.tmp`;
       await mkdir(dirname(file), { recursive: true });
       await writeFile(temp, JSON.stringify(this.schema.parse(value), null, 2), { mode: 0o600 });
       await rename(temp, file);
     });
     this.chains.set(contentHash, next);
-    return next.finally(() => { if (this.chains.get(contentHash) === next) this.chains.delete(contentHash); });
+    return next.finally(() => {
+      if (this.chains.get(contentHash) === next) this.chains.delete(contentHash);
+    });
   }
   private path(contentHash: string): string {
     if (!/^[a-f0-9]{64}$/i.test(contentHash)) throw new Error("INVALID_CONTENT_HASH");
@@ -1126,13 +1259,18 @@ Main 在 `app.getPath("userData")` 下创建 `sidecars/` 与 `resume/` store。�
 
 ```ts
 export class DiagnosticLogger {
-  constructor(private readonly directory: string, private readonly maxBytes = 1024 * 1024) {}
+  constructor(
+    private readonly directory: string,
+    private readonly maxBytes = 1024 * 1024,
+  ) {}
   async write(value: unknown): Promise<void> {
     const event = diagnosticEventSchema.parse(value);
     await mkdir(this.directory, { recursive: true });
     const current = join(this.directory, "desktop.log");
     const previous = join(this.directory, "desktop.log.1");
-    const size = await stat(current).then(info => info.size).catch(() => 0);
+    const size = await stat(current)
+      .then((info) => info.size)
+      .catch(() => 0);
     if (size >= this.maxBytes) {
       await rm(previous, { force: true });
       await rename(current, previous);
@@ -1160,6 +1298,7 @@ git commit -m "feat: persist desktop practice state as atomic JSON"
 ### Task 10: 完成单实例、菜单、挂起和安全关闭生命周期
 
 **Files:**
+
 - Create: `apps/desktop-shell/src/main/lifecycle.ts`
 - Create: `apps/desktop-shell/src/main/lifecycle.test.ts`
 - Modify: `apps/desktop-shell/src/main/main.ts`
@@ -1168,6 +1307,7 @@ git commit -m "feat: persist desktop practice state as atomic JSON"
 - Test: `packages/web-viewer/src/viewerApp.test.ts`
 
 **Interfaces:**
+
 - Consumes: `app.command`、`app.lifecycle` event 与 `app.lifecycleAck` request。
 - Produces: `DesktopLifecycleCoordinator`，保证 suspend/close 先 pause+flush 再继续。
 
@@ -1177,7 +1317,9 @@ git commit -m "feat: persist desktop practice state as atomic JSON"
 it("waits for prepare-close acknowledgement", async () => {
   const coordinator = new DesktopLifecycleCoordinator(sendEvent, { timeoutMs: 5000 });
   const closing = coordinator.prepareClose();
-  expect(sendEvent).toHaveBeenCalledWith(expect.objectContaining({ type: "app.lifecycle", payload: { state: "prepare-close" } }));
+  expect(sendEvent).toHaveBeenCalledWith(
+    expect.objectContaining({ type: "app.lifecycle", payload: { state: "prepare-close" } }),
+  );
   coordinator.acknowledge("prepare-close");
   await expect(closing).resolves.toBe("acknowledged");
 });
@@ -1202,13 +1344,24 @@ export class DesktopLifecycleCoordinator {
   ) {}
   async request(state: "suspend" | "prepare-close"): Promise<"acknowledged" | "timed-out"> {
     this.send(createBridgeEvent("app.lifecycle", { state }));
-    return new Promise(resolve => {
-      const timer = setTimeout(() => { this.pending.delete(state); resolve("timed-out"); }, this.options.timeoutMs);
-      this.pending.set(state, () => { clearTimeout(timer); this.pending.delete(state); resolve("acknowledged"); });
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        this.pending.delete(state);
+        resolve("timed-out");
+      }, this.options.timeoutMs);
+      this.pending.set(state, () => {
+        clearTimeout(timer);
+        this.pending.delete(state);
+        resolve("acknowledged");
+      });
     });
   }
-  acknowledge(state: "suspend" | "prepare-close"): void { this.pending.get(state)?.(); }
-  prepareClose(): Promise<"acknowledged" | "timed-out"> { return this.request("prepare-close"); }
+  acknowledge(state: "suspend" | "prepare-close"): void {
+    this.pending.get(state)?.();
+  }
+  prepareClose(): Promise<"acknowledged" | "timed-out"> {
+    return this.request("prepare-close");
+  }
 }
 ```
 
@@ -1240,6 +1393,7 @@ git commit -m "feat: coordinate desktop app and playback lifecycle"
 ### Task 11: 增加 Electron smoke、打包验证和验收文档
 
 **Files:**
+
 - Create: `apps/desktop-shell/playwright.config.ts`
 - Create: `apps/desktop-shell/e2e/desktop.spec.ts`
 - Create: `apps/desktop-shell/scripts/verify-package.mjs`
@@ -1250,6 +1404,7 @@ git commit -m "feat: coordinate desktop app and playback lifecycle"
 - Modify: `docs/architecture/implementation-foundation.md`
 
 **Interfaces:**
+
 - Consumes: 可启动 Desktop Shell、固定 fixture、Forge package。
 - Produces: `pnpm desktop:test:e2e`、`desktop:package` 和 macOS/Windows 验收记录入口。
 
@@ -1264,11 +1419,13 @@ test("starts offline with an isolated renderer", async () => {
   await app.context().setOffline(true);
   await window.reload();
   await expect(window.locator("#open-score")).toBeVisible();
-  expect(await window.evaluate(() => ({
-    require: typeof (globalThis as { require?: unknown }).require,
-    process: typeof (globalThis as { process?: unknown }).process,
-    api: Object.keys(window.tabViewerBridge).sort(),
-  }))).toEqual({ require: "undefined", process: "undefined", api: ["request", "subscribe"] });
+  expect(
+    await window.evaluate(() => ({
+      require: typeof (globalThis as { require?: unknown }).require,
+      process: typeof (globalThis as { process?: unknown }).process,
+      api: Object.keys(window.tabViewerBridge).sort(),
+    })),
+  ).toEqual({ require: "undefined", process: "undefined", api: ["request", "subscribe"] });
   await app.close();
 });
 ```

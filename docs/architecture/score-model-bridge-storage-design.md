@@ -252,11 +252,7 @@ type SyncStateEvent = {
 
 type ViewerInteractionEvent = {
   action:
-    | "section-created"
-    | "loop-changed"
-    | "annotation-updated"
-    | "midi-quantization-updated"
-    | "midi-measure-corrected";
+    "section-created" | "loop-changed" | "annotation-updated" | "midi-quantization-updated" | "midi-measure-corrected";
   identity: ScoreIdentity;
   payload: unknown;
 };

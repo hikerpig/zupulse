@@ -1,13 +1,13 @@
-import { describe, expect, it, vi } from 'vitest';
-import { ViewerApplication } from './ViewerApplication';
+import { describe, expect, it, vi } from "vitest";
+import { ViewerApplication } from "./ViewerApplication";
 
-describe('ViewerApplication', () => {
-  it('keeps cancellation on the current session and replaces a selected file', async () => {
+describe("ViewerApplication", () => {
+  it("keeps cancellation on the current session and replaces a selected file", async () => {
     const destroy = vi.fn(async () => undefined);
     const files = [
-      { fileName: 'first.gp5', bytes: new Uint8Array([1]) },
+      { fileName: "first.gp5", bytes: new Uint8Array([1]) },
       undefined,
-      { fileName: 'second.gp5', bytes: new Uint8Array([2]) },
+      { fileName: "second.gp5", bytes: new Uint8Array([2]) },
     ];
     const application = new ViewerApplication(
       { openScore: async () => files.shift(), subscribe: () => () => undefined },

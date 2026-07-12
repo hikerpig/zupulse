@@ -28,7 +28,7 @@ export function mergePlaybackSidecar(
   local: PracticePlaybackSidecar,
   remote: PracticePlaybackSidecar,
 ): PracticePlaybackSidecar {
-  const loopMap = new Map(local.loops.map(loop => [loop.id, loop]));
+  const loopMap = new Map(local.loops.map((loop) => [loop.id, loop]));
   for (const loop of remote.loops) {
     const current = loopMap.get(loop.id);
     if (!current || loop.updatedAt > current.updatedAt) {
@@ -51,24 +51,16 @@ export function mergePlaybackSidecar(
     }
     tracks[id] = {
       muted: right.muteUpdatedAt > left.muteUpdatedAt ? right.muted : left.muted,
-      muteUpdatedAt: right.muteUpdatedAt > left.muteUpdatedAt
-        ? right.muteUpdatedAt
-        : left.muteUpdatedAt,
+      muteUpdatedAt: right.muteUpdatedAt > left.muteUpdatedAt ? right.muteUpdatedAt : left.muteUpdatedAt,
       volume: right.volumeUpdatedAt > left.volumeUpdatedAt ? right.volume : left.volume,
-      volumeUpdatedAt: right.volumeUpdatedAt > left.volumeUpdatedAt
-        ? right.volumeUpdatedAt
-        : left.volumeUpdatedAt,
+      volumeUpdatedAt: right.volumeUpdatedAt > left.volumeUpdatedAt ? right.volumeUpdatedAt : left.volumeUpdatedAt,
     };
   }
 
   return {
-    scoreSpeed: remote.scoreSpeed.updatedAt > local.scoreSpeed.updatedAt
-      ? remote.scoreSpeed
-      : local.scoreSpeed,
+    scoreSpeed: remote.scoreSpeed.updatedAt > local.scoreSpeed.updatedAt ? remote.scoreSpeed : local.scoreSpeed,
     loops: [...loopMap.values()].sort((a, b) => a.start.tick - b.start.tick),
-    visibility: remote.visibility.updatedAt > local.visibility.updatedAt
-      ? remote.visibility
-      : local.visibility,
+    visibility: remote.visibility.updatedAt > local.visibility.updatedAt ? remote.visibility : local.visibility,
     tracks,
   };
 }

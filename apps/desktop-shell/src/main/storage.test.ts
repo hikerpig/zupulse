@@ -8,9 +8,12 @@ const hash = "a".repeat(64);
 const roots: string[] = [];
 const valueSchema = {
   parse(value: unknown): { value: number } {
-    if (typeof value !== "object" || value === null
-      || Object.keys(value).length !== 1
-      || typeof (value as { value?: unknown }).value !== "number") {
+    if (
+      typeof value !== "object" ||
+      value === null ||
+      Object.keys(value).length !== 1 ||
+      typeof (value as { value?: unknown }).value !== "number"
+    ) {
       throw new Error("invalid value");
     }
     return value as { value: number };
@@ -18,7 +21,7 @@ const valueSchema = {
 };
 
 afterEach(async () => {
-  await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true })));
+  await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
 
 async function tempRoot(): Promise<string> {
@@ -36,11 +39,11 @@ describe("JsonStore", () => {
     await mkdir(join(root, "sidecars"), { recursive: true });
     await writeFile(join(root, "sidecars", `${hash}.json`), source);
     const warnings: string[] = [];
-    const store = new JsonStore(root, "sidecars", valueSchema, code => warnings.push(code));
+    const store = new JsonStore(root, "sidecars", valueSchema, (code) => warnings.push(code));
 
     expect(await store.read(hash)).toBeUndefined();
     expect(warnings).toEqual(["CORRUPT_PERSISTED_DATA"]);
-    expect((await readdir(join(root, "sidecars"))).some(name => name.includes(".corrupt"))).toBe(true);
+    expect((await readdir(join(root, "sidecars"))).some((name) => name.includes(".corrupt"))).toBe(true);
   });
 
   it("returns undefined for missing data and rejects invalid hashes", async () => {

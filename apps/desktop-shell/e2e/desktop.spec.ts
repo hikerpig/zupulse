@@ -25,6 +25,11 @@ async function setRange(locator: import("@playwright/test").Locator, value: stri
   await locator.blur();
 }
 
+async function openPracticeSettings(window: import("@playwright/test").Page): Promise<void> {
+  await window.getByRole("button", { name: "练习设置" }).click();
+  await expect(window.getByRole("complementary", { name: "练习设置" })).toBeVisible();
+}
+
 test("starts offline with an isolated renderer", async () => {
   const userData = await mkdtemp(join(tmpdir(), "tab-viewer-e2e-security-"));
   const app = await launch(userData);
@@ -80,6 +85,7 @@ test("opens a GP file and restores persisted practice state", async () => {
     await expect(window.getByRole("button", { name: "播放" })).toBeEnabled();
 
     await setRange(window.getByRole("slider", { name: "速度" }), "75");
+    await openPracticeSettings(window);
     await window.getByRole("combobox", { name: "边界吸附" }).selectOption("off");
     await window.getByRole("button", { name: "设为 A" }).click();
     await setRange(window.getByRole("slider", { name: "循环 B 点" }), "500");
@@ -95,6 +101,7 @@ test("opens a GP file and restores persisted practice state", async () => {
     await window.locator("#open-score").click();
     await expect(window.locator("#summary")).toContainText("桌面验收谱");
     await expect(window.getByRole("slider", { name: "速度" })).toHaveValue("75");
+    await openPracticeSettings(window);
     await expect(window.locator(".loop-row")).toHaveCount(1);
   } finally {
     await app.close().catch(() => undefined);

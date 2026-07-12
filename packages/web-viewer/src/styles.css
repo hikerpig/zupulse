@@ -297,25 +297,29 @@ input[type='range'] {
   z-index: 2;
   border-bottom: 1px solid var(--border-default);
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset;
+  min-height: 52px;
+  padding: 8px 20px;
+  gap: 12px;
 }
 
 .transport-actions button {
-  min-width: 64px;
+  min-width: 56px;
+  min-height: 34px;
+  padding-block: 5px;
 }
 
 .transport-progress {
   flex: 1 1 auto;
-  gap: 16px;
+  gap: 12px;
+}
+
+.transport-tools .status-chip {
+  margin: 0;
 }
 
 .time-readout {
   min-width: 96px;
-  padding: 8px 10px;
   color: var(--text-secondary);
-  background: var(--bg-control);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -325,8 +329,8 @@ input[type='range'] {
   grid-template-columns: auto minmax(120px, 1fr) auto;
   align-items: center;
   gap: 8px;
-  min-width: 220px;
-  padding: 10px 12px;
+  min-width: 200px;
+  padding: 4px 8px;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   background: var(--bg-control);
@@ -372,16 +376,16 @@ input[type='range'] {
 }
 
 .workspace {
+  position: relative;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 20px;
+  display: block;
   padding: 20px;
 }
 
 .score-stage {
+  height: 100%;
   min-width: 0;
   min-height: 0;
 }
@@ -390,22 +394,17 @@ input[type='range'] {
   height: 100%;
   min-height: 0;
   overflow: auto;
-  padding: 18px;
+  padding: 10px;
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-sm);
   background: var(--bg-score-shell);
   box-shadow: var(--shadow-soft);
 }
 
 .score-viewer {
   width: 100%;
-  height: 100%;
   min-width: 0;
   min-height: 0;
-  overflow: visible;
-  padding: 24px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
   background: var(--bg-score);
 }
 
@@ -449,11 +448,79 @@ input[type='range'] {
 }
 
 .practice-panel {
+  position: absolute;
+  z-index: 3;
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  width: min(360px, calc(100% - 24px));
   min-height: 0;
   overflow-y: auto;
   display: grid;
   gap: 16px;
   align-content: start;
+  padding: 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  background: var(--bg-shell);
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: blur(16px);
+  animation: drawer-enter 160ms ease-out;
+}
+
+.drawer-header {
+  position: sticky;
+  z-index: 1;
+  top: -12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 4px 12px;
+  background: var(--bg-shell);
+}
+
+.drawer-kicker,
+.drawer-title {
+  margin: 0;
+}
+
+.drawer-kicker {
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.drawer-title {
+  margin-top: 2px;
+  font-size: 16px;
+}
+
+.drawer-close {
+  min-width: 34px;
+  padding: 0;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.drawer-toggle[aria-expanded='true'] {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: var(--accent-soft);
+}
+
+@keyframes drawer-enter {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .practice-panel {
+    animation: none;
+  }
 }
 
 .panel-section {
@@ -627,7 +694,6 @@ button:focus-visible {
   }
 
   .workspace {
-    grid-template-columns: minmax(0, 1fr);
     overflow: visible;
   }
 
@@ -644,18 +710,30 @@ button:focus-visible {
   }
 
   .practice-panel {
-    overflow: visible;
+    position: fixed;
+    top: 12px;
+    overflow-y: auto;
   }
 }
 
 @media (max-width: 720px) {
   .context-bar,
-  .transport-bar,
-  .context-actions,
-  .transport-progress,
-  .transport-tools {
+  .context-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .transport-bar {
+    flex-wrap: wrap;
+  }
+
+  .transport-progress {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .transport-tools {
+    margin-left: auto;
   }
 
   .speed-control {

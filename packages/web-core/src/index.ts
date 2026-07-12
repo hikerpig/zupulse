@@ -34,5 +34,4 @@ export * from "./playback/playbackController";
 export * from "./library/types";
 export * from "./library/schemas";
 export * from "./library/ports";
-export * from "./library/repositoryContract";
 export * from "./library/importLibraryScores";

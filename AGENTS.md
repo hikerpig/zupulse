@@ -20,7 +20,7 @@
 
 - TypeScript 开启 `exactOptionalPropertyTypes`：可选字段不存在时省略属性，禁止显式赋值 `undefined`。
 - 所有跨进程与持久化输入使用现有 Zod schema；新增 Bridge API 必须同时添加 request、response、capability 和测试。
-- 遵循现有 named export、同目录 `*.test.ts(x)` 测试和 Prettier 双引号风格。
+- 遵循现有 named export、`__tests__/` 目录中的 `*.test.ts(x)` 测试和 Prettier 双引号风格；仅 `__tests__/` 目录内允许引用 `vitest`，运行时模块不得导出或依赖测试代码。
 - 不添加依赖前先检查现有标准库、平台能力和已安装包；优先最小实现。
 - 修改前先读目标文件、关联测试和同类实现；错误/测试失败时先定位根因再修复。
 

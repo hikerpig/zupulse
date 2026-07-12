@@ -4,6 +4,8 @@
 
 已接受
 
+> 后续说明：ADR 0036 将 MusicXML 导入安排在 GP 与 MIDI 分析之间；本 ADR 对 MIDI 的产品范围仍然有效，但不再定义紧邻 Desktop GP Slice 的交付顺序。
+
 ## 背景
 
 产品定位不是单一 Guitar Pro viewer，也不是单一 MIDI 工具，而是跨端练习型 viewer。研究报告指出，GP 与 MIDI 是两个性质不同的问题：GP 是结构化乐谱文件，MIDI 是演奏事件流。

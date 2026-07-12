@@ -1,23 +1,18 @@
 import type { OpenFileResponse } from "@tab-viewer/web-core";
 import { dialog } from "electron";
 import { readFile, stat } from "node:fs/promises";
-import { basename, extname } from "node:path";
+import { basename } from "node:path";
 import type { FileTokenStore } from "./fileTokens";
 
 export const MAX_SCORE_BYTES = 64 * 1024 * 1024;
-const GP_EXTENSIONS = new Set([".gp3", ".gp4", ".gp5", ".gpx", ".gp"]);
-
-export type ReadableGpMetadata = {
+export type ReadableScoreMetadata = {
   fileName: string;
   sizeBytes: number;
   isFile: boolean;
 };
 
-export function assertReadableGp(metadata: ReadableGpMetadata): void {
+export function assertReadableScore(metadata: ReadableScoreMetadata): void {
   if (!metadata.isFile) throw new Error("FILE_NOT_REGULAR");
-  if (!GP_EXTENSIONS.has(extname(metadata.fileName).toLowerCase())) {
-    throw new Error("FILE_TYPE_NOT_ALLOWED");
-  }
   if (!Number.isSafeInteger(metadata.sizeBytes) || metadata.sizeBytes < 0) {
     throw new Error("FILE_SIZE_INVALID");
   }
@@ -32,12 +27,17 @@ type FileDependencies = {
 const defaultDependencies: FileDependencies = {
   showOpenDialog: () => dialog.showOpenDialog({
     properties: ["openFile"],
-    filters: [{ name: "Guitar Pro", extensions: ["gp3", "gp4", "gp5", "gpx", "gp"] }],
+    filters: [
+      { name: "乐谱", extensions: ["gp3", "gp4", "gp5", "gpx", "gp", "musicxml", "mxl"] },
+      { name: "Guitar Pro", extensions: ["gp3", "gp4", "gp5", "gpx", "gp"] },
+      { name: "MusicXML", extensions: ["musicxml", "mxl"] },
+      { name: "所有文件", extensions: ["*"] },
+    ],
   }),
   stat,
 };
 
-export async function openGpFile(
+export async function openScoreFile(
   tokens: FileTokenStore,
   dependencies: FileDependencies = defaultDependencies,
 ): Promise<OpenFileResponse> {
@@ -47,7 +47,7 @@ export async function openGpFile(
 
   const info = await dependencies.stat(path);
   const fileName = basename(path);
-  assertReadableGp({ fileName, sizeBytes: info.size, isFile: info.isFile() });
+  assertReadableScore({ fileName, sizeBytes: info.size, isFile: info.isFile() });
   return {
     status: "opened",
     fileToken: tokens.issue(path, { fileName, sizeBytes: info.size }),
@@ -56,7 +56,7 @@ export async function openGpFile(
   };
 }
 
-export async function readGpFileBytes(
+export async function readScoreFileBytes(
   tokens: FileTokenStore,
   token: string,
   read: (path: string) => Promise<Uint8Array> = readFile,
@@ -66,3 +66,10 @@ export async function readGpFileBytes(
   if (bytes.byteLength > MAX_SCORE_BYTES) throw new Error("FILE_TOO_LARGE");
   return { fileName: entry.fileName, bytes };
 }
+
+/** @deprecated Use the format-neutral score APIs. */
+export const assertReadableGp = assertReadableScore;
+/** @deprecated Use the format-neutral score APIs. */
+export const openGpFile = openScoreFile;
+/** @deprecated Use the format-neutral score APIs. */
+export const readGpFileBytes = readScoreFileBytes;

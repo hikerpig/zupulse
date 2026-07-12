@@ -89,4 +89,14 @@ describe("bridge schemas", () => {
       bytes: new Uint8Array([1]),
     }).bytes).toBeInstanceOf(Uint8Array);
   });
+
+  it("round-trips MusicXML identities through sidecar requests", () => {
+    const identity = {
+      contentHash: hash,
+      format: "musicxml" as const,
+      sourceHints: { fileName: "score.musicxml", trackNames: ["Piano"] },
+    };
+    expect(createBridgeRequest("sidecar.read", "sidecar-1", { identity }).payload.identity)
+      .toEqual(identity);
+  });
 });

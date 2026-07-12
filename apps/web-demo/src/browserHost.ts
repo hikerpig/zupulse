@@ -13,7 +13,7 @@ export function createBrowserHost(ownerDocument: Document): ViewerHost & { bridg
     async openScore(): Promise<ViewerFile | undefined> {
       const input = ownerDocument.createElement("input");
       input.type = "file";
-      input.accept = ".gp3,.gp4,.gp5,.gpx,.gp";
+      input.accept = ".gp3,.gp4,.gp5,.gpx,.gp,.musicxml,.mxl,.xml";
       const file = await new Promise<File | undefined>(resolve => {
         input.addEventListener("change", () => resolve(input.files?.[0]), { once: true });
         input.click();

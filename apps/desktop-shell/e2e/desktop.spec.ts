@@ -7,15 +7,21 @@ import { fileURLToPath } from "node:url";
 const fixture = fileURLToPath(
   new URL("../../../test-fixtures/gp/generated/desktop-acceptance.gp", import.meta.url),
 );
+const musicXmlFixture = fileURLToPath(
+  new URL("../../../test-fixtures/musicxml/generated/single-voice.musicxml", import.meta.url),
+);
+const mxlFixture = fileURLToPath(
+  new URL("../../../test-fixtures/musicxml/generated/simple.mxl", import.meta.url),
+);
 
 async function launch(userData: string): Promise<ElectronApplication> {
   return electron.launch({ args: [".", `--user-data-dir=${userData}`] });
 }
 
-async function chooseFixture(app: ElectronApplication): Promise<void> {
+async function chooseFixture(app: ElectronApplication, filePath = fixture): Promise<void> {
   await app.evaluate(({ dialog }, filePath) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [filePath] });
-  }, fixture);
+  }, filePath);
 }
 
 async function setRange(
@@ -94,6 +100,25 @@ test("opens a GP file and restores persisted practice state", async () => {
     await expect(window.locator('[data-action="select-loop"]')).toHaveCount(1);
   } finally {
     await app.close().catch(() => undefined);
+    await rm(userData, { recursive: true, force: true });
+  }
+});
+
+test("opens MusicXML and MXL through the unified score entry", async () => {
+  const userData = await mkdtemp(join(tmpdir(), "tab-viewer-e2e-musicxml-"));
+  const app = await launch(userData);
+  try {
+    const window = await app.firstWindow();
+    await expect(window.locator("#open-score")).toContainText("打开乐谱");
+    await chooseFixture(app, musicXmlFixture);
+    await window.locator("#open-score").click();
+    await expect(window.locator("#summary")).toContainText("Single Voice");
+
+    await chooseFixture(app, mxlFixture);
+    await window.locator("#open-score").click();
+    await expect(window.locator("#summary")).toContainText("Single Voice");
+  } finally {
+    await app.close();
     await rm(userData, { recursive: true, force: true });
   }
 });

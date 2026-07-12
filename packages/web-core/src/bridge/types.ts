@@ -7,6 +7,8 @@ import type {
 
 export type { BridgeError, BridgeEvent, BridgeRequest, Capabilities } from "./schemas";
 export type OpenFileResponse = BridgeResponse<"file.open">;
+export type OpenScoreFileResponse = OpenFileResponse;
+export type ReadScoreFileResponse = BridgeResponse<"file.readBytes">;
 export type ReadSidecarRequest = Extract<BridgeRequest, { type: "sidecar.read" }>["payload"];
 export type WriteSidecarRequest = Extract<BridgeRequest, { type: "sidecar.write" }>["payload"];
 export type ReadSidecarResponse = BridgeResponse<"sidecar.read">;

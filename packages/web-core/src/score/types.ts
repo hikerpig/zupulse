@@ -1,4 +1,4 @@
-export type ScoreFormat = "gp" | "midi";
+export type ScoreFormat = "gp" | "musicxml" | "midi";
 
 export type SupportedExtension =
   | ".gp3"
@@ -6,6 +6,8 @@ export type SupportedExtension =
   | ".gp5"
   | ".gpx"
   | ".gp"
+  | ".musicxml"
+  | ".mxl"
   | ".mid"
   | ".midi";
 
@@ -101,6 +103,7 @@ export type Section = {
 
 export type SourceExtensions = {
   gp?: Record<string, unknown>;
+  musicxml?: Record<string, unknown>;
   midi?: Record<string, unknown>;
 };
 

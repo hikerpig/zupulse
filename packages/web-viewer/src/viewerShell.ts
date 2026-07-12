@@ -13,7 +13,7 @@ export function renderViewerShell(ownerDocument: Document): void {
             <button id="theme-dark" class="theme-toggle-button" type="button" aria-pressed="true">Dark</button>
           </div>
           <p id="status" class="status-chip" role="status">等待选择文件</p>
-          <button id="open-score" class="primary-button" type="button">打开 GP 文件</button>
+          <button id="open-score" class="primary-button" type="button">打开乐谱</button>
         </div>
       </header>
 
@@ -44,8 +44,8 @@ export function renderViewerShell(ownerDocument: Document): void {
           <div class="score-stage-frame">
             <section id="alpha-tab" class="score-viewer" aria-label="乐谱预览">
               <div class="score-empty-state">
-                <p class="empty-title">打开一份 Guitar Pro 乐谱开始练习</p>
-                <p class="empty-copy">支持 .gp3 .gp4 .gp5 .gpx .gp，本地读取，不上传文件。</p>
+                <p class="empty-title">打开一份乐谱开始练习</p>
+                <p class="empty-copy">支持 Guitar Pro、.musicxml 与 .mxl，本地读取，不上传文件。</p>
               </div>
             </section>
           </div>

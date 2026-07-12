@@ -19,7 +19,7 @@ import {
 import { dispatchBridgeRequest } from "./bridge";
 import { DiagnosticLogger } from "./diagnostics";
 import { FileTokenStore } from "./fileTokens";
-import { openGpFile, readGpFileBytes } from "./files";
+import { openScoreFile, readScoreFileBytes } from "./files";
 import { registerAppProtocol } from "./protocol";
 import { JsonStore } from "./storage";
 import { DesktopLifecycleCoordinator } from "./lifecycle";
@@ -111,8 +111,8 @@ async function startDesktopApp(): Promise<void> {
     appVersion: __APP_VERSION__,
     rendererBuildHash: __RENDERER_BUILD_HASH__,
     handlers: {
-      "file.open": () => openGpFile(fileTokens),
-      "file.readBytes": request => readGpFileBytes(fileTokens, request.payload.fileToken),
+    "file.open": () => openScoreFile(fileTokens),
+    "file.readBytes": request => readScoreFileBytes(fileTokens, request.payload.fileToken),
       "sidecar.read": async request => ({
         payload: await sidecarStore.read(request.payload.identity.contentHash),
       }),

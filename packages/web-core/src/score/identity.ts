@@ -1,5 +1,6 @@
 import { detectScoreFormat } from "./format";
 import type { ScoreIdentity } from "./types";
+import type { ScoreFormat } from "./types";
 
 export async function createContentHash(bytes: Uint8Array): Promise<string> {
   const digest = await globalThis.crypto.subtle.digest("SHA-256", toArrayBuffer(bytes));
@@ -14,10 +15,11 @@ export async function createScoreIdentity(input: {
   durationMs?: number;
   trackNames?: string[];
   tempoSummary?: string;
+  format?: ScoreFormat;
 }): Promise<ScoreIdentity> {
   const identity: ScoreIdentity = {
     contentHash: await createContentHash(input.bytes),
-    format: detectScoreFormat(input.fileName),
+    format: input.format ?? detectScoreFormat(input.fileName),
   };
 
   if (input.title !== undefined) {

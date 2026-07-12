@@ -1,4 +1,6 @@
 export * from "./host";
+export * from "./importJob";
+export * from "./importPresenter";
 export * from "./viewerShell";
 export * from "./viewerApp";
 export * from "./playbackControls";

@@ -32,6 +32,26 @@ Guitar Pro 文件族的统称。第一版支持 `.gp3`、`.gp4`、`.gp5`、`.gpx
 
 MIDI 分析模块。负责解析 MIDI 事件、tempo map、轨道、channel、note events，并生成 piano-roll 与基础钢琴谱候选。
 
+## MusicXML Import
+
+把 MusicXML 结构化乐谱接入 Viewer 的导入流程，覆盖格式识别、文件读取、alphaTab 解析、显示、播放和错误处理。它先于 MIDI Analyzer 交付，并用于验证统一 Score Model 对多声部、连音、拍号变化和 repeat 的表达能力。
+
+## MXL
+
+MusicXML 的压缩容器格式，常用扩展名为 `.mxl`。导入时需要验证容器结构并定位其中的乐谱文档，不能把它当作普通 XML 文本读取。
+
+## Raw MIDI
+
+从 MIDI 文件解析出的不可变源事件集合，是 MIDI 内容的事实源。量化、分手、异常检测和制谱推断不得原地修改 Raw MIDI。
+
+## Analysis Revision
+
+由某份 Raw MIDI、分析参数和算法版本派生的可重算分析结果。它包含量化、拍号推断、左右手分配、异常检测和基础钢琴谱所需信息。
+
+## User Corrections
+
+用户针对 MIDI 分析结果保存的修正或覆盖层。它不改写 Raw MIDI，并且必须能够追溯到目标 Analysis Revision 或稳定的原始音乐位置。
+
 ## Native Audio Bridge
 
 Web Viewer Core 到平台原生音频引擎的桥。后续可接 AVAudioEngine、AudioKit 或 TinySoundFont。
@@ -54,7 +74,15 @@ Web Core 中播放练习状态的单一入口。它接收 UI 领域命令，维�
 
 ## Musical Position
 
-附着在谱面时间轴上的定位，由小节、拍和 tick 表达。它用于跨播放速度和时间缓存稳定表示循环边界。
+音乐位置的统称。存在书面位置与播放实例两种语义；调用方必须根据批注/谱面交互或播放/恢复用途选择正确类型，不能只传递含义不明的小节与 tick。
+
+## Written Position
+
+附着在书面谱面上的位置，由 track 或 part、小节、拍和 tick 表达。用于批注、section 和谱面选择；反复播放不会复制 Written Position。
+
+## Playback Occurrence
+
+某个 Written Position 在展开播放时间轴中的一次具体出现。用于播放头、seek、AB 循环和 Local Playback Resume，以区分反复或跳转造成的多次经过。
 
 ## Track Playback State
 

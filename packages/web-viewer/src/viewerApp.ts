@@ -17,7 +17,8 @@ import type {
 } from "./host";
 import { ALPHATAB_ASSETS } from "./playbackAssets";
 import { mountPlaybackControls } from "./playbackControls";
-import { presentGpFile, type DemoState } from "./gpDemoPresenter";
+import { type DemoState } from "./gpDemoPresenter";
+import { presentScoreFile } from "./importPresenter";
 
 export type ViewerAppDependencies = {
   host: ViewerHost;
@@ -27,7 +28,7 @@ export type ViewerAppDependencies = {
 export type DefaultOpenSessionDependencies = {
   createApi: typeof createAlphaTabApi;
   createAdapter(api: AlphaTabApiLike): AlphaTabPlaybackAdapter;
-  presentFile: typeof presentGpFile;
+  presentFile: typeof presentScoreFile;
   waitForScore: typeof waitForAlphaTabScore;
   extractModel: typeof extractAlphaTabPlaybackModel;
   createController(
@@ -39,7 +40,7 @@ export type DefaultOpenSessionDependencies = {
 const defaultOpenSessionDependencies: DefaultOpenSessionDependencies = {
   createApi: createAlphaTabApi,
   createAdapter: api => new AlphaTabPlaybackAdapter(api, ALPHATAB_ASSETS.soundFont),
-  presentFile: presentGpFile,
+  presentFile: presentScoreFile,
   waitForScore: waitForAlphaTabScore,
   extractModel: extractAlphaTabPlaybackModel,
   createController: options => new PlaybackController(options),
@@ -279,13 +280,13 @@ function alphaTabSettings(scrollElement: HTMLElement): unknown {
 type ViewerTheme = "light" | "dark";
 
 function readInitialTheme(ownerDocument: Document): ViewerTheme {
-  const stored = ownerDocument.defaultView?.localStorage.getItem("tab-viewer-theme");
+  const stored = ownerDocument.defaultView?.localStorage?.getItem("tab-viewer-theme");
   return stored === "light" ? "light" : "dark";
 }
 
 function applyTheme(ownerDocument: Document, theme: ViewerTheme): void {
   ownerDocument.documentElement.dataset.theme = theme;
-  ownerDocument.defaultView?.localStorage.setItem("tab-viewer-theme", theme);
+  ownerDocument.defaultView?.localStorage?.setItem("tab-viewer-theme", theme);
 
   const lightThemeButton = ownerDocument.getElementById("theme-light");
   const darkThemeButton = ownerDocument.getElementById("theme-dark");

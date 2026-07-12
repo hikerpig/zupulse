@@ -17,8 +17,8 @@ describe("mountViewerApp", () => {
     expect(document.querySelector(".score-stage")).not.toBeNull();
     expect(document.querySelector(".practice-panel")).not.toBeNull();
     expect(document.querySelector(".theme-toggle")).not.toBeNull();
-    expect(document.getElementById("open-score")?.textContent).toContain("打开 GP 文件");
-    expect(document.querySelector(".empty-title")?.textContent).toBe("打开一份 Guitar Pro 乐谱开始练习");
+    expect(document.getElementById("open-score")?.textContent).toContain("打开乐谱");
+    expect(document.querySelector(".empty-title")?.textContent).toBe("打开一份乐谱开始练习");
   });
 
   it("switches between dark and light theme", async () => {

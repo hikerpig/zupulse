@@ -5,6 +5,9 @@
   "type": "module",
   "packageManager": "pnpm@9.3.0",
   "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "simple-git-hooks",
     "test": "vitest run",
     "typecheck": "tsc -b",
     "check": "pnpm typecheck && pnpm test",
@@ -35,6 +38,15 @@
     "@types/react-dom": "^19.2.3",
     "jsdom": "^24.1.0",
     "typescript": "^5.5.0",
-    "vitest": "^2.0.0"
+    "vitest": "^2.0.0",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.9.0",
+    "simple-git-hooks": "^2.13.1"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm exec lint-staged"
+  },
+  "lint-staged": {
+    "*.{css,html,js,json,jsx,md,mjs,ts,tsx,yaml,yml}": "prettier --check"
   }
 }

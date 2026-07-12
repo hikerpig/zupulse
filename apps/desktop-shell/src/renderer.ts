@@ -7,7 +7,6 @@ import {
 import {
   createDefaultOpenSession,
   mountViewerApp,
-  renderViewerShell,
   type ViewerAppHandle,
   type ViewerHost,
 } from "@tab-viewer/web-viewer";
@@ -37,8 +36,9 @@ async function start(): Promise<void> {
   };
   const host = createElectronHost(bridge, acknowledgeLifecycle);
   const persistence = new BridgePlaybackPersistence(bridge);
-  renderViewerShell(document);
-  appHandle = mountViewerApp(document, {
+  const root = document.getElementById("root");
+  if (!root) throw new Error("VIEWER_ROOT_MISSING");
+  appHandle = mountViewerApp(root, {
     host,
     openSession: createDefaultOpenSession(document, persistence),
   });

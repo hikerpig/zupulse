@@ -1,0 +1,231 @@
+import {
+  AlphaTabPlaybackAdapter,
+  PlaybackController,
+  createAlphaTabApi,
+  createDefaultSidecar,
+  extractAlphaTabPlaybackModel,
+  waitForAlphaTabScore,
+  type AlphaTabApiLike,
+  type BridgePlaybackPersistence,
+} from '@tab-viewer/web-core';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { flushSync } from 'react-dom';
+import type { ViewerAppHandle, ViewerFile, ViewerHost, ViewerSessionHandle } from './host';
+import { App } from './app/App';
+import { ViewerApplication } from './app/ViewerApplication';
+import { ALPHATAB_ASSETS } from './playbackAssets';
+import { type DemoState } from './gpDemoPresenter';
+import { presentScoreFile } from './importPresenter';
+
+export type ViewerAppDependencies = {
+  host: ViewerHost;
+  openSession(file: ViewerFile): Promise<ViewerSessionHandle>;
+};
+
+export type DefaultOpenSessionDependencies = {
+  createApi: typeof createAlphaTabApi;
+  createAdapter(api: AlphaTabApiLike): AlphaTabPlaybackAdapter;
+  presentFile: typeof presentScoreFile;
+  waitForScore: typeof waitForAlphaTabScore;
+  extractModel: typeof extractAlphaTabPlaybackModel;
+  createController(
+    options: ConstructorParameters<typeof PlaybackController>[0],
+  ): PlaybackController;
+};
+
+const defaultOpenSessionDependencies: DefaultOpenSessionDependencies = {
+  createApi: createAlphaTabApi,
+  createAdapter: (api) => new AlphaTabPlaybackAdapter(api, ALPHATAB_ASSETS.soundFont),
+  presentFile: presentScoreFile,
+  waitForScore: waitForAlphaTabScore,
+  extractModel: extractAlphaTabPlaybackModel,
+  createController: (options) => new PlaybackController(options),
+};
+
+export function mountViewerApp(
+  rootElement: HTMLElement,
+  dependencies: ViewerAppDependencies,
+): ViewerAppHandle {
+  const root = createRoot(rootElement);
+  const application = new ViewerApplication(dependencies.host, dependencies.openSession);
+  flushSync(() =>
+    root.render(
+      <StrictMode>
+        <App application={application} />
+      </StrictMode>,
+    ),
+  );
+  let destroyPromise: Promise<void> | undefined;
+  return {
+    openScore: () => application.openScore(),
+    togglePlayback: () => application.togglePlayback(),
+    pauseAndFlush: () => application.pauseAndFlush(),
+    destroy: () => (destroyPromise ??= application.destroy().finally(() => root.unmount())),
+  };
+}
+
+export function createDefaultOpenSession(
+  ownerDocument: Document,
+  persistence: BridgePlaybackPersistence,
+  dependencies: DefaultOpenSessionDependencies = defaultOpenSessionDependencies,
+): (file: ViewerFile) => Promise<ViewerSessionHandle> {
+  return async (file) => {
+    const alphaTabHost = required<HTMLElement>(ownerDocument, 'alpha-tab');
+    const scoreScrollElement = alphaTabHost.parentElement;
+    if (!scoreScrollElement) throw new Error('Viewer DOM is missing the score scroll container');
+    const status = required<HTMLElement>(ownerDocument, 'status');
+    const summary = required<HTMLElement>(ownerDocument, 'summary');
+    renderViewerState(status, summary, { status: 'loading', message: '正在加载文件' });
+    alphaTabHost.replaceChildren();
+    const api = dependencies.createApi(alphaTabHost, alphaTabSettings(scoreScrollElement));
+    const adapter = dependencies.createAdapter(api);
+    let controller: PlaybackController | undefined;
+    try {
+      const state = await dependencies.presentFile({
+        file: {
+          name: file.fileName,
+          async arrayBuffer() {
+            return file.bytes.slice().buffer;
+          },
+        },
+        api,
+      });
+      if (state.status !== 'ready' || !state.identity) {
+        adapter.destroy();
+        renderViewerState(status, summary, state);
+        return emptySession();
+      }
+
+      await dependencies.waitForScore(api);
+      const model = dependencies.extractModel(api);
+      const sessionController = dependencies.createController({
+        sessionId: crypto.randomUUID(),
+        identity: state.identity,
+        engine: adapter,
+        persistence,
+        baseSidecar: createDefaultSidecar(state.identity),
+        tracks: model.tracks,
+        timeline: model.timeline,
+      });
+      controller = sessionController;
+      await sessionController.initialize();
+      let playbackSnapshot = sessionController.getState();
+      const playbackListeners = new Set<(state: typeof playbackSnapshot) => void>();
+      const unsubscribePlayback = sessionController.subscribe((state) => {
+        playbackSnapshot = state;
+        for (const listener of playbackListeners) listener(state);
+      });
+      renderViewerState(status, summary, state);
+      return {
+        playback: {
+          getState: () => playbackSnapshot,
+          subscribe(listener) {
+            playbackListeners.add(listener);
+            listener(playbackSnapshot);
+            return () => playbackListeners.delete(listener);
+          },
+          dispatch: (command) => sessionController.dispatch(command),
+          timeline: model.timeline,
+        },
+        async togglePlayback() {
+          await sessionController.dispatch({ type: 'toggle-playback' });
+        },
+        async pauseAndFlush() {
+          await sessionController.dispatch({ type: 'pause' });
+          await sessionController.flush();
+        },
+        async destroy() {
+          unsubscribePlayback();
+          playbackListeners.clear();
+          await sessionController.destroy();
+        },
+      };
+    } catch (error) {
+      let cleanupError: unknown;
+      try {
+        if (controller) await controller.destroy();
+        else adapter.destroy();
+      } catch (caughtCleanupError) {
+        cleanupError = caughtCleanupError;
+      }
+      if (cleanupError !== undefined) {
+        throw new AggregateError(
+          [error, cleanupError],
+          'Viewer session initialization and cleanup both failed',
+        );
+      }
+      renderViewerState(status, summary, {
+        status: 'error',
+        message: error instanceof Error ? error.message : '加载失败',
+      });
+      return emptySession();
+    }
+  };
+}
+
+export function renderViewerState(
+  status: HTMLElement,
+  summary: HTMLElement,
+  state: DemoState,
+): void {
+  status.textContent = state.message;
+  if (state.status !== 'ready' || !state.summary) {
+    summary.textContent = '未打开乐谱';
+    return;
+  }
+  summary.textContent = state.summary.title;
+}
+
+function emptySession(): ViewerSessionHandle {
+  return {
+    togglePlayback: async () => undefined,
+    pauseAndFlush: async () => undefined,
+    destroy: async () => undefined,
+  };
+}
+
+function required<T extends HTMLElement>(ownerDocument: Document, id: string): T {
+  const element = ownerDocument.getElementById(id);
+  if (!element) throw new Error(`Viewer DOM is missing #${id}`);
+  return element as T;
+}
+
+function alphaTabSettings(scrollElement: HTMLElement): unknown {
+  const chineseSerifFonts = "Georgia, 'Songti SC', 'STSong', SimSun, 'Noto Serif SC', serif";
+  const chineseSansFonts =
+    "Arial, 'PingFang SC', 'Microsoft YaHei', 'Heiti SC', 'Noto Sans SC', sans-serif";
+  return {
+    core: {
+      useWorkers: false,
+      scriptFile: ALPHATAB_ASSETS.scriptFile,
+      fontDirectory: ALPHATAB_ASSETS.fontDirectory,
+    },
+    player: {
+      enablePlayer: true,
+      enableCursor: true,
+      enableAnimatedBeatCursor: true,
+      enableElementHighlighting: true,
+      scrollElement,
+      soundFont: ALPHATAB_ASSETS.soundFont,
+    },
+    display: {
+      scale: 1,
+      resources: {
+        titleFont: `32px ${chineseSerifFonts}`,
+        subTitleFont: `20px ${chineseSerifFonts}`,
+        wordsFont: `15px ${chineseSansFonts}`,
+        tablatureFont: `13px ${chineseSansFonts}`,
+        graceFont: `11px ${chineseSansFonts}`,
+        barNumberFont: `11px ${chineseSansFonts}`,
+        copyrightFont: `bold 12px ${chineseSansFonts}`,
+        markerFont: `bold 14px ${chineseSerifFonts}`,
+        directionsFont: `14px ${chineseSerifFonts}`,
+        timerFont: `12px ${chineseSerifFonts}`,
+        fretboardNumberFont: `11px ${chineseSansFonts}`,
+        numberedNotationFont: `14px ${chineseSansFonts}`,
+        numberedNotationGraceFont: `16px ${chineseSansFonts}`,
+      },
+    },
+  };
+}

@@ -28,12 +28,8 @@ async function setRange(
   locator: import("@playwright/test").Locator,
   value: string,
 ): Promise<void> {
-  await locator.evaluate((element, nextValue) => {
-    const input = element as HTMLInputElement;
-    input.value = nextValue;
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-    input.dispatchEvent(new Event("change", { bubbles: true }));
-  }, value);
+  await locator.fill(value);
+  await locator.blur();
 }
 
 test("starts offline with an isolated renderer", async () => {
@@ -82,12 +78,13 @@ test("opens a GP file and restores persisted practice state", async () => {
     await window.locator("#open-score").click();
     await expect(window.locator("#summary")).toContainText("桌面验收谱");
 
-    await setRange(window.locator("#play-speed"), "75");
-    await setRange(window.locator("#loop-start"), "0");
-    await setRange(window.locator("#loop-end"), "500");
-    await expect(window.locator("#loop-end")).toHaveValue("500");
-    await window.locator("#loop-save").click();
-    await expect(window.locator('[data-action="select-loop"]')).toHaveCount(1);
+    await setRange(window.getByRole("slider", { name: "速度" }), "75");
+    await window.getByRole("combobox", { name: "边界吸附" }).selectOption("off");
+    await window.getByRole("button", { name: "设为 A" }).click();
+    await setRange(window.getByRole("slider", { name: "循环 B 点" }), "500");
+    await expect(window.getByRole("slider", { name: "循环 B 点" })).toHaveValue("500");
+    await window.getByRole("button", { name: "保存区间" }).click();
+    await expect(window.locator(".loop-row")).toHaveCount(1);
     await window.waitForTimeout(700);
     await app.close();
 
@@ -96,8 +93,8 @@ test("opens a GP file and restores persisted practice state", async () => {
     window = await app.firstWindow();
     await window.locator("#open-score").click();
     await expect(window.locator("#summary")).toContainText("桌面验收谱");
-    await expect(window.locator("#play-speed")).toHaveValue("75");
-    await expect(window.locator('[data-action="select-loop"]')).toHaveCount(1);
+    await expect(window.getByRole("slider", { name: "速度" })).toHaveValue("75");
+    await expect(window.locator(".loop-row")).toHaveCount(1);
   } finally {
     await app.close().catch(() => undefined);
     await rm(userData, { recursive: true, force: true });

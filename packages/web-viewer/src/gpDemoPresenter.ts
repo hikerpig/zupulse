@@ -11,9 +11,9 @@ import {
   type GpScoreSummary,
   type AlphaTabScoreLike,
   type ScoreIdentity,
-} from "@tab-viewer/web-core";
+} from '@tab-viewer/web-core';
 
-export type DemoStatus = "idle" | "loading" | "ready" | "error";
+export type DemoStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 export type DemoState = {
   status: DemoStatus;
@@ -34,10 +34,10 @@ export async function presentGpFile(input: {
   api: AlphaTabApiLike;
   loader?: AlphaTabScoreLoader;
 }): Promise<DemoState> {
-  if (detectScoreFormat(input.file.name) !== "gp") {
+  if (detectScoreFormat(input.file.name) !== 'gp') {
     return {
-      status: "error",
-      message: "请选择 Guitar Pro 文件",
+      status: 'error',
+      message: '请选择 Guitar Pro 文件',
     };
   }
 
@@ -49,15 +49,15 @@ export async function presentGpFile(input: {
   const loaded = loadAlphaTabBytes(input.api, bytes);
   if (!loaded) {
     return {
-      status: "error",
-      message: "alphaTab 无法加载该文件",
+      status: 'error',
+      message: 'alphaTab 无法加载该文件',
     };
   }
 
   const score = loadGpScore(bytes, input.loader);
   const summary = summarizeGpScore(score);
   const trackNames = (score.tracks ?? [])
-    .map(track => track.name?.trim())
+    .map((track) => track.name?.trim())
     .filter((name): name is string => Boolean(name));
   const identityInput: Parameters<typeof createScoreIdentity>[0] = {
     fileName: input.file.name,
@@ -74,7 +74,7 @@ export async function presentGpFile(input: {
   const identity = await createScoreIdentity(identityInput);
 
   return {
-    status: "ready",
+    status: 'ready',
     message: `已加载 ${summary.title}`,
     identity,
     summary,

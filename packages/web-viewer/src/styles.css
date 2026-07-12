@@ -2,7 +2,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 :root {
-  font-family: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    'Space Grotesk',
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
@@ -12,7 +19,7 @@
   --focus-ring: 0 0 0 3px rgb(242 107 79 / 0.18);
 }
 
-:root[data-theme="light"] {
+:root[data-theme='light'] {
   --bg-app: #f0ede8;
   --bg-shell: rgb(240 237 232 / 0.94);
   --bg-panel: #f5f2ed;
@@ -51,7 +58,7 @@
   --signal-yellow: #ffbe1a;
 }
 
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   --bg-app: #1a1a1a;
   --bg-shell: rgb(26 26 26 / 0.94);
   --bg-panel: #222222;
@@ -116,7 +123,10 @@ button {
   border-radius: var(--radius-sm);
   cursor: pointer;
   box-shadow: none;
-  transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    transform 140ms ease;
 }
 
 button:hover:not(:disabled) {
@@ -143,9 +153,51 @@ button:disabled {
   border-color: var(--accent-primary-hover);
 }
 
-input[type="range"] {
+input[type='range'] {
   width: 100%;
   accent-color: var(--accent-primary);
+}
+
+.base-slider {
+  width: 100%;
+  min-width: 80px;
+}
+
+.base-slider-control {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  touch-action: none;
+}
+
+.base-slider-track {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--meter-track);
+}
+
+.base-slider-indicator {
+  border-radius: inherit;
+  background: var(--meter-fill);
+}
+
+.base-slider-thumb {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--accent-primary);
+  border-radius: 50%;
+  background: var(--bg-elevated);
+}
+
+.base-slider-thumb:focus-within {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.base-slider[data-disabled] {
+  opacity: 0.5;
 }
 
 .app-shell {
@@ -232,7 +284,7 @@ input[type="range"] {
   box-shadow: none;
 }
 
-.theme-toggle-button[aria-pressed="true"] {
+.theme-toggle-button[aria-pressed='true'] {
   color: var(--text-primary);
   background: var(--bg-elevated);
   border-color: var(--border-default);
@@ -263,7 +315,7 @@ input[type="range"] {
   background: var(--bg-control);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -295,7 +347,7 @@ input[type="range"] {
 }
 
 .status-chip::before {
-  content: "";
+  content: '';
   width: 7px;
   height: 7px;
   border-radius: 999px;
@@ -483,7 +535,7 @@ input[type="range"] {
 }
 
 .loop-row span,
-.loop-row input[type="number"] {
+.loop-row input[type='number'] {
   font-size: 12px;
 }
 
@@ -494,7 +546,7 @@ input[type="range"] {
 }
 
 .track-row strong,
-.track-row input[type="range"] {
+.track-row input[type='range'] {
   grid-column: 1 / -1;
   min-width: 0;
 }
@@ -529,8 +581,8 @@ select {
   border-radius: var(--radius-sm);
 }
 
-input[type="text"],
-input[type="number"],
+input[type='text'],
+input[type='number'],
 select {
   min-height: 34px;
   padding: 0 10px;
@@ -546,7 +598,13 @@ button:focus-visible {
 #play-progress {
   height: 6px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--meter-fill) 0%, var(--meter-fill) 40%, var(--meter-track) 40%, var(--meter-track) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--meter-fill) 0%,
+    var(--meter-fill) 40%,
+    var(--meter-track) 40%,
+    var(--meter-track) 100%
+  );
 }
 
 .sr-only {

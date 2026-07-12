@@ -25,7 +25,7 @@ const config = {
     maxEntrypointSize: 2 * 1024 * 1024,
   },
   resolve: {
-    extensions: [".ts", ".js"],
+    extensions: [".tsx", ".ts", ".js"],
   },
   externalsType: "module-import",
   externals: {
@@ -34,13 +34,15 @@ const config = {
   module: {
     rules: [
       {
-        test: /\.ts$/,
+        test: /\.tsx?$/,
         loader: "builtin:swc-loader",
         options: {
           jsc: {
             parser: {
               syntax: "typescript",
+              tsx: true,
             },
+            transform: { react: { runtime: "automatic" } },
           },
         },
         type: "javascript/auto",

@@ -19,9 +19,14 @@ const buildDefinitions = {
 };
 
 const swcRule = {
-  test: /\.ts$/,
+  test: /\.tsx?$/,
   loader: "builtin:swc-loader",
-  options: { jsc: { parser: { syntax: "typescript" } } },
+  options: {
+    jsc: {
+      parser: { syntax: "typescript", tsx: true },
+      transform: { react: { runtime: "automatic" } },
+    },
+  },
   type: "javascript/auto",
 };
 
@@ -36,7 +41,7 @@ const main = {
     path: join(shellRoot, "dist/main"),
     library: { type: "commonjs2" },
   },
-  resolve: { extensions: [".ts", ".js"] },
+  resolve: { extensions: [".tsx", ".ts", ".js"] },
   module: { rules: [swcRule] },
   plugins: [new DefinePlugin(buildDefinitions)],
 };
@@ -52,7 +57,7 @@ const preload = {
     path: join(shellRoot, "dist/preload"),
     library: { type: "commonjs2" },
   },
-  resolve: { extensions: [".ts", ".js"] },
+  resolve: { extensions: [".tsx", ".ts", ".js"] },
   module: { rules: [swcRule] },
 };
 
@@ -70,7 +75,7 @@ const renderer = {
     maxAssetSize: 2 * 1024 * 1024,
     maxEntrypointSize: 2 * 1024 * 1024,
   },
-  resolve: { extensions: [".ts", ".js"] },
+  resolve: { extensions: [".tsx", ".ts", ".js"] },
   module: {
     rules: [swcRule, { test: /\.css$/, type: "css" }],
   },

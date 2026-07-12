@@ -6,7 +6,7 @@ import {
   extractAlphaTabPlaybackModel,
   waitForAlphaTabScore,
   type AlphaTabApiLike,
-  type BridgePlaybackPersistence,
+  type PlaybackPersistence,
 } from "@tab-viewer/web-core";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
@@ -21,7 +21,7 @@ import { presentScoreFile } from "./importPresenter";
 
 export type ViewerAppDependencies = {
   host: ViewerHost;
-  openSession(file: ViewerFile): Promise<ViewerSessionHandle>;
+  openSession(file: ViewerFile, libraryScoreId?: string): Promise<ViewerSessionHandle>;
   library?: { repository: SheetLibraryRepository; gateway: ScoreFileGateway; adapters: readonly ScoreFormatAdapter[] };
 };
 
@@ -64,10 +64,10 @@ export function mountViewerApp(rootElement: HTMLElement, dependencies: ViewerApp
 
 export function createDefaultOpenSession(
   ownerDocument: Document,
-  persistence: BridgePlaybackPersistence,
+  persistence: PlaybackPersistence & { forLibraryScore(libraryScoreId: string): PlaybackPersistence },
   dependencies: DefaultOpenSessionDependencies = defaultOpenSessionDependencies,
-): (file: ViewerFile) => Promise<ViewerSessionHandle> {
-  return async (file) => {
+): (file: ViewerFile, libraryScoreId?: string) => Promise<ViewerSessionHandle> {
+  return async (file, libraryScoreId) => {
     const alphaTabHost = required<HTMLElement>(ownerDocument, "alpha-tab");
     const scoreScrollElement = alphaTabHost.parentElement;
     if (!scoreScrollElement) throw new Error("Viewer DOM is missing the score scroll container");
@@ -100,7 +100,7 @@ export function createDefaultOpenSession(
         sessionId: crypto.randomUUID(),
         identity: state.identity,
         engine: adapter,
-        persistence,
+        persistence: libraryScoreId === undefined ? persistence : persistence.forLibraryScore(libraryScoreId),
         baseSidecar: createDefaultSidecar(state.identity),
         tracks: model.tracks,
         timeline: model.timeline,

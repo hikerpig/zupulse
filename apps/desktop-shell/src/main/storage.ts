@@ -35,26 +35,32 @@ export class JsonStore<T> {
 
   write(contentHash: string, value: T): Promise<void> {
     const previous = this.chains.get(contentHash) ?? Promise.resolve();
-    const operation = previous.catch(() => undefined).then(async () => {
-      const file = this.path(contentHash);
-      const temp = `${file}.${randomUUID()}.tmp`;
-      await mkdir(dirname(file), { recursive: true });
-      try {
-        const parsed = this.schema.parse(value);
-        await writeFile(temp, JSON.stringify(parsed, null, 2), { mode: 0o600 });
-        await rename(temp, file);
-      } finally {
-        await rm(temp, { force: true });
-      }
-    });
+    const operation = previous
+      .catch(() => undefined)
+      .then(async () => {
+        const file = this.path(contentHash);
+        const temp = `${file}.${randomUUID()}.tmp`;
+        await mkdir(dirname(file), { recursive: true });
+        try {
+          const parsed = this.schema.parse(value);
+          await writeFile(temp, JSON.stringify(parsed, null, 2), { mode: 0o600 });
+          await rename(temp, file);
+        } finally {
+          await rm(temp, { force: true });
+        }
+      });
     this.chains.set(contentHash, operation);
     return operation.finally(() => {
       if (this.chains.get(contentHash) === operation) this.chains.delete(contentHash);
     });
   }
 
-  private path(contentHash: string): string {
-    if (!/^[a-f0-9]{64}$/i.test(contentHash)) throw new Error("INVALID_CONTENT_HASH");
-    return join(this.userData, this.category, `${contentHash}.json`);
+  async delete(key: string): Promise<void> {
+    await rm(this.path(key), { force: true });
+  }
+
+  private path(key: string): string {
+    if (!/^(?:[a-f0-9]{64}|[a-f0-9-]{36})$/i.test(key)) throw new Error("INVALID_CONTENT_HASH");
+    return join(this.userData, this.category, `${key}.json`);
   }
 }

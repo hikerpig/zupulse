@@ -469,6 +469,41 @@ input[type="range"] {
   font-size: 13px;
 }
 
+.library-editor {
+  position: fixed;
+  z-index: 10;
+  right: 20px;
+  bottom: 20px;
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-panel);
+}
+
+.library-editor label {
+  display: grid;
+  gap: 4px;
+}
+
+.library-dialog {
+  position: fixed;
+  z-index: 11;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  padding: 24px;
+  background: var(--bg-shell);
+}
+
+.library-dialog h2,
+.library-dialog p {
+  margin: 0;
+}
+
 .at-cursor-bar {
   background: rgb(255 190 26 / 18%);
 }

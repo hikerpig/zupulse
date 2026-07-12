@@ -115,22 +115,30 @@ export const bridgeRequestSchema = z.discriminatedUnion("type", [
   envelope("library.setFavorite", z.object({ id: libraryScoreIdSchema, favorite: z.boolean() }).strict()),
   envelope("library.markOpened", z.object({ id: libraryScoreIdSchema, openedAt: z.iso.datetime() }).strict()),
   envelope("library.delete", z.object({ id: libraryScoreIdSchema }).strict()),
-  envelope("sidecar.read", z.object({ identity: scoreIdentitySchema }).strict()),
+  envelope(
+    "sidecar.read",
+    z.object({ identity: scoreIdentitySchema, libraryScoreId: libraryScoreIdSchema.optional() }).strict(),
+  ),
   envelope(
     "sidecar.write",
     z
       .object({
         identity: scoreIdentitySchema,
+        libraryScoreId: libraryScoreIdSchema.optional(),
         payload: sidecarPayloadSchema,
       })
       .strict(),
   ),
-  envelope("playbackResume.read", z.object({ identity: scoreIdentitySchema }).strict()),
+  envelope(
+    "playbackResume.read",
+    z.object({ identity: scoreIdentitySchema, libraryScoreId: libraryScoreIdSchema.optional() }).strict(),
+  ),
   envelope(
     "playbackResume.write",
     z
       .object({
         identity: scoreIdentitySchema,
+        libraryScoreId: libraryScoreIdSchema.optional(),
         resume: localPlaybackResumeSchema,
       })
       .strict(),

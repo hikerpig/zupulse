@@ -1,9 +1,10 @@
-import { BridgePlaybackPersistence, createGpFormatAdapter, createMusicXmlAdapter } from "@tab-viewer/web-core";
+import { createGpFormatAdapter, createMusicXmlAdapter } from "@tab-viewer/web-core";
 import { createDefaultOpenSession, mountViewerApp } from "@tab-viewer/web-viewer";
 import "@tab-viewer/web-viewer/styles.css";
 import { createBrowserHost } from "./browserHost";
 import { BrowserSheetLibraryRepository } from "./library/BrowserSheetLibraryRepository";
 import { BrowserScoreFileGateway } from "./library/BrowserScoreFileGateway";
+import { BrowserLibraryPlaybackPersistence } from "./library/BrowserLibraryPlaybackPersistence";
 
 export const DEMO_APP_NAME = "Tab Viewer Demo";
 
@@ -15,7 +16,7 @@ if (typeof document !== "undefined") {
   void navigator.storage?.persist?.().catch(() => false);
   mountViewerApp(root, {
     host,
-    openSession: createDefaultOpenSession(document, new BridgePlaybackPersistence(host.bridge)),
+    openSession: createDefaultOpenSession(document, new BrowserLibraryPlaybackPersistence(repository)),
     library: {
       repository,
       gateway: new BrowserScoreFileGateway(document),

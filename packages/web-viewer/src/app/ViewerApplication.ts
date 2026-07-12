@@ -25,7 +25,7 @@ export class ViewerApplication implements ViewerAppHandle {
 
   constructor(
     private readonly host: ViewerHost,
-    private readonly openSession: (file: ViewerFile) => Promise<ViewerSessionHandle>,
+    private readonly openSession: (file: ViewerFile, libraryScoreId?: string) => Promise<ViewerSessionHandle>,
     private readonly library?: {
       repository: SheetLibraryRepository;
       gateway: ScoreFileGateway;
@@ -108,7 +108,7 @@ export class ViewerApplication implements ViewerAppHandle {
     const previous = this.active;
     this.active = undefined;
     await previous?.destroy();
-    this.active = await this.openSession(file);
+    this.active = await this.openSession(file, id);
     this.setSnapshot({ ...this.snapshot, currentSessionId: crypto.randomUUID(), currentLibraryScoreId: id });
   }
 
@@ -118,6 +118,17 @@ export class ViewerApplication implements ViewerAppHandle {
 
   async setFavorite(id: string, favorite: boolean): Promise<void> {
     if (this.library) await this.library.repository.setFavorite(id, favorite);
+  }
+
+  async updateLibraryMetadata(
+    id: string,
+    patch: { titleOverride?: string | undefined; artistOverride?: string | undefined },
+  ): Promise<void> {
+    if (this.library)
+      await this.library.repository.updateMetadata(id, {
+        ...(patch.titleOverride === undefined ? {} : { titleOverride: patch.titleOverride }),
+        ...(patch.artistOverride === undefined ? {} : { artistOverride: patch.artistOverride }),
+      });
   }
 
   async deleteLibraryScore(id: string): Promise<void> {

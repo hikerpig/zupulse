@@ -7,6 +7,8 @@ import type {
   SheetLibraryRepository,
   StoredScoreFile,
   ValidatedLibraryScoreDraft,
+  LocalPlaybackResume,
+  SidecarPayload,
 } from "@tab-viewer/web-core";
 
 const DATABASE = "tab-viewer-library";
@@ -28,10 +30,18 @@ export class BrowserSheetLibraryRepository implements SheetLibraryRepository {
 
   async list(): Promise<readonly LibraryScoreSummary[]> {
     const db = await this.getDatabase();
-    const transaction = db.transaction(SCORES, "readonly");
+    const transaction = db.transaction([SCORES, SIDECARS, RESUMES], "readonly");
     const records = await request<ScoreRecord[]>(transaction.objectStore(SCORES).getAll());
+    const sidecars = await request<{ id: string; payload: SidecarPayload }[]>(
+      transaction.objectStore(SIDECARS).getAll(),
+    );
+    const resumes = await request<{ id: string; resume: LocalPlaybackResume }[]>(
+      transaction.objectStore(RESUMES).getAll(),
+    );
     await complete(transaction);
-    return records.map(toSummary);
+    const sidecarById = new Map(sidecars.map((item) => [item.id, item.payload]));
+    const resumeById = new Map(resumes.map((item) => [item.id, item.resume]));
+    return records.map((record) => toSummary(record, sidecarById.get(record.id), resumeById.get(record.id)));
   }
 
   async get(id: LibraryScoreId): Promise<LibraryScore | undefined> {
@@ -130,11 +140,41 @@ export class BrowserSheetLibraryRepository implements SheetLibraryRepository {
     await complete(transaction);
   }
 
+  async readSidecar(id: LibraryScoreId): Promise<SidecarPayload | undefined> {
+    return this.readPractice(SIDECARS, id, "payload");
+  }
+  async writeSidecar(id: LibraryScoreId, payload: SidecarPayload): Promise<void> {
+    await this.writePractice(SIDECARS, id, "payload", payload);
+  }
+  async readResume(id: LibraryScoreId): Promise<LocalPlaybackResume | undefined> {
+    return this.readPractice(RESUMES, id, "resume");
+  }
+  async writeResume(id: LibraryScoreId, resume: LocalPlaybackResume): Promise<void> {
+    await this.writePractice(RESUMES, id, "resume", resume);
+  }
+
   private async require(id: LibraryScoreId): Promise<ScoreRecord> {
     const score = await this.get(id);
     if (!score) throw new Error("Library score does not exist");
     const { practice: _practice, ...record } = score;
     return record;
+  }
+  private async readPractice<T>(store: string, id: LibraryScoreId, key: string): Promise<T | undefined> {
+    const db = await this.getDatabase();
+    const transaction = db.transaction(store, "readonly");
+    const record = await request<Record<string, T> | undefined>(transaction.objectStore(store).get(id));
+    await complete(transaction);
+    return record?.[key];
+  }
+  private async writePractice<T>(store: string, id: LibraryScoreId, key: string, value: T): Promise<void> {
+    const db = await this.getDatabase();
+    const transaction = db.transaction([SCORES, store], "readwrite");
+    if (!(await request<ScoreRecord | undefined>(transaction.objectStore(SCORES).get(id)))) {
+      transaction.abort();
+      throw new Error("LIBRARY_SCORE_NOT_FOUND");
+    }
+    transaction.objectStore(store).put({ id, [key]: value });
+    await complete(transaction);
   }
   private async getDatabase(): Promise<IDBDatabase> {
     await this.initialize();
@@ -176,6 +216,12 @@ function complete(transaction: IDBTransaction): Promise<void> {
 function titleFromFileName(fileName: string): string {
   return fileName.replace(/\.[^.]+$/, "");
 }
-function toSummary(score: ScoreRecord): LibraryScoreSummary {
-  return { ...score, practice: { hasLoop: false } };
+function toSummary(score: ScoreRecord, sidecar?: SidecarPayload, resume?: LocalPlaybackResume): LibraryScoreSummary {
+  return {
+    ...score,
+    practice: {
+      hasLoop: Boolean(sidecar?.practice.playback.loops.length),
+      ...(resume === undefined ? {} : { lastPracticedAt: resume.updatedAt, lastPosition: resume.position }),
+    },
+  };
 }

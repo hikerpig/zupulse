@@ -1,0 +1,30 @@
+import type {
+  LibraryScoreId,
+  LocalPlaybackResume,
+  PlaybackPersistence,
+  ScoreIdentity,
+  SidecarPayload,
+} from "@tab-viewer/web-core";
+import type { BrowserSheetLibraryRepository } from "./BrowserSheetLibraryRepository";
+
+export class BrowserLibraryPlaybackPersistence implements PlaybackPersistence {
+  constructor(
+    private readonly repository: BrowserSheetLibraryRepository,
+    private readonly libraryScoreId?: LibraryScoreId,
+  ) {}
+  forLibraryScore(id: LibraryScoreId): BrowserLibraryPlaybackPersistence {
+    return new BrowserLibraryPlaybackPersistence(this.repository, id);
+  }
+  async readSidecar(_identity: ScoreIdentity): Promise<SidecarPayload | undefined> {
+    return this.libraryScoreId === undefined ? undefined : this.repository.readSidecar(this.libraryScoreId);
+  }
+  async writeSidecar(_identity: ScoreIdentity, payload: SidecarPayload): Promise<void> {
+    if (this.libraryScoreId) await this.repository.writeSidecar(this.libraryScoreId, payload);
+  }
+  async readResume(_identity: ScoreIdentity): Promise<LocalPlaybackResume | undefined> {
+    return this.libraryScoreId === undefined ? undefined : this.repository.readResume(this.libraryScoreId);
+  }
+  async writeResume(_identity: ScoreIdentity, resume: LocalPlaybackResume): Promise<void> {
+    if (this.libraryScoreId) await this.repository.writeResume(this.libraryScoreId, resume);
+  }
+}

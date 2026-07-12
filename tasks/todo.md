@@ -1,5 +1,11 @@
 # Sheet Library Implementation Tasks
 
+## Progress
+
+- [x] Tasks 1–13: shared contracts, Browser/ Desktop Library vertical slices, managed copies, Bridge, routing and practice ownership.
+- [ ] Task 14: Browser resilience.
+- [ ] Task 15: Desktop fault injection and E2E release acceptance.
+
 ## Task 1: 定义 Library 领域契约与 contract harness
 
 **Description:** 在 `web-core` 定义 Library Score、Library Metadata、Practice Summary、导入结果、`SheetLibraryRepository` 和 `ScoreFileGateway` 的类型与 Zod schema，并建立所有 Repository 实现必须通过的共享 contract test harness。

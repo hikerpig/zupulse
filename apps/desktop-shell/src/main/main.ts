@@ -140,20 +140,27 @@ async function startDesktopApp(): Promise<void> {
           },
           "library.delete": async (request) => {
             await library.delete(request.payload.id);
+            await Promise.all([sidecarStore.delete(request.payload.id), resumeStore.delete(request.payload.id)]);
             return {};
           },
           "sidecar.read": async (request) => ({
-            payload: await sidecarStore.read(request.payload.identity.contentHash),
+            payload: await sidecarStore.read(request.payload.libraryScoreId ?? request.payload.identity.contentHash),
           }),
           "sidecar.write": async (request) => {
-            await sidecarStore.write(request.payload.identity.contentHash, request.payload.payload);
+            const key = request.payload.libraryScoreId ?? request.payload.identity.contentHash;
+            if (request.payload.libraryScoreId && !(await library.get(request.payload.libraryScoreId)))
+              throw new Error("LIBRARY_SCORE_NOT_FOUND");
+            await sidecarStore.write(key, request.payload.payload);
             return {};
           },
           "playbackResume.read": async (request) => ({
-            resume: await resumeStore.read(request.payload.identity.contentHash),
+            resume: await resumeStore.read(request.payload.libraryScoreId ?? request.payload.identity.contentHash),
           }),
           "playbackResume.write": async (request) => {
-            await resumeStore.write(request.payload.identity.contentHash, request.payload.resume);
+            const key = request.payload.libraryScoreId ?? request.payload.identity.contentHash;
+            if (request.payload.libraryScoreId && !(await library.get(request.payload.libraryScoreId)))
+              throw new Error("LIBRARY_SCORE_NOT_FOUND");
+            await resumeStore.write(key, request.payload.resume);
             return {};
           },
           "diagnostics.write": async (request) => {

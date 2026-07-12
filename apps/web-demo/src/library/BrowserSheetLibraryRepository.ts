@@ -22,10 +22,17 @@ type ScoreRecord = Omit<LibraryScore, "practice">;
 
 export class BrowserSheetLibraryRepository implements SheetLibraryRepository {
   private database?: Promise<IDBDatabase>;
+  private unavailable?: Error;
 
   async initialize(): Promise<void> {
+    if (this.unavailable) throw this.unavailable;
     this.database ??= openDatabase();
-    await this.database;
+    try {
+      await this.database;
+    } catch (error) {
+      this.unavailable = error instanceof Error ? error : new Error("Library database is unavailable");
+      throw this.unavailable;
+    }
   }
 
   async list(): Promise<readonly LibraryScoreSummary[]> {
@@ -196,7 +203,11 @@ function openDatabase(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(SIDECARS)) db.createObjectStore(SIDECARS, { keyPath: "id" });
       if (!db.objectStoreNames.contains(RESUMES)) db.createObjectStore(RESUMES, { keyPath: "id" });
     };
-    open.onsuccess = () => resolve(open.result);
+    open.onblocked = () => reject(new Error("Library database migration is blocked"));
+    open.onsuccess = () => {
+      open.result.onversionchange = () => open.result.close();
+      resolve(open.result);
+    };
     open.onerror = () => reject(open.error ?? new Error("Unable to open library database"));
   });
 }

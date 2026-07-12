@@ -3,7 +3,7 @@
 ## Progress
 
 - [x] Tasks 1–13: shared contracts, Browser/ Desktop Library vertical slices, managed copies, Bridge, routing and practice ownership.
-- [ ] Task 14: Browser resilience.
+- [x] Task 14: Browser resilience.
 - [ ] Task 15: Desktop fault injection and E2E release acceptance.
 
 ## Task 1: 定义 Library 领域契约与 contract harness

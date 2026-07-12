@@ -85,8 +85,8 @@ T10,T11,T12,T13 ─ T15 Desktop 韧性与最终验收
 
 ### Phase 4: Resilience and release acceptance
 
-- [ ] Task 14: 完成 Browser quota、迁移与多标签页韧性
-- [ ] Task 15: 完成 Desktop 故障注入与双端 E2E 验收
+- [x] Task 14: 完成 Browser quota、迁移与多标签页韧性
+- [x] Task 15: 完成 Desktop 故障注入与双端 E2E 验收
 
 ### Checkpoint D: Complete
 

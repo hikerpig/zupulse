@@ -42,9 +42,9 @@ T10,T11,T12,T13 ─ T15 Desktop 韧性与最终验收
 
 ### Phase 1: Shared foundation
 
-- [ ] Task 1: 定义 Library 领域契约与 Repository contract harness
-- [ ] Task 2: 实现共享 Library Import 用例
-- [ ] Task 3: 实现 Browser IndexedDB Repository 与 File Gateway
+- [x] Task 1: 定义 Library 领域契约与 Repository contract harness
+- [x] Task 2: 实现共享 Library Import 用例
+- [x] Task 3: 实现 Browser IndexedDB Repository 与 File Gateway
 
 ### Checkpoint A: Shared foundation
 
@@ -55,12 +55,12 @@ T10,T11,T12,T13 ─ T15 Desktop 韧性与最终验收
 
 ### Phase 2: Browser user slices
 
-- [ ] Task 4: 交付 Browser Library 首页与单/批量导入
-- [ ] Task 5: 以 Library Score 重建 Studio 路由
-- [ ] Task 6: 交付 Library 搜索、筛选与排序
-- [ ] Task 7: 交付收藏与 Library Metadata 编辑
-- [ ] Task 8: 交付原始文件导出与彻底删除
-- [ ] Task 9: 把练习数据归属和摘要接入 Library Score
+- [x] Task 4: 交付 Browser Library 首页与单/批量导入
+- [x] Task 5: 以 Library Score 重建 Studio 路由
+- [x] Task 6: 交付 Library 搜索、筛选与排序
+- [x] Task 7: 交付收藏与 Library Metadata 编辑
+- [x] Task 8: 交付原始文件导出与彻底删除
+- [x] Task 9: 把练习数据归属和摘要接入 Library Score
 
 ### Checkpoint B: Browser complete
 
@@ -71,10 +71,10 @@ T10,T11,T12,T13 ─ T15 Desktop 韧性与最终验收
 
 ### Phase 3: Desktop persistence and bridge
 
-- [ ] Task 10: 验证 Electron SQLite 并建立版本化 schema
-- [ ] Task 11: 实现 Desktop Managed Score Copy 与崩溃恢复
-- [ ] Task 12: 扩展 Library Bridge 并实现 Desktop adapters
-- [ ] Task 13: 交付 Desktop Library Import 到 Studio 竖切
+- [x] Task 10: 验证 Electron SQLite 并建立版本化 schema
+- [x] Task 11: 实现 Desktop Managed Score Copy 与崩溃恢复
+- [x] Task 12: 扩展 Library Bridge 并实现 Desktop adapters
+- [x] Task 13: 交付 Desktop Library Import 到 Studio 竖切
 
 ### Checkpoint C: Desktop vertical slice
 

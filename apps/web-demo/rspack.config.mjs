@@ -27,6 +27,10 @@ const config = {
   resolve: {
     extensions: [".ts", ".js"],
   },
+  externalsType: "module-import",
+  externals: {
+    "@coderline/alphatab": "/alphatab/alphaTab.mjs",
+  },
   module: {
     rules: [
       {
@@ -68,8 +72,8 @@ const config = {
     new CopyRspackPlugin({
       patterns: [
         {
-          from: join(alphaTabDist, "alphaTab.mjs"),
-          to: "alphatab/alphaTab.mjs",
+          from: join(alphaTabDist, "alphaTab*.mjs"),
+          to: "alphatab/[name][ext]",
         },
         {
           from: join(alphaTabDist, "font"),

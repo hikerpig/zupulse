@@ -3,6 +3,9 @@ import { fileURLToPath } from "node:url";
 
 const requiredAssets = [
   "../dist/alphatab/alphaTab.mjs",
+  "../dist/alphatab/alphaTab.core.mjs",
+  "../dist/alphatab/alphaTab.worker.mjs",
+  "../dist/alphatab/alphaTab.worklet.mjs",
   "../dist/alphatab/font/Bravura.woff2",
   "../dist/alphatab/soundfont/sonivox.sf3",
   "../dist/alphatab/soundfont/LICENSE",

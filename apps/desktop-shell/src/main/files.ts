@@ -1,6 +1,6 @@
 import type { OpenFileResponse } from "@tab-viewer/web-core";
 import { dialog } from "electron";
-import { readFile, stat } from "node:fs/promises";
+import { readFile, stat, writeFile } from "node:fs/promises";
 import { basename } from "node:path";
 import type { FileTokenStore } from "./fileTokens";
 
@@ -25,15 +25,16 @@ type FileDependencies = {
 };
 
 const defaultDependencies: FileDependencies = {
-  showOpenDialog: () => dialog.showOpenDialog({
-    properties: ["openFile"],
-    filters: [
-      { name: "乐谱", extensions: ["gp3", "gp4", "gp5", "gpx", "gp", "musicxml", "mxl"] },
-      { name: "Guitar Pro", extensions: ["gp3", "gp4", "gp5", "gpx", "gp"] },
-      { name: "MusicXML", extensions: ["musicxml", "mxl"] },
-      { name: "所有文件", extensions: ["*"] },
-    ],
-  }),
+  showOpenDialog: () =>
+    dialog.showOpenDialog({
+      properties: ["openFile"],
+      filters: [
+        { name: "乐谱", extensions: ["gp3", "gp4", "gp5", "gpx", "gp", "musicxml", "mxl"] },
+        { name: "Guitar Pro", extensions: ["gp3", "gp4", "gp5", "gpx", "gp"] },
+        { name: "MusicXML", extensions: ["musicxml", "mxl"] },
+        { name: "所有文件", extensions: ["*"] },
+      ],
+    }),
   stat,
 };
 
@@ -56,6 +57,28 @@ export async function openScoreFile(
   };
 }
 
+export async function selectScoreFiles(
+  tokens: FileTokenStore,
+  multiple: boolean,
+): Promise<
+  { status: "cancelled" } | { status: "selected"; files: { fileToken: string; fileName: string; sizeBytes: number }[] }
+> {
+  const selection = await dialog.showOpenDialog({
+    properties: multiple ? ["openFile", "multiSelections"] : ["openFile"],
+    filters: [{ name: "乐谱", extensions: ["gp3", "gp4", "gp5", "gpx", "gp", "musicxml", "mxl"] }],
+  });
+  if (selection.canceled || selection.filePaths.length === 0) return { status: "cancelled" };
+  const files = await Promise.all(
+    selection.filePaths.map(async (path) => {
+      const info = await stat(path);
+      const fileName = basename(path);
+      assertReadableScore({ fileName, sizeBytes: info.size, isFile: info.isFile() });
+      return { fileToken: tokens.issue(path, { fileName, sizeBytes: info.size }), fileName, sizeBytes: info.size };
+    }),
+  );
+  return { status: "selected", files };
+}
+
 export async function readScoreFileBytes(
   tokens: FileTokenStore,
   token: string,
@@ -65,6 +88,16 @@ export async function readScoreFileBytes(
   const bytes = new Uint8Array(await read(entry.path));
   if (bytes.byteLength > MAX_SCORE_BYTES) throw new Error("FILE_TOO_LARGE");
   return { fileName: entry.fileName, bytes };
+}
+
+export async function saveScoreFile(file: {
+  fileName: string;
+  bytes: Uint8Array;
+}): Promise<{ status: "saved" | "cancelled" }> {
+  const selection = await dialog.showSaveDialog({ defaultPath: file.fileName });
+  if (selection.canceled || !selection.filePath) return { status: "cancelled" };
+  await writeFile(selection.filePath, file.bytes, { mode: 0o600 });
+  return { status: "saved" };
 }
 
 /** @deprecated Use the format-neutral score APIs. */

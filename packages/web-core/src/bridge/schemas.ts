@@ -1,106 +1,231 @@
 import { z } from "zod";
 import { scoreIdentitySchema } from "../score/schemas";
 import { localPlaybackResumeSchema, sidecarPayloadSchema } from "../storage/schemas";
+import { libraryMetadataSchema, libraryScoreIdSchema, libraryScoreIdentitySchema } from "../library/schemas";
 
-export const BRIDGE_SCHEMA_VERSION = "1.0.0" as const;
+export const BRIDGE_SCHEMA_VERSION = "2.0.0" as const;
 const idSchema = z.string().min(1).max(128);
-const envelope = <T extends string, S extends z.ZodType>(type: T, payload: S) => z.object({
-  bridgeVersion: z.literal(BRIDGE_SCHEMA_VERSION),
-  correlationId: idSchema,
-  type: z.literal(type),
-  payload,
-}).strict();
+const envelope = <T extends string, S extends z.ZodType>(type: T, payload: S) =>
+  z
+    .object({
+      bridgeVersion: z.literal(BRIDGE_SCHEMA_VERSION),
+      correlationId: idSchema,
+      type: z.literal(type),
+      payload,
+    })
+    .strict();
+const libraryScoreSchema = z
+  .object({
+    id: libraryScoreIdSchema,
+    scoreIdentity: libraryScoreIdentitySchema,
+    fileName: z.string().min(1),
+    format: z.enum(["gp", "musicxml"]),
+    title: z.string(),
+    artist: z.string().optional(),
+    durationMs: z.number().nonnegative().optional(),
+    importedAt: z.iso.datetime(),
+    lastOpenedAt: z.iso.datetime().optional(),
+    isFavorite: z.boolean(),
+    practice: z.object({ hasLoop: z.boolean() }).strict(),
+    parsedTitle: z.string().optional(),
+    parsedArtist: z.string().optional(),
+    metadata: libraryMetadataSchema,
+  })
+  .strict();
+const libraryDraftSchema = z
+  .object({
+    id: libraryScoreIdSchema,
+    scoreIdentity: libraryScoreIdentitySchema,
+    file: z.object({ fileName: z.string().min(1).max(255), bytes: z.instanceof(Uint8Array) }).strict(),
+    format: z.enum(["gp", "musicxml"]),
+    parsedTitle: z.string().optional(),
+    parsedArtist: z.string().optional(),
+    durationMs: z.number().nonnegative().optional(),
+    importedAt: z.iso.datetime(),
+  })
+  .strict();
 
-export const bridgeErrorSchema = z.object({
-  code: z.string().min(1),
-  message: z.string(),
-  recoverable: z.boolean(),
-  details: z.unknown().optional(),
-}).strict();
+export const bridgeErrorSchema = z
+  .object({
+    code: z.string().min(1),
+    message: z.string(),
+    recoverable: z.boolean(),
+    details: z.unknown().optional(),
+  })
+  .strict();
 
-export const capabilitiesSchema = z.object({
-  fileAccess: z.object({
-    openExternalFile: z.boolean(),
-    persistentFileReferences: z.boolean(),
-    localLibraryImport: z.boolean(),
-  }).strict(),
-  storage: z.object({
-    sqliteIndex: z.boolean(),
-    sidecarPayload: z.boolean(),
-  }).strict(),
-  sync: z.object({
-    available: z.boolean(),
-    provider: z.enum(["none", "custom"]),
-  }).strict(),
-  audio: z.object({
-    webAudio: z.boolean(),
-    nativeBridge: z.boolean(),
-  }).strict(),
-}).strict();
+export const capabilitiesSchema = z
+  .object({
+    fileAccess: z
+      .object({
+        openExternalFile: z.boolean(),
+        persistentFileReferences: z.boolean(),
+        localLibraryImport: z.boolean(),
+      })
+      .strict(),
+    storage: z
+      .object({
+        sqliteIndex: z.boolean(),
+        sidecarPayload: z.boolean(),
+      })
+      .strict(),
+    sync: z
+      .object({
+        available: z.boolean(),
+        provider: z.enum(["none", "custom"]),
+      })
+      .strict(),
+    audio: z
+      .object({
+        webAudio: z.boolean(),
+        nativeBridge: z.boolean(),
+      })
+      .strict(),
+  })
+  .strict();
 
-export const diagnosticEventSchema = z.object({
-  code: idSchema,
-  durationMs: z.number().nonnegative().optional(),
-  contentHashPrefix: z.string().max(16).optional(),
-}).strict();
+export const diagnosticEventSchema = z
+  .object({
+    code: idSchema,
+    durationMs: z.number().nonnegative().optional(),
+    contentHashPrefix: z.string().max(16).optional(),
+  })
+  .strict();
 
 export const bridgeRequestSchema = z.discriminatedUnion("type", [
-  envelope("app.handshake", z.object({
-    appVersion: z.string(),
-    rendererBuildHash: idSchema,
-  }).strict()),
+  envelope(
+    "app.handshake",
+    z
+      .object({
+        appVersion: z.string(),
+        rendererBuildHash: idSchema,
+      })
+      .strict(),
+  ),
   envelope("file.open", z.object({}).strict()),
+  envelope("file.select", z.object({ multiple: z.boolean() }).strict()),
   envelope("file.readBytes", z.object({ fileToken: idSchema }).strict()),
+  envelope("file.save", z.object({ fileName: z.string().min(1).max(255), bytes: z.instanceof(Uint8Array) }).strict()),
+  envelope("library.list", z.object({}).strict()),
+  envelope("library.get", z.object({ id: libraryScoreIdSchema }).strict()),
+  envelope("library.find", z.object({ scoreIdentity: libraryScoreIdentitySchema }).strict()),
+  envelope("library.add", z.object({ draft: libraryDraftSchema }).strict()),
+  envelope("library.readScore", z.object({ id: libraryScoreIdSchema }).strict()),
+  envelope("library.updateMetadata", z.object({ id: libraryScoreIdSchema, patch: libraryMetadataSchema }).strict()),
+  envelope("library.setFavorite", z.object({ id: libraryScoreIdSchema, favorite: z.boolean() }).strict()),
+  envelope("library.markOpened", z.object({ id: libraryScoreIdSchema, openedAt: z.iso.datetime() }).strict()),
+  envelope("library.delete", z.object({ id: libraryScoreIdSchema }).strict()),
   envelope("sidecar.read", z.object({ identity: scoreIdentitySchema }).strict()),
-  envelope("sidecar.write", z.object({
-    identity: scoreIdentitySchema,
-    payload: sidecarPayloadSchema,
-  }).strict()),
+  envelope(
+    "sidecar.write",
+    z
+      .object({
+        identity: scoreIdentitySchema,
+        payload: sidecarPayloadSchema,
+      })
+      .strict(),
+  ),
   envelope("playbackResume.read", z.object({ identity: scoreIdentitySchema }).strict()),
-  envelope("playbackResume.write", z.object({
-    identity: scoreIdentitySchema,
-    resume: localPlaybackResumeSchema,
-  }).strict()),
-  envelope("app.lifecycleAck", z.object({
-    state: z.enum(["suspend", "prepare-close"]),
-  }).strict()),
+  envelope(
+    "playbackResume.write",
+    z
+      .object({
+        identity: scoreIdentitySchema,
+        resume: localPlaybackResumeSchema,
+      })
+      .strict(),
+  ),
+  envelope(
+    "app.lifecycleAck",
+    z
+      .object({
+        state: z.enum(["suspend", "prepare-close"]),
+      })
+      .strict(),
+  ),
   envelope("diagnostics.write", diagnosticEventSchema),
   envelope("diagnostics.openDirectory", z.object({}).strict()),
 ]);
 
 export const bridgeEventSchema = z.discriminatedUnion("type", [
-  envelope("app.command", z.object({
-    command: z.enum(["open-score", "toggle-playback"]),
-  }).strict()),
-  envelope("app.lifecycle", z.object({
-    state: z.enum(["suspend", "prepare-close"]),
-  }).strict()),
-  envelope("storage.warning", z.object({
-    code: z.literal("CORRUPT_PERSISTED_DATA"),
-    category: z.enum(["sidecar", "resume"]),
-  }).strict()),
+  envelope(
+    "app.command",
+    z
+      .object({
+        command: z.enum(["open-score", "toggle-playback"]),
+      })
+      .strict(),
+  ),
+  envelope(
+    "app.lifecycle",
+    z
+      .object({
+        state: z.enum(["suspend", "prepare-close"]),
+      })
+      .strict(),
+  ),
+  envelope(
+    "storage.warning",
+    z
+      .object({
+        code: z.literal("CORRUPT_PERSISTED_DATA"),
+        category: z.enum(["sidecar", "resume"]),
+      })
+      .strict(),
+  ),
 ]);
 
 export const bridgeResponseSchemas = {
-  "app.handshake": z.object({
-    appVersion: z.string(),
-    bridgeVersion: z.literal(BRIDGE_SCHEMA_VERSION),
-    rendererBuildHash: idSchema,
-    capabilities: capabilitiesSchema,
-  }).strict(),
+  "app.handshake": z
+    .object({
+      appVersion: z.string(),
+      bridgeVersion: z.literal(BRIDGE_SCHEMA_VERSION),
+      rendererBuildHash: idSchema,
+      capabilities: capabilitiesSchema,
+    })
+    .strict(),
   "file.open": z.discriminatedUnion("status", [
     z.object({ status: z.literal("cancelled") }).strict(),
-    z.object({
-      status: z.literal("opened"),
-      fileToken: idSchema,
-      fileName: z.string().min(1),
-      sizeBytes: z.number().int().nonnegative(),
-    }).strict(),
+    z
+      .object({
+        status: z.literal("opened"),
+        fileToken: idSchema,
+        fileName: z.string().min(1),
+        sizeBytes: z.number().int().nonnegative(),
+      })
+      .strict(),
   ]),
-  "file.readBytes": z.object({
-    fileName: z.string().min(1),
-    bytes: z.instanceof(Uint8Array),
-  }).strict(),
+  "file.select": z.discriminatedUnion("status", [
+    z.object({ status: z.literal("cancelled") }).strict(),
+    z
+      .object({
+        status: z.literal("selected"),
+        files: z
+          .array(
+            z
+              .object({ fileToken: idSchema, fileName: z.string().min(1), sizeBytes: z.number().int().nonnegative() })
+              .strict(),
+          )
+          .min(1),
+      })
+      .strict(),
+  ]),
+  "file.readBytes": z
+    .object({
+      fileName: z.string().min(1),
+      bytes: z.instanceof(Uint8Array),
+    })
+    .strict(),
+  "file.save": z.object({ status: z.enum(["saved", "cancelled"]) }).strict(),
+  "library.list": z.object({ scores: z.array(libraryScoreSchema) }).strict(),
+  "library.get": z.object({ score: libraryScoreSchema.optional() }).strict(),
+  "library.find": z.object({ score: libraryScoreSchema.optional() }).strict(),
+  "library.add": z.object({ status: z.enum(["created", "existing"]), score: libraryScoreSchema }).strict(),
+  "library.readScore": z.object({ fileName: z.string().min(1), bytes: z.instanceof(Uint8Array) }).strict(),
+  "library.updateMetadata": z.object({ score: libraryScoreSchema }).strict(),
+  "library.setFavorite": z.object({}).strict(),
+  "library.markOpened": z.object({}).strict(),
+  "library.delete": z.object({}).strict(),
   "sidecar.read": z.object({ payload: sidecarPayloadSchema.optional() }).strict(),
   "sidecar.write": z.object({}).strict(),
   "playbackResume.read": z.object({ resume: localPlaybackResumeSchema.optional() }).strict(),
@@ -115,9 +240,7 @@ export type BridgeEvent = z.infer<typeof bridgeEventSchema>;
 export type Capabilities = z.infer<typeof capabilitiesSchema>;
 export type BridgeError = z.infer<typeof bridgeErrorSchema>;
 export type BridgeRequestType = BridgeRequest["type"];
-export type BridgeResponse<T extends BridgeRequestType> = z.infer<
-  (typeof bridgeResponseSchemas)[T]
->;
+export type BridgeResponse<T extends BridgeRequestType> = z.infer<(typeof bridgeResponseSchemas)[T]>;
 
 type RequestFor<T extends BridgeRequestType> = Extract<BridgeRequest, { type: T }>;
 type BridgeEventType = BridgeEvent["type"];
@@ -136,10 +259,7 @@ export function createBridgeRequest<T extends BridgeRequestType>(
   }) as RequestFor<T>;
 }
 
-export function parseBridgeResponse<T extends BridgeRequestType>(
-  type: T,
-  value: unknown,
-): BridgeResponse<T> {
+export function parseBridgeResponse<T extends BridgeRequestType>(type: T, value: unknown): BridgeResponse<T> {
   return bridgeResponseSchemas[type].parse(value) as BridgeResponse<T>;
 }
 

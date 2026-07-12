@@ -2,6 +2,11 @@ import { createRequire } from "node:module";
 
 type SqliteDatabase = {
   exec(sql: string): void;
+  prepare(sql: string): {
+    get(...parameters: unknown[]): unknown;
+    all(...parameters: unknown[]): unknown[];
+    run(...parameters: unknown[]): unknown;
+  };
   close(): void;
 };
 

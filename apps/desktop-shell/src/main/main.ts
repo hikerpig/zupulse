@@ -15,12 +15,12 @@ import {
 import { dispatchBridgeRequest } from "./bridge";
 import { DiagnosticLogger } from "./diagnostics";
 import { FileTokenStore } from "./fileTokens";
-import { openScoreFile, readScoreFileBytes } from "./files";
+import { openScoreFile, readScoreFileBytes, saveScoreFile, selectScoreFiles } from "./files";
 import { registerAppProtocol } from "./protocol";
 import { JsonStore } from "./storage";
 import { DesktopLifecycleCoordinator } from "./lifecycle";
-import { migrateLibraryDatabase } from "./library/migrations";
-import { openSqliteDatabase, verifySqliteAvailable } from "./library/sqlite";
+import { DesktopLibraryStore } from "./library/DesktopLibraryStore";
+import { verifySqliteAvailable } from "./library/sqlite";
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -78,9 +78,9 @@ async function startDesktopApp(): Promise<void> {
   const userData = app.getPath("userData");
   const logDirectory = path.join(userData, "logs");
   verifySqliteAvailable();
-  const libraryDatabase = openSqliteDatabase(path.join(userData, "library.sqlite"));
-  migrateLibraryDatabase(libraryDatabase);
-  app.once("will-quit", () => libraryDatabase.close());
+  const library = new DesktopLibraryStore(path.join(userData, "library.sqlite"), path.join(userData, "library"));
+  await library.initialize();
+  app.once("will-quit", () => library.close());
   const sendStorageWarning = (category: "sidecar" | "resume") => (code: "CORRUPT_PERSISTED_DATA") => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
     mainWindow.webContents.send(
@@ -110,7 +110,38 @@ async function startDesktopApp(): Promise<void> {
         rendererBuildHash: __RENDERER_BUILD_HASH__,
         handlers: {
           "file.open": () => openScoreFile(fileTokens),
+          "file.select": (request) => selectScoreFiles(fileTokens, request.payload.multiple),
           "file.readBytes": (request) => readScoreFileBytes(fileTokens, request.payload.fileToken),
+          "file.save": (request) => saveScoreFile(request.payload),
+          "library.list": async () => ({ scores: await library.list() }),
+          "library.get": async (request) => ({ score: await library.get(request.payload.id) }),
+          "library.find": async (request) => ({ score: await library.findByIdentity(request.payload.scoreIdentity) }),
+          "library.add": async (request) => {
+            const { parsedTitle, parsedArtist, durationMs, ...draft } = request.payload.draft;
+            return library.add({
+              ...draft,
+              file: { ...draft.file, bytes: new Uint8Array(draft.file.bytes) },
+              ...(parsedTitle === undefined ? {} : { parsedTitle }),
+              ...(parsedArtist === undefined ? {} : { parsedArtist }),
+              ...(durationMs === undefined ? {} : { durationMs }),
+            });
+          },
+          "library.readScore": async (request) => await library.readScore(request.payload.id),
+          "library.updateMetadata": async (request) => ({
+            score: await library.updateMetadata(request.payload.id, request.payload.patch),
+          }),
+          "library.setFavorite": async (request) => {
+            await library.setFavorite(request.payload.id, request.payload.favorite);
+            return {};
+          },
+          "library.markOpened": async (request) => {
+            await library.markOpened(request.payload.id, request.payload.openedAt);
+            return {};
+          },
+          "library.delete": async (request) => {
+            await library.delete(request.payload.id);
+            return {};
+          },
           "sidecar.read": async (request) => ({
             payload: await sidecarStore.read(request.payload.identity.contentHash),
           }),

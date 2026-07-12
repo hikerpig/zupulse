@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createBridgeRequest, parseBridgeResponse } from "./schemas";
+import { BRIDGE_SCHEMA_VERSION, createBridgeRequest, parseBridgeResponse } from "./schemas";
 import { MockNativeBridge } from "./mockNativeBridge";
 
 describe("MockNativeBridge", () => {
@@ -47,28 +47,32 @@ describe("MockNativeBridge", () => {
   it("records only schema-defined event messages", () => {
     const bridge = new MockNativeBridge();
     bridge.emit({
-      bridgeVersion: "1.0.0",
+      bridgeVersion: BRIDGE_SCHEMA_VERSION,
       correlationId: "event-1",
       type: "app.command",
       payload: { command: "toggle-playback" },
     });
-    expect(bridge.events()).toEqual([{
-      bridgeVersion: "1.0.0",
-      correlationId: "event-1",
-      type: "app.command",
-      payload: { command: "toggle-playback" },
-    }]);
+    expect(bridge.events()).toEqual([
+      {
+        bridgeVersion: BRIDGE_SCHEMA_VERSION,
+        correlationId: "event-1",
+        type: "app.command",
+        payload: { command: "toggle-playback" },
+      },
+    ]);
   });
 
   it("rejects event messages that fail the runtime schema", () => {
     const bridge = new MockNativeBridge();
 
-    expect(() => bridge.emit({
-      bridgeVersion: "1.0.0",
-      correlationId: "event-1",
-      type: "app.command",
-      payload: { command: "toggle-playback", path: "/tmp/score.gp" },
-    } as never)).toThrow();
+    expect(() =>
+      bridge.emit({
+        bridgeVersion: BRIDGE_SCHEMA_VERSION,
+        correlationId: "event-1",
+        type: "app.command",
+        payload: { command: "toggle-playback", path: "/tmp/score.gp" },
+      } as never),
+    ).toThrow();
     expect(bridge.events()).toEqual([]);
   });
 

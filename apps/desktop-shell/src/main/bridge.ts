@@ -37,9 +37,9 @@ const DEFAULT_CAPABILITIES = capabilitiesSchema.parse({
   fileAccess: {
     openExternalFile: true,
     persistentFileReferences: false,
-    localLibraryImport: false,
+    localLibraryImport: true,
   },
-  storage: { sqliteIndex: false, sidecarPayload: true },
+  storage: { sqliteIndex: true, sidecarPayload: true },
   sync: { available: false, provider: "none" },
   audio: { webAudio: true, nativeBridge: false },
 });
@@ -62,13 +62,11 @@ export async function dispatchBridgeRequest(
   const request = parsed.data;
 
   if (request.type === "app.handshake") {
-    if (request.payload.appVersion !== options.appVersion
-      || request.payload.rendererBuildHash !== options.rendererBuildHash) {
-      throw new BridgeDispatchError(
-        "BRIDGE_VERSION_MISMATCH",
-        "Renderer and main bridge versions do not match",
-        false,
-      );
+    if (
+      request.payload.appVersion !== options.appVersion ||
+      request.payload.rendererBuildHash !== options.rendererBuildHash
+    ) {
+      throw new BridgeDispatchError("BRIDGE_VERSION_MISMATCH", "Renderer and main bridge versions do not match", false);
     }
     return parseBridgeResponse(request.type, {
       appVersion: options.appVersion,
@@ -79,14 +77,9 @@ export async function dispatchBridgeRequest(
   }
 
   const handler = options.handlers?.[request.type] as
-    | ((value: BridgeRequest) => unknown | Promise<unknown>)
-    | undefined;
+    ((value: BridgeRequest) => unknown | Promise<unknown>) | undefined;
   if (!handler) {
-    throw new BridgeDispatchError(
-      "BRIDGE_HANDLER_UNAVAILABLE",
-      `No handler registered for ${request.type}`,
-      true,
-    );
+    throw new BridgeDispatchError("BRIDGE_HANDLER_UNAVAILABLE", `No handler registered for ${request.type}`, true);
   }
   return parseBridgeResponse(request.type, await handler(request));
 }
@@ -98,8 +91,13 @@ function assertAppSender(senderUrl: string): void {
   } catch {
     throw new BridgeDispatchError("INVALID_BRIDGE_SENDER", "Invalid bridge sender URL", false);
   }
-  if (url.protocol !== "tab-viewer:" || url.host !== "app"
-    || url.username !== "" || url.password !== "" || url.port !== "") {
+  if (
+    url.protocol !== "tab-viewer:" ||
+    url.host !== "app" ||
+    url.username !== "" ||
+    url.password !== "" ||
+    url.port !== ""
+  ) {
     throw new BridgeDispatchError("INVALID_BRIDGE_SENDER", "Bridge sender is not the app origin", false);
   }
 }

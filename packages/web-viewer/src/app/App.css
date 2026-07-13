@@ -79,6 +79,8 @@
   box-shadow: none;
 }
 .score-stage {
+  position: relative;
+  z-index: var(--z-index-score);
   height: 100%;
   min-width: 0;
   min-height: 0;

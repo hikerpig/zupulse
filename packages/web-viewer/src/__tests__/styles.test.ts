@@ -82,4 +82,30 @@ describe("alphaTab playback cursor styles", () => {
     expect(css).toMatch(/\.transport-progress:is\(:hover, :focus-within\) \.base-slider-track\s*{[^}]*height:\s*6px;/s);
     expect(css).toMatch(/\.transport-progress:is\(:hover, :focus-within\) \.base-slider-thumb\s*{[^}]*opacity:\s*1;/s);
   });
+
+  it("keeps third-party score layers below viewer controls through shared stacking tokens", async () => {
+    const [commonCss, appCss, workspaceCss, libraryCss, alphaTabCss] = await Promise.all([
+      source("../styles/common.css"),
+      source("../app/App.css"),
+      source("../features/PlaybackWorkspace.css"),
+      source("../features/SheetLibrary.css"),
+      source("../styles/vendors/alphaTab.css"),
+    ]);
+
+    expect(commonCss).toMatch(/\/\* Stacking order \(low to high\)\. \*\//);
+    expect(commonCss).toMatch(/--z-index-score:\s*0;/);
+    expect(commonCss).toMatch(/--z-index-score-cursor:\s*10;/);
+    expect(commonCss).toMatch(/--z-index-transport:\s*20;/);
+    expect(commonCss).toMatch(/--z-index-practice-panel:\s*30;/);
+    expect(commonCss).toMatch(/--z-index-library-editor:\s*40;/);
+    expect(commonCss).toMatch(/--z-index-library-dialog:\s*50;/);
+    expect(appCss).toMatch(/\.score-stage\s*{[^}]*position:\s*relative;[^}]*z-index:\s*var\(--z-index-score\);/s);
+    expect(workspaceCss).toMatch(/\.transport-bar\s*{[^}]*z-index:\s*var\(--z-index-transport\);/s);
+    expect(workspaceCss).toMatch(/\.practice-panel\s*{[^}]*z-index:\s*var\(--z-index-practice-panel\);/s);
+    expect(libraryCss).toMatch(/\.library-editor\s*{[^}]*z-index:\s*var\(--z-index-library-editor\);/s);
+    expect(libraryCss).toMatch(/\.library-dialog\s*{[^}]*z-index:\s*var\(--z-index-library-dialog\);/s);
+    expect(alphaTabCss).toMatch(
+      /\.score-viewer \.at-cursors\s*{[^}]*z-index:\s*var\(--z-index-score-cursor\)\s*!important;/s,
+    );
+  });
 });

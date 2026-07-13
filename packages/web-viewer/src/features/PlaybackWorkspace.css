@@ -1,7 +1,7 @@
 .transport-bar {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: var(--z-index-transport);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -35,7 +35,7 @@
 }
 .transport-progress {
   position: absolute;
-  z-index: 3;
+  z-index: var(--z-index-surface-raised);
   inset-inline: 0;
   bottom: -1px;
   display: block;
@@ -135,7 +135,7 @@
 }
 .practice-panel {
   position: absolute;
-  z-index: 3;
+  z-index: var(--z-index-practice-panel);
   top: 8px;
   right: 8px;
   bottom: 8px;
@@ -155,7 +155,7 @@
 }
 .drawer-header {
   position: sticky;
-  z-index: 1;
+  z-index: var(--z-index-surface-raised);
   top: -12px;
   display: flex;
   align-items: center;

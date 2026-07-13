@@ -16,6 +16,15 @@
   --shadow-soft: 0 6px 18px rgb(24 24 24 / 0.08);
   --shadow-panel: 0 14px 30px -10px rgb(24 24 24 / 0.18);
   --focus-ring: 0 0 0 3px rgb(242 107 79 / 0.18);
+
+  /* Stacking order (low to high). */
+  --z-index-surface-raised: 1;
+  --z-index-score: 0;
+  --z-index-score-cursor: 10;
+  --z-index-transport: 20;
+  --z-index-practice-panel: 30;
+  --z-index-library-editor: 40;
+  --z-index-library-dialog: 50;
 }
 
 :root[data-theme="light"] {

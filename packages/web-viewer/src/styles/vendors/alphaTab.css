@@ -1,5 +1,8 @@
 /* alphaTab-generated playback decorations. */
 
+.score-viewer .at-cursors {
+  z-index: var(--z-index-score-cursor) !important;
+}
 .at-cursor-bar {
   background: rgb(255 190 26 / 18%);
 }

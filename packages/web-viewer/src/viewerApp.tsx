@@ -73,6 +73,7 @@ export function createDefaultOpenSession(
         baseSidecar: createDefaultSidecar(state.identity),
         tracks: model.tracks,
         timeline: model.timeline,
+        baseTempo: model.baseTempo,
       });
       controller = sessionController;
       await sessionController.initialize();

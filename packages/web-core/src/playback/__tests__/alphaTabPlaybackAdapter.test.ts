@@ -11,6 +11,7 @@ describe("extractAlphaTabPlaybackModel", () => {
     const api = createApi();
 
     expect(extractAlphaTabPlaybackModel(api)).toEqual({
+      baseTempo: 120,
       tracks: [
         { id: "track-0", sourceIndex: 0, name: "Lead" },
         { id: "track-1", sourceIndex: 1, name: "轨道 2" },
@@ -203,6 +204,7 @@ function createEvents() {
 
 function createScore(): AlphaTabBrowserScoreLike {
   return {
+    tempo: 120,
     tracks: [{ index: 0, name: "Lead" }, { index: 1 }],
     masterBars: [
       { index: 0, start: 0, timeSignatureNumerator: 4, calculateDuration: () => 1920 },

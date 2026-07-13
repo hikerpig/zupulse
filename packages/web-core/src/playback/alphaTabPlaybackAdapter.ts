@@ -8,6 +8,7 @@ import type {
 } from "./types";
 
 export function extractAlphaTabPlaybackModel(api: AlphaTabApiLike): {
+  baseTempo: number;
   tracks: PlaybackTrack[];
   timeline: PlaybackTimelineMap;
 } {
@@ -30,6 +31,7 @@ export function extractAlphaTabPlaybackModel(api: AlphaTabApiLike): {
   const scoreDurationTicks = finalMeasure ? finalMeasure.startTick + finalMeasure.durationTicks : 0;
 
   return {
+    baseTempo: score.tempo && score.tempo > 0 ? score.tempo : 120,
     tracks: score.tracks.map((track) => ({
       id: trackId(track.index),
       sourceIndex: track.index,

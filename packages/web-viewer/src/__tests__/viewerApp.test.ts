@@ -341,6 +341,7 @@ describe("createDefaultOpenSession cleanup", () => {
       presentFile: async () => ({ status: "error", message: "stop after host check" }),
       waitForScore: async () => ({}) as never,
       extractModel: () => ({
+        baseTempo: 120,
         tracks: [],
         timeline: { durationTicks: 0, durationMs: 0, measures: [] },
       }),
@@ -361,6 +362,7 @@ describe("createDefaultOpenSession cleanup", () => {
       presentFile: async () => ({ status: "error", message: "stop after settings" }),
       waitForScore: async () => ({}) as never,
       extractModel: () => ({
+        baseTempo: 120,
         tracks: [],
         timeline: { durationTicks: 0, durationMs: 0, measures: [] },
       }),
@@ -403,6 +405,7 @@ describe("createDefaultOpenSession cleanup", () => {
       }),
       waitForScore: async () => ({}) as never,
       extractModel: () => ({
+        baseTempo: 120,
         tracks: [{ id: "track-0", sourceIndex: 0, name: "Lead" }],
         timeline: { durationTicks: 0, durationMs: 0, measures: [] },
       }),
@@ -442,6 +445,7 @@ describe("createDefaultOpenSession cleanup", () => {
       }),
       waitForScore: async () => ({}) as never,
       extractModel: () => ({
+        baseTempo: 120,
         tracks: [{ id: "track-0", sourceIndex: 0, name: "Lead" }],
         timeline: { durationTicks: 0, durationMs: 0, measures: [] },
       }),
@@ -484,6 +488,7 @@ describe("createDefaultOpenSession cleanup", () => {
       }),
       waitForScore: async () => ({}) as never,
       extractModel: () => ({
+        baseTempo: 120,
         tracks: [{ id: "track-0", sourceIndex: 0, name: "Lead" }],
         timeline: { durationTicks: 0, durationMs: 0, measures: [] },
       }),

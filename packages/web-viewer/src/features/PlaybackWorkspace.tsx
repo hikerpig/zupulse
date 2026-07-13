@@ -1,5 +1,7 @@
 import { musicalPositionFromTick } from "@zupulse/web-core/src/playback/loopRegions";
 import type { PlaybackCommand } from "@zupulse/web-core";
+import { Popover } from "@base-ui/react/popover";
+import { Pause, Play } from "lucide-react";
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import type { ViewerSessionHandle } from "../host";
 import { presentPlayback } from "../playbackPresenter";
@@ -37,12 +39,13 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
       <section className="transport-bar" aria-label="播放控制">
         <div className="transport-actions">
           <button
-            className="primary-button"
+            className="primary-button transport-play-button"
             type="button"
+            aria-label={view.playLabel}
             disabled={view.playDisabled}
             onClick={() => dispatch({ type: "toggle-playback" })}
           >
-            {view.playLabel}
+            {view.playLabel === "暂停" ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
           </button>
           <button type="button" disabled={view.stopDisabled} onClick={() => dispatch({ type: "stop" })}>
             停止
@@ -61,18 +64,11 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
           />
         </div>
         <div className="transport-tools">
-          <label className="speed-control">
-            <span>速度</span>
-            <Slider
-              label="速度"
-              min={25}
-              max={200}
-              step={5}
-              value={view.speedPercent}
-              onValueChange={(value) => dispatch({ type: "set-score-speed", speed: value / 100 })}
-            />
-            <output>{view.speedPercent}%</output>
-          </label>
+          <BpmControl
+            baseTempo={view.baseTempo}
+            currentTempo={view.currentTempo}
+            onCommit={(tempo) => dispatch({ type: "set-score-speed", speed: tempo / view.baseTempo })}
+          />
           <p className={`status-chip ${view.audioStatusTone}`}>{view.audioStatusLabel}</p>
           {view.soundFontRetryVisible && (
             <button type="button" onClick={() => dispatch({ type: "retry-soundfont" })}>
@@ -331,8 +327,8 @@ function disabledPlaybackWorkspace(children: ReactNode, drawerOpen: boolean, set
     <>
       <section className="transport-bar" aria-label="播放控制">
         <div className="transport-actions">
-          <button className="primary-button" type="button" disabled>
-            播放
+          <button className="primary-button transport-play-button" type="button" aria-label="播放" disabled>
+            <Play aria-hidden="true" />
           </button>
           <button type="button" disabled>
             停止
@@ -344,11 +340,7 @@ function disabledPlaybackWorkspace(children: ReactNode, drawerOpen: boolean, set
           <Slider label="播放进度" max={1000} value={0} disabled />
         </div>
         <div className="transport-tools">
-          <label className="speed-control">
-            <span>速度</span>
-            <Slider label="速度" min={25} max={200} value={100} disabled />
-            <output>100%</output>
-          </label>
+          <BpmControl baseTempo={120} currentTempo={120} disabled />
           <p className="status-chip subtle">音频准备中</p>
           <DrawerToggle open={drawerOpen} onClick={() => setDrawerOpen(!drawerOpen)} />
         </div>
@@ -385,6 +377,75 @@ function disabledPlaybackWorkspace(children: ReactNode, drawerOpen: boolean, set
         )}
       </section>
     </>
+  );
+}
+
+function BpmControl({
+  baseTempo,
+  currentTempo,
+  disabled = false,
+  onCommit,
+}: {
+  baseTempo: number;
+  currentTempo: number;
+  disabled?: boolean;
+  onCommit?(tempo: number): void;
+}) {
+  const presets = [1, 0.75, 0.5, 0.25];
+  return (
+    <Popover.Root>
+      <Popover.Trigger className="speed-trigger" aria-label={`速度 ${currentTempo} BPM`} disabled={disabled}>
+        <strong>{currentTempo}</strong>
+        <span>BPM</span>
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Positioner side="top" align="center" sideOffset={10} className="speed-popover-positioner">
+          <Popover.Popup className="speed-popover">
+            <Popover.Title className="sr-only">播放速度</Popover.Title>
+            <label className="speed-input">
+              <span className="sr-only">速度 BPM</span>
+              <input
+                key={currentTempo}
+                type="number"
+                aria-label="速度 BPM"
+                min={Math.round(baseTempo * 0.25)}
+                max={Math.round(baseTempo * 2)}
+                step="1"
+                defaultValue={currentTempo}
+                onBlur={(event) => {
+                  const tempo = event.currentTarget.valueAsNumber;
+                  if (Number.isFinite(tempo)) onCommit?.(tempo);
+                  else event.currentTarget.value = String(currentTempo);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") event.currentTarget.blur();
+                }}
+              />
+              <span>BPM</span>
+            </label>
+            <div className="speed-presets">
+              {presets.map((speed) => {
+                const tempo = Math.round(baseTempo * speed);
+                const label = `${Math.round(speed * 100)}%（${tempo} BPM）`;
+                return (
+                  <button
+                    key={speed}
+                    type="button"
+                    aria-label={label}
+                    aria-pressed={currentTempo === tempo}
+                    onClick={() => onCommit?.(tempo)}
+                  >
+                    <strong>{Math.round(speed * 100)}%</strong>
+                    <span>{tempo} BPM</span>
+                  </button>
+                );
+              })}
+            </div>
+            <Popover.Arrow className="speed-popover-arrow" />
+          </Popover.Popup>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }
 

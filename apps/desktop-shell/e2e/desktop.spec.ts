@@ -84,7 +84,11 @@ test("opens a GP file and restores persisted practice state", async () => {
     await expect(window.getByText("音频已就绪")).toBeVisible();
     await expect(window.getByRole("button", { name: "播放" })).toBeEnabled();
 
-    await setRange(window.getByRole("slider", { name: "速度" }), "75");
+    await window.getByRole("button", { name: /^速度 \d+ BPM$/ }).click();
+    const tempoInput = window.getByRole("spinbutton", { name: "速度 BPM" });
+    const reducedTempo = String(Math.round(Number(await tempoInput.inputValue()) * 0.75));
+    await tempoInput.fill(reducedTempo);
+    await tempoInput.blur();
     await openPracticeSettings(window);
     await window.getByRole("combobox", { name: "边界吸附" }).selectOption("off");
     await window.getByRole("button", { name: "设为 A" }).click();
@@ -100,7 +104,8 @@ test("opens a GP file and restores persisted practice state", async () => {
     window = await app.firstWindow();
     await window.getByRole("button", { name: "导入曲谱" }).first().click();
     await expect(window.locator("#summary")).toContainText("桌面验收谱");
-    await expect(window.getByRole("slider", { name: "速度" })).toHaveValue("75");
+    await window.getByRole("button", { name: `速度 ${reducedTempo} BPM` }).click();
+    await expect(window.getByRole("spinbutton", { name: "速度 BPM" })).toHaveValue(reducedTempo);
     await openPracticeSettings(window);
     await expect(window.locator(".loop-row")).toHaveCount(1);
   } finally {

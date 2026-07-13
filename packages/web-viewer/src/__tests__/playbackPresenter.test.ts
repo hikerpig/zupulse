@@ -102,6 +102,7 @@ function state(): PlaybackState {
       cachedTimeMs: 65000,
     },
     durationMs: 125000,
+    baseTempo: 120,
     scoreSpeed: 0.8,
     looping: true,
     activeLoopId: "loop-1",

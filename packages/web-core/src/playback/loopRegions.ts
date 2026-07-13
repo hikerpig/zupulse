@@ -5,6 +5,10 @@ export function normalizePlaybackSpeed(value: number): number {
   return Number((Math.round(clamped / 0.05) * 0.05).toFixed(2));
 }
 
+export function normalizeScorePlaybackSpeed(value: number): number {
+  return Number(Math.min(2, Math.max(0.25, value)).toFixed(4));
+}
+
 export function snapMusicalPosition(
   position: MusicalPosition,
   mode: LoopSnapMode,
@@ -64,7 +68,9 @@ export function createLoopRegion(input: {
 }
 
 export function getEffectivePlaybackSpeed(scoreSpeed: number, loop: { speedOverride?: number | undefined }): number {
-  return normalizePlaybackSpeed(loop.speedOverride ?? scoreSpeed);
+  return loop.speedOverride === undefined
+    ? normalizeScorePlaybackSpeed(scoreSpeed)
+    : normalizePlaybackSpeed(loop.speedOverride);
 }
 
 export function musicalPositionFromTick(tick: number, timeMs: number, timeline: PlaybackTimelineMap): MusicalPosition {

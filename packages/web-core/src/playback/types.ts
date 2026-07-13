@@ -55,6 +55,7 @@ export type PlaybackState = {
   transport: TransportState;
   position: MusicalPosition;
   durationMs: number;
+  baseTempo: number;
   scoreSpeed: number;
   looping: boolean;
   activeLoopId?: string;

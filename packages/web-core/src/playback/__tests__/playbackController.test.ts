@@ -46,6 +46,17 @@ describe("PlaybackController", () => {
     expect(persistence.sidecarWrites).toHaveLength(1);
   });
 
+  it("keeps one-BPM score speed precision", async () => {
+    const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" });
+    const controller = createController(engine, new FakePersistence());
+    await controller.initialize();
+
+    await controller.dispatch({ type: "set-score-speed", speed: 91 / 120 });
+
+    expect(controller.getState().scoreSpeed).toBe(0.7583);
+    expect(engine.calls.at(-1)).toEqual(["speed", 0.7583]);
+  });
+
   it("pauses and immediately saves resume state", async () => {
     const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" });
     const persistence = new FakePersistence();
@@ -86,6 +97,7 @@ describe("PlaybackController", () => {
     expect(controller.getState()).toMatchObject({
       transport: "ready",
       soundFont: "ready",
+      baseTempo: 120,
       scoreSpeed: 0.75,
       position: { tick: 2400 },
       trackState: {
@@ -148,7 +160,7 @@ describe("PlaybackController", () => {
     await controller.dispatch({ type: "set-loop-enabled", enabled: false });
     expect(engine.calls.slice(-2)).toEqual([
       ["loop", { range: null, enabled: false }],
-      ["speed", 0.8],
+      ["speed", 0.81],
     ]);
   });
 
@@ -229,6 +241,7 @@ function createController(
     baseSidecar: createDefaultSidecar(identity, "2026-07-10T00:00:00Z"),
     tracks,
     timeline,
+    baseTempo: 120,
     clock: { now: () => "2026-07-10T04:00:00Z" },
     ids: { next: () => "loop-1" },
     schedule,

@@ -33,6 +33,15 @@
   min-height: 34px;
   padding-block: 5px;
 }
+.transport-actions .transport-play-button {
+  min-width: 40px;
+  width: 40px;
+  padding: 0;
+}
+.transport-play-button svg {
+  width: 18px;
+  height: 18px;
+}
 .transport-progress {
   position: absolute;
   z-index: var(--z-index-surface-raised);
@@ -80,16 +89,87 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.speed-control {
-  display: grid;
-  grid-template-columns: auto minmax(120px, 1fr) auto;
+.speed-trigger {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-width: 200px;
-  padding: 4px 8px;
+  min-height: 34px;
+  padding: 4px 10px;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   background: var(--bg-control);
+  font-variant-numeric: tabular-nums;
+}
+.speed-trigger span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.speed-popover-positioner {
+  z-index: var(--z-index-practice-panel);
+}
+.speed-popover {
+  width: 224px;
+  padding: 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-panel);
+}
+.speed-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-control);
+}
+.speed-input input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  border-right: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  padding: 10px;
+}
+.speed-input > span:last-child {
+  color: var(--text-secondary);
+  padding: 0 10px;
+}
+.speed-presets {
+  display: grid;
+  gap: 2px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-default);
+}
+.speed-presets button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38px;
+  border-color: transparent;
+  background: transparent;
+  text-align: left;
+}
+.speed-presets button[aria-pressed="true"] {
+  color: var(--accent-primary);
+  background: var(--accent-soft);
+}
+.speed-presets button span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.speed-popover-arrow {
+  width: 10px;
+  height: 10px;
+  border-right: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-elevated);
+  transform: rotate(45deg);
 }
 .status-chip {
   display: inline-flex;

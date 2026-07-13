@@ -9,6 +9,8 @@ export type PlaybackViewModel = {
   duration: string;
   progress: number;
   speedPercent: number;
+  baseTempo: number;
+  currentTempo: number;
   looping: boolean;
   loopDraftStart: number;
   loopDraftEnd: number;
@@ -67,6 +69,8 @@ export function presentPlayback(state: PlaybackState): PlaybackViewModel {
     duration: formatTime(durationMs),
     progress: ratio(currentMs, durationMs),
     speedPercent: Math.round(state.scoreSpeed * 100),
+    baseTempo: state.baseTempo,
+    currentTempo: Math.round(state.baseTempo * state.scoreSpeed),
     looping: state.looping,
     loopDraftStart: ratio(state.loopDraft.start?.cachedTimeMs ?? 0, durationMs),
     loopDraftEnd: ratio(state.loopDraft.end?.cachedTimeMs ?? 0, durationMs),

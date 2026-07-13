@@ -20,6 +20,7 @@ export type AlphaTabBrowserTrackLike = {
 };
 
 export type AlphaTabBrowserScoreLike = {
+  tempo?: number;
   tracks: AlphaTabBrowserTrackLike[];
   masterBars: Array<{
     index: number;

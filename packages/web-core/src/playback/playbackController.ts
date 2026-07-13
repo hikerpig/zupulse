@@ -5,6 +5,7 @@ import {
   getEffectivePlaybackSpeed,
   musicalPositionFromTick,
   normalizePlaybackSpeed,
+  normalizeScorePlaybackSpeed,
   snapMusicalPosition,
 } from "./loopRegions";
 import type { PlaybackPersistence } from "./playbackPersistence";
@@ -28,6 +29,7 @@ export type PlaybackControllerOptions = {
   baseSidecar: SidecarPayload;
   tracks: PlaybackTrack[];
   timeline: PlaybackTimelineMap;
+  baseTempo?: number;
   clock?: { now(): string };
   ids?: { next(): string };
   schedule?: {
@@ -225,7 +227,8 @@ export class PlaybackController {
       transport: "loading",
       position: musicalPositionFromTick(0, 0, this.options.timeline),
       durationMs: this.options.timeline.durationMs,
-      scoreSpeed: normalizePlaybackSpeed(playback.scoreSpeed.value),
+      baseTempo: this.options.baseTempo && this.options.baseTempo > 0 ? this.options.baseTempo : 120,
+      scoreSpeed: normalizeScorePlaybackSpeed(playback.scoreSpeed.value),
       looping: false,
       loopDraft: { snapMode: "beat" },
       loops: structuredClone(playback.loops),
@@ -297,7 +300,7 @@ export class PlaybackController {
   }
 
   private setScoreSpeed(speed: number): void {
-    const normalized = normalizePlaybackSpeed(speed);
+    const normalized = normalizeScorePlaybackSpeed(speed);
     const now = this.clock.now();
     this.state.scoreSpeed = normalized;
     this.sidecar.practice.playback.scoreSpeed = { value: normalized, updatedAt: now };

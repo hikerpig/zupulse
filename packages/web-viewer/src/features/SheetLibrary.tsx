@@ -8,12 +8,14 @@ export function SheetLibrary({
   scores,
   loading,
   error,
+  onImport,
   onOpen,
 }: {
   application: ViewerApplication;
   scores: readonly LibraryScoreSummary[];
   loading: boolean;
   error?: string;
+  onImport(multiple: boolean): Promise<void>;
   onOpen(id: string): void;
 }) {
   const [query, setQuery] = useState("");
@@ -68,10 +70,10 @@ export function SheetLibrary({
           <p className="context-subtitle">曲谱保存在这台设备上，可离线使用。</p>
         </div>
         <div className="context-actions">
-          <button className="primary-button" disabled={loading} onClick={() => void application.importScores(false)}>
+          <button className="primary-button" disabled={loading} onClick={() => void onImport(false)}>
             导入曲谱
           </button>
-          <button className="secondary-button" disabled={loading} onClick={() => void application.importScores(true)}>
+          <button className="secondary-button" disabled={loading} onClick={() => void onImport(true)}>
             批量导入
           </button>
         </div>
@@ -139,7 +141,7 @@ export function SheetLibrary({
         <section className="score-empty-state">
           <p className="empty-title">你的曲谱会保存在这台设备上</p>
           <p className="empty-copy">支持 Guitar Pro、MusicXML 和 MXL，导入后可离线使用。</p>
-          <button className="primary-button" onClick={() => void application.importScores(false)}>
+          <button className="primary-button" onClick={() => void onImport(false)}>
             导入第一份曲谱
           </button>
         </section>

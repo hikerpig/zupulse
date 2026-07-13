@@ -8,6 +8,7 @@ import type { SheetLibraryRepository } from "@zupulse/web-core";
 
 afterEach(() => {
   cleanup();
+  window.history.replaceState(null, "", "#/");
 });
 
 beforeEach(() => {
@@ -105,6 +106,43 @@ describe("App", () => {
     );
     render(<App application={application} />);
     expect(await screen.findByRole("heading", { name: "曲谱库" })).toBeTruthy();
+    await application.destroy();
+  });
+
+  it("offers library navigation from a viewer route", async () => {
+    const id = "8f14e45f-ea42-4c2e-a9f4-6f1f8f60d88a";
+    window.history.replaceState(null, "", `#/viewer/${id}`);
+    const repository: SheetLibraryRepository = {
+      initialize: async () => undefined,
+      list: async () => [],
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async () => ({ fileName: "test.gp", bytes: new Uint8Array() }),
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+    };
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      async () => ({
+        togglePlayback: async () => undefined,
+        pauseAndFlush: async () => undefined,
+        destroy: async () => undefined,
+      }),
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+    );
+    render(<App application={application} />);
+
+    const libraryLink = await screen.findByRole("link", { name: "返回曲谱库" });
+    expect(libraryLink.getAttribute("href")).toBe("#/");
+    expect(libraryLink.querySelector("svg.lucide-library-big")).toBeTruthy();
+    expect(screen.getByRole("tooltip").textContent).toBe("返回曲谱库");
     await application.destroy();
   });
 });

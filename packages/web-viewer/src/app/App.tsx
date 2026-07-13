@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { flushSync } from "react-dom";
-import { createHashRouter, RouterProvider, useNavigate, useParams } from "react-router";
+import { LibraryBig } from "lucide-react";
+import { createHashRouter, Link, RouterProvider, useNavigate, useParams } from "react-router";
 import "./App.css";
 import type { ViewerApplication } from "./ViewerApplication";
 import { AppStoreProvider, useAppStore, useApplyTheme } from "./appStore";
@@ -45,10 +46,14 @@ function ViewerShell({ notFound = false }: { notFound?: boolean }) {
   const invalidSession = Boolean(libraryScoreId && !application.hasSession(libraryScoreId));
 
   useEffect(() => {
-    if (snapshot.currentLibraryScoreId && !navigator.userAgent.includes("jsdom")) {
+    if (
+      snapshot.currentLibraryScoreId &&
+      snapshot.currentLibraryScoreId !== libraryScoreId &&
+      !navigator.userAgent.includes("jsdom")
+    ) {
       void navigate(`/viewer/${snapshot.currentLibraryScoreId}`);
     }
-  }, [navigate, snapshot.currentLibraryScoreId]);
+  }, [libraryScoreId, navigate, snapshot.currentLibraryScoreId]);
 
   useEffect(() => {
     if (application.hasLibrary() && libraryScoreId && !application.hasSession(libraryScoreId))
@@ -68,6 +73,14 @@ function ViewerShell({ notFound = false }: { notFound?: boolean }) {
           </p>
         </div>
         <div className="context-actions">
+          {application.hasLibrary() && (
+            <Link className="icon-navigation" to="/" aria-label="返回曲谱库">
+              <LibraryBig aria-hidden="true" size={19} strokeWidth={1.8} />
+              <span className="icon-navigation-tooltip" role="tooltip">
+                返回曲谱库
+              </span>
+            </Link>
+          )}
           <div className="theme-toggle" role="group" aria-label="主题切换">
             <button
               id="theme-light"
@@ -122,10 +135,6 @@ function LibraryShell() {
   const snapshot = useSyncExternalStore(application.subscribe, application.getSnapshot);
   const navigate = useNavigate();
   useEffect(() => {
-    if (application.hasLibrary() && snapshot.currentLibraryScoreId)
-      void navigate(`/viewer/${snapshot.currentLibraryScoreId}`);
-  }, [application, navigate, snapshot.currentLibraryScoreId]);
-  useEffect(() => {
     const refresh = () => void application.refreshLibrary();
     window.addEventListener("focus", refresh);
     return () => window.removeEventListener("focus", refresh);
@@ -136,10 +145,13 @@ function LibraryShell() {
     <SheetLibrary
       application={application}
       {...library}
-      onOpen={(id) => {
-        application.selectLibraryScore(id);
-        void navigate(`/viewer/${id}`);
+      onImport={async (multiple) => {
+        const previousId = application.getSnapshot().currentLibraryScoreId;
+        await application.importScores(multiple);
+        const importedId = application.getSnapshot().currentLibraryScoreId;
+        if (importedId && importedId !== previousId) void navigate(`/viewer/${importedId}`);
       }}
+      onOpen={(id) => void navigate(`/viewer/${id}`)}
     />
   );
 }

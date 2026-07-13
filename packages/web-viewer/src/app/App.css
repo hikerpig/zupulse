@@ -37,6 +37,61 @@
 .context-actions {
   justify-content: flex-end;
 }
+.icon-navigation {
+  position: relative;
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--text-secondary);
+  background: var(--bg-control);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  transition:
+    color 140ms ease,
+    border-color 140ms ease,
+    background-color 140ms ease;
+}
+.icon-navigation:hover,
+.icon-navigation:focus-visible {
+  color: var(--accent-primary);
+  background: var(--bg-control-active);
+  border-color: var(--accent-primary);
+}
+.icon-navigation:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.icon-navigation-tooltip {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 8px);
+  right: 0;
+  width: max-content;
+  padding: 5px 8px;
+  color: var(--text-primary);
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+  transform: translateY(-3px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    visibility 120ms ease;
+}
+.icon-navigation:hover .icon-navigation-tooltip,
+.icon-navigation:focus-visible .icon-navigation-tooltip {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+}
 .app-kicker {
   margin: 0;
   color: var(--text-secondary);

@@ -1,6 +1,6 @@
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { LibraryScoreId, StoredScoreFile } from "@tab-viewer/web-core";
+import type { LibraryScoreId, StoredScoreFile } from "@zupulse/web-core";
 
 export function managedScorePath(root: string, id: LibraryScoreId): string {
   return join(root, "scores", `${id}.score`);

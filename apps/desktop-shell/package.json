@@ -1,5 +1,5 @@
 {
-  "name": "@tab-viewer/desktop-shell",
+  "name": "@zupulse/desktop-shell",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -13,8 +13,8 @@
     "make": "pnpm build && electron-forge make"
   },
   "dependencies": {
-    "@tab-viewer/web-core": "workspace:*",
-    "@tab-viewer/web-viewer": "workspace:*"
+    "@zupulse/web-core": "workspace:*",
+    "@zupulse/web-viewer": "workspace:*"
   },
   "devDependencies": {
     "@electron-forge/cli": "7.11.2",

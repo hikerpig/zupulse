@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
-import type { ViewerHostEvent } from "@tab-viewer/web-viewer";
+import type { ViewerHostEvent } from "@zupulse/web-viewer";
 import { createBrowserHost } from "../browserHost";
 
 describe("createBrowserHost", () => {

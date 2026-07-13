@@ -15,19 +15,14 @@ import {
   type ValidatedLibraryScoreDraft,
   type LibraryMetadata,
   type StoredScoreFile,
-} from "@tab-viewer/web-core";
-import {
-  createDefaultOpenSession,
-  mountViewerApp,
-  type ViewerAppHandle,
-  type ViewerHost,
-} from "@tab-viewer/web-viewer";
-import "@tab-viewer/web-viewer/styles.css";
+} from "@zupulse/web-core";
+import { createDefaultOpenSession, mountViewerApp, type ViewerAppHandle, type ViewerHost } from "@zupulse/web-viewer";
+import "@zupulse/web-viewer/styles.css";
 
 document.documentElement.classList.add("desktop-shell");
 
 async function start(): Promise<void> {
-  const bridge = window.tabViewerBridge;
+  const bridge = window.zupulseBridge;
   if (!bridge) throw new Error("DESKTOP_BRIDGE_UNAVAILABLE");
 
   const handshake = createBridgeRequest("app.handshake", crypto.randomUUID(), {
@@ -63,7 +58,7 @@ async function start(): Promise<void> {
 }
 
 class DesktopLibraryRepository implements SheetLibraryRepository {
-  constructor(private readonly bridge: NonNullable<Window["tabViewerBridge"]>) {}
+  constructor(private readonly bridge: NonNullable<Window["zupulseBridge"]>) {}
   async initialize(): Promise<void> {}
   async list(): Promise<readonly LibraryScoreSummary[]> {
     return (await this.request("library.list", {})).scores;
@@ -107,7 +102,7 @@ class DesktopLibraryRepository implements SheetLibraryRepository {
 }
 
 class DesktopScoreFileGateway implements ScoreFileGateway {
-  constructor(private readonly bridge: NonNullable<Window["tabViewerBridge"]>) {}
+  constructor(private readonly bridge: NonNullable<Window["zupulseBridge"]>) {}
   async selectForImport(options: { multiple: boolean }): Promise<readonly ScoreImportSource[]> {
     const request = createBridgeRequest("file.select", crypto.randomUUID(), options);
     const selection = parseBridgeResponse(request.type, await this.bridge.request(request));
@@ -130,7 +125,7 @@ class DesktopScoreFileGateway implements ScoreFileGateway {
 }
 
 function createElectronHost(
-  bridge: NonNullable<Window["tabViewerBridge"]>,
+  bridge: NonNullable<Window["zupulseBridge"]>,
   acknowledgeLifecycle: (state: "suspend" | "prepare-close") => Promise<void>,
 ): ViewerHost {
   let storageWarningShown = false;

@@ -59,7 +59,7 @@ function ViewerShell({ notFound = false }: { notFound?: boolean }) {
     <main className="app-shell">
       <header className="context-bar">
         <div className="context-main">
-          <p className="app-kicker">Tab Viewer</p>
+          <p className="app-kicker">Zupulse</p>
           <h1 id="summary" className="context-title" aria-live="polite">
             未打开乐谱
           </h1>

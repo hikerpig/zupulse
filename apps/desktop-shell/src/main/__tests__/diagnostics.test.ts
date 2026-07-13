@@ -11,7 +11,7 @@ afterEach(async () => {
 });
 
 async function tempRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "tab-viewer-logs-"));
+  const root = await mkdtemp(join(tmpdir(), "zupulse-logs-"));
   roots.push(root);
   return root;
 }

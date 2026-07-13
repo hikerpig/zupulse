@@ -12,7 +12,7 @@ afterEach(async () => Promise.all(roots.splice(0).map((root) => rm(root, { recur
 
 describe("reconcileManagedScores", () => {
   it("completes pending files and removes deleting records plus staging files", async () => {
-    const root = await mkdtemp(join(tmpdir(), "tab-viewer-reconcile-"));
+    const root = await mkdtemp(join(tmpdir(), "zupulse-reconcile-"));
     roots.push(root);
     const database = openSqliteDatabase(join(root, "library.sqlite"));
     migrateLibraryDatabase(database);

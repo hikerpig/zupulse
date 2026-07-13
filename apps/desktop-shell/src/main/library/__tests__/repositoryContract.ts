@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { SheetLibraryRepository, ValidatedLibraryScoreDraft } from "@tab-viewer/web-core";
+import type { SheetLibraryRepository, ValidatedLibraryScoreDraft } from "@zupulse/web-core";
 
 export type SheetLibraryRepositoryFactory = () => Promise<SheetLibraryRepository> | SheetLibraryRepository;
 

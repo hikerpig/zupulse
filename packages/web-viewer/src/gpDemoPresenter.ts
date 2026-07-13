@@ -11,7 +11,7 @@ import {
   type GpScoreSummary,
   type AlphaTabScoreLike,
   type ScoreIdentity,
-} from "@tab-viewer/web-core";
+} from "@zupulse/web-core";
 
 export type DemoStatus = "idle" | "loading" | "ready" | "error";
 

@@ -1,5 +1,5 @@
-import { musicalPositionFromTick } from "@tab-viewer/web-core/src/playback/loopRegions";
-import type { PlaybackCommand } from "@tab-viewer/web-core";
+import { musicalPositionFromTick } from "@zupulse/web-core/src/playback/loopRegions";
+import type { PlaybackCommand } from "@zupulse/web-core";
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import type { ViewerSessionHandle } from "../host";
 import { presentPlayback } from "../playbackPresenter";
@@ -48,6 +48,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
             停止
           </button>
         </div>
+        <div className="transport-divider" aria-hidden="true" />
         <div className="transport-progress">
           <span className="time-readout">
             {view.currentTime} / {view.duration}
@@ -59,6 +60,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
             onValueChange={(value) => dispatch({ type: "seek", position: position(value / 1000) })}
           />
         </div>
+        <div className="transport-divider" aria-hidden="true" />
         <div className="transport-tools">
           <label className="speed-control">
             <span>速度</span>
@@ -72,7 +74,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
             />
             <output>{view.speedPercent}%</output>
           </label>
-          <p className={`status-chip ${audioTone(state.soundFont)}`}>{audioText(state.soundFont)}</p>
+          <p className={`status-chip ${view.audioStatusTone}`}>{view.audioStatusLabel}</p>
           {view.soundFontRetryVisible && (
             <button type="button" onClick={() => dispatch({ type: "retry-soundfont" })}>
               重试音频
@@ -89,6 +91,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
               <div>
                 <p className="drawer-kicker">Practice</p>
                 <h2 className="drawer-title">练习设置</h2>
+                <p className="drawer-summary">{view.sessionSummary}</p>
               </div>
               <button
                 className="drawer-close"
@@ -99,185 +102,200 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                 ×
               </button>
             </div>
-            <section className="panel-section">
-              <div className="panel-header">
-                <p className="panel-title">Loop</p>
-                <label className="toggle-row">
-                  <input
-                    type="checkbox"
-                    checked={view.looping}
-                    onChange={(event) => dispatch({ type: "set-loop-enabled", enabled: event.currentTarget.checked })}
-                  />
-                  <span>启用循环</span>
-                </label>
-              </div>
-              <div className="panel-content">
-                <div className="button-row">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      dispatch({
-                        type: "set-loop-boundary",
-                        boundary: "start",
-                        position: state.position,
-                      })
-                    }
-                  >
-                    设为 A
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      dispatch({
-                        type: "set-loop-boundary",
-                        boundary: "end",
-                        position: state.position,
-                      })
-                    }
-                  >
-                    设为 B
-                  </button>
-                  <button type="button" onClick={() => dispatch({ type: "save-loop" })}>
-                    保存区间
-                  </button>
+            <div className="panel-shell">
+              <section className="panel-section">
+                <div className="panel-header">
+                  <p className="panel-title">Loop</p>
+                  <label className="toggle-row">
+                    <input
+                      type="checkbox"
+                      checked={view.looping}
+                      onChange={(event) => dispatch({ type: "set-loop-enabled", enabled: event.currentTarget.checked })}
+                    />
+                    <span>启用循环</span>
+                  </label>
                 </div>
-                <label>
-                  <span>边界吸附</span>
-                  <select
-                    value={view.loopSnapMode}
-                    onChange={(event) =>
-                      dispatch({
-                        type: "set-loop-snap",
-                        mode: event.currentTarget.value as typeof view.loopSnapMode,
-                      })
-                    }
-                  >
-                    <option value="off">关闭</option>
-                    <option value="beat">按拍</option>
-                    <option value="measure">按小节</option>
-                  </select>
-                </label>
-                <label>
-                  <span>A 点</span>
-                  <Slider
-                    label="循环 A 点"
-                    max={1000}
-                    value={loopValue(state.loopDraft.start?.tick, playback.timeline.durationTicks)}
-                    onValueChange={(value) =>
-                      dispatch({
-                        type: "set-loop-boundary",
-                        boundary: "start",
-                        position: position(value / 1000),
-                      })
-                    }
-                  />
-                </label>
-                <label>
-                  <span>B 点</span>
-                  <Slider
-                    label="循环 B 点"
-                    max={1000}
-                    value={loopValue(state.loopDraft.end?.tick, playback.timeline.durationTicks)}
-                    onValueChange={(value) =>
-                      dispatch({
-                        type: "set-loop-boundary",
-                        boundary: "end",
-                        position: position(value / 1000),
-                      })
-                    }
-                  />
-                </label>
-                <div className="item-list">
-                  {view.loops.map((loop) => (
-                    <div className="loop-row" key={loop.id}>
-                      <button type="button" onClick={() => dispatch({ type: "select-loop", loopId: loop.id })}>
-                        {loop.selected ? "当前" : "选择"}
-                      </button>
-                      <input
-                        aria-label="循环名称"
-                        value={loop.label}
-                        onChange={(event) =>
+                <div className="panel-content">
+                  <div className="button-row">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        dispatch({
+                          type: "set-loop-boundary",
+                          boundary: "start",
+                          position: state.position,
+                        })
+                      }
+                    >
+                      设为 A
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        dispatch({
+                          type: "set-loop-boundary",
+                          boundary: "end",
+                          position: state.position,
+                        })
+                      }
+                    >
+                      设为 B
+                    </button>
+                    <button type="button" onClick={() => dispatch({ type: "save-loop" })}>
+                      保存区间
+                    </button>
+                  </div>
+                  <label>
+                    <span>边界吸附</span>
+                    <select
+                      value={view.loopSnapMode}
+                      onChange={(event) =>
+                        dispatch({
+                          type: "set-loop-snap",
+                          mode: event.currentTarget.value as typeof view.loopSnapMode,
+                        })
+                      }
+                    >
+                      <option value="off">关闭</option>
+                      <option value="beat">按拍</option>
+                      <option value="measure">按小节</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>A 点</span>
+                    <Slider
+                      label="循环 A 点"
+                      max={1000}
+                      value={loopValue(state.loopDraft.start?.tick, playback.timeline.durationTicks)}
+                      onValueChange={(value) =>
+                        dispatch({
+                          type: "set-loop-boundary",
+                          boundary: "start",
+                          position: position(value / 1000),
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>B 点</span>
+                    <Slider
+                      label="循环 B 点"
+                      max={1000}
+                      value={loopValue(state.loopDraft.end?.tick, playback.timeline.durationTicks)}
+                      onValueChange={(value) =>
+                        dispatch({
+                          type: "set-loop-boundary",
+                          boundary: "end",
+                          position: position(value / 1000),
+                        })
+                      }
+                    />
+                  </label>
+                  <div className="item-list">
+                    {view.loops.map((loop) => (
+                      <div className="loop-row" key={loop.id}>
+                        <button type="button" onClick={() => dispatch({ type: "select-loop", loopId: loop.id })}>
+                          {loop.selected ? "当前" : "选择"}
+                        </button>
+                        <input
+                          aria-label="循环名称"
+                          value={loop.label}
+                          onChange={(event) =>
+                            dispatch({
+                              type: "rename-loop",
+                              loopId: loop.id,
+                              label: event.currentTarget.value,
+                            })
+                          }
+                        />
+                        <span>{loop.rangeLabel}</span>
+                        <input
+                          type="number"
+                          min="25"
+                          max="200"
+                          step="5"
+                          value={loop.speedPercent ?? ""}
+                          placeholder="默认"
+                          aria-label="循环速度百分比"
+                          onChange={(event) => dispatch(loopSpeedCommand(loop.id, event.currentTarget.value))}
+                        />
+                        <button type="button" onClick={() => dispatch({ type: "delete-loop", loopId: loop.id })}>
+                          删除
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+              <section className="panel-section">
+                <div className="panel-header">
+                  <p className="panel-title">Tracks</p>
+                </div>
+                <div className="panel-content item-list">
+                  {view.tracks.map((track) => (
+                    <div className="track-row" key={track.id}>
+                      <strong>{track.name}</strong>
+                      <Check
+                        label="主"
+                        type="radio"
+                        name="primary-track"
+                        checked={track.primary}
+                        onChange={() => dispatch({ type: "set-primary-track", trackId: track.id })}
+                      />
+                      <Check
+                        label="显示"
+                        checked={track.additional}
+                        onChange={(checked) =>
                           dispatch({
-                            type: "rename-loop",
-                            loopId: loop.id,
-                            label: event.currentTarget.value,
+                            type: "set-additional-tracks",
+                            trackIds: checked
+                              ? [...new Set([...state.trackState.additionalVisibleTrackIds, track.id])]
+                              : state.trackState.additionalVisibleTrackIds.filter((id) => id !== track.id),
                           })
                         }
                       />
-                      <span>{loop.rangeLabel}</span>
-                      <input
-                        type="number"
-                        min="25"
-                        max="200"
-                        step="5"
-                        value={loop.speedPercent ?? ""}
-                        placeholder="默认"
-                        aria-label="循环速度百分比"
-                        onChange={(event) => dispatch(loopSpeedCommand(loop.id, event.currentTarget.value))}
+                      <Check
+                        label="静音"
+                        checked={track.muted}
+                        onChange={(muted) => dispatch({ type: "set-track-mute", trackId: track.id, muted })}
                       />
-                      <button type="button" onClick={() => dispatch({ type: "delete-loop", loopId: loop.id })}>
-                        删除
-                      </button>
+                      <Check
+                        label="独奏"
+                        checked={track.solo}
+                        onChange={(solo) => dispatch({ type: "set-track-solo", trackId: track.id, solo })}
+                      />
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={track.volumePercent}
+                        aria-label={`${track.name} 音量`}
+                        onChange={(event) =>
+                          dispatch({
+                            type: "set-track-volume",
+                            trackId: track.id,
+                            volume: Number(event.currentTarget.value) / 100,
+                          })
+                        }
+                      />
                     </div>
                   ))}
                 </div>
-              </div>
-            </section>
-            <section className="panel-section">
-              <div className="panel-header">
-                <p className="panel-title">Tracks</p>
-              </div>
-              <div className="panel-content item-list">
-                {view.tracks.map((track) => (
-                  <div className="track-row" key={track.id}>
-                    <strong>{track.name}</strong>
-                    <Check
-                      label="主"
-                      type="radio"
-                      name="primary-track"
-                      checked={track.primary}
-                      onChange={() => dispatch({ type: "set-primary-track", trackId: track.id })}
-                    />
-                    <Check
-                      label="显示"
-                      checked={track.additional}
-                      onChange={(checked) =>
-                        dispatch({
-                          type: "set-additional-tracks",
-                          trackIds: checked
-                            ? [...new Set([...state.trackState.additionalVisibleTrackIds, track.id])]
-                            : state.trackState.additionalVisibleTrackIds.filter((id) => id !== track.id),
-                        })
-                      }
-                    />
-                    <Check
-                      label="静音"
-                      checked={track.muted}
-                      onChange={(muted) => dispatch({ type: "set-track-mute", trackId: track.id, muted })}
-                    />
-                    <Check
-                      label="独奏"
-                      checked={track.solo}
-                      onChange={(solo) => dispatch({ type: "set-track-solo", trackId: track.id, solo })}
-                    />
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={track.volumePercent}
-                      aria-label={`${track.name} 音量`}
-                      onChange={(event) =>
-                        dispatch({
-                          type: "set-track-volume",
-                          trackId: track.id,
-                          volume: Number(event.currentTarget.value) / 100,
-                        })
-                      }
-                    />
-                  </div>
-                ))}
-              </div>
-            </section>
+              </section>
+              <section className="panel-section">
+                <div className="panel-header">
+                  <p className="panel-title">Session</p>
+                </div>
+                <div className="panel-content session-facts">
+                  {view.sessionFacts.map((fact) => (
+                    <div className="session-fact" key={fact.label}>
+                      <span className="session-fact-label">{fact.label}</span>
+                      <strong className="session-fact-value">{fact.value}</strong>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
             <p className="persistence-status" aria-live="polite">
               {view.persistenceMessage}
             </p>
@@ -321,10 +339,12 @@ function disabledPlaybackWorkspace(children: ReactNode, drawerOpen: boolean, set
             停止
           </button>
         </div>
+        <div className="transport-divider" aria-hidden="true" />
         <div className="transport-progress">
           <span className="time-readout">0:00 / 0:00</span>
           <Slider label="播放进度" max={1000} value={0} disabled />
         </div>
+        <div className="transport-divider" aria-hidden="true" />
         <div className="transport-tools">
           <label className="speed-control">
             <span>速度</span>
@@ -353,6 +373,15 @@ function disabledPlaybackWorkspace(children: ReactNode, drawerOpen: boolean, set
                 ×
               </button>
             </div>
+            <div className="panel-shell">
+              {["Loop", "Tracks", "Session"].map((title) => (
+                <section className="panel-section" key={title}>
+                  <div className="panel-header">
+                    <p className="panel-title">{title}</p>
+                  </div>
+                </section>
+              ))}
+            </div>
             <p className="persistence-status">打开乐谱后可调整循环和轨道</p>
           </aside>
         )}
@@ -375,12 +404,6 @@ function DrawerToggle({ open, onClick }: { open: boolean; onClick(): void }) {
   );
 }
 
-function audioText(soundFont: "idle" | "loading" | "ready" | "error") {
-  return soundFont === "ready" ? "音频已就绪" : soundFont === "error" ? "音频初始化失败" : "音频准备中";
-}
-function audioTone(soundFont: "idle" | "loading" | "ready" | "error") {
-  return soundFont === "ready" ? "ready" : soundFont === "error" ? "error" : "subtle";
-}
 function loopSpeedCommand(loopId: string, value: string): PlaybackCommand {
   return value === ""
     ? { type: "set-loop-speed", loopId }

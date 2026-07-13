@@ -1,5 +1,5 @@
-import { MockNativeBridge } from "@tab-viewer/web-core/src/bridge/mockNativeBridge";
-import type { ViewerFile, ViewerHost } from "@tab-viewer/web-viewer";
+import { MockNativeBridge } from "@zupulse/web-core/src/bridge/mockNativeBridge";
+import type { ViewerFile, ViewerHost } from "@zupulse/web-viewer";
 
 export function createBrowserHost(ownerDocument: Document): ViewerHost & { bridge: MockNativeBridge } {
   const bridge = new MockNativeBridge();

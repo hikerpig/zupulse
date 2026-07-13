@@ -16,7 +16,7 @@ export function resolveAppAsset(root: string, rawUrl: string): string {
   }
 
   const url = new URL(rawUrl);
-  if (url.protocol !== "tab-viewer:" || url.host !== "app") {
+  if (url.protocol !== "zupulse:" || url.host !== "app") {
     throw new Error("APP_PROTOCOL_INVALID_ORIGIN");
   }
   const candidate = path.resolve(root, `.${decodedPath}`);
@@ -28,5 +28,5 @@ export function resolveAppAsset(root: string, rawUrl: string): string {
 }
 
 export function registerAppProtocol(root: string): void {
-  protocol.handle("tab-viewer", (request) => net.fetch(pathToFileURL(resolveAppAsset(root, request.url)).href));
+  protocol.handle("zupulse", (request) => net.fetch(pathToFileURL(resolveAppAsset(root, request.url)).href));
 }

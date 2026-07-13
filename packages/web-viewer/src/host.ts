@@ -17,4 +17,4 @@ export type ViewerSessionHandle = {
   destroy(): Promise<void>;
 };
 export type ViewerAppHandle = ViewerSessionHandle & { openScore(): Promise<void> };
-import type { PlaybackCommand, PlaybackState, PlaybackTimelineMap } from "@tab-viewer/web-core";
+import type { PlaybackCommand, PlaybackState, PlaybackTimelineMap } from "@zupulse/web-core";

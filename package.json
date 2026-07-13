@@ -1,5 +1,5 @@
 {
-  "name": "tab-viewer",
+  "name": "zupulse",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -14,13 +14,13 @@
     "fixtures:gp": "node scripts/generate-gp-fixtures.mjs && node scripts/verify-gp-fixtures.mjs",
     "fixtures:musicxml": "node scripts/generate-musicxml-fixtures.mjs && node scripts/verify-musicxml-fixtures.mjs",
     "benchmark:musicxml": "node scripts/benchmark-musicxml-import.mjs",
-    "demo:dev": "pnpm --filter @tab-viewer/web-demo dev",
-    "demo:build": "pnpm --filter @tab-viewer/web-demo build",
-    "desktop:dev": "pnpm --filter @tab-viewer/desktop-shell dev",
-    "desktop:build": "pnpm --filter @tab-viewer/desktop-shell build",
-    "desktop:start": "pnpm --filter @tab-viewer/desktop-shell start",
-    "desktop:test:e2e": "pnpm --filter @tab-viewer/desktop-shell test:e2e",
-    "desktop:package": "pnpm --filter @tab-viewer/desktop-shell package"
+    "demo:dev": "pnpm --filter @zupulse/web-demo dev",
+    "demo:build": "pnpm --filter @zupulse/web-demo build",
+    "desktop:dev": "pnpm --filter @zupulse/desktop-shell dev",
+    "desktop:build": "pnpm --filter @zupulse/desktop-shell build",
+    "desktop:start": "pnpm --filter @zupulse/desktop-shell start",
+    "desktop:test:e2e": "pnpm --filter @zupulse/desktop-shell test:e2e",
+    "desktop:package": "pnpm --filter @zupulse/desktop-shell package"
   },
   "workspaces": [
     "packages/*",

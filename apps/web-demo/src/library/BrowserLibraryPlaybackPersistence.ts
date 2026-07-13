@@ -4,7 +4,7 @@ import type {
   PlaybackPersistence,
   ScoreIdentity,
   SidecarPayload,
-} from "@tab-viewer/web-core";
+} from "@zupulse/web-core";
 import type { BrowserSheetLibraryRepository } from "./BrowserSheetLibraryRepository";
 
 export class BrowserLibraryPlaybackPersistence implements PlaybackPersistence {

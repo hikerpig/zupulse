@@ -1,6 +1,6 @@
-# Tab Viewer Design System
+# Zupulse Design System
 
-A design system reconstruction of **Tab Viewer** — a Digital Music Practice Workspace.
+A design system reconstruction of **Zupulse** — a Digital Music Practice Workspace.
 This system is written for a dashboard-oriented practice environment with a future-facing, restrained, precise, screen-first, and digitally playful character.
 
 ## Source
@@ -41,7 +41,7 @@ This system is written for a dashboard-oriented practice environment with a futu
 
 ### Color
 
-主品牌色是一条完整的珊瑚色 10 阶色阶，从 `#fff3ed` 到 `#611f14`，其中主动作色落在 `--tab-viewer-primary-500: #f26b4f`。这比上一版更干净、更锐利，也更像屏幕里的高能操作信号，而不是偏材质化的暖工业橙。浅色主题下，它与 `--surface: #f5f2ed`、`--surface-container-low: #eae6e0`、`--surface-container: #e0dbd5` 一起工作，形成"净白工作台 + 炭黑结构件 + 珊瑚主操作"的清晰层级；深色主题中主色切换到 `--tab-viewer-primary-400: #f5826a`，继续保持高可见度与快速响应感。
+主品牌色是一条完整的珊瑚色 10 阶色阶，从 `#fff3ed` 到 `#611f14`，其中主动作色落在 `--zupulse-primary-500: #f26b4f`。这比上一版更干净、更锐利，也更像屏幕里的高能操作信号，而不是偏材质化的暖工业橙。浅色主题下，它与 `--surface: #f5f2ed`、`--surface-container-low: #eae6e0`、`--surface-container: #e0dbd5` 一起工作，形成"净白工作台 + 炭黑结构件 + 珊瑚主操作"的清晰层级；深色主题中主色切换到 `--zupulse-primary-400: #f5826a`，继续保持高可见度与快速响应感。
 
 中性色是另一条 10 阶色阶，从 `#f0ede8` 到 `#141414`。真正主导界面质感的不是纸感暖白，而是更清洁的屏幕白与更明确的炭灰结构：`#f5f2ed`、`#eae6e0`、`#e0dbd5` 负责底板与卡面，`#4a4a4a`、`#2e2e2d`、`#141414` 负责导航、轨道结构、控制框架和高密度信息区。这让工作台保留 Braun 式秩序，但整体观感从"暖金属台面"转向"低金属、先屏幕后材质"的数字设备界面，冷灰底色更克制、更沉稳，减少 AI 生成的浮夸感。
 
@@ -77,9 +77,9 @@ This system is written for a dashboard-oriented practice environment with a futu
 
 ### Borders
 
-- 轮廓线主值来自 `--rule: var(--tab-viewer-neutral-200)`，也就是冷灰 `#d5d0ca` 这一层。
+- 轮廓线主值来自 `--rule: var(--zupulse-neutral-200)`，也就是冷灰 `#d5d0ca` 这一层。
 - 常规描边使用 `--color-outline` 与 `--color-border`，都落在这条冷中性色谱上，而不是纯黑透明线。
-- 深色主题下 outline 变为 `--tab-viewer-neutral-700`，保持同样的结构逻辑但提升暗底可见性。
+- 深色主题下 outline 变为 `--zupulse-neutral-700`，保持同样的结构逻辑但提升暗底可见性。
 
 ### Backgrounds
 

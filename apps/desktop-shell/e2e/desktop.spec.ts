@@ -31,7 +31,7 @@ async function openPracticeSettings(window: import("@playwright/test").Page): Pr
 }
 
 test("starts offline with an isolated renderer", async () => {
-  const userData = await mkdtemp(join(tmpdir(), "tab-viewer-e2e-security-"));
+  const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-security-"));
   const app = await launch(userData);
   try {
     const window = await app.firstWindow();
@@ -42,14 +42,14 @@ test("starts offline with an isolated renderer", async () => {
       await window.evaluate(() => ({
         require: typeof (globalThis as { require?: unknown }).require,
         process: typeof (globalThis as { process?: unknown }).process,
-        api: Object.keys(window.tabViewerBridge ?? {}).sort(),
+        api: Object.keys(window.zupulseBridge ?? {}).sort(),
       })),
     ).toEqual({ require: "undefined", process: "undefined", api: ["request", "subscribe"] });
 
     await expect(
       window.evaluate(async () => {
         try {
-          await window.tabViewerBridge?.request({ type: "fs.read", payload: {} });
+          await window.zupulseBridge?.request({ type: "fs.read", payload: {} });
           return "accepted";
         } catch {
           return "rejected";
@@ -74,7 +74,7 @@ test("starts offline with an isolated renderer", async () => {
 });
 
 test("opens a GP file and restores persisted practice state", async () => {
-  const userData = await mkdtemp(join(tmpdir(), "tab-viewer-e2e-persistence-"));
+  const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-persistence-"));
   let app = await launch(userData);
   try {
     await chooseFixture(app);
@@ -110,7 +110,7 @@ test("opens a GP file and restores persisted practice state", async () => {
 });
 
 test("opens MusicXML and MXL through the unified score entry", async () => {
-  const userData = await mkdtemp(join(tmpdir(), "tab-viewer-e2e-musicxml-"));
+  const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-musicxml-"));
   const app = await launch(userData);
   try {
     const window = await app.firstWindow();

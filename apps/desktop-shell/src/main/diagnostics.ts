@@ -1,4 +1,4 @@
-import { diagnosticEventSchema } from "@tab-viewer/web-core";
+import { diagnosticEventSchema } from "@zupulse/web-core";
 import { appendFile, mkdir, rename, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 

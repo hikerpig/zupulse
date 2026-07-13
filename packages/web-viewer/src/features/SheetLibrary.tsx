@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { LibraryScoreSummary } from "@tab-viewer/web-core";
+import type { LibraryScoreSummary } from "@zupulse/web-core";
 import type { ViewerApplication } from "../app/ViewerApplication";
 import "./SheetLibrary.css";
 
@@ -63,7 +63,7 @@ export function SheetLibrary({
     <main className="app-shell library-shell">
       <header className="context-bar">
         <div className="context-main">
-          <p className="app-kicker">Tab Viewer</p>
+          <p className="app-kicker">Zupulse</p>
           <h1 className="context-title library-title">曲谱库</h1>
           <p className="context-subtitle">曲谱保存在这台设备上，可离线使用。</p>
         </div>

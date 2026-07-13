@@ -6,7 +6,7 @@ import {
   type BridgeRequest,
   type BridgeRequestType,
   type Capabilities,
-} from "@tab-viewer/web-core";
+} from "@zupulse/web-core";
 
 type RequestFor<T extends BridgeRequestType> = Extract<BridgeRequest, { type: T }>;
 
@@ -92,7 +92,7 @@ function assertAppSender(senderUrl: string): void {
     throw new BridgeDispatchError("INVALID_BRIDGE_SENDER", "Invalid bridge sender URL", false);
   }
   if (
-    url.protocol !== "tab-viewer:" ||
+    url.protocol !== "zupulse:" ||
     url.host !== "app" ||
     url.username !== "" ||
     url.password !== "" ||

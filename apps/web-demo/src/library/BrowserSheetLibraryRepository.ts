@@ -9,9 +9,9 @@ import type {
   ValidatedLibraryScoreDraft,
   LocalPlaybackResume,
   SidecarPayload,
-} from "@tab-viewer/web-core";
+} from "@zupulse/web-core";
 
-const DATABASE = "tab-viewer-library";
+const DATABASE = "zupulse-library";
 const VERSION = 1;
 const SCORES = "library_scores";
 const FILES = "score_files";

@@ -1,6 +1,6 @@
 import { readdir, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
-import type { LibraryScoreId } from "@tab-viewer/web-core";
+import type { LibraryScoreId } from "@zupulse/web-core";
 import { managedScorePath, removeManagedScore } from "./files";
 import type { openSqliteDatabase } from "./sqlite";
 

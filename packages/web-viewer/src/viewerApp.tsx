@@ -7,7 +7,7 @@ import {
   waitForAlphaTabScore,
   type AlphaTabApiLike,
   type PlaybackPersistence,
-} from "@tab-viewer/web-core";
+} from "@zupulse/web-core";
 import type { ViewerFile, ViewerSessionHandle } from "./host";
 import { ALPHATAB_ASSETS } from "./playbackAssets";
 import { type DemoState } from "./gpDemoPresenter";

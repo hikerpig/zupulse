@@ -1,4 +1,4 @@
-# Tab Viewer 组件语义
+# Zupulse 组件语义
 
 ## 核心原则
 
@@ -13,8 +13,8 @@
 ### Primary Button
 
 - 用途：播放、打开乐谱、确认保存区间
-- 背景：`--tab-viewer-primary-500`
-- 悬停：`--tab-viewer-primary-600`
+- 背景：`--zupulse-primary-500`
+- 悬停：`--zupulse-primary-600`
 - 前景：`#ffffff`
 - 圆角：`--radius-sm`
 - 风格：纯色、平面、强对比，像屏幕里的立即执行信号，不做金属高光

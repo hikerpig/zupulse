@@ -4,7 +4,7 @@ import { flushSync } from "react-dom";
 import type { ViewerAppHandle, ViewerFile, ViewerHost, ViewerSessionHandle } from "./host";
 import { App } from "./app/App";
 import { ViewerApplication } from "./app/ViewerApplication";
-import type { ScoreFileGateway, ScoreFormatAdapter, SheetLibraryRepository } from "@tab-viewer/web-core";
+import type { ScoreFileGateway, ScoreFormatAdapter, SheetLibraryRepository } from "@zupulse/web-core";
 
 export type ViewerAppDependencies = {
   host: ViewerHost;

@@ -1,4 +1,4 @@
-import type { ScoreFileGateway, ScoreImportSource, StoredScoreFile } from "@tab-viewer/web-core";
+import type { ScoreFileGateway, ScoreImportSource, StoredScoreFile } from "@zupulse/web-core";
 
 export class BrowserScoreFileGateway implements ScoreFileGateway {
   constructor(private readonly ownerDocument: Document) {}

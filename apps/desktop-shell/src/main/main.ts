@@ -1,5 +1,5 @@
 import path from "node:path";
-import { createBridgeEvent, localPlaybackResumeSchema, sidecarPayloadSchema } from "@tab-viewer/web-core";
+import { createBridgeEvent, localPlaybackResumeSchema, sidecarPayloadSchema } from "@zupulse/web-core";
 import { randomUUID } from "node:crypto";
 import {
   app,
@@ -24,7 +24,7 @@ import { verifySqliteAvailable } from "./library/sqlite";
 
 protocol.registerSchemesAsPrivileged([
   {
-    scheme: "tab-viewer",
+    scheme: "zupulse",
     privileges: {
       standard: true,
       secure: true,
@@ -56,7 +56,7 @@ function createMainWindow(): BrowserWindow {
   });
   window.webContents.on("will-navigate", (event) => event.preventDefault());
   window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
-  void window.loadURL("tab-viewer://app/index.html");
+  void window.loadURL("zupulse://app/index.html");
   return window;
 }
 
@@ -84,7 +84,7 @@ async function startDesktopApp(): Promise<void> {
   const sendStorageWarning = (category: "sidecar" | "resume") => (code: "CORRUPT_PERSISTED_DATA") => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
     mainWindow.webContents.send(
-      "tab-viewer:event",
+      "zupulse:event",
       createBridgeEvent("storage.warning", randomUUID(), { code, category }),
     );
   };
@@ -99,7 +99,7 @@ async function startDesktopApp(): Promise<void> {
   session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
     callback(false);
   });
-  ipcMain.handle("tab-viewer:request", (event, value: unknown) =>
+  ipcMain.handle("zupulse:request", (event, value: unknown) =>
     dispatchBridgeRequest(
       {
         senderUrl: event.senderFrame?.url ?? event.sender.getURL(),
@@ -182,7 +182,7 @@ async function startDesktopApp(): Promise<void> {
   mainWindow = createMainWindow();
   const sendEvent = (event: ReturnType<typeof createBridgeEvent>) => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
-    mainWindow.webContents.send("tab-viewer:event", event);
+    mainWindow.webContents.send("zupulse:event", event);
   };
   lifecycle = new DesktopLifecycleCoordinator(sendEvent, {
     timeoutMs: 5000,
@@ -243,6 +243,7 @@ function installMenu(
       label: "播放",
       submenu: [{ label: "播放/暂停", accelerator: "Space", click: command("toggle-playback") }],
     },
+    ...(app.isPackaged ? [] : [{ label: "开发", submenu: [{ role: "toggleDevTools" as const }] }]),
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }

@@ -7,7 +7,7 @@ import {
   summarizeGpScore,
   type AlphaTabApiLike,
   type AlphaTabScoreLike,
-} from "@tab-viewer/web-core";
+} from "@zupulse/web-core";
 import type { DemoFileLike, DemoState } from "./gpDemoPresenter";
 
 export async function presentScoreFile(input: { file: DemoFileLike; api: AlphaTabApiLike }): Promise<DemoState> {

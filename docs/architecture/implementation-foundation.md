@@ -92,7 +92,7 @@ GP 第一条竖切已经接入 `@coderline/alphatab@1.8.4`：
 
 ## Browser Demo
 
-浏览器 demo 位于 `apps/web-demo/`。它使用 Rspack 启动本地页面，通过 `@tab-viewer/web-core` 创建 alphaTab API，并把用户选择的 GP 文件渲染到 DOM 容器。
+浏览器 demo 位于 `apps/web-demo/`。它使用 Rspack 启动本地页面，通过 `@zupulse/web-core` 创建 alphaTab API，并把用户选择的 GP 文件渲染到 DOM 容器。
 
 运行：
 

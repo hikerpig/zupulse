@@ -29,13 +29,13 @@ export function useApplyTheme(): ViewerTheme {
   const theme = useAppStore((state) => state.theme);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    storage()?.setItem("tab-viewer-theme", theme);
+    storage()?.setItem("zupulse-theme", theme);
   }, [theme]);
   return theme;
 }
 
 function readInitialTheme(): ViewerTheme {
-  return storage()?.getItem("tab-viewer-theme") === "light" ? "light" : "dark";
+  return storage()?.getItem("zupulse-theme") === "light" ? "light" : "dark";
 }
 
 function storage(): Storage | undefined {

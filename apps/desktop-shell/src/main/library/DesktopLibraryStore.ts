@@ -7,7 +7,7 @@ import type {
   SheetLibraryRepository,
   StoredScoreFile,
   ValidatedLibraryScoreDraft,
-} from "@tab-viewer/web-core";
+} from "@zupulse/web-core";
 import { migrateLibraryDatabase } from "./migrations";
 import { readManagedScore, removeManagedScore, writeManagedScore } from "./files";
 import { openSqliteDatabase } from "./sqlite";

@@ -56,10 +56,10 @@ importers:
 
   apps/desktop-shell:
     dependencies:
-      '@tab-viewer/web-core':
+      '@zupulse/web-core':
         specifier: workspace:*
         version: link:../../packages/web-core
-      '@tab-viewer/web-viewer':
+      '@zupulse/web-viewer':
         specifier: workspace:*
         version: link:../../packages/web-viewer
     devDependencies:
@@ -84,10 +84,10 @@ importers:
 
   apps/web-demo:
     dependencies:
-      '@tab-viewer/web-core':
+      '@zupulse/web-core':
         specifier: workspace:*
         version: link:../../packages/web-core
-      '@tab-viewer/web-viewer':
+      '@zupulse/web-viewer':
         specifier: workspace:*
         version: link:../../packages/web-viewer
 
@@ -105,7 +105,7 @@ importers:
       '@base-ui/react':
         specifier: ^1.6.0
         version: 1.6.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@tab-viewer/web-core':
+      '@zupulse/web-core':
         specifier: workspace:*
         version: link:../web-core
       react:
@@ -276,7 +276,7 @@ packages:
     engines: {node: '>=22.12.0'}
 
   '@electron/node-gyp@https://codeload.github.com/electron/node-gyp/tar.gz/06b29aafb7708acef8b3669835c8a7857ebc92d2':
-    resolution: {tarball: https://codeload.github.com/electron/node-gyp/tar.gz/06b29aafb7708acef8b3669835c8a7857ebc92d2}
+    resolution: {gitHosted: true, tarball: https://codeload.github.com/electron/node-gyp/tar.gz/06b29aafb7708acef8b3669835c8a7857ebc92d2}
     version: 10.2.0-electron.1
     engines: {node: '>=12.13.0'}
     hasBin: true

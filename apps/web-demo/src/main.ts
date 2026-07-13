@@ -1,11 +1,11 @@
-import { mountViewerApp } from "@tab-viewer/web-viewer/src/mountViewerApp";
-import "@tab-viewer/web-viewer/styles.css";
+import { mountViewerApp } from "@zupulse/web-viewer/src/mountViewerApp";
+import "@zupulse/web-viewer/styles.css";
 import { createBrowserHost } from "./browserHost";
 import { BrowserSheetLibraryRepository } from "./library/BrowserSheetLibraryRepository";
 import { BrowserScoreFileGateway } from "./library/BrowserScoreFileGateway";
 import { BrowserLibraryPlaybackPersistence } from "./library/BrowserLibraryPlaybackPersistence";
 
-export const DEMO_APP_NAME = "Tab Viewer Demo";
+export const DEMO_APP_NAME = "Zupulse";
 
 if (typeof document !== "undefined") {
   const root = document.getElementById("root");
@@ -16,7 +16,7 @@ if (typeof document !== "undefined") {
   mountViewerApp(root, {
     host,
     openSession: async (file, libraryScoreId) => {
-      const { createDefaultOpenSession } = await import("@tab-viewer/web-viewer/src/viewerApp");
+      const { createDefaultOpenSession } = await import("@zupulse/web-viewer/src/viewerApp");
       return createDefaultOpenSession(document, new BrowserLibraryPlaybackPersistence(repository))(
         file,
         libraryScoreId,
@@ -29,12 +29,12 @@ if (typeof document !== "undefined") {
         {
           format: "gp",
           parse: async (input) =>
-            (await import("@tab-viewer/web-core/src/gp/gpFormatAdapter")).createGpFormatAdapter().parse(input),
+            (await import("@zupulse/web-core/src/gp/gpFormatAdapter")).createGpFormatAdapter().parse(input),
         },
         {
           format: "musicxml",
           parse: async (input) =>
-            (await import("@tab-viewer/web-core/src/musicxml/musicXmlAdapter")).createMusicXmlAdapter().parse(input),
+            (await import("@zupulse/web-core/src/musicxml/musicXmlAdapter")).createMusicXmlAdapter().parse(input),
         },
       ],
     },

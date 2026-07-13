@@ -9,7 +9,7 @@ const roots: string[] = [];
 afterEach(async () => Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true }))));
 
 async function store(): Promise<DesktopLibraryStore> {
-  const root = await mkdtemp(join(tmpdir(), "tab-viewer-library-"));
+  const root = await mkdtemp(join(tmpdir(), "zupulse-library-"));
   roots.push(root);
   return new DesktopLibraryStore(join(root, "library.sqlite"), root);
 }

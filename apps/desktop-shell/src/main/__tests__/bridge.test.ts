@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BRIDGE_SCHEMA_VERSION, createBridgeRequest } from "@tab-viewer/web-core";
+import { BRIDGE_SCHEMA_VERSION, createBridgeRequest } from "@zupulse/web-core";
 import { dispatchBridgeRequest } from "../bridge";
 
 const rendererBuildHash = "b".repeat(64);
@@ -27,7 +27,7 @@ describe("dispatchBridgeRequest", () => {
     await expect(
       dispatchBridgeRequest(
         {
-          senderUrl: "tab-viewer://app/index.html",
+          senderUrl: "zupulse://app/index.html",
           value: { type: "fs.read", payload: {} },
         },
         { appVersion: "0.1.0", rendererBuildHash },
@@ -41,7 +41,7 @@ describe("dispatchBridgeRequest", () => {
     await expect(
       dispatchBridgeRequest(
         {
-          senderUrl: "tab-viewer://app/index.html",
+          senderUrl: "zupulse://app/index.html",
           value: validHandshake,
         },
         { appVersion: "0.1.0", rendererBuildHash },
@@ -57,7 +57,7 @@ describe("dispatchBridgeRequest", () => {
     await expect(
       dispatchBridgeRequest(
         {
-          senderUrl: "tab-viewer://app/index.html",
+          senderUrl: "zupulse://app/index.html",
           value: validHandshake,
         },
         { appVersion: "0.2.0", rendererBuildHash },

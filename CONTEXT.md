@@ -1,11 +1,11 @@
-# Tab Viewer
+# Zupulse 逐拍
 
-Tab Viewer 是面向乐谱查看与练习的产品上下文，覆盖谱文件导入、乐谱呈现、播放练习以及练习数据恢复。
+Zupulse（中文名：逐拍）是面向乐谱查看与练习的产品上下文，覆盖谱文件导入、乐谱呈现、播放练习以及练习数据恢复。
 
 ## Language
 
 **Desktop Shell**:
-使用 Electron 承载 Tab Viewer 核心体验的桌面应用外壳，面向 macOS 与 Windows。
+使用 Electron 承载 Zupulse 核心体验的桌面应用外壳，面向 macOS 与 Windows。
 _Avoid_: Apple Shell、Native App、Electron Viewer
 
 **Desktop Shell MVP**:

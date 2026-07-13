@@ -1,10 +1,10 @@
 ---
-name: tab-viewer-design
-description: Use this skill to generate future-facing, restrained, precise, warm-industrial, digitally playful interfaces for tab-viewer — Digital Music Practice Workspace. Contains colors, type, spacing, radius, shadow, and dashboard guidance.
+name: zupulse-design
+description: Use this skill to generate future-facing, restrained, precise, warm-industrial, digitally playful interfaces for zupulse — Digital Music Practice Workspace. Contains colors, type, spacing, radius, shadow, and dashboard guidance.
 user-invocable: true
 ---
 
-# tab-viewer Design Skill
+# zupulse Design Skill
 
 使用这个设计系统生成 Digital Music Practice Workspace 的 dashboard 界面。
 先用 `css.json` 理解 token，再用 `colors_and_type.css` 接入运行时变量。
@@ -27,5 +27,5 @@ user-invocable: true
 - 控件高度优先 `36/40/44/48px`；默认中号按钮高 `44px`，输入框高 `40px`，适合精确、数据化操作。
 - 圆角使用 `6/10/14/20/9999px`；小控件偏硬朗，卡片与面板更柔和，但仍保持 restrained，而不是圆润消费感。
 - 阴影是低金属、低对比的 5 层体系：从 `0 1px 2px rgba(24,24,24,0.06)` 到 `0 30px 72px -24px rgba(24,24,24,0.28)`，静态轻、浮层重。
-- 深色模式把主色切到 `--tab-viewer-primary-400`，背景切到 `#1a1a1a`，表面 `#272727`，保留珊瑚色节奏与精密软件气质。
+- 深色模式把主色切到 `--zupulse-primary-400`，背景切到 `#1a1a1a`，表面 `#272727`，保留珊瑚色节奏与精密软件气质。
 - 语气与文案参考 `播放 / 循环 / 轨道 / 速度 / 打开乐谱`：简短、功能导向、无修饰、无 emoji。

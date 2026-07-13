@@ -25,7 +25,7 @@ afterEach(async () => {
 });
 
 async function tempRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "tab-viewer-storage-"));
+  const root = await mkdtemp(join(tmpdir(), "zupulse-storage-"));
   roots.push(root);
   return root;
 }

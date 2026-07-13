@@ -9,7 +9,7 @@ const outRoot = new URL("./out/", shellRoot);
 const asar = await findFile(outRoot, "app.asar");
 if (!asar) throw new Error("Missing packaged app.asar");
 
-const extracted = await mkdtemp(join(tmpdir(), "tab-viewer-package-"));
+const extracted = await mkdtemp(join(tmpdir(), "zupulse-package-"));
 try {
   extractAll(fileURLToPath(asar), extracted);
   const required = [

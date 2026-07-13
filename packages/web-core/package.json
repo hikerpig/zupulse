@@ -1,5 +1,5 @@
 {
-  "name": "@tab-viewer/web-core",
+  "name": "@zupulse/web-core",
   "private": true,
   "version": "0.1.0",
   "type": "module",

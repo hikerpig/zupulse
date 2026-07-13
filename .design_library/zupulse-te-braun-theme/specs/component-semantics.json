@@ -1,11 +1,11 @@
 {
-  "library": "tab-viewer-te-braun-theme",
+  "library": "zupulse-te-braun-theme",
   "themeIntent": "Braun-like order with a cleaner screen-first workstation palette, orange-red primary focus, charcoal structure, and sparse coded accents.",
   "components": {
     "primaryButton": {
       "role": "主操作",
-      "background": "--tab-viewer-primary-500",
-      "hoverBackground": "--tab-viewer-primary-600",
+      "background": "--zupulse-primary-500",
+      "hoverBackground": "--zupulse-primary-600",
       "foreground": "#ffffff",
       "radius": "--radius-sm",
       "style": "平面高对比主信号",

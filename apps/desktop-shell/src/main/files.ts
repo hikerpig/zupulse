@@ -1,4 +1,4 @@
-import type { OpenFileResponse } from "@tab-viewer/web-core";
+import type { OpenFileResponse } from "@zupulse/web-core";
 import { dialog } from "electron";
 import { readFile, stat, writeFile } from "node:fs/promises";
 import { basename } from "node:path";

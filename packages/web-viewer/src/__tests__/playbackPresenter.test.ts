@@ -1,6 +1,6 @@
 // Migrated with the shared presenter.
 import { describe, expect, it } from "vitest";
-import type { PlaybackState } from "@tab-viewer/web-core";
+import type { PlaybackState } from "@zupulse/web-core";
 import { presentPlayback } from "../playbackPresenter";
 
 describe("presentPlayback", () => {
@@ -47,6 +47,32 @@ describe("presentPlayback", () => {
 
     loading.soundFont = "error";
     expect(presentPlayback(loading).soundFontRetryVisible).toBe(true);
+  });
+
+  it("derives audio chrome and session facts for the compact workbench", () => {
+    const view = presentPlayback(state());
+
+    expect(view.audioStatusLabel).toBe("音频已就绪");
+    expect(view.audioStatusTone).toBe("ready");
+    expect(view.sessionSummary).toContain("Lead Guitar");
+    expect(view.sessionFacts).toEqual([
+      { label: "Tracks", value: "2" },
+      { label: "Tempo", value: "80%" },
+      { label: "Loop", value: "Solo" },
+      { label: "Primary", value: "Lead Guitar" },
+    ]);
+  });
+
+  it("falls back to quiet audio copy and no active loop", () => {
+    const input = state();
+    input.soundFont = "loading";
+    delete input.activeLoopId;
+
+    expect(presentPlayback(input)).toMatchObject({
+      audioStatusLabel: "音频准备中",
+      audioStatusTone: "subtle",
+      sessionFacts: expect.arrayContaining([{ label: "Loop", value: "未启用" }]),
+    });
   });
 
   it("never renders NaN and reports unsaved practice settings", () => {

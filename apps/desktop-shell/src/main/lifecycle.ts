@@ -1,4 +1,4 @@
-import { createBridgeEvent, type BridgeEvent } from "@tab-viewer/web-core";
+import { createBridgeEvent, type BridgeEvent } from "@zupulse/web-core";
 import { randomUUID } from "node:crypto";
 
 export type LifecycleState = "suspend" | "prepare-close";

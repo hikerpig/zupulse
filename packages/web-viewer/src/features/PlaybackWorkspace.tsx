@@ -47,12 +47,12 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
           <button type="button" disabled={view.stopDisabled} onClick={() => dispatch({ type: "stop" })}>
             停止
           </button>
-        </div>
-        <div className="transport-divider" aria-hidden="true" />
-        <div className="transport-progress">
           <span className="time-readout">
             {view.currentTime} / {view.duration}
           </span>
+        </div>
+        <div className="transport-divider" aria-hidden="true" />
+        <div className="transport-progress">
           <Slider
             label="播放进度"
             max={1000}
@@ -60,7 +60,6 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
             onValueChange={(value) => dispatch({ type: "seek", position: position(value / 1000) })}
           />
         </div>
-        <div className="transport-divider" aria-hidden="true" />
         <div className="transport-tools">
           <label className="speed-control">
             <span>速度</span>
@@ -338,13 +337,12 @@ function disabledPlaybackWorkspace(children: ReactNode, drawerOpen: boolean, set
           <button type="button" disabled>
             停止
           </button>
+          <span className="time-readout">0:00 / 0:00</span>
         </div>
         <div className="transport-divider" aria-hidden="true" />
         <div className="transport-progress">
-          <span className="time-readout">0:00 / 0:00</span>
           <Slider label="播放进度" max={1000} value={0} disabled />
         </div>
-        <div className="transport-divider" aria-hidden="true" />
         <div className="transport-tools">
           <label className="speed-control">
             <span>速度</span>

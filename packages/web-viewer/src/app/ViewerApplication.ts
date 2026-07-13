@@ -101,10 +101,22 @@ export class ViewerApplication implements ViewerAppHandle {
     }
   }
 
-  async openLibraryScore(id: string): Promise<void> {
-    if (!this.library) return;
-    const file = await this.library.repository.readScore(id);
-    await this.library.repository.markOpened(id, new Date().toISOString());
+  openLibraryScore(id: string): Promise<void> {
+    if (!this.library) return Promise.resolve();
+    if (this.destroying) return Promise.reject(new Error("Viewer app is being destroyed"));
+    const operation = this.chain.then(() => (this.hasSession(id) ? undefined : this.openLibraryScoreOnce(id)));
+    this.chain = operation.then(
+      () => undefined,
+      () => undefined,
+    );
+    return operation;
+  }
+
+  private async openLibraryScoreOnce(id: string): Promise<void> {
+    const library = this.library;
+    if (!library) return;
+    const file = await library.repository.readScore(id);
+    await library.repository.markOpened(id, new Date().toISOString());
     const previous = this.active;
     this.active = undefined;
     await previous?.destroy();

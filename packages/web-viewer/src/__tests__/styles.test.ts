@@ -70,4 +70,16 @@ describe("alphaTab playback cursor styles", () => {
       /\.score-viewer \.at-surface\s*{[^}]*display:\s*block;[^}]*background:\s*var\(--bg-score\);/s,
     );
   });
+
+  it("keeps playback progress on the toolbar edge until it is interactive", async () => {
+    const css = await source("../features/PlaybackWorkspace.css");
+
+    expect(css).toMatch(
+      /\.transport-progress\s*{[^}]*position:\s*absolute;[^}]*inset-inline:\s*0;[^}]*bottom:\s*-1px;/s,
+    );
+    expect(css).toMatch(/\.transport-progress \.base-slider-track\s*{[^}]*height:\s*2px;/s);
+    expect(css).toMatch(/\.transport-progress \.base-slider-thumb\s*{[^}]*opacity:\s*0;/s);
+    expect(css).toMatch(/\.transport-progress:is\(:hover, :focus-within\) \.base-slider-track\s*{[^}]*height:\s*6px;/s);
+    expect(css).toMatch(/\.transport-progress:is\(:hover, :focus-within\) \.base-slider-thumb\s*{[^}]*opacity:\s*1;/s);
+  });
 });

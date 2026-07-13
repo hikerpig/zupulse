@@ -34,7 +34,42 @@
   padding-block: 5px;
 }
 .transport-progress {
-  flex: 1 1 auto;
+  position: absolute;
+  z-index: 3;
+  inset-inline: 0;
+  bottom: -1px;
+  display: block;
+  height: 12px;
+  cursor: pointer;
+}
+.transport-progress .base-slider,
+.transport-progress .base-slider-control {
+  height: 100%;
+  min-width: 0;
+}
+.transport-progress .base-slider-control {
+  min-height: 0;
+  align-items: flex-end;
+}
+.transport-progress .base-slider-track {
+  width: calc(100% - 12px);
+  height: 2px;
+  margin-inline: 6px;
+  border-radius: 0;
+  background: color-mix(in srgb, var(--meter-track) 72%, transparent);
+  transition: height 120ms ease;
+}
+.transport-progress .base-slider-thumb {
+  width: 12px;
+  height: 12px;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.transport-progress:is(:hover, :focus-within) .base-slider-track {
+  height: 6px;
+}
+.transport-progress:is(:hover, :focus-within) .base-slider-thumb {
+  opacity: 1;
 }
 .transport-tools .status-chip {
   margin: 0;
@@ -278,14 +313,19 @@
   .transport-bar {
     flex-wrap: wrap;
   }
-  .transport-progress {
-    order: 3;
-    flex-basis: 100%;
-  }
   .transport-tools {
     margin-left: auto;
   }
   .speed-control {
     min-width: 0;
+  }
+}
+
+@media (hover: none) {
+  .transport-progress .base-slider-track {
+    height: 4px;
+  }
+  .transport-progress .base-slider-thumb {
+    opacity: 1;
   }
 }

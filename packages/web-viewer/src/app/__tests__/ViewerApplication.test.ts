@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { SheetLibraryRepository } from "@zupulse/web-core";
+import type { ScoreFormatAdapter, SheetLibraryRepository } from "@zupulse/web-core";
 import { ViewerApplication } from "../ViewerApplication";
 
 describe("ViewerApplication", () => {
@@ -64,18 +64,42 @@ describe("ViewerApplication", () => {
     await application.destroy();
   });
 
-  it("does not treat the previous active session as a newly selected library score", async () => {
-    const firstScoreId = "00000000-0000-4000-8000-000000000001";
-    const secondScoreId = "00000000-0000-4000-8000-000000000002";
+  it("emits an explicit navigation target after a single score import", async () => {
+    const bytes = new TextEncoder().encode("<score-partwise><part/><measure/></score-partwise>");
+    const adapter: ScoreFormatAdapter = {
+      format: "musicxml",
+      parse: async () => ({
+        runtime: {},
+        diagnostics: [],
+        capabilities: { view: true, playback: false },
+        document: {
+          schemaVersion: "0",
+          summary: { title: "Imported", trackCount: 1 },
+          tracks: [{ id: "x", name: "x", staves: [], playback: { muted: false, solo: false, volume: 1 } }],
+          timeline: { ticksPerQuarter: 1, durationTicks: 1 },
+          sections: [],
+        },
+      }),
+    };
     const repository: SheetLibraryRepository = {
       initialize: async () => undefined,
       list: async () => [],
       get: async () => undefined,
       findByIdentity: async () => undefined,
-      add: async () => {
+      add: async (draft) => ({
+        status: "created",
+        score: {
+          ...draft,
+          fileName: draft.file.fileName,
+          title: draft.parsedTitle ?? draft.file.fileName,
+          isFavorite: false,
+          practice: { hasLoop: false },
+          metadata: {},
+        },
+      }),
+      readScore: async () => {
         throw new Error("unused");
       },
-      readScore: async () => ({ fileName: "score.gp", bytes: new Uint8Array([1]) }),
       updateMetadata: async () => {
         throw new Error("unused");
       },
@@ -85,18 +109,26 @@ describe("ViewerApplication", () => {
     };
     const application = new ViewerApplication(
       { openScore: async () => undefined, subscribe: () => () => undefined },
-      async () => ({
-        togglePlayback: async () => undefined,
-        pauseAndFlush: async () => undefined,
-        destroy: async () => undefined,
-      }),
-      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+      async () => {
+        throw new Error("unused");
+      },
+      {
+        repository,
+        gateway: {
+          selectForImport: async () => [{ fileName: "imported.musicxml", readBytes: async () => bytes }],
+          saveExport: async () => "cancelled",
+        },
+        adapters: [adapter],
+      },
     );
+    const navigate = vi.fn();
+    const unsubscribe = application.subscribeNavigation(navigate);
 
-    await application.openLibraryScore(firstScoreId);
-    application.selectLibraryScore(secondScoreId);
+    await application.importScores(false);
 
-    expect(application.hasSession(secondScoreId)).toBe(false);
+    expect(navigate).toHaveBeenCalledWith(expect.stringMatching(/^[0-9a-f-]{36}$/));
+    expect(application.getSnapshot().currentLibraryScoreId).toBeUndefined();
+    unsubscribe();
     await application.destroy();
   });
 });

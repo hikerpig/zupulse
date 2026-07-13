@@ -55,6 +55,12 @@ describe("alphaTab playback cursor styles", () => {
     expect(sliderSource).toContain('import "./Slider.css";');
   });
 
+  it("keeps the library page out of the viewer grid regardless of stylesheet order", async () => {
+    const css = await source("../features/SheetLibrary.css");
+
+    expect(css).toMatch(/\.app-shell\.library-shell\s*{[^}]*display:\s*block;/s);
+  });
+
   it("uses a compact continuous-surface workbench with a clean score surface", async () => {
     const [appCss, workspaceCss] = await Promise.all([
       source("../app/App.css"),

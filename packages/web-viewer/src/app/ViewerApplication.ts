@@ -22,6 +22,7 @@ export class ViewerApplication implements ViewerAppHandle {
   private destroying = false;
   private snapshot: ViewerApplicationSnapshot = {};
   private readonly listeners = new Set<() => void>();
+  private readonly navigationListeners = new Set<(libraryScoreId: string) => void>();
   private readonly unsubscribe: () => void;
 
   constructor(
@@ -43,6 +44,11 @@ export class ViewerApplication implements ViewerAppHandle {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   };
+
+  subscribeNavigation(listener: (libraryScoreId: string) => void): () => void {
+    this.navigationListeners.add(listener);
+    return () => this.navigationListeners.delete(listener);
+  }
 
   hasSession(sessionId: string): boolean {
     return this.activeLibraryScoreId === sessionId && this.active !== undefined;
@@ -96,7 +102,8 @@ export class ViewerApplication implements ViewerAppHandle {
     await this.refreshLibrary();
     if (!multiple) {
       const result = results.find((item) => item.status === "created" || item.status === "existing");
-      if (result && result.status !== "failed") this.selectLibraryScore(result.score.id);
+      if (result && result.status !== "failed")
+        for (const listener of this.navigationListeners) listener(result.score.id);
     }
   }
 
@@ -123,10 +130,6 @@ export class ViewerApplication implements ViewerAppHandle {
     this.active = await this.openSession(file, id);
     this.activeLibraryScoreId = id;
     this.setSnapshot({ ...this.snapshot, currentSessionId: crypto.randomUUID(), currentLibraryScoreId: id });
-  }
-
-  selectLibraryScore(id: string): void {
-    this.setSnapshot({ ...this.snapshot, currentLibraryScoreId: id });
   }
 
   async exportLibraryScore(id: string): Promise<void> {
@@ -217,6 +220,7 @@ export class ViewerApplication implements ViewerAppHandle {
 
   private async destroyOnce(): Promise<void> {
     this.unsubscribe();
+    this.navigationListeners.clear();
     await this.chain;
     const openError = this.queuedError;
     const session = this.active;

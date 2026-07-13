@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { createHashRouter, RouterProvider, useNavigate, useParams } from "react-router";
+import "./App.css";
 import type { ViewerApplication } from "./ViewerApplication";
 import { AppStoreProvider, useAppStore, useApplyTheme } from "./appStore";
 import { PlaybackWorkspace } from "../features/PlaybackWorkspace";

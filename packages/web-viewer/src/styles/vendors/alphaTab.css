@@ -1,0 +1,16 @@
+/* alphaTab-generated playback decorations. */
+
+.at-cursor-bar {
+  background: rgb(255 190 26 / 18%);
+}
+.at-cursor-beat {
+  width: 3px;
+  background: var(--accent-primary);
+}
+.at-highlight * {
+  fill: var(--accent-primary);
+  stroke: var(--accent-primary);
+}
+.at-selection div {
+  background: rgb(93 173 226 / 14%);
+}

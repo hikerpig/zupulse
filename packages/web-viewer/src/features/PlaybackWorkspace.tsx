@@ -4,6 +4,7 @@ import { useState, useSyncExternalStore, type ReactNode } from "react";
 import type { ViewerSessionHandle } from "../host";
 import { presentPlayback } from "../playbackPresenter";
 import { Slider } from "../components/Slider";
+import "./PlaybackWorkspace.css";
 
 export function PlaybackWorkspace({
   session,

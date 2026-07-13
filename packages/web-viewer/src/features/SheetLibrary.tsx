@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { LibraryScoreSummary } from "@tab-viewer/web-core";
 import type { ViewerApplication } from "../app/ViewerApplication";
+import "./SheetLibrary.css";
 
 export function SheetLibrary({
   application,

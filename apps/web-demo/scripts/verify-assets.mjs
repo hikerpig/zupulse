@@ -20,7 +20,9 @@ for (const relativePath of requiredAssets) {
   }
 }
 
-const bundleFiles = (await readdir(fileURLToPath(new URL("../dist/", import.meta.url)))).filter((file) => file.endsWith(".js"));
+const bundleFiles = (await readdir(fileURLToPath(new URL("../dist/", import.meta.url)))).filter((file) =>
+  file.endsWith(".js"),
+);
 const bundles = await Promise.all(
   bundleFiles.map((file) => readFile(fileURLToPath(new URL(`../dist/${file}`, import.meta.url)), "utf8")),
 );

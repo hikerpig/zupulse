@@ -1,0 +1,140 @@
+.library-shell {
+  display: block;
+  overflow: auto;
+  background:
+    linear-gradient(90deg, rgb(242 107 79 / 5%) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(0deg, rgb(24 24 24 / 4%) 1px, transparent 1px) 0 0 / 24px 24px,
+    var(--bg-app);
+}
+.library-shell .context-bar {
+  min-height: var(--nav-height, 72px);
+  border-top: 4px solid var(--accent-primary);
+  background: color-mix(in srgb, var(--bg-shell) 94%, var(--bg-app));
+}
+.library-title {
+  letter-spacing: -0.055em;
+}
+.library-controls,
+.library-list {
+  width: min(1180px, calc(100% - 48px));
+  margin: 24px auto;
+}
+.library-controls,
+.library-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.library-controls input {
+  flex: 1;
+  min-height: 40px;
+  padding: 0 12px;
+  border-color: var(--border-strong);
+  background: var(--bg-panel);
+}
+.library-controls button[aria-pressed="true"] {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: var(--accent-soft);
+}
+.library-list {
+  display: grid;
+  gap: 6px;
+  padding: 0;
+  list-style: none;
+}
+.library-row {
+  position: relative;
+  padding: 10px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--bg-panel) 92%, var(--bg-elevated));
+  box-shadow: 0 1px 2px rgb(24 24 24 / 6%);
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
+}
+.library-row::before {
+  position: absolute;
+  inset: 10px auto 10px 0;
+  width: 3px;
+  content: "";
+  border-radius: 0 3px 3px 0;
+  background: var(--border-strong);
+}
+.library-row:hover {
+  z-index: 1;
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-soft);
+  transform: translateX(2px);
+}
+.library-open {
+  flex: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  justify-items: start;
+  column-gap: 12px;
+  row-gap: 3px;
+  text-align: left;
+}
+.library-open strong {
+  grid-column: 2;
+  font-size: 16px;
+}
+.library-open span {
+  grid-column: 2;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.library-open .library-format {
+  grid-row: 1 / span 3;
+  grid-column: 1;
+  align-self: center;
+  min-width: 42px;
+  padding: 5px 4px;
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  background: var(--bg-elevated);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+.library-open .library-format-musicxml {
+  color: var(--status-ready-text);
+  border-color: var(--status-ready-text);
+}
+.library-editor {
+  position: fixed;
+  z-index: 10;
+  right: 20px;
+  bottom: 20px;
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-panel);
+}
+.library-editor label {
+  display: grid;
+  gap: 4px;
+}
+.library-dialog {
+  position: fixed;
+  z-index: 11;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  padding: 24px;
+  background: var(--bg-shell);
+}
+.library-dialog h2,
+.library-dialog p {
+  margin: 0;
+}

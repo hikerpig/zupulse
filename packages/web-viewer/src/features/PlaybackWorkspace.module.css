@@ -39,7 +39,18 @@
     width: 40px;
     padding: 0;
   }
-  .transportPlayButton svg {
+  .transportActions .transportIconButton {
+    min-width: 34px;
+    width: 34px;
+    padding: 0;
+  }
+  .transportIconButton[aria-pressed="true"] {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    background: var(--accent-soft);
+  }
+  .transportPlayButton svg,
+  .transportIconButton svg {
     width: 18px;
     height: 18px;
   }
@@ -230,6 +241,11 @@
     margin-top: 2px;
     font-size: 16px;
   }
+  .drawerSummary {
+    margin: 4px 0 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
   .drawerClose {
     min-width: 34px;
     padding: 0;
@@ -253,6 +269,10 @@
     border-radius: var(--radius-lg);
     background: var(--bg-panel);
     box-shadow: var(--shadow-soft);
+  }
+  .panelShell {
+    display: grid;
+    gap: 16px;
   }
   .panelHeader {
     display: flex;
@@ -344,6 +364,20 @@
   }
   .persistenceStatus:not(:empty) {
     color: var(--status-warning-text);
+  }
+  .sessionFacts {
+    display: grid;
+    gap: 8px;
+  }
+  .sessionFact {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+  .sessionFactValue {
+    color: var(--text-primary);
   }
 
   @media (prefers-reduced-motion: reduce) {

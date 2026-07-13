@@ -1,8 +1,8 @@
 import { musicalPositionFromTick } from "@zupulse/web-core";
 import type { PlaybackCommand } from "@zupulse/web-core";
 import { Popover } from "@base-ui/react/popover";
-import { Pause, Play } from "lucide-react";
-import { useState, useSyncExternalStore, type ReactNode } from "react";
+import { Pause, Play, Repeat2, Square } from "lucide-react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { ViewerSessionHandle } from "../host";
 import { presentPlayback } from "../playbackPresenter";
 import { Slider } from "../components/Slider";
@@ -24,9 +24,29 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
     (listener) => playback?.subscribe(() => listener()) ?? (() => undefined),
     () => playback?.getState() ?? null,
   );
+  useEffect(() => {
+    if (!playback || state?.soundFont !== "ready") return;
+    const togglePlayback = (event: KeyboardEvent) => {
+      if (
+        event.key !== " " ||
+        event.repeat ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        isInteractiveShortcutTarget(event.target)
+      )
+        return;
+      event.preventDefault();
+      void playback.dispatch({ type: "toggle-playback" });
+    };
+    window.addEventListener("keydown", togglePlayback);
+    return () => window.removeEventListener("keydown", togglePlayback);
+  }, [playback, state?.soundFont]);
   if (!playback || !state) return disabledPlaybackWorkspace(children, drawerOpen, setDrawerOpen);
   const view = presentPlayback(state);
   const dispatch = (command: PlaybackCommand) => void playback.dispatch(command);
+  const hasActiveLoop = view.loops.some((loop) => loop.selected);
   const position = (ratio: number) =>
     musicalPositionFromTick(
       Math.round(playback.timeline.durationTicks * ratio),
@@ -42,13 +62,33 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
             className={`primary-button ${styles.transportPlayButton}`}
             type="button"
             aria-label={view.playLabel}
+            title={`${view.playLabel}（Space）`}
             disabled={view.playDisabled}
             onClick={() => dispatch({ type: "toggle-playback" })}
           >
             {view.playLabel === "暂停" ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
           </button>
-          <button type="button" disabled={view.stopDisabled} onClick={() => dispatch({ type: "stop" })}>
-            停止
+          <button
+            className={styles.transportIconButton}
+            type="button"
+            aria-label="停止"
+            title="停止并返回起点"
+            disabled={view.stopDisabled}
+            onClick={() => dispatch({ type: "stop" })}
+          >
+            <Square aria-hidden="true" />
+          </button>
+          <button
+            className={styles.transportIconButton}
+            type="button"
+            aria-label={hasActiveLoop ? (view.looping ? "关闭循环" : "启用循环") : "设置循环区间"}
+            title={hasActiveLoop ? (view.looping ? "关闭循环" : "启用循环") : "设置循环区间"}
+            aria-pressed={view.looping}
+            onClick={() =>
+              hasActiveLoop ? dispatch({ type: "set-loop-enabled", enabled: !view.looping }) : setDrawerOpen(true)
+            }
+          >
+            <Repeat2 aria-hidden="true" />
           </button>
           <span className={styles.timeReadout}>
             {view.currentTime} / {view.duration}
@@ -68,9 +108,12 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
           <BpmControl
             baseTempo={view.baseTempo}
             currentTempo={view.currentTempo}
+            speedPercent={view.speedPercent}
             onCommit={(tempo) => dispatch({ type: "set-score-speed", speed: tempo / view.baseTempo })}
           />
-          <p className={`${styles.statusChip} ${styles[view.audioStatusTone]}`}>{view.audioStatusLabel}</p>
+          {state.soundFont !== "ready" && (
+            <p className={`${styles.statusChip} ${styles[view.audioStatusTone]}`}>{view.audioStatusLabel}</p>
+          )}
           {view.soundFontRetryVisible && (
             <button type="button" onClick={() => dispatch({ type: "retry-soundfont" })}>
               重试音频
@@ -87,7 +130,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
               <div>
                 <p className={styles.drawerKicker}>Practice</p>
                 <h2 className={styles.drawerTitle}>练习设置</h2>
-                <p>{view.sessionSummary}</p>
+                <p className={styles.drawerSummary}>{view.sessionSummary}</p>
               </div>
               <button
                 className={styles.drawerClose}
@@ -98,7 +141,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                 ×
               </button>
             </div>
-            <div>
+            <div className={styles.panelShell}>
               <section className={styles.panelSection}>
                 <div className={styles.panelHeader}>
                   <p className={styles.panelTitle}>Loop</p>
@@ -282,11 +325,11 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                 <div className={styles.panelHeader}>
                   <p className={styles.panelTitle}>Session</p>
                 </div>
-                <div className={styles.panelContent}>
+                <div className="panel-content session-facts">
                   {view.sessionFacts.map((fact) => (
-                    <div key={fact.label}>
-                      <span>{fact.label}</span>
-                      <strong>{fact.value}</strong>
+                    <div className={styles.sessionFact} key={fact.label}>
+                      <span className={styles.sessionFactLabel}>{fact.label}</span>
+                      <strong className={styles.sessionFactValue}>{fact.value}</strong>
                     </div>
                   ))}
                 </div>
@@ -299,6 +342,17 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
         )}
       </section>
     </>
+  );
+}
+
+function isInteractiveShortcutTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof Element &&
+    Boolean(
+      target.closest(
+        'a, button, input, select, textarea, [contenteditable]:not([contenteditable="false"]), [role="slider"], [data-shortcuts-disabled]',
+      ),
+    )
   );
 }
 
@@ -328,21 +382,36 @@ function disabledPlaybackWorkspace(children: ReactNode, drawerOpen: boolean, set
     <>
       <section className={styles.transportBar} aria-label="播放控制">
         <div className={styles.transportActions}>
-          <button className={`primary-button ${styles.transportPlayButton}`} type="button" aria-label="播放" disabled>
+          <button
+            className="primary-button transport-play-button"
+            type="button"
+            aria-label="播放"
+            title="播放（Space）"
+            disabled
+          >
             <Play aria-hidden="true" />
           </button>
-          <button type="button" disabled>
-            停止
+          <button
+            className={styles.transportIconButton}
+            type="button"
+            aria-label="停止"
+            title="停止并返回起点"
+            disabled
+          >
+            <Square aria-hidden="true" />
+          </button>
+          <button className={styles.transportIconButton} type="button" aria-label="设置循环区间" disabled>
+            <Repeat2 aria-hidden="true" />
           </button>
           <span className={styles.timeReadout}>0:00 / 0:00</span>
         </div>
         <div className={styles.transportDivider} aria-hidden="true" />
         <div className={styles.transportProgress}>
-          <Slider label="播放进度" max={1000} value={0} variant="progress" disabled />
+          <Slider label="播放进度" variant="progress" max={1000} value={0} disabled />
         </div>
         <div className={styles.transportTools}>
-          <BpmControl baseTempo={120} currentTempo={120} disabled />
-          <p className={`${styles.statusChip} ${styles.subtle}`}>音频准备中</p>
+          <BpmControl baseTempo={120} currentTempo={120} speedPercent={100} disabled />
+          <p className="status-chip subtle">音频准备中</p>
           <DrawerToggle open={drawerOpen} onClick={() => setDrawerOpen(!drawerOpen)} />
         </div>
       </section>
@@ -364,7 +433,7 @@ function disabledPlaybackWorkspace(children: ReactNode, drawerOpen: boolean, set
                 ×
               </button>
             </div>
-            <div>
+            <div className={styles.panelShell}>
               {["Loop", "Tracks", "Session"].map((title) => (
                 <section className={styles.panelSection} key={title}>
                   <div className={styles.panelHeader}>
@@ -384,24 +453,30 @@ function disabledPlaybackWorkspace(children: ReactNode, drawerOpen: boolean, set
 function BpmControl({
   baseTempo,
   currentTempo,
+  speedPercent,
   disabled = false,
   onCommit,
 }: {
   baseTempo: number;
   currentTempo: number;
+  speedPercent: number;
   disabled?: boolean;
   onCommit?(tempo: number): void;
 }) {
   const presets = [1, 0.75, 0.5, 0.25];
   return (
     <Popover.Root>
-      <Popover.Trigger className={styles.speedTrigger} aria-label={`速度 ${currentTempo} BPM`} disabled={disabled}>
+      <Popover.Trigger
+        className={styles.speedTrigger}
+        aria-label={`速度 ${currentTempo} BPM，${speedPercent}%`}
+        disabled={disabled}
+      >
         <strong>{currentTempo}</strong>
-        <span>BPM</span>
+        <span>BPM · {speedPercent}%</span>
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Positioner side="top" align="center" sideOffset={10} className={styles.speedPopoverPositioner}>
-          <Popover.Popup className={styles.speedPopover}>
+          <Popover.Popup className={styles.speedPopover} data-shortcuts-disabled>
             <Popover.Title className="sr-only">播放速度</Popover.Title>
             <label className={styles.speedInput}>
               <span className="sr-only">速度 BPM</span>

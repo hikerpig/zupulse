@@ -1,0 +1,102 @@
+:root {
+  font-family:
+    "Space Grotesk",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --shadow-soft: 0 6px 18px rgb(24 24 24 / 0.08);
+  --shadow-panel: 0 14px 30px -10px rgb(24 24 24 / 0.18);
+  --focus-ring: 0 0 0 3px rgb(242 107 79 / 0.18);
+  --z-index-surface-raised: 1;
+  --z-index-score: 0;
+  --z-index-score-cursor: 10;
+  --z-index-transport: 20;
+  --z-index-practice-panel: 30;
+  --z-index-library-editor: 40;
+  --z-index-library-dialog: 50;
+}
+
+:root[data-theme="light"] {
+  --bg-app: #f0ede8;
+  --bg-shell: rgb(240 237 232 / 0.94);
+  --bg-panel: #f5f2ed;
+  --bg-panel-muted: #e0dad8;
+  --bg-elevated: #eae6e0;
+  --bg-control: #e0dbd5;
+  --bg-control-active: rgb(242 107 79 / 0.12);
+  --bg-score-shell: linear-gradient(180deg, #eae6e0 0%, #d8d2cc 100%);
+  --bg-score: #f5f2ed;
+  --bg-glow: radial-gradient(circle at top left, rgb(242 107 79 / 0.08), transparent 24%);
+  --text-primary: #1a1a1a;
+  --text-secondary: #5a5a5a;
+  --text-tertiary: #9e9a95;
+  --text-on-accent: #ffffff;
+  --border-default: #d5d0ca;
+  --border-strong: #bfb9b3;
+  --accent-primary: #f26b4f;
+  --accent-primary-hover: #d85a3f;
+  --accent-soft: rgb(242 107 79 / 0.12);
+  --accent-bright: #f89880;
+  --status-ready-bg: rgb(44 159 105 / 0.12);
+  --status-ready-text: #1f8254;
+  --status-warning-bg: rgb(242 107 79 / 0.12);
+  --status-warning-text: #b84530;
+  --status-error-bg: rgb(224 46 24 / 0.12);
+  --status-error-text: #c42814;
+  --transport-key-bg: #f26b4f;
+  --transport-key-text: #ffffff;
+  --transport-key-secondary-bg: #e0dbd5;
+  --transport-key-secondary-text: #1a1a1a;
+  --meter-track: #d5d0ca;
+  --meter-fill: #f26b4f;
+  --signal-blue: #5dade2;
+  --signal-pink: #f04a8a;
+  --signal-purple: #a972ff;
+  --signal-yellow: #ffbe1a;
+}
+
+:root[data-theme="dark"] {
+  --bg-app: #1a1a1a;
+  --bg-shell: rgb(26 26 26 / 0.94);
+  --bg-panel: #222222;
+  --bg-panel-muted: #272727;
+  --bg-elevated: #2e2e2d;
+  --bg-control: #383837;
+  --bg-control-active: rgb(242 107 79 / 0.14);
+  --bg-score-shell: linear-gradient(180deg, #2e2e2d 0%, #222222 100%);
+  --bg-score: #f0ede8;
+  --bg-glow: radial-gradient(circle at top left, rgb(242 107 79 / 0.08), transparent 24%);
+  --text-primary: #eae6e0;
+  --text-secondary: #bfb9b3;
+  --text-tertiary: #7a7a7a;
+  --text-on-accent: #1a1a1a;
+  --border-default: #4a4a4a;
+  --border-strong: #5a5a5a;
+  --accent-primary: #f5826a;
+  --accent-primary-hover: #f89880;
+  --accent-soft: rgb(242 107 79 / 0.18);
+  --accent-bright: #f89880;
+  --status-ready-bg: rgb(87 185 132 / 0.18);
+  --status-ready-text: #b0dfbd;
+  --status-warning-bg: rgb(242 107 79 / 0.18);
+  --status-warning-text: #f8a898;
+  --status-error-bg: rgb(224 46 24 / 0.18);
+  --status-error-text: #f09888;
+  --transport-key-bg: #f5826a;
+  --transport-key-text: #1a1a1a;
+  --transport-key-secondary-bg: #272727;
+  --transport-key-secondary-text: #eae6e0;
+  --meter-track: #4a4a4a;
+  --meter-fill: #f5826a;
+  --signal-blue: #5dade2;
+  --signal-pink: #f04a8a;
+  --signal-purple: #a972ff;
+  --signal-yellow: #ffbe1a;
+}

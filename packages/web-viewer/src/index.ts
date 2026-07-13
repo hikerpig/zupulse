@@ -1,3 +1,5 @@
+/// <reference path="./styles.d.ts" />
+
 export * from "./host";
 export * from "./importJob";
 export * from "./importPresenter";

@@ -1,5 +1,5 @@
 import { Slider as BaseSlider } from "@base-ui/react/slider";
-import "./Slider.css";
+import styles from "./Slider.module.css";
 
 export type SliderProps = {
   label: string;
@@ -8,6 +8,7 @@ export type SliderProps = {
   step?: number;
   value: number;
   disabled?: boolean;
+  variant?: "default" | "progress";
   onValueChange?(value: number): void;
   onValueCommitted?(value: number): void;
 };
@@ -19,12 +20,13 @@ export function Slider({
   step = 1,
   value,
   disabled,
+  variant = "default",
   onValueChange,
   onValueCommitted,
 }: SliderProps) {
   return (
     <BaseSlider.Root
-      className="base-slider"
+      className={`${styles.root} ${variant === "progress" ? styles.progress : ""}`}
       min={min}
       max={max}
       step={step}
@@ -33,10 +35,10 @@ export function Slider({
       onValueChange={(next) => onValueChange?.(next)}
       onValueCommitted={(next) => onValueCommitted?.(next)}
     >
-      <BaseSlider.Control className="base-slider-control">
-        <BaseSlider.Track className="base-slider-track">
-          <BaseSlider.Indicator className="base-slider-indicator" />
-          <BaseSlider.Thumb className="base-slider-thumb" getAriaLabel={() => label} />
+      <BaseSlider.Control className={styles.control}>
+        <BaseSlider.Track className={styles.track}>
+          <BaseSlider.Indicator className={styles.indicator} />
+          <BaseSlider.Thumb className={styles.thumb} getAriaLabel={() => label} />
         </BaseSlider.Track>
       </BaseSlider.Control>
     </BaseSlider.Root>

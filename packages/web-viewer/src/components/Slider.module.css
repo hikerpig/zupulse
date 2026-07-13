@@ -1,0 +1,88 @@
+@layer components {
+  .root {
+    width: 100%;
+    min-width: 80px;
+  }
+
+  .control {
+    display: flex;
+    align-items: center;
+    min-height: 28px;
+    touch-action: none;
+  }
+
+  .track {
+    position: relative;
+    width: 100%;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--meter-track);
+  }
+
+  .indicator {
+    border-radius: inherit;
+    background: var(--meter-fill);
+  }
+
+  .thumb {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--accent-primary);
+    border-radius: 50%;
+    background: var(--bg-elevated);
+  }
+
+  .thumb:focus-within {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  .root[data-disabled] {
+    opacity: 0.5;
+  }
+
+  .progress,
+  .progress .control {
+    height: 100%;
+    min-width: 0;
+  }
+
+  .progress .control {
+    min-height: 0;
+    align-items: flex-end;
+  }
+
+  .progress .track {
+    width: calc(100% - 12px);
+    height: 2px;
+    margin-inline: 6px;
+    border-radius: 0;
+    background: color-mix(in srgb, var(--meter-track) 72%, transparent);
+    transition: height 120ms ease;
+  }
+
+  .progress .thumb {
+    width: 12px;
+    height: 12px;
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+
+  .progress:is(:hover, :focus-within) .track {
+    height: 6px;
+  }
+
+  .progress:is(:hover, :focus-within) .thumb {
+    opacity: 1;
+  }
+
+  @media (hover: none) {
+    .progress .track {
+      height: 4px;
+    }
+
+    .progress .thumb {
+      opacity: 1;
+    }
+  }
+}

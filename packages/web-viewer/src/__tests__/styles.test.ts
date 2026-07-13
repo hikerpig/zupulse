@@ -21,8 +21,8 @@ describe("alphaTab playback cursor styles", () => {
 
   it("contains score scrolling within the desktop viewport and restores mobile document flow", async () => {
     const [appCss, workspaceCss] = await Promise.all([
-      source("../app/App.css"),
-      source("../features/PlaybackWorkspace.css"),
+      source("../app/pages/PageShell.module.css"),
+      source("../features/PlaybackWorkspace.module.css"),
     ]);
 
     expect(appCss).toMatch(/\.app-shell\s*{[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden;/s);
@@ -39,32 +39,47 @@ describe("alphaTab playback cursor styles", () => {
   });
 
   it("keeps the public stylesheet limited to common and vendor styles", async () => {
-    const [entryCss, appSource, librarySource, workspaceSource, sliderSource] = await Promise.all([
+    const [entryCss, viewerSource, librarySource, workspaceSource, sliderSource] = await Promise.all([
       source("../styles.css"),
-      source("../app/App.tsx"),
+      source("../app/pages/ViewerPage.tsx"),
       source("../features/SheetLibrary.tsx"),
       source("../features/PlaybackWorkspace.tsx"),
       source("../components/Slider.tsx"),
     ]);
 
-    expect(entryCss).toMatch(/@import "\.\/styles\/common\.css";/);
-    expect(entryCss).toMatch(/@import "\.\/styles\/vendors\/alphaTab\.css";/);
-    expect(appSource).toContain('import "./App.css";');
-    expect(librarySource).toContain('import "./SheetLibrary.css";');
-    expect(workspaceSource).toContain('import "./PlaybackWorkspace.css";');
-    expect(sliderSource).toContain('import "./Slider.css";');
+    expect(entryCss).toMatch(/@layer tokens, base, vendor, components;/);
+    expect(entryCss).toMatch(/@import "\.\/styles\/tokens\.css" layer\(tokens\);/);
+    expect(entryCss).toMatch(/@import "\.\/styles\/common\.css" layer\(base\);/);
+    expect(entryCss).toMatch(/@import "\.\/styles\/vendors\/alphaTab\.css" layer\(vendor\);/);
+    expect(viewerSource).toContain('import styles from "./PageShell.module.css";');
+    expect(librarySource).toContain('import styles from "./SheetLibrary.module.css";');
+    expect(workspaceSource).toContain('import styles from "./PlaybackWorkspace.module.css";');
+    expect(sliderSource).toContain('import styles from "./Slider.module.css";');
+  });
+
+  it("loads cascade layers before component modules in both application entries", async () => {
+    const [browserEntry, desktopEntry] = await Promise.all([
+      source("../../../../apps/web-demo/src/main.ts"),
+      source("../../../../apps/desktop-shell/src/renderer.ts"),
+    ]);
+
+    for (const entry of [browserEntry, desktopEntry]) {
+      expect(entry.indexOf('import "@zupulse/web-viewer/styles.css";')).toBeLessThan(
+        entry.indexOf('from "@zupulse/web-viewer"'),
+      );
+    }
   });
 
   it("keeps the library page out of the viewer grid regardless of stylesheet order", async () => {
-    const css = await source("../features/SheetLibrary.css");
+    const css = await source("../features/SheetLibrary.module.css");
 
-    expect(css).toMatch(/\.app-shell\.library-shell\s*{[^}]*display:\s*block;/s);
+    expect(css).toMatch(/\.library-shell\s*{[^}]*display:\s*block;/s);
   });
 
   it("uses a compact continuous-surface workbench with a clean score surface", async () => {
     const [appCss, workspaceCss] = await Promise.all([
-      source("../app/App.css"),
-      source("../features/PlaybackWorkspace.css"),
+      source("../app/pages/PageShell.module.css"),
+      source("../features/PlaybackWorkspace.module.css"),
     ]);
 
     expect(workspaceCss).toMatch(/\.workspace\s*{[^}]*display:\s*block;[^}]*padding:\s*12px;/s);
@@ -73,38 +88,40 @@ describe("alphaTab playback cursor styles", () => {
     expect(workspaceCss).toMatch(/\.practice-panel\s*{[^}]*top:\s*8px;[^}]*right:\s*8px;[^}]*bottom:\s*8px;/s);
     expect(appCss).toMatch(/\.score-viewer\s*{[^}]*background:\s*var\(--bg-score\);/s);
     expect(appCss).toMatch(
-      /\.score-viewer \.at-surface\s*{[^}]*display:\s*block;[^}]*background:\s*var\(--bg-score\);/s,
+      /\.score-viewer :global\(\.at-surface\)\s*{[^}]*display:\s*block;[^}]*background:\s*var\(--bg-score\);/s,
     );
   });
 
   it("keeps playback progress on the toolbar edge until it is interactive", async () => {
-    const css = await source("../features/PlaybackWorkspace.css");
+    const [workspaceCss, sliderCss] = await Promise.all([
+      source("../features/PlaybackWorkspace.module.css"),
+      source("../components/Slider.module.css"),
+    ]);
 
-    expect(css).toMatch(
+    expect(workspaceCss).toMatch(
       /\.transport-progress\s*{[^}]*position:\s*absolute;[^}]*inset-inline:\s*0;[^}]*bottom:\s*-1px;/s,
     );
-    expect(css).toMatch(/\.transport-progress \.base-slider-track\s*{[^}]*height:\s*2px;/s);
-    expect(css).toMatch(/\.transport-progress \.base-slider-thumb\s*{[^}]*opacity:\s*0;/s);
-    expect(css).toMatch(/\.transport-progress:is\(:hover, :focus-within\) \.base-slider-track\s*{[^}]*height:\s*6px;/s);
-    expect(css).toMatch(/\.transport-progress:is\(:hover, :focus-within\) \.base-slider-thumb\s*{[^}]*opacity:\s*1;/s);
+    expect(sliderCss).toMatch(/\.progress \.track\s*{[^}]*height:\s*2px;/s);
+    expect(sliderCss).toMatch(/\.progress \.thumb\s*{[^}]*opacity:\s*0;/s);
+    expect(sliderCss).toMatch(/\.progress:is\(:hover, :focus-within\) \.track\s*{[^}]*height:\s*6px;/s);
+    expect(sliderCss).toMatch(/\.progress:is\(:hover, :focus-within\) \.thumb\s*{[^}]*opacity:\s*1;/s);
   });
 
   it("keeps third-party score layers below viewer controls through shared stacking tokens", async () => {
-    const [commonCss, appCss, workspaceCss, libraryCss, alphaTabCss] = await Promise.all([
-      source("../styles/common.css"),
-      source("../app/App.css"),
-      source("../features/PlaybackWorkspace.css"),
-      source("../features/SheetLibrary.css"),
+    const [tokensCss, appCss, workspaceCss, libraryCss, alphaTabCss] = await Promise.all([
+      source("../styles/tokens.css"),
+      source("../app/pages/PageShell.module.css"),
+      source("../features/PlaybackWorkspace.module.css"),
+      source("../features/SheetLibrary.module.css"),
       source("../styles/vendors/alphaTab.css"),
     ]);
 
-    expect(commonCss).toMatch(/\/\* Stacking order \(low to high\)\. \*\//);
-    expect(commonCss).toMatch(/--z-index-score:\s*0;/);
-    expect(commonCss).toMatch(/--z-index-score-cursor:\s*10;/);
-    expect(commonCss).toMatch(/--z-index-transport:\s*20;/);
-    expect(commonCss).toMatch(/--z-index-practice-panel:\s*30;/);
-    expect(commonCss).toMatch(/--z-index-library-editor:\s*40;/);
-    expect(commonCss).toMatch(/--z-index-library-dialog:\s*50;/);
+    expect(tokensCss).toMatch(/--z-index-score:\s*0;/);
+    expect(tokensCss).toMatch(/--z-index-score-cursor:\s*10;/);
+    expect(tokensCss).toMatch(/--z-index-transport:\s*20;/);
+    expect(tokensCss).toMatch(/--z-index-practice-panel:\s*30;/);
+    expect(tokensCss).toMatch(/--z-index-library-editor:\s*40;/);
+    expect(tokensCss).toMatch(/--z-index-library-dialog:\s*50;/);
     expect(appCss).toMatch(/\.score-stage\s*{[^}]*position:\s*relative;[^}]*z-index:\s*var\(--z-index-score\);/s);
     expect(workspaceCss).toMatch(/\.transport-bar\s*{[^}]*z-index:\s*var\(--z-index-transport\);/s);
     expect(workspaceCss).toMatch(/\.practice-panel\s*{[^}]*z-index:\s*var\(--z-index-practice-panel\);/s);

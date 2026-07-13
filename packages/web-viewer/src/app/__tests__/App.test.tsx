@@ -24,9 +24,9 @@ describe("App", () => {
 
     render(<App application={application} />);
 
-    expect(screen.getByRole("main").classList.contains("app-shell")).toBe(true);
-    expect(screen.getByRole("banner").classList.contains("context-bar")).toBe(true);
-    expect(screen.getByRole("region", { name: "乐谱工作区" }).classList.contains("score-stage")).toBe(true);
+    expect(screen.getByRole("main")).toBeTruthy();
+    expect(screen.getByRole("banner")).toBeTruthy();
+    expect(screen.getByRole("region", { name: "乐谱工作区" })).toBeTruthy();
     expect(
       screen.getByText("Studio-style practice workspace for score reading, playback, and loop training."),
     ).toBeTruthy();
@@ -70,9 +70,9 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App application={application} />);
     await user.click(screen.getByRole("button", { name: "练习设置" }));
-    expect(screen.getByRole("complementary", { name: "练习设置" }).classList.contains("practice-panel")).toBe(true);
-    expect(screen.getByText("Loop").classList.contains("panel-title")).toBe(true);
-    expect(screen.getByText("Tracks").classList.contains("panel-title")).toBe(true);
+    expect(screen.getByRole("complementary", { name: "练习设置" })).toBeTruthy();
+    expect(screen.getByText("Loop")).toBeTruthy();
+    expect(screen.getByText("Tracks")).toBeTruthy();
     await application.destroy();
   });
 

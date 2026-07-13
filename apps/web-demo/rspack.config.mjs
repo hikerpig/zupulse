@@ -51,9 +51,12 @@ const config = {
       },
       {
         test: /\.css$/,
-        type: "css",
+        type: "css/auto",
       },
     ],
+    parser: {
+      "css/auto": { namedExports: false },
+    },
   },
   watchOptions: {
     ignored: ["**/node_modules/**", "**/dist/**"],

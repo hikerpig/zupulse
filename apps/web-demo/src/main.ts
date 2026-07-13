@@ -1,5 +1,5 @@
-import { mountViewerApp } from "@zupulse/web-viewer";
 import "@zupulse/web-viewer/styles.css";
+import { mountViewerApp } from "@zupulse/web-viewer";
 import { createBrowserHost } from "./browserHost";
 import { BrowserSheetLibraryRepository } from "./library/BrowserSheetLibraryRepository";
 import { BrowserScoreFileGateway } from "./library/BrowserScoreFileGateway";

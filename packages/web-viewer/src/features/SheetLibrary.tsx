@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import type { LibraryScoreSummary } from "@zupulse/web-core";
 import type { ViewerApplication } from "../app/ViewerApplication";
-import "./SheetLibrary.css";
+import pageStyles from "../app/pages/PageShell.module.css";
+import styles from "./SheetLibrary.module.css";
 
 export function SheetLibrary({
   application,
@@ -62,14 +63,14 @@ export function SheetLibrary({
       </section>
     );
   return (
-    <main className="app-shell library-shell">
-      <header className="context-bar">
-        <div className="context-main">
-          <p className="app-kicker">Zupulse</p>
-          <h1 className="context-title library-title">曲谱库</h1>
-          <p className="context-subtitle">曲谱保存在这台设备上，可离线使用。</p>
+    <main className={`${pageStyles["app-shell"]} ${styles["library-shell"]}`}>
+      <header className={`${pageStyles["context-bar"]} ${styles["library-context-bar"]}`}>
+        <div className={pageStyles["context-main"]}>
+          <p className={pageStyles["app-kicker"]}>Zupulse</p>
+          <h1 className={`${pageStyles["context-title"]} ${styles["library-title"]}`}>曲谱库</h1>
+          <p className={pageStyles["context-subtitle"]}>曲谱保存在这台设备上，可离线使用。</p>
         </div>
-        <div className="context-actions">
+        <div className={pageStyles["context-actions"]}>
           <button className="primary-button" disabled={loading} onClick={() => void onImport(false)}>
             导入曲谱
           </button>
@@ -78,7 +79,7 @@ export function SheetLibrary({
           </button>
         </div>
       </header>
-      <section className="library-controls" aria-label="曲谱库筛选">
+      <section className={styles["library-controls"]} aria-label="曲谱库筛选">
         <input
           aria-label="搜索曲名或艺术家"
           value={query}
@@ -101,11 +102,13 @@ export function SheetLibrary({
       {loading ? (
         <p role="status">正在读取曲谱库…</p>
       ) : visible.length ? (
-        <ul className="library-list">
+        <ul className={styles["library-list"]}>
           {visible.map((score) => (
-            <li key={score.id} className="library-row">
-              <button className="library-open" onClick={() => onOpen(score.id)}>
-                <span className={`library-format library-format-${score.format}`}>{score.format.toUpperCase()}</span>
+            <li key={score.id} className={styles["library-row"]}>
+              <button className={styles["library-open"]} onClick={() => onOpen(score.id)}>
+                <span className={`${styles["library-format"]} ${styles[`library-format-${score.format}`] ?? ""}`}>
+                  {score.format.toUpperCase()}
+                </span>
                 <strong>{score.title}</strong>
                 <span>
                   {score.artist ?? "未知艺术家"} · {score.format.toUpperCase()}
@@ -148,7 +151,7 @@ export function SheetLibrary({
       )}
       {editing && (
         <form
-          className="library-editor"
+          className={styles["library-editor"]}
           aria-label="编辑曲谱信息"
           onSubmit={(event) => {
             event.preventDefault();
@@ -177,7 +180,12 @@ export function SheetLibrary({
         </form>
       )}
       {deleting && (
-        <section className="library-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-title">
+        <section
+          className={styles["library-dialog"]}
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="delete-title"
+        >
           <h2 id="delete-title">删除“{deleting.title}”吗？</h2>
           <p>曲谱文件和全部练习数据将被永久删除，且无法恢复。</p>
           <button

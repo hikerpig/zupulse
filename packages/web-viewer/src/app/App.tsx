@@ -4,7 +4,6 @@ import type { ViewerApplication } from "./ViewerApplication";
 import { AppStoreProvider, useApplyTheme } from "./appStore";
 import { LibraryPage } from "./pages/LibraryPage";
 import { ViewerPage } from "./pages/ViewerPage";
-import "./App.css";
 
 export function App({ application }: { application: ViewerApplication }) {
   const router = useMemo(

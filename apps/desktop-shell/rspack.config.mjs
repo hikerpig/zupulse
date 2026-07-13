@@ -77,7 +77,10 @@ const renderer = {
   },
   resolve: { extensions: [".tsx", ".ts", ".js"] },
   module: {
-    rules: [swcRule, { test: /\.css$/, type: "css" }],
+    rules: [swcRule, { test: /\.css$/, type: "css/auto" }],
+    parser: {
+      "css/auto": { namedExports: false },
+    },
   },
   plugins: [
     new DefinePlugin(buildDefinitions),

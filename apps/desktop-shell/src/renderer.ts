@@ -16,8 +16,8 @@ import {
   type LibraryMetadata,
   type StoredScoreFile,
 } from "@zupulse/web-core";
-import { createDefaultOpenSession, mountViewerApp, type ViewerAppHandle, type ViewerHost } from "@zupulse/web-viewer";
 import "@zupulse/web-viewer/styles.css";
+import { createDefaultOpenSession, mountViewerApp, type ViewerAppHandle, type ViewerHost } from "@zupulse/web-viewer";
 
 document.documentElement.classList.add("desktop-shell");
 

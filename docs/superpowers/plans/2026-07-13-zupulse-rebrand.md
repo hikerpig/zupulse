@@ -53,13 +53,13 @@ import type { LibraryScoreId } from "@zupulse/web-core";
 
 - [ ] **Step 2: 重新生成 workspace 锁文件引用**
 
-Run: `rtk pnpm install --lockfile-only`
+Run: `pnpm install --lockfile-only`
 
 Expected: 成功退出，`pnpm-lock.yaml` 的 importer 依赖只引用 `@zupulse/*`。
 
 - [ ] **Step 3: 验证包解析和类型检查**
 
-Run: `rtk pnpm typecheck`
+Run: `pnpm typecheck`
 
 Expected: PASS，不出现 `Cannot find module '@zupulse/...'`。
 
@@ -105,7 +105,7 @@ const exposed = await page.evaluate(() => ({
 
 - [ ] **Step 2: 运行针对性测试并确认旧实现失败**
 
-Run: `rtk pnpm vitest run apps/desktop-shell/src/main/__tests__/protocol.test.ts apps/desktop-shell/src/main/__tests__/bridge.test.ts`
+Run: `pnpm vitest run apps/desktop-shell/src/main/__tests__/protocol.test.ts apps/desktop-shell/src/main/__tests__/bridge.test.ts`
 
 Expected: FAIL，错误指向旧 `tab-viewer://` 协议仍被校验或旧 Bridge 名称仍被使用。
 
@@ -125,7 +125,7 @@ contextBridge.exposeInMainWorld("zupulseBridge", bridge);
 
 - [ ] **Step 4: 运行 Desktop 单测**
 
-Run: `rtk pnpm vitest run apps/desktop-shell/src/main/__tests__`
+Run: `pnpm vitest run apps/desktop-shell/src/main/__tests__`
 
 Expected: PASS。
 
@@ -164,7 +164,7 @@ expect(DEMO_APP_NAME).toBe("Zupulse");
 
 - [ ] **Step 2: 运行名称测试并确认失败**
 
-Run: `rtk pnpm vitest run apps/web-demo/src/__tests__/main.test.ts`
+Run: `pnpm vitest run apps/web-demo/src/__tests__/main.test.ts`
 
 Expected: FAIL，实际值仍为 `Tab Viewer Demo`。
 
@@ -181,7 +181,7 @@ HTML title 使用 `Zupulse`；需要说明中文品牌的当前产品说明写�
 
 - [ ] **Step 4: 运行应用测试**
 
-Run: `rtk pnpm vitest run apps/web-demo apps/desktop-shell`
+Run: `pnpm vitest run apps/web-demo apps/desktop-shell`
 
 Expected: PASS。
 
@@ -232,7 +232,7 @@ JSON、Markdown 与技能元数据中的库名使用 `zupulse-te-braun-theme`，
 Run:
 
 ```bash
-rtk rg -n -i --hidden \
+rg -n -i --hidden \
   --glob '!node_modules' --glob '!dist' --glob '!.git/**' \
   --glob '!docs/adr/**' --glob '!docs/superpowers/plans/**' \
   --glob '!docs/superpowers/specs/**' --glob '!.design_library/.tmp/**' \
@@ -264,30 +264,30 @@ git commit -m "docs: rebrand current project as Zupulse"
 
 - [ ] **Step 1: 运行全量类型与单测**
 
-Run: `rtk pnpm check`
+Run: `pnpm check`
 
 Expected: PASS。
 
 - [ ] **Step 2: 构建 Browser**
 
-Run: `rtk pnpm demo:build`
+Run: `pnpm demo:build`
 
 Expected: PASS，资源验证成功。
 
 - [ ] **Step 3: 构建 Desktop**
 
-Run: `rtk pnpm desktop:build`
+Run: `pnpm desktop:build`
 
 Expected: PASS，Electron main、preload、renderer 均成功产出。
 
 - [ ] **Step 4: 运行格式检查**
 
-Run: `rtk pnpm format:check`
+Run: `pnpm format:check`
 
 Expected: PASS；若失败，只格式化本计划修改的文件，未触及文件的历史格式债务记录在交付说明中。
 
 - [ ] **Step 5: 检查最终差异**
 
-Run: `rtk git status --short && rtk git diff --check HEAD~4..HEAD`
+Run: `git status --short && git diff --check HEAD~4..HEAD`
 
 Expected: 无空白错误；既有用户删除和未跟踪文件仍保持原状态，未被提交。

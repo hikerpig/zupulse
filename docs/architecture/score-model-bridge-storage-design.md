@@ -1,4 +1,11 @@
+---
+status: historical
+supersededBy: ./README.md
+---
+
 # Score Model、Bridge API 与存储同步详细设计
+
+> 历史研究文档：Apple Native Shell、CloudKit 和 JSON Schema 方向已被当前架构与 Zod Bridge 取代。
 
 ## 目标
 

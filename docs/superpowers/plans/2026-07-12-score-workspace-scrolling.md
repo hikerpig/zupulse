@@ -52,7 +52,7 @@ expect(settings.player.scrollElement).toBe(alphaTabHost.parentElement);
 Run:
 
 ```bash
-rtk pnpm test -- packages/web-viewer/src/viewerApp.test.ts
+pnpm test -- packages/web-viewer/src/viewerApp.test.ts
 ```
 
 Expected: FAIL because `settings.player.scrollElement` is currently `undefined`.
@@ -90,7 +90,7 @@ Then change the helper signature and add the one new player property, leaving th
 Run:
 
 ```bash
-rtk pnpm test -- packages/web-viewer/src/viewerApp.test.ts
+pnpm test -- packages/web-viewer/src/viewerApp.test.ts
 ```
 
 Expected: 21 tests pass with no failures.
@@ -98,8 +98,8 @@ Expected: 21 tests pass with no failures.
 - [ ] **Step 5: Commit the scroll-target change**
 
 ```bash
-rtk git add packages/web-viewer/src/viewerApp.ts packages/web-viewer/src/viewerApp.test.ts
-rtk git commit -m "fix: scroll score during alphaTab playback"
+git add packages/web-viewer/src/viewerApp.ts packages/web-viewer/src/viewerApp.test.ts
+git commit -m "fix: scroll score during alphaTab playback"
 ```
 
 ### Task 2: Constrain the Desktop Workbench to the Viewport
@@ -136,7 +136,7 @@ it("contains score scrolling within the desktop viewport and restores mobile doc
 Run:
 
 ```bash
-rtk pnpm test -- packages/web-viewer/src/styles.test.ts
+pnpm test -- packages/web-viewer/src/styles.test.ts
 ```
 
 Expected: FAIL on the missing viewport containment rules.
@@ -241,7 +241,7 @@ Expand the existing `max-width: 960px` media query:
 Run:
 
 ```bash
-rtk pnpm test -- packages/web-viewer/src/styles.test.ts
+pnpm test -- packages/web-viewer/src/styles.test.ts
 ```
 
 Expected: 2 tests pass with no failures.
@@ -251,7 +251,7 @@ Expected: 2 tests pass with no failures.
 Run:
 
 ```bash
-rtk pnpm test -- packages/web-viewer/src
+pnpm test -- packages/web-viewer/src
 ```
 
 Expected: all web-viewer test files pass.
@@ -259,8 +259,8 @@ Expected: all web-viewer test files pass.
 - [ ] **Step 7: Commit the viewport layout**
 
 ```bash
-rtk git add packages/web-viewer/src/styles.css packages/web-viewer/src/styles.test.ts
-rtk git commit -m "feat: contain score scrolling in viewer workspace"
+git add packages/web-viewer/src/styles.css packages/web-viewer/src/styles.test.ts
+git commit -m "feat: contain score scrolling in viewer workspace"
 ```
 
 ### Task 3: Verify Playback, Responsive Layout, and the Full Repository
@@ -274,7 +274,7 @@ rtk git commit -m "feat: contain score scrolling in viewer workspace"
 Run:
 
 ```bash
-rtk pnpm demo:dev
+pnpm demo:dev
 ```
 
 Expected: Rspack serves `http://127.0.0.1:5173/` without compilation errors.
@@ -318,9 +318,9 @@ Expected:
 Run:
 
 ```bash
-rtk pnpm check
-rtk pnpm demo:build
-rtk git diff --check
+pnpm check
+pnpm demo:build
+git diff --check
 ```
 
 Expected: typecheck passes, all Vitest tests pass, Rspack build and asset verification pass, and `git diff --check` prints no errors.

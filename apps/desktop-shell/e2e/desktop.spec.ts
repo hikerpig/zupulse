@@ -34,12 +34,12 @@ test("starts offline with an isolated renderer", async () => {
   const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-security-"));
   const app = await launch(userData);
   try {
-    const window = await app.firstWindow();
+    const page = await app.firstWindow();
     await app.context().setOffline(true);
-    await window.reload();
-    await expect(window.getByRole("button", { name: "导入曲谱" })).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("button", { name: "导入曲谱" })).toBeVisible();
     expect(
-      await window.evaluate(() => ({
+      await page.evaluate(() => ({
         require: typeof (globalThis as { require?: unknown }).require,
         process: typeof (globalThis as { process?: unknown }).process,
         api: Object.keys(window.zupulseBridge ?? {}).sort(),
@@ -47,7 +47,7 @@ test("starts offline with an isolated renderer", async () => {
     ).toEqual({ require: "undefined", process: "undefined", api: ["request", "subscribe"] });
 
     await expect(
-      window.evaluate(async () => {
+      page.evaluate(async () => {
         try {
           await window.zupulseBridge?.request({ type: "fs.read", payload: {} });
           return "accepted";
@@ -57,7 +57,7 @@ test("starts offline with an isolated renderer", async () => {
       }),
     ).resolves.toBe("rejected");
     await expect(
-      window.evaluate(async () => {
+      page.evaluate(async () => {
         try {
           await fetch("https://example.com/");
           return "accepted";
@@ -66,7 +66,7 @@ test("starts offline with an isolated renderer", async () => {
         }
       }),
     ).resolves.toBe("rejected");
-    expect(await window.evaluate(() => window.open("https://example.com/") === null)).toBe(true);
+    expect(await page.evaluate(() => window.open("https://example.com/") === null)).toBe(true);
   } finally {
     await app.close();
     await rm(userData, { recursive: true, force: true });

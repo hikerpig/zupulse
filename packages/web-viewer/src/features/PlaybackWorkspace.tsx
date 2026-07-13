@@ -1,4 +1,4 @@
-import { musicalPositionFromTick } from "@zupulse/web-core/src/playback/loopRegions";
+import { musicalPositionFromTick } from "@zupulse/web-core";
 import type { PlaybackCommand } from "@zupulse/web-core";
 import { Popover } from "@base-ui/react/popover";
 import { Pause, Play } from "lucide-react";

@@ -2,8 +2,12 @@
   "files": [],
   "references": [
     { "path": "./packages/web-core" },
+    { "path": "./packages/web-core/tsconfig.test.json" },
     { "path": "./packages/web-viewer" },
+    { "path": "./packages/web-viewer/tsconfig.test.json" },
     { "path": "./apps/web-demo" },
-    { "path": "./apps/desktop-shell" }
+    { "path": "./apps/web-demo/tsconfig.test.json" },
+    { "path": "./apps/desktop-shell" },
+    { "path": "./apps/desktop-shell/tsconfig.test.json" }
   ]
 }

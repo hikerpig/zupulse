@@ -29,8 +29,8 @@
 ## 验证
 
 - 搜索活动源码、配置、测试和当前文档，确认没有应被替换的 `Tab Viewer`、`tab-viewer`、`tabViewer` 残留。
-- 运行 `rtk pnpm check`。
-- 运行 `rtk pnpm demo:build`。
-- 运行 `rtk pnpm desktop:build`。
-- 运行 `rtk pnpm format:check`；若失败，仅报告未触及文件的历史格式债务。
+- 运行 `pnpm check`。
+- 运行 `pnpm demo:build`。
+- 运行 `pnpm desktop:build`。
+- 运行 `pnpm format:check`；若失败，仅报告未触及文件的历史格式债务。
 - 与协议、IPC、Bridge、数据库相关的现有测试同步更新，并继续验证安全边界。

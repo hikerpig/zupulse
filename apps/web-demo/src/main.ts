@@ -1,4 +1,4 @@
-import { mountViewerApp } from "@zupulse/web-viewer/src/mountViewerApp";
+import { mountViewerApp } from "@zupulse/web-viewer";
 import "@zupulse/web-viewer/styles.css";
 import { createBrowserHost } from "./browserHost";
 import { BrowserSheetLibraryRepository } from "./library/BrowserSheetLibraryRepository";
@@ -16,7 +16,7 @@ if (typeof document !== "undefined") {
   mountViewerApp(root, {
     host,
     openSession: async (file, libraryScoreId) => {
-      const { createDefaultOpenSession } = await import("@zupulse/web-viewer/src/viewerApp");
+      const { createDefaultOpenSession } = await import("@zupulse/web-viewer");
       return createDefaultOpenSession(document, new BrowserLibraryPlaybackPersistence(repository))(
         file,
         libraryScoreId,
@@ -28,13 +28,11 @@ if (typeof document !== "undefined") {
       adapters: [
         {
           format: "gp",
-          parse: async (input) =>
-            (await import("@zupulse/web-core/src/gp/gpFormatAdapter")).createGpFormatAdapter().parse(input),
+          parse: async (input) => (await import("@zupulse/web-core")).createGpFormatAdapter().parse(input),
         },
         {
           format: "musicxml",
-          parse: async (input) =>
-            (await import("@zupulse/web-core/src/musicxml/musicXmlAdapter")).createMusicXmlAdapter().parse(input),
+          parse: async (input) => (await import("@zupulse/web-core")).createMusicXmlAdapter().parse(input),
         },
       ],
     },

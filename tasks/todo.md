@@ -1,4 +1,11 @@
+---
+status: historical
+completed: 2026-07-13
+---
+
 # Sheet Library Implementation Tasks
+
+> 已完成任务清单，未勾选项不代表当前待办；新的工作应从 `tasks/TEMPLATE.md` 建立独立任务包。
 
 ## Progress
 

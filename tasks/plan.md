@@ -1,4 +1,11 @@
+---
+status: historical
+completed: 2026-07-13
+---
+
 # Implementation Plan: Sheet Library 离线曲谱库
+
+> 已完成实施计划，仅保留任务拆分和风险记录；当前事实以代码、测试和架构索引为准。
 
 ## Overview
 

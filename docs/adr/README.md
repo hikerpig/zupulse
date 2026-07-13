@@ -1,0 +1,32 @@
+# ADR 状态索引
+
+ADR 文件保留历史编号；本表决定哪些决策可作为当前实现依据。未列入 Current 的早期 ADR 只能
+作为历史背景，若与代码、测试或当前架构索引冲突，不得继续指导实现。
+
+## Current
+
+- `0018`：Electron Renderer 与 Node 隔离。
+- `0021`：Preload 只暴露经过校验的领域 Bridge。
+- `0022`：Bridge 类型从运行时 schema 推导。
+- `0023`：外部文件使用一次性 token。
+- `0030`：Desktop 包内要求 Bridge schema 精确匹配。
+- `0031`：Desktop 本地优先并推迟同步。
+- `0032`：按 packages/apps 组织 monorepo。
+- `0033`：使用 Zod 4 定义运行时契约。
+- `0034`：共享 Viewer UI 全部位于 web-viewer。
+- `0036`、`0037`、`0038`：MusicXML 与播放位置模型。
+- `0039`：共享 Viewer 使用 React 应用壳。
+- `0040`–`0051`：Managed Score Copy、Library 身份/路由、双宿主 Repository、迁移与故障恢复。
+
+## Superseded
+
+- `0004`、`0008` 的首版 CloudKit/同步承诺由 `0031` 取代。
+- `0013`–`0017` 中 Apple Web/Native Shell 交付结构由 Electron Desktop Shell 和 `0032` 取代。
+- `0046` 取代任何把 Viewer Session ID 放入 URL 的早期路由描述。
+- `0048`、`0049`、`0051` 取代临时 Viewer 文件或通用 key-value store 作为馆藏事实源的设计。
+
+## 维护规则
+
+- 新 ADR 必须包含 YAML frontmatter：`status: proposed|accepted|superseded|historical`。
+- 取代旧决策时，在新旧 ADR 中互相链接，并更新本索引。
+- Accepted 不代表永久正确；当前实现发生变化时同步更新状态，不能只新增一份冲突文档。

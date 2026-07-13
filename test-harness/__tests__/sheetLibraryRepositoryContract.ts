@@ -5,15 +5,17 @@ export type SheetLibraryRepositoryFactory = () => Promise<SheetLibraryRepository
 
 export function sheetLibraryRepositoryContract(createRepository: SheetLibraryRepositoryFactory): void {
   describe("SheetLibraryRepository contract", () => {
-    it("deduplicates by score identity and keeps the original bytes", async () => {
+    it("deduplicates concurrent imports by score identity and keeps the original bytes", async () => {
       const repository = await createRepository();
       await repository.initialize();
       const draft = exampleDraft();
-      const created = await repository.add(draft);
-      const existing = await repository.add({ ...draft, id: crypto.randomUUID() });
-      expect(created.status).toBe("created");
-      expect(existing).toMatchObject({ status: "existing", score: { id: draft.id } });
-      await expect(repository.readScore(draft.id)).resolves.toMatchObject({
+      const [first, second] = await Promise.all([
+        repository.add(draft),
+        repository.add({ ...draft, id: crypto.randomUUID() }),
+      ]);
+      expect([first.status, second.status].sort()).toEqual(["created", "existing"]);
+      const created = first.status === "created" ? first : second;
+      await expect(repository.readScore(created.score.id)).resolves.toMatchObject({
         fileName: draft.file.fileName,
         bytes: draft.file.bytes,
       });
@@ -34,15 +36,20 @@ export function sheetLibraryRepositoryContract(createRepository: SheetLibraryRep
       await expect(repository.get(draft.id)).resolves.toMatchObject({ isFavorite: true });
     });
 
-    it("permanently removes the score and permits a fresh re-import", async () => {
+    it("deletes managed bytes and gives a re-import a fresh identity", async () => {
       const repository = await createRepository();
       await repository.initialize();
       const draft = exampleDraft();
       await repository.add(draft);
       await repository.delete(draft.id);
+
       await expect(repository.get(draft.id)).resolves.toBeUndefined();
       await expect(repository.readScore(draft.id)).rejects.toThrow();
-      await expect(repository.add({ ...draft, id: crypto.randomUUID() })).resolves.toMatchObject({ status: "created" });
+      const newId = crypto.randomUUID();
+      await expect(repository.add({ ...draft, id: newId })).resolves.toMatchObject({
+        status: "created",
+        score: { id: newId },
+      });
     });
   });
 }

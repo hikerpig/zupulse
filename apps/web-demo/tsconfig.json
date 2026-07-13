@@ -11,7 +11,8 @@
     "noEmit": true,
     "skipLibCheck": true,
     "lib": ["ES2022", "DOM"],
-    "types": ["node", "vitest"]
+    "types": []
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/__tests__/**"]
 }

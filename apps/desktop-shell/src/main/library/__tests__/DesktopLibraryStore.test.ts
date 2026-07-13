@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { sheetLibraryRepositoryContract } from "./repositoryContract";
+import { sheetLibraryRepositoryContract } from "../../../../../../test-harness/__tests__/sheetLibraryRepositoryContract";
 import { DesktopLibraryStore } from "../DesktopLibraryStore";
 
 const roots: string[] = [];

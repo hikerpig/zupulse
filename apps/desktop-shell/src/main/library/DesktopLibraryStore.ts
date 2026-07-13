@@ -56,9 +56,9 @@ export class DesktopLibraryStore implements SheetLibraryRepository {
   async add(draft: ValidatedLibraryScoreDraft): Promise<{ status: "created" | "existing"; score: LibraryScore }> {
     const existing = await this.findByIdentity(draft.scoreIdentity);
     if (existing) return { status: "existing", score: existing };
-    this.database
+    const inserted = this.database
       .prepare(
-        "INSERT INTO library_scores (id, score_identity, file_name, format, parsed_title, parsed_artist, duration_ms, imported_at, storage_state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')",
+        "INSERT OR IGNORE INTO library_scores (id, score_identity, file_name, format, parsed_title, parsed_artist, duration_ms, imported_at, storage_state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')",
       )
       .run(
         draft.id,
@@ -69,7 +69,12 @@ export class DesktopLibraryStore implements SheetLibraryRepository {
         draft.parsedArtist ?? null,
         draft.durationMs ?? null,
         draft.importedAt,
-      );
+      ) as { changes: number };
+    if (inserted.changes === 0) {
+      const concurrent = await this.findByIdentity(draft.scoreIdentity);
+      if (!concurrent) throw new Error("LIBRARY_CONCURRENT_IMPORT_MISSING");
+      return { status: "existing", score: concurrent };
+    }
     try {
       await writeManagedScore(this.root, draft.id, draft.file);
       this.database.prepare("UPDATE library_scores SET storage_state = 'ready' WHERE id = ?").run(draft.id);

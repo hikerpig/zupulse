@@ -1,4 +1,11 @@
+---
+status: historical
+supersededBy: ./README.md
+---
+
 # macOS 与 iOS Viewer 架构总览
+
+> 历史研究文档：描述早期 Apple 平台与同步方向，不作为当前 Electron/Browser 实现依据。
 
 ## 背景
 

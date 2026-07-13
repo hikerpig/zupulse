@@ -1,5 +1,5 @@
 import type { ViewerAppHandle, ViewerFile, ViewerHost, ViewerHostEvent, ViewerSessionHandle } from "../host";
-import { importLibraryScores } from "@zupulse/web-core/src/library/importLibraryScores";
+import { importLibraryScores } from "@zupulse/web-core";
 import type {
   ScoreFileGateway,
   ScoreFormatAdapter,

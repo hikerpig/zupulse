@@ -5,11 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "rspack serve --host 127.0.0.1",
-    "build": "rspack build && node ./scripts/verify-assets.mjs"
+    "build": "rspack build && node ./scripts/verify-assets.mjs",
+    "test:e2e": "playwright test -c playwright.config.ts"
   },
   "dependencies": {
     "@zupulse/web-core": "workspace:*",
     "@zupulse/web-viewer": "workspace:*"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@playwright/test": "1.61.1",
+    "fake-indexeddb": "^6.2.5"
+  }
 }

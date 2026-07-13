@@ -15,6 +15,7 @@ export type ViewerApplicationSnapshot = {
 
 export class ViewerApplication implements ViewerAppHandle {
   private active: ViewerSessionHandle | undefined;
+  private activeLibraryScoreId: string | undefined;
   private chain = Promise.resolve();
   private queuedError: unknown;
   private destroyPromise?: Promise<void>;
@@ -44,9 +45,7 @@ export class ViewerApplication implements ViewerAppHandle {
   };
 
   hasSession(sessionId: string): boolean {
-    return (
-      (this.snapshot.currentLibraryScoreId ?? this.snapshot.currentSessionId) === sessionId && this.active !== undefined
-    );
+    return this.activeLibraryScoreId === sessionId && this.active !== undefined;
   }
 
   getCurrentSession(): ViewerSessionHandle | undefined {
@@ -119,8 +118,10 @@ export class ViewerApplication implements ViewerAppHandle {
     await library.repository.markOpened(id, new Date().toISOString());
     const previous = this.active;
     this.active = undefined;
+    this.activeLibraryScoreId = undefined;
     await previous?.destroy();
     this.active = await this.openSession(file, id);
+    this.activeLibraryScoreId = id;
     this.setSnapshot({ ...this.snapshot, currentSessionId: crypto.randomUUID(), currentLibraryScoreId: id });
   }
 
@@ -153,6 +154,7 @@ export class ViewerApplication implements ViewerAppHandle {
     if (this.snapshot.currentLibraryScoreId === id) {
       await this.active?.destroy();
       this.active = undefined;
+      this.activeLibraryScoreId = undefined;
     }
     await this.refreshLibrary();
   }
@@ -176,6 +178,7 @@ export class ViewerApplication implements ViewerAppHandle {
     if (!file) return;
     const previous = this.active;
     this.active = undefined;
+    this.activeLibraryScoreId = undefined;
     this.setSnapshot({});
     await previous?.destroy();
     this.active = await this.openSession(file);
@@ -218,6 +221,7 @@ export class ViewerApplication implements ViewerAppHandle {
     const openError = this.queuedError;
     const session = this.active;
     this.active = undefined;
+    this.activeLibraryScoreId = undefined;
     this.setSnapshot({});
     let cleanupError: unknown;
     try {

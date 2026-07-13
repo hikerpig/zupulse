@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
@@ -143,6 +143,60 @@ describe("App", () => {
     expect(libraryLink.getAttribute("href")).toBe("#/");
     expect(libraryLink.querySelector("svg.lucide-library-big")).toBeTruthy();
     expect(screen.getByRole("tooltip").textContent).toBe("返回曲谱库");
+    await application.destroy();
+  });
+
+  it("keeps a library click on the requested score instead of restoring the previous route", async () => {
+    const firstId = "00000000-0000-4000-8000-000000000001";
+    const secondId = "00000000-0000-4000-8000-000000000002";
+    window.history.replaceState(null, "", `#/viewer/${firstId}`);
+    vi.spyOn(window.navigator, "userAgent", "get").mockReturnValue("browser");
+    const repository: SheetLibraryRepository = {
+      initialize: async () => undefined,
+      list: async () =>
+        [
+          { id: firstId, title: "First", fileName: "first.gp", scoreIdentity: "1".repeat(64) },
+          { id: secondId, title: "Second", fileName: "second.gp", scoreIdentity: "2".repeat(64) },
+        ].map((score) => ({
+          ...score,
+          format: "gp" as const,
+          importedAt: "2026-07-13T00:00:00.000Z",
+          isFavorite: false,
+          practice: { hasLoop: false },
+        })),
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async (id) => ({ fileName: `${id}.gp`, bytes: new Uint8Array([1]) }),
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+    };
+    const openSession = vi.fn(async () => ({
+      togglePlayback: async () => undefined,
+      pauseAndFlush: async () => undefined,
+      destroy: async () => undefined,
+    }));
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      openSession,
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+    );
+    const user = userEvent.setup();
+    render(<App application={application} />);
+
+    await waitFor(() => expect(application.hasSession(firstId)).toBe(true));
+    await user.click(screen.getByRole("link", { name: "返回曲谱库" }));
+    await user.click((await screen.findByText("Second")).closest("button")!);
+
+    await waitFor(() => expect(window.location.hash).toBe(`#/viewer/${secondId}`));
+    await waitFor(() => expect(application.hasSession(secondId)).toBe(true));
+    expect(openSession).toHaveBeenCalledTimes(2);
     await application.destroy();
   });
 });

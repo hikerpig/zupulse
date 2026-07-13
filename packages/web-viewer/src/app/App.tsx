@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { LibraryBig } from "lucide-react";
 import { createHashRouter, Link, RouterProvider, useNavigate, useParams } from "react-router";
@@ -44,9 +44,13 @@ function ViewerShell({ notFound = false }: { notFound?: boolean }) {
   const theme = useAppStore((state) => state.theme);
   const setTheme = useAppStore((state) => state.setTheme);
   const invalidSession = Boolean(libraryScoreId && !application.hasSession(libraryScoreId));
+  const previousLibraryScoreId = useRef(snapshot.currentLibraryScoreId);
 
   useEffect(() => {
+    const libraryScoreChanged = previousLibraryScoreId.current !== snapshot.currentLibraryScoreId;
+    previousLibraryScoreId.current = snapshot.currentLibraryScoreId;
     if (
+      libraryScoreChanged &&
       snapshot.currentLibraryScoreId &&
       snapshot.currentLibraryScoreId !== libraryScoreId &&
       !navigator.userAgent.includes("jsdom")

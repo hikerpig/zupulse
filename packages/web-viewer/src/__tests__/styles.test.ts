@@ -4,6 +4,20 @@ import { describe, expect, it } from "vitest";
 const source = (path: string) => readFile(new URL(path, import.meta.url), "utf8");
 
 describe("alphaTab playback cursor styles", () => {
+  it("uses camelCase for local CSS Module class names", async () => {
+    const modules = await Promise.all([
+      source("../app/pages/PageShell.module.css"),
+      source("../components/Slider.module.css"),
+      source("../features/PlaybackWorkspace.module.css"),
+      source("../features/SheetLibrary.module.css"),
+    ]);
+
+    for (const css of modules) {
+      const localCss = css.replaceAll(/:global\([^)]*\)/g, "");
+      expect(localCss).not.toMatch(/\.[a-zA-Z_][\w-]*-[\w-]*/);
+    }
+  });
+
   it("does not load stylesheets that violate the offline CSP", async () => {
     const css = await source("../styles.css");
 
@@ -25,16 +39,16 @@ describe("alphaTab playback cursor styles", () => {
       source("../features/PlaybackWorkspace.module.css"),
     ]);
 
-    expect(appCss).toMatch(/\.app-shell\s*{[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden;/s);
+    expect(appCss).toMatch(/\.appShell\s*{[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden;/s);
     expect(workspaceCss).toMatch(/\.workspace\s*{[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/s);
-    expect(appCss).toMatch(/\.score-stage-frame\s*{[^}]*height:\s*100%;[^}]*overflow:\s*auto;/s);
-    expect(appCss).toMatch(/\.score-viewer\s*{[^}]*height:\s*auto;[^}]*min-height:\s*100%;[^}]*overflow:\s*visible;/s);
-    expect(workspaceCss).toMatch(/\.practice-panel\s*{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;/s);
+    expect(appCss).toMatch(/\.scoreStageFrame\s*{[^}]*height:\s*100%;[^}]*overflow:\s*auto;/s);
+    expect(appCss).toMatch(/\.scoreViewer\s*{[^}]*height:\s*auto;[^}]*min-height:\s*100%;[^}]*overflow:\s*visible;/s);
+    expect(workspaceCss).toMatch(/\.practicePanel\s*{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;/s);
     expect(appCss).toMatch(
-      /@media \(max-width:\s*960px\)[\s\S]*?\.app-shell\s*{[^}]*height:\s*auto;[^}]*overflow:\s*visible;/s,
+      /@media \(max-width:\s*960px\)[\s\S]*?\.appShell\s*{[^}]*height:\s*auto;[^}]*overflow:\s*visible;/s,
     );
     expect(appCss).toMatch(
-      /@media \(max-width:\s*960px\)[\s\S]*?\.score-stage-frame\s*{[^}]*height:\s*auto;[^}]*overflow:\s*visible;/s,
+      /@media \(max-width:\s*960px\)[\s\S]*?\.scoreStageFrame\s*{[^}]*height:\s*auto;[^}]*overflow:\s*visible;/s,
     );
   });
 
@@ -73,7 +87,7 @@ describe("alphaTab playback cursor styles", () => {
   it("keeps the library page out of the viewer grid regardless of stylesheet order", async () => {
     const css = await source("../features/SheetLibrary.module.css");
 
-    expect(css).toMatch(/\.library-shell\s*{[^}]*display:\s*block;/s);
+    expect(css).toMatch(/\.libraryShell\s*{[^}]*display:\s*block;/s);
   });
 
   it("uses a compact continuous-surface workbench with a clean score surface", async () => {
@@ -83,12 +97,12 @@ describe("alphaTab playback cursor styles", () => {
     ]);
 
     expect(workspaceCss).toMatch(/\.workspace\s*{[^}]*display:\s*block;[^}]*padding:\s*12px;/s);
-    expect(workspaceCss).toMatch(/\.transport-bar\s*{[^}]*border-bottom:\s*1px solid[^}]*padding:\s*8px 12px;/s);
-    expect(workspaceCss).toMatch(/\.transport-divider\s*{[^}]*width:\s*1px;[^}]*align-self:\s*stretch;/s);
-    expect(workspaceCss).toMatch(/\.practice-panel\s*{[^}]*top:\s*8px;[^}]*right:\s*8px;[^}]*bottom:\s*8px;/s);
-    expect(appCss).toMatch(/\.score-viewer\s*{[^}]*background:\s*var\(--bg-score\);/s);
+    expect(workspaceCss).toMatch(/\.transportBar\s*{[^}]*border-bottom:\s*1px solid[^}]*padding:\s*8px 12px;/s);
+    expect(workspaceCss).toMatch(/\.transportDivider\s*{[^}]*width:\s*1px;[^}]*align-self:\s*stretch;/s);
+    expect(workspaceCss).toMatch(/\.practicePanel\s*{[^}]*top:\s*8px;[^}]*right:\s*8px;[^}]*bottom:\s*8px;/s);
+    expect(appCss).toMatch(/\.scoreViewer\s*{[^}]*background:\s*var\(--bg-score\);/s);
     expect(appCss).toMatch(
-      /\.score-viewer :global\(\.at-surface\)\s*{[^}]*display:\s*block;[^}]*background:\s*var\(--bg-score\);/s,
+      /\.scoreViewer :global\(\.at-surface\)\s*{[^}]*display:\s*block;[^}]*background:\s*var\(--bg-score\);/s,
     );
   });
 
@@ -99,7 +113,7 @@ describe("alphaTab playback cursor styles", () => {
     ]);
 
     expect(workspaceCss).toMatch(
-      /\.transport-progress\s*{[^}]*position:\s*absolute;[^}]*inset-inline:\s*0;[^}]*bottom:\s*-1px;/s,
+      /\.transportProgress\s*{[^}]*position:\s*absolute;[^}]*inset-inline:\s*0;[^}]*bottom:\s*-1px;/s,
     );
     expect(sliderCss).toMatch(/\.progress \.track\s*{[^}]*height:\s*2px;/s);
     expect(sliderCss).toMatch(/\.progress \.thumb\s*{[^}]*opacity:\s*0;/s);
@@ -122,11 +136,11 @@ describe("alphaTab playback cursor styles", () => {
     expect(tokensCss).toMatch(/--z-index-practice-panel:\s*30;/);
     expect(tokensCss).toMatch(/--z-index-library-editor:\s*40;/);
     expect(tokensCss).toMatch(/--z-index-library-dialog:\s*50;/);
-    expect(appCss).toMatch(/\.score-stage\s*{[^}]*position:\s*relative;[^}]*z-index:\s*var\(--z-index-score\);/s);
-    expect(workspaceCss).toMatch(/\.transport-bar\s*{[^}]*z-index:\s*var\(--z-index-transport\);/s);
-    expect(workspaceCss).toMatch(/\.practice-panel\s*{[^}]*z-index:\s*var\(--z-index-practice-panel\);/s);
-    expect(libraryCss).toMatch(/\.library-editor\s*{[^}]*z-index:\s*var\(--z-index-library-editor\);/s);
-    expect(libraryCss).toMatch(/\.library-dialog\s*{[^}]*z-index:\s*var\(--z-index-library-dialog\);/s);
+    expect(appCss).toMatch(/\.scoreStage\s*{[^}]*position:\s*relative;[^}]*z-index:\s*var\(--z-index-score\);/s);
+    expect(workspaceCss).toMatch(/\.transportBar\s*{[^}]*z-index:\s*var\(--z-index-transport\);/s);
+    expect(workspaceCss).toMatch(/\.practicePanel\s*{[^}]*z-index:\s*var\(--z-index-practice-panel\);/s);
+    expect(libraryCss).toMatch(/\.libraryEditor\s*{[^}]*z-index:\s*var\(--z-index-library-editor\);/s);
+    expect(libraryCss).toMatch(/\.libraryDialog\s*{[^}]*z-index:\s*var\(--z-index-library-dialog\);/s);
     expect(alphaTabCss).toMatch(
       /\.score-viewer \.at-cursors\s*{[^}]*z-index:\s*var\(--z-index-score-cursor\)\s*!important;/s,
     );

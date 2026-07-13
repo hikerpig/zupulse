@@ -36,10 +36,10 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
 
   return (
     <>
-      <section className={styles["transport-bar"]} aria-label="播放控制">
-        <div className={styles["transport-actions"]}>
+      <section className={styles.transportBar} aria-label="播放控制">
+        <div className={styles.transportActions}>
           <button
-            className={`primary-button ${styles["transport-play-button"]}`}
+            className={`primary-button ${styles.transportPlayButton}`}
             type="button"
             aria-label={view.playLabel}
             disabled={view.playDisabled}
@@ -50,12 +50,12 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
           <button type="button" disabled={view.stopDisabled} onClick={() => dispatch({ type: "stop" })}>
             停止
           </button>
-          <span className={styles["time-readout"]}>
+          <span className={styles.timeReadout}>
             {view.currentTime} / {view.duration}
           </span>
         </div>
-        <div className={styles["transport-divider"]} aria-hidden="true" />
-        <div className={styles["transport-progress"]}>
+        <div className={styles.transportDivider} aria-hidden="true" />
+        <div className={styles.transportProgress}>
           <Slider
             label="播放进度"
             variant="progress"
@@ -64,13 +64,13 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
             onValueChange={(value) => dispatch({ type: "seek", position: position(value / 1000) })}
           />
         </div>
-        <div className={styles["transport-tools"]}>
+        <div className={styles.transportTools}>
           <BpmControl
             baseTempo={view.baseTempo}
             currentTempo={view.currentTempo}
             onCommit={(tempo) => dispatch({ type: "set-score-speed", speed: tempo / view.baseTempo })}
           />
-          <p className={`${styles["status-chip"]} ${styles[view.audioStatusTone]}`}>{view.audioStatusLabel}</p>
+          <p className={`${styles.statusChip} ${styles[view.audioStatusTone]}`}>{view.audioStatusLabel}</p>
           {view.soundFontRetryVisible && (
             <button type="button" onClick={() => dispatch({ type: "retry-soundfont" })}>
               重试音频
@@ -82,15 +82,15 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
       <section className={styles.workspace}>
         {children}
         {drawerOpen && (
-          <aside id="practice-drawer" className={styles["practice-panel"]} aria-label="练习设置">
-            <div className={styles["drawer-header"]}>
+          <aside id="practice-drawer" className={styles.practicePanel} aria-label="练习设置">
+            <div className={styles.drawerHeader}>
               <div>
-                <p className={styles["drawer-kicker"]}>Practice</p>
-                <h2 className={styles["drawer-title"]}>练习设置</h2>
+                <p className={styles.drawerKicker}>Practice</p>
+                <h2 className={styles.drawerTitle}>练习设置</h2>
                 <p>{view.sessionSummary}</p>
               </div>
               <button
-                className={styles["drawer-close"]}
+                className={styles.drawerClose}
                 type="button"
                 aria-label="关闭练习设置"
                 onClick={() => setDrawerOpen(false)}
@@ -99,10 +99,10 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
               </button>
             </div>
             <div>
-              <section className={styles["panel-section"]}>
-                <div className={styles["panel-header"]}>
-                  <p className={styles["panel-title"]}>Loop</p>
-                  <label className={styles["toggle-row"]}>
+              <section className={styles.panelSection}>
+                <div className={styles.panelHeader}>
+                  <p className={styles.panelTitle}>Loop</p>
+                  <label className={styles.toggleRow}>
                     <input
                       type="checkbox"
                       checked={view.looping}
@@ -111,8 +111,8 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                     <span>启用循环</span>
                   </label>
                 </div>
-                <div className={styles["panel-content"]}>
-                  <div className={styles["button-row"]}>
+                <div className={styles.panelContent}>
+                  <div className={styles.buttonRow}>
                     <button
                       type="button"
                       onClick={() =>
@@ -187,9 +187,9 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                       }
                     />
                   </label>
-                  <div className={styles["item-list"]}>
+                  <div className={styles.itemList}>
                     {view.loops.map((loop) => (
-                      <div className={styles["loop-row"]} key={loop.id}>
+                      <div className={styles.loopRow} key={loop.id}>
                         <button type="button" onClick={() => dispatch({ type: "select-loop", loopId: loop.id })}>
                           {loop.selected ? "当前" : "选择"}
                         </button>
@@ -223,13 +223,13 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                   </div>
                 </div>
               </section>
-              <section className={styles["panel-section"]}>
-                <div className={styles["panel-header"]}>
-                  <p className={styles["panel-title"]}>Tracks</p>
+              <section className={styles.panelSection}>
+                <div className={styles.panelHeader}>
+                  <p className={styles.panelTitle}>Tracks</p>
                 </div>
-                <div className={`${styles["panel-content"]} ${styles["item-list"]}`}>
+                <div className={`${styles.panelContent} ${styles.itemList}`}>
                   {view.tracks.map((track) => (
-                    <div className={styles["track-row"]} key={track.id}>
+                    <div className={styles.trackRow} key={track.id}>
                       <strong>{track.name}</strong>
                       <Check
                         label="主"
@@ -278,11 +278,11 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                   ))}
                 </div>
               </section>
-              <section className={styles["panel-section"]}>
-                <div className={styles["panel-header"]}>
-                  <p className={styles["panel-title"]}>Session</p>
+              <section className={styles.panelSection}>
+                <div className={styles.panelHeader}>
+                  <p className={styles.panelTitle}>Session</p>
                 </div>
-                <div className={styles["panel-content"]}>
+                <div className={styles.panelContent}>
                   {view.sessionFacts.map((fact) => (
                     <div key={fact.label}>
                       <span>{fact.label}</span>
@@ -292,7 +292,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                 </div>
               </section>
             </div>
-            <p className={styles["persistence-status"]} aria-live="polite">
+            <p className={styles.persistenceStatus} aria-live="polite">
               {view.persistenceMessage}
             </p>
           </aside>
@@ -326,42 +326,37 @@ function Check({
 function disabledPlaybackWorkspace(children: ReactNode, drawerOpen: boolean, setDrawerOpen: (open: boolean) => void) {
   return (
     <>
-      <section className={styles["transport-bar"]} aria-label="播放控制">
-        <div className={styles["transport-actions"]}>
-          <button
-            className={`primary-button ${styles["transport-play-button"]}`}
-            type="button"
-            aria-label="播放"
-            disabled
-          >
+      <section className={styles.transportBar} aria-label="播放控制">
+        <div className={styles.transportActions}>
+          <button className={`primary-button ${styles.transportPlayButton}`} type="button" aria-label="播放" disabled>
             <Play aria-hidden="true" />
           </button>
           <button type="button" disabled>
             停止
           </button>
-          <span className={styles["time-readout"]}>0:00 / 0:00</span>
+          <span className={styles.timeReadout}>0:00 / 0:00</span>
         </div>
-        <div className={styles["transport-divider"]} aria-hidden="true" />
-        <div className={styles["transport-progress"]}>
+        <div className={styles.transportDivider} aria-hidden="true" />
+        <div className={styles.transportProgress}>
           <Slider label="播放进度" max={1000} value={0} variant="progress" disabled />
         </div>
-        <div className={styles["transport-tools"]}>
+        <div className={styles.transportTools}>
           <BpmControl baseTempo={120} currentTempo={120} disabled />
-          <p className={`${styles["status-chip"]} ${styles.subtle}`}>音频准备中</p>
+          <p className={`${styles.statusChip} ${styles.subtle}`}>音频准备中</p>
           <DrawerToggle open={drawerOpen} onClick={() => setDrawerOpen(!drawerOpen)} />
         </div>
       </section>
       <section className={styles.workspace}>
         {children}
         {drawerOpen && (
-          <aside id="practice-drawer" className={styles["practice-panel"]} aria-label="练习设置">
-            <div className={styles["drawer-header"]}>
+          <aside id="practice-drawer" className={styles.practicePanel} aria-label="练习设置">
+            <div className={styles.drawerHeader}>
               <div>
-                <p className={styles["drawer-kicker"]}>Practice</p>
-                <h2 className={styles["drawer-title"]}>练习设置</h2>
+                <p className={styles.drawerKicker}>Practice</p>
+                <h2 className={styles.drawerTitle}>练习设置</h2>
               </div>
               <button
-                className={styles["drawer-close"]}
+                className={styles.drawerClose}
                 type="button"
                 aria-label="关闭练习设置"
                 onClick={() => setDrawerOpen(false)}
@@ -371,14 +366,14 @@ function disabledPlaybackWorkspace(children: ReactNode, drawerOpen: boolean, set
             </div>
             <div>
               {["Loop", "Tracks", "Session"].map((title) => (
-                <section className={styles["panel-section"]} key={title}>
-                  <div className={styles["panel-header"]}>
-                    <p className={styles["panel-title"]}>{title}</p>
+                <section className={styles.panelSection} key={title}>
+                  <div className={styles.panelHeader}>
+                    <p className={styles.panelTitle}>{title}</p>
                   </div>
                 </section>
               ))}
             </div>
-            <p className={styles["persistence-status"]}>打开乐谱后可调整循环和轨道</p>
+            <p className={styles.persistenceStatus}>打开乐谱后可调整循环和轨道</p>
           </aside>
         )}
       </section>
@@ -400,15 +395,15 @@ function BpmControl({
   const presets = [1, 0.75, 0.5, 0.25];
   return (
     <Popover.Root>
-      <Popover.Trigger className={styles["speed-trigger"]} aria-label={`速度 ${currentTempo} BPM`} disabled={disabled}>
+      <Popover.Trigger className={styles.speedTrigger} aria-label={`速度 ${currentTempo} BPM`} disabled={disabled}>
         <strong>{currentTempo}</strong>
         <span>BPM</span>
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Positioner side="top" align="center" sideOffset={10} className={styles["speed-popover-positioner"]}>
-          <Popover.Popup className={styles["speed-popover"]}>
+        <Popover.Positioner side="top" align="center" sideOffset={10} className={styles.speedPopoverPositioner}>
+          <Popover.Popup className={styles.speedPopover}>
             <Popover.Title className="sr-only">播放速度</Popover.Title>
-            <label className={styles["speed-input"]}>
+            <label className={styles.speedInput}>
               <span className="sr-only">速度 BPM</span>
               <input
                 key={currentTempo}
@@ -429,7 +424,7 @@ function BpmControl({
               />
               <span>BPM</span>
             </label>
-            <div className={styles["speed-presets"]}>
+            <div className={styles.speedPresets}>
               {presets.map((speed) => {
                 const tempo = Math.round(baseTempo * speed);
                 const label = `${Math.round(speed * 100)}%（${tempo} BPM）`;
@@ -447,7 +442,7 @@ function BpmControl({
                 );
               })}
             </div>
-            <Popover.Arrow className={styles["speed-popover-arrow"]} />
+            <Popover.Arrow className={styles.speedPopoverArrow} />
           </Popover.Popup>
         </Popover.Positioner>
       </Popover.Portal>
@@ -458,7 +453,7 @@ function BpmControl({
 function DrawerToggle({ open, onClick }: { open: boolean; onClick(): void }) {
   return (
     <button
-      className={styles["drawer-toggle"]}
+      className={styles.drawerToggle}
       type="button"
       aria-controls="practice-drawer"
       aria-expanded={open}

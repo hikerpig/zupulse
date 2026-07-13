@@ -1,5 +1,5 @@
 @layer components {
-  .library-shell {
+  .libraryShell {
     display: block;
     overflow: auto;
     background:
@@ -7,44 +7,44 @@
       linear-gradient(0deg, rgb(24 24 24 / 4%) 1px, transparent 1px) 0 0 / 24px 24px,
       var(--bg-app);
   }
-  .library-context-bar {
+  .libraryContextBar {
     min-height: var(--nav-height, 72px);
     border-top: 4px solid var(--accent-primary);
     background: color-mix(in srgb, var(--bg-shell) 94%, var(--bg-app));
   }
-  .library-title {
+  .libraryTitle {
     letter-spacing: -0.055em;
   }
-  .library-controls,
-  .library-list {
+  .libraryControls,
+  .libraryList {
     width: min(1180px, calc(100% - 48px));
     margin: 24px auto;
   }
-  .library-controls,
-  .library-row {
+  .libraryControls,
+  .libraryRow {
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .library-controls input {
+  .libraryControls input {
     flex: 1;
     min-height: 40px;
     padding: 0 12px;
     border-color: var(--border-strong);
     background: var(--bg-panel);
   }
-  .library-controls button[aria-pressed="true"] {
+  .libraryControls button[aria-pressed="true"] {
     color: var(--accent-primary);
     border-color: var(--accent-primary);
     background: var(--accent-soft);
   }
-  .library-list {
+  .libraryList {
     display: grid;
     gap: 6px;
     padding: 0;
     list-style: none;
   }
-  .library-row {
+  .libraryRow {
     position: relative;
     padding: 10px;
     border: 1px solid var(--border-default);
@@ -56,7 +56,7 @@
       box-shadow 140ms ease,
       transform 140ms ease;
   }
-  .library-row::before {
+  .libraryRow::before {
     position: absolute;
     inset: 10px auto 10px 0;
     width: 3px;
@@ -64,13 +64,13 @@
     border-radius: 0 3px 3px 0;
     background: var(--border-strong);
   }
-  .library-row:hover {
+  .libraryRow:hover {
     z-index: var(--z-index-surface-raised);
     border-color: var(--accent-primary);
     box-shadow: var(--shadow-soft);
     transform: translateX(2px);
   }
-  .library-open {
+  .libraryOpen {
     flex: 1;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -79,16 +79,16 @@
     row-gap: 3px;
     text-align: left;
   }
-  .library-open strong {
+  .libraryOpen strong {
     grid-column: 2;
     font-size: 16px;
   }
-  .library-open span {
+  .libraryOpen span {
     grid-column: 2;
     color: var(--text-secondary);
     font-size: 13px;
   }
-  .library-open .library-format {
+  .libraryOpen .libraryFormat {
     grid-row: 1 / span 3;
     grid-column: 1;
     align-self: center;
@@ -104,11 +104,11 @@
     letter-spacing: 0.04em;
     text-align: center;
   }
-  .library-open .library-format-musicxml {
+  .libraryOpen .libraryFormatMusicxml {
     color: var(--status-ready-text);
     border-color: var(--status-ready-text);
   }
-  .library-editor {
+  .libraryEditor {
     position: fixed;
     z-index: var(--z-index-library-editor);
     right: 20px;
@@ -121,11 +121,11 @@
     background: var(--bg-panel);
     box-shadow: var(--shadow-panel);
   }
-  .library-editor label {
+  .libraryEditor label {
     display: grid;
     gap: 4px;
   }
-  .library-dialog {
+  .libraryDialog {
     position: fixed;
     z-index: var(--z-index-library-dialog);
     inset: 0;
@@ -135,8 +135,8 @@
     padding: 24px;
     background: var(--bg-shell);
   }
-  .library-dialog h2,
-  .library-dialog p {
+  .libraryDialog h2,
+  .libraryDialog p {
     margin: 0;
   }
 }

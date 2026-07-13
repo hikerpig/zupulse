@@ -1,12 +1,12 @@
 @layer components {
-  .app-shell {
+  .appShell {
     height: 100dvh;
     min-height: 0;
     overflow: hidden;
     display: grid;
     grid-template-rows: auto auto minmax(0, 1fr);
   }
-  .context-bar {
+  .contextBar {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -16,29 +16,29 @@
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-default);
   }
-  :global(:root.desktop-shell) .context-bar {
+  :global(:root.desktop-shell) .contextBar {
     padding-left: 88px;
     -webkit-app-region: drag;
   }
-  :global(:root.desktop-shell) .context-actions {
+  :global(:root.desktop-shell) .contextActions {
     -webkit-app-region: no-drag;
   }
-  .context-main,
-  .context-actions {
+  .contextMain,
+  .contextActions {
     min-width: 0;
     display: flex;
     align-items: center;
     gap: 12px;
   }
-  .context-main {
+  .contextMain {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
   }
-  .context-actions {
+  .contextActions {
     justify-content: flex-end;
   }
-  .icon-navigation {
+  .iconNavigation {
     position: relative;
     display: inline-grid;
     width: 36px;
@@ -54,17 +54,17 @@
       border-color 140ms ease,
       background-color 140ms ease;
   }
-  .icon-navigation:hover,
-  .icon-navigation:focus-visible {
+  .iconNavigation:hover,
+  .iconNavigation:focus-visible {
     color: var(--accent-primary);
     background: var(--bg-control-active);
     border-color: var(--accent-primary);
   }
-  .icon-navigation:focus-visible {
+  .iconNavigation:focus-visible {
     outline: none;
     box-shadow: var(--focus-ring);
   }
-  .icon-navigation-tooltip {
+  .iconNavigationTooltip {
     position: absolute;
     z-index: 10;
     top: calc(100% + 8px);
@@ -87,13 +87,13 @@
       transform 120ms ease,
       visibility 120ms ease;
   }
-  .icon-navigation:hover .icon-navigation-tooltip,
-  .icon-navigation:focus-visible .icon-navigation-tooltip {
+  .iconNavigation:hover .iconNavigationTooltip,
+  .iconNavigation:focus-visible .iconNavigationTooltip {
     visibility: visible;
     opacity: 1;
     transform: translateY(0);
   }
-  .app-kicker {
+  .appKicker {
     margin: 0;
     color: var(--text-secondary);
     font-size: 12px;
@@ -101,18 +101,18 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
-  .context-title {
+  .contextTitle {
     margin: 0;
     font-size: 24px;
     font-weight: 700;
     line-height: 1.2;
   }
-  .context-subtitle {
+  .contextSubtitle {
     margin: 0;
     color: var(--text-secondary);
     font-size: 13px;
   }
-  .theme-toggle {
+  .themeToggle {
     display: inline-flex;
     gap: 4px;
     padding: 4px;
@@ -120,7 +120,7 @@
     border-radius: 999px;
     background: var(--bg-control);
   }
-  .theme-toggle-button {
+  .themeToggleButton {
     min-height: 30px;
     padding: 0 12px;
     border-radius: 999px;
@@ -128,13 +128,13 @@
     border-color: transparent;
     box-shadow: none;
   }
-  .theme-toggle-button[aria-pressed="true"] {
+  .themeToggleButton[aria-pressed="true"] {
     color: var(--text-primary);
     background: var(--bg-elevated);
     border-color: var(--border-default);
     box-shadow: none;
   }
-  .status-chip {
+  .statusChip {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -147,7 +147,7 @@
     font-size: 12px;
     white-space: nowrap;
   }
-  .status-chip::before {
+  .statusChip::before {
     width: 7px;
     height: 7px;
     content: "";
@@ -155,14 +155,14 @@
     background: currentColor;
     opacity: 0.9;
   }
-  .score-stage {
+  .scoreStage {
     position: relative;
     z-index: var(--z-index-score);
     height: 100%;
     min-width: 0;
     min-height: 0;
   }
-  .score-stage-frame {
+  .scoreStageFrame {
     height: 100%;
     min-height: 0;
     overflow: auto;
@@ -174,7 +174,7 @@
       inset 0 1px 0 rgb(255 255 255 / 0.2),
       0 4px 14px rgb(24 24 24 / 0.08);
   }
-  .score-viewer {
+  .scoreViewer {
     width: 100%;
     height: auto;
     min-width: 0;
@@ -182,23 +182,23 @@
     overflow: visible;
     background: var(--bg-score);
   }
-  .score-viewer :global(.at-surface) {
+  .scoreViewer :global(.at-surface) {
     display: block;
     background: var(--bg-score);
   }
 
   @media (max-width: 960px) {
-    .app-shell {
+    .appShell {
       height: auto;
       min-height: 100dvh;
       overflow: visible;
     }
-    .score-stage-frame {
+    .scoreStageFrame {
       height: auto;
       min-height: 72vh;
       overflow: visible;
     }
-    .score-viewer {
+    .scoreViewer {
       height: auto;
       min-height: calc(72vh - 36px);
       overflow: visible;
@@ -206,8 +206,8 @@
   }
 
   @media (max-width: 720px) {
-    .context-bar,
-    .context-actions {
+    .contextBar,
+    .contextActions {
       align-items: stretch;
       flex-direction: column;
     }

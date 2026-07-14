@@ -192,7 +192,7 @@ describe("App", () => {
 
     await waitFor(() => expect(application.hasSession(firstId)).toBe(true));
     await user.click(screen.getByRole("link", { name: "返回曲谱库" }));
-    await user.click((await screen.findByText("Second")).closest("button")!);
+    await user.click((await screen.findByText("Second")).closest("[role='button']")!);
 
     await waitFor(() => expect(window.location.hash).toBe(`#/viewer/${secondId}`));
     await waitFor(() => expect(application.hasSession(secondId)).toBe(true));

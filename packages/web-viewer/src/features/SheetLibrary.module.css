@@ -1,100 +1,169 @@
 @layer components {
+  /* ── Shell ─────────────────────────────────────────────── */
   .libraryShell {
     display: block;
     overflow: auto;
     background:
-      linear-gradient(90deg, rgb(242 107 79 / 5%) 1px, transparent 1px) 0 0 / 24px 24px,
-      linear-gradient(0deg, rgb(24 24 24 / 4%) 1px, transparent 1px) 0 0 / 24px 24px,
+      linear-gradient(90deg, rgb(242 107 79 / 3%) 1px, transparent 1px) 0 0 / 24px 24px,
+      linear-gradient(0deg, rgb(24 24 24 / 3%) 1px, transparent 1px) 0 0 / 24px 24px,
+      var(--bg-glow),
       var(--bg-app);
   }
+
+  /* ── Context Bar ──────────────────────────────────────── */
   .libraryContextBar {
     min-height: var(--nav-height, 72px);
-    border-top: 4px solid var(--accent-primary);
-    background: color-mix(in srgb, var(--bg-shell) 94%, var(--bg-app));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-shell) 96%, white) 0%, var(--bg-shell) 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.28),
+      inset 0 -1px 0 rgb(24 24 24 / 0.05);
+    backdrop-filter: blur(12px);
   }
   .libraryTitle {
     letter-spacing: -0.055em;
   }
-  .libraryControls,
-  .libraryList {
+
+  /* ── Controls ──────────────────────────────────────────── */
+  .libraryControls {
     width: min(1180px, calc(100% - 48px));
-    margin: 24px auto;
-  }
-  .libraryControls,
-  .libraryRow {
+    margin: 20px auto 0;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
-  .libraryControls input {
+  .libraryControls input[type="text"] {
     flex: 1;
     min-height: 40px;
     padding: 0 12px;
-    border-color: var(--border-strong);
+    border-color: var(--border-default);
     background: var(--bg-panel);
+    transition:
+      border-color 140ms ease,
+      box-shadow 140ms ease;
+  }
+  .libraryControls input[type="text"]:focus {
+    border-color: var(--accent-primary);
+    box-shadow: var(--focus-ring);
   }
   .libraryControls button[aria-pressed="true"] {
     color: var(--accent-primary);
     border-color: var(--accent-primary);
     background: var(--accent-soft);
   }
+  .libraryControls .libraryFilterButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 40px;
+    padding: 0 12px;
+    background: var(--bg-panel);
+    border-color: var(--border-default);
+    box-shadow: none;
+    font-size: 13px;
+  }
+  .libraryControls .libraryFilterButton[aria-pressed="true"] {
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+    background: var(--accent-soft);
+  }
+  .libraryControls .librarySort {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--bg-control);
+  }
+  .libraryControls .librarySort span {
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+  .libraryControls .librarySort select {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    min-height: auto;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .libraryControls .librarySort select:focus-visible {
+    box-shadow: none;
+  }
+
+  /* ── Stats Bar ─────────────────────────────────────────── */
+  .libraryStats {
+    width: min(1180px, calc(100% - 48px));
+    margin: 16px auto 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .libraryCount {
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-family: "IBM Plex Mono", monospace;
+    letter-spacing: 0.04em;
+  }
+  .libraryCount strong {
+    color: var(--text-secondary);
+  }
+
+  /* ── Score Grid ───────────────────────────────────────── */
   .libraryList {
+    width: min(1180px, calc(100% - 48px));
+    margin: 12px auto 32px;
     display: grid;
-    gap: 6px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 10px;
     padding: 0;
     list-style: none;
   }
+
+  /* ── Score Card ────────────────────────────────────────── */
   .libraryRow {
     position: relative;
-    padding: 10px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 0;
+    padding: 0;
     border: 1px solid var(--border-default);
     border-radius: var(--radius-sm);
-    background: color-mix(in srgb, var(--bg-panel) 92%, var(--bg-elevated));
-    box-shadow: 0 1px 2px rgb(24 24 24 / 6%);
+    background: var(--bg-panel);
+    box-shadow: var(--shadow-soft);
+    cursor: pointer;
     transition:
       border-color 140ms ease,
       box-shadow 140ms ease,
       transform 140ms ease;
-  }
-  .libraryRow::before {
-    position: absolute;
-    inset: 10px auto 10px 0;
-    width: 3px;
-    content: "";
-    border-radius: 0 3px 3px 0;
-    background: var(--border-strong);
+    overflow: hidden;
   }
   .libraryRow:hover {
     z-index: var(--z-index-surface-raised);
     border-color: var(--accent-primary);
-    box-shadow: var(--shadow-soft);
-    transform: translateX(2px);
+    box-shadow: var(--shadow-panel);
+    transform: translateY(-2px);
   }
-  .libraryOpen {
-    flex: 1;
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    justify-items: start;
-    column-gap: 12px;
-    row-gap: 3px;
-    text-align: left;
+  .libraryRow:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--accent-primary);
   }
-  .libraryOpen strong {
-    grid-column: 2;
-    font-size: 16px;
+
+  /* ── Card: Format Banner ──────────────────────────────── */
+  .libraryCardBanner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border-default);
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.04) 0%, transparent 100%);
   }
-  .libraryOpen span {
-    grid-column: 2;
+  .libraryFormat {
+    min-width: 36px;
+    padding: 3px 6px;
     color: var(--text-secondary);
-    font-size: 13px;
-  }
-  .libraryOpen .libraryFormat {
-    grid-row: 1 / span 3;
-    grid-column: 1;
-    align-self: center;
-    min-width: 42px;
-    padding: 5px 4px;
-    color: var(--text-primary);
     border: 1px solid var(--border-strong);
     border-radius: 3px;
     background: var(--bg-elevated);
@@ -104,10 +173,146 @@
     letter-spacing: 0.04em;
     text-align: center;
   }
-  .libraryOpen .libraryFormatMusicxml {
+  .libraryFormatMusicxml {
     color: var(--status-ready-text);
     border-color: var(--status-ready-text);
   }
+  .libraryCardBannerActions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .libraryCardBannerActions button {
+    display: inline-grid;
+    width: 28px;
+    height: 28px;
+    min-height: 0;
+    padding: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    place-items: center;
+    color: var(--text-tertiary);
+  }
+  .libraryCardBannerActions button svg {
+    width: 14px;
+    height: 14px;
+  }
+  .libraryCardBannerActions button:hover {
+    color: var(--accent-primary);
+    border-color: transparent;
+    background: var(--accent-soft);
+    transform: none;
+  }
+  .libraryCardBannerActions button:focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+  .libraryCardBannerActions .libraryFavoriteActive {
+    color: var(--accent-primary);
+  }
+
+  /* ── Card: Content ─────────────────────────────────────── */
+  .libraryContent {
+    display: grid;
+    align-items: center;
+    gap: 4px;
+    padding: 14px;
+    text-align: left;
+  }
+  .libraryContent strong {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    -webkit-box-clamp: 2;
+  }
+  .libraryArtist {
+    color: var(--text-secondary);
+    font-size: 13px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .libraryMeta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-tertiary);
+    font-size: 11px;
+    font-family: "IBM Plex Mono", monospace;
+    letter-spacing: 0.03em;
+  }
+  .libraryMetaDot {
+    width: 3px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--text-tertiary);
+  }
+  .libraryPracticeStatus {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .libraryPracticeStatusDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--text-tertiary);
+  }
+  .libraryPracticeStatusActive .libraryPracticeStatusDot {
+    background: var(--accent-primary);
+  }
+  .libraryPracticeStatusLoop .libraryPracticeStatusDot {
+    background: var(--signal-purple);
+  }
+
+  /* ── Card: Footer ──────────────────────────────────────── */
+  .libraryCardFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    border-top: 1px solid var(--border-default);
+    background: color-mix(in srgb, var(--bg-panel) 92%, var(--bg-elevated));
+  }
+  .libraryCardFooterActions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .libraryCardFooterActions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 28px;
+    padding: 0 8px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+  .libraryCardFooterActions button svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+  }
+  .libraryCardFooterActions button:hover {
+    color: var(--accent-primary);
+    border-color: transparent;
+    background: transparent;
+    transform: none;
+  }
+  .libraryCardFooterActions button:focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+
+  /* ── Editor ────────────────────────────────────────────── */
   .libraryEditor {
     position: fixed;
     z-index: var(--z-index-library-editor);
@@ -117,14 +322,17 @@
     gap: 10px;
     padding: 16px;
     border: 1px solid var(--border-default);
-    border-radius: var(--radius-md);
-    background: var(--bg-panel);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-shell) 96%, white) 0%, var(--bg-panel) 100%);
     box-shadow: var(--shadow-panel);
+    backdrop-filter: blur(16px);
   }
   .libraryEditor label {
     display: grid;
     gap: 4px;
   }
+
+  /* ── Dialog ────────────────────────────────────────────── */
   .libraryDialog {
     position: fixed;
     z-index: var(--z-index-library-dialog);
@@ -138,5 +346,28 @@
   .libraryDialog h2,
   .libraryDialog p {
     margin: 0;
+  }
+
+  /* ── Responsive ────────────────────────────────────────── */
+  @media (max-width: 960px) {
+    .libraryList {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+  }
+  @media (max-width: 720px) {
+    .libraryList {
+      grid-template-columns: 1fr;
+      margin: 12px 16px 32px;
+      width: auto;
+    }
+    .libraryControls {
+      margin: 12px 16px 0;
+      flex-wrap: wrap;
+      width: auto;
+    }
+    .libraryStats {
+      margin: 12px 16px 0;
+      width: auto;
+    }
   }
 }

@@ -64,9 +64,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] 9/11/13、altered degree、slash bass 和等音拼写可稳定 round-trip。
-- [ ] 非法 kind/extension/degree 组合被 schema 拒绝。
-- [ ] 可选字段缺失时省略，不产生显式 `undefined`。
+- [x] 9/11/13、altered degree、slash bass 和等音拼写可稳定 round-trip。
+- [x] 非法 kind/extension/degree 组合被 schema 拒绝。
+- [x] 可选字段缺失时省略，不产生显式 `undefined`。
 
 **Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/schemas.test.ts packages/web-core/src/harmony/__tests__/formatter.test.ts`
 
@@ -76,15 +76,17 @@ feature: harmony-analysis-studio
 
 **Estimated scope:** Medium: 5 files
 
+**Evidence:** `rtk pnpm vitest run packages/web-core/src/harmony/__tests__/schemas.test.ts packages/web-core/src/harmony/__tests__/formatter.test.ts`（8 tests）与 `rtk pnpm typecheck` 于 2026-07-15 通过。
+
 ### Task 4: 实现 Correction range 代数与 Effective Projection
 
 **Description:** 实现半开区间切分、覆盖、合并、Reset，以及 User Correction > source harmony > revision 的只读组合。
 
 **Acceptance criteria:**
 
-- [ ] Corrections 规范化为不重叠 ranges，后写编辑只切分相交部分。
-- [ ] source conflict/unsupported source、N.C. 和 unresolved 不混淆。
-- [ ] 新 Revision 以相同 written ranges 重新叠加旧 Corrections。
+- [x] Corrections 规范化为不重叠 ranges，后写编辑只切分相交部分。
+- [x] source conflict/unsupported source、N.C. 和 unresolved 不混淆。
+- [x] 新 Revision 以相同 written ranges 重新叠加旧 Corrections。
 
 **Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/corrections.test.ts packages/web-core/src/harmony/__tests__/effectiveProjection.test.ts`
 
@@ -94,7 +96,7 @@ feature: harmony-analysis-studio
 
 **Estimated scope:** Medium: 4 files
 
-**Evidence:** `pnpm vitest run packages/web-core/src/harmony packages/web-core/src/musicxml`（23 tests）、`pnpm typecheck` 与 `pnpm fixtures:musicxml` 于 2026-07-15 通过。XML 使用保留未触及片段的结构感知词法插入；MXL 使用直接依赖 `fflate@0.8.3`（MIT，约 797 KB unpacked），保留非 root entry 内容并在解压前检查 entry 数量、单 entry 与总解压上限。
+**Evidence:** T4 的两个测试文件共 4 tests，另加 T3 的 8 tests；相关测试与 `rtk pnpm typecheck` 于 2026-07-15 通过。XML/MXL 证据沿用 T2 记录。
 
 ### Task 5: 投影 AnalysisInput 与来源 harmony
 

@@ -25,6 +25,27 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   useEffect(() => {
     if (libraryScoreId && storageAvailable) void application.openStudio(libraryScoreId);
   }, [application, libraryScoreId, storageAvailable]);
+  useEffect(() => {
+    if (!libraryScoreId || !storageAvailable) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        void application.flushStudio(libraryScoreId);
+      }
+    };
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (studio?.status === "unsaved" || studio?.status === "saving") {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
+  }, [application, libraryScoreId, storageAvailable, studio?.status]);
   return (
     <main className={styles.page} aria-labelledby="studio-title">
       <header className={styles.header}>
@@ -64,6 +85,20 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
               </button>
               <button type="button" onClick={() => application.redoStudio(libraryScoreId!)}>
                 重做修正
+              </button>
+            </div>
+            <div aria-label="分析控制">
+              {studio.status === "loading" ? (
+                <button type="button" onClick={() => application.cancelStudioReanalysis(libraryScoreId!)}>
+                  取消分析
+                </button>
+              ) : (
+                <button type="button" onClick={() => void application.reanalyzeStudio(libraryScoreId!)}>
+                  重新分析
+                </button>
+              )}
+              <button type="button" onClick={() => void application.flushStudio(libraryScoreId!)}>
+                立即保存
               </button>
             </div>
             <label>

@@ -240,6 +240,23 @@ export class ViewerApplication implements ViewerAppHandle {
     this.setStudioState(id, state);
   }
 
+  async reanalyzeStudio(id: string): Promise<void> {
+    const session = this.studioSessions.get(id);
+    if (!session) return;
+    const state = await session.reanalyze(({ scope }) => this.createStudioDocument(id, scope));
+    this.setStudioState(id, state);
+  }
+
+  cancelStudioReanalysis(id: string): void {
+    const session = this.studioSessions.get(id);
+    if (session) this.setStudioState(id, session.cancelReanalysis());
+  }
+
+  async flushStudio(id: string): Promise<void> {
+    const session = this.studioSessions.get(id);
+    if (session) this.setStudioState(id, await session.flush());
+  }
+
   private async openStudioOnce(id: string): Promise<void> {
     const library = this.library;
     const repository = this.getHarmonyAnalysisRepository();

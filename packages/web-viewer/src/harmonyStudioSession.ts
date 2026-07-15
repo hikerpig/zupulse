@@ -127,8 +127,9 @@ export class HarmonyStudioSession {
       });
     }
   }
-  cancelReanalysis(): void {
+  cancelReanalysis(): HarmonyStudioSessionState {
     this.intent += 1;
+    return this.set({ status: this.state.document === null ? "error" : "ready", document: this.state.document });
   }
   dispose(): void {
     if (this.autosaveTimer !== undefined) clearTimeout(this.autosaveTimer);

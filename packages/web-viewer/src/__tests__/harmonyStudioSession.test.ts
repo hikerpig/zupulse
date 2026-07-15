@@ -127,6 +127,27 @@ describe("HarmonyStudioSession", () => {
     expect(session.getState().document?.annotationTarget.trackId).toBe("guitar");
   });
 
+  it("cancels reanalysis without discarding the current document", async () => {
+    const repository = new InMemoryHarmonyAnalysisRepository(
+      new Map([[document.libraryScoreId, document.sourceContentHash]]),
+    );
+    await repository.save({ document, expectedDocumentVersion: null });
+    const session = new HarmonyStudioSession(repository, document.libraryScoreId);
+    await session.load(async () => document);
+    let release: (() => void) | undefined;
+    const pending = session.reanalyze(
+      () =>
+        new Promise<HarmonyAnalysisDocument>((resolve) => {
+          release = () => resolve({ ...document, activeRevision: { ...document.activeRevision, id: "cancelled" } });
+        }),
+    );
+    expect(session.getState().status).toBe("analyzing");
+    expect(session.cancelReanalysis().status).toBe("ready");
+    release?.();
+    await pending;
+    expect(session.getState().document?.activeRevision.id).toBe(document.activeRevision.id);
+  });
+
   it("drops undo history when the Studio session is disposed", async () => {
     const repository = new InMemoryHarmonyAnalysisRepository(
       new Map([[document.libraryScoreId, document.sourceContentHash]]),

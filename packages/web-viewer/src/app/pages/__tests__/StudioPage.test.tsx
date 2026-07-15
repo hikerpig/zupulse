@@ -234,6 +234,7 @@ describe("StudioPage", () => {
         },
       },
     };
+    const flushStudio = vi.fn(async () => undefined);
     const application = {
       getSnapshot: () => snapshot,
       subscribe: () => () => undefined,
@@ -243,6 +244,7 @@ describe("StudioPage", () => {
       redoStudio: () => undefined,
       setStudioScope: async () => undefined,
       setStudioAnnotationTarget: async () => undefined,
+      flushStudio,
     } as never;
     render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -256,5 +258,7 @@ describe("StudioPage", () => {
     expect(document.activeElement?.textContent).toBe("返回查看器");
     await user.tab();
     expect(document.activeElement?.textContent).toBe("撤销修正");
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "s", ctrlKey: true }));
+    expect(flushStudio).toHaveBeenCalledWith("score-1");
   });
 });

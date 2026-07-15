@@ -1,6 +1,7 @@
 /// <reference path="./styles.d.ts" />
 
 export * from "./host";
+export * from "./harmonyStudioSession";
 export * from "./importJob";
 export * from "./importPresenter";
 export * from "./viewerApp";

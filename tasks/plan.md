@@ -87,18 +87,18 @@ P6 发布质量 T24 -> T25
 
 目标：从 AnalysisInput 产出可拒识的 Analysis Revision，先达到规则基线，不接 ML。
 
-- [ ] T6：建立 legal boundary lattice 与缓存特征。
-- [ ] T7：实现基础 kind/extension 候选和 LocalScore。
-- [ ] T8：实现 segmental Viterbi/beam 与 Transition。
-- [ ] T9：加入完整 9/11/13 和 altered chord 候选。
-- [ ] T10：加入非和弦音修正、合并、confidence 和 unresolved。
+- [x] T6：建立 legal boundary lattice 与缓存特征。
+- [x] T7：实现基础 kind/extension 候选和 LocalScore。
+- [x] T8：实现 segmental Viterbi/beam 与 Transition。
+- [x] T9：加入完整 9/11/13 和 altered chord 候选。
+- [x] T10：加入非和弦音修正、合并、confidence 和 unresolved。
 
 ### Exit gate P2
 
-- [ ] 合成 fixtures 覆盖 inversion、9/11/13、`b9/#9/#11/b13` 组合、经过音、挂留、tie、移调乐器和微分音拒识。
+- [x] 合成 fixtures 覆盖 inversion、9/11/13、`b9/#9/#11/b13` 组合、经过音、挂留、tie、移调乐器和微分音拒识。
 - [ ] Top-8 oracle recall、resolved precision 和 coverage 能从固定 corpus 自动生成报告；此阶段允许尚未达到最终发布阈值，但不得回归基础 golden cases。
-- [ ] 典型 fixture benchmark 有基线，边界/候选/beam 上限可观察且取消有效。
-- [ ] `pnpm verify:fast` 通过。
+- [x] 典型 fixture benchmark 有基线，边界/候选/beam 上限可观察且取消有效。
+- [x] `pnpm verify:fast` 通过。
 
 ## Phase 3: Persisted analysis data
 

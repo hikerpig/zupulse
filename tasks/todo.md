@@ -133,9 +133,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] mandatory boundaries 不被剪枝，optional boundaries 有稳定排序和硬上限。
-- [ ] doubling 封顶，tie/grace/percussion 权重符合规格。
-- [ ] 区间特征与直接扫描的 oracle 在 fixtures 上一致。
+- [x] mandatory boundaries 不被剪枝，optional boundaries 有稳定排序和硬上限。
+- [x] doubling 封顶，tie/grace/percussion 权重符合规格。
+- [x] 区间特征与直接扫描的 oracle 在 fixtures 上一致。
 
 **Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/boundaries.test.ts packages/web-core/src/harmony/__tests__/features.test.ts`
 
@@ -151,9 +151,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] major/minor/diminished/half-diminished/augmented/sus/power golden cases 命中 Top-K。
-- [ ] inversion 与 root-position 可按 bass 证据区分。
-- [ ] 每区间候选数有固定上限且排序确定。
+- [x] major/minor/diminished/half-diminished/augmented/sus/power golden cases 命中 Top-K。
+- [x] inversion 与 root-position 可按 bass 证据区分。
+- [x] 每区间候选数有固定上限且排序确定。
 
 **Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/candidates.test.ts`
 
@@ -169,9 +169,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] decoder 在小型 oracle 图上返回全局最优路径。
-- [ ] beam/segment length/state 数量均有硬上限。
-- [ ] key prior 只消歧，不禁止 chromatic chord 或输出功能和声。
+- [x] decoder 在小型 oracle 图上返回全局最优路径。
+- [x] beam/segment length/state 数量均有硬上限。
+- [x] key prior 只消歧，不禁止 chromatic chord 或输出功能和声。
 
 **Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/decode.test.ts`
 
@@ -187,9 +187,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] major/minor/dominant 9/11/13 与 add9/add11/add13 可区分。
-- [ ] 单项及多项 alteration 在有证据时进入 Top-8。
-- [ ] 无 tension 证据时复杂候选受先验抑制。
+- [x] major/minor/dominant 9/11/13 与 add9/add11/add13 可区分。
+- [x] 单项及多项 alteration 在有证据时进入 Top-8。
+- [x] 无 tension 证据时复杂候选受先验抑制。
 
 **Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/extendedChords.test.ts`
 
@@ -205,9 +205,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] `C | Cadd9 | C` 弱短 D 合并为 C，强长 D 仍支持 tension。
-- [ ] 算法从不自动产生 N.C.；微分音范围不取整。
-- [ ] confidence 来源可解释且低于 threshold 必为 unresolved。
+- [x] `C | Cadd9 | C` 弱短 D 合并为 C，强长 D 仍支持 tension。
+- [x] 算法从不自动产生 N.C.；微分音范围不取整。
+- [x] confidence 来源可解释且低于 threshold 必为 unresolved。
 
 **Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/nonChordTones.test.ts packages/web-core/src/harmony/__tests__/confidence.test.ts`
 
@@ -220,7 +220,9 @@ feature: harmony-analysis-studio
 ### Checkpoint P2
 
 - [ ] Harmony golden corpus 与 benchmark 报告生成成功。
-- [ ] `pnpm verify:fast`
+- [x] `pnpm verify:fast`
+
+**Evidence:** P2 相关 harmony 测试 36 tests、全仓库 `rtk pnpm verify:fast`（68 test files / 237 tests）于 2026-07-15 通过；固定 corpus/指标报告仍待 T24 完成。
 
 ## Phase 3: Persisted analysis data
 

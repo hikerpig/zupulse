@@ -485,9 +485,11 @@ feature: harmony-analysis-studio
 
 ### Checkpoint P5
 
-- [ ] `pnpm fixtures:musicxml`
-- [ ] Browser/Desktop 导出 E2E 通过。
-- [ ] Managed Score Copy 导出前后 SHA-256 相同。
+- [x] `pnpm fixtures:musicxml`
+- [x] Browser/Desktop 导出 E2E 通过。
+- [x] Managed Score Copy 导出前后 SHA-256 相同。
+
+**Evidence:** `rtk pnpm fixtures:musicxml`（12 fixtures）与 `rtk pnpm verify:e2e`（Browser 2/2、Desktop 4/4）于 2026-07-15 通过；`ViewerApplication` 导出回归以 SHA-256 断言原始 Managed Score Copy 未变。
 
 ## Phase 6: Release quality
 

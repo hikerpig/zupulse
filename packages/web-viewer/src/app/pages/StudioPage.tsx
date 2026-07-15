@@ -1,5 +1,6 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useReducer, useState, useSyncExternalStore } from "react";
 import { Link, useParams } from "react-router";
+import { reducePreviewTransport } from "@zupulse/web-core";
 import { HarmonyStudioEditor } from "../../features/harmony-studio/HarmonyStudioEditor";
 import type { ViewerApplication } from "../ViewerApplication";
 import styles from "./PageShell.module.css";
@@ -13,6 +14,11 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   const studioDocument = studio?.document;
   const firstSegment = studioDocument?.activeRevision.segments[0];
   const [exportStatus, setExportStatus] = useState<string>();
+  const [preview, dispatchPreview] = useReducer(reducePreviewTransport, {
+    status: "paused",
+    positionTicks: 0,
+    speed: 1,
+  });
   useEffect(() => {
     if (libraryScoreId && storageAvailable) void application.openStudio(libraryScoreId);
   }, [application, libraryScoreId, storageAvailable]);
@@ -96,6 +102,60 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                 ))}
               </select>
             </label>
+            <section aria-label="Studio 预览">
+              <h3>Studio 预览</h3>
+              <p role="status">{preview.status === "playing" ? "预览播放中" : "预览已暂停"}</p>
+              <button
+                type="button"
+                onClick={() => dispatchPreview({ type: preview.status === "playing" ? "pause" : "play" })}
+              >
+                {preview.status === "playing" ? "暂停预览" : "播放预览"}
+              </button>
+              <label>
+                预览位置
+                <input
+                  type="range"
+                  aria-label="预览位置"
+                  min="0"
+                  max="10000"
+                  value={preview.positionTicks}
+                  onChange={(event) =>
+                    dispatchPreview({ type: "seek", positionTicks: Number(event.currentTarget.value) })
+                  }
+                />
+              </label>
+              <label>
+                预览速度
+                <select
+                  aria-label="预览速度"
+                  value={preview.speed}
+                  onChange={(event) => dispatchPreview({ type: "speed", speed: Number(event.currentTarget.value) })}
+                >
+                  {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
+                    <option key={speed} value={speed}>
+                      {speed}x
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                disabled={!firstSegment}
+                onClick={() =>
+                  dispatchPreview({
+                    type: "loop",
+                    range: firstSegment
+                      ? {
+                          startTicks: firstSegment.range.start.offsetTicks,
+                          endTicks: firstSegment.range.end.offsetTicks,
+                        }
+                      : undefined,
+                  })
+                }
+              >
+                {preview.loop ? "取消选中片段循环" : "循环选中片段"}
+              </button>
+            </section>
             <button
               type="button"
               onClick={() =>

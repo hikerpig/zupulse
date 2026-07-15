@@ -60,6 +60,7 @@ describe("StudioPage", () => {
     );
     expect(screen.getByText(/修正尚未保存/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "撤销修正" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "播放预览" })).toBeTruthy();
   });
 
   it("reports a completed annotated-score export", async () => {

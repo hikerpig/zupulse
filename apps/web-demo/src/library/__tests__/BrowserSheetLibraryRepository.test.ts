@@ -1,5 +1,6 @@
 import { IDBFactory } from "fake-indexeddb";
 import { expect, it } from "vitest";
+import type { HarmonyAnalysisDocument } from "@zupulse/web-core";
 import {
   exampleDraft,
   sheetLibraryRepositoryContract,
@@ -35,3 +36,39 @@ it("deletes only an analysis document without deleting its Library Score", async
 
   await expect(repository.get(draft.id)).resolves.toMatchObject({ id: draft.id });
 });
+
+it("deletes analysis with its Library Score and rejects stale recreation", async () => {
+  Object.defineProperty(globalThis, "indexedDB", { configurable: true, value: new IDBFactory() });
+  const repository = new BrowserSheetLibraryRepository();
+  await repository.initialize();
+  const draft = exampleDraft();
+  await repository.add(draft);
+  const document = harmonyDocument(draft.id, draft.scoreIdentity);
+  await expect(repository.save({ document, expectedDocumentVersion: null })).resolves.toMatchObject({
+    status: "saved",
+  });
+
+  await repository.delete(draft.id);
+
+  await expect(repository.read(draft.id)).resolves.toBeNull();
+  await expect(repository.save({ document, expectedDocumentVersion: 0 })).rejects.toThrow("identity");
+});
+
+function harmonyDocument(libraryScoreId: string, sourceContentHash: string): HarmonyAnalysisDocument {
+  return {
+    schemaVersion: "1.0.0",
+    libraryScoreId,
+    sourceContentHash,
+    documentVersion: 0,
+    activeRevision: {
+      id: crypto.randomUUID(),
+      algorithmVersion: "rules-1",
+      createdAt: "2026-07-15T00:00:00.000Z",
+      parameters: { scope: { includedTrackIds: ["part-1"] }, topK: 8, decisionThreshold: 0.6 },
+      segments: [],
+    },
+    corrections: [],
+    annotationTarget: { trackId: "part-1", staffIndex: 0 },
+    updatedAt: "2026-07-15T00:00:00.000Z",
+  };
+}

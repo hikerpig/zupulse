@@ -1,4 +1,4 @@
-import type { ScoreWrittenRange } from "./schemas";
+import { compareMoments, type ScoreWrittenRange } from "./schemas";
 
 export type HarmonyFeatureVector = {
   durationByPitchClass: number[];
@@ -24,23 +24,37 @@ export function buildHarmonyFeatureCache(input: {
       const notes = input.notes.filter(
         (note) =>
           note.soundingPitchClass !== undefined &&
-          note.moment.measureIndex === range.start.measureIndex &&
-          note.moment.offsetTicks < range.end.offsetTicks &&
-          note.moment.offsetTicks + note.durationTicks > range.start.offsetTicks,
+          compareMoments(note.moment, range.end) < 0 &&
+          compareMoments(
+            { measureIndex: note.moment.measureIndex, offsetTicks: note.moment.offsetTicks + note.durationTicks },
+            range.start,
+          ) > 0,
       );
       let bass: FeatureNote | undefined;
       const maxDurationByPitchClass = Array.from({ length: 12 }, () => 0);
       for (const note of notes) {
-        const start = Math.max(note.moment.offsetTicks, range.start.offsetTicks);
-        const end = Math.min(note.moment.offsetTicks + note.durationTicks, range.end.offsetTicks);
+        const start =
+          note.moment.measureIndex === range.start.measureIndex
+            ? Math.max(note.moment.offsetTicks, range.start.offsetTicks)
+            : note.moment.offsetTicks;
+        const end =
+          note.moment.measureIndex === range.end.measureIndex
+            ? Math.min(note.moment.offsetTicks + note.durationTicks, range.end.offsetTicks)
+            : note.moment.offsetTicks + note.durationTicks;
         maxDurationByPitchClass[note.soundingPitchClass!] = Math.max(
           maxDurationByPitchClass[note.soundingPitchClass!]!,
           end - start,
         );
       }
       for (const note of notes) {
-        const start = Math.max(note.moment.offsetTicks, range.start.offsetTicks);
-        const end = Math.min(note.moment.offsetTicks + note.durationTicks, range.end.offsetTicks);
+        const start =
+          note.moment.measureIndex === range.start.measureIndex
+            ? Math.max(note.moment.offsetTicks, range.start.offsetTicks)
+            : note.moment.offsetTicks;
+        const end =
+          note.moment.measureIndex === range.end.measureIndex
+            ? Math.min(note.moment.offsetTicks + note.durationTicks, range.end.offsetTicks)
+            : note.moment.offsetTicks + note.durationTicks;
         const pitchClass = note.soundingPitchClass!;
         durationByPitchClass[pitchClass] = Math.min(
           durationByPitchClass[pitchClass]! + end - start,

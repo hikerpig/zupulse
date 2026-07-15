@@ -3,6 +3,7 @@ import { buildHarmonyFeatureCache } from "./features";
 import { generateHarmonyCandidates } from "./candidates";
 import { applyHarmonyConfidence, mergeHarmonySegments } from "./postprocess";
 import type { HarmonySegment } from "./schemas";
+import { decodeHarmonySequence } from "./decode";
 
 export function analyzeHarmonyRules(
   input: HarmonyAnalysisInput,
@@ -22,22 +23,27 @@ export function analyzeHarmonyRules(
       ),
     );
   const cache = buildHarmonyFeatureCache({ ticksPerQuarter: input.ticksPerQuarter, notes });
-  const segments = input.measures.map((measure) => {
-    const range = {
-      start: { measureIndex: measure.index, offsetTicks: 0 },
-      end: { measureIndex: measure.index, offsetTicks: measure.durationTicks },
-    };
-    const alternatives = generateHarmonyCandidates(range, cache.forRange(range), {
-      ...(options.topK === undefined ? {} : { topK: options.topK }),
-    });
-    const selected = alternatives[0]!;
-    return {
-      status: "resolved" as const,
-      range,
-      chord: selected.chord,
-      confidence: selected.confidence,
-      alternatives,
-    };
+  const boundaries = input.measures.flatMap((measure) => [
+    { measureIndex: measure.index, offsetTicks: 0 },
+    { measureIndex: measure.index, offsetTicks: measure.durationTicks },
+  ]);
+  const decoded = decodeHarmonySequence({
+    boundaries,
+    candidates: (range) =>
+      generateHarmonyCandidates(range, cache.forRange(range), {
+        ...(options.topK === undefined ? {} : { topK: options.topK }),
+      }),
+    beamWidth: 16,
+    maxSegments: Math.max(64, input.measures.length),
   });
+  const segments: HarmonySegment[] = decoded.map((selected) => ({
+    status: "resolved",
+    range: selected.range,
+    chord: selected.chord,
+    confidence: selected.candidate.confidence,
+    alternatives: generateHarmonyCandidates(selected.range, cache.forRange(selected.range), {
+      ...(options.topK === undefined ? {} : { topK: options.topK }),
+    }),
+  }));
   return mergeHarmonySegments(applyHarmonyConfidence(segments, options.decisionThreshold ?? 0.6));
 }

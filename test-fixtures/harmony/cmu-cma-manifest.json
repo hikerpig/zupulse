@@ -1,0 +1,11 @@
+{
+  "name": "cmu-computer-music-analysis-chord-test",
+  "source": "https://www.cs.cmu.edu/~music/data/melody-identification/dataset.zip",
+  "sha256": "273029e36c31d7223172508a116bbf4fd7a660ca29a21a6fbd07365db70a253b",
+  "license": "CC BY 4.0",
+  "citation": "Jiang, Z. & Dannenberg, R. (2019). Melody Identification in Standard MIDI Files. SMC 2019.",
+  "subset": "test/*_chord.txt",
+  "genres": ["pop", "keyboard"],
+  "sourcePage": "https://www.cs.cmu.edu/~music/data/melody-identification/",
+  "eventsWithChordLabels": 20
+}

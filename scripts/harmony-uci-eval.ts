@@ -8,6 +8,7 @@ import {
   type ChordSymbolInput,
 } from "../packages/web-core/src/index";
 import { chordBassPitchClass, matchesUciHarmonyLabel, parseUciHarmonyLabel, pitchNameToPitch } from "./uciHarmonyLabel";
+import { generateOracleCandidates } from "./harmonyOracleCandidates";
 
 type Manifest = { source: string; sha256: string; license: string; citation: string; events: number };
 
@@ -43,6 +44,16 @@ for (const event of events)
   groups.set(event.id.split(":")[0]!, [...(groups.get(event.id.split(":")[0]!) ?? []), event]);
 const boundaryResults: Array<{ groupId: string; predicted: Set<number>; expected: Set<number> }> = [];
 const results = [...groups.entries()].flatMap(([groupId, group]) => {
+  const notes = group.flatMap((event, measureIndex) =>
+    event.pitchClasses.map((pitchClass, noteIndex) => ({
+      id: `${event.id}:${noteIndex}`,
+      moment: { measureIndex, offsetTicks: 0 },
+      durationTicks: 480,
+      soundingPitchClass: pitchClass,
+      soundingMidi: pitchClass === event.bassPitchClass ? 36 : 60 + pitchClass,
+      voice: noteIndex + 1,
+    })),
+  );
   const input = createHarmonyAnalysisInput({
     ticksPerQuarter: 480,
     measures: group.map((_, index) => ({
@@ -58,16 +69,7 @@ const results = [...groups.entries()].flatMap(([groupId, group]) => {
         staves: [
           {
             index: 0,
-            notes: group.flatMap((event, measureIndex) =>
-              event.pitchClasses.map((pitchClass, noteIndex) => ({
-                id: `${event.id}:${noteIndex}`,
-                moment: { measureIndex, offsetTicks: 0 },
-                durationTicks: 480,
-                soundingPitchClass: pitchClass,
-                soundingMidi: pitchClass === event.bassPitchClass ? 36 : 60 + pitchClass,
-                voice: noteIndex + 1,
-              })),
-            ),
+            notes,
           },
         ],
       },
@@ -89,7 +91,11 @@ const results = [...groups.entries()].flatMap(([groupId, group]) => {
       (candidate) =>
         compareMoments(candidate.range.start, start) <= 0 && compareMoments(start, candidate.range.end) < 0,
     );
-    const alternatives = segment?.alternatives ?? [];
+    const alternatives = generateOracleCandidates({
+      ticksPerQuarter: 480,
+      range: { start, end: { measureIndex, offsetTicks: 480 } },
+      notes,
+    });
     return {
       groupId,
       expected: event.expected,

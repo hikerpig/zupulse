@@ -15,6 +15,7 @@ import {
   type CmuChordLabel,
   type MidiHarmonyNote,
 } from "./cmuCmaParser";
+import { generateOracleCandidates } from "./harmonyOracleCandidates";
 
 type Manifest = {
   source: string;
@@ -75,6 +76,7 @@ for (const chordFile of chordFiles.sort()) {
   if (labels.length === 0) continue;
   const maxEndMs = Math.max(labels.at(-1)!.startMs + 1000, ...notes.map((note) => note.endMs));
   const input = createHarmonyInput(labels, notes, maxEndMs, groupId);
+  const analysisNotes = input.tracks.flatMap((track) => track.staves.flatMap((staff) => staff.notes));
   emptyNoteEvents += labels.filter((_, index) => notesForLabel(labels, notes, index, maxEndMs).length === 0).length;
   const segments = analyzeHarmonyRules(input, { includedTrackIds: ["cmu"], topK: 8, decisionThreshold: 0 });
   boundaryResults.push({
@@ -90,6 +92,11 @@ for (const chordFile of chordFiles.sort()) {
   });
   for (const [measureIndex, label] of labels.entries()) {
     const moment = { measureIndex, offsetTicks: 0 };
+    const alternatives = generateOracleCandidates({
+      ticksPerQuarter: input.ticksPerQuarter,
+      range: { start: moment, end: { measureIndex, offsetTicks: 480 } },
+      notes: analysisNotes,
+    });
     const segment = segments.find(
       (candidate) =>
         compareMoments(candidate.range.start, moment) <= 0 && compareMoments(moment, candidate.range.end) < 0,
@@ -100,9 +107,7 @@ for (const chordFile of chordFiles.sort()) {
       expected: label.chord,
       resolved,
       correct: resolved && JSON.stringify(segment.chord) === JSON.stringify(label.chord),
-      top8:
-        segment?.alternatives.some((candidate) => JSON.stringify(candidate.chord) === JSON.stringify(label.chord)) ??
-        false,
+      top8: alternatives.some((candidate) => JSON.stringify(candidate.chord) === JSON.stringify(label.chord)),
       confidence: resolved ? segment.confidence : 0,
       facets: {
         root: resolved && JSON.stringify(segment.chord.root) === JSON.stringify(label.chord.root),

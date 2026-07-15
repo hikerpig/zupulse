@@ -108,6 +108,25 @@ describe("HarmonyStudioSession", () => {
     }
   });
 
+  it("surfaces an external CAS write as a conflict without replacing the local revision", async () => {
+    const repository = new InMemoryHarmonyAnalysisRepository(
+      new Map([[document.libraryScoreId, document.sourceContentHash]]),
+    );
+    await repository.save({ document, expectedDocumentVersion: null });
+    const session = new HarmonyStudioSession(repository, document.libraryScoreId);
+    await session.load(async () => document);
+    const external = {
+      ...document,
+      activeRevision: { ...document.activeRevision, id: "00000000-0000-4000-8000-000000000006" },
+    };
+    expect((await repository.save({ document: external, expectedDocumentVersion: 0 })).status).toBe("saved");
+    session.setAnnotationTarget({ trackId: "guitar", staffIndex: 0 });
+    const result = await session.flush();
+    expect(result.status).toBe("conflict");
+    expect(session.getState().document?.activeRevision.id).toBe(document.activeRevision.id);
+    expect(session.getState().document?.annotationTarget.trackId).toBe("guitar");
+  });
+
   it("drops undo history when the Studio session is disposed", async () => {
     const repository = new InMemoryHarmonyAnalysisRepository(
       new Map([[document.libraryScoreId, document.sourceContentHash]]),

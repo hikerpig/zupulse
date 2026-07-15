@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { StudioPage } from "../StudioPage";
+
+afterEach(() => cleanup());
 
 describe("StudioPage", () => {
   it("renders a persistent library score route without exposing a session id", () => {
@@ -216,5 +218,41 @@ describe("StudioPage", () => {
       </MemoryRouter>,
     );
     expect(screen.getByRole("alert").textContent).toContain("存储不可用");
+  });
+
+  it("keeps primary Studio controls keyboard reachable", async () => {
+    const snapshot = {
+      studio: {
+        libraryScoreId: "score-1",
+        status: "ready",
+        document: {
+          activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
+          corrections: [],
+          annotationTarget: { trackId: "track-1", staffIndex: 0 },
+        },
+      },
+    };
+    const application = {
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      hasHarmonyAnalysisStorage: () => true,
+      openStudio: async () => undefined,
+      undoStudio: () => undefined,
+      redoStudio: () => undefined,
+      setStudioScope: async () => undefined,
+      setStudioAnnotationTarget: async () => undefined,
+    } as never;
+    render(
+      <MemoryRouter initialEntries={["/studio/score-1"]}>
+        <Routes>
+          <Route path="/studio/:libraryScoreId" element={<StudioPage application={application} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    const user = userEvent.setup();
+    await user.tab();
+    expect(document.activeElement?.textContent).toBe("返回查看器");
+    await user.tab();
+    expect(document.activeElement?.textContent).toBe("撤销修正");
   });
 });

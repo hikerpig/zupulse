@@ -369,8 +369,8 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] 每个命令产生确定、可逆的 Correction 变化。
-- [ ] Reset 删除 Correction 并露出来源/算法层。
+- [x] 每个命令产生确定、可逆的 Correction 变化。
+- [x] Reset 删除 Correction 并露出来源/算法层。
 - [ ] undo/redo 离开 Studio 后丢弃，不持久化历史 Revision。
 
 **Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/correctionCommands.test.ts packages/web-viewer/src/features/harmony-studio`
@@ -406,7 +406,7 @@ feature: harmony-analysis-studio
 **Acceptance criteria:**
 
 - [ ] Scope 变化触发新 Job；Annotation Target 变化不重新分析。
-- [ ] Preview Transport 支持 play/pause/seek/speed/selected-range loop。
+- [x] Preview Transport 支持 play/pause/seek/speed/selected-range loop。
 - [ ] sidecar、resume、practice summary 前后快照完全不变。
 
 **Verification:** `pnpm vitest run packages/web-viewer/src/features/harmony-studio packages/web-core/src/playback`

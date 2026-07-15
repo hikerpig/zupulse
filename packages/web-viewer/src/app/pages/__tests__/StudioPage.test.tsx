@@ -312,6 +312,9 @@ describe("StudioPage", () => {
       </MemoryRouter>,
     );
     expect(within(view.container).getByRole("alert").textContent).toContain("版本冲突");
+    const conflictUnload = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(conflictUnload);
+    expect(conflictUnload.defaultPrevented).toBe(true);
 
     view.unmount();
     const unsavedSnapshot = { ...snapshot, studio: { ...snapshot.studio, status: "unsaved" as const } };
@@ -328,6 +331,38 @@ describe("StudioPage", () => {
         </Routes>
       </MemoryRouter>,
     );
+    const unload = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(unload);
+    expect(unload.defaultPrevented).toBe(true);
+  });
+
+  it("blocks leaving after a save failure keeps the edited document local", () => {
+    const snapshot = {
+      studio: {
+        libraryScoreId: "score-1",
+        status: "error" as const,
+        error: "保存失败",
+        document: {
+          activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
+          corrections: [],
+          annotationTarget: { trackId: "track-1", staffIndex: 0 },
+        },
+      },
+    };
+    const application = {
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      hasHarmonyAnalysisStorage: () => true,
+      openStudio: async () => undefined,
+    } as never;
+    render(
+      <MemoryRouter initialEntries={["/studio/score-1"]}>
+        <Routes>
+          <Route path="/studio/:libraryScoreId" element={<StudioPage application={application} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
     const unload = new Event("beforeunload", { cancelable: true });
     window.dispatchEvent(unload);
     expect(unload.defaultPrevented).toBe(true);

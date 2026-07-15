@@ -34,7 +34,12 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
       }
     };
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (studio?.status === "unsaved" || studio?.status === "saving") {
+      const hasUnpersistedDocument =
+        studio?.status === "unsaved" ||
+        studio?.status === "saving" ||
+        studio?.status === "conflict" ||
+        (studio?.status === "error" && studio.document !== undefined && studio.document !== null);
+      if (hasUnpersistedDocument) {
         event.preventDefault();
         event.returnValue = "";
       }

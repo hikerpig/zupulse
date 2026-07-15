@@ -387,8 +387,8 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] UI 准确显示 unsaved/saving/saved/failure/conflict。
-- [ ] reanalysis 期间旧 Revision 可编辑，失败/取消/旧 intent 不提交。
+- [x] UI 准确显示 unsaved/saving/saved/failure/conflict。
+- [x] reanalysis 期间旧 Revision 可编辑，失败/取消/旧 intent 不提交。
 - [ ] 新 Revision 原子结合提交瞬间最新 Corrections。
 
 **Verification:** `pnpm vitest run packages/web-viewer/src/features/harmony-studio/__tests__/harmonyStudioSession.test.ts packages/web-viewer/src/app`

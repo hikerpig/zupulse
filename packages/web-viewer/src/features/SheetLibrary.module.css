@@ -88,10 +88,6 @@
     font-size: 13px;
     cursor: pointer;
   }
-  .libraryControls .librarySort select:focus-visible {
-    box-shadow: none;
-  }
-
   /* ── Stats Bar ─────────────────────────────────────────── */
   .libraryStats {
     width: min(1180px, calc(100% - 48px));

@@ -90,6 +90,12 @@ describe("alphaTab playback cursor styles", () => {
     expect(css).toMatch(/\.libraryShell\s*{[^}]*display:\s*block;/s);
   });
 
+  it("keeps the library sort control visibly focusable", async () => {
+    const css = await source("../features/SheetLibrary.module.css");
+
+    expect(css).not.toMatch(/\.libraryControls \.librarySort select:focus-visible\s*{[^}]*box-shadow:\s*none;/s);
+  });
+
   it("uses a compact continuous-surface workbench with a clean score surface", async () => {
     const [appCss, workspaceCss] = await Promise.all([
       source("../app/pages/PageShell.module.css"),

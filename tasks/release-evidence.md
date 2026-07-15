@@ -28,6 +28,6 @@ updated: 2026-07-15
 
 ## 仍需人工或产品决策的项目
 
-- P4 键盘、焦点、loading/empty/error/save-conflict 的人工可访问性评审尚未完成；组件测试覆盖这些状态，但不替代人工审阅。
+- P4 人工复核已检查 Browser 空库状态、Tab 顺序和排序控件焦点环；曾发现排序 `<select>` 的焦点环被局部 CSS 隐藏并已修复，组件样式回归测试锁定该行为。loading/empty/error/save-conflict 的状态逻辑仍主要由组件测试覆盖，保存失败离开保护尚未完成独立人工演练。
 - 当前独立授权语料包括 UCI Bach Choral Harmony，以及 CMU CMA 的 CC BY 4.0 流行/键盘测试子集；仍未满足规格要求的爵士、多声部 MusicXML、source/no-source 分层覆盖。CMU 评估通过 manifest SHA-256 校验，20 个文件共 1,911 个可解析和弦事件，另计 33 个 N 事件与 131 个无重叠 MIDI 音符事件。
 - 要达到第 14 条的 95% Top-8 与 resolved precision，现有规则引擎需要超出当前“首版不提前铺设 ML”范围的产品/架构决策。

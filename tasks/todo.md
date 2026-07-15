@@ -423,6 +423,8 @@ feature: harmony-analysis-studio
 - [x] `pnpm demo:test:e2e` Studio 主旅程通过。
 - [ ] 键盘、焦点与保存失败离开保护人工检查完成。
 
+**Evidence:** Browser 人工检查确认空库可访问、Tab 顺序覆盖导入/批量导入/搜索/收藏/排序，排序 `<select>` 获得可见 3px 焦点环；此前隐藏焦点环的局部 CSS 已移除并由 `styles.test.ts` 回归测试锁定。保存失败离开保护仍需独立人工演练。
+
 ## Phase 5: Annotated score export
 
 ### Task 21: 交付 partwise MusicXML 导出

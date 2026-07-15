@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { InMemoryHarmonyAnalysisRepository, type HarmonyAnalysisDocument } from "@zupulse/web-core";
 import { HarmonyStudioSession } from "../harmonyStudioSession";
 
@@ -33,5 +33,78 @@ describe("HarmonyStudioSession", () => {
     });
     expect(calls).toBe(0);
     expect(session.getState().status).toBe("ready");
+  });
+
+  it("keeps undo and redo local to the current Studio session", async () => {
+    const repository = new InMemoryHarmonyAnalysisRepository(
+      new Map([[document.libraryScoreId, document.sourceContentHash]]),
+    );
+    await repository.save({ document, expectedDocumentVersion: null });
+    const session = new HarmonyStudioSession(repository, document.libraryScoreId);
+    await session.load(async () => document);
+    session.setAnnotationTarget({ trackId: "guitar", staffIndex: 1 });
+    expect(session.getState().document?.annotationTarget.trackId).toBe("guitar");
+    session.undo();
+    expect(session.getState().document?.annotationTarget.trackId).toBe("piano");
+    session.redo();
+    expect(session.getState().document?.annotationTarget.trackId).toBe("guitar");
+  });
+
+  it("reapplies the latest corrections when reanalysis completes", async () => {
+    const repository = new InMemoryHarmonyAnalysisRepository(
+      new Map([[document.libraryScoreId, document.sourceContentHash]]),
+    );
+    await repository.save({ document, expectedDocumentVersion: null });
+    const session = new HarmonyStudioSession(repository, document.libraryScoreId);
+    await session.load(async () => document);
+    const correction = {
+      id: "00000000-0000-4000-8000-000000000003",
+      range: { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 1 } },
+      value: { type: "no-chord" as const },
+      updatedAt: "2026-07-15T00:00:01.000Z",
+    };
+    session.setCorrections([correction]);
+    await session.reanalyze(async () => ({
+      ...document,
+      activeRevision: { ...document.activeRevision, id: "00000000-0000-4000-8000-000000000004" },
+    }));
+    expect(session.getState().document?.corrections).toEqual([correction]);
+  });
+
+  it("reanalyses on Scope changes but not Annotation Target changes", async () => {
+    const repository = new InMemoryHarmonyAnalysisRepository(
+      new Map([[document.libraryScoreId, document.sourceContentHash]]),
+    );
+    await repository.save({ document, expectedDocumentVersion: null });
+    const session = new HarmonyStudioSession(repository, document.libraryScoreId);
+    await session.load(async () => document);
+    session.setAnnotationTarget({ trackId: "guitar", staffIndex: 0 });
+    let scopes: readonly string[] = [];
+    await session.setScope(["guitar"], async ({ scope }) => {
+      scopes = scope;
+      return {
+        ...document,
+        activeRevision: { ...document.activeRevision, id: "00000000-0000-4000-8000-000000000005" },
+      };
+    });
+    expect(scopes).toEqual(["guitar"]);
+    expect(session.getState().document?.annotationTarget.trackId).toBe("guitar");
+  });
+
+  it("autosaves edits after the configured debounce delay", async () => {
+    vi.useFakeTimers();
+    try {
+      const repository = new InMemoryHarmonyAnalysisRepository(
+        new Map([[document.libraryScoreId, document.sourceContentHash]]),
+      );
+      await repository.save({ document, expectedDocumentVersion: null });
+      const session = new HarmonyStudioSession(repository, document.libraryScoreId, 500);
+      await session.load(async () => document);
+      session.setAnnotationTarget({ trackId: "guitar", staffIndex: 0 });
+      await vi.advanceTimersByTimeAsync(500);
+      expect((await repository.read(document.libraryScoreId))?.annotationTarget.trackId).toBe("guitar");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

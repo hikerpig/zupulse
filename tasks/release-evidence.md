@@ -24,7 +24,7 @@ updated: 2026-07-15
 | 12  | 导出可重导入，非 harmony 音乐语义保持                | `musicXmlAcceptance.test.ts`、`exportMxlHarmony`/fixtures                                                                                                                                                                            | 通过                               |
 | 13  | latest-intent-wins、CAS、离开 flush 防止静默丢失     | `harmonyStudioSession.test.ts`、`StudioPage.test.tsx`、Browser 双窗口 CAS E2E                                                                                                                                                        | 通过                               |
 | 14  | 固定语料准确率、覆盖率、校准、性能达到门槛           | UCI Bach eval：Top-8 59.22%、precision 46.47%、coverage 100%、boundary F1 82.96%、ECE 1.67%；CMU CMA pop/keyboard eval：Top-8 9.96%、precision 4.04%、coverage 100%、boundary F1 84.45%、ECE 1.92%；`harmony:benchmark` 通过性能预算 | **未通过：准确率与 boundary 门槛** |
-| 15  | verify 与 Browser/Desktop E2E 通过                   | `pnpm verify`（77 files / 281 tests）、`pnpm verify:e2e`（Browser 4/4、Desktop 4/4）                                                                                                                                                 | 通过                               |
+| 15  | verify 与 Browser/Desktop E2E 通过                   | `pnpm verify`（78 files / 285 tests，Browser/Desktop build 通过）、`pnpm verify:e2e`（Browser 4/4、Desktop 4/4）                                                                                                                     | 通过                               |
 
 ## 仍需人工或产品决策的项目
 

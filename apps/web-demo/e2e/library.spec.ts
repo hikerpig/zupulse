@@ -40,6 +40,7 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await page.getByRole("link", { name: "和弦分析" }).click();
   await expect(page.getByRole("heading", { name: "和弦分析工作室" })).toBeVisible();
   await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "和弦候选" })).toBeVisible();
   await page.reload();
   await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
 });

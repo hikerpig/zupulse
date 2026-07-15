@@ -156,7 +156,7 @@ P6 发布质量 T24 -> T25
 目标：达到规格中的量化精度、性能、韧性和双端发布门槛。
 
 - [ ] T24：完成标注 corpus、confidence calibration 与性能/资源预算。
-- [ ] T25：完成双端 E2E、故障注入、可访问性和发布验收证据。
+- [x] T25：完成双端 E2E、故障注入、可访问性和发布验收证据。
 
 ### Exit gate P6
 
@@ -165,7 +165,7 @@ P6 发布质量 T24 -> T25
 - [ ] boundary F1 >= 85%，confidence ECE <= 0.10。
 - [x] 典型 5,000-note 乐谱 P95 分析时间 <= 5 秒，UI/cancel 反馈 <= 100 ms。
 - [x] `pnpm verify` 与 `pnpm verify:e2e` 全部通过。
-- [ ] 规格 15 条验收标准逐项有自动化或明确人工证据。
+- [x] 规格 15 条验收标准逐项有自动化或明确人工证据。
 
 ## Verification plan
 

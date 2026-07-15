@@ -523,11 +523,11 @@ feature: harmony-analysis-studio
 
 - [x] E2E 覆盖首次分析、编辑、重分析、保存冲突、刷新、Preview、导出和删除。
 - [x] Desktop/Browser 故障不会丢失旧 Revision、重建孤儿分析或泄漏路径。
-- [ ] 规格 15 条验收标准均有自动化或明确人工证据。
+- [x] 规格 15 条验收标准均有自动化或明确人工证据。
 
 **Verification:** `pnpm verify && pnpm verify:e2e`
 
-**Evidence:** 最新 `rtk pnpm verify`（78 test files / 285 tests，Browser/Desktop build 通过）与 `rtk pnpm verify:e2e`（Browser 4/4、Desktop 4/4）通过；Browser E2E 覆盖双页面 stale revision 的 CAS conflict，Studio session 测试断言 conflict 时本地旧 Revision 不被替换，Browser IndexedDB 与 Desktop SQLite store 测试均断言删除 score 后旧 session 无法重建 orphan document，Desktop preload/Main 测试断言 Renderer 不暴露路径。仍缺完整 15 条验收逐项证据、独立 corpus 发布阈值和保存失败离开保护的独立人工演练。
+**Evidence:** 最新 `rtk pnpm verify:fast`（82 test files / 319 tests）通过；此前完整 `rtk pnpm verify` 与 `rtk pnpm verify:e2e`（Browser 4/4、Desktop 4/4）通过。Browser E2E 覆盖双页面 stale revision 的 CAS conflict，Studio session 测试断言 conflict 时本地旧 Revision 不被替换，Browser IndexedDB 与 Desktop SQLite store 测试均断言删除 score 后旧 session 无法重建 orphan document，Desktop preload/Main 测试断言 Renderer 不暴露路径。`tasks/release-evidence.md` 已逐项映射规格 1–15；第 14 条保留可复现的未通过指标，不把“证据齐全”误记为“验收通过”。Studio 页面故障注入组件测试另证明 unsaved、saving、CAS conflict 与持有本地 Document 的保存失败均触发离开保护。仍缺独立 corpus 发布阈值和保存失败离开保护的独立人工演练。
 
 **Dependencies:** Task 24
 

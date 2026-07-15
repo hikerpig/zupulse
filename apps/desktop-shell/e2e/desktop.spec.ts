@@ -147,6 +147,12 @@ test("opens a saved MusicXML Studio document", async () => {
     await expect(window.getByRole("heading", { name: "和弦候选" })).toBeVisible();
     await window.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
     await expect(window.getByText("已保存 1 个修正")).toBeVisible();
+    await window.getByRole("button", { name: "播放预览" }).click();
+    await expect(window.getByText("预览播放中")).toBeVisible();
+    await window.getByRole("button", { name: "暂停预览" }).click();
+    await window.getByRole("combobox", { name: "预览速度" }).selectOption("1.5");
+    await window.getByRole("slider", { name: "预览位置" }).fill("5000");
+    await window.getByRole("button", { name: "循环选中片段" }).click();
     await app.evaluate(({ dialog }, path) => {
       dialog.showSaveDialog = async () => ({ canceled: false, filePath: path });
     }, exportPath);

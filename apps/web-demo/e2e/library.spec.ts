@@ -43,6 +43,12 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await expect(page.getByRole("heading", { name: "和弦候选" })).toBeVisible();
   await page.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
   await expect(page.getByText("已保存 1 个修正")).toBeVisible();
+  await page.getByRole("button", { name: "播放预览" }).click();
+  await expect(page.getByText("预览播放中")).toBeVisible();
+  await page.getByRole("button", { name: "暂停预览" }).click();
+  await page.getByRole("combobox", { name: "预览速度" }).selectOption("1.5");
+  await page.getByRole("slider", { name: "预览位置" }).fill("5000");
+  await page.getByRole("button", { name: "循环选中片段" }).click();
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "导出标注曲谱" }).click();
   expect((await download).suggestedFilename()).toBe("single-voice-chords.musicxml");
@@ -50,6 +56,12 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await page.reload();
   await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
   await expect(page.getByText("已保存 1 个修正")).toBeVisible();
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "曲谱库" })).toBeVisible();
+  await page.getByRole("button", { name: "删除 Single Voice", exact: true }).click();
+  await expect(page.getByRole("alertdialog")).toContainText("全部练习数据");
+  await page.getByRole("button", { name: "永久删除" }).click();
+  await expect(page.getByRole("button", { name: "导入第一份曲谱" })).toBeVisible();
 });
 
 async function importFixture(page: Page, buttonName: string, filePath = fixture): Promise<void> {

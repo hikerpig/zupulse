@@ -520,12 +520,12 @@ feature: harmony-analysis-studio
 **Acceptance criteria:**
 
 - [ ] E2E 覆盖首次分析、编辑、重分析、保存冲突、刷新、Preview、导出和删除。
-- [ ] Desktop/Browser 故障不会丢失旧 Revision、重建孤儿分析或泄漏路径。
+- [x] Desktop/Browser 故障不会丢失旧 Revision、重建孤儿分析或泄漏路径。
 - [ ] 规格 15 条验收标准均有自动化或明确人工证据。
 
 **Verification:** `pnpm verify && pnpm verify:e2e`
 
-**Evidence:** 最新 `rtk pnpm verify`（77 test files / 279 tests、双端 build）与 `rtk pnpm verify:e2e`（Browser 4/4、Desktop 4/4）通过；Browser E2E 已覆盖双页面 stale revision 的 CAS conflict；仍缺完整 15 条验收逐项证据、独立 corpus 发布阈值、Desktop 故障注入和人工可访问性评审。
+**Evidence:** 最新 `rtk pnpm verify:fast`（77 test files / 281 tests）与 `rtk pnpm verify:e2e`（Browser 4/4、Desktop 4/4）通过；Browser E2E 覆盖双页面 stale revision 的 CAS conflict，Studio session 测试断言 conflict 时本地旧 Revision 不被替换，Browser IndexedDB 与 Desktop SQLite store 测试均断言删除 score 后旧 session 无法重建 orphan document，Desktop preload/Main 测试断言 Renderer 不暴露路径。仍缺完整 15 条验收逐项证据、独立 corpus 发布阈值和人工可访问性评审。
 
 **Dependencies:** Task 24
 

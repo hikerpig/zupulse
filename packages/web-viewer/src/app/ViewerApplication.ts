@@ -1,5 +1,11 @@
 import type { ViewerAppHandle, ViewerFile, ViewerHost, ViewerHostEvent, ViewerSessionHandle } from "../host";
-import { analyzeHarmonyRules, importLibraryScores, projectAlphaTabHarmonyInput } from "@zupulse/web-core";
+import {
+  analyzeHarmonyRules,
+  effectiveHarmonyProjection,
+  importLibraryScores,
+  listMusicXmlPartIds,
+  projectAlphaTabHarmonyInput,
+} from "@zupulse/web-core";
 import type {
   HarmonyAnalysisDocument,
   HarmonyAnalysisRepository,
@@ -13,6 +19,7 @@ import type {
 import { insertCorrection } from "@zupulse/web-core";
 import { HarmonyStudioSession } from "../harmonyStudioSession";
 import type { HarmonyStudioSessionState } from "../harmonyStudioSession";
+import { exportHarmonyStudioDocument } from "../harmonyStudioExport";
 
 export type ViewerApplicationSnapshot = {
   currentSessionId?: string;
@@ -160,6 +167,28 @@ export class ViewerApplication implements ViewerAppHandle {
   redoStudio(id: string): void {
     const session = this.studioSessions.get(id);
     if (session) this.setStudioState(id, session.redo());
+  }
+
+  async exportStudio(id: string): Promise<"saved" | "cancelled"> {
+    const library = this.library;
+    const session = this.studioSessions.get(id);
+    const document = session?.getState().document;
+    if (!library || !session || !document) throw new Error("STUDIO_DOCUMENT_NOT_SAVED");
+    const source = await library.repository.readScore(id as LibraryScore["id"]);
+    const trackIndex = trackIndexFromId(document.annotationTarget.trackId);
+    const partId = listMusicXmlPartIds(source.bytes)[trackIndex];
+    if (partId === undefined) throw new Error("ANNOTATION_TARGET_NOT_FOUND");
+    return exportHarmonyStudioDocument({
+      session,
+      projection: effectiveHarmonyProjection({
+        revision: document.activeRevision.segments,
+        source: [],
+        corrections: document.corrections,
+      }),
+      partId,
+      readScore: async () => source,
+      gateway: library.gateway,
+    });
   }
 
   private getStudioSession(id: string, repository: HarmonyAnalysisRepository): HarmonyStudioSession {
@@ -393,4 +422,10 @@ export class ViewerApplication implements ViewerAppHandle {
     if (openError !== undefined) throw openError;
     if (cleanupError !== undefined) throw cleanupError;
   }
+}
+
+function trackIndexFromId(trackId: string): number {
+  const match = /^track-(\d+)$/.exec(trackId);
+  if (!match || Number(match[1]) < 1) throw new Error("ANNOTATION_TARGET_NOT_FOUND");
+  return Number(match[1]) - 1;
 }

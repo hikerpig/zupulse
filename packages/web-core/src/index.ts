@@ -28,6 +28,7 @@ export * from "./harmony/postprocess";
 export * from "./harmony/repository";
 export * from "./harmony/correctionCommands";
 export * from "./harmony/exportMusicXmlHarmony";
+export * from "./harmony/musicXmlRoundTrip";
 export * from "./score/positions";
 export * from "./bridge/types";
 export * from "./bridge/schemas";

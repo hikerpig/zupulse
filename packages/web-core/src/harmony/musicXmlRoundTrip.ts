@@ -23,6 +23,19 @@ export function insertMusicXmlHarmony(bytes: Uint8Array, insertions: readonly Mu
   return insertIntoXml(bytes, preflight.root, insertions);
 }
 
+/** Returns source part IDs in the order used by the MusicXML importer track projection. */
+export function listMusicXmlPartIds(bytes: Uint8Array): string[] {
+  const source = isZip(bytes) ? preflightMxlEntries(unzipMxlEntries(bytes)).rootBytes : bytes;
+  const { root } = preflightMusicXml(source);
+  const tags = readXmlTags(new TextDecoder("utf-8", { fatal: true }).decode(source));
+  const parent = root === "score-partwise" ? 0 : findDirectChild(tags, 0, "part-list", () => true);
+  if (parent === undefined) throw new Error("part-list-missing");
+  const name = root === "score-partwise" ? "part" : "score-part";
+  return findDirectChildren(tags, parent, name)
+    .map((index) => attribute(tags[index]!.value, "id"))
+    .filter((id): id is string => id !== undefined && id.length > 0);
+}
+
 function insertMxlHarmony(bytes: Uint8Array, insertions: readonly MusicXmlHarmonyInsertion[]): Uint8Array {
   const entries = unzipMxlEntries(bytes);
   const { rootFileName, rootBytes } = preflightMxlEntries(entries);
@@ -147,6 +160,22 @@ function findDirectChild(
     if (tag.type === "open") depth += 1;
   }
   return undefined;
+}
+
+function findDirectChildren(tags: readonly XmlTag[], parent: number, name: string): number[] {
+  const matches: number[] = [];
+  const close = tags[parent]!.type === "self" ? parent : matchingClose(tags, parent);
+  let depth = 0;
+  for (let index = parent + 1; index < close; index += 1) {
+    const tag = tags[index]!;
+    if (tag.type === "close") {
+      depth -= 1;
+      continue;
+    }
+    if (depth === 0 && tag.name === name) matches.push(index);
+    if (tag.type === "open") depth += 1;
+  }
+  return matches;
 }
 
 function matchingClose(tags: readonly XmlTag[], open: number): number {

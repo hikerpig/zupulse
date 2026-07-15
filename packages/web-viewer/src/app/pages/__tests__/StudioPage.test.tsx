@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { StudioPage } from "../StudioPage";
 
 describe("StudioPage", () => {
@@ -56,6 +57,35 @@ describe("StudioPage", () => {
     );
     expect(screen.getByText(/修正尚未保存/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "撤销修正" })).toBeTruthy();
+  });
+
+  it("reports a completed annotated-score export", async () => {
+    const snapshot = {
+      studio: {
+        libraryScoreId: "score-1",
+        status: "ready",
+        document: { activeRevision: { segments: [], parameters: {} }, corrections: [] },
+      },
+    };
+    const application = {
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      hasHarmonyAnalysisStorage: () => true,
+      openStudio: async () => undefined,
+      undoStudio: () => undefined,
+      redoStudio: () => undefined,
+      exportStudio: async () => "saved" as const,
+    } as never;
+    const view = render(
+      <MemoryRouter initialEntries={["/studio/score-1"]}>
+        <Routes>
+          <Route path="/studio/:libraryScoreId" element={<StudioPage application={application} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    const user = userEvent.setup();
+    await user.click(within(view.container).getByRole("button", { name: "导出标注曲谱" }));
+    expect(await within(view.container).findByText("已导出标注曲谱")).toBeTruthy();
   });
 
   it("shows a storage-unavailable state instead of silently using memory", () => {

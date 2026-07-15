@@ -43,6 +43,10 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await expect(page.getByRole("heading", { name: "和弦候选" })).toBeVisible();
   await page.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
   await expect(page.getByText("已保存 1 个修正")).toBeVisible();
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "导出标注曲谱" }).click();
+  expect((await download).suggestedFilename()).toBe("single-voice-chords.musicxml");
+  await expect(page.getByText("已导出标注曲谱")).toBeVisible();
   await page.reload();
   await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
   await expect(page.getByText("已保存 1 个修正")).toBeVisible();

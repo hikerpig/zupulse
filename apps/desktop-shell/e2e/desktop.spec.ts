@@ -1,5 +1,5 @@
 import { expect, test, _electron as electron, type ElectronApplication } from "@playwright/test";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -134,6 +134,7 @@ test("opens MusicXML and MXL through the unified score entry", async () => {
 
 test("opens a saved MusicXML Studio document", async () => {
   const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-studio-"));
+  const exportPath = join(userData, "single-voice-chords.musicxml");
   const app = await launch(userData);
   try {
     const window = await app.firstWindow();
@@ -144,6 +145,14 @@ test("opens a saved MusicXML Studio document", async () => {
     await expect(window.getByRole("heading", { name: "和弦分析工作室" })).toBeVisible();
     await expect(window.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
     await expect(window.getByRole("heading", { name: "和弦候选" })).toBeVisible();
+    await window.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
+    await expect(window.getByText("已保存 1 个修正")).toBeVisible();
+    await app.evaluate(({ dialog }, path) => {
+      dialog.showSaveDialog = async () => ({ canceled: false, filePath: path });
+    }, exportPath);
+    await window.getByRole("button", { name: "导出标注曲谱" }).click();
+    await expect(window.getByText("已导出标注曲谱")).toBeVisible();
+    await expect.poll(async () => new TextDecoder().decode(await readFile(exportPath))).toContain("<harmony>");
   } finally {
     await app.close();
     await rm(userData, { recursive: true, force: true });

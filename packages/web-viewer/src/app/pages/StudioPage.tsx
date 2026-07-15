@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Link, useParams } from "react-router";
 import { HarmonyStudioEditor } from "../../features/harmony-studio/HarmonyStudioEditor";
 import type { ViewerApplication } from "../ViewerApplication";
@@ -12,6 +12,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   const studio = snapshot.studio?.libraryScoreId === libraryScoreId ? snapshot.studio : undefined;
   const studioDocument = studio?.document;
   const firstSegment = studioDocument?.activeRevision.segments[0];
+  const [exportStatus, setExportStatus] = useState<string>();
   useEffect(() => {
     if (libraryScoreId && storageAvailable) void application.openStudio(libraryScoreId);
   }, [application, libraryScoreId, storageAvailable]);
@@ -56,6 +57,18 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                 重做修正
               </button>
             </div>
+            <button
+              type="button"
+              onClick={() =>
+                void application
+                  .exportStudio(libraryScoreId!)
+                  .then((result) => setExportStatus(result === "saved" ? "已导出标注曲谱" : "已取消导出"))
+                  .catch((error: unknown) => setExportStatus(error instanceof Error ? error.message : "导出失败"))
+              }
+            >
+              导出标注曲谱
+            </button>
+            {exportStatus ? <p role="status">{exportStatus}</p> : null}
             {firstSegment ? (
               <HarmonyStudioEditor
                 candidates={firstSegment.alternatives}

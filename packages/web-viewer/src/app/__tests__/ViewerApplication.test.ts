@@ -150,7 +150,7 @@ describe("ViewerApplication", () => {
         document: {
           schemaVersion: "0",
           summary: { title: "Score", trackCount: 1 },
-          tracks: [{ id: "P1", name: "Piano", staves: [], playback: { muted: false, solo: false, volume: 1 } }],
+          tracks: [{ id: "track-1", name: "Piano", staves: [], playback: { muted: false, solo: false, volume: 1 } }],
           timeline: { ticksPerQuarter: 1, durationTicks: 1 },
           sections: [],
         },
@@ -176,7 +176,9 @@ describe("ViewerApplication", () => {
       },
       readScore: async () => ({
         fileName: "score.musicxml",
-        bytes: new TextEncoder().encode("<score-partwise><part/></score-partwise>"),
+        bytes: new TextEncoder().encode(
+          '<score-partwise><part id="P1"><measure><note/></measure></part></score-partwise>',
+        ),
       }),
       updateMetadata: async () => {
         throw new Error("unused");
@@ -194,6 +196,7 @@ describe("ViewerApplication", () => {
         return { status: "saved" as const, document };
       },
     };
+    let exported: { fileName: string; bytes: Uint8Array } | undefined;
     const application = new ViewerApplication(
       { openScore: async () => undefined, subscribe: () => () => undefined },
       async () => ({
@@ -203,7 +206,13 @@ describe("ViewerApplication", () => {
       }),
       {
         repository,
-        gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
+        gateway: {
+          selectForImport: async () => [],
+          saveExport: async (file) => {
+            exported = file;
+            return "saved";
+          },
+        },
         adapters: [adapter],
       },
     );
@@ -222,6 +231,9 @@ describe("ViewerApplication", () => {
     expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(0);
     application.redoStudio(scoreId);
     expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(1);
+    await expect(application.exportStudio(scoreId)).resolves.toBe("saved");
+    expect(exported?.fileName).toBe("score-chords.musicxml");
+    expect(new TextDecoder().decode(exported?.bytes)).toContain("<root-step>C</root-step>");
     await application.openStudio(scoreId);
     expect(adapter.parse).toHaveBeenCalledOnce();
     await application.destroy();

@@ -834,62 +834,14 @@ Browser 与 Desktop 运行同一组 HarmonyAnalysisRepository contract tests：
 - GP Library Score 显示不支持，不创建分析记录。
 - 删除 score 后已打开 Studio 的后续保存失败且不重建数据。
 
-## 命令
+## 实施与验证计划
 
-实现阶段从最小测试开始，按风险逐级执行：
+为避免本规格同时承担领域事实与执行清单，阶段、依赖图、验证矩阵和退出门槛已拆到：
 
-```bash
-pnpm vitest run packages/web-core/src/harmony
-pnpm vitest run apps/web-demo/src/library/__tests__
-pnpm vitest run apps/desktop-shell/src/main/__tests__
-pnpm fixtures:musicxml
-pnpm benchmark:musicxml
-pnpm verify:fast
-pnpm verify
-pnpm demo:test:e2e
-pnpm desktop:test:e2e
-pnpm verify:e2e
-```
+- [`tasks/plan.md`](../../../tasks/plan.md)：七阶段实施计划与验证计划。
+- [`tasks/todo.md`](../../../tasks/todo.md)：25 个单会话任务、逐项验收、命令和预计修改范围。
 
-如实现新增专用 harmony corpus/benchmark 命令，应从根 `package.json` 暴露稳定脚本，CI 不调用 workspace 私有文件路径。
-
-## 实施顺序
-
-### 1. 领域与算法基线
-
-- Zod 领域模型、formatter、range/correction 代数。
-- AnalysisInput 与 source harmony projector。
-- 基础候选、DP、unresolved 和固定合成 fixtures。
-- 先证明 9/11/13 与 altered combinations，再接 UI。
-
-### 2. 分析数据层
-
-- HarmonyAnalysisRepository contract。
-- Browser IndexedDB adapter 与迁移。
-- Desktop SQLite/Bridge adapter 与迁移。
-- Library 删除联动与 CAS。
-
-### 3. Studio 竖切
-
-- 新 route、独立 runtime/session 和首次自动分析。
-- Effective Projection、overlay、候选检查器和编辑命令。
-- autosave、后台 reanalysis、latest-intent-wins 与 Preview Transport。
-
-### 4. 导出竖切
-
-- partwise `.musicxml/.xml`。
-- timewise。
-- MXL container round-trip。
-- source harmony override、N.C.、unresolved 与 unknown-element fixtures。
-
-### 5. 质量门禁
-
-- 标注 corpus 指标与置信度校准。
-- 性能/取消 benchmark。
-- Browser/Desktop E2E、无障碍和故障注入。
-- 通过完整 `pnpm verify` 与 `pnpm verify:e2e` 后才发布入口。
-
-每一阶段都必须产生可运行的纵向验证，不一次性铺设全部文件后再补测试。
+实现必须从 Phase 0 的书面时间可逆性和 XML/MXL 增量回写关口开始；当前 phase 未通过时不得进入依赖阶段。量化产品验收仍以本规格下节为准。
 
 ## 验收标准
 

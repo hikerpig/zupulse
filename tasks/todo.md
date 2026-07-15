@@ -1,424 +1,511 @@
 ---
 status: historical
-completed: 2026-07-13
+planning_status: proposed
+feature: harmony-analysis-studio
 ---
 
-# Sheet Library Implementation Tasks
+# Harmony Analysis Studio Tasks
 
-> 已完成任务清单，未勾选项不代表当前待办；新的工作应从 `tasks/TEMPLATE.md` 建立独立任务包。
+> `status: historical` 是仓库上下文检查对 `tasks/*` 执行文档的固定分类，表示它不覆盖 Current ADR/spec；实际执行生命周期由 `planning_status` 表示。
 
-## Progress
+执行规则与阶段退出门槛见 [`tasks/plan.md`](plan.md)。任务按依赖顺序编号；未通过当前 phase checkpoint 时，不开始下一阶段。
 
-- [x] Tasks 1–13: shared contracts, Browser/ Desktop Library vertical slices, managed copies, Bridge, routing and practice ownership.
-- [x] Task 14: Browser resilience.
-- [x] Task 15: Desktop fault injection and E2E release acceptance.
+## Phase 0: Feasibility gates
 
-## Task 1: 定义 Library 领域契约与 contract harness
+### Task 1: 证明书面时间位置可逆
 
-**Description:** 在 `web-core` 定义 Library Score、Library Metadata、Practice Summary、导入结果、`SheetLibraryRepository` 和 `ScoreFileGateway` 的类型与 Zod schema，并建立所有 Repository 实现必须通过的共享 contract test harness。
+**Description:** 用变化 divisions、tuplets、多 voice/backup/forward fixture 建立 legal Score Written Moment，并证明它能精确映射回来源 MusicXML 位置。
 
 **Acceptance criteria:**
 
-- [ ] Library Score ID、Score Identity、时间戳、文件名和元数据长度都有运行时校验。
-- [ ] Repository 只暴露领域操作，不暴露路径、表或通用 get/put。
-- [ ] Contract harness 覆盖去重、元数据更新、收藏、读取文件和彻底删除语义。
+- [ ] legal moment 往返 source divisions 后完全相等。
+- [ ] 不可精确表示的位置返回结构化错误，不取整或吸附。
+- [ ] 书面时间不展开 repeat，也不绑定 track。
 
-**Verification:**
-
-- [ ] Tests pass: `pnpm vitest run packages/web-core/src/library`
-- [ ] Typecheck succeeds: `pnpm typecheck`
+**Verification:** `pnpm vitest run packages/web-core/src/musicxml packages/web-core/src/harmony`
 
 **Dependencies:** None
 
-**Files likely touched:**
-
-- `packages/web-core/src/library/types.ts`
-- `packages/web-core/src/library/schemas.ts`
-- `packages/web-core/src/library/ports.ts`
-- `packages/web-core/src/library/repositoryContract.ts`
-- `packages/web-core/src/index.ts`
-
-**Estimated scope:** Medium: 5 files
-
-## Task 2: 实现共享 Library Import 用例
-
-**Description:** 提取不创建 Viewer Session 的最小谱面验证与元数据投影，实现单/批量 Library Import，统一处理文件限制、格式、SHA-256、去重、失败分类和部分成功。
-
-**Acceptance criteria:**
-
-- [ ] 成功文件产生已验证 draft，重复内容返回 existing，损坏/不支持文件不调用 Repository `add`。
-- [ ] 批量导入按文件返回 created/existing/failed，任意单项失败不中止其他项。
-- [ ] 导入验证不创建 alphaTab/audio/Viewer Session，现有 `openScore()` 行为不回归。
-
-**Verification:**
-
-- [ ] Tests pass: `pnpm vitest run packages/web-core/src/library/importLibraryScores.test.ts packages/web-core/src/import/openScore.test.ts`
-- [ ] Typecheck succeeds: `pnpm typecheck`
-
-**Dependencies:** Task 1
-
-**Files likely touched:**
-
-- `packages/web-core/src/library/importLibraryScores.ts`
-- `packages/web-core/src/library/importLibraryScores.test.ts`
-- `packages/web-core/src/import/openScore.ts`
-- `packages/web-core/src/import/types.ts`
-- `packages/web-core/src/index.ts`
-
-**Estimated scope:** Medium: 5 files
-
-## Task 3: 实现 Browser IndexedDB Repository 与 File Gateway
-
-**Description:** 用原生 IndexedDB 实现 Browser Repository，在单个 transaction 中保存/删除馆藏、谱文件字节和练习数据；扩展现有 browser host 实现多选文件与导出。
-
-**Acceptance criteria:**
-
-- [ ] IndexedDB schema 以 Score Identity 唯一索引防止并发重复导入。
-- [ ] Repository 通过 Task 1 共享 contract harness，且删除不留文件或练习孤儿记录。
-- [ ] Browser Gateway 支持单选/多选、取消与原始文件名导出。
-
-**Verification:**
-
-- [ ] Tests pass: `pnpm vitest run apps/web-demo/src/library`
-- [ ] Build succeeds: `pnpm demo:build`
-
-**Dependencies:** Task 1
-
-**Files likely touched:**
-
-- `apps/web-demo/src/library/BrowserSheetLibraryRepository.ts`
-- `apps/web-demo/src/library/BrowserSheetLibraryRepository.test.ts`
-- `apps/web-demo/src/library/BrowserScoreFileGateway.ts`
-- `apps/web-demo/src/browserHost.ts`
-- `apps/web-demo/src/main.ts`
-
-**Estimated scope:** Medium: 5 files
-
-## Task 4: 交付 Browser Library 首页与单/批量导入
-
-**Description:** 把 `/` 替换为 Sheet Library 空状态和基础列表，注入 Repository/Gateway，打通 Browser 单文件导入直达 Studio 与批量导入留在 Library 的首个 UI 竖切。
-
-**Acceptance criteria:**
-
-- [ ] 冷启动显示可访问的 Library 空状态/列表，不再显示空闲 Studio。
-- [ ] 单导入成功或命中重复时导航 Studio；批量导入留在 Library 并汇总成功/重复/失败。
-- [ ] Loading、取消、空库、无结果和 Repository 错误不产生空白页。
-
-**Verification:**
-
-- [ ] Tests pass: `pnpm vitest run packages/web-viewer/src/app/App.test.tsx`
-- [ ] Build succeeds: `pnpm demo:build`
-- [ ] Manual check: Browser 单导入与批量汇总流程
-
-**Dependencies:** Tasks 2, 3
-
-**Files likely touched:**
-
-- `packages/web-viewer/src/app/App.tsx`
-- `packages/web-viewer/src/app/ViewerApplication.ts`
-- `packages/web-viewer/src/features/SheetLibrary.tsx`
-- `packages/web-viewer/src/app/App.test.tsx`
-- `packages/web-viewer/src/styles.css`
-
-**Estimated scope:** Medium: 5 files
-
-## Task 5: 以 Library Score 重建 Viewer 路由
-
-**Description:** 保留 `/viewer/` 路由前缀，将 `/viewer/:sessionId` 的参数语义迁移为 `/viewer/:libraryScoreId`，从 Repository 读取 Managed Score Copy 创建 Viewer Session，并为刷新、缺失馆藏和损坏文件提供可恢复状态。
-
-**Acceptance criteria:**
-
-- [ ] 直接打开/刷新 `/viewer/:libraryScoreId` 可从持久馆藏重建新 Viewer Session。
-- [ ] 不存在 ID 显示返回 Library 的缺失状态，托管文件损坏不静默删除馆藏。
-- [ ] 旧 `/viewer/:sessionId` 状态所有者和自动导航逻辑被删除，Studio 提供返回 Library。
-
-**Verification:**
-
-- [ ] Tests pass: `pnpm vitest run packages/web-viewer/src/app/ViewerApplication.test.ts packages/web-viewer/src/app/App.test.tsx`
-- [ ] Build succeeds: `pnpm demo:build`
-- [ ] Manual check: Studio URL 刷新后谱面恢复
-
-**Dependencies:** Task 4
-
-**Files likely touched:**
-
-- `packages/web-viewer/src/app/App.tsx`
-- `packages/web-viewer/src/app/ViewerApplication.ts`
-- `packages/web-viewer/src/app/ViewerApplication.test.ts`
-- `packages/web-viewer/src/app/App.test.tsx`
-- `packages/web-viewer/src/features/PlaybackWorkspace.tsx`
-
-**Estimated scope:** Medium: 5 files
-
-## Task 6: 交付 Library 搜索、筛选与排序
-
-**Description:** 在共享 UI 对 Repository 返回的轻量摘要执行标题/艺术家搜索、全部/收藏筛选和四种排序，不向 Repository 下推 query。
-
-**Acceptance criteria:**
-
-- [ ] 默认最近活动使用 `max(importedAt,lastOpenedAt)`，编辑和收藏不改变顺序。
-- [ ] 搜索覆盖显示标题与艺术家，无结果状态可一次清除条件。
-- [ ] 筛选/排序键盘可操作，选择只在当前设备记忆且不进入 Repository。
-
-**Verification:**
-
-- [ ] Tests pass: `pnpm vitest run packages/web-viewer/src/features/SheetLibrary.test.tsx`
-- [ ] Manual check: 中英文标题搜索与所有排序选项
-
-**Dependencies:** Task 4
-
-**Files likely touched:**
-
-- `packages/web-viewer/src/features/SheetLibrary.tsx`
-- `packages/web-viewer/src/features/SheetLibrary.test.tsx`
-- `packages/web-viewer/src/app/appStore.tsx`
-- `packages/web-viewer/src/styles.css`
+**Files likely touched:** `packages/web-core/src/harmony/writtenTime.ts`、`packages/web-core/src/harmony/__tests__/writtenTime.test.ts`、`packages/web-core/src/musicxml/alphaTabProjection.ts`、MusicXML fixtures。
 
 **Estimated scope:** Medium: 4 files
 
-## Task 7: 交付收藏与 Library Metadata 编辑
+### Task 2: 证明 XML/MXL 增量写入可行
 
-**Description:** 增加行收藏操作和可访问的馆藏信息编辑对话框，并以用户覆盖值 > 谱内值 > 文件名的优先级渲染列表。
+**Description:** 对 partwise、timewise 和 MXL 做最小 `<harmony>` 插入实验，验证未知节点与非 harmony 音乐语义保留，并冻结 XML/ZIP 公开依赖选择。
 
 **Acceptance criteria:**
 
-- [ ] 收藏更新立即反映于“收藏”筛选，失败时回滚 UI 并报错。
-- [ ] 编辑标题/艺术家不修改托管字节、Score Identity 或 activityAt。
-- [ ] 对话框的标签、初始焦点、Tab 圈定和关闭后焦点恢复可验证。
+- [ ] 三种来源容器插入 harmony 后均可被当前 adapter 重开。
+- [ ] semantic diff 只出现预期 harmony 变化。
+- [ ] external entity、path traversal、zip bomb 和超限输入被拒绝。
 
-**Verification:**
+**Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/musicXmlRoundTrip.test.ts && pnpm fixtures:musicxml`
 
-- [ ] Tests pass: `pnpm vitest run packages/web-viewer/src/features/SheetLibrary.test.tsx`
-- [ ] Manual check: 仅键盘完成收藏和编辑
+**Dependencies:** None
 
-**Dependencies:** Tasks 4, 6
+**Files likely touched:** `packages/web-core/package.json`、`pnpm-lock.yaml`、`packages/web-core/src/harmony/musicXmlRoundTrip.ts`、对应测试与 fixtures。
 
-**Files likely touched:**
+**Estimated scope:** Medium: 5 files
 
-- `packages/web-viewer/src/features/SheetLibrary.tsx`
-- `packages/web-viewer/src/features/EditLibraryMetadataDialog.tsx`
-- `packages/web-viewer/src/features/SheetLibrary.test.tsx`
-- `packages/web-viewer/src/styles.css`
+### Checkpoint P0
+
+- [ ] `tasks/plan.md` 的 Exit gate P0 全部通过并记录结论。
+
+## Phase 1: Domain core
+
+### Task 3: 定义 Harmony 领域 schema 与 formatter
+
+**Description:** 建立 SpelledPitch、ChordSymbol、ChordDegree、Range、Revision、Correction、Document 和 AnnotationTarget 的严格 Zod schema，并生成稳定显示文本。
+
+**Acceptance criteria:**
+
+- [ ] 9/11/13、altered degree、slash bass 和等音拼写可稳定 round-trip。
+- [ ] 非法 kind/extension/degree 组合被 schema 拒绝。
+- [ ] 可选字段缺失时省略，不产生显式 `undefined`。
+
+**Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/schemas.test.ts packages/web-core/src/harmony/__tests__/formatter.test.ts`
+
+**Dependencies:** Tasks 1, 2
+
+**Files likely touched:** `packages/web-core/src/harmony/schemas.ts`、`model.ts`、两个测试、`packages/web-core/src/index.ts`。
+
+**Estimated scope:** Medium: 5 files
+
+### Task 4: 实现 Correction range 代数与 Effective Projection
+
+**Description:** 实现半开区间切分、覆盖、合并、Reset，以及 User Correction > source harmony > revision 的只读组合。
+
+**Acceptance criteria:**
+
+- [ ] Corrections 规范化为不重叠 ranges，后写编辑只切分相交部分。
+- [ ] source conflict/unsupported source、N.C. 和 unresolved 不混淆。
+- [ ] 新 Revision 以相同 written ranges 重新叠加旧 Corrections。
+
+**Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/corrections.test.ts packages/web-core/src/harmony/__tests__/effectiveProjection.test.ts`
+
+**Dependencies:** Task 3
+
+**Files likely touched:** `packages/web-core/src/harmony/corrections.ts`、`effectiveProjection.ts`、两个测试。
 
 **Estimated scope:** Medium: 4 files
 
-## Task 8: 交付原始文件导出与彻底删除
+### Task 5: 投影 AnalysisInput 与来源 harmony
 
-**Description:** 从 Library 行菜单提供导出和删除，Studio 只提供导出；删除确认明确包含练习数据并经 Repository 执行原子彻底删除。
-
-**Acceptance criteria:**
-
-- [ ] 导出保留原始文件名和原始字节，不嵌入 Library Metadata/练习数据，取消无副作用。
-- [ ] 删除确认显示曲名与不可恢复文案，删除成功后列表更新，Studio 无删除入口。
-- [ ] 删除后重新导入相同字节产生新 Library Score ID 且无旧练习数据。
-
-**Verification:**
-
-- [ ] Tests pass: `pnpm vitest run packages/web-viewer/src/features/SheetLibrary.test.tsx apps/web-demo/src/library`
-- [ ] Manual check: Browser 导出字节与导入 fixture 一致
-
-**Dependencies:** Tasks 5, 7
-
-**Files likely touched:**
-
-- `packages/web-viewer/src/features/SheetLibrary.tsx`
-- `packages/web-viewer/src/features/DeleteLibraryScoreDialog.tsx`
-- `packages/web-viewer/src/features/SheetLibrary.test.tsx`
-- `packages/web-viewer/src/app/ViewerApplication.ts`
-- `packages/web-viewer/src/styles.css`
-
-**Estimated scope:** Medium: 5 files
-
-## Task 9: 把练习数据归属和摘要接入 Library Score
-
-**Description:** 让 Studio 的 Practice Sidecar、Local Playback Resume 和 Library Practice Summary 都受 Library Score 生命周期约束，保持 Score Identity 作内容身份但防止删除后旧 Session 重建孤儿数据。
+**Description:** 从 alphaTab/MusicXML 建立可序列化 AnalysisInput，并解析来源 `<harmony>`、N.C.、重复和冲突地址。
 
 **Acceptance criteria:**
 
-- [ ] Studio 打开和持久化练习状态时同时具有 Library Score ID 与 Score Identity。
-- [ ] 已删除 Library Score 的旧 Session 后续写入失败且不重建 sidecar/resume。
-- [ ] Library Practice Summary 展示上次练习时间、上次位置和 Loop 存在性，不创建进度百分比。
+- [ ] 输入保留 track/staff/voice、note time、tie、key/meter、spelling 和 source mapping。
+- [ ] 默认 Scope 只含有音高非打击乐 tracks。
+- [ ] 来源 harmony 作为固定 state；unsupported kind 保留原节点且不被算法填补。
 
-**Verification:**
+**Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/analysisInput.test.ts packages/web-core/src/harmony/__tests__/sourceHarmony.test.ts`
 
-- [ ] Tests pass: `pnpm vitest run packages/web-core/src/playback packages/web-core/src/library packages/web-viewer/src/features/SheetLibrary.test.tsx`
-- [ ] Manual check: 练习后返回 Library 能看到客观摘要
+**Dependencies:** Tasks 1, 3
 
-**Dependencies:** Tasks 1, 5, 8
-
-**Files likely touched:**
-
-- `packages/web-core/src/library/ports.ts`
-- `packages/web-core/src/playback/playbackPersistence.ts`
-- `packages/web-core/src/playback/playbackSidecar.ts`
-- `packages/web-viewer/src/playbackPresenter.ts`
-- `packages/web-viewer/src/features/SheetLibrary.tsx`
+**Files likely touched:** `packages/web-core/src/harmony/analysisInput.ts`、`sourceHarmony.ts`、两个测试、`packages/web-core/src/index.ts`。
 
 **Estimated scope:** Medium: 5 files
 
-## Task 10: 验证 Electron SQLite 并建立版本化 schema
+### Checkpoint P1
 
-**Description:** 在 Electron 43 主进程和打包产物中 fail-fast 验证 `node:sqlite`，然后在不清空旧数据的前提下建立版本表、Library 表、唯一索引和顺序迁移。
+- [ ] `pnpm vitest run packages/web-core/src/harmony`
+- [ ] `pnpm verify:fast`
+
+## Phase 2: Analysis engine
+
+### Task 6: 建立边界格与区间特征缓存
+
+**Description:** 从合法 note/beat/bar/source events 生成有上限的 boundary lattice，并用前缀缓存计算 pitch-class、metric、bass 和 voice coverage 特征。
 
 **Acceptance criteria:**
 
-- [ ] 开发和 packaged Electron 都有可运行 SQLite smoke test；若 `node:sqlite` 不可用，任务停在依赖选型决策而不继续实现。
-- [ ] schema 包含 Library Score ID 主键、Score Identity 唯一索引、storage state 和 schema version。
-- [ ] 迁移失败保留原数据并使 Repository 不可写，不删除/重建数据库。
+- [ ] mandatory boundaries 不被剪枝，optional boundaries 有稳定排序和硬上限。
+- [ ] doubling 封顶，tie/grace/percussion 权重符合规格。
+- [ ] 区间特征与直接扫描的 oracle 在 fixtures 上一致。
 
-**Verification:**
+**Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/boundaries.test.ts packages/web-core/src/harmony/__tests__/features.test.ts`
 
-- [ ] Tests pass: `pnpm vitest run apps/desktop-shell/src/main/library`
-- [ ] Build succeeds: `pnpm desktop:build`
-- [ ] Package smoke succeeds: `pnpm desktop:package`
+**Dependencies:** Task 5
 
-**Dependencies:** Task 1
+**Files likely touched:** `packages/web-core/src/harmony/boundaries.ts`、`features.ts`、两个测试。
 
-**Files likely touched:**
+**Estimated scope:** Medium: 4 files
 
-- `apps/desktop-shell/src/main/library/sqlite.ts`
-- `apps/desktop-shell/src/main/library/migrations.ts`
-- `apps/desktop-shell/src/main/library/sqlite.test.ts`
-- `apps/desktop-shell/scripts/verify-package.mjs`
-- `packages/web-core/src/storage/sqliteSchema.ts`
+### Task 7: 交付基础候选与 LocalScore
 
-**Estimated scope:** Medium: 5 files
-
-## Task 11: 实现 Desktop Managed Score Copy 与崩溃恢复
-
-**Description:** 实现 Desktop Repository 的文件管理、pending/ready/deleting 状态、staging rename 和 initialize reconciliation，并通过共享 contract harness。
+**Description:** 生成 triad、sus、power、6/7、inversion 候选并按 required/optional/conflict tones、bass、metric 和复杂度评分。
 
 **Acceptance criteria:**
 
-- [ ] add/read/delete 只使用 Library Score ID 相对路径，不信任用户文件名生成路径。
-- [ ] initialize 可完成/回滚 pending、继续 deleting、清理无主 staging；ready + missing file 保留记录并报错。
-- [ ] Desktop Repository 通过与 Browser 相同的 contract harness。
+- [ ] major/minor/diminished/half-diminished/augmented/sus/power golden cases 命中 Top-K。
+- [ ] inversion 与 root-position 可按 bass 证据区分。
+- [ ] 每区间候选数有固定上限且排序确定。
 
-**Verification:**
+**Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/candidates.test.ts`
 
-- [ ] Tests pass: `pnpm vitest run apps/desktop-shell/src/main/library`
-- [ ] Typecheck succeeds: `pnpm typecheck`
+**Dependencies:** Tasks 3, 6
 
-**Dependencies:** Task 10
+**Files likely touched:** `packages/web-core/src/harmony/candidates.ts`、`chordTemplates.ts`、`scoring.ts`、对应测试。
 
-**Files likely touched:**
+**Estimated scope:** Medium: 4 files
 
-- `apps/desktop-shell/src/main/library/DesktopLibraryStore.ts`
-- `apps/desktop-shell/src/main/library/files.ts`
-- `apps/desktop-shell/src/main/library/reconcile.ts`
-- `apps/desktop-shell/src/main/library/DesktopLibraryStore.test.ts`
-- `apps/desktop-shell/src/main/library/reconcile.test.ts`
+### Task 8: 交付全局 sequence decoder
 
-**Estimated scope:** Medium: 5 files
-
-## Task 12: 扩展 Library Bridge 并实现 Desktop adapters
-
-**Description:** 扩展共享 Bridge schema/response/capabilities，在 Main Process 注册 Library/File handlers，并在 Renderer 提供完成 `SheetLibraryRepository` 和 `ScoreFileGateway` 的窄 adapter。
+**Description:** 实现 segmental Viterbi 与固定宽度 beam，加入 same-chord、fifth motion 和常见进行的弱 Transition prior。
 
 **Acceptance criteria:**
 
-- [ ] 所有 Library/File 请求与响应从 Zod schema 派生类型，Bridge version 升级且 capability 如实开启。
-- [ ] Renderer 不获得绝对路径，外部文件仍通过一次性 token 受限读取。
-- [ ] Main Process 重新验证 ID、哈希、字节大小和元数据，且 sender origin 保护不回归。
+- [ ] decoder 在小型 oracle 图上返回全局最优路径。
+- [ ] beam/segment length/state 数量均有硬上限。
+- [ ] key prior 只消歧，不禁止 chromatic chord 或输出功能和声。
 
-**Verification:**
+**Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/decode.test.ts`
 
-- [ ] Tests pass: `pnpm vitest run packages/web-core/src/bridge apps/desktop-shell/src/main/bridge.test.ts apps/desktop-shell/src/main/library`
-- [ ] Build succeeds: `pnpm desktop:build`
+**Dependencies:** Task 7
 
-**Dependencies:** Tasks 1, 2, 11
+**Files likely touched:** `packages/web-core/src/harmony/decode.ts`、`transitions.ts`、对应测试、`analyzeHarmony.ts`。
 
-**Files likely touched:**
+**Estimated scope:** Medium: 4 files
 
-- `packages/web-core/src/bridge/schemas.ts`
-- `packages/web-core/src/bridge/types.ts`
-- `apps/desktop-shell/src/main/bridge.ts`
-- `apps/desktop-shell/src/main/main.ts`
-- `apps/desktop-shell/src/renderer.ts`
+### Task 9: 加入完整高叠与 altered candidates
 
-**Estimated scope:** Medium: 5 files
-
-## Task 13: 交付 Desktop Library Import 到 Studio 竖切
-
-**Description:** 把 Desktop 启动与菜单接入共享 Library UI，使 `CmdOrCtrl+O`、菜单和页面按钮都触发 Library Import，并在导入后从托管副本进入 Studio。
+**Description:** 在 evidence-driven candidate expansion 中加入完整 9/11/13、add chords 和 `b9/#9/#11/b13` 组合，不做笛卡尔积。
 
 **Acceptance criteria:**
 
-- [ ] Desktop 冷启动进入 Library，菜单文案为“导入曲谱…”并走同一导入用例。
-- [ ] 单导入直达 Studio，批量导入留在 Library，重复导入打开已有馆藏。
-- [ ] 导入后移动/删除外部原文件，Desktop 重启后仍可从 Library 离线打开。
+- [ ] major/minor/dominant 9/11/13 与 add9/add11/add13 可区分。
+- [ ] 单项及多项 alteration 在有证据时进入 Top-8。
+- [ ] 无 tension 证据时复杂候选受先验抑制。
 
-**Verification:**
+**Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/extendedChords.test.ts`
 
-- [ ] Tests pass: `pnpm vitest run apps/desktop-shell/src/main packages/web-viewer/src/app`
-- [ ] Build succeeds: `pnpm desktop:build`
-- [ ] Manual check: 外部原文件删除后重启续练
+**Dependencies:** Task 7
 
-**Dependencies:** Tasks 5, 9, 12
+**Files likely touched:** `packages/web-core/src/harmony/chordTemplates.ts`、`candidates.ts`、`scoring.ts`、对应测试。
 
-**Files likely touched:**
+**Estimated scope:** Medium: 4 files
 
-- `apps/desktop-shell/src/main/main.ts`
-- `apps/desktop-shell/src/renderer.ts`
-- `packages/web-viewer/src/app/ViewerApplication.ts`
-- `packages/web-viewer/src/app/App.tsx`
-- `apps/desktop-shell/e2e/desktop.spec.ts`
+### Task 10: 加入非和弦音修正与置信度拒识
 
-**Estimated scope:** Medium: 5 files
-
-## Task 14: 完成 Browser quota、迁移与多标签页韧性
-
-**Description:** 为 Browser Repository 增加 schema migration failure 保护、persistent storage 请求、quota 错误分类和页面 focus 刷新，并验证多标签页删除后旧 Studio 不能重建练习数据。
+**Description:** 对 passing/neighbor/suspension/anticipation 做一次上下文修正，合并短伪 segment，并以固定 threshold 输出 resolved/unresolved。
 
 **Acceptance criteria:**
 
-- [ ] 启动尝试 `navigator.storage.persist()`，失败不阻塞使用，UI 明示 Browser 数据可能被清理。
-- [ ] quota 不足只使当前导入失败，已有 Library 不被驱逐；schema 迁移失败不清库且阻止写入。
-- [ ] 页面恢复 focus 后刷新 Library，不引入 BroadcastChannel；删除后旧 Session 写入被拒绝。
+- [ ] `C | Cadd9 | C` 弱短 D 合并为 C，强长 D 仍支持 tension。
+- [ ] 算法从不自动产生 N.C.；微分音范围不取整。
+- [ ] confidence 来源可解释且低于 threshold 必为 unresolved。
 
-**Verification:**
+**Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/nonChordTones.test.ts packages/web-core/src/harmony/__tests__/confidence.test.ts`
 
-- [ ] Tests pass: `pnpm vitest run apps/web-demo/src/library packages/web-viewer/src/features/SheetLibrary.test.tsx`
-- [ ] Build succeeds: `pnpm demo:build`
-- [ ] Manual check: 两标签页 focus 刷新和删除冲突
+**Dependencies:** Tasks 8, 9
 
-**Dependencies:** Tasks 3, 4, 8, 9
-
-**Files likely touched:**
-
-- `apps/web-demo/src/library/BrowserSheetLibraryRepository.ts`
-- `apps/web-demo/src/library/BrowserSheetLibraryRepository.test.ts`
-- `apps/web-demo/src/main.ts`
-- `packages/web-viewer/src/features/SheetLibrary.tsx`
-- `packages/web-viewer/src/features/SheetLibrary.test.tsx`
+**Files likely touched:** `packages/web-core/src/harmony/nonChordTones.ts`、`confidence.ts`、`analyzeHarmony.ts`、两个测试。
 
 **Estimated scope:** Medium: 5 files
 
-## Task 15: 完成 Desktop 故障注入与双端 E2E 验收
+### Checkpoint P2
 
-**Description:** 在 Desktop 导入/删除每个持久化边界注入故障并验证下次 initialize 收敛，扩展 Browser/Desktop E2E 覆盖规格的核心用户流和可访问性。
+- [ ] Harmony golden corpus 与 benchmark 报告生成成功。
+- [ ] `pnpm verify:fast`
+
+## Phase 3: Persisted analysis data
+
+### Task 11: 定义 Repository、CAS 与 contract harness
+
+**Description:** 新增独立 HarmonyAnalysisRepository、读写用例和共享 contract，明确 expectedDocumentVersion 与 source hash 约束。
 
 **Acceptance criteria:**
 
-- [ ] pending/deleting 每个崩溃点重启后收敛，无重复馆藏、无不可清理 staging，ready + missing file 保留记录报错。
-- [ ] Browser/Desktop E2E 覆盖空库、单/批量导入、Studio 恢复、编辑、收藏、导出、删除和冷启动。
-- [ ] 主流程仅用键盘可完成，320/768/1024/1440 px 无遮挡或不可达操作。
+- [ ] create/read/update/conflict 有结构化结果。
+- [ ] score 不存在或 hash 不匹配时拒绝写入。
+- [ ] contract 覆盖删除后禁止重建孤儿 Document。
 
-**Verification:**
+**Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/repositoryContract.test.ts`
 
-- [ ] Full checks pass: `pnpm check && pnpm demo:build && pnpm desktop:build`
-- [ ] Desktop E2E passes: `pnpm desktop:test:e2e`
-- [ ] Format passes: `pnpm format:check`
-- [ ] Manual check: 规格 12 条验收标准逐项留证
+**Dependencies:** Tasks 3, 4
 
-**Dependencies:** Tasks 10, 11, 12, 13, 14
-
-**Files likely touched:**
-
-- `apps/desktop-shell/src/main/library/reconcile.test.ts`
-- `apps/desktop-shell/e2e/desktop.spec.ts`
-- `apps/web-demo/src/main.test.ts`
-- `packages/web-viewer/src/app/App.test.tsx`
-- `docs/superpowers/specs/2026-07-12-sheet-library-design.md`
+**Files likely touched:** `packages/web-core/src/harmony/ports.ts`、`saveHarmonyAnalysis.ts`、`repositoryContract.ts`、测试、`packages/web-core/src/index.ts`。
 
 **Estimated scope:** Medium: 5 files
+
+### Task 12: 交付 Browser IndexedDB version 2
+
+**Description:** 添加 `harmony_analyses` store、CAS transaction 和删除联动，并保持 version 1 数据的 additive migration。
+
+**Acceptance criteria:**
+
+- [ ] Browser adapter 通过共享 contract。
+- [ ] migration failure 不清库且阻止写入。
+- [ ] 多标签页冲突不静默覆盖，删除后 autosave 被拒绝。
+
+**Verification:** `pnpm vitest run apps/web-demo/src/library/__tests__/BrowserHarmonyAnalysisRepository.test.ts && pnpm demo:build`
+
+**Dependencies:** Task 11
+
+**Files likely touched:** `apps/web-demo/src/library/BrowserSheetLibraryRepository.ts`、`BrowserHarmonyAnalysisRepository.ts`、对应测试、`apps/web-demo/src/main.ts`。
+
+**Estimated scope:** Medium: 4 files
+
+### Task 13: 交付 Desktop SQLite schema version 2
+
+**Description:** 添加 `library_harmony_analyses` 表、CAS store 和 Library 删除事务联动，不依赖隐式 foreign-key cascade。
+
+**Acceptance criteria:**
+
+- [ ] version 1 到 2 顺序迁移保留现有 Library 数据。
+- [ ] Main store 通过共享 contract 和 migration failure 测试。
+- [ ] 删除 score 与 analysis row 在同一 SQLite transaction 中完成。
+
+**Verification:** `pnpm vitest run apps/desktop-shell/src/main/library && pnpm desktop:build`
+
+**Dependencies:** Task 11
+
+**Files likely touched:** `apps/desktop-shell/src/main/library/migrations.ts`、`DesktopHarmonyAnalysisStore.ts`、`DesktopLibraryStore.ts`、两个测试。
+
+**Estimated scope:** Medium: 5 files
+
+### Task 14: 升级 Bridge 3.0 并接入 Main/Preload
+
+**Description:** 增加 harmonyAnalysis read/save request/response、capability、mock 和 Main dispatcher，并把 Bridge schema 精确升级到 3.0.0。
+
+**Acceptance criteria:**
+
+- [ ] request/response/capability 类型全部从 strict Zod schema 推导。
+- [ ] Main 重验 score ID、hash、version 和 payload，不返回绝对路径。
+- [ ] 旧版本 handshake 明确失败，不宽松兼容。
+
+**Verification:** `pnpm vitest run packages/web-core/src/bridge apps/desktop-shell/src/main/__tests__/bridge.test.ts`
+
+**Dependencies:** Tasks 11, 13
+
+**Files likely touched:** `packages/web-core/src/bridge/schemas.ts`、`mockNativeBridge.ts`、`apps/desktop-shell/src/main/bridge.ts`、`preload.ts`、相关测试。
+
+**Estimated scope:** Medium: 5 files
+
+### Task 15: 接入 Desktop Renderer adapter
+
+**Description:** 在 Renderer 通过 Bridge 实现 HarmonyAnalysisRepository，并把 Browser/Desktop adapter 注入共享应用入口。
+
+**Acceptance criteria:**
+
+- [ ] Renderer adapter 通过共享 contract 的 Bridge-backed 变体。
+- [ ] capability 关闭时 Studio 显示存储不可用，不回退内存静默保存。
+- [ ] Viewer 现有 Repository/Gateway 注入行为不回归。
+
+**Verification:** `pnpm vitest run apps/desktop-shell/src packages/web-viewer/src/app && pnpm desktop:build`
+
+**Dependencies:** Tasks 12, 14
+
+**Files likely touched:** `apps/desktop-shell/src/renderer.ts`、`packages/web-viewer/src/mountViewerApp.tsx`、`packages/web-viewer/src/app/ViewerApplication.ts`、对应测试。
+
+**Estimated scope:** Medium: 4 files
+
+### Checkpoint P3
+
+- [ ] Browser/Desktop Repository contract 全部通过。
+- [ ] `pnpm verify:fast && pnpm demo:build && pnpm desktop:build`
+
+## Phase 4: Studio editing vertical slice
+
+### Task 16: 交付 Studio route 与首次自动分析
+
+**Description:** 添加 `#/studio/:libraryScoreId`、独立 Studio Session 和首次自动分析；已有 Document 直接加载。
+
+**Acceptance criteria:**
+
+- [ ] 刷新 route 从 Library Score 重建，不在 URL 放 Session ID。
+- [ ] 无 Document 自动启动可取消分析，成功后立即保存。
+- [ ] 已有 Document 或算法升级不静默重跑；GP 显示不支持。
+
+**Verification:** `pnpm vitest run packages/web-viewer/src/app packages/web-viewer/src/features/harmony-studio`
+
+**Dependencies:** Tasks 10, 12, 15
+
+**Files likely touched:** `packages/web-viewer/src/app/App.tsx`、`ViewerApplication.ts`、`pages/StudioPage.tsx`、`features/harmony-studio/HarmonyStudio.tsx`、相关测试。
+
+**Estimated scope:** Medium: 5 files
+
+### Task 17: 交付 overlay、候选检查器与结构化编辑器
+
+**Description:** 在 Studio score model 上叠加 Effective Projection，并提供候选选择和 root/kind/extension/degrees/bass 编辑。
+
+**Acceptance criteria:**
+
+- [ ] overlay 不修改 Managed Score Copy 或 Viewer runtime。
+- [ ] unresolved 显示原因与 Top-K；不能输入任意 chord string。
+- [ ] 选择候选或字段编辑创建结构化 Correction。
+
+**Verification:** `pnpm vitest run packages/web-viewer/src/features/harmony-studio/__tests__/HarmonyStudio.test.tsx`
+
+**Dependencies:** Tasks 4, 16
+
+**Files likely touched:** `HarmonyStudio.tsx`、`HarmonyOverlay.tsx`、`HarmonyInspector.tsx`、对应测试、Studio styles。
+
+**Estimated scope:** Medium: 5 files
+
+### Task 18: 交付范围编辑与 session undo/redo
+
+**Description:** 接入 split/merge/move/reset、N.C. 和命令式 undo/redo；边界只允许 legal moments。
+
+**Acceptance criteria:**
+
+- [ ] 每个命令产生确定、可逆的 Correction 变化。
+- [ ] Reset 删除 Correction 并露出来源/算法层。
+- [ ] undo/redo 离开 Studio 后丢弃，不持久化历史 Revision。
+
+**Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/correctionCommands.test.ts packages/web-viewer/src/features/harmony-studio`
+
+**Dependencies:** Task 17
+
+**Files likely touched:** `packages/web-core/src/harmony/correctionCommands.ts`、对应测试、`harmonyStudioSession.ts`、`HarmonyInspector.tsx`、UI 测试。
+
+**Estimated scope:** Medium: 5 files
+
+### Task 19: 交付 autosave 与后台 reanalysis
+
+**Description:** 实现 500 ms autosave、Save/flush、离开保护、CAS conflict、串行写队列和 latest-intent-wins Worker job。
+
+**Acceptance criteria:**
+
+- [ ] UI 准确显示 unsaved/saving/saved/failure/conflict。
+- [ ] reanalysis 期间旧 Revision 可编辑，失败/取消/旧 intent 不提交。
+- [ ] 新 Revision 原子结合提交瞬间最新 Corrections。
+
+**Verification:** `pnpm vitest run packages/web-viewer/src/features/harmony-studio/__tests__/harmonyStudioSession.test.ts packages/web-viewer/src/app`
+
+**Dependencies:** Tasks 11, 16, 18
+
+**Files likely touched:** `harmonyStudioSession.ts`、`harmonyAnalysis.worker.ts`、`ViewerApplication.ts`、两个测试。
+
+**Estimated scope:** Medium: 5 files
+
+### Task 20: 交付 Scope、Annotation Target 与 Preview Transport
+
+**Description:** 增加 track Scope、显示/导出目标 staff 和 Studio-only transport，并验证它们各自的状态所有权。
+
+**Acceptance criteria:**
+
+- [ ] Scope 变化触发新 Job；Annotation Target 变化不重新分析。
+- [ ] Preview Transport 支持 play/pause/seek/speed/selected-range loop。
+- [ ] sidecar、resume、practice summary 前后快照完全不变。
+
+**Verification:** `pnpm vitest run packages/web-viewer/src/features/harmony-studio packages/web-core/src/playback`
+
+**Dependencies:** Task 19
+
+**Files likely touched:** `HarmonyStudio.tsx`、`HarmonyInspector.tsx`、`StudioTransport.tsx`、`harmonyStudioSession.ts`、相关测试。
+
+**Estimated scope:** Medium: 5 files
+
+### Checkpoint P4
+
+- [ ] `pnpm verify`
+- [ ] `pnpm demo:test:e2e` Studio 主旅程通过。
+- [ ] 键盘、焦点与保存失败离开保护人工检查完成。
+
+## Phase 5: Annotated score export
+
+### Task 21: 交付 partwise MusicXML 导出
+
+**Description:** 从原始 `.musicxml/.xml` 字节按 Annotation Target 写入 Effective Projection，支持 source override、N.C. 与 unresolved skip。
+
+**Acceptance criteria:**
+
+- [ ] root/kind/bass/degree 结构化节点与 projection 等价。
+- [ ] source harmony 未覆盖部分保持；Correction 范围可切分并恢复来源语义。
+- [ ] unrepresentable moment 明确失败，不生成节奏漂移。
+
+**Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/exportMusicXmlHarmony.test.ts && pnpm fixtures:musicxml`
+
+**Dependencies:** Tasks 2, 4, 20
+
+**Files likely touched:** `packages/web-core/src/harmony/exportMusicXmlHarmony.ts`、`musicXmlHarmonyWriter.ts`、对应测试与 fixtures。
+
+**Estimated scope:** Medium: 4 files
+
+### Task 22: 交付 timewise 与 MXL round-trip
+
+**Description:** 复用同一 export planner 支持 score-timewise 和 MXL rootfile 替换，保留其他 archive entries。
+
+**Acceptance criteria:**
+
+- [ ] timewise/partwise 使用同一领域 projection，不出现第二套和弦逻辑。
+- [ ] MXL 读取 container rootfile，保持附加 entries 和来源扩展名。
+- [ ] 恶意 archive 与超限压缩被拒绝。
+
+**Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/exportMxlHarmony.test.ts && pnpm fixtures:musicxml`
+
+**Dependencies:** Task 21
+
+**Files likely touched:** `exportMusicXmlHarmony.ts`、`mxlContainer.ts`、对应测试与 fixtures。
+
+**Estimated scope:** Medium: 4 files
+
+### Task 23: 接入 Studio 导出用户流
+
+**Description:** 在 Studio flush 保存后固化 projection 快照，通过现有 ScoreFileGateway 导出 `-chords` 文件并显示取消/失败状态。
+
+**Acceptance criteria:**
+
+- [ ] 未保存或 CAS conflict 时不开始导出。
+- [ ] 扩展名/容器保持，取消无副作用。
+- [ ] 导出不替换、重新导入或修改当前 Library Score。
+
+**Verification:** `pnpm vitest run packages/web-viewer/src/features/harmony-studio apps/web-demo/src/library apps/desktop-shell/src && pnpm demo:build && pnpm desktop:build`
+
+**Dependencies:** Tasks 15, 19, 22
+
+**Files likely touched:** `HarmonyStudio.tsx`、`harmonyStudioSession.ts`、Browser/Desktop ScoreFileGateway、相关测试。
+
+**Estimated scope:** Medium: 5 files
+
+### Checkpoint P5
+
+- [ ] `pnpm fixtures:musicxml`
+- [ ] Browser/Desktop 导出 E2E 通过。
+- [ ] Managed Score Copy 导出前后 SHA-256 相同。
+
+## Phase 6: Release quality
+
+### Task 24: 建立 corpus、校准与性能门禁
+
+**Description:** 固化授权 corpus manifest、结构化指标、confidence calibration 和分析 benchmark，并接入稳定根脚本。
+
+**Acceptance criteria:**
+
+- [ ] 自动报告 Top-8 recall、precision、coverage、boundary F1、ECE 和分项准确率。
+- [ ] 独立评估集达到规格阈值，不能用全部 unresolved 规避 coverage。
+- [ ] 5,000-note P95、UI/cancel latency 和资源硬上限达到预算。
+
+**Verification:** harmony eval/benchmark 根脚本 + `pnpm verify`
+
+**Dependencies:** Tasks 10, 23
+
+**Files likely touched:** `scripts/harmony-eval.mjs`、`scripts/harmony-benchmark.mjs`、corpus manifest、`package.json`、算法参数测试。
+
+**Estimated scope:** Medium: 5 files
+
+### Task 25: 完成双端发布验收
+
+**Description:** 覆盖 Browser/Desktop 完整旅程、迁移/CAS/删除故障、可访问性和规格逐条证据，关闭 release gate。
+
+**Acceptance criteria:**
+
+- [ ] E2E 覆盖首次分析、编辑、重分析、保存冲突、刷新、Preview、导出和删除。
+- [ ] Desktop/Browser 故障不会丢失旧 Revision、重建孤儿分析或泄漏路径。
+- [ ] 规格 15 条验收标准均有自动化或明确人工证据。
+
+**Verification:** `pnpm verify && pnpm verify:e2e`
+
+**Dependencies:** Task 24
+
+**Files likely touched:** Browser E2E、Desktop E2E、Repository fault tests、Studio accessibility tests、规格验收记录。
+
+**Estimated scope:** Medium: 5 files
+
+### Checkpoint P6
+
+- [ ] `tasks/plan.md` 的 Exit gate P6 全部通过。
+- [ ] 人工评审后才能把计划状态改为 completed。

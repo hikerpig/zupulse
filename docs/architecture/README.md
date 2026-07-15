@@ -36,6 +36,7 @@ flowchart LR
 - MusicXML 导入：`musicxml-import-design.md`、`musicxml-import-acceptance.md`
 - Sheet Library 当前规格：`../superpowers/specs/2026-07-12-sheet-library-design.md`
 - Harmony Analysis Studio 规格：`../superpowers/specs/2026-07-15-harmony-analysis-studio-design.md`
+- Harmony Analysis Studio 实施计划：`../../tasks/plan.md`、`../../tasks/todo.md`
 - 架构决策状态：`../adr/README.md`
 
 ## 当前核心不变量

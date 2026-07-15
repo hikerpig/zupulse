@@ -1,139 +1,227 @@
 ---
 status: historical
-completed: 2026-07-13
+planning_status: proposed
+feature: harmony-analysis-studio
+source_spec: docs/superpowers/specs/2026-07-15-harmony-analysis-studio-design.md
 ---
 
-# Implementation Plan: Sheet Library 离线曲谱库
+# Implementation Plan: Harmony Analysis Studio
 
-> 已完成实施计划，仅保留任务拆分和风险记录；当前事实以代码、测试和架构索引为准。
+> `status: historical` 是仓库上下文检查对 `tasks/*` 执行文档的固定分类，表示它不覆盖 Current ADR/spec；实际执行生命周期由 `planning_status` 表示。
 
 ## Overview
 
-把当前以临时 Viewer 为首页的应用演进为 `Sheet Library → Studio` 产品结构。Browser 和 Desktop 共享 `web-core` 领域契约、导入用例与 `web-viewer` React UI，分别使用 IndexedDB 和 SQLite + Managed Score Copy 持久化独立曲谱库。实施以 Browser 首个端到端竖切验证契约，再接入 Desktop Bridge 与崩溃恢复。
+把 Harmony Analysis Studio 分成七个可独立验收的阶段：先关闭书面时间与 XML/MXL 回写风险，再建立领域模型和分析引擎，然后依次交付双宿主持久化、Studio 编辑竖切、导出竖切和发布质量门禁。每个阶段都必须留下可运行证据；上一个阶段的退出门槛未通过时，不进入依赖它的阶段。
 
-设计来源：[`docs/superpowers/specs/2026-07-12-sheet-library-design.md`](../docs/superpowers/specs/2026-07-12-sheet-library-design.md)。
+详细任务与逐项验收见 [`tasks/todo.md`](todo.md)，产品与技术语义仍以[设计规格](../docs/superpowers/specs/2026-07-15-harmony-analysis-studio-design.md)为准。
 
-## Architecture Decisions
+## Delivery rules
 
-- `SheetLibraryRepository` 只暴露馆藏领域操作，`ScoreFileGateway` 单独负责文件选择与保存对话框。
-- 领域类型、Zod schema、导入验证与用例位于 `packages/web-core`；React 路由与 UI 位于 `packages/web-viewer`；适配器位于各 App。
-- Library Score ID 使用 UUID，Score Identity 使用 SHA-256；Repository 以 Score Identity 唯一约束原子去重。
-- Browser 使用 IndexedDB transaction；Desktop 使用 SQLite 状态 + staging/rename/reconciliation 协调文件系统。
-- `/` 是 Library，`/viewer/:libraryScoreId` 指向持久馆藏并在需要时重建临时 Viewer Session。
-- 删除 Library Score 必须同时删除托管字节、馆藏元数据、Practice Sidecar 和 Local Playback Resume。
-- Browser/Desktop 曲谱库互相独立，本轮不引入同步、OPFS、分页或额外状态库。
+- 一次只实施一个任务；每个任务应在一个聚焦会话内完成。
+- 行为先写相邻失败测试，再实现最小代码。
+- 不提前铺设未来 ML、Roman numeral、GP 分析或通用制谱编辑抽象。
+- 每 2–5 个任务设置 checkpoint；checkpoint 失败只修复当前阶段，不继续叠加功能。
+- Browser 先证明共享契约可用，Desktop 随后实现同一契约，不产生两套领域语义。
+- 任何 Bridge、Repository 或导出边界都必须先过 Zod/资源限制和数据完整性测试。
 
-## Dependency Graph
+## Dependency graph
 
 ```text
-T1 领域契约
- ├─ T2 共享导入用例
- ├─ T3 Browser IndexedDB Repository/Gateway
- │    └─ T4 Browser Library 首个竖切
- │         ├─ T5 稳定 Viewer 路由
- │         ├─ T6 列表搜索/筛选/排序
- │         ├─ T7 馆藏元数据/收藏
- │         └─ T8 导出/彻底删除
- └─ T9 练习持久化归属 Library Score
-
-T1 ─ T10 Desktop SQLite 可用性与 schema
-T10 ─ T11 Desktop 托管文件与 reconciliation
-T1,T2,T11 ─ T12 Desktop Bridge 与 adapter
-T5,T9,T12 ─ T13 Desktop 导入/Studio 竖切
-
-T3,T4,T8,T9 ─ T14 Browser 韧性
-T10,T11,T12,T13 ─ T15 Desktop 韧性与最终验收
+P0 可行性关口
+  T1 written-time 可逆映射 ─┐
+  T2 XML/MXL 增量回写 ──────┴─> P1 领域核心
+                                  T3 schema/formatter
+                                  T4 correction/projection
+                                  T5 analysis input/source harmony
+                                            │
+                                            v
+P2 分析引擎 T6 -> T7 -> T8 -> T9 -> T10
+                    │
+                    └──────────────> P3 数据层 T11 ─┬-> T12 Browser
+                                                    └-> T13 Desktop -> T14 -> T15
+                                                              │
+                                                              v
+P4 Studio T16 -> T17 -> T18 -> T19 -> T20
+                                                             │
+                                                             v
+P5 导出 T21 -> T22 -> T23
+                         │
+                         v
+P6 发布质量 T24 -> T25
 ```
 
-## Task List
+## Phase 0: Feasibility gates
 
-### Phase 1: Shared foundation
+目标：用最小可运行 fixture 证明两个最高风险边界，不做 UI 或持久化。
 
-- [x] Task 1: 定义 Library 领域契约与 Repository contract harness
-- [x] Task 2: 实现共享 Library Import 用例
-- [x] Task 3: 实现 Browser IndexedDB Repository 与 File Gateway
+- [ ] T1：证明 Score Written Moment 与 MusicXML divisions/tuplets 可逆。
+- [ ] T2：证明 partwise/timewise/MXL 能语义保留地增量写入 `<harmony>`。
 
-### Checkpoint A: Shared foundation
+### Exit gate P0
 
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm test` 通过
-- [ ] Browser Repository 通过共享 contract suite
-- [ ] 导入用例覆盖成功、重复、损坏和批量部分成功
+- [ ] 变化 divisions、tuplets、多 voice 的 legal moments 可以精确 round-trip；不可表示位置被拒绝而不是取整。
+- [ ] `.musicxml`、`.xml`、`.mxl` fixture 写入后可重新导入，非 harmony 音乐语义不变。
+- [ ] XML/ZIP 只采用公开 API；依赖、许可、bundle 影响已记录。
+- [ ] 若任一项失败，先修订领域位置或导出设计并更新 ADR/spec，不进入 Phase 1。
 
-### Phase 2: Browser user slices
+## Phase 1: Domain core
 
-- [x] Task 4: 交付 Browser Library 首页与单/批量导入
-- [x] Task 5: 以 Library Score 重建 Studio 路由
-- [x] Task 6: 交付 Library 搜索、筛选与排序
-- [x] Task 7: 交付收藏与 Library Metadata 编辑
-- [x] Task 8: 交付原始文件导出与彻底删除
-- [x] Task 9: 把练习数据归属和摘要接入 Library Score
+目标：得到无需 UI/宿主即可验证的 Harmony Analysis Document 与 Effective Projection。
 
-### Checkpoint B: Browser complete
+- [ ] T3：建立 ChordSymbol、Range、Revision、Document Zod schema 与 formatter。
+- [ ] T4：实现 Correction range 代数和 Effective Harmony Projection。
+- [ ] T5：实现 AnalysisInput 与来源 `<harmony>` 投影。
 
-- [ ] `pnpm check` 和 `pnpm demo:build` 通过
-- [ ] Browser 离线导入、重启恢复、Studio 刷新、导出和删除完整可用
-- [ ] 320 / 768 / 1024 / 1440 px 视觉与键盘验收通过
-- [ ] 人工复核 Browser 竖切后再接 Desktop
+### Exit gate P1
 
-### Phase 3: Desktop persistence and bridge
+- [ ] `pnpm vitest run packages/web-core/src/harmony` 通过。
+- [ ] 9/11/13、altered degrees、N.C.、unresolved、来源冲突都有结构化 round-trip 测试。
+- [ ] User Correction > source harmony > revision 的所有组合通过表驱动测试。
+- [ ] `pnpm verify:fast` 通过。
 
-- [x] Task 10: 验证 Electron SQLite 并建立版本化 schema
-- [x] Task 11: 实现 Desktop Managed Score Copy 与崩溃恢复
-- [x] Task 12: 扩展 Library Bridge 并实现 Desktop adapters
-- [x] Task 13: 交付 Desktop Library Import 到 Studio 竖切
+## Phase 2: Analysis engine
 
-### Checkpoint C: Desktop vertical slice
+目标：从 AnalysisInput 产出可拒识的 Analysis Revision，先达到规则基线，不接 ML。
 
-- [ ] `pnpm check` 和 `pnpm desktop:build` 通过
-- [ ] Desktop Repository 通过与 Browser 相同的 contract suite
-- [ ] 导入后删除外部原文件，馆藏仍可离线打开
-- [ ] 菜单 `CmdOrCtrl+O` 统一触发 Library Import
+- [ ] T6：建立 legal boundary lattice 与缓存特征。
+- [ ] T7：实现基础 kind/extension 候选和 LocalScore。
+- [ ] T8：实现 segmental Viterbi/beam 与 Transition。
+- [ ] T9：加入完整 9/11/13 和 altered chord 候选。
+- [ ] T10：加入非和弦音修正、合并、confidence 和 unresolved。
 
-### Phase 4: Resilience and release acceptance
+### Exit gate P2
 
-- [x] Task 14: 完成 Browser quota、迁移与多标签页韧性
-- [x] Task 15: 完成 Desktop 故障注入与双端 E2E 验收
+- [ ] 合成 fixtures 覆盖 inversion、9/11/13、`b9/#9/#11/b13` 组合、经过音、挂留、tie、移调乐器和微分音拒识。
+- [ ] Top-8 oracle recall、resolved precision 和 coverage 能从固定 corpus 自动生成报告；此阶段允许尚未达到最终发布阈值，但不得回归基础 golden cases。
+- [ ] 典型 fixture benchmark 有基线，边界/候选/beam 上限可观察且取消有效。
+- [ ] `pnpm verify:fast` 通过。
 
-### Checkpoint D: Complete
+## Phase 3: Persisted analysis data
 
-- [ ] `pnpm check`、`pnpm demo:build`、`pnpm desktop:build` 通过
-- [ ] `pnpm desktop:test:e2e` 通过
-- [ ] 设计规格 12 条验收标准全部有自动化或明确人工证据
-- [ ] 无自动重建曲谱库、无孤儿练习数据、无 Renderer 绝对路径泄漏
-- [ ] 人工复核后可进入发布候选
+目标：Browser 与 Desktop 都能安全保存同一 Harmony Analysis Document，并随 Library Score 删除。
 
-## Parallelization Opportunities
+- [ ] T11：定义 HarmonyAnalysisRepository、CAS 与共享 contract harness。
+- [ ] T12：交付 Browser IndexedDB version 2 adapter。
+- [ ] T13：交付 Desktop SQLite library schema version 2 store。
+- [ ] T14：升级 Bridge schema 到 3.0.0 并接入 Main/Preload。
+- [ ] T15：接入 Desktop Renderer adapter 与双端契约测试。
 
-- T1 完成后，T2 与 T3 可并行，但不得各自改动端口而不同步 contract tests。
-- T4 完成后，T6 与 T7 可并行；T8 建议等 T7 稳定行菜单/对话框模式后进行。
-- T10/T11 的 Desktop Main Process 工作可与 T5–T9 Browser/UI 工作并行，前提是 T1 契约已冻结。
-- T14 与 T15 可并行，因为分别位于 Browser 与 Desktop 适配器。
+### Exit gate P3
 
-## Risks and Mitigations
+- [ ] Browser/Desktop 同一 contract suite 覆盖 create/read/CAS/hash mismatch/delete/orphan prevention/migration failure。
+- [ ] Library 删除事务同时删除 Harmony Analysis Document；旧 Session autosave 无法重建孤儿记录。
+- [ ] Renderer 不获得绝对路径、SQLite 或未校验 payload。
+- [ ] `pnpm verify:fast`、`pnpm demo:build`、`pnpm desktop:build` 通过。
 
-| Risk                                                                                   | Impact | Mitigation                                                                                |
-| -------------------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------- |
-| Electron 43 打包运行时的 `node:sqlite` 能力或 ASAR 行为不符预期                        | High   | T10 先做运行时和打包 smoke test；失败时再决定是否引入 SQLite 依赖，不在后续任务中暗自换库 |
-| 现有 `openScore()` 同时执行解析与创建 Session，直接复用会在导入阶段创建音频/渲染运行时 | High   | T2 提取无 UI 副作用的最小验证/元数据投影，保持 Viewer Session 只在 Studio 创建            |
-| Practice Sidecar 当前按 Score Identity 存储，彻底删除和 Browser 多标签页可产生孤儿数据 | High   | T9 建立 Library Score 存在性约束和删除联动 contract tests，先解决归属再做韧性             |
-| Desktop SQLite 与文件系统无法共享事务                                                  | High   | T11 使用 pending/ready/deleting + staging rename，T15 在每个持久化边界注入失败            |
-| IndexedDB quota 和用户清理站点数据破坏“持久”预期                                       | Medium | T14 请求 persistent storage、分类 quota 错误并显示诚实文案；保留单份导出                  |
-| Library 和 Studio 同时重构导致旧 `/viewer/:sessionId` 与新路由双重状态                 | Medium | T5 一次性切换路由所有者并删除旧 session URL 导航，不长期兼容两套路由                      |
+## Phase 4: Studio editing vertical slice
 
-## Open Questions
+目标：用户能进入 Studio、看到结果、修正、保存和试听；Viewer 状态保持隔离。
 
-- Electron 43 主进程与打包产物是否可直接使用 `node:sqlite`，由 T10 用可运行 smoke test 回答。
-- 现有开发/验收数据中是否存在需要迁移的旧 `scores` / `score_index` 记录，T10 实施前必须检查；不得假设可清空。
+- [ ] T16：交付 Studio route/session 和首次自动分析。
+- [ ] T17：交付 score overlay、候选检查器和结构化 chord editor。
+- [ ] T18：交付 split/merge/move/reset、N.C. 与 session undo/redo。
+- [ ] T19：交付 autosave、CAS 冲突和 latest-intent-wins reanalysis。
+- [ ] T20：交付 Scope、Annotation Target 与 Preview Transport。
 
-## Definition of Done
+### Exit gate P4
 
-每个任务必须同时满足：
+- [ ] 刷新 `#/studio/:libraryScoreId` 可重建 Studio；已有 Document 不静默重跑。
+- [ ] 用户修正跨 reanalysis/Scope 变化保留；失败、取消、旧 Job 都不能替换 active Revision。
+- [ ] Preview Transport 不改变 Practice Sidecar、Local Playback Resume 或练习摘要。
+- [ ] 键盘、焦点、loading/empty/error/save-conflict 状态通过组件测试和人工检查。
+- [ ] `pnpm verify`、`pnpm demo:test:e2e` 的 Studio 主旅程通过。
 
-- 验收标准有自动化或明确人工验证证据。
-- 相关最小测试、包级 typecheck/build 通过。
-- 新增 Bridge/持久化输入有 Zod 边界校验和结构化错误。
-- 不留旧实现的双重状态所有者、死代码或无实际消费者的抽象。
-- 经过 Prettier 检查，可访问性与错误/空状态不回退。
+## Phase 5: Annotated score export
 
-> `planning-and-task-breakdown` 技能引用的 `references/definition-of-done.md` 在当前安装中缺失；上述 Definition of Done 依据技能正文和项目现有检查命令制定。
+目标：从原始 Managed Score Copy 导出语义保持的新副本，不修改馆藏。
+
+- [ ] T21：交付 partwise `.musicxml/.xml` 导出。
+- [ ] T22：交付 timewise 与 `.mxl` round-trip。
+- [ ] T23：交付 Studio export command、保存面板和失败恢复。
+
+### Exit gate P5
+
+- [ ] 来源 harmony、Correction override、N.C.、unresolved skip、Annotation Target 在导出后语义正确。
+- [ ] unknown elements/attributes、lyrics、directions、layout 和 MXL 附加 entries 语义保留。
+- [ ] 导出前后原始 Managed Score Copy 的 SHA-256 不变；导出文件可被项目重新导入。
+- [ ] path traversal、zip bomb、external entity 和 unrepresentable position 被安全拒绝。
+- [ ] `pnpm fixtures:musicxml`、相关核心测试、Browser/Desktop 导出 E2E 通过。
+
+## Phase 6: Release quality
+
+目标：达到规格中的量化精度、性能、韧性和双端发布门槛。
+
+- [ ] T24：完成标注 corpus、confidence calibration 与性能/资源预算。
+- [ ] T25：完成双端 E2E、故障注入、可访问性和发布验收证据。
+
+### Exit gate P6
+
+- [ ] Top-8 oracle recall >= 95%。
+- [ ] resolved duration sound-label precision >= 95%，coverage >= 70%。
+- [ ] boundary F1 >= 85%，confidence ECE <= 0.10。
+- [ ] 典型 5,000-note 乐谱 P95 分析时间 <= 5 秒，UI/cancel 反馈 <= 100 ms。
+- [ ] `pnpm verify` 与 `pnpm verify:e2e` 全部通过。
+- [ ] 规格 15 条验收标准逐项有自动化或明确人工证据。
+
+## Verification plan
+
+### Per-task loop
+
+1. 运行任务列出的最小测试，确认新增测试先失败。
+2. 实现最小行为并只运行相关测试直到通过。
+3. 运行受影响 package 的 typecheck/build。
+4. 每完成 2–5 个任务运行当前 phase checkpoint。
+5. 不用全量 E2E 替代缺失的领域单测或 Repository contract。
+
+### Gate matrix
+
+| Change area              | Minimum verification                            | Phase gate               | Release gate                   |
+| ------------------------ | ----------------------------------------------- | ------------------------ | ------------------------------ |
+| Harmony schema/algorithm | `pnpm vitest run packages/web-core/src/harmony` | `pnpm verify:fast`       | corpus metrics + `pnpm verify` |
+| Browser persistence      | Browser repository tests                        | `pnpm demo:build`        | `pnpm demo:test:e2e`           |
+| Desktop store/Bridge     | Main/Bridge tests                               | `pnpm desktop:build`     | `pnpm desktop:test:e2e`        |
+| Studio React UI          | harmony-studio component/app tests              | Browser smoke            | Browser + Desktop E2E          |
+| MusicXML/MXL export      | harmony export + fixture tests                  | `pnpm fixtures:musicxml` | dual-host export E2E           |
+| Docs/context             | Prettier + `pnpm check:context`                 | `pnpm check:arch`        | `pnpm verify`                  |
+
+### Evidence retention
+
+- Golden MusicXML/MXL fixtures、corpus manifest、metric JSON 和 benchmark JSON 必须版本化或可重复生成。
+- 人工验证只用于视觉、键盘、屏幕阅读器和系统保存面板；领域正确性必须自动化。
+- 每个 checkpoint 在 `tasks/todo.md` 勾选并记录实际命令；失败命令不以“其他测试通过”替代。
+
+## Risks and mitigations
+
+| Risk                                          | Impact | Mitigation                                                        |
+| --------------------------------------------- | ------ | ----------------------------------------------------------------- |
+| fixed tick 无法无损表达变化 divisions/tuplets | High   | P0 先证明；失败时在内部引入 rational mapping，保持 UI Moment 外形 |
+| DOM 重序列化破坏未知 MusicXML 语义            | High   | P0 使用语义 diff fixture；导出只从原始字节增量修改                |
+| 高叠/altered 候选造成组合爆炸                 | High   | evidence-driven generation、Top-K、复杂度先验和硬上限             |
+| confidence 未校准导致错误“确定答案”           | High   | 保留 unresolved；P6 用独立 corpus 校准，不开放用户阈值            |
+| reanalysis/autosave 并发丢失 correction       | High   | 串行写队列、intent id、CAS 和故障测试                             |
+| Browser/Desktop 持久化语义漂移                | High   | 共享 schema、contract harness 与删除联动测试                      |
+| Studio 污染 Viewer 练习状态                   | Medium | 独立 runtime/Repository；E2E 对 sidecar/resume 做前后快照         |
+| MXL 攻击面扩大                                | High   | entry/path/ratio/size 上限与恶意 fixture                          |
+
+## Parallelization
+
+- P0 的 T1/T2 可并行探索，但在位置模型和依赖决策冻结前不进入 P1。
+- P2 契约冻结后，P3 的 Browser 与 Desktop adapter 可并行；共享 contract 只能由 T11 统一修改。
+- P4 中纯 UI 呈现可以在 Studio application contract 冻结后与宿主 adapter 收尾并行。
+- P5 的 timewise/MXL 必须复用 T21 的导出 planner，不创建第二套 exporter。
+
+## Definition of done
+
+每个任务同时满足才可勾选：
+
+- 验收标准有自动化或明确人工证据。
+- 最小测试和受影响 package build/typecheck 通过。
+- 跨进程/持久化输入有严格 Zod 校验，错误不会泄漏路径或原始异常。
+- 不存在第二份状态所有者、无消费者抽象、临时 spike 或跳过的测试。
+- Prettier 通过；涉及 UI 时键盘、焦点、loading、empty、error 状态不回退。
+
+> `planning-and-task-breakdown` 技能引用的 `references/definition-of-done.md` 在当前安装中不存在；本节采用技能正文与项目验证阶梯定义。
+
+## Open questions
+
+当前无阻塞计划评审的产品问题。P0 的技术结论若推翻现有设计，必须先更新规格/ADR，再调整后续任务依赖。

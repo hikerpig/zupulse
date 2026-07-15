@@ -7,6 +7,7 @@ import {
   projectAlphaTabHarmonyInput,
 } from "@zupulse/web-core";
 import type {
+  AnnotationTarget,
   HarmonyAnalysisDocument,
   HarmonyAnalysisRepository,
   HarmonyCorrection,
@@ -143,6 +144,21 @@ export class ViewerApplication implements ViewerAppHandle {
     await session.flush();
   }
 
+  async setStudioAnnotationTarget(id: string, annotationTarget: AnnotationTarget): Promise<void> {
+    const session = this.studioSessions.get(id);
+    if (!session) return;
+    session.setAnnotationTarget(annotationTarget);
+    await session.flush();
+  }
+
+  async setStudioScope(id: string, includedTrackIds: readonly string[]): Promise<void> {
+    if (includedTrackIds.length === 0) throw new Error("STUDIO_SCOPE_EMPTY");
+    const session = this.studioSessions.get(id);
+    if (!session) return;
+    const state = await session.setScope(includedTrackIds, ({ scope }) => this.createStudioDocument(id, scope));
+    this.setStudioState(id, state);
+  }
+
   private async openStudioOnce(id: string): Promise<void> {
     const library = this.library;
     const repository = this.getHarmonyAnalysisRepository();
@@ -199,7 +215,7 @@ export class ViewerApplication implements ViewerAppHandle {
     return session;
   }
 
-  private async createStudioDocument(id: string): Promise<HarmonyAnalysisDocument> {
+  private async createStudioDocument(id: string, requestedScope?: readonly string[]): Promise<HarmonyAnalysisDocument> {
     const library = this.library;
     if (!library) throw new Error("曲谱库不可用");
     const score = await library.repository.get(id as LibraryScore["id"]);
@@ -209,8 +225,11 @@ export class ViewerApplication implements ViewerAppHandle {
     const adapter = library.adapters.find((candidate) => candidate.format === "musicxml");
     if (!adapter) throw new Error("MusicXML 分析器不可用");
     const parsed = await adapter.parse({ fileName: file.fileName, bytes: file.bytes });
-    const includedTrackIds = parsed.document.tracks.map((track) => track.id);
+    const allTrackIds = parsed.document.tracks.map((track) => track.id);
+    const includedTrackIds = requestedScope === undefined ? allTrackIds : [...requestedScope];
     if (includedTrackIds.length === 0) throw new Error("曲谱没有可分析的音高轨道");
+    if (includedTrackIds.some((trackId) => !allTrackIds.includes(trackId)))
+      throw new Error("STUDIO_SCOPE_TRACK_NOT_FOUND");
     const now = new Date().toISOString();
     return {
       schemaVersion: "1.0.0",

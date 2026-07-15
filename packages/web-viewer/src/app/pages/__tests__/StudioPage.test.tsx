@@ -35,8 +35,9 @@ describe("StudioPage", () => {
         libraryScoreId: "score-1",
         status: "unsaved",
         document: {
-          activeRevision: { segments: [], parameters: {} },
+          activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
           corrections: [],
+          annotationTarget: { trackId: "track-1", staffIndex: 0 },
         },
       },
     };
@@ -47,6 +48,8 @@ describe("StudioPage", () => {
       openStudio: async () => undefined,
       undoStudio: () => undefined,
       redoStudio: () => undefined,
+      setStudioScope: async () => undefined,
+      setStudioAnnotationTarget: async () => undefined,
     } as never;
     render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -64,7 +67,11 @@ describe("StudioPage", () => {
       studio: {
         libraryScoreId: "score-1",
         status: "ready",
-        document: { activeRevision: { segments: [], parameters: {} }, corrections: [] },
+        document: {
+          activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
+          corrections: [],
+          annotationTarget: { trackId: "track-1", staffIndex: 0 },
+        },
       },
     };
     const application = {
@@ -74,6 +81,8 @@ describe("StudioPage", () => {
       openStudio: async () => undefined,
       undoStudio: () => undefined,
       redoStudio: () => undefined,
+      setStudioScope: async () => undefined,
+      setStudioAnnotationTarget: async () => undefined,
       exportStudio: async () => "saved" as const,
     } as never;
     const view = render(

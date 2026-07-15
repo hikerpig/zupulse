@@ -57,6 +57,45 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                 重做修正
               </button>
             </div>
+            <label>
+              分析范围
+              <select
+                multiple
+                aria-label="分析范围"
+                value={studioDocument.activeRevision.parameters.scope.includedTrackIds}
+                onChange={(event) =>
+                  void application.setStudioScope(
+                    libraryScoreId!,
+                    Array.from(event.currentTarget.selectedOptions, (option) => option.value),
+                  )
+                }
+              >
+                {studioDocument.activeRevision.parameters.scope.includedTrackIds.map((trackId) => (
+                  <option key={trackId} value={trackId}>
+                    {trackId}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              标注目标
+              <select
+                aria-label="标注目标"
+                value={studioDocument.annotationTarget.trackId}
+                onChange={(event) =>
+                  void application.setStudioAnnotationTarget(libraryScoreId!, {
+                    trackId: event.currentTarget.value,
+                    staffIndex: studioDocument.annotationTarget.staffIndex,
+                  })
+                }
+              >
+                {studioDocument.activeRevision.parameters.scope.includedTrackIds.map((trackId) => (
+                  <option key={trackId} value={trackId}>
+                    {trackId}
+                  </option>
+                ))}
+              </select>
+            </label>
             <button
               type="button"
               onClick={() =>

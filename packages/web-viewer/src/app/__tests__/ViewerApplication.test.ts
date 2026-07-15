@@ -221,6 +221,9 @@ describe("ViewerApplication", () => {
     );
     await Promise.all([application.openStudio(scoreId), application.openStudio(scoreId)]);
     expect(application.getSnapshot().studio).toMatchObject({ libraryScoreId: scoreId, status: "ready" });
+    await application.setStudioAnnotationTarget(scoreId, { trackId: "track-1", staffIndex: 1 });
+    expect(application.getSnapshot().studio?.document?.annotationTarget).toEqual({ trackId: "track-1", staffIndex: 1 });
+    expect(adapter.parse).toHaveBeenCalledOnce();
     await application.setStudioCorrection(
       scoreId,
       { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 1 } },
@@ -234,12 +237,16 @@ describe("ViewerApplication", () => {
     expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(0);
     application.redoStudio(scoreId);
     expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(1);
+    await application.setStudioScope(scoreId, ["track-1"]);
+    expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(1);
+    expect(application.getSnapshot().studio?.document?.annotationTarget).toEqual({ trackId: "track-1", staffIndex: 1 });
+    expect(adapter.parse).toHaveBeenCalledTimes(2);
     await expect(application.exportStudio(scoreId)).resolves.toBe("saved");
     expect(exported?.fileName).toBe("score-chords.musicxml");
     expect(new TextDecoder().decode(exported?.bytes)).toContain("<root-step>C</root-step>");
     expect(createHash("sha256").update(sourceBytes).digest("hex")).toBe(sourceHash);
     await application.openStudio(scoreId);
-    expect(adapter.parse).toHaveBeenCalledOnce();
+    expect(adapter.parse).toHaveBeenCalledTimes(2);
     await application.deleteLibraryScore(scoreId);
     expect(application.getSnapshot().studio).toBeUndefined();
     expect(document).toBeNull();

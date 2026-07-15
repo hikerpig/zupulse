@@ -219,10 +219,10 @@ feature: harmony-analysis-studio
 
 ### Checkpoint P2
 
-- [ ] Harmony golden corpus 与 benchmark 报告生成成功。
+- [x] Harmony golden corpus 与 benchmark 报告生成成功。
 - [x] `pnpm verify:fast`
 
-**Evidence:** P2 相关 harmony 测试 36 tests、全仓库 `rtk pnpm verify:fast`（77 test files / 265 tests）与 `rtk pnpm harmony:eval` 于 2026-07-15 通过；后者是固定 synthetic baseline，独立授权 corpus、校准和发布阈值仍待 T24 完成。
+**Evidence:** P2 相关 harmony 测试、全仓库 `rtk pnpm verify:fast` 与 `rtk pnpm harmony:eval` 于 2026-07-15 通过；固定 synthetic baseline 为 Top-8/precision/coverage/boundary F1 全 1.0。`rtk pnpm harmony:benchmark` 同日通过（5,000 notes analysis P95 205.84 ms、UI/cancel P95 0.0217 ms、heap delta 38.18 MB）。这些是规则基线证据，独立授权 corpus、校准和发布阈值仍属 P6。
 
 ## Phase 3: Persisted analysis data
 

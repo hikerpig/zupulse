@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { createHash } from "node:crypto";
 import type {
   HarmonyAnalysisDocument,
   HarmonyAnalysisRepository,
@@ -140,6 +141,10 @@ describe("ViewerApplication", () => {
   it("creates an initial Studio document once and restores it on later opens", async () => {
     const scoreId = "00000000-0000-4000-8000-000000000001";
     const hash = "a".repeat(64);
+    const sourceBytes = new TextEncoder().encode(
+      '<score-partwise><part id="P1"><measure><note/></measure></part></score-partwise>',
+    );
+    const sourceHash = createHash("sha256").update(sourceBytes).digest("hex");
     let document: HarmonyAnalysisDocument | null = null;
     const adapter: ScoreFormatAdapter = {
       format: "musicxml",
@@ -176,9 +181,7 @@ describe("ViewerApplication", () => {
       },
       readScore: async () => ({
         fileName: "score.musicxml",
-        bytes: new TextEncoder().encode(
-          '<score-partwise><part id="P1"><measure><note/></measure></part></score-partwise>',
-        ),
+        bytes: sourceBytes,
       }),
       updateMetadata: async () => {
         throw new Error("unused");
@@ -234,6 +237,7 @@ describe("ViewerApplication", () => {
     await expect(application.exportStudio(scoreId)).resolves.toBe("saved");
     expect(exported?.fileName).toBe("score-chords.musicxml");
     expect(new TextDecoder().decode(exported?.bytes)).toContain("<root-step>C</root-step>");
+    expect(createHash("sha256").update(sourceBytes).digest("hex")).toBe(sourceHash);
     await application.openStudio(scoreId);
     expect(adapter.parse).toHaveBeenCalledOnce();
     await application.destroy();

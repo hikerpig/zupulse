@@ -519,7 +519,7 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] E2E 覆盖首次分析、编辑、重分析、保存冲突、刷新、Preview、导出和删除。
+- [x] E2E 覆盖首次分析、编辑、重分析、保存冲突、刷新、Preview、导出和删除。
 - [x] Desktop/Browser 故障不会丢失旧 Revision、重建孤儿分析或泄漏路径。
 - [ ] 规格 15 条验收标准均有自动化或明确人工证据。
 

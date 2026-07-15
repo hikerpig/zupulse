@@ -3,6 +3,10 @@ import { chordSymbolSchema, type ChordSymbolInput } from "../packages/web-core/s
 export type MidiHarmonyNote = { startMs: number; endMs: number; midi: number; channel: number };
 export type CmuChordLabel = { startMs: number; label: string; chord: ChordSymbolInput | null };
 
+export function isPitchedMidiNote(note: MidiHarmonyNote): boolean {
+  return note.channel !== 9;
+}
+
 export function parseCmuChordLabels(text: string): CmuChordLabel[] {
   return text
     .trim()

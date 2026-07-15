@@ -8,7 +8,13 @@ import {
   createHarmonyAnalysisInput,
   type ChordSymbolInput,
 } from "../packages/web-core/src/index";
-import { parseCmuChordLabel, parseStandardMidi, type CmuChordLabel, type MidiHarmonyNote } from "./cmuCmaParser";
+import {
+  isPitchedMidiNote,
+  parseCmuChordLabel,
+  parseStandardMidi,
+  type CmuChordLabel,
+  type MidiHarmonyNote,
+} from "./cmuCmaParser";
 
 type Manifest = {
   source: string;
@@ -59,7 +65,7 @@ for (const chordFile of chordFiles.sort()) {
   const groupId = chordFile.slice("test/".length, -"_chord.txt".length);
   const midiBytes = entries[`test/${groupId}.mid`];
   if (!midiBytes) continue;
-  const notes = parseStandardMidi(midiBytes);
+  const notes = parseStandardMidi(midiBytes).filter(isPitchedMidiNote);
   const parsed = parseLabelRows(new TextDecoder().decode(entries[chordFile]!));
   unsupportedLabels += parsed.unsupported;
   noChordEvents += parsed.labels.filter((entry) => entry.chord === null).length;

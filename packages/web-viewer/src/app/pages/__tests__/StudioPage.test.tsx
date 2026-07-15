@@ -257,6 +257,82 @@ describe("StudioPage", () => {
     expect(screen.getByRole("alert").textContent).toContain("存储不可用");
   });
 
+  it("shows analysis errors and CAS conflicts as accessible alerts", () => {
+    const snapshot = {
+      studio: {
+        libraryScoreId: "score-1",
+        status: "error" as const,
+        error: "分析失败",
+      },
+    };
+    const application = {
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      hasHarmonyAnalysisStorage: () => true,
+      openStudio: async () => undefined,
+    } as never;
+    const view = render(
+      <MemoryRouter initialEntries={["/studio/score-1"]}>
+        <Routes>
+          <Route path="/studio/:libraryScoreId" element={<StudioPage application={application} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(within(view.container).getByRole("alert").textContent).toContain("分析失败");
+  });
+
+  it("blocks leaving with unsaved work and reports a CAS conflict", () => {
+    const snapshot = {
+      studio: {
+        libraryScoreId: "score-1",
+        status: "conflict",
+        error: "版本冲突",
+        document: {
+          activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
+          corrections: [],
+          annotationTarget: { trackId: "track-1", staffIndex: 0 },
+        },
+      },
+    };
+    const application = {
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      hasHarmonyAnalysisStorage: () => true,
+      openStudio: async () => undefined,
+      undoStudio: () => undefined,
+      redoStudio: () => undefined,
+      setStudioScope: async () => undefined,
+      setStudioAnnotationTarget: async () => undefined,
+    } as never;
+    const view = render(
+      <MemoryRouter initialEntries={["/studio/score-1"]}>
+        <Routes>
+          <Route path="/studio/:libraryScoreId" element={<StudioPage application={application} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(within(view.container).getByRole("alert").textContent).toContain("版本冲突");
+
+    view.unmount();
+    const unsavedSnapshot = { ...snapshot, studio: { ...snapshot.studio, status: "unsaved" as const } };
+    const unsavedApplication = {
+      getSnapshot: () => unsavedSnapshot,
+      subscribe: () => () => undefined,
+      hasHarmonyAnalysisStorage: () => true,
+      openStudio: async () => undefined,
+    } as never;
+    render(
+      <MemoryRouter initialEntries={["/studio/score-1"]}>
+        <Routes>
+          <Route path="/studio/:libraryScoreId" element={<StudioPage application={unsavedApplication} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    const unload = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(unload);
+    expect(unload.defaultPrevented).toBe(true);
+  });
+
   it("keeps primary Studio controls keyboard reachable", async () => {
     const snapshot = {
       studio: {

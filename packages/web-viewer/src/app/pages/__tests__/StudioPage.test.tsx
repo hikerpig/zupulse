@@ -24,7 +24,38 @@ describe("StudioPage", () => {
     expect(screen.getByRole("heading", { name: "和弦分析工作室" })).toBeTruthy();
     expect(screen.getByText("Library Score: score-1")).toBeTruthy();
     expect(screen.getByRole("link", { name: "返回查看器" }).getAttribute("href")).toBe("/viewer/score-1");
+    expect(screen.queryByRole("button", { name: "撤销修正" })).toBeNull();
     expect(screen.queryByText(/session/i)).toBeNull();
+  });
+
+  it("keeps the Studio document visible while an autosave is pending", () => {
+    const snapshot = {
+      studio: {
+        libraryScoreId: "score-1",
+        status: "unsaved",
+        document: {
+          activeRevision: { segments: [], parameters: {} },
+          corrections: [],
+        },
+      },
+    };
+    const application = {
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      hasHarmonyAnalysisStorage: () => true,
+      openStudio: async () => undefined,
+      undoStudio: () => undefined,
+      redoStudio: () => undefined,
+    } as never;
+    render(
+      <MemoryRouter initialEntries={["/studio/score-1"]}>
+        <Routes>
+          <Route path="/studio/:libraryScoreId" element={<StudioPage application={application} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText(/修正尚未保存/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "撤销修正" })).toBeTruthy();
   });
 
   it("shows a storage-unavailable state instead of silently using memory", () => {

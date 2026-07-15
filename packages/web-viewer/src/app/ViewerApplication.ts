@@ -11,6 +11,8 @@ import type {
   LibraryScoreSummary,
 } from "@zupulse/web-core";
 import { insertCorrection } from "@zupulse/web-core";
+import { HarmonyStudioSession } from "../harmonyStudioSession";
+import type { HarmonyStudioSessionState } from "../harmonyStudioSession";
 
 export type ViewerApplicationSnapshot = {
   currentSessionId?: string;
@@ -18,7 +20,7 @@ export type ViewerApplicationSnapshot = {
   library?: { scores: readonly LibraryScoreSummary[]; loading: boolean; error?: string; importing?: boolean };
   studio?: {
     libraryScoreId: string;
-    status: "loading" | "ready" | "error";
+    status: "loading" | "ready" | "unsaved" | "saving" | "error" | "conflict";
     document?: HarmonyAnalysisDocument;
     error?: string;
   };
@@ -32,6 +34,7 @@ export class ViewerApplication implements ViewerAppHandle {
   private destroyPromise?: Promise<void>;
   private studioIntent = 0;
   private studioOpening: { id: string; promise: Promise<void> } | undefined;
+  private readonly studioSessions = new Map<string, HarmonyStudioSession>();
   private destroying = false;
   private snapshot: ViewerApplicationSnapshot = {};
   private readonly listeners = new Set<() => void>();
@@ -115,9 +118,9 @@ export class ViewerApplication implements ViewerAppHandle {
     range: HarmonyCorrection["range"],
     value: HarmonyCorrection["value"],
   ): Promise<void> {
-    const repository = this.getHarmonyAnalysisRepository();
     const current = this.snapshot.studio;
-    if (!repository || current?.libraryScoreId !== id || current.status !== "ready" || !current.document) return;
+    const session = this.studioSessions.get(id);
+    if (!session || current?.libraryScoreId !== id || !current.document) return;
     const updatedAt = new Date().toISOString();
     const document: HarmonyAnalysisDocument = {
       ...current.document,
@@ -129,13 +132,7 @@ export class ViewerApplication implements ViewerAppHandle {
       }),
       updatedAt,
     };
-    try {
-      const saved = await repository.save({ document, expectedDocumentVersion: current.document.documentVersion });
-      if (saved.status === "conflict") return this.setStudio(id, { status: "error", error: "分析文档版本冲突" });
-      this.setStudio(id, { status: "ready", document: saved.document });
-    } catch (error) {
-      this.setStudio(id, { status: "error", error: error instanceof Error ? error.message : "保存失败" });
-    }
+    session.setCorrections(document.corrections);
   }
 
   private async openStudioOnce(id: string): Promise<void> {
@@ -145,48 +142,66 @@ export class ViewerApplication implements ViewerAppHandle {
     if (!library || !repository) return this.setStudio(id, { status: "error", error: "和声分析存储不可用" });
     this.setStudio(id, { status: "loading" });
     try {
-      const score = await library.repository.get(id as LibraryScore["id"]);
-      if (!score) throw new Error("曲谱不存在");
-      if (score.format !== "musicxml") throw new Error("仅支持 MusicXML/MXL 曲谱");
-      const existing = await repository.read(id);
-      if (existing) {
-        if (intent === this.studioIntent) this.setStudio(id, { status: "ready", document: existing });
-        return;
-      }
-      const file = await library.repository.readScore(id as LibraryScore["id"]);
-      const adapter = library.adapters.find((candidate) => candidate.format === "musicxml");
-      if (!adapter) throw new Error("MusicXML 分析器不可用");
-      const parsed = await adapter.parse({ fileName: file.fileName, bytes: file.bytes });
-      const includedTrackIds = parsed.document.tracks.map((track) => track.id);
-      if (includedTrackIds.length === 0) throw new Error("曲谱没有可分析的音高轨道");
-      const now = new Date().toISOString();
-      const document: HarmonyAnalysisDocument = {
-        schemaVersion: "1.0.0",
-        libraryScoreId: id,
-        sourceContentHash: score.scoreIdentity,
-        documentVersion: 0,
-        activeRevision: {
-          id: crypto.randomUUID(),
-          algorithmVersion: "rules-1",
-          createdAt: now,
-          parameters: { scope: { includedTrackIds }, topK: 8, decisionThreshold: 0.6 },
-          segments: analyzeHarmonyRules(projectAlphaTabHarmonyInput(parsed.runtime), {
-            includedTrackIds,
-            topK: 8,
-            decisionThreshold: 0.6,
-          }),
-        },
-        corrections: [],
-        annotationTarget: { trackId: includedTrackIds[0]!, staffIndex: 0 },
-        updatedAt: now,
-      };
-      const saved = await repository.save({ document, expectedDocumentVersion: null });
-      if (saved.status === "conflict") throw new Error("分析文档版本冲突");
-      if (intent === this.studioIntent) this.setStudio(id, { status: "ready", document: saved.document });
+      const session = this.getStudioSession(id, repository);
+      const state = await session.load(() => this.createStudioDocument(id));
+      if (intent === this.studioIntent) this.setStudioState(id, state);
     } catch (error) {
       if (intent === this.studioIntent)
         this.setStudio(id, { status: "error", error: error instanceof Error ? error.message : "分析失败" });
     }
+  }
+
+  undoStudio(id: string): void {
+    const session = this.studioSessions.get(id);
+    if (session) this.setStudioState(id, session.undo());
+  }
+
+  redoStudio(id: string): void {
+    const session = this.studioSessions.get(id);
+    if (session) this.setStudioState(id, session.redo());
+  }
+
+  private getStudioSession(id: string, repository: HarmonyAnalysisRepository): HarmonyStudioSession {
+    const existing = this.studioSessions.get(id);
+    if (existing) return existing;
+    const session = new HarmonyStudioSession(repository, id, 500, (state) => this.setStudioState(id, state));
+    this.studioSessions.set(id, session);
+    return session;
+  }
+
+  private async createStudioDocument(id: string): Promise<HarmonyAnalysisDocument> {
+    const library = this.library;
+    if (!library) throw new Error("曲谱库不可用");
+    const score = await library.repository.get(id as LibraryScore["id"]);
+    if (!score) throw new Error("曲谱不存在");
+    if (score.format !== "musicxml") throw new Error("仅支持 MusicXML/MXL 曲谱");
+    const file = await library.repository.readScore(id as LibraryScore["id"]);
+    const adapter = library.adapters.find((candidate) => candidate.format === "musicxml");
+    if (!adapter) throw new Error("MusicXML 分析器不可用");
+    const parsed = await adapter.parse({ fileName: file.fileName, bytes: file.bytes });
+    const includedTrackIds = parsed.document.tracks.map((track) => track.id);
+    if (includedTrackIds.length === 0) throw new Error("曲谱没有可分析的音高轨道");
+    const now = new Date().toISOString();
+    return {
+      schemaVersion: "1.0.0",
+      libraryScoreId: id,
+      sourceContentHash: score.scoreIdentity,
+      documentVersion: 0,
+      activeRevision: {
+        id: crypto.randomUUID(),
+        algorithmVersion: "rules-1",
+        createdAt: now,
+        parameters: { scope: { includedTrackIds }, topK: 8, decisionThreshold: 0.6 },
+        segments: analyzeHarmonyRules(projectAlphaTabHarmonyInput(parsed.runtime), {
+          includedTrackIds,
+          topK: 8,
+          decisionThreshold: 0.6,
+        }),
+      },
+      corrections: [],
+      annotationTarget: { trackId: includedTrackIds[0]!, staffIndex: 0 },
+      updatedAt: now,
+    };
   }
 
   async refreshLibrary(): Promise<void> {
@@ -343,9 +358,19 @@ export class ViewerApplication implements ViewerAppHandle {
     this.setSnapshot({ ...this.snapshot, studio: { libraryScoreId, ...studio } });
   }
 
+  private setStudioState(libraryScoreId: string, state: HarmonyStudioSessionState): void {
+    this.setStudio(libraryScoreId, {
+      status: state.status === "analyzing" ? "loading" : state.status,
+      ...(state.document === null ? {} : { document: state.document }),
+      ...(state.error === undefined ? {} : { error: state.error }),
+    });
+  }
+
   private async destroyOnce(): Promise<void> {
     this.unsubscribe();
     this.navigationListeners.clear();
+    for (const studioSession of this.studioSessions.values()) studioSession.dispose();
+    this.studioSessions.clear();
     await this.chain;
     const openError = this.queuedError;
     const session = this.active;

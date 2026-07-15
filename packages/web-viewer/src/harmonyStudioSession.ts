@@ -22,6 +22,7 @@ export class HarmonyStudioSession {
     private readonly repository: HarmonyAnalysisRepository,
     private readonly libraryScoreId: string,
     private readonly autosaveDelayMs = 500,
+    private readonly onStateChange?: (state: HarmonyStudioSessionState) => void,
   ) {}
   getState(): HarmonyStudioSessionState {
     return this.state;
@@ -172,6 +173,7 @@ export class HarmonyStudioSession {
   }
   private set(state: HarmonyStudioSessionState): HarmonyStudioSessionState {
     this.state = state;
+    this.onStateChange?.(state);
     return state;
   }
 }

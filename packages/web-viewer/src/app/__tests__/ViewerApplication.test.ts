@@ -218,6 +218,10 @@ describe("ViewerApplication", () => {
       },
     );
     expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(1);
+    application.undoStudio(scoreId);
+    expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(0);
+    application.redoStudio(scoreId);
+    expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(1);
     await application.openStudio(scoreId);
     expect(adapter.parse).toHaveBeenCalledOnce();
     await application.destroy();

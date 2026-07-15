@@ -10,6 +10,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   const active = libraryScoreId !== undefined && snapshot.currentLibraryScoreId === libraryScoreId;
   const storageAvailable = application.hasHarmonyAnalysisStorage();
   const studio = snapshot.studio?.libraryScoreId === libraryScoreId ? snapshot.studio : undefined;
+  const studioDocument = studio?.document;
   useEffect(() => {
     if (libraryScoreId && storageAvailable) void application.openStudio(libraryScoreId);
   }, [application, libraryScoreId, storageAvailable]);
@@ -32,20 +33,36 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
           <p role="status">正在初始化和声分析…</p>
         ) : studio?.status === "error" ? (
           <p role="alert">{studio.error}</p>
-        ) : studio?.status === "ready" ? (
+        ) : studioDocument ? (
           <>
-            <p role="status">已加载分析结果（{studio.document?.activeRevision.segments.length ?? 0} 个片段）</p>
-            <p>已保存 {studio.document?.corrections.length ?? 0} 个修正</p>
-            {studio.document?.activeRevision.segments[0] ? (
+            <p role="status">
+              {studio.status === "saving"
+                ? "正在保存修正…"
+                : studio.status === "unsaved"
+                  ? "修正尚未保存"
+                  : "已加载分析结果"}
+              （{studioDocument.activeRevision.segments.length} 个片段）
+            </p>
+            {studio.status === "conflict" ? <p role="alert">{studio.error}</p> : null}
+            <p>已保存 {studioDocument.corrections.length} 个修正</p>
+            <div aria-label="修正历史">
+              <button type="button" onClick={() => application.undoStudio(libraryScoreId!)}>
+                撤销修正
+              </button>
+              <button type="button" onClick={() => application.redoStudio(libraryScoreId!)}>
+                重做修正
+              </button>
+            </div>
+            {studioDocument.activeRevision.segments[0] ? (
               <HarmonyStudioEditor
-                candidates={studio.document.activeRevision.segments[0].alternatives}
-                {...(studio.document.activeRevision.segments[0].status === "unresolved"
-                  ? { unresolvedReason: studio.document.activeRevision.segments[0].reason }
+                candidates={studioDocument.activeRevision.segments[0].alternatives}
+                {...(studioDocument.activeRevision.segments[0].status === "unresolved"
+                  ? { unresolvedReason: studioDocument.activeRevision.segments[0].reason }
                   : {})}
                 onSelect={(candidate) =>
                   void application.setStudioCorrection(
                     libraryScoreId!,
-                    studio.document!.activeRevision.segments[0].range,
+                    studioDocument.activeRevision.segments[0].range,
                     {
                       type: "chord",
                       chord: candidate.chord,
@@ -55,7 +72,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                 onApply={(chord) =>
                   void application.setStudioCorrection(
                     libraryScoreId!,
-                    studio.document!.activeRevision.segments[0].range,
+                    studioDocument.activeRevision.segments[0].range,
                     {
                       type: "chord",
                       chord,
@@ -65,7 +82,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                 onNoChord={() =>
                   void application.setStudioCorrection(
                     libraryScoreId!,
-                    studio.document!.activeRevision.segments[0].range,
+                    studioDocument.activeRevision.segments[0].range,
                     {
                       type: "no-chord",
                     },

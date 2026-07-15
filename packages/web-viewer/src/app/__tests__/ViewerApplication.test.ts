@@ -209,6 +209,15 @@ describe("ViewerApplication", () => {
     );
     await Promise.all([application.openStudio(scoreId), application.openStudio(scoreId)]);
     expect(application.getSnapshot().studio).toMatchObject({ libraryScoreId: scoreId, status: "ready" });
+    await application.setStudioCorrection(
+      scoreId,
+      { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 1 } },
+      {
+        type: "chord",
+        chord: { root: { step: "C", alter: 0 }, kind: "major", degrees: [] },
+      },
+    );
+    expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(1);
     await application.openStudio(scoreId);
     expect(adapter.parse).toHaveBeenCalledOnce();
     await application.destroy();

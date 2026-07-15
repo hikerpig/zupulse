@@ -1,5 +1,6 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { Link, useParams } from "react-router";
+import { HarmonyStudioEditor } from "../../features/harmony-studio/HarmonyStudioEditor";
 import type { ViewerApplication } from "../ViewerApplication";
 import styles from "./PageShell.module.css";
 
@@ -32,7 +33,36 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
         ) : studio?.status === "error" ? (
           <p role="alert">{studio.error}</p>
         ) : studio?.status === "ready" ? (
-          <p role="status">已加载分析结果（{studio.document?.activeRevision.segments.length ?? 0} 个片段）</p>
+          <>
+            <p role="status">已加载分析结果（{studio.document?.activeRevision.segments.length ?? 0} 个片段）</p>
+            {studio.document?.activeRevision.segments[0] ? (
+              <HarmonyStudioEditor
+                candidates={studio.document.activeRevision.segments[0].alternatives}
+                {...(studio.document.activeRevision.segments[0].status === "unresolved"
+                  ? { unresolvedReason: studio.document.activeRevision.segments[0].reason }
+                  : {})}
+                onSelect={(candidate) =>
+                  void application.setStudioCorrection(
+                    libraryScoreId!,
+                    studio.document!.activeRevision.segments[0].range,
+                    {
+                      type: "chord",
+                      chord: candidate.chord,
+                    },
+                  )
+                }
+                onNoChord={() =>
+                  void application.setStudioCorrection(
+                    libraryScoreId!,
+                    studio.document!.activeRevision.segments[0].range,
+                    {
+                      type: "no-chord",
+                    },
+                  )
+                }
+              />
+            ) : null}
+          </>
         ) : (
           <p>首次分析、修正与导出将在此工作区完成。</p>
         )}

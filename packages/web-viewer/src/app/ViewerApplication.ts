@@ -3,12 +3,14 @@ import { importLibraryScores } from "@zupulse/web-core";
 import type {
   HarmonyAnalysisDocument,
   HarmonyAnalysisRepository,
+  HarmonyCorrection,
   LibraryScore,
   ScoreFileGateway,
   ScoreFormatAdapter,
   SheetLibraryRepository,
   LibraryScoreSummary,
 } from "@zupulse/web-core";
+import { insertCorrection } from "@zupulse/web-core";
 
 export type ViewerApplicationSnapshot = {
   currentSessionId?: string;
@@ -106,6 +108,30 @@ export class ViewerApplication implements ViewerAppHandle {
     });
     this.studioOpening = { id, promise };
     return promise;
+  }
+
+  async setStudioCorrection(
+    id: string,
+    range: HarmonyCorrection["range"],
+    value: HarmonyCorrection["value"],
+  ): Promise<void> {
+    const repository = this.getHarmonyAnalysisRepository();
+    const current = this.snapshot.studio;
+    if (!repository || current?.libraryScoreId !== id || current.status !== "ready" || !current.document) return;
+    const updatedAt = new Date().toISOString();
+    const document: HarmonyAnalysisDocument = {
+      ...current.document,
+      corrections: insertCorrection(current.document.corrections, {
+        id: crypto.randomUUID(),
+        range,
+        value,
+        updatedAt,
+      }),
+      updatedAt,
+    };
+    const saved = await repository.save({ document, expectedDocumentVersion: current.document.documentVersion });
+    if (saved.status === "conflict") return this.setStudio(id, { status: "error", error: "分析文档版本冲突" });
+    this.setStudio(id, { status: "ready", document: saved.document });
   }
 
   private async openStudioOnce(id: string): Promise<void> {

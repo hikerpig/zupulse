@@ -5,6 +5,9 @@ const fixture = fileURLToPath(new URL("../../../test-fixtures/gp/generated/deskt
 const musicXmlFixture = fileURLToPath(
   new URL("../../../test-fixtures/musicxml/generated/single-voice.musicxml", import.meta.url),
 );
+const multiPartFixture = fileURLToPath(
+  new URL("../../../test-fixtures/musicxml/generated/multi-part.musicxml", import.meta.url),
+);
 
 test("persists a Browser Library Score and gives a re-import a fresh ID after deletion", async ({ page }) => {
   await page.goto("/");
@@ -62,6 +65,20 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await expect(page.getByRole("alertdialog")).toContainText("全部练习数据");
   await page.getByRole("button", { name: "永久删除" }).click();
   await expect(page.getByRole("button", { name: "导入第一份曲谱" })).toBeVisible();
+});
+
+test("reanalyses a multi-part Studio scope and allows a track to be added back", async ({ page }) => {
+  await page.goto("/");
+  await importFixture(page, "导入第一份曲谱", multiPartFixture);
+  await page.getByRole("link", { name: "和弦分析" }).click();
+  await expect(page.getByRole("heading", { name: "和弦分析工作室" })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
+  const scope = page.getByRole("listbox", { name: "分析范围" });
+  await expect(scope.locator("option")).toHaveCount(4);
+  await scope.selectOption(["track-1"]);
+  await expect(scope.locator("option:checked")).toHaveCount(1);
+  await scope.selectOption(["track-1", "track-2"]);
+  await expect(scope.locator("option:checked")).toHaveCount(2);
 });
 
 async function importFixture(page: Page, buttonName: string, filePath = fixture): Promise<void> {

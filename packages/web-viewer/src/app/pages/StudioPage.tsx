@@ -52,6 +52,16 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                     },
                   )
                 }
+                onApply={(chord) =>
+                  void application.setStudioCorrection(
+                    libraryScoreId!,
+                    studio.document!.activeRevision.segments[0].range,
+                    {
+                      type: "chord",
+                      chord,
+                    },
+                  )
+                }
                 onNoChord={() =>
                   void application.setStudioCorrection(
                     libraryScoreId!,

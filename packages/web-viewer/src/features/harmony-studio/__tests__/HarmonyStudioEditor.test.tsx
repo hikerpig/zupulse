@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { HarmonyStudioEditor } from "../HarmonyStudioEditor";
 
@@ -18,6 +19,7 @@ describe("HarmonyStudioEditor", () => {
           },
         ]}
         onSelect={onSelect}
+        onApply={vi.fn()}
         onNoChord={vi.fn()}
         unresolvedReason="证据不足"
       />,
@@ -27,5 +29,32 @@ describe("HarmonyStudioEditor", () => {
     expect(screen.queryByRole("textbox")).toBeNull();
     screen.getByRole("button", { name: /^C ·/ }).click();
     expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it("applies constrained root, kind, extension, degrees, and bass fields", async () => {
+    const onApply = vi.fn();
+    const user = userEvent.setup();
+    const view = render(
+      <HarmonyStudioEditor candidates={[]} onSelect={vi.fn()} onApply={onApply} onNoChord={vi.fn()} />,
+    );
+    const editor = within(view.container);
+
+    await user.selectOptions(editor.getByRole("combobox", { name: "根音" }), "D");
+    await user.selectOptions(editor.getByRole("combobox", { name: "和弦类型" }), "dominant");
+    await user.selectOptions(editor.getByRole("combobox", { name: "扩展音" }), "9");
+    await user.selectOptions(editor.getByRole("combobox", { name: "度数操作" }), "alter");
+    await user.selectOptions(editor.getByRole("combobox", { name: "度数" }), "5");
+    await user.selectOptions(editor.getByRole("combobox", { name: "度数变化" }), "1");
+    await user.click(editor.getByRole("button", { name: "添加度数" }));
+    await user.selectOptions(editor.getByRole("combobox", { name: "低音" }), "F");
+    await user.click(editor.getByRole("button", { name: "应用结构化和弦" }));
+
+    expect(onApply).toHaveBeenCalledWith({
+      root: { step: "D", alter: 0 },
+      kind: "dominant",
+      extension: 9,
+      degrees: [{ operation: "alter", value: 5, alter: 1 }],
+      bass: { step: "F", alter: 0 },
+    });
   });
 });

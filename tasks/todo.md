@@ -351,9 +351,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] overlay 不修改 Managed Score Copy 或 Viewer runtime。
-- [ ] unresolved 显示原因与 Top-K；不能输入任意 chord string。
-- [ ] 选择候选或字段编辑创建结构化 Correction。
+- [x] overlay 不修改 Managed Score Copy 或 Viewer runtime。
+- [x] unresolved 显示原因与 Top-K；不能输入任意 chord string。
+- [x] 选择候选或字段编辑创建结构化 Correction。
 
 **Verification:** `pnpm vitest run packages/web-viewer/src/features/harmony-studio/__tests__/HarmonyStudio.test.tsx`
 
@@ -431,9 +431,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] root/kind/bass/degree 结构化节点与 projection 等价。
-- [ ] source harmony 未覆盖部分保持；Correction 范围可切分并恢复来源语义。
-- [ ] unrepresentable moment 明确失败，不生成节奏漂移。
+- [x] root/kind/bass/degree 结构化节点与 projection 等价。
+- [x] source harmony 未覆盖部分保持；Correction 范围可切分并恢复来源语义。
+- [x] unrepresentable moment 明确失败，不生成节奏漂移。
 
 **Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/exportMusicXmlHarmony.test.ts && pnpm fixtures:musicxml`
 

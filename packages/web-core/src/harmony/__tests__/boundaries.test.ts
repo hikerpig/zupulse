@@ -37,4 +37,22 @@ describe("harmony legal boundaries", () => {
       { measureIndex: 0, offsetTicks: 3840 },
     ]);
   });
+
+  it("represents a barline once using the following measure start", () => {
+    const result = buildLegalBoundaryLattice({
+      ticksPerQuarter: 480,
+      measures: [
+        { index: 0, durationTicks: 1920, timeSignature: { numerator: 4, denominator: 4 } },
+        { index: 1, durationTicks: 1920, timeSignature: { numerator: 4, denominator: 4 } },
+      ],
+      tracks: [],
+      maxOptionalPerMeasure: 0,
+    });
+
+    expect(result.moments).toEqual([
+      { measureIndex: 0, offsetTicks: 0 },
+      { measureIndex: 1, offsetTicks: 0 },
+      { measureIndex: 1, offsetTicks: 1920 },
+    ]);
+  });
 });

@@ -10,7 +10,16 @@ export function buildLegalBoundaryLattice(
     maxOptionalPerMeasure?: number;
   },
 ): LegalBoundaryLattice {
-  const mandatory = new Set((input.mandatory ?? []).map(key));
+  const canonical = (moment: ScoreWrittenMoment): ScoreWrittenMoment => {
+    const measureIndex = input.measures.findIndex((measure) => measure.index === moment.measureIndex);
+    const measure = input.measures[measureIndex];
+    const next = input.measures[measureIndex + 1];
+    return measure && next && moment.offsetTicks === measure.durationTicks
+      ? { measureIndex: next.index, offsetTicks: 0 }
+      : moment;
+  };
+  const requestedMandatory = (input.mandatory ?? []).map(canonical);
+  const mandatory = new Set(requestedMandatory.map(key));
   const candidates = input.measures.flatMap((measure) => {
     const starts = [
       { measureIndex: measure.index, offsetTicks: 0 },
@@ -30,12 +39,10 @@ export function buildLegalBoundaryLattice(
     const metric = Array.from({ length: measure.timeSignature.numerator }, (_, index) => ({
       measureIndex: measure.index,
       offsetTicks: index * beat,
-    }));
-    return [...starts, ...noteMoments, ...metric];
+    })).filter((moment) => moment.offsetTicks < measure.durationTicks);
+    return [...starts, ...noteMoments, ...metric].map(canonical);
   });
-  const unique = [
-    ...new Map([...candidates, ...(input.mandatory ?? [])].map((moment) => [key(moment), moment])).values(),
-  ];
+  const unique = [...new Map([...candidates, ...requestedMandatory].map((moment) => [key(moment), moment])).values()];
   const moments = input.measures
     .flatMap((measure) =>
       unique.filter((moment) => moment.measureIndex === measure.index).sort((a, b) => a.offsetTicks - b.offsetTicks),

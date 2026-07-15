@@ -1,4 +1,5 @@
 import type { HarmonyAnalysisInput } from "./analysisInput";
+import { buildLegalBoundaryLattice } from "./boundaries";
 import { buildHarmonyFeatureCache } from "./features";
 import { generateHarmonyCandidates } from "./candidates";
 import { applyHarmonyConfidence, mergeHarmonySegments } from "./postprocess";
@@ -24,10 +25,11 @@ export function analyzeHarmonyRules(
       ),
     );
   const cache = buildHarmonyFeatureCache({ ticksPerQuarter: input.ticksPerQuarter, notes });
-  const boundaries = input.measures.flatMap((measure) => [
-    { measureIndex: measure.index, offsetTicks: 0 },
-    { measureIndex: measure.index, offsetTicks: measure.durationTicks },
-  ]);
+  const boundaries = buildLegalBoundaryLattice({
+    ticksPerQuarter: input.ticksPerQuarter,
+    measures: input.measures,
+    tracks: input.tracks.filter((track) => included.has(track.id) && !track.isPercussion),
+  }).moments;
   const decoded = decodeHarmonySequence({
     boundaries,
     candidates: (range) =>

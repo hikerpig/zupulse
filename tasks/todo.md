@@ -222,7 +222,7 @@ feature: harmony-analysis-studio
 - [ ] Harmony golden corpus 与 benchmark 报告生成成功。
 - [x] `pnpm verify:fast`
 
-**Evidence:** P2 相关 harmony 测试 36 tests、全仓库 `rtk pnpm verify:fast`（68 test files / 237 tests）于 2026-07-15 通过；固定 corpus/指标报告仍待 T24 完成。
+**Evidence:** P2 相关 harmony 测试 36 tests、全仓库 `rtk pnpm verify:fast`（77 test files / 265 tests）与 `rtk pnpm harmony:eval` 于 2026-07-15 通过；后者是固定 synthetic baseline，独立授权 corpus、校准和发布阈值仍待 T24 完成。
 
 ## Phase 3: Persisted analysis data
 

@@ -96,7 +96,7 @@ P6 发布质量 T24 -> T25
 ### Exit gate P2
 
 - [x] 合成 fixtures 覆盖 inversion、9/11/13、`b9/#9/#11/b13` 组合、经过音、挂留、tie、移调乐器和微分音拒识。
-- [ ] Top-8 oracle recall、resolved precision 和 coverage 能从固定 corpus 自动生成报告；此阶段允许尚未达到最终发布阈值，但不得回归基础 golden cases。
+- [x] Top-8 oracle recall、resolved precision 和 coverage 能从固定 corpus 自动生成报告；此阶段允许尚未达到最终发布阈值，但不得回归基础 golden cases。（`pnpm harmony:eval`，synthetic baseline；发布独立 corpus 仍属 P6。）
 - [x] 典型 fixture benchmark 有基线，边界/候选/beam 上限可观察且取消有效。
 - [x] `pnpm verify:fast` 通过。
 

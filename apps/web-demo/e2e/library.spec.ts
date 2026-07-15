@@ -41,8 +41,11 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await expect(page.getByRole("heading", { name: "和弦分析工作室" })).toBeVisible();
   await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "和弦候选" })).toBeVisible();
+  await page.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
+  await expect(page.getByText("已保存 1 个修正")).toBeVisible();
   await page.reload();
   await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
+  await expect(page.getByText("已保存 1 个修正")).toBeVisible();
 });
 
 async function importFixture(page: Page, buttonName: string, filePath = fixture): Promise<void> {

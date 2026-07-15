@@ -129,9 +129,13 @@ export class ViewerApplication implements ViewerAppHandle {
       }),
       updatedAt,
     };
-    const saved = await repository.save({ document, expectedDocumentVersion: current.document.documentVersion });
-    if (saved.status === "conflict") return this.setStudio(id, { status: "error", error: "分析文档版本冲突" });
-    this.setStudio(id, { status: "ready", document: saved.document });
+    try {
+      const saved = await repository.save({ document, expectedDocumentVersion: current.document.documentVersion });
+      if (saved.status === "conflict") return this.setStudio(id, { status: "error", error: "分析文档版本冲突" });
+      this.setStudio(id, { status: "ready", document: saved.document });
+    } catch (error) {
+      this.setStudio(id, { status: "error", error: error instanceof Error ? error.message : "保存失败" });
+    }
   }
 
   private async openStudioOnce(id: string): Promise<void> {

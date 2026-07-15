@@ -35,6 +35,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
         ) : studio?.status === "ready" ? (
           <>
             <p role="status">已加载分析结果（{studio.document?.activeRevision.segments.length ?? 0} 个片段）</p>
+            <p>已保存 {studio.document?.corrections.length ?? 0} 个修正</p>
             {studio.document?.activeRevision.segments[0] ? (
               <HarmonyStudioEditor
                 candidates={studio.document.activeRevision.segments[0].alternatives}

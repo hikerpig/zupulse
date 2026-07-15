@@ -16,6 +16,7 @@ import {
   type MidiHarmonyNote,
 } from "./cmuCmaParser";
 import { generateOracleCandidates } from "./harmonyOracleCandidates";
+import { weightedFraction } from "./harmonyWeightedMetrics";
 
 type Manifest = {
   source: string;
@@ -33,6 +34,7 @@ type EvaluationResult = {
   correct: boolean;
   top8: boolean;
   confidence: number;
+  durationMs: number;
   facets: {
     root: boolean;
     bass: boolean;
@@ -109,6 +111,7 @@ for (const chordFile of chordFiles.sort()) {
       correct: resolved && JSON.stringify(segment.chord) === JSON.stringify(label.chord),
       top8: alternatives.some((candidate) => JSON.stringify(candidate.chord) === JSON.stringify(label.chord)),
       confidence: resolved ? segment.confidence : 0,
+      durationMs: (labels[measureIndex + 1]?.startMs ?? maxEndMs) - label.startMs,
       facets: {
         root: resolved && JSON.stringify(segment.chord.root) === JSON.stringify(label.chord.root),
         bass: resolved && JSON.stringify(segment.chord.bass) === JSON.stringify(label.chord.bass),
@@ -137,16 +140,44 @@ const report = {
   },
   metrics: {
     top8OracleRecall: ratio(evalResults.filter((result) => result.top8).length, evalResults.length),
-    resolvedPrecision: ratio(evalResults.filter((result) => result.correct).length, resolved.length),
-    resolvedCoverage: ratio(resolved.length, evalResults.length),
+    resolvedPrecision: weightedFraction(
+      resolved,
+      (result) => result.correct,
+      (result) => result.durationMs,
+    ),
+    resolvedCoverage: weightedFraction(
+      evalResults,
+      (result) => result.resolved,
+      (result) => result.durationMs,
+    ),
     boundaryF1: calculateBoundaryF1(boundaryResults.filter((result) => splitFor(result.groupId) === "eval")),
     expectedCalibrationError: calibrationError(evalResults, calibration),
     facets: {
-      root: ratio(resolved.filter((result) => result.facets.root).length, resolved.length),
-      bass: ratio(resolved.filter((result) => result.facets.bass).length, resolved.length),
-      kind: ratio(resolved.filter((result) => result.facets.kind).length, resolved.length),
-      extension: ratio(resolved.filter((result) => result.facets.extension).length, resolved.length),
-      alterations: ratio(resolved.filter((result) => result.facets.alterations).length, resolved.length),
+      root: weightedFraction(
+        resolved,
+        (result) => result.facets.root,
+        (result) => result.durationMs,
+      ),
+      bass: weightedFraction(
+        resolved,
+        (result) => result.facets.bass,
+        (result) => result.durationMs,
+      ),
+      kind: weightedFraction(
+        resolved,
+        (result) => result.facets.kind,
+        (result) => result.durationMs,
+      ),
+      extension: weightedFraction(
+        resolved,
+        (result) => result.facets.extension,
+        (result) => result.durationMs,
+      ),
+      alterations: weightedFraction(
+        resolved,
+        (result) => result.facets.alterations,
+        (result) => result.durationMs,
+      ),
     },
   },
   citation: manifest.citation,
@@ -241,23 +272,25 @@ function calculateBoundaryF1(groups: readonly BoundaryResult[]): number {
 }
 
 function calibrationError(
-  results: readonly { confidence: number; correct: boolean }[],
+  results: readonly { confidence: number; correct: boolean; durationMs: number }[],
   calibration: (confidence: number) => number,
 ): number {
-  const bins = Array.from({ length: 10 }, () => ({ confidence: 0, accuracy: 0, count: 0 }));
+  const bins = Array.from({ length: 10 }, () => ({ confidence: 0, accuracy: 0, durationMs: 0 }));
+  const totalDurationMs = results.reduce((sum, result) => sum + result.durationMs, 0);
   for (const result of results) {
     const confidence = calibration(result.confidence);
     const bin = bins[Math.min(9, Math.floor(confidence * 10))]!;
-    bin.confidence += confidence;
-    bin.accuracy += Number(result.correct);
-    bin.count += 1;
+    bin.confidence += confidence * result.durationMs;
+    bin.accuracy += Number(result.correct) * result.durationMs;
+    bin.durationMs += result.durationMs;
   }
   return bins.reduce(
     (sum, bin) =>
       sum +
-      (bin.count === 0
+      (bin.durationMs === 0
         ? 0
-        : (bin.count / (results.length || 1)) * Math.abs(bin.confidence / bin.count - bin.accuracy / bin.count)),
+        : (bin.durationMs / (totalDurationMs || 1)) *
+          Math.abs(bin.confidence / bin.durationMs - bin.accuracy / bin.durationMs)),
     0,
   );
 }
@@ -278,16 +311,16 @@ function countSplits(results: readonly { groupId: string }[]): Record<DatasetSpl
 }
 
 function createCalibrationModel(
-  results: readonly { confidence: number; correct: boolean }[],
+  results: readonly { confidence: number; correct: boolean; durationMs: number }[],
 ): (confidence: number) => number {
-  const bins = Array.from({ length: 10 }, () => ({ correct: 0, count: 0 }));
+  const bins = Array.from({ length: 10 }, () => ({ correctDurationMs: 0, durationMs: 0 }));
   for (const result of results) {
     const bin = bins[Math.min(9, Math.floor(result.confidence * 10))]!;
-    bin.correct += Number(result.correct);
-    bin.count += 1;
+    bin.correctDurationMs += Number(result.correct) * result.durationMs;
+    bin.durationMs += result.durationMs;
   }
   return (confidence) => {
     const bin = bins[Math.min(9, Math.floor(confidence * 10))]!;
-    return bin.count === 0 ? confidence : bin.correct / bin.count;
+    return bin.durationMs === 0 ? confidence : bin.correctDurationMs / bin.durationMs;
   };
 }

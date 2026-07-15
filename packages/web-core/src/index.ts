@@ -12,6 +12,7 @@ export * from "./import/openScore";
 export * from "./musicxml/preflight";
 export * from "./musicxml/musicXmlAdapter";
 export * from "./musicxml/alphaTabProjection";
+export * from "./harmony/writtenTime";
 export * from "./score/positions";
 export * from "./bridge/types";
 export * from "./bridge/schemas";

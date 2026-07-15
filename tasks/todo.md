@@ -18,9 +18,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] legal moment 往返 source divisions 后完全相等。
-- [ ] 不可精确表示的位置返回结构化错误，不取整或吸附。
-- [ ] 书面时间不展开 repeat，也不绑定 track。
+- [x] legal moment 往返 source divisions 后完全相等。
+- [x] 不可精确表示的位置返回结构化错误，不取整或吸附。
+- [x] 书面时间不展开 repeat，也不绑定 track。
 
 **Verification:** `pnpm vitest run packages/web-core/src/musicxml packages/web-core/src/harmony`
 
@@ -29,6 +29,8 @@ feature: harmony-analysis-studio
 **Files likely touched:** `packages/web-core/src/harmony/writtenTime.ts`、`packages/web-core/src/harmony/__tests__/writtenTime.test.ts`、`packages/web-core/src/musicxml/alphaTabProjection.ts`、MusicXML fixtures。
 
 **Estimated scope:** Medium: 4 files
+
+**Evidence:** `pnpm vitest run packages/web-core/src/harmony packages/web-core/src/musicxml`（16 tests）、`pnpm typecheck` 与 `pnpm fixtures:musicxml` 于 2026-07-15 通过。`pnpm verify:fast` 的其余检查通过，但既有 `packages/web-viewer/src/app/__tests__/App.test.tsx` 单测因 jsdom `AbortSignal` 与 undici 不匹配失败；该文件在本任务前后无变更，已隔离记录，未将无关 UI 修复纳入 T1。
 
 ### Task 2: 证明 XML/MXL 增量写入可行
 

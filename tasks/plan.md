@@ -54,10 +54,12 @@ P6 发布质量 T24 -> T25
 
 目标：用最小可运行 fixture 证明两个最高风险边界，不做 UI 或持久化。
 
-- [ ] T1：证明 Score Written Moment 与 MusicXML divisions/tuplets 可逆。
+- [x] T1：证明 Score Written Moment 与 MusicXML divisions/tuplets 可逆。
 - [ ] T2：证明 partwise/timewise/MXL 能语义保留地增量写入 `<harmony>`。
 
 ### Exit gate P0
+
+> T1 结论：固定 960 tick 无法精确覆盖 7/11 divisions。`web-core` 改用每份谱有效 divisions 的安全 LCM 作为内部 `ticksPerQuarter`；moment 外形不变，超出安全整数的位置拒绝成为 legal moment。
 
 - [ ] 变化 divisions、tuplets、多 voice 的 legal moments 可以精确 round-trip；不可表示位置被拒绝而不是取整。
 - [ ] `.musicxml`、`.xml`、`.mxl` fixture 写入后可重新导入，非 harmony 音乐语义不变。

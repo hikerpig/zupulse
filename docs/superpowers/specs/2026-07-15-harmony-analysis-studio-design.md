@@ -864,7 +864,7 @@ Browser 与 Desktop 运行同一组 HarmonyAnalysisRepository contract tests：
 ## 已定假设与非阻塞实现选择
 
 - 首版 Studio 只对 MusicXML/MXL 开放；未来 GP 支持需要新的来源写回规格。
-- canonical tick 的具体常量复用 alphaTab 当前书面时间语义，但由 `web-core` 命名导出并通过 tuplets/divisions fixture 证明可逆；若 fixture 证明固定 tick 不足，保持 `ScoreWrittenMoment` 外形不变，在 AnalysisInput 内增加来源 rational mapping，而不让 UI 接触 MusicXML divisions。
+- `ScoreWrittenMoment` 保持 `{ measureIndex, offsetTicks }` 外形；`offsetTicks` 使用每份来源谱所有有效 MusicXML `divisions` 的安全 LCM 作为 `AnalysisInput.ticksPerQuarter`，而不是 alphaTab 固定 960。这样可精确表示 7/11 等非 960 整除的时值；LCM 或 offset 超出安全整数时，该位置不能成为 legal moment，分析以结构化错误拒绝，不让 UI 接触 MusicXML divisions。
 - 首版多窗口冲突只检测并阻止覆盖，不自动合并。
 - XML/ZIP 建议使用两个窄直接依赖；实现前按仓库规则确认许可、bundle 大小和公开 API。
 - 精度门槛是首个发布 gate；实际 corpus 名单和权重需在实现阶段随授权 fixture 一并提交，但不得用私有、不可重复数据作为唯一证据。

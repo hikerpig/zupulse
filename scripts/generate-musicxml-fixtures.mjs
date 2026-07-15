@@ -13,6 +13,8 @@ const fixtures = {
   "large-score.musicxml": score("Large Score", 6),
   "repeat-ending.musicxml": score("Repeat", 1, `<barline location="right"><repeat direction="backward"/></barline>`),
   "lyrics-pickup.musicxml": score("中文歌曲", 1, `<note><lyric><text>你好</text></lyric></note>`),
+  "harmony-written-time.musicxml": `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="4.0"><work><work-title>Written Time</work-title></work><part-list><score-part id="P1"><part-name>Part 1</part-name></score-part></part-list><part id="P1"><measure number="1"><attributes><divisions>7</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes><note><pitch><step>C</step><octave>4</octave></pitch><duration>7</duration><voice>1</voice></note><backup><duration>7</duration></backup><note><pitch><step>E</step><octave>4</octave></pitch><duration>1</duration><voice>2</voice><time-modification><actual-notes>7</actual-notes><normal-notes>4</normal-notes></time-modification></note><forward><duration>6</duration></forward><attributes><divisions>11</divisions></attributes><note><pitch><step>G</step><octave>4</octave></pitch><duration>5</duration><voice>2</voice></note></measure></part></score-partwise>`,
   "timewise.musicxml": `<?xml version="1.0"?><score-timewise version="4.0"><part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list><measure number="1"><part id="P1"><note><rest/><duration>4</duration></note></part></measure></score-timewise>`,
   "empty.musicxml": `<?xml version="1.0"?><score-partwise version="4.0"></score-partwise>`,
   "malformed.musicxml": `<score-partwise><part>`,

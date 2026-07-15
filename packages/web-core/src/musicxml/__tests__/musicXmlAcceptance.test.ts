@@ -6,7 +6,13 @@ import { getDefaultVisibleTrackIds } from "../alphaTabProjection";
 
 describe("MusicXML acceptance fixtures", () => {
   const adapter = createMusicXmlAdapter();
-  for (const name of ["single-voice.musicxml", "piano-multistaff.musicxml", "timewise.musicxml", "simple.mxl"]) {
+  for (const name of [
+    "single-voice.musicxml",
+    "piano-multistaff.musicxml",
+    "harmony-written-time.musicxml",
+    "timewise.musicxml",
+    "simple.mxl",
+  ]) {
     it(`imports ${name}`, async () => {
       const bytes = new Uint8Array(await readFile(resolve("test-fixtures/musicxml/generated", name)));
       const output = await adapter.parse({ fileName: name, bytes });

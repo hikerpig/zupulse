@@ -53,6 +53,7 @@ const events = new TextDecoder()
 const groups = new Map<string, UciEvent[]>();
 for (const event of events)
   groups.set(event.id.split(":")[0]!, [...(groups.get(event.id.split(":")[0]!) ?? []), event]);
+const boundaryResults: Array<{ groupId: string; predicted: Set<number>; expected: Set<number> }> = [];
 const results = [...groups.entries()].flatMap(([groupId, group]) => {
   const input = createHarmonyAnalysisInput({
     ticksPerQuarter: 480,
@@ -85,6 +86,17 @@ const results = [...groups.entries()].flatMap(([groupId, group]) => {
     ],
   });
   const segments = analyzeHarmonyRules(input, { includedTrackIds: ["bach"], topK: 8, decisionThreshold: 0 });
+  boundaryResults.push({
+    groupId,
+    predicted: new Set(segments.slice(1).map((segment) => segment.range.start.measureIndex)),
+    expected: new Set(
+      group
+        .slice(1)
+        .flatMap((event, index) =>
+          JSON.stringify(event.expected) === JSON.stringify(group[index]?.expected) ? [] : [index + 1],
+        ),
+    ),
+  });
   return group.map((event, measureIndex) => {
     const start = { measureIndex, offsetTicks: 0 };
     const segment = segments.find(
@@ -130,6 +142,7 @@ const report = {
     top8OracleRecall: ratio(evalResults.filter((result) => result.top8).length, evalResults.length),
     resolvedPrecision: ratio(evalResults.filter((result) => result.correct).length, resolved.length),
     resolvedCoverage: ratio(resolved.length, evalResults.length),
+    boundaryF1: calculateBoundaryF1(boundaryResults.filter((result) => splitFor(result.groupId) === "eval")),
     expectedCalibrationError: calibrationError(evalResults, calibration),
     facets: {
       root: ratio(resolved.filter((result) => result.facets.root).length, resolved.length),
@@ -145,6 +158,23 @@ console.log(JSON.stringify(report, null, 2));
 
 function ratio(numerator: number, denominator: number): number {
   return denominator === 0 ? 0 : numerator / denominator;
+}
+
+function calculateBoundaryF1(
+  groups: readonly { predicted: ReadonlySet<number>; expected: ReadonlySet<number> }[],
+): number {
+  const counts = groups.reduce(
+    (total, group) => {
+      total.truePositive += [...group.predicted].filter((boundary) => group.expected.has(boundary)).length;
+      total.predicted += group.predicted.size;
+      total.expected += group.expected.size;
+      return total;
+    },
+    { truePositive: 0, predicted: 0, expected: 0 },
+  );
+  const precision = ratio(counts.truePositive, counts.predicted);
+  const recall = ratio(counts.truePositive, counts.expected);
+  return precision + recall === 0 ? 0 : (2 * precision * recall) / (precision + recall);
 }
 
 function calibrationError(

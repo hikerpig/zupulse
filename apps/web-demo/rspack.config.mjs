@@ -6,10 +6,12 @@ import { fileURLToPath } from "node:url";
 const demoRoot = fileURLToPath(new URL(".", import.meta.url));
 const requireFromWebCore = createRequire(new URL("../../packages/web-core/package.json", import.meta.url));
 const alphaTabDist = dirname(requireFromWebCore.resolve("@coderline/alphatab"));
+const isE2e = process.env.PLAYWRIGHT_TEST === "1";
 
 /** @type {import("@rspack/core").Configuration} */
 const config = {
   context: demoRoot,
+  ...(isE2e ? { lazyCompilation: false } : {}),
   entry: {
     main: "./src/main.ts",
   },
@@ -65,6 +67,7 @@ const config = {
   devServer: {
     host: "127.0.0.1",
     port: 5173,
+    ...(isE2e ? { hot: false, liveReload: false } : {}),
     static: [
       {
         directory: alphaTabDist,

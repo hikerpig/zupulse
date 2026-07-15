@@ -29,6 +29,7 @@ export class ViewerApplication implements ViewerAppHandle {
   private queuedError: unknown;
   private destroyPromise?: Promise<void>;
   private studioIntent = 0;
+  private studioOpening: { id: string; promise: Promise<void> } | undefined;
   private destroying = false;
   private snapshot: ViewerApplicationSnapshot = {};
   private readonly listeners = new Set<() => void>();
@@ -99,6 +100,15 @@ export class ViewerApplication implements ViewerAppHandle {
   }
 
   async openStudio(id: string): Promise<void> {
+    if (this.studioOpening?.id === id) return this.studioOpening.promise;
+    const promise = this.openStudioOnce(id).finally(() => {
+      if (this.studioOpening?.promise === promise) this.studioOpening = undefined;
+    });
+    this.studioOpening = { id, promise };
+    return promise;
+  }
+
+  private async openStudioOnce(id: string): Promise<void> {
     const library = this.library;
     const repository = this.getHarmonyAnalysisRepository();
     const intent = ++this.studioIntent;

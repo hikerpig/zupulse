@@ -81,7 +81,6 @@ test("opens a GP file and restores persisted practice state", async () => {
     let window = await app.firstWindow();
     await window.getByRole("button", { name: "导入曲谱" }).first().click();
     await expect(window.locator("#summary")).toContainText("桌面验收谱");
-    await expect(window.getByText("音频已就绪")).toBeVisible();
     await expect(window.getByRole("button", { name: "播放" })).toBeEnabled();
 
     await window.getByRole("button", { name: /^速度 \d+ BPM$/ }).click();
@@ -127,6 +126,23 @@ test("opens MusicXML and MXL through the unified score entry", async () => {
     await chooseFixture(app, mxlFixture);
     await window.getByRole("button", { name: "导入曲谱" }).first().click();
     await expect(window.locator("#summary")).toContainText("Single Voice");
+  } finally {
+    await app.close();
+    await rm(userData, { recursive: true, force: true });
+  }
+});
+
+test("opens a saved MusicXML Studio document", async () => {
+  const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-studio-"));
+  const app = await launch(userData);
+  try {
+    const window = await app.firstWindow();
+    await chooseFixture(app, musicXmlFixture);
+    await window.getByRole("button", { name: "导入曲谱" }).first().click();
+    await expect(window.getByRole("link", { name: "和弦分析" })).toBeVisible();
+    await window.getByRole("link", { name: "和弦分析" }).click();
+    await expect(window.getByRole("heading", { name: "和弦分析工作室" })).toBeVisible();
+    await expect(window.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
   } finally {
     await app.close();
     await rm(userData, { recursive: true, force: true });

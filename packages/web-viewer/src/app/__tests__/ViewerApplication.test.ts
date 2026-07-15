@@ -207,7 +207,7 @@ describe("ViewerApplication", () => {
         adapters: [adapter],
       },
     );
-    await application.openStudio(scoreId);
+    await Promise.all([application.openStudio(scoreId), application.openStudio(scoreId)]);
     expect(application.getSnapshot().studio).toMatchObject({ libraryScoreId: scoreId, status: "ready" });
     await application.openStudio(scoreId);
     expect(adapter.parse).toHaveBeenCalledOnce();

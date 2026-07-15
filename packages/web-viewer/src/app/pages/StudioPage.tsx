@@ -169,27 +169,35 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
             </button>
             {exportStatus ? <p role="status">{exportStatus}</p> : null}
             {firstSegment ? (
-              <HarmonyStudioEditor
-                candidates={firstSegment.alternatives}
-                {...(firstSegment.status === "unresolved" ? { unresolvedReason: firstSegment.reason } : {})}
-                onSelect={(candidate) =>
-                  void application.setStudioCorrection(libraryScoreId!, firstSegment.range, {
-                    type: "chord",
-                    chord: candidate.chord,
-                  })
-                }
-                onApply={(chord) =>
-                  void application.setStudioCorrection(libraryScoreId!, firstSegment.range, {
-                    type: "chord",
-                    chord,
-                  })
-                }
-                onNoChord={() =>
-                  void application.setStudioCorrection(libraryScoreId!, firstSegment.range, {
-                    type: "no-chord",
-                  })
-                }
-              />
+              <>
+                <HarmonyStudioEditor
+                  candidates={firstSegment.alternatives}
+                  {...(firstSegment.status === "unresolved" ? { unresolvedReason: firstSegment.reason } : {})}
+                  onSelect={(candidate) =>
+                    void application.setStudioCorrection(libraryScoreId!, firstSegment.range, {
+                      type: "chord",
+                      chord: candidate.chord,
+                    })
+                  }
+                  onApply={(chord) =>
+                    void application.setStudioCorrection(libraryScoreId!, firstSegment.range, {
+                      type: "chord",
+                      chord,
+                    })
+                  }
+                  onNoChord={() =>
+                    void application.setStudioCorrection(libraryScoreId!, firstSegment.range, {
+                      type: "no-chord",
+                    })
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => void application.resetStudioCorrection(libraryScoreId!, firstSegment.range)}
+                >
+                  重置选中片段
+                </button>
+              </>
             ) : null}
           </>
         ) : (

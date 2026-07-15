@@ -233,6 +233,20 @@ describe("ViewerApplication", () => {
       },
     );
     expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(1);
+    await application.resetStudioCorrection(scoreId, {
+      start: { measureIndex: 0, offsetTicks: 0 },
+      end: { measureIndex: 0, offsetTicks: 1 },
+    });
+    expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(0);
+    await application.setStudioCorrection(
+      scoreId,
+      { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 1 } },
+      {
+        type: "chord",
+        chord: { root: { step: "C", alter: 0 }, kind: "major", degrees: [] },
+      },
+    );
+    expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(1);
     application.undoStudio(scoreId);
     expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(0);
     application.redoStudio(scoreId);

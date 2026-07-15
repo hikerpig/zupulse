@@ -1,6 +1,7 @@
 import type { ViewerAppHandle, ViewerFile, ViewerHost, ViewerHostEvent, ViewerSessionHandle } from "../host";
 import {
   analyzeHarmonyRules,
+  applyCorrectionCommand,
   effectiveHarmonyProjection,
   importLibraryScores,
   listMusicXmlPartIds,
@@ -148,6 +149,14 @@ export class ViewerApplication implements ViewerAppHandle {
     const session = this.studioSessions.get(id);
     if (!session) return;
     session.setAnnotationTarget(annotationTarget);
+    await session.flush();
+  }
+
+  async resetStudioCorrection(id: string, range: HarmonyCorrection["range"]): Promise<void> {
+    const session = this.studioSessions.get(id);
+    const document = session?.getState().document;
+    if (!session || !document) return;
+    session.setCorrections(applyCorrectionCommand(document.corrections, { type: "reset", range }));
     await session.flush();
   }
 

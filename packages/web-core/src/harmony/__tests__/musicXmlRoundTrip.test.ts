@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { TextDecoder, TextEncoder } from "node:util";
+import { unzipSync } from "fflate";
 import { describe, expect, it } from "vitest";
 import { insertMusicXmlHarmony } from "../musicXmlRoundTrip";
 import { createMusicXmlAdapter } from "../../musicxml/musicXmlAdapter";
@@ -43,6 +44,12 @@ describe("insertMusicXmlHarmony", () => {
     ).toThrow("target-not-found");
   });
 
+  it("rejects external entity declarations before parsing source XML", () => {
+    const source = `<!DOCTYPE score-partwise SYSTEM "https://example.test/score.dtd"><score-partwise version="4.0"><part-list/></score-partwise>`;
+
+    expect(() => insertMusicXmlHarmony(encode(source), [])).toThrow("unsupported-format");
+  });
+
   it.each(["single-voice.musicxml", "timewise.musicxml"])("can reimport annotated %s", async (name) => {
     const source = new Uint8Array(await readFile(resolve("test-fixtures/musicxml/generated", name)));
     const annotated = insertMusicXmlHarmony(source, [{ partId: "P1", measureIndex: 0, harmonyXml: harmony }]);
@@ -50,5 +57,17 @@ describe("insertMusicXmlHarmony", () => {
     const output = await createMusicXmlAdapter().parse({ fileName: name, bytes: annotated });
 
     expect(output.document.summary.trackCount).toBeGreaterThan(0);
+  });
+
+  it("updates only the MXL root score while retaining its container entry", async () => {
+    const source = new Uint8Array(await readFile(resolve("test-fixtures/musicxml/generated/simple.mxl")));
+
+    const annotated = insertMusicXmlHarmony(source, [{ partId: "P1", measureIndex: 0, harmonyXml: harmony }]);
+    const entries = unzipSync(annotated);
+
+    expect(decode(entries["score.musicxml"]!)).toContain(harmony);
+    expect(decode(entries["META-INF/container.xml"]!)).toContain('full-path="score.musicxml"');
+    expect(decode(entries["attachments/layout.xml"]!)).toBe('<layout vendor="keep"/>');
+    await expect(createMusicXmlAdapter().parse({ fileName: "simple.mxl", bytes: annotated })).resolves.toBeDefined();
   });
 });

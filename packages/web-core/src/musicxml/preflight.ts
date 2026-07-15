@@ -22,6 +22,7 @@ export type MusicXmlPreflight = {
 export function preflightMusicXml(bytes: Uint8Array): MusicXmlPreflight {
   if (bytes.byteLength > MUSICXML_LIMITS.maxXmlBytes) fail("resource-limit-exceeded");
   const source = new TextDecoder("utf-8", { fatal: true }).decode(bytes).replace(/^\uFEFF/, "");
+  if (/<!DOCTYPE\b[^>]*\b(?:SYSTEM|PUBLIC)\b/i.test(source)) fail("unsupported-format");
   const withoutProlog = source.replace(/^\s*(?:<\?xml[\s\S]*?\?>\s*)?(?:<!DOCTYPE[\s\S]*?>\s*)?/, "");
   const rootMatch = /^<(score-partwise|score-timewise)\b([^>]*)>/i.exec(withoutProlog);
   if (!rootMatch) {

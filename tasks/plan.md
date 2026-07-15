@@ -55,15 +55,17 @@ P6 发布质量 T24 -> T25
 目标：用最小可运行 fixture 证明两个最高风险边界，不做 UI 或持久化。
 
 - [x] T1：证明 Score Written Moment 与 MusicXML divisions/tuplets 可逆。
-- [ ] T2：证明 partwise/timewise/MXL 能语义保留地增量写入 `<harmony>`。
+- [x] T2：证明 partwise/timewise/MXL 能语义保留地增量写入 `<harmony>`。
 
 ### Exit gate P0
 
 > T1 结论：固定 960 tick 无法精确覆盖 7/11 divisions。`web-core` 改用每份谱有效 divisions 的安全 LCM 作为内部 `ticksPerQuarter`；moment 外形不变，超出安全整数的位置拒绝成为 legal moment。
 
-- [ ] 变化 divisions、tuplets、多 voice 的 legal moments 可以精确 round-trip；不可表示位置被拒绝而不是取整。
-- [ ] `.musicxml`、`.xml`、`.mxl` fixture 写入后可重新导入，非 harmony 音乐语义不变。
-- [ ] XML/ZIP 只采用公开 API；依赖、许可、bundle 影响已记录。
+> T2 结论：DOM 重序列化不满足“未触及内容保持”的目标。导出器采用受限的结构感知词法插入，并以直接依赖的 `fflate@0.8.3`（MIT，约 797 KB unpacked）读取和重建 MXL；只替换声明的 rootfile，保留其他解压 entry 内容。外部 DTD、重复/超限 ZIP entry 和超限解压总量在解析前拒绝。
+
+- [x] 变化 divisions、tuplets、多 voice 的 legal moments 可以精确 round-trip；不可表示位置被拒绝而不是取整。
+- [x] `.musicxml`、`.xml`、`.mxl` fixture 写入后可重新导入，非 harmony 音乐语义不变。
+- [x] XML/ZIP 只采用公开 API；依赖、许可、bundle 影响已记录。
 - [ ] 若任一项失败，先修订领域位置或导出设计并更新 ADR/spec，不进入 Phase 1。
 
 ## Phase 1: Domain core

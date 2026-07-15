@@ -28,6 +28,7 @@ await writeFile(
       data: `<container><rootfiles><rootfile full-path="score.musicxml" media-type="application/vnd.recordare.musicxml+xml"/></rootfiles></container>`,
     },
     { name: "score.musicxml", data: fixtures["single-voice.musicxml"] },
+    { name: "attachments/layout.xml", data: '<layout vendor="keep"/>' },
   ]),
 );
 await writeFile(resolve(root, "broken.mxl"), new Uint8Array([0x50, 0x4b, 3, 4]));

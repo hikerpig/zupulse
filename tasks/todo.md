@@ -38,9 +38,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] 三种来源容器插入 harmony 后均可被当前 adapter 重开。
-- [ ] semantic diff 只出现预期 harmony 变化。
-- [ ] external entity、path traversal、zip bomb 和超限输入被拒绝。
+- [x] 三种来源容器插入 harmony 后均可被当前 adapter 重开。
+- [x] semantic diff 只出现预期 harmony 变化。
+- [x] external entity、path traversal、zip bomb 和超限输入被拒绝。
 
 **Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/musicXmlRoundTrip.test.ts && pnpm fixtures:musicxml`
 
@@ -91,6 +91,8 @@ feature: harmony-analysis-studio
 **Files likely touched:** `packages/web-core/src/harmony/corrections.ts`、`effectiveProjection.ts`、两个测试。
 
 **Estimated scope:** Medium: 4 files
+
+**Evidence:** `pnpm vitest run packages/web-core/src/harmony packages/web-core/src/musicxml`（23 tests）、`pnpm typecheck` 与 `pnpm fixtures:musicxml` 于 2026-07-15 通过。XML 使用保留未触及片段的结构感知词法插入；MXL 使用直接依赖 `fflate@0.8.3`（MIT，约 797 KB unpacked），保留非 root entry 内容并在解压前检查 entry 数量、单 entry 与总解压上限。
 
 ### Task 5: 投影 AnalysisInput 与来源 harmony
 

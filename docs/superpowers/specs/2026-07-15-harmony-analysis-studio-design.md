@@ -625,7 +625,7 @@ Bridge 增加严格、exact 的 request/response：
 - 保持来源 MusicXML version、`score-partwise`/`score-timewise` 根结构和 namespace。
 - 未知元素、属性、注释和非根 MXL entries 需语义保留；不承诺字节、缩进或属性顺序完全相同。
 - 实现不得从 alphaTab 或 `ScoreDocument` 重新生成整份 MusicXML。
-- 为跨 Browser/Desktop 获得一致行为，XML DOM 与 ZIP 必须使用公开、直接声明的依赖；不得依赖 alphaTab 私有 ZIP API。建议最小选择是直接声明 `@xmldom/xmldom` 与 `fflate`，不引入通用制谱库。
+- 为跨 Browser/Desktop 获得一致行为，ZIP 使用公开、直接声明的 `fflate@0.8.3`（MIT）；不得依赖 alphaTab 私有 ZIP API。P0 证明 DOM 重序列化会破坏“只改 harmony”的字节保留目标，因此 XML 不引入 DOM 依赖，而是以受限、结构感知的词法扫描器在原始字节中定位并增量插入；它必须保留未触及 XML 片段，且只接受预先生成的 `<harmony>` 片段。`fflate` 的解包体积为约 797 KB，但当前仅由未接入 UI 的导出模块引用，尚不增加生产入口 bundle。
 
 ### XML 处理
 

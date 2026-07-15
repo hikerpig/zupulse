@@ -1,4 +1,5 @@
-import { preflightMusicXml } from "../musicxml/preflight";
+import { unzipSync, zipSync } from "fflate";
+import { MUSICXML_LIMITS, preflightMusicXml, preflightMxlEntries, type MxlEntry } from "../musicxml/preflight";
 
 export type MusicXmlHarmonyInsertion = {
   partId: string;
@@ -15,15 +16,40 @@ type XmlTag = {
 };
 
 export function insertMusicXmlHarmony(bytes: Uint8Array, insertions: readonly MusicXmlHarmonyInsertion[]): Uint8Array {
+  if (isZip(bytes)) return insertMxlHarmony(bytes, insertions);
   const preflight = preflightMusicXml(bytes);
   if (insertions.length === 0) return bytes;
 
+  return insertIntoXml(bytes, preflight.root, insertions);
+}
+
+function insertMxlHarmony(bytes: Uint8Array, insertions: readonly MusicXmlHarmonyInsertion[]): Uint8Array {
+  const entries = unzipMxlEntries(bytes);
+  const { rootFileName, rootBytes } = preflightMxlEntries(entries);
+  if (insertions.length === 0) return bytes;
+  const root = preflightMusicXml(rootBytes);
+  const annotatedRoot = insertIntoXml(rootBytes, root.root, insertions);
+  return zipSync(
+    Object.fromEntries(
+      entries.map((entry) => [
+        entry.name,
+        normalize(entry.name) === normalize(rootFileName) ? annotatedRoot : entry.bytes!,
+      ]),
+    ),
+  );
+}
+
+function insertIntoXml(
+  bytes: Uint8Array,
+  root: "score-partwise" | "score-timewise",
+  insertions: readonly MusicXmlHarmonyInsertion[],
+): Uint8Array {
   const source = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   const tags = readXmlTags(source);
   const positions = insertions.map((insertion) => {
     validateInsertion(insertion);
     const target =
-      preflight.root === "score-partwise" ? findPartwiseTarget(tags, insertion) : findTimewiseTarget(tags, insertion);
+      root === "score-partwise" ? findPartwiseTarget(tags, insertion) : findTimewiseTarget(tags, insertion);
     if (!target) throw new Error("target-not-found");
     return { position: findContentStart(tags, target), harmonyXml: insertion.harmonyXml };
   });
@@ -37,6 +63,40 @@ export function insertMusicXmlHarmony(bytes: Uint8Array, insertions: readonly Mu
         source,
       ),
   );
+}
+
+function unzipMxlEntries(bytes: Uint8Array): MxlEntry[] {
+  if (bytes.byteLength > MUSICXML_LIMITS.maxXmlBytes) throw new Error("resource-limit-exceeded");
+  let totalSize = 0;
+  const names = new Set<string>();
+  const entries = unzipSync(bytes, {
+    filter: (entry) => {
+      totalSize += entry.originalSize;
+      if (
+        names.has(entry.name) ||
+        entry.originalSize > MUSICXML_LIMITS.maxEntryBytes ||
+        totalSize > MUSICXML_LIMITS.maxTotalUncompressedBytes ||
+        names.size >= MUSICXML_LIMITS.maxEntries
+      ) {
+        throw new Error("resource-limit-exceeded");
+      }
+      names.add(entry.name);
+      return true;
+    },
+  });
+  return Object.entries(entries).map(([name, entryBytes]) => ({
+    name,
+    uncompressedSize: entryBytes.byteLength,
+    bytes: entryBytes,
+  }));
+}
+
+function isZip(bytes: Uint8Array): boolean {
+  return bytes[0] === 0x50 && bytes[1] === 0x4b;
+}
+
+function normalize(path: string): string {
+  return path.replace(/\\/g, "/").replace(/^\.\//, "");
 }
 
 function validateInsertion(insertion: MusicXmlHarmonyInsertion): void {

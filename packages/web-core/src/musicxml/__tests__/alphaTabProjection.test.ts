@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getDefaultVisibleTrackIds, projectAlphaTabScore } from "../alphaTabProjection";
+import { getDefaultVisibleTrackIds, projectAlphaTabHarmonyInput, projectAlphaTabScore } from "../alphaTabProjection";
 
 describe("alphaTab MusicXML projection", () => {
   it("keeps multiple staves inside one part track", () => {
@@ -16,6 +16,34 @@ describe("alphaTab MusicXML projection", () => {
     expect(getDefaultVisibleTrackIds({ tracks: [{}, {}, {}, {}] })).toHaveLength(4);
     expect(getDefaultVisibleTrackIds({ tracks: [{ playbackInfo: { isPercussion: true } }, {}, {}, {}, {}] })).toEqual([
       "track-2",
+    ]);
+  });
+
+  it("projects runtime beats into written harmony notes", () => {
+    const input = projectAlphaTabHarmonyInput({
+      masterBars: [{ duration: 960 }],
+      tracks: [
+        {
+          name: "Piano",
+          staves: [
+            {
+              bars: [
+                {
+                  voices: [
+                    {
+                      beats: [{ displayStart: 0, displayDuration: 960, notes: [{ realValue: 60 }, { realValue: 64 }] }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    expect(input.tracks[0]?.staves[0]?.notes).toMatchObject([
+      { moment: { measureIndex: 0, offsetTicks: 0 }, soundingPitchClass: 0 },
+      { soundingPitchClass: 4 },
     ]);
   });
 });

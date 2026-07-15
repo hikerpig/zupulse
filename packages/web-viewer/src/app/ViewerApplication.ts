@@ -1,5 +1,5 @@
 import type { ViewerAppHandle, ViewerFile, ViewerHost, ViewerHostEvent, ViewerSessionHandle } from "../host";
-import { importLibraryScores } from "@zupulse/web-core";
+import { analyzeHarmonyRules, importLibraryScores, projectAlphaTabHarmonyInput } from "@zupulse/web-core";
 import type {
   HarmonyAnalysisDocument,
   HarmonyAnalysisRepository,
@@ -166,7 +166,11 @@ export class ViewerApplication implements ViewerAppHandle {
           algorithmVersion: "rules-1",
           createdAt: now,
           parameters: { scope: { includedTrackIds }, topK: 8, decisionThreshold: 0.6 },
-          segments: [],
+          segments: analyzeHarmonyRules(projectAlphaTabHarmonyInput(parsed.runtime), {
+            includedTrackIds,
+            topK: 8,
+            decisionThreshold: 0.6,
+          }),
         },
         corrections: [],
         annotationTarget: { trackId: includedTrackIds[0]!, staffIndex: 0 },

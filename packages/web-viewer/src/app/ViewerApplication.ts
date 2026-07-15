@@ -133,6 +133,7 @@ export class ViewerApplication implements ViewerAppHandle {
       updatedAt,
     };
     session.setCorrections(document.corrections);
+    await session.flush();
   }
 
   private async openStudioOnce(id: string): Promise<void> {

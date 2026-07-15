@@ -44,7 +44,9 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
               （{studioDocument.activeRevision.segments.length} 个片段）
             </p>
             {studio.status === "conflict" ? <p role="alert">{studio.error}</p> : null}
-            <p>已保存 {studioDocument.corrections.length} 个修正</p>
+            <p>
+              {studio.status === "ready" ? "已保存" : "待保存"} {studioDocument.corrections.length} 个修正
+            </p>
             <div aria-label="修正历史">
               <button type="button" onClick={() => application.undoStudio(libraryScoreId!)}>
                 撤销修正

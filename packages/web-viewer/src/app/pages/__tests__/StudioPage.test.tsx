@@ -98,6 +98,60 @@ describe("StudioPage", () => {
     expect(await within(view.container).findByText("已导出标注曲谱")).toBeTruthy();
   });
 
+  it("selects any analysis segment instead of pinning the inspector to the first segment", async () => {
+    const snapshot = {
+      studio: {
+        libraryScoreId: "score-1",
+        status: "ready",
+        document: {
+          activeRevision: {
+            parameters: { scope: { includedTrackIds: ["track-1"] } },
+            segments: [
+              {
+                status: "unresolved",
+                range: { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 1 } },
+                alternatives: [],
+                reason: "low-confidence",
+              },
+              {
+                status: "unresolved",
+                range: { start: { measureIndex: 1, offsetTicks: 0 }, end: { measureIndex: 1, offsetTicks: 1 } },
+                alternatives: [],
+                reason: "low-confidence",
+              },
+            ],
+          },
+          corrections: [],
+          annotationTarget: { trackId: "track-1", staffIndex: 0 },
+        },
+      },
+    };
+    const application = {
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      hasHarmonyAnalysisStorage: () => true,
+      openStudio: async () => undefined,
+      undoStudio: () => undefined,
+      redoStudio: () => undefined,
+      setStudioScope: async () => undefined,
+      setStudioAnnotationTarget: async () => undefined,
+      exportStudio: async () => "saved" as const,
+      setStudioCorrection: async () => undefined,
+      resetStudioCorrection: async () => undefined,
+    } as never;
+    const view = render(
+      <MemoryRouter initialEntries={["/studio/score-1"]}>
+        <Routes>
+          <Route path="/studio/:libraryScoreId" element={<StudioPage application={application} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    const user = userEvent.setup();
+    const segments = within(view.container).getByRole("list", { name: "分析片段" });
+    await user.click(within(segments).getByRole("button", { name: "片段 2" }));
+    expect(within(segments).getByRole("button", { name: "片段 2" }).getAttribute("aria-pressed")).toBe("true");
+  });
+
   it("shows a storage-unavailable state instead of silently using memory", () => {
     const snapshot = {};
     const application = {

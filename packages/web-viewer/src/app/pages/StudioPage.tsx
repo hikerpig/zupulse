@@ -12,7 +12,8 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   const storageAvailable = application.hasHarmonyAnalysisStorage();
   const studio = snapshot.studio?.libraryScoreId === libraryScoreId ? snapshot.studio : undefined;
   const studioDocument = studio?.document;
-  const firstSegment = studioDocument?.activeRevision.segments[0];
+  const [selectedSegmentIndex, setSelectedSegmentIndex] = useState(0);
+  const selectedSegment = studioDocument?.activeRevision.segments[selectedSegmentIndex];
   const [exportStatus, setExportStatus] = useState<string>();
   const [preview, dispatchPreview] = useReducer(reducePreviewTransport, {
     status: "paused",
@@ -140,15 +141,15 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
               </label>
               <button
                 type="button"
-                disabled={!firstSegment}
+                disabled={!selectedSegment}
                 onClick={() =>
                   dispatchPreview({
                     type: "loop",
-                    ...(firstSegment
+                    ...(selectedSegment
                       ? {
                           range: {
-                            startTicks: firstSegment.range.start.offsetTicks,
-                            endTicks: firstSegment.range.end.offsetTicks,
+                            startTicks: selectedSegment.range.start.offsetTicks,
+                            endTicks: selectedSegment.range.end.offsetTicks,
                           },
                         }
                       : {}),
@@ -170,32 +171,44 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
               导出标注曲谱
             </button>
             {exportStatus ? <p role="status">{exportStatus}</p> : null}
-            {firstSegment ? (
+            <div role="list" aria-label="分析片段">
+              {studioDocument.activeRevision.segments.map((segment, index) => (
+                <button
+                  key={`${segment.range.start.measureIndex}:${segment.range.start.offsetTicks}`}
+                  type="button"
+                  aria-pressed={index === selectedSegmentIndex}
+                  onClick={() => setSelectedSegmentIndex(index)}
+                >
+                  片段 {index + 1}
+                </button>
+              ))}
+            </div>
+            {selectedSegment ? (
               <>
                 <HarmonyStudioEditor
-                  candidates={firstSegment.alternatives}
-                  {...(firstSegment.status === "unresolved" ? { unresolvedReason: firstSegment.reason } : {})}
+                  candidates={selectedSegment.alternatives}
+                  {...(selectedSegment.status === "unresolved" ? { unresolvedReason: selectedSegment.reason } : {})}
                   onSelect={(candidate) =>
-                    void application.setStudioCorrection(libraryScoreId!, firstSegment.range, {
+                    void application.setStudioCorrection(libraryScoreId!, selectedSegment.range, {
                       type: "chord",
                       chord: candidate.chord,
                     })
                   }
                   onApply={(chord) =>
-                    void application.setStudioCorrection(libraryScoreId!, firstSegment.range, {
+                    void application.setStudioCorrection(libraryScoreId!, selectedSegment.range, {
                       type: "chord",
                       chord,
                     })
                   }
                   onNoChord={() =>
-                    void application.setStudioCorrection(libraryScoreId!, firstSegment.range, {
+                    void application.setStudioCorrection(libraryScoreId!, selectedSegment.range, {
                       type: "no-chord",
                     })
                   }
                 />
                 <button
                   type="button"
-                  onClick={() => void application.resetStudioCorrection(libraryScoreId!, firstSegment.range)}
+                  onClick={() => void application.resetStudioCorrection(libraryScoreId!, selectedSegment.range)}
                 >
                   重置选中片段
                 </button>

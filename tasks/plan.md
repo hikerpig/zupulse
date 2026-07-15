@@ -163,8 +163,8 @@ P6 发布质量 T24 -> T25
 - [ ] Top-8 oracle recall >= 95%。
 - [ ] resolved duration sound-label precision >= 95%，coverage >= 70%。
 - [ ] boundary F1 >= 85%，confidence ECE <= 0.10。
-- [ ] 典型 5,000-note 乐谱 P95 分析时间 <= 5 秒，UI/cancel 反馈 <= 100 ms。
-- [ ] `pnpm verify` 与 `pnpm verify:e2e` 全部通过。
+- [x] 典型 5,000-note 乐谱 P95 分析时间 <= 5 秒，UI/cancel 反馈 <= 100 ms。
+- [x] `pnpm verify` 与 `pnpm verify:e2e` 全部通过。
 - [ ] 规格 15 条验收标准逐项有自动化或明确人工证据。
 
 ## Verification plan

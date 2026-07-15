@@ -499,9 +499,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] 自动报告 Top-8 recall、precision、coverage、boundary F1、ECE 和分项准确率。
+- [x] 自动报告 Top-8 recall、precision、coverage、boundary F1、ECE 和分项准确率。
 - [ ] 独立评估集达到规格阈值，不能用全部 unresolved 规避 coverage。
-- [ ] 5,000-note P95、UI/cancel latency 和资源硬上限达到预算。
+- [x] 5,000-note P95、UI/cancel latency 和资源硬上限达到预算。
 
 **Verification:** harmony eval/benchmark 根脚本 + `pnpm verify`
 

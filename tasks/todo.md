@@ -489,7 +489,7 @@ feature: harmony-analysis-studio
 - [x] Browser/Desktop 导出 E2E 通过。
 - [x] Managed Score Copy 导出前后 SHA-256 相同。
 
-**Evidence:** `rtk pnpm fixtures:musicxml`（12 fixtures）与最新 `rtk pnpm verify:e2e`（Browser 3/3、Desktop 4/4）通过；`ViewerApplication` 导出回归以 SHA-256 断言原始 Managed Score Copy 未变。
+**Evidence:** `rtk pnpm fixtures:musicxml`（12 fixtures）与最新 `rtk pnpm verify:e2e`（Browser 4/4、Desktop 4/4）通过；`ViewerApplication` 导出回归以 SHA-256 断言原始 Managed Score Copy 未变。
 
 ## Phase 6: Release quality
 
@@ -525,7 +525,7 @@ feature: harmony-analysis-studio
 
 **Verification:** `pnpm verify && pnpm verify:e2e`
 
-**Evidence:** 最新 `rtk pnpm verify`（77 test files / 274 tests、双端 build）与 `rtk pnpm verify:e2e`（Browser 3/3、Desktop 4/4）通过；仍缺完整 15 条验收逐项证据、独立 corpus 发布阈值和人工可访问性评审。
+**Evidence:** 最新 `rtk pnpm verify`（77 test files / 279 tests、双端 build）与 `rtk pnpm verify:e2e`（Browser 4/4、Desktop 4/4）通过；Browser E2E 已覆盖双页面 stale revision 的 CAS conflict；仍缺完整 15 条验收逐项证据、独立 corpus 发布阈值、Desktop 故障注入和人工可访问性评审。
 
 **Dependencies:** Task 24
 

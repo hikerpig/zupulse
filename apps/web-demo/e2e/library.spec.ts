@@ -81,6 +81,23 @@ test("reanalyses a multi-part Studio scope and allows a track to be added back",
   await expect(scope.locator("option:checked")).toHaveCount(2);
 });
 
+test("surfaces a CAS conflict when two Browser Studio windows save the same revision", async ({ page, context }) => {
+  await page.goto("/");
+  await importFixture(page, "导入第一份曲谱", musicXmlFixture);
+  await page.getByRole("link", { name: "和弦分析" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
+
+  const stalePage = await context.newPage();
+  await stalePage.goto(page.url());
+  await expect(stalePage.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
+
+  await page.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
+  await expect(page.getByText("已保存 1 个修正")).toBeVisible();
+  await stalePage.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
+  await expect(stalePage.getByRole("alert")).toContainText("版本冲突");
+  await stalePage.close();
+});
+
 async function importFixture(page: Page, buttonName: string, filePath = fixture): Promise<void> {
   const chooser = page.waitForEvent("filechooser");
   await page.getByRole("button", { name: buttonName }).click();

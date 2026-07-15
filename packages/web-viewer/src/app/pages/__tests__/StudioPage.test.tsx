@@ -7,7 +7,10 @@ import { StudioPage } from "../StudioPage";
 
 describe("StudioPage", () => {
   it("renders a persistent library score route without exposing a session id", () => {
-    const application = { getSnapshot: () => ({ currentLibraryScoreId: "score-1" }) } as never;
+    const application = {
+      getSnapshot: () => ({ currentLibraryScoreId: "score-1" }),
+      hasHarmonyAnalysisStorage: () => true,
+    } as never;
     render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
         <Routes>
@@ -18,5 +21,17 @@ describe("StudioPage", () => {
     expect(screen.getByRole("heading", { name: "和弦分析工作室" })).toBeTruthy();
     expect(screen.getByText("Library Score: score-1")).toBeTruthy();
     expect(screen.queryByText(/session/i)).toBeNull();
+  });
+
+  it("shows a storage-unavailable state instead of silently using memory", () => {
+    const application = { getSnapshot: () => ({}), hasHarmonyAnalysisStorage: () => false } as never;
+    render(
+      <MemoryRouter initialEntries={["/studio/score-1"]}>
+        <Routes>
+          <Route path="/studio/:libraryScoreId" element={<StudioPage application={application} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("alert").textContent).toContain("存储不可用");
   });
 });

@@ -1,6 +1,7 @@
 import type { ViewerAppHandle, ViewerFile, ViewerHost, ViewerHostEvent, ViewerSessionHandle } from "../host";
 import { importLibraryScores } from "@zupulse/web-core";
 import type {
+  HarmonyAnalysisRepository,
   ScoreFileGateway,
   ScoreFormatAdapter,
   SheetLibraryRepository,
@@ -69,6 +70,11 @@ export class ViewerApplication implements ViewerAppHandle {
 
   hasLibrary(): boolean {
     return this.library !== undefined;
+  }
+
+  hasHarmonyAnalysisStorage(): boolean {
+    const repository = this.library?.repository as Partial<HarmonyAnalysisRepository> | undefined;
+    return typeof repository?.read === "function" && typeof repository.save === "function";
   }
 
   async refreshLibrary(): Promise<void> {

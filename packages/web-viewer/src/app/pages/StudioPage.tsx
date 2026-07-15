@@ -6,6 +6,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   const { libraryScoreId } = useParams();
   const snapshot = application.getSnapshot();
   const active = libraryScoreId !== undefined && snapshot.currentLibraryScoreId === libraryScoreId;
+  const storageAvailable = application.hasHarmonyAnalysisStorage();
   return (
     <main className={styles.page} aria-labelledby="studio-title">
       <header className={styles.header}>
@@ -18,7 +19,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
       <section aria-label="分析状态">
         <h2>分析结果</h2>
         <p>{libraryScoreId ? `Library Score: ${libraryScoreId}` : "缺少曲谱 ID"}</p>
-        <p>首次分析、修正与导出将在此工作区完成。</p>
+        {storageAvailable ? <p>首次分析、修正与导出将在此工作区完成。</p> : <p role="alert">和声分析存储不可用</p>}
       </section>
     </main>
   );

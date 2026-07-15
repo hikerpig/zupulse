@@ -305,7 +305,7 @@ feature: harmony-analysis-studio
 **Acceptance criteria:**
 
 - [x] Renderer adapter 通过共享 contract 的 Bridge-backed 变体。
-- [ ] capability 关闭时 Studio 显示存储不可用，不回退内存静默保存。
+- [x] capability 关闭时 Studio 显示存储不可用，不回退内存静默保存。
 - [x] Viewer 现有 Repository/Gateway 注入行为不回归。
 
 **Verification:** `pnpm vitest run apps/desktop-shell/src packages/web-viewer/src/app && pnpm desktop:build`

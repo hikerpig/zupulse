@@ -4,6 +4,7 @@ import type { ViewerApplication } from "./ViewerApplication";
 import { AppStoreProvider, useApplyTheme } from "./appStore";
 import { LibraryPage } from "./pages/LibraryPage";
 import { ViewerPage } from "./pages/ViewerPage";
+import { StudioPage } from "./pages/StudioPage";
 
 export function App({ application }: { application: ViewerApplication }) {
   const router = useMemo(
@@ -14,6 +15,7 @@ export function App({ application }: { application: ViewerApplication }) {
           children: [
             { path: "/", element: <LibraryPage application={application} /> },
             { path: "/viewer/:libraryScoreId", element: <ViewerPage application={application} /> },
+            { path: "/studio/:libraryScoreId", element: <StudioPage application={application} /> },
             { path: "*", element: <ViewerPage application={application} notFound /> },
           ],
         },

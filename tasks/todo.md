@@ -331,8 +331,8 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] 刷新 route 从 Library Score 重建，不在 URL 放 Session ID。
-- [ ] 无 Document 自动启动可取消分析，成功后立即保存。
+- [x] 刷新 route 从 Library Score 重建，不在 URL 放 Session ID。
+- [x] 无 Document 自动启动可取消分析，成功后立即保存。
 - [ ] 已有 Document 或算法升级不静默重跑；GP 显示不支持。
 
 **Verification:** `pnpm vitest run packages/web-viewer/src/app packages/web-viewer/src/features/harmony-studio`
@@ -342,6 +342,8 @@ feature: harmony-analysis-studio
 **Files likely touched:** `packages/web-viewer/src/app/App.tsx`、`ViewerApplication.ts`、`pages/StudioPage.tsx`、`features/harmony-studio/HarmonyStudio.tsx`、相关测试。
 
 **Estimated scope:** Medium: 5 files
+
+**Evidence:** Studio route 与首次加载 session 测试共 2 tests 于 2026-07-15 通过；已有 Document 不触发 analyzer，新增 Document 通过 Repository CAS 保存。
 
 ### Task 17: 交付 overlay、候选检查器与结构化编辑器
 

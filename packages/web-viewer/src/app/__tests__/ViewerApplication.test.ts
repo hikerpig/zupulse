@@ -240,6 +240,9 @@ describe("ViewerApplication", () => {
     expect(createHash("sha256").update(sourceBytes).digest("hex")).toBe(sourceHash);
     await application.openStudio(scoreId);
     expect(adapter.parse).toHaveBeenCalledOnce();
+    await application.deleteLibraryScore(scoreId);
+    expect(application.getSnapshot().studio).toBeUndefined();
+    expect(document).toBeNull();
     await application.destroy();
   });
 

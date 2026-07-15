@@ -319,7 +319,13 @@ export class ViewerApplication implements ViewerAppHandle {
 
   async deleteLibraryScore(id: string): Promise<void> {
     if (!this.library) return;
+    this.studioSessions.get(id)?.dispose();
+    this.studioSessions.delete(id);
     await this.library.repository.delete(id);
+    if (this.snapshot.studio?.libraryScoreId === id) {
+      const { studio: _studio, ...snapshot } = this.snapshot;
+      this.setSnapshot(snapshot);
+    }
     if (this.snapshot.currentLibraryScoreId === id) {
       await this.active?.destroy();
       this.active = undefined;

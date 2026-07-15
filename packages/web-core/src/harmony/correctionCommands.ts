@@ -1,5 +1,6 @@
 import { insertCorrection, normalizeCorrections } from "./corrections";
-import type { HarmonyCorrection, ScoreWrittenMoment, ScoreWrittenRange } from "./schemas";
+import type { HarmonyCorrection, ScoreWrittenRange } from "./schemas";
+import type { ScoreWrittenMoment } from "./writtenTime";
 import { compareMoments } from "./schemas";
 
 export type HarmonyCorrectionCommand =

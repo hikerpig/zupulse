@@ -18,5 +18,10 @@ export function reducePreviewTransport(
   if (command.type === "pause") return { ...state, status: "paused" };
   if (command.type === "seek") return { ...state, positionTicks: Math.max(0, command.positionTicks) };
   if (command.type === "speed") return { ...state, speed: Math.max(0.25, Math.min(4, command.speed)) };
-  return command.range === undefined ? { ...state, loop: undefined } : { ...state, loop: command.range };
+  if (command.type !== "loop") return state;
+  if (command.range === undefined) {
+    const { loop: _loop, ...withoutLoop } = state;
+    return withoutLoop;
+  }
+  return { ...state, loop: command.range };
 }

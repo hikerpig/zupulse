@@ -5,6 +5,7 @@ import { generateHarmonyCandidates } from "./candidates";
 import { applyHarmonyConfidence, mergeHarmonySegments, suppressShortNonChordSegments } from "./postprocess";
 import type { HarmonySegment } from "./schemas";
 import { decodeHarmonySequence } from "./decode";
+import { scoreHarmonyTransition } from "./transitions";
 
 export function analyzeHarmonyRules(
   input: HarmonyAnalysisInput,
@@ -36,6 +37,7 @@ export function analyzeHarmonyRules(
       generateHarmonyCandidates(range, cache.forRange(range), {
         ...(options.topK === undefined ? {} : { topK: options.topK }),
       }),
+    transition: (from, to) => scoreHarmonyTransition(from, to) * input.ticksPerQuarter * 0.1,
     beamWidth: 16,
     maxSegments: Math.max(64, input.measures.length),
     maxSpan: 16,

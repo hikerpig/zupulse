@@ -24,6 +24,7 @@ export * from "./harmony/features";
 export * from "./harmony/candidates";
 export * from "./harmony/decode";
 export * from "./harmony/postprocess";
+export * from "./harmony/repository";
 export * from "./score/positions";
 export * from "./bridge/types";
 export * from "./bridge/schemas";

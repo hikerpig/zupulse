@@ -143,6 +143,8 @@ async function startDesktopApp(): Promise<void> {
             await Promise.all([sidecarStore.delete(request.payload.id), resumeStore.delete(request.payload.id)]);
             return {};
           },
+          "harmonyAnalysis.read": async (request) => ({ document: await library.read(request.payload.libraryScoreId) }),
+          "harmonyAnalysis.save": async (request) => library.save(request.payload),
           "sidecar.read": async (request) => ({
             payload: await sidecarStore.read(request.payload.libraryScoreId ?? request.payload.identity.contentHash),
           }),

@@ -25,7 +25,14 @@ export function migrateLibraryDatabase(database: Database): void {
       );
       CREATE TABLE IF NOT EXISTS library_practice_sidecars (library_score_id TEXT PRIMARY KEY, payload_json TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS library_playback_resume (library_score_id TEXT PRIMARY KEY, payload_json TEXT NOT NULL);
-      UPDATE library_schema SET version = 1;
+      CREATE TABLE IF NOT EXISTS library_harmony_analyses (
+        library_score_id TEXT PRIMARY KEY,
+        document_version INTEGER NOT NULL,
+        payload_json TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (library_score_id) REFERENCES library_scores(id)
+      );
+      UPDATE library_schema SET version = 2;
     `);
     database.exec("COMMIT");
   } catch (error) {

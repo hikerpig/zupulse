@@ -104,18 +104,18 @@ P6 发布质量 T24 -> T25
 
 目标：Browser 与 Desktop 都能安全保存同一 Harmony Analysis Document，并随 Library Score 删除。
 
-- [ ] T11：定义 HarmonyAnalysisRepository、CAS 与共享 contract harness。
-- [ ] T12：交付 Browser IndexedDB version 2 adapter。
-- [ ] T13：交付 Desktop SQLite library schema version 2 store。
-- [ ] T14：升级 Bridge schema 到 3.0.0 并接入 Main/Preload。
-- [ ] T15：接入 Desktop Renderer adapter 与双端契约测试。
+- [x] T11：定义 HarmonyAnalysisRepository、CAS 与共享 contract harness。
+- [x] T12：交付 Browser IndexedDB version 2 adapter。
+- [x] T13：交付 Desktop SQLite library schema version 2 store。
+- [x] T14：升级 Bridge schema 到 3.0.0 并接入 Main/Preload。
+- [x] T15：接入 Desktop Renderer adapter 与双端契约测试。
 
 ### Exit gate P3
 
 - [ ] Browser/Desktop 同一 contract suite 覆盖 create/read/CAS/hash mismatch/delete/orphan prevention/migration failure。
 - [ ] Library 删除事务同时删除 Harmony Analysis Document；旧 Session autosave 无法重建孤儿记录。
 - [ ] Renderer 不获得绝对路径、SQLite 或未校验 payload。
-- [ ] `pnpm verify:fast`、`pnpm demo:build`、`pnpm desktop:build` 通过。
+- [x] `pnpm verify:fast`、`pnpm demo:build`、`pnpm desktop:build` 通过。
 
 ## Phase 4: Studio editing vertical slice
 

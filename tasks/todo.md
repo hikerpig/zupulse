@@ -232,9 +232,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] create/read/update/conflict 有结构化结果。
-- [ ] score 不存在或 hash 不匹配时拒绝写入。
-- [ ] contract 覆盖删除后禁止重建孤儿 Document。
+- [x] create/read/update/conflict 有结构化结果。
+- [x] score 不存在或 hash 不匹配时拒绝写入。
+- [x] contract 覆盖删除后禁止重建孤儿 Document。
 
 **Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/repositoryContract.test.ts`
 
@@ -250,9 +250,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] Browser adapter 通过共享 contract。
-- [ ] migration failure 不清库且阻止写入。
-- [ ] 多标签页冲突不静默覆盖，删除后 autosave 被拒绝。
+- [x] Browser adapter 通过共享 contract。
+- [x] migration failure 不清库且阻止写入。
+- [x] 多标签页冲突不静默覆盖，删除后 autosave 被拒绝。
 
 **Verification:** `pnpm vitest run apps/web-demo/src/library/__tests__/BrowserHarmonyAnalysisRepository.test.ts && pnpm demo:build`
 
@@ -268,9 +268,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] version 1 到 2 顺序迁移保留现有 Library 数据。
-- [ ] Main store 通过共享 contract 和 migration failure 测试。
-- [ ] 删除 score 与 analysis row 在同一 SQLite transaction 中完成。
+- [x] version 1 到 2 顺序迁移保留现有 Library 数据。
+- [x] Main store 通过共享 contract 和 migration failure 测试。
+- [x] 删除 score 与 analysis row 在同一 SQLite transaction 中完成。
 
 **Verification:** `pnpm vitest run apps/desktop-shell/src/main/library && pnpm desktop:build`
 
@@ -286,9 +286,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] request/response/capability 类型全部从 strict Zod schema 推导。
-- [ ] Main 重验 score ID、hash、version 和 payload，不返回绝对路径。
-- [ ] 旧版本 handshake 明确失败，不宽松兼容。
+- [x] request/response/capability 类型全部从 strict Zod schema 推导。
+- [x] Main 重验 score ID、hash、version 和 payload，不返回绝对路径。
+- [x] 旧版本 handshake 明确失败，不宽松兼容。
 
 **Verification:** `pnpm vitest run packages/web-core/src/bridge apps/desktop-shell/src/main/__tests__/bridge.test.ts`
 
@@ -304,9 +304,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] Renderer adapter 通过共享 contract 的 Bridge-backed 变体。
+- [x] Renderer adapter 通过共享 contract 的 Bridge-backed 变体。
 - [ ] capability 关闭时 Studio 显示存储不可用，不回退内存静默保存。
-- [ ] Viewer 现有 Repository/Gateway 注入行为不回归。
+- [x] Viewer 现有 Repository/Gateway 注入行为不回归。
 
 **Verification:** `pnpm vitest run apps/desktop-shell/src packages/web-viewer/src/app && pnpm desktop:build`
 
@@ -318,8 +318,10 @@ feature: harmony-analysis-studio
 
 ### Checkpoint P3
 
-- [ ] Browser/Desktop Repository contract 全部通过。
-- [ ] `pnpm verify:fast && pnpm demo:build && pnpm desktop:build`
+- [x] Browser/Desktop Repository contract 全部通过。
+- [x] `pnpm verify:fast && pnpm demo:build && pnpm desktop:build`
+
+**Evidence:** Repository contract 2 tests、Bridge/Desktop 相关 26 tests、`rtk pnpm typecheck`、`rtk pnpm demo:build` 和 `rtk pnpm desktop:build` 于 2026-07-15 通过；capability 关闭时 Studio UI 行为待 P4。
 
 ## Phase 4: Studio editing vertical slice
 

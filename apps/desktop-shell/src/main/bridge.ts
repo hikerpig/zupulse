@@ -40,6 +40,7 @@ const DEFAULT_CAPABILITIES = capabilitiesSchema.parse({
     localLibraryImport: true,
   },
   storage: { sqliteIndex: true, sidecarPayload: true },
+  harmonyAnalysis: true,
   sync: { available: false, provider: "none" },
   audio: { webAudio: true, nativeBridge: false },
 });

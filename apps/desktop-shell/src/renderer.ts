@@ -15,6 +15,9 @@ import {
   type ValidatedLibraryScoreDraft,
   type LibraryMetadata,
   type StoredScoreFile,
+  type HarmonyAnalysisDocument,
+  type HarmonyAnalysisRepository,
+  type HarmonyAnalysisSaveResult,
 } from "@zupulse/web-core";
 import "@zupulse/web-viewer/styles.css";
 import { createDefaultOpenSession, mountViewerApp, type ViewerAppHandle, type ViewerHost } from "@zupulse/web-viewer";
@@ -57,7 +60,7 @@ async function start(): Promise<void> {
   });
 }
 
-class DesktopLibraryRepository implements SheetLibraryRepository {
+class DesktopLibraryRepository implements SheetLibraryRepository, HarmonyAnalysisRepository {
   constructor(private readonly bridge: NonNullable<Window["zupulseBridge"]>) {}
   async initialize(): Promise<void> {}
   async list(): Promise<readonly LibraryScoreSummary[]> {
@@ -94,6 +97,15 @@ class DesktopLibraryRepository implements SheetLibraryRepository {
   }
   async delete(id: LibraryScoreId): Promise<void> {
     await this.request("library.delete", { id });
+  }
+  async read(libraryScoreId: LibraryScoreId): Promise<HarmonyAnalysisDocument | null> {
+    return (await this.request("harmonyAnalysis.read", { libraryScoreId })).document;
+  }
+  async save(input: {
+    document: HarmonyAnalysisDocument;
+    expectedDocumentVersion: number | null;
+  }): Promise<HarmonyAnalysisSaveResult> {
+    return this.request("harmonyAnalysis.save", input);
   }
   private async request(type: any, payload: any): Promise<any> {
     const request = createBridgeRequest(type as never, crypto.randomUUID(), payload as never);

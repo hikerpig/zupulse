@@ -7,7 +7,11 @@ import type {
   SheetLibraryRepository,
   StoredScoreFile,
   ValidatedLibraryScoreDraft,
+  HarmonyAnalysisDocument,
+  HarmonyAnalysisRepository,
+  HarmonyAnalysisSaveResult,
 } from "@zupulse/web-core";
+import { harmonyAnalysisDocumentSchema } from "@zupulse/web-core";
 import { migrateLibraryDatabase } from "./migrations";
 import { readManagedScore, removeManagedScore, writeManagedScore } from "./files";
 import { openSqliteDatabase } from "./sqlite";
@@ -29,7 +33,7 @@ type Row = {
   storage_state: string;
 };
 
-export class DesktopLibraryStore implements SheetLibraryRepository {
+export class DesktopLibraryStore implements SheetLibraryRepository, HarmonyAnalysisRepository {
   private readonly database;
   constructor(
     databasePath: string,
@@ -116,8 +120,48 @@ export class DesktopLibraryStore implements SheetLibraryRepository {
     try {
       this.database.prepare("DELETE FROM library_practice_sidecars WHERE library_score_id = ?").run(id);
       this.database.prepare("DELETE FROM library_playback_resume WHERE library_score_id = ?").run(id);
+      this.database.prepare("DELETE FROM library_harmony_analyses WHERE library_score_id = ?").run(id);
       this.database.prepare("DELETE FROM library_scores WHERE id = ?").run(id);
       this.database.exec("COMMIT");
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  async read(libraryScoreId: LibraryScoreId): Promise<HarmonyAnalysisDocument | null> {
+    const row = this.database
+      .prepare("SELECT payload_json FROM library_harmony_analyses WHERE library_score_id = ?")
+      .get(libraryScoreId) as { payload_json: string } | undefined;
+    return row ? harmonyAnalysisDocumentSchema.parse(JSON.parse(row.payload_json)) : null;
+  }
+  async save(input: {
+    document: HarmonyAnalysisDocument;
+    expectedDocumentVersion: number | null;
+  }): Promise<HarmonyAnalysisSaveResult> {
+    const document = harmonyAnalysisDocumentSchema.parse(input.document);
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const score = this.database
+        .prepare("SELECT score_identity FROM library_scores WHERE id = ?")
+        .get(document.libraryScoreId) as { score_identity: string } | undefined;
+      if (!score || score.score_identity !== document.sourceContentHash)
+        throw new Error("Score identity does not match analysis document");
+      const row = this.database
+        .prepare("SELECT payload_json FROM library_harmony_analyses WHERE library_score_id = ?")
+        .get(document.libraryScoreId) as { payload_json: string } | undefined;
+      const current = row ? harmonyAnalysisDocumentSchema.parse(JSON.parse(row.payload_json)) : null;
+      if ((current?.documentVersion ?? null) !== input.expectedDocumentVersion) {
+        this.database.exec("ROLLBACK");
+        return { status: "conflict", current };
+      }
+      const saved = { ...document, documentVersion: (current?.documentVersion ?? -1) + 1 };
+      this.database
+        .prepare(
+          "INSERT INTO library_harmony_analyses (library_score_id, document_version, payload_json, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(library_score_id) DO UPDATE SET document_version = excluded.document_version, payload_json = excluded.payload_json, updated_at = excluded.updated_at",
+        )
+        .run(saved.libraryScoreId, saved.documentVersion, JSON.stringify(saved), saved.updatedAt);
+      this.database.exec("COMMIT");
+      return { status: "saved", document: saved };
     } catch (error) {
       this.database.exec("ROLLBACK");
       throw error;

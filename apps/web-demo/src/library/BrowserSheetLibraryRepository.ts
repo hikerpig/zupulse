@@ -9,18 +9,23 @@ import type {
   ValidatedLibraryScoreDraft,
   LocalPlaybackResume,
   SidecarPayload,
+  HarmonyAnalysisDocument,
+  HarmonyAnalysisRepository,
+  HarmonyAnalysisSaveResult,
 } from "@zupulse/web-core";
+import { harmonyAnalysisDocumentSchema } from "@zupulse/web-core";
 
 const DATABASE = "zupulse-library";
-const VERSION = 1;
+const VERSION = 2;
 const SCORES = "library_scores";
 const FILES = "score_files";
 const SIDECARS = "practice_sidecars";
 const RESUMES = "playback_resume";
+const HARMONY = "harmony_analyses";
 
 type ScoreRecord = Omit<LibraryScore, "practice">;
 
-export class BrowserSheetLibraryRepository implements SheetLibraryRepository {
+export class BrowserSheetLibraryRepository implements SheetLibraryRepository, HarmonyAnalysisRepository {
   private database?: Promise<IDBDatabase>;
   private unavailable?: Error;
 
@@ -71,7 +76,7 @@ export class BrowserSheetLibraryRepository implements SheetLibraryRepository {
 
   async add(draft: ValidatedLibraryScoreDraft): Promise<{ status: "created" | "existing"; score: LibraryScore }> {
     const db = await this.getDatabase();
-    const transaction = db.transaction([SCORES, FILES, SIDECARS, RESUMES], "readwrite");
+    const transaction = db.transaction([SCORES, FILES, SIDECARS, RESUMES, HARMONY], "readwrite");
     const scores = transaction.objectStore(SCORES);
     const current = await request<ScoreRecord | undefined>(scores.index("scoreIdentity").get(draft.scoreIdentity));
     if (current) {
@@ -142,8 +147,8 @@ export class BrowserSheetLibraryRepository implements SheetLibraryRepository {
 
   async delete(id: LibraryScoreId): Promise<void> {
     const db = await this.getDatabase();
-    const transaction = db.transaction([SCORES, FILES, SIDECARS, RESUMES], "readwrite");
-    for (const store of [SCORES, FILES, SIDECARS, RESUMES]) transaction.objectStore(store).delete(id);
+    const transaction = db.transaction([SCORES, FILES, SIDECARS, RESUMES, HARMONY], "readwrite");
+    for (const store of [SCORES, FILES, SIDECARS, RESUMES, HARMONY]) transaction.objectStore(store).delete(id);
     await complete(transaction);
   }
 
@@ -158,6 +163,53 @@ export class BrowserSheetLibraryRepository implements SheetLibraryRepository {
   }
   async writeResume(id: LibraryScoreId, resume: LocalPlaybackResume): Promise<void> {
     await this.writePractice(RESUMES, id, "resume", resume);
+  }
+
+  async readHarmonyAnalysis(libraryScoreId: LibraryScoreId): Promise<HarmonyAnalysisDocument | null> {
+    return this.read(libraryScoreId);
+  }
+  async read(libraryScoreId: LibraryScoreId): Promise<HarmonyAnalysisDocument | null> {
+    const db = await this.getDatabase();
+    const transaction = db.transaction(HARMONY, "readonly");
+    const record = await request<{ payload: HarmonyAnalysisDocument } | undefined>(
+      transaction.objectStore(HARMONY).get(libraryScoreId),
+    );
+    await complete(transaction);
+    return record ? harmonyAnalysisDocumentSchema.parse(record.payload) : null;
+  }
+  async save(input: {
+    document: HarmonyAnalysisDocument;
+    expectedDocumentVersion: number | null;
+  }): Promise<HarmonyAnalysisSaveResult> {
+    const document = harmonyAnalysisDocumentSchema.parse(input.document);
+    const db = await this.getDatabase();
+    const transaction = db.transaction([SCORES, HARMONY], "readwrite");
+    const score = await request<ScoreRecord | undefined>(transaction.objectStore(SCORES).get(document.libraryScoreId));
+    if (!score || score.scoreIdentity !== document.sourceContentHash) {
+      transaction.abort();
+      throw new Error("Score identity does not match analysis document");
+    }
+    const currentRecord = await request<{ payload: HarmonyAnalysisDocument } | undefined>(
+      transaction.objectStore(HARMONY).get(document.libraryScoreId),
+    );
+    const current = currentRecord ? harmonyAnalysisDocumentSchema.parse(currentRecord.payload) : null;
+    if ((current?.documentVersion ?? null) !== input.expectedDocumentVersion) {
+      await complete(transaction);
+      return { status: "conflict", current };
+    }
+    const saved = { ...document, documentVersion: (current?.documentVersion ?? -1) + 1 };
+    transaction.objectStore(HARMONY).put({ id: saved.libraryScoreId, payload: saved });
+    await complete(transaction);
+    return { status: "saved", document: saved };
+  }
+  async deleteHarmonyAnalysis(libraryScoreId: LibraryScoreId): Promise<void> {
+    await this.delete(libraryScoreId);
+  }
+  async deleteAnalysis(libraryScoreId: LibraryScoreId): Promise<void> {
+    const db = await this.getDatabase();
+    const transaction = db.transaction(HARMONY, "readwrite");
+    transaction.objectStore(HARMONY).delete(libraryScoreId);
+    await complete(transaction);
   }
 
   private async require(id: LibraryScoreId): Promise<ScoreRecord> {
@@ -202,6 +254,7 @@ function openDatabase(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(FILES)) db.createObjectStore(FILES, { keyPath: "id" });
       if (!db.objectStoreNames.contains(SIDECARS)) db.createObjectStore(SIDECARS, { keyPath: "id" });
       if (!db.objectStoreNames.contains(RESUMES)) db.createObjectStore(RESUMES, { keyPath: "id" });
+      if (!db.objectStoreNames.contains(HARMONY)) db.createObjectStore(HARMONY, { keyPath: "id" });
     };
     open.onblocked = () => reject(new Error("Library database migration is blocked"));
     open.onsuccess = () => {

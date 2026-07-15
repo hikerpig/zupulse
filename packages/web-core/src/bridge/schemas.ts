@@ -2,8 +2,9 @@ import { z } from "zod";
 import { scoreIdentitySchema } from "../score/schemas";
 import { localPlaybackResumeSchema, sidecarPayloadSchema } from "../storage/schemas";
 import { libraryMetadataSchema, libraryScoreIdSchema, libraryScoreIdentitySchema } from "../library/schemas";
+import { harmonyAnalysisDocumentSchema } from "../harmony/schemas";
 
-export const BRIDGE_SCHEMA_VERSION = "2.0.0" as const;
+export const BRIDGE_SCHEMA_VERSION = "3.0.0" as const;
 const idSchema = z.string().min(1).max(128);
 const envelope = <T extends string, S extends z.ZodType>(type: T, payload: S) =>
   z
@@ -64,6 +65,7 @@ export const capabilitiesSchema = z
         localLibraryImport: z.boolean(),
       })
       .strict(),
+    harmonyAnalysis: z.boolean().optional(),
     storage: z
       .object({
         sqliteIndex: z.boolean(),
@@ -116,6 +118,16 @@ export const bridgeRequestSchema = z.discriminatedUnion("type", [
   envelope("library.setFavorite", z.object({ id: libraryScoreIdSchema, favorite: z.boolean() }).strict()),
   envelope("library.markOpened", z.object({ id: libraryScoreIdSchema, openedAt: z.iso.datetime() }).strict()),
   envelope("library.delete", z.object({ id: libraryScoreIdSchema }).strict()),
+  envelope("harmonyAnalysis.read", z.object({ libraryScoreId: libraryScoreIdSchema }).strict()),
+  envelope(
+    "harmonyAnalysis.save",
+    z
+      .object({
+        document: harmonyAnalysisDocumentSchema,
+        expectedDocumentVersion: z.number().int().nonnegative().nullable(),
+      })
+      .strict(),
+  ),
   envelope(
     "sidecar.read",
     z.object({ identity: scoreIdentitySchema, libraryScoreId: libraryScoreIdSchema.optional() }).strict(),
@@ -235,6 +247,11 @@ export const bridgeResponseSchemas = {
   "library.setFavorite": z.object({}).strict(),
   "library.markOpened": z.object({}).strict(),
   "library.delete": z.object({}).strict(),
+  "harmonyAnalysis.read": z.object({ document: harmonyAnalysisDocumentSchema.nullable() }).strict(),
+  "harmonyAnalysis.save": z.discriminatedUnion("status", [
+    z.object({ status: z.literal("saved"), document: harmonyAnalysisDocumentSchema }).strict(),
+    z.object({ status: z.literal("conflict"), current: harmonyAnalysisDocumentSchema.nullable() }).strict(),
+  ]),
   "sidecar.read": z.object({ payload: sidecarPayloadSchema.optional() }).strict(),
   "sidecar.write": z.object({}).strict(),
   "playbackResume.read": z.object({ resume: localPlaybackResumeSchema.optional() }).strict(),

@@ -17,6 +17,8 @@ export * from "./harmony/schemas";
 export * from "./harmony/formatter";
 export * from "./harmony/corrections";
 export * from "./harmony/effectiveProjection";
+export * from "./harmony/analysisInput";
+export * from "./harmony/sourceHarmony";
 export * from "./score/positions";
 export * from "./bridge/types";
 export * from "./bridge/schemas";

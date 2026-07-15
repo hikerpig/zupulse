@@ -104,9 +104,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] 输入保留 track/staff/voice、note time、tie、key/meter、spelling 和 source mapping。
-- [ ] 默认 Scope 只含有音高非打击乐 tracks。
-- [ ] 来源 harmony 作为固定 state；unsupported kind 保留原节点且不被算法填补。
+- [x] 输入保留 track/staff/voice、note time、tie、key/meter、spelling 和 source mapping。
+- [x] 默认 Scope 只含有音高非打击乐 tracks。
+- [x] 来源 harmony 作为固定 state；unsupported kind 保留原节点且不被算法填补。
 
 **Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/analysisInput.test.ts packages/web-core/src/harmony/__tests__/sourceHarmony.test.ts`
 
@@ -116,10 +116,14 @@ feature: harmony-analysis-studio
 
 **Estimated scope:** Medium: 5 files
 
+**Evidence:** `rtk pnpm vitest run packages/web-core/src/harmony/__tests__/analysisInput.test.ts packages/web-core/src/harmony/__tests__/sourceHarmony.test.ts`（3 tests）、完整 harmony 测试（28 tests）与 `rtk pnpm typecheck` 于 2026-07-15 通过。
+
 ### Checkpoint P1
 
-- [ ] `pnpm vitest run packages/web-core/src/harmony`
-- [ ] `pnpm verify:fast`
+- [x] `pnpm vitest run packages/web-core/src/harmony`
+- [x] `pnpm verify:fast`
+
+**Evidence:** `rtk pnpm vitest run packages/web-core/src/harmony`（28 tests）与 `rtk pnpm verify:fast`（61 test files / 229 tests）于 2026-07-15 通过；`rtk pnpm typecheck` 通过。
 
 ## Phase 2: Analysis engine
 

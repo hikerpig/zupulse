@@ -72,16 +72,16 @@ P6 发布质量 T24 -> T25
 
 目标：得到无需 UI/宿主即可验证的 Harmony Analysis Document 与 Effective Projection。
 
-- [ ] T3：建立 ChordSymbol、Range、Revision、Document Zod schema 与 formatter。
-- [ ] T4：实现 Correction range 代数和 Effective Harmony Projection。
-- [ ] T5：实现 AnalysisInput 与来源 `<harmony>` 投影。
+- [x] T3：建立 ChordSymbol、Range、Revision、Document Zod schema 与 formatter。
+- [x] T4：实现 Correction range 代数和 Effective Harmony Projection。
+- [x] T5：实现 AnalysisInput 与来源 `<harmony>` 投影。
 
 ### Exit gate P1
 
-- [ ] `pnpm vitest run packages/web-core/src/harmony` 通过。
-- [ ] 9/11/13、altered degrees、N.C.、unresolved、来源冲突都有结构化 round-trip 测试。
-- [ ] User Correction > source harmony > revision 的所有组合通过表驱动测试。
-- [ ] `pnpm verify:fast` 通过。
+- [x] `pnpm vitest run packages/web-core/src/harmony` 通过。
+- [x] 9/11/13、altered degrees、N.C.、unresolved、来源冲突都有结构化 round-trip 测试。
+- [x] User Correction > source harmony > revision 的所有组合通过表驱动测试。
+- [x] `pnpm verify:fast` 通过。
 
 ## Phase 2: Analysis engine
 

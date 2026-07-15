@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ScoreWrittenMoment } from "./writtenTime";
 
 const uuidSchema = z.string().uuid();
 const timestampSchema = z.iso.datetime();
@@ -169,7 +170,6 @@ export const harmonyAnalysisDocumentSchema = z
 
 export type ChordSymbolInput = z.input<typeof chordSymbolSchema>;
 export type HarmonyAnalysisDocument = z.output<typeof harmonyAnalysisDocumentSchema>;
-export type ScoreWrittenMoment = z.infer<typeof scoreWrittenMomentSchema>;
 export type ScoreWrittenRange = z.infer<typeof scoreWrittenRangeSchema>;
 export type HarmonySegment = z.infer<typeof harmonySegmentSchema>;
 export type HarmonyCorrection = z.infer<typeof harmonyCorrectionSchema>;

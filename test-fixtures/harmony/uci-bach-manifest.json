@@ -1,0 +1,8 @@
+{
+  "name": "bach-choral-harmony",
+  "source": "https://archive.ics.uci.edu/static/public/298/bach%2Bchoral%2Bharmony.zip",
+  "sha256": "6b5a0d52262839ead7605b8b95f455d464299a245638f44990fcb443bd0f4aaf",
+  "license": "CC BY 4.0",
+  "citation": "Radicioni, D. & Esposito, R. (2014). Bach Choral Harmony. UCI Machine Learning Repository. https://doi.org/10.24432/C5B61F",
+  "events": 5665
+}

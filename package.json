@@ -20,6 +20,7 @@
     "fixtures:musicxml": "node scripts/generate-musicxml-fixtures.mjs && node scripts/verify-musicxml-fixtures.mjs",
     "benchmark:musicxml": "node scripts/benchmark-musicxml-import.mjs",
     "harmony:eval": "vite-node scripts/harmony-eval.ts",
+    "harmony:eval:uci": "vite-node scripts/harmony-uci-eval.ts",
     "harmony:benchmark": "vite-node scripts/harmony-benchmark.ts",
     "demo:dev": "pnpm --filter @zupulse/web-demo dev",
     "demo:build": "pnpm --filter @zupulse/web-demo build",

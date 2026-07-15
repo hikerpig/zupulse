@@ -32,11 +32,40 @@ const templates: readonly Template[] = [
     evidence: [5],
     degrees: [{ operation: "add", value: 4, alter: 0 }],
   },
+  ...(["major", "minor"] as const).flatMap((kind) => [
+    {
+      kind,
+      intervals: [0, kind === "major" ? 4 : 3, 7, 2],
+      evidence: [2],
+      important: [kind === "major" ? 4 : 3],
+      degrees: [{ operation: "add" as const, value: 9 as const, alter: 0 as const }],
+    },
+    {
+      kind,
+      intervals: [0, kind === "major" ? 4 : 3, 7, 5],
+      evidence: [5],
+      important: [kind === "major" ? 4 : 3],
+      degrees: [{ operation: "add" as const, value: 11 as const, alter: 0 as const }],
+    },
+    {
+      kind,
+      intervals: [0, kind === "major" ? 4 : 3, 7, 9],
+      evidence: [9],
+      important: [kind === "major" ? 4 : 3],
+      degrees: [{ operation: "add" as const, value: 13 as const, alter: 0 as const }],
+    },
+  ]),
   { kind: "power", intervals: [0, 7], important: [7] },
   { kind: "major", extension: 6, intervals: [0, 4, 7, 9], evidence: [4, 9] },
   { kind: "minor", extension: 6, intervals: [0, 3, 7, 9], evidence: [3, 9] },
   { kind: "major", extension: 7, intervals: [0, 4, 7, 11], evidence: [4, 11] },
   { kind: "minor", extension: 7, intervals: [0, 3, 7, 10], evidence: [3, 10] },
+  { kind: "major", extension: 9, intervals: [0, 2, 4, 7, 11], evidence: [2, 4, 11] },
+  { kind: "major", extension: 11, intervals: [0, 2, 4, 5, 7, 11], evidence: [4, 5, 11] },
+  { kind: "major", extension: 13, intervals: [0, 2, 4, 5, 7, 9, 11], evidence: [4, 9, 11] },
+  { kind: "minor", extension: 9, intervals: [0, 2, 3, 7, 10], evidence: [2, 3, 10] },
+  { kind: "minor", extension: 11, intervals: [0, 2, 3, 5, 7, 10], evidence: [3, 5, 10] },
+  { kind: "minor", extension: 13, intervals: [0, 2, 3, 5, 7, 9, 10], evidence: [3, 9, 10] },
   { kind: "dominant", extension: 7, intervals: [0, 4, 7, 10], evidence: [4, 10] },
   { kind: "dominant", extension: 9, intervals: [0, 2, 4, 7, 10], evidence: [2, 4, 10] },
   { kind: "dominant", extension: 11, intervals: [0, 2, 4, 5, 7, 10], evidence: [4, 5, 10] },
@@ -55,7 +84,7 @@ export function generateHarmonyCandidates(
   const totalDuration = features.durationByPitchClass.reduce((sum, duration) => sum + duration, 0);
   const roots = features.durationByPitchClass.flatMap((duration, pitchClass) => (duration > 0 ? [pitchClass] : []));
   const candidates = roots.flatMap((root) =>
-    templates
+    templatesForRoot(root, features)
       .filter((template) =>
         (template.evidence ?? []).every((interval) => features.durationByPitchClass[(root + interval) % 12]! > 0),
       )
@@ -72,12 +101,16 @@ export function generateHarmonyCandidates(
           features.bassPitchClass !== undefined && features.bassPitchClass !== root && bassIsChordTone
             ? pitch(features.bassPitchClass)
             : undefined;
+        const upperExtensionComplexity =
+          template.extension === 9 ? 1 : template.extension === 11 ? 2 : template.extension === 13 ? 3 : 0;
         const localScore =
           support -
           conflict * 0.75 -
           missing * maximumDuration * 0.6 -
           missingImportant * maximumDuration * 1.5 -
           template.intervals.length * maximumDuration * 0.02 -
+          (template.degrees?.length ?? 0) * maximumDuration * 2.5 -
+          upperExtensionComplexity * maximumDuration * 1.5 -
           (bassIsChordTone ? 0 : maximumDuration * 2) +
           (features.bassPitchClass === root ? maximumDuration * 0.1 : 0);
         const chord = chordSymbolSchema.parse({
@@ -117,4 +150,46 @@ export function generateHarmonyCandidates(
 
 function pitch(pitchClass: number) {
   return { step: steps[pitchClass]!, alter: alters[pitchClass]! };
+}
+
+function templatesForRoot(root: number, features: HarmonyFeatureVector): readonly Template[] {
+  const sounds = (interval: number) => features.durationByPitchClass[(root + interval) % 12]! > 0;
+  if (!sounds(4) || !sounds(10)) return templates;
+  const ninths = [
+    { interval: 1, value: 9 as const, alter: -1 as const },
+    { interval: 3, value: 9 as const, alter: 1 as const },
+  ].filter(({ interval }) => sounds(interval));
+  const upperAlterations = [
+    { interval: 6, value: 11 as const, alter: 1 as const },
+    { interval: 8, value: 13 as const, alter: -1 as const },
+  ].filter(({ interval }) => sounds(interval));
+  const alterationGroups = ninths.length
+    ? ninths.map((ninth) => [ninth, ...upperAlterations])
+    : upperAlterations.length
+      ? [upperAlterations]
+      : [];
+  const alteredTensions: Template[] = alterationGroups.map((alterations) => ({
+    kind: "dominant",
+    extension: 7,
+    intervals: [0, 4, 7, 10, ...alterations.map(({ interval }) => interval)],
+    evidence: [4, 10, ...alterations.map(({ interval }) => interval)],
+    degrees: alterations.map(({ value, alter }) => ({ operation: "alter", value, alter })),
+  }));
+  const alteredFifths: Template[] = [
+    { interval: 6, alter: -1 as const },
+    { interval: 8, alter: 1 as const },
+  ].flatMap(({ interval, alter }) =>
+    sounds(interval)
+      ? [
+          {
+            kind: "dominant" as const,
+            extension: 7 as const,
+            intervals: [0, 4, 10, interval],
+            evidence: [4, 10, interval],
+            degrees: [{ operation: "alter" as const, value: 5 as const, alter }],
+          },
+        ]
+      : [],
+  );
+  return [...templates, ...alteredTensions, ...alteredFifths];
 }

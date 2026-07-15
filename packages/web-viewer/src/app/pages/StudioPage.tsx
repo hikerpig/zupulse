@@ -11,6 +11,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   const storageAvailable = application.hasHarmonyAnalysisStorage();
   const studio = snapshot.studio?.libraryScoreId === libraryScoreId ? snapshot.studio : undefined;
   const studioDocument = studio?.document;
+  const firstSegment = studioDocument?.activeRevision.segments[0];
   useEffect(() => {
     if (libraryScoreId && storageAvailable) void application.openStudio(libraryScoreId);
   }, [application, libraryScoreId, storageAvailable]);
@@ -55,40 +56,26 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                 重做修正
               </button>
             </div>
-            {studioDocument.activeRevision.segments[0] ? (
+            {firstSegment ? (
               <HarmonyStudioEditor
-                candidates={studioDocument.activeRevision.segments[0].alternatives}
-                {...(studioDocument.activeRevision.segments[0].status === "unresolved"
-                  ? { unresolvedReason: studioDocument.activeRevision.segments[0].reason }
-                  : {})}
+                candidates={firstSegment.alternatives}
+                {...(firstSegment.status === "unresolved" ? { unresolvedReason: firstSegment.reason } : {})}
                 onSelect={(candidate) =>
-                  void application.setStudioCorrection(
-                    libraryScoreId!,
-                    studioDocument.activeRevision.segments[0].range,
-                    {
-                      type: "chord",
-                      chord: candidate.chord,
-                    },
-                  )
+                  void application.setStudioCorrection(libraryScoreId!, firstSegment.range, {
+                    type: "chord",
+                    chord: candidate.chord,
+                  })
                 }
                 onApply={(chord) =>
-                  void application.setStudioCorrection(
-                    libraryScoreId!,
-                    studioDocument.activeRevision.segments[0].range,
-                    {
-                      type: "chord",
-                      chord,
-                    },
-                  )
+                  void application.setStudioCorrection(libraryScoreId!, firstSegment.range, {
+                    type: "chord",
+                    chord,
+                  })
                 }
                 onNoChord={() =>
-                  void application.setStudioCorrection(
-                    libraryScoreId!,
-                    studioDocument.activeRevision.segments[0].range,
-                    {
-                      type: "no-chord",
-                    },
-                  )
+                  void application.setStudioCorrection(libraryScoreId!, firstSegment.range, {
+                    type: "no-chord",
+                  })
                 }
               />
             ) : null}

@@ -17,7 +17,7 @@ type RuntimeScore = {
   }>;
 };
 
-type HarmonyRuntimeScore = RuntimeScore & {
+type HarmonyRuntimeScore = Omit<RuntimeScore, "tracks" | "masterBars"> & {
   tracks?: Array<{
     name?: string;
     playbackInfo?: { isPercussion?: boolean };

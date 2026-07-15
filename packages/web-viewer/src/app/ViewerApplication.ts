@@ -193,11 +193,14 @@ export class ViewerApplication implements ViewerAppHandle {
         algorithmVersion: "rules-1",
         createdAt: now,
         parameters: { scope: { includedTrackIds }, topK: 8, decisionThreshold: 0.6 },
-        segments: analyzeHarmonyRules(projectAlphaTabHarmonyInput(parsed.runtime), {
-          includedTrackIds,
-          topK: 8,
-          decisionThreshold: 0.6,
-        }),
+        segments: analyzeHarmonyRules(
+          projectAlphaTabHarmonyInput(parsed.runtime as Parameters<typeof projectAlphaTabHarmonyInput>[0]),
+          {
+            includedTrackIds,
+            topK: 8,
+            decisionThreshold: 0.6,
+          },
+        ),
       },
       corrections: [],
       annotationTarget: { trackId: includedTrackIds[0]!, staffIndex: 0 },

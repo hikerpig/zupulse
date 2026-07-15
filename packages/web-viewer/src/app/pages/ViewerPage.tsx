@@ -40,6 +40,11 @@ export function ViewerPage({ application, notFound = false }: { application: Vie
               </span>
             </Link>
           )}
+          {application.hasLibrary() && libraryScoreId && application.hasHarmonyAnalysisStorage() ? (
+            <Link className="secondary-button" to={`/studio/${libraryScoreId}`}>
+              和弦分析
+            </Link>
+          ) : null}
           <div className={styles.themeToggle} role="group" aria-label="主题切换">
             <button
               id="theme-light"

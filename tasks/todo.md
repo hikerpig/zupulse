@@ -333,7 +333,7 @@ feature: harmony-analysis-studio
 
 - [x] 刷新 route 从 Library Score 重建，不在 URL 放 Session ID。
 - [x] 无 Document 自动启动可取消分析，成功后立即保存。
-- [ ] 已有 Document 或算法升级不静默重跑；GP 显示不支持。
+- [x] 已有 Document 或算法升级不静默重跑；GP 显示不支持。
 
 **Verification:** `pnpm vitest run packages/web-viewer/src/app packages/web-viewer/src/features/harmony-studio`
 
@@ -371,7 +371,7 @@ feature: harmony-analysis-studio
 
 - [x] 每个命令产生确定、可逆的 Correction 变化。
 - [x] Reset 删除 Correction 并露出来源/算法层。
-- [ ] undo/redo 离开 Studio 后丢弃，不持久化历史 Revision。
+- [x] undo/redo 离开 Studio 后丢弃，不持久化历史 Revision。
 
 **Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/correctionCommands.test.ts packages/web-viewer/src/features/harmony-studio`
 
@@ -389,7 +389,7 @@ feature: harmony-analysis-studio
 
 - [x] UI 准确显示 unsaved/saving/saved/failure/conflict。
 - [x] reanalysis 期间旧 Revision 可编辑，失败/取消/旧 intent 不提交。
-- [ ] 新 Revision 原子结合提交瞬间最新 Corrections。
+- [x] 新 Revision 原子结合提交瞬间最新 Corrections。
 
 **Verification:** `pnpm vitest run packages/web-viewer/src/features/harmony-studio/__tests__/harmonyStudioSession.test.ts packages/web-viewer/src/app`
 
@@ -405,7 +405,7 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] Scope 变化触发新 Job；Annotation Target 变化不重新分析。
+- [x] Scope 变化触发新 Job；Annotation Target 变化不重新分析。
 - [x] Preview Transport 支持 play/pause/seek/speed/selected-range loop。
 - [ ] sidecar、resume、practice summary 前后快照完全不变。
 

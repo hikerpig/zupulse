@@ -1,5 +1,5 @@
 import { useEffect, useSyncExternalStore } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import type { ViewerApplication } from "../ViewerApplication";
 import styles from "./PageShell.module.css";
 
@@ -20,6 +20,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
           <h1 id="studio-title">和弦分析工作室</h1>
         </div>
         <span role="status">{active ? "曲谱已加载" : "等待曲谱加载"}</span>
+        {libraryScoreId ? <Link to={`/viewer/${libraryScoreId}`}>返回查看器</Link> : null}
       </header>
       <section aria-label="分析状态">
         <h2>分析结果</h2>

@@ -23,6 +23,7 @@ describe("StudioPage", () => {
     );
     expect(screen.getByRole("heading", { name: "和弦分析工作室" })).toBeTruthy();
     expect(screen.getByText("Library Score: score-1")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "返回查看器" }).getAttribute("href")).toBe("/viewer/score-1");
     expect(screen.queryByText(/session/i)).toBeNull();
   });
 

@@ -107,4 +107,17 @@ describe("HarmonyStudioSession", () => {
       vi.useRealTimers();
     }
   });
+
+  it("drops undo history when the Studio session is disposed", async () => {
+    const repository = new InMemoryHarmonyAnalysisRepository(
+      new Map([[document.libraryScoreId, document.sourceContentHash]]),
+    );
+    await repository.save({ document, expectedDocumentVersion: null });
+    const session = new HarmonyStudioSession(repository, document.libraryScoreId);
+    await session.load(async () => document);
+    session.setAnnotationTarget({ trackId: "guitar", staffIndex: 0 });
+    session.dispose();
+    session.undo();
+    expect(session.getState().document?.annotationTarget.trackId).toBe("guitar");
+  });
 });

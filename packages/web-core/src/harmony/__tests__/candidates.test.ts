@@ -17,6 +17,9 @@ describe("harmony candidates", () => {
     expect(
       candidates.some((candidate) => candidate.chord.root.step === "C" && candidate.chord.extension !== undefined),
     ).toBe(false);
+    expect(candidates.some((candidate) => candidate.chord.root.step === "C" && candidate.chord.kind === "minor")).toBe(
+      false,
+    );
   });
 
   it("uses bass evidence for slash chords", () => {

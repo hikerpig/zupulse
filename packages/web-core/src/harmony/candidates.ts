@@ -13,35 +13,36 @@ type Template = {
   intervals: readonly number[];
   extension?: ChordSymbolInput["extension"];
   evidence?: readonly number[];
+  important?: readonly number[];
   degrees?: ChordSymbolInput["degrees"];
 };
 
 const steps = ["C", "C", "D", "D", "E", "F", "F", "G", "G", "A", "A", "B"] as const;
 const alters = [0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0] as const;
 const templates: readonly Template[] = [
-  { kind: "major", intervals: [0, 4, 7] },
-  { kind: "minor", intervals: [0, 3, 7] },
-  { kind: "diminished", intervals: [0, 3, 6] },
-  { kind: "augmented", intervals: [0, 4, 8] },
-  { kind: "suspended-second", intervals: [0, 2, 7] },
-  { kind: "suspended-fourth", intervals: [0, 5, 7] },
+  { kind: "major", intervals: [0, 4, 7], important: [4] },
+  { kind: "minor", intervals: [0, 3, 7], important: [3] },
+  { kind: "diminished", intervals: [0, 3, 6], important: [3, 6] },
+  { kind: "augmented", intervals: [0, 4, 8], important: [4, 8] },
+  { kind: "suspended-second", intervals: [0, 2, 7], important: [2] },
+  { kind: "suspended-fourth", intervals: [0, 5, 7], important: [5] },
   {
     kind: "major",
     intervals: [0, 4, 5, 7],
     evidence: [5],
     degrees: [{ operation: "add", value: 4, alter: 0 }],
   },
-  { kind: "power", intervals: [0, 7] },
-  { kind: "major", extension: 6, intervals: [0, 4, 7, 9], evidence: [9] },
-  { kind: "minor", extension: 6, intervals: [0, 3, 7, 9], evidence: [9] },
-  { kind: "major", extension: 7, intervals: [0, 4, 7, 11], evidence: [11] },
-  { kind: "minor", extension: 7, intervals: [0, 3, 7, 10], evidence: [10] },
-  { kind: "dominant", extension: 7, intervals: [0, 4, 7, 10], evidence: [10] },
-  { kind: "dominant", extension: 9, intervals: [0, 2, 4, 7, 10], evidence: [2, 10] },
-  { kind: "dominant", extension: 11, intervals: [0, 2, 4, 5, 7, 10], evidence: [5, 10] },
-  { kind: "dominant", extension: 13, intervals: [0, 2, 4, 5, 7, 9, 10], evidence: [9, 10] },
-  { kind: "diminished", extension: 7, intervals: [0, 3, 6, 9], evidence: [9] },
-  { kind: "half-diminished", extension: 7, intervals: [0, 3, 6, 10], evidence: [10] },
+  { kind: "power", intervals: [0, 7], important: [7] },
+  { kind: "major", extension: 6, intervals: [0, 4, 7, 9], evidence: [4, 9] },
+  { kind: "minor", extension: 6, intervals: [0, 3, 7, 9], evidence: [3, 9] },
+  { kind: "major", extension: 7, intervals: [0, 4, 7, 11], evidence: [4, 11] },
+  { kind: "minor", extension: 7, intervals: [0, 3, 7, 10], evidence: [3, 10] },
+  { kind: "dominant", extension: 7, intervals: [0, 4, 7, 10], evidence: [4, 10] },
+  { kind: "dominant", extension: 9, intervals: [0, 2, 4, 7, 10], evidence: [2, 4, 10] },
+  { kind: "dominant", extension: 11, intervals: [0, 2, 4, 5, 7, 10], evidence: [4, 5, 10] },
+  { kind: "dominant", extension: 13, intervals: [0, 2, 4, 5, 7, 9, 10], evidence: [4, 9, 10] },
+  { kind: "diminished", extension: 7, intervals: [0, 3, 6, 9], evidence: [3, 6, 9] },
+  { kind: "half-diminished", extension: 7, intervals: [0, 3, 6, 10], evidence: [3, 6, 10] },
 ];
 
 export function generateHarmonyCandidates(
@@ -63,6 +64,9 @@ export function generateHarmonyCandidates(
         const support = pitchClasses.reduce((sum, pitchClass) => sum + features.durationByPitchClass[pitchClass]!, 0);
         const conflict = totalDuration - support;
         const missing = pitchClasses.filter((pitchClass) => features.durationByPitchClass[pitchClass] === 0).length;
+        const missingImportant = (template.important ?? []).filter(
+          (interval) => features.durationByPitchClass[(root + interval) % 12] === 0,
+        ).length;
         const bassIsChordTone = features.bassPitchClass === undefined || pitchClasses.includes(features.bassPitchClass);
         const bass =
           features.bassPitchClass !== undefined && features.bassPitchClass !== root && bassIsChordTone
@@ -72,6 +76,7 @@ export function generateHarmonyCandidates(
           support -
           conflict * 0.75 -
           missing * maximumDuration * 0.6 -
+          missingImportant * maximumDuration * 1.5 -
           template.intervals.length * maximumDuration * 0.02 -
           (bassIsChordTone ? 0 : maximumDuration * 2) +
           (features.bassPitchClass === root ? maximumDuration * 0.1 : 0);

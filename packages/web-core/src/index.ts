@@ -18,6 +18,7 @@ export * from "./harmony/formatter";
 export * from "./harmony/corrections";
 export * from "./harmony/effectiveProjection";
 export * from "./harmony/analysisInput";
+export * from "./harmony/analyzeRules";
 export * from "./harmony/sourceHarmony";
 export * from "./harmony/boundaries";
 export * from "./harmony/features";

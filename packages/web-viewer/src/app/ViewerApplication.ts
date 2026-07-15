@@ -1,7 +1,9 @@
 import type { ViewerAppHandle, ViewerFile, ViewerHost, ViewerHostEvent, ViewerSessionHandle } from "../host";
 import { importLibraryScores } from "@zupulse/web-core";
 import type {
+  HarmonyAnalysisDocument,
   HarmonyAnalysisRepository,
+  LibraryScore,
   ScoreFileGateway,
   ScoreFormatAdapter,
   SheetLibraryRepository,
@@ -12,6 +14,12 @@ export type ViewerApplicationSnapshot = {
   currentSessionId?: string;
   currentLibraryScoreId?: string;
   library?: { scores: readonly LibraryScoreSummary[]; loading: boolean; error?: string; importing?: boolean };
+  studio?: {
+    libraryScoreId: string;
+    status: "loading" | "ready" | "error";
+    document?: HarmonyAnalysisDocument;
+    error?: string;
+  };
 };
 
 export class ViewerApplication implements ViewerAppHandle {
@@ -20,6 +28,7 @@ export class ViewerApplication implements ViewerAppHandle {
   private chain = Promise.resolve();
   private queuedError: unknown;
   private destroyPromise?: Promise<void>;
+  private studioIntent = 0;
   private destroying = false;
   private snapshot: ViewerApplicationSnapshot = {};
   private readonly listeners = new Set<() => void>();
@@ -73,8 +82,67 @@ export class ViewerApplication implements ViewerAppHandle {
   }
 
   hasHarmonyAnalysisStorage(): boolean {
+    return this.getHarmonyAnalysisRepository() !== undefined;
+  }
+
+  getHarmonyAnalysisRepository(): HarmonyAnalysisRepository | undefined {
     const repository = this.library?.repository as Partial<HarmonyAnalysisRepository> | undefined;
-    return typeof repository?.read === "function" && typeof repository.save === "function";
+    return typeof repository?.read === "function" &&
+      typeof repository.save === "function" &&
+      typeof repository.delete === "function"
+      ? (repository as HarmonyAnalysisRepository)
+      : undefined;
+  }
+
+  async getLibraryScore(id: string): Promise<LibraryScore | undefined> {
+    return this.library?.repository.get(id as LibraryScore["id"]);
+  }
+
+  async openStudio(id: string): Promise<void> {
+    const library = this.library;
+    const repository = this.getHarmonyAnalysisRepository();
+    const intent = ++this.studioIntent;
+    if (!library || !repository) return this.setStudio(id, { status: "error", error: "和声分析存储不可用" });
+    this.setStudio(id, { status: "loading" });
+    try {
+      const score = await library.repository.get(id as LibraryScore["id"]);
+      if (!score) throw new Error("曲谱不存在");
+      if (score.format !== "musicxml") throw new Error("仅支持 MusicXML/MXL 曲谱");
+      const existing = await repository.read(id);
+      if (existing) {
+        if (intent === this.studioIntent) this.setStudio(id, { status: "ready", document: existing });
+        return;
+      }
+      const file = await library.repository.readScore(id as LibraryScore["id"]);
+      const adapter = library.adapters.find((candidate) => candidate.format === "musicxml");
+      if (!adapter) throw new Error("MusicXML 分析器不可用");
+      const parsed = await adapter.parse({ fileName: file.fileName, bytes: file.bytes });
+      const includedTrackIds = parsed.document.tracks.map((track) => track.id);
+      if (includedTrackIds.length === 0) throw new Error("曲谱没有可分析的音高轨道");
+      const now = new Date().toISOString();
+      const document: HarmonyAnalysisDocument = {
+        schemaVersion: "1.0.0",
+        libraryScoreId: id,
+        sourceContentHash: score.scoreIdentity,
+        documentVersion: 0,
+        activeRevision: {
+          id: crypto.randomUUID(),
+          algorithmVersion: "rules-1",
+          createdAt: now,
+          parameters: { scope: { includedTrackIds }, topK: 8, decisionThreshold: 0.6 },
+          segments: [],
+        },
+        corrections: [],
+        annotationTarget: { trackId: includedTrackIds[0]!, staffIndex: 0 },
+        updatedAt: now,
+      };
+      const saved = await repository.save({ document, expectedDocumentVersion: null });
+      if (saved.status === "conflict") throw new Error("分析文档版本冲突");
+      if (intent === this.studioIntent) this.setStudio(id, { status: "ready", document: saved.document });
+    } catch (error) {
+      if (intent === this.studioIntent)
+        this.setStudio(id, { status: "error", error: error instanceof Error ? error.message : "分析失败" });
+    }
   }
 
   async refreshLibrary(): Promise<void> {
@@ -222,6 +290,13 @@ export class ViewerApplication implements ViewerAppHandle {
   private setSnapshot(snapshot: ViewerApplicationSnapshot): void {
     this.snapshot = snapshot;
     for (const listener of this.listeners) listener();
+  }
+
+  private setStudio(
+    libraryScoreId: string,
+    studio: Omit<NonNullable<ViewerApplicationSnapshot["studio"]>, "libraryScoreId">,
+  ): void {
+    this.setSnapshot({ ...this.snapshot, studio: { libraryScoreId, ...studio } });
   }
 
   private async destroyOnce(): Promise<void> {

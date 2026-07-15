@@ -7,9 +7,12 @@ import { StudioPage } from "../StudioPage";
 
 describe("StudioPage", () => {
   it("renders a persistent library score route without exposing a session id", () => {
+    const snapshot = { currentLibraryScoreId: "score-1" };
     const application = {
-      getSnapshot: () => ({ currentLibraryScoreId: "score-1" }),
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
       hasHarmonyAnalysisStorage: () => true,
+      openStudio: async () => undefined,
     } as never;
     render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -24,7 +27,13 @@ describe("StudioPage", () => {
   });
 
   it("shows a storage-unavailable state instead of silently using memory", () => {
-    const application = { getSnapshot: () => ({}), hasHarmonyAnalysisStorage: () => false } as never;
+    const snapshot = {};
+    const application = {
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      hasHarmonyAnalysisStorage: () => false,
+      openStudio: async () => undefined,
+    } as never;
     render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
         <Routes>

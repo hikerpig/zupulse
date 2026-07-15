@@ -32,16 +32,16 @@ const templates: readonly Template[] = [
     degrees: [{ operation: "add", value: 4, alter: 0 }],
   },
   { kind: "power", intervals: [0, 7] },
-  { kind: "major", extension: 6, intervals: [0, 4, 7, 9] },
-  { kind: "minor", extension: 6, intervals: [0, 3, 7, 9] },
-  { kind: "major", extension: 7, intervals: [0, 4, 7, 11] },
-  { kind: "minor", extension: 7, intervals: [0, 3, 7, 10] },
-  { kind: "dominant", extension: 7, intervals: [0, 4, 7, 10] },
+  { kind: "major", extension: 6, intervals: [0, 4, 7, 9], evidence: [9] },
+  { kind: "minor", extension: 6, intervals: [0, 3, 7, 9], evidence: [9] },
+  { kind: "major", extension: 7, intervals: [0, 4, 7, 11], evidence: [11] },
+  { kind: "minor", extension: 7, intervals: [0, 3, 7, 10], evidence: [10] },
+  { kind: "dominant", extension: 7, intervals: [0, 4, 7, 10], evidence: [10] },
   { kind: "dominant", extension: 9, intervals: [0, 2, 4, 7, 10], evidence: [2, 10] },
   { kind: "dominant", extension: 11, intervals: [0, 2, 4, 5, 7, 10], evidence: [5, 10] },
   { kind: "dominant", extension: 13, intervals: [0, 2, 4, 5, 7, 9, 10], evidence: [9, 10] },
-  { kind: "diminished", extension: 7, intervals: [0, 3, 6, 9] },
-  { kind: "half-diminished", extension: 7, intervals: [0, 3, 6, 10] },
+  { kind: "diminished", extension: 7, intervals: [0, 3, 6, 9], evidence: [9] },
+  { kind: "half-diminished", extension: 7, intervals: [0, 3, 6, 10], evidence: [10] },
 ];
 
 export function generateHarmonyCandidates(

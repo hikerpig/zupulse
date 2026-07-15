@@ -407,7 +407,7 @@ feature: harmony-analysis-studio
 
 - [x] Scope 变化触发新 Job；Annotation Target 变化不重新分析。
 - [x] Preview Transport 支持 play/pause/seek/speed/selected-range loop。
-- [ ] sidecar、resume、practice summary 前后快照完全不变。
+- [x] sidecar、resume、practice summary 前后快照完全不变。
 
 **Verification:** `pnpm vitest run packages/web-viewer/src/features/harmony-studio packages/web-core/src/playback`
 
@@ -419,8 +419,8 @@ feature: harmony-analysis-studio
 
 ### Checkpoint P4
 
-- [ ] `pnpm verify`
-- [ ] `pnpm demo:test:e2e` Studio 主旅程通过。
+- [x] `pnpm verify`
+- [x] `pnpm demo:test:e2e` Studio 主旅程通过。
 - [ ] 键盘、焦点与保存失败离开保护人工检查完成。
 
 ## Phase 5: Annotated score export

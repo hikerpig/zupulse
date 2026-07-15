@@ -2,7 +2,7 @@
 
 import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { StudioPage } from "../StudioPage";
 
@@ -150,6 +150,54 @@ describe("StudioPage", () => {
     const segments = within(view.container).getByRole("list", { name: "分析片段" });
     await user.click(within(segments).getByRole("button", { name: "片段 2" }));
     expect(within(segments).getByRole("button", { name: "片段 2" }).getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("keeps preview transport local to Studio", async () => {
+    const playViewer = vi.fn();
+    const snapshot = {
+      studio: {
+        libraryScoreId: "score-1",
+        status: "ready",
+        document: {
+          activeRevision: {
+            parameters: { scope: { includedTrackIds: ["track-1"] } },
+            segments: [
+              {
+                status: "unresolved",
+                range: { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 4 } },
+                alternatives: [],
+                reason: "low-confidence",
+              },
+            ],
+          },
+          corrections: [],
+          annotationTarget: { trackId: "track-1", staffIndex: 0 },
+        },
+      },
+    };
+    const application = {
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      hasHarmonyAnalysisStorage: () => true,
+      openStudio: async () => undefined,
+      undoStudio: () => undefined,
+      redoStudio: () => undefined,
+      setStudioScope: async () => undefined,
+      setStudioAnnotationTarget: async () => undefined,
+      playback: { play: playViewer },
+    } as never;
+    const view = render(
+      <MemoryRouter initialEntries={["/studio/score-1"]}>
+        <Routes>
+          <Route path="/studio/:libraryScoreId" element={<StudioPage application={application} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    const user = userEvent.setup();
+    await user.click(within(view.container).getByRole("button", { name: "播放预览" }));
+    await user.click(within(view.container).getByRole("button", { name: "循环选中片段" }));
+    expect(within(view.container).getByText("预览播放中")).toBeTruthy();
+    expect(playViewer).not.toHaveBeenCalled();
   });
 
   it("shows a storage-unavailable state instead of silently using memory", () => {

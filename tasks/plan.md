@@ -112,44 +112,44 @@ P6 发布质量 T24 -> T25
 
 ### Exit gate P3
 
-- [ ] Browser/Desktop 同一 contract suite 覆盖 create/read/CAS/hash mismatch/delete/orphan prevention/migration failure。
-- [ ] Library 删除事务同时删除 Harmony Analysis Document；旧 Session autosave 无法重建孤儿记录。
-- [ ] Renderer 不获得绝对路径、SQLite 或未校验 payload。
+- [x] Browser/Desktop 同一 contract suite 覆盖 create/read/CAS/hash mismatch/delete/orphan prevention/migration failure。
+- [x] Library 删除事务同时删除 Harmony Analysis Document；旧 Session autosave 无法重建孤儿记录。
+- [x] Renderer 不获得绝对路径、SQLite 或未校验 payload。
 - [x] `pnpm verify:fast`、`pnpm demo:build`、`pnpm desktop:build` 通过。
 
 ## Phase 4: Studio editing vertical slice
 
 目标：用户能进入 Studio、看到结果、修正、保存和试听；Viewer 状态保持隔离。
 
-- [ ] T16：交付 Studio route/session 和首次自动分析。
-- [ ] T17：交付 score overlay、候选检查器和结构化 chord editor。
-- [ ] T18：交付 split/merge/move/reset、N.C. 与 session undo/redo。
-- [ ] T19：交付 autosave、CAS 冲突和 latest-intent-wins reanalysis。
-- [ ] T20：交付 Scope、Annotation Target 与 Preview Transport。
+- [x] T16：交付 Studio route/session 和首次自动分析。
+- [x] T17：交付 score overlay、候选检查器和结构化 chord editor。
+- [x] T18：交付 split/merge/move/reset、N.C. 与 session undo/redo。
+- [x] T19：交付 autosave、CAS 冲突和 latest-intent-wins reanalysis。
+- [x] T20：交付 Scope、Annotation Target 与 Preview Transport。
 
 ### Exit gate P4
 
-- [ ] 刷新 `#/studio/:libraryScoreId` 可重建 Studio；已有 Document 不静默重跑。
-- [ ] 用户修正跨 reanalysis/Scope 变化保留；失败、取消、旧 Job 都不能替换 active Revision。
-- [ ] Preview Transport 不改变 Practice Sidecar、Local Playback Resume 或练习摘要。
+- [x] 刷新 `#/studio/:libraryScoreId` 可重建 Studio；已有 Document 不静默重跑。
+- [x] 用户修正跨 reanalysis/Scope 变化保留；失败、取消、旧 Job 都不能替换 active Revision。
+- [x] Preview Transport 不改变 Practice Sidecar、Local Playback Resume 或练习摘要。
 - [ ] 键盘、焦点、loading/empty/error/save-conflict 状态通过组件测试和人工检查。
-- [ ] `pnpm verify`、`pnpm demo:test:e2e` 的 Studio 主旅程通过。
+- [x] `pnpm verify`、`pnpm demo:test:e2e` 的 Studio 主旅程通过。
 
 ## Phase 5: Annotated score export
 
 目标：从原始 Managed Score Copy 导出语义保持的新副本，不修改馆藏。
 
-- [ ] T21：交付 partwise `.musicxml/.xml` 导出。
-- [ ] T22：交付 timewise 与 `.mxl` round-trip。
-- [ ] T23：交付 Studio export command、保存面板和失败恢复。
+- [x] T21：交付 partwise `.musicxml/.xml` 导出。
+- [x] T22：交付 timewise 与 `.mxl` round-trip。
+- [x] T23：交付 Studio export command、保存面板和失败恢复。
 
 ### Exit gate P5
 
-- [ ] 来源 harmony、Correction override、N.C.、unresolved skip、Annotation Target 在导出后语义正确。
-- [ ] unknown elements/attributes、lyrics、directions、layout 和 MXL 附加 entries 语义保留。
-- [ ] 导出前后原始 Managed Score Copy 的 SHA-256 不变；导出文件可被项目重新导入。
-- [ ] path traversal、zip bomb、external entity 和 unrepresentable position 被安全拒绝。
-- [ ] `pnpm fixtures:musicxml`、相关核心测试、Browser/Desktop 导出 E2E 通过。
+- [x] 来源 harmony、Correction override、N.C.、unresolved skip、Annotation Target 在导出后语义正确。
+- [x] unknown elements/attributes、lyrics、directions、layout 和 MXL 附加 entries 语义保留。
+- [x] 导出前后原始 Managed Score Copy 的 SHA-256 不变；导出文件可被项目重新导入。
+- [x] path traversal、zip bomb、external entity 和 unrepresentable position 被安全拒绝。
+- [x] `pnpm fixtures:musicxml`、相关核心测试、Browser/Desktop 导出 E2E 通过。
 
 ## Phase 6: Release quality
 

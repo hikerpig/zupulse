@@ -1,6 +1,6 @@
 import { insertMusicXmlHarmony, type MusicXmlHarmonyInsertion } from "./musicXmlRoundTrip";
-import { formatChordSymbol } from "./formatter";
 import { chordSymbolSchema } from "./schemas";
+import type { EffectiveHarmonyEntry } from "./effectiveProjection";
 
 export type AnnotatedHarmonyInsertion = Omit<MusicXmlHarmonyInsertion, "harmonyXml"> & { chord: unknown };
 
@@ -12,6 +12,23 @@ export function exportAnnotatedMusicXml(
     bytes,
     insertions.map((insertion) => ({ ...insertion, harmonyXml: chordToMusicXml(insertion.chord) })),
   );
+}
+
+export function planAnnotatedMusicXmlExport(
+  entries: readonly EffectiveHarmonyEntry[],
+  target: { partId: string },
+): MusicXmlHarmonyInsertion[] {
+  return entries.flatMap((entry) => {
+    if (entry.origin === "source" || entry.type === "unresolved") return [];
+    if (entry.range.start.offsetTicks !== 0) throw new Error("unrepresentable-harmony-position");
+    return [
+      {
+        partId: target.partId,
+        measureIndex: entry.range.start.measureIndex,
+        harmonyXml: entry.type === "no-chord" ? "<harmony><kind>none</kind></harmony>" : chordToMusicXml(entry.chord),
+      },
+    ];
+  });
 }
 
 export function chordToMusicXml(input: unknown): string {

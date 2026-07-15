@@ -449,9 +449,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] timewise/partwise 使用同一领域 projection，不出现第二套和弦逻辑。
-- [ ] MXL 读取 container rootfile，保持附加 entries 和来源扩展名。
-- [ ] 恶意 archive 与超限压缩被拒绝。
+- [x] timewise/partwise 使用同一领域 projection，不出现第二套和弦逻辑。
+- [x] MXL 读取 container rootfile，保持附加 entries 和来源扩展名。
+- [x] 恶意 archive 与超限压缩被拒绝。
 
 **Verification:** `pnpm vitest run packages/web-core/src/harmony/__tests__/exportMxlHarmony.test.ts && pnpm fixtures:musicxml`
 
@@ -460,6 +460,8 @@ feature: harmony-analysis-studio
 **Files likely touched:** `exportMusicXmlHarmony.ts`、`mxlContainer.ts`、对应测试与 fixtures。
 
 **Estimated scope:** Medium: 4 files
+
+**Evidence:** 结构化导出 planner 测试 4 tests 覆盖 partwise/timewise/MXL；`rtk pnpm fixtures:musicxml` 验证 12 个确定性 fixture，于 2026-07-15 通过。
 
 ### Task 23: 接入 Studio 导出用户流
 

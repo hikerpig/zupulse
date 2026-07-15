@@ -52,7 +52,9 @@ feature: harmony-analysis-studio
 
 ### Checkpoint P0
 
-- [ ] `tasks/plan.md` 的 Exit gate P0 全部通过并记录结论。
+- [x] `tasks/plan.md` 的 Exit gate P0 全部通过并记录结论。
+
+**Evidence:** `rtk pnpm vitest run packages/web-core/src/harmony packages/web-core/src/musicxml`（23 tests）于 2026-07-15 通过；T1/T2 的 typecheck、fixture 与安全边界证据已记录在上方任务项。
 
 ## Phase 1: Domain core
 

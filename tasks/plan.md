@@ -66,7 +66,7 @@ P6 发布质量 T24 -> T25
 - [x] 变化 divisions、tuplets、多 voice 的 legal moments 可以精确 round-trip；不可表示位置被拒绝而不是取整。
 - [x] `.musicxml`、`.xml`、`.mxl` fixture 写入后可重新导入，非 harmony 音乐语义不变。
 - [x] XML/ZIP 只采用公开 API；依赖、许可、bundle 影响已记录。
-- [ ] 若任一项失败，先修订领域位置或导出设计并更新 ADR/spec，不进入 Phase 1。
+- [x] 若任一项失败，先修订领域位置或导出设计并更新 ADR/spec，不进入 Phase 1。
 
 ## Phase 1: Domain core
 

@@ -3,11 +3,11 @@ import { readFile } from "node:fs/promises";
 import { unzipSync } from "fflate";
 import {
   analyzeHarmonyRules,
-  chordSymbolSchema,
   compareMoments,
   createHarmonyAnalysisInput,
   type ChordSymbolInput,
 } from "../packages/web-core/src/index";
+import { chordBassPitchClass, matchesUciHarmonyLabel, parseUciHarmonyLabel, pitchNameToPitch } from "./uciHarmonyLabel";
 
 type Manifest = { source: string; sha256: string; license: string; citation: string; events: number };
 
@@ -23,31 +23,19 @@ if (digest !== manifest.sha256) throw new Error(`UCI archive checksum mismatch: 
 const data = unzipSync(archive)["jsbach_chorals_harmony.data"];
 if (!data) throw new Error("UCI data file missing");
 
-const pitchClassByStep = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 } as const;
-type PitchStep = keyof typeof pitchClassByStep;
-type UciEvent = { id: string; expected: ReturnType<typeof chordSymbolSchema.parse>; pitchClasses: number[] };
+type UciEvent = { id: string; expected: ChordSymbolInput; pitchClasses: number[]; bassPitchClass: number };
 const events = new TextDecoder()
   .decode(data)
   .trim()
   .split(/\r?\n/)
   .flatMap((line) => {
     const columns = line.split(",").map((value) => value.trim());
-    const label = columns[16];
-    const match = /^([A-G](?:#|b)?)(?:_)?([Mmd])([467])?$/.exec(label ?? "");
-    if (!match) return [];
+    const expected = parseUciHarmonyLabel(columns[16] ?? "");
+    if (!expected) return [];
     const pitchClasses = columns.slice(2, 14).flatMap((value, index) => (value === "YES" ? [index] : []));
     if (pitchClasses.length === 0) return [];
-    const root = pitchNameToPitch(match[1]!);
     const bass = pitchNameToPitch(columns[14]!);
-    const figure = match[3] === undefined ? undefined : Number(match[3]);
-    const expected: ChordSymbolInput = {
-      root: { step: root.step, alter: root.alter },
-      kind: match[2] === "M" ? "major" : match[2] === "m" ? "minor" : "diminished",
-      degrees: figure === 4 ? [{ operation: "add", value: 4, alter: 0 }] : [],
-      ...(figure === 6 || figure === 7 ? { extension: figure } : {}),
-      ...(bass.pitchClass !== root.pitchClass ? { bass: { step: bass.step, alter: bass.alter } } : {}),
-    };
-    return [{ id: `${columns[0]}:${columns[1]}`, expected: chordSymbolSchema.parse(expected), pitchClasses }];
+    return [{ id: `${columns[0]}:${columns[1]}`, expected, pitchClasses, bassPitchClass: bass.pitchClass }];
   });
 
 const groups = new Map<string, UciEvent[]>();
@@ -76,7 +64,7 @@ const results = [...groups.entries()].flatMap(([groupId, group]) => {
                 moment: { measureIndex, offsetTicks: 0 },
                 durationTicks: 480,
                 soundingPitchClass: pitchClass,
-                soundingMidi: pitchClass === chordBassPitchClass(event.expected) ? 36 : 60 + pitchClass,
+                soundingMidi: pitchClass === event.bassPitchClass ? 36 : 60 + pitchClass,
                 voice: noteIndex + 1,
               })),
             ),
@@ -92,9 +80,7 @@ const results = [...groups.entries()].flatMap(([groupId, group]) => {
     expected: new Set(
       group
         .slice(1)
-        .flatMap((event, index) =>
-          JSON.stringify(event.expected) === JSON.stringify(group[index]?.expected) ? [] : [index + 1],
-        ),
+        .flatMap((event, index) => (matchesUciHarmonyLabel(event.expected, group[index]!.expected) ? [] : [index + 1])),
     ),
   });
   return group.map((event, measureIndex) => {
@@ -108,14 +94,13 @@ const results = [...groups.entries()].flatMap(([groupId, group]) => {
       groupId,
       expected: event.expected,
       resolved: segment?.status === "resolved",
-      correct: segment?.status === "resolved" && JSON.stringify(segment.chord) === JSON.stringify(event.expected),
-      top8: alternatives.some((candidate) => JSON.stringify(candidate.chord) === JSON.stringify(event.expected)),
+      correct: segment?.status === "resolved" && matchesUciHarmonyLabel(segment.chord, event.expected),
+      top8: alternatives.some((candidate) => matchesUciHarmonyLabel(candidate.chord, event.expected)),
       confidence: segment?.status === "resolved" ? segment.confidence : 0,
       facets: {
         root:
           segment?.status === "resolved" && JSON.stringify(segment.chord.root) === JSON.stringify(event.expected.root),
-        bass:
-          segment?.status === "resolved" && JSON.stringify(segment.chord.bass) === JSON.stringify(event.expected.bass),
+        bass: segment?.status === "resolved" && chordBassPitchClass(segment.chord) === event.bassPitchClass,
         kind: segment?.status === "resolved" && segment.chord.kind === event.expected.kind,
         extension: segment?.status === "resolved" && segment.chord.extension === event.expected.extension,
         alterations:
@@ -229,16 +214,4 @@ function createCalibrationModel(
     const bin = bins[Math.min(9, Math.floor(confidence * 10))]!;
     return bin.count === 0 ? confidence : bin.correct / bin.count;
   };
-}
-
-function pitchNameToPitch(name: string): { step: PitchStep; alter: number; pitchClass: number } {
-  const step = name.slice(0, 1) as PitchStep;
-  const alter = name.endsWith("#") ? 1 : name.endsWith("b") ? -1 : 0;
-  return { step, alter, pitchClass: (pitchClassByStep[step] + alter + 12) % 12 };
-}
-
-function chordBassPitchClass(chord: ChordSymbolInput): number {
-  const pitchClassByStep = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 } as const;
-  const pitch = chord.bass ?? chord.root;
-  return (pitchClassByStep[pitch.step] + pitch.alter + 12) % 12;
 }

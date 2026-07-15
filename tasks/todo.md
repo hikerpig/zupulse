@@ -507,7 +507,7 @@ feature: harmony-analysis-studio
 
 **Verification:** harmony eval/benchmark 根脚本 + `pnpm verify`
 
-**Evidence:** `pnpm harmony:eval:uci /tmp/bach-choral-harmony.zip` 可复现 UCI Bach Choral Harmony（总计 5,665 事件、CC BY 4.0）评估；按 chorale 分组、保留 sounding MIDI/bass、使用有界序列解码，并以 train/tune/eval 分组（3,331/1,157/1,177 事件）后，独立 eval 为 Top-8 oracle recall 63.38%、resolved precision 45.54%、coverage 100%、boundary F1 82.22%、校准后 ECE 2.73%。`pnpm harmony:eval:cmu /tmp/cma-dataset.zip` 可复现 CMU CMA CC BY 4.0 流行/键盘测试子集，20 个文件、1,911 个可解析和弦事件，按文件分组后 train/tune/eval 为 1,011/157/743，独立 eval 为 Top-8 11.98%、resolved precision 3.63%、coverage 100%、boundary F1 91.68%、ECE 0.59%。两套独立语料均未达到规格阈值，因此不能勾选该验收项；报告同时输出 root/bass/kind/extension/alterations 分项准确率。
+**Evidence:** `pnpm harmony:eval:uci /tmp/bach-choral-harmony.zip` 可复现 UCI Bach Choral Harmony（总计 5,665 事件、CC BY 4.0）评估；按 chorale 分组、保留 sounding MIDI/bass、使用有界序列解码，并以 train/tune/eval 分组（3,331/1,157/1,177 事件）后，独立 eval 为 Top-8 oracle recall 67.71%、resolved precision 50.21%、coverage 100%、boundary F1 67.74%、校准后 ECE 1.79%。UCI chord label 比较不再把独立的观测 bass 特征误作 slash-bass 标签，`M7` 按数据中的 major-triad/minor-seventh 音集合映射为 dominant 7；bass 分项单独对照观测 bass。`pnpm harmony:eval:cmu /tmp/cma-dataset.zip` 可复现 CMU CMA CC BY 4.0 流行/键盘测试子集，20 个文件、1,911 个可解析和弦事件，按文件分组后 train/tune/eval 为 1,011/157/743，独立 eval 为 Top-8 11.98%、resolved precision 3.63%、coverage 100%、boundary F1 91.68%、ECE 0.59%。两套独立语料均未达到规格阈值，因此不能勾选该验收项；报告同时输出 root/bass/kind/extension/alterations 分项准确率。
 
 **Dependencies:** Tasks 10, 23
 

@@ -28,4 +28,12 @@ describe("source harmony", () => {
     });
     expect(events[1]?.type).toBe("no-chord");
   });
+
+  it("limits source events to the requested part", () => {
+    const xml = `<score-partwise><part id="P1"><measure><harmony><root><root-step>C</root-step></root><kind>major</kind></harmony></measure></part><part id="P2"><measure><harmony><root><root-step>D</root-step></root><kind>minor</kind></harmony></measure></part></score-partwise>`;
+    expect(parseSourceHarmonyEvents(xml, "P2")[0]).toMatchObject({
+      type: "chord",
+      chord: { root: { step: "D" }, kind: "minor" },
+    });
+  });
 });

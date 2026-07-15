@@ -7,9 +7,10 @@ export type SourceHarmonyPoint =
   | { type: "no-chord"; moment: ScoreWrittenMoment }
   | { type: "unresolved"; moment: ScoreWrittenMoment; reason: "unsupported-source-harmony"; alternatives: [] };
 
-export function parseSourceHarmonyEvents(xml: string): SourceHarmonyPoint[] {
+export function parseSourceHarmonyEvents(xml: string, partId?: string): SourceHarmonyPoint[] {
   const points: SourceHarmonyPoint[] = [];
-  const measures = [...xml.matchAll(/<measure\b[^>]*>([\s\S]*?)<\/measure>/gi)];
+  const scopedXml = partId === undefined ? xml : selectPartXml(xml, partId);
+  const measures = [...scopedXml.matchAll(/<measure\b[^>]*>([\s\S]*?)<\/measure>/gi)];
   measures.forEach((measureMatch, measureIndex) => {
     const measure = measureMatch[1] ?? "";
     for (const harmony of measure.matchAll(/<harmony\b[^>]*>([\s\S]*?)<\/harmony>/gi)) {
@@ -47,6 +48,28 @@ export function parseSourceHarmonyEvents(xml: string): SourceHarmonyPoint[] {
     }
   });
   return points;
+}
+
+function selectPartXml(xml: string, partId: string): string {
+  if (/<score-timewise\b/i.test(xml)) {
+    return [...xml.matchAll(/<measure\b[^>]*>([\s\S]*?)<\/measure>/gi)]
+      .map((measure) => {
+        const part = new RegExp(
+          `<part\\b[^>]*\\bid=["']${escapeRegExp(partId)}["'][^>]*>([\\s\\S]*?)<\\/part>`,
+          "i",
+        ).exec(measure[1] ?? "");
+        return part ? `<measure>${part[1] ?? ""}</measure>` : "";
+      })
+      .join("");
+  }
+  const part = new RegExp(`<part\\b[^>]*\\bid=["']${escapeRegExp(partId)}["'][^>]*>([\\s\\S]*?)<\\/part>`, "i").exec(
+    xml,
+  );
+  return part?.[1] ?? "";
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export function projectSourceHarmonyEvents(

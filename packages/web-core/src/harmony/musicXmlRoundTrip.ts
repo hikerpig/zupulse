@@ -36,6 +36,13 @@ export function listMusicXmlPartIds(bytes: Uint8Array): string[] {
     .filter((id): id is string => id !== undefined && id.length > 0);
 }
 
+/** Returns the score XML contained by a plain MusicXML or MXL file. */
+export function readMusicXmlRootXml(bytes: Uint8Array): string {
+  const source = isZip(bytes) ? preflightMxlEntries(unzipMxlEntries(bytes)).rootBytes : bytes;
+  preflightMusicXml(source);
+  return new TextDecoder("utf-8", { fatal: true }).decode(source);
+}
+
 function insertMxlHarmony(bytes: Uint8Array, insertions: readonly MusicXmlHarmonyInsertion[]): Uint8Array {
   const entries = unzipMxlEntries(bytes);
   const { rootFileName, rootBytes } = preflightMxlEntries(entries);

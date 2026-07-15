@@ -5,7 +5,10 @@ import {
   effectiveHarmonyProjection,
   importLibraryScores,
   listMusicXmlPartIds,
+  parseSourceHarmonyEvents,
   projectAlphaTabHarmonyInput,
+  projectSourceHarmonyEvents,
+  readMusicXmlRootXml,
   compareMoments,
 } from "@zupulse/web-core";
 import type {
@@ -222,11 +225,18 @@ export class ViewerApplication implements ViewerAppHandle {
     const trackIndex = trackIndexFromId(document.annotationTarget.trackId);
     const partId = listMusicXmlPartIds(source.bytes)[trackIndex];
     if (partId === undefined) throw new Error("ANNOTATION_TARGET_NOT_FOUND");
+    const scoreEnd = document.activeRevision.segments.reduce(
+      (end, segment) => (compareMoments(segment.range.end, end) > 0 ? segment.range.end : end),
+      { measureIndex: 0, offsetTicks: 0 },
+    );
     return exportHarmonyStudioDocument({
       session,
       projection: effectiveHarmonyProjection({
         revision: document.activeRevision.segments,
-        source: [],
+        source: projectSourceHarmonyEvents(
+          parseSourceHarmonyEvents(readMusicXmlRootXml(source.bytes), partId),
+          scoreEnd,
+        ),
         corrections: document.corrections,
       }),
       partId,

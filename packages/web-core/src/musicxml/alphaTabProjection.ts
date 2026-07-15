@@ -104,6 +104,7 @@ export function projectAlphaTabHarmonyInput(score: HarmonyRuntimeScore): Harmony
                   moment: { measureIndex: bar.index ?? measureIndex, offsetTicks: beat.displayStart ?? 0 },
                   durationTicks: Math.max(1, beat.displayDuration ?? 0),
                   soundingPitchClass: note.realValue! % 12,
+                  soundingMidi: note.realValue!,
                   voice: voiceIndex + 1,
                 })),
             ),

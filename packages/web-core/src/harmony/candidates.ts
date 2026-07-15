@@ -42,7 +42,17 @@ export function generateHarmonyCandidates(
         (sum, duration, pc) => sum + (pitchClass(root, intervals).includes(pc) ? 0 : duration),
         0,
       );
-      const localScore = support - conflict * 0.35 - (kind === "power" ? 20 : kind === "diminished" ? 8 : 0);
+      const bassConflict =
+        features.bassPitchClass !== undefined && !pitchClass(root, intervals).includes(features.bassPitchClass)
+          ? 24
+          : 0;
+      const bassRootBonus = features.bassPitchClass === root ? 4 : 0;
+      const localScore =
+        support -
+        conflict * 0.35 -
+        bassConflict +
+        bassRootBonus -
+        (kind === "power" ? 20 : kind === "diminished" ? 8 : 0);
       const bass =
         features.bassPitchClass !== undefined &&
         features.bassPitchClass !== root &&
@@ -56,6 +66,63 @@ export function generateHarmonyCandidates(
         degrees: [],
         ...(bass ? { bass } : {}),
       });
+      candidates.push({ chord, localScore, sequenceScore: localScore, confidence: 0 });
+    }
+    const qualityExtensionIntervals =
+      third === "major"
+        ? ([
+            [6, [0, 4, 7, 9]],
+            [7, [0, 4, 7, 11]],
+          ] as const)
+        : ([
+            [6, [0, 3, 7, 9]],
+            [7, [0, 3, 7, 10]],
+          ] as const);
+    for (const [extension, extensionIntervals] of qualityExtensionIntervals) {
+      if (features.durationByPitchClass[(root + extensionIntervals.at(-1)!) % 12]! <= 0) continue;
+      const extensionPitchClasses = pitchClass(root, extensionIntervals);
+      const extensionSupport = extensionPitchClasses.reduce((sum, pc) => sum + features.durationByPitchClass[pc]!, 0);
+      const conflict = features.durationByPitchClass.reduce(
+        (sum, duration, pc) => sum + (extensionPitchClasses.includes(pc) ? 0 : duration),
+        0,
+      );
+      const bassConflict =
+        features.bassPitchClass !== undefined && !extensionPitchClasses.includes(features.bassPitchClass) ? 24 : 0;
+      const bassRootBonus = features.bassPitchClass === root ? 4 : 0;
+      const bass =
+        features.bassPitchClass !== undefined &&
+        features.bassPitchClass !== root &&
+        extensionPitchClasses.includes(features.bassPitchClass)
+          ? { step: steps[features.bassPitchClass]!, alter: alters[features.bassPitchClass]! }
+          : undefined;
+      const chord = chordSymbolSchema.parse({
+        root: { step: steps[root]!, alter: alters[root]! },
+        kind: third,
+        extension,
+        degrees: [],
+        ...(bass ? { bass } : {}),
+      });
+      const localScore = extensionSupport - conflict * 0.35 - bassConflict + bassRootBonus - 1;
+      candidates.push({ chord, localScore, sequenceScore: localScore, confidence: 0 });
+    }
+    const diminishedSeventhIntervals = [0, 3, 6, 9] as const;
+    if (features.durationByPitchClass[(root + 9) % 12]! > 0) {
+      const diminishedPitchClasses = pitchClass(root, diminishedSeventhIntervals);
+      const support = diminishedPitchClasses.reduce((sum, pc) => sum + features.durationByPitchClass[pc]!, 0);
+      const conflict = features.durationByPitchClass.reduce(
+        (sum, duration, pc) => sum + (diminishedPitchClasses.includes(pc) ? 0 : duration),
+        0,
+      );
+      const bassConflict =
+        features.bassPitchClass !== undefined && !diminishedPitchClasses.includes(features.bassPitchClass) ? 24 : 0;
+      const bassRootBonus = features.bassPitchClass === root ? 4 : 0;
+      const chord = chordSymbolSchema.parse({
+        root: { step: steps[root]!, alter: alters[root]! },
+        kind: "diminished",
+        extension: 7,
+        degrees: [],
+      });
+      const localScore = support - conflict * 0.35 - bassConflict + bassRootBonus - 8;
       candidates.push({ chord, localScore, sequenceScore: localScore, confidence: 0 });
     }
     const seventh = features.durationByPitchClass[(root + 10) % 12]!;
@@ -83,10 +150,16 @@ export function generateHarmonyCandidates(
           extension,
           degrees: alterations,
         });
+        const bassConflict =
+          features.bassPitchClass !== undefined &&
+          !pitchClass(root, extensionIntervals).includes(features.bassPitchClass)
+            ? 24
+            : 0;
+        const bassRootBonus = features.bassPitchClass === root ? 4 : 0;
         candidates.push({
           chord,
-          localScore: extensionSupport - (extension - 7) * 2,
-          sequenceScore: extensionSupport - (extension - 7) * 2,
+          localScore: extensionSupport - (extension - 7) * 2 - bassConflict + bassRootBonus,
+          sequenceScore: extensionSupport - (extension - 7) * 2 - bassConflict + bassRootBonus,
           confidence: 0,
         });
       }

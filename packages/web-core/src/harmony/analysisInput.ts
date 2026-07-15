@@ -7,6 +7,7 @@ const harmonyNoteSchema = z
     moment: scoreWrittenMomentSchema,
     durationTicks: z.number().int().positive(),
     soundingPitchClass: z.number().int().min(0).max(11).optional(),
+    soundingMidi: z.number().int().min(0).max(127).optional(),
     spelling: spelledPitchSchema.optional(),
     velocity: z.number().min(0).max(1).optional(),
     voice: z.number().int().positive(),

@@ -10,6 +10,7 @@ type FeatureNote = {
   moment: { measureIndex: number; offsetTicks: number };
   durationTicks: number;
   soundingPitchClass?: number;
+  soundingMidi?: number;
   voice: number;
 };
 
@@ -62,7 +63,15 @@ export function buildHarmonyFeatureCache(input: {
         );
         if (note.moment.offsetTicks >= range.start.offsetTicks && note.moment.offsetTicks < range.end.offsetTicks)
           onsetCountByPitchClass[pitchClass] = Math.min(onsetCountByPitchClass[pitchClass]! + 1, 8);
-        if (!bass || note.soundingPitchClass! < bass.soundingPitchClass!) bass = note;
+        if (
+          !bass ||
+          (note.soundingMidi !== undefined &&
+            (bass.soundingMidi === undefined || note.soundingMidi < bass.soundingMidi)) ||
+          (note.soundingMidi === undefined &&
+            bass.soundingMidi === undefined &&
+            note.soundingPitchClass! < bass.soundingPitchClass!)
+        )
+          bass = note;
       }
       return {
         durationByPitchClass,

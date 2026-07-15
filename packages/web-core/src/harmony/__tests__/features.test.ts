@@ -16,4 +16,30 @@ describe("harmony feature cache", () => {
         .durationByPitchClass,
     ).toEqual([960, 0, 0, 0, 480, 0, 0, 0, 0, 0, 0, 0]);
   });
+
+  it("uses sounding MIDI to identify the actual bass in an inversion", () => {
+    const cache = buildHarmonyFeatureCache({
+      ticksPerQuarter: 960,
+      notes: [
+        {
+          moment: { measureIndex: 0, offsetTicks: 0 },
+          durationTicks: 960,
+          soundingPitchClass: 0,
+          soundingMidi: 60,
+          voice: 1,
+        },
+        {
+          moment: { measureIndex: 0, offsetTicks: 0 },
+          durationTicks: 960,
+          soundingPitchClass: 4,
+          soundingMidi: 52,
+          voice: 1,
+        },
+      ],
+    });
+    expect(
+      cache.forRange({ start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 960 } })
+        .bassPitchClass,
+    ).toBe(4);
+  });
 });

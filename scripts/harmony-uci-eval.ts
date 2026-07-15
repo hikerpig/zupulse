@@ -39,11 +39,12 @@ const events = new TextDecoder()
     if (pitchClasses.length === 0) return [];
     const root = pitchNameToPitch(match[1]!);
     const bass = pitchNameToPitch(columns[14]!);
+    const figure = match[3] === undefined ? undefined : Number(match[3]);
     const expected: ChordSymbolInput = {
       root: { step: root.step, alter: root.alter },
       kind: match[2] === "M" ? "major" : match[2] === "m" ? "minor" : "diminished",
-      degrees: [],
-      ...(match[3] === "7" ? { extension: 7 } : {}),
+      degrees: figure === 4 ? [{ operation: "add", value: 4, alter: 0 }] : [],
+      ...(figure === 6 || figure === 7 ? { extension: figure } : {}),
       ...(bass.pitchClass !== root.pitchClass ? { bass: { step: bass.step, alter: bass.alter } } : {}),
     };
     return [{ id: `${columns[0]}:${columns[1]}`, expected: chordSymbolSchema.parse(expected), pitchClasses }];
@@ -74,6 +75,7 @@ const results = [...groups.values()].flatMap((group) => {
                 moment: { measureIndex, offsetTicks: 0 },
                 durationTicks: 480,
                 soundingPitchClass: pitchClass,
+                soundingMidi: pitchClass === chordBassPitchClass(event.expected) ? 36 : 60 + pitchClass,
                 voice: noteIndex + 1,
               })),
             ),
@@ -117,7 +119,7 @@ const report = {
     top8OracleRecall: ratio(results.filter((result) => result.top8).length, results.length),
     resolvedPrecision: ratio(results.filter((result) => result.correct).length, resolved.length),
     resolvedCoverage: ratio(resolved.length, results.length),
-    confidence: calibrationError(results),
+    expectedCalibrationError: calibrationError(results),
     facets: {
       root: ratio(resolved.filter((result) => result.facets.root).length, resolved.length),
       bass: ratio(resolved.filter((result) => result.facets.bass).length, resolved.length),
@@ -145,4 +147,10 @@ function pitchNameToPitch(name: string): { step: PitchStep; alter: number; pitch
   const step = name.slice(0, 1) as PitchStep;
   const alter = name.endsWith("#") ? 1 : name.endsWith("b") ? -1 : 0;
   return { step, alter, pitchClass: (pitchClassByStep[step] + alter + 12) % 12 };
+}
+
+function chordBassPitchClass(chord: ChordSymbolInput): number {
+  const pitchClassByStep = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 } as const;
+  const pitch = chord.bass ?? chord.root;
+  return (pitchClassByStep[pitch.step] + pitch.alter + 12) % 12;
 }

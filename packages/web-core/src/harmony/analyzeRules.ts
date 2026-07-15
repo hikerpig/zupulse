@@ -19,6 +19,7 @@ export function analyzeHarmonyRules(
           durationTicks: note.durationTicks,
           voice: note.voice,
           ...(note.soundingPitchClass === undefined ? {} : { soundingPitchClass: note.soundingPitchClass }),
+          ...(note.soundingMidi === undefined ? {} : { soundingMidi: note.soundingMidi }),
         })),
       ),
     );

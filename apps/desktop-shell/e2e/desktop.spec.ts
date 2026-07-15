@@ -143,6 +143,7 @@ test("opens a saved MusicXML Studio document", async () => {
     await window.getByRole("link", { name: "和弦分析" }).click();
     await expect(window.getByRole("heading", { name: "和弦分析工作室" })).toBeVisible();
     await expect(window.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
+    await expect(window.getByRole("heading", { name: "和弦候选" })).toBeVisible();
   } finally {
     await app.close();
     await rm(userData, { recursive: true, force: true });

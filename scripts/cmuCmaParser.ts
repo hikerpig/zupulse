@@ -33,7 +33,6 @@ export function parseCmuChordLabel(label: string): ChordSymbolInput | null {
   if (suffix.startsWith("m7b5")) {
     kind = "half-diminished";
     extension = 7;
-    degrees.push({ operation: "alter", value: 5, alter: -1 });
     suffix = suffix.slice(4);
   } else if (suffix.startsWith("dim")) {
     kind = "diminished";

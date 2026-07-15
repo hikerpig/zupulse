@@ -13,7 +13,7 @@ describe("CMU CMA parser", () => {
       root: { step: "F", alter: 1 },
       kind: "half-diminished",
       extension: 7,
-      degrees: [{ operation: "alter", value: 5, alter: -1 }],
+      degrees: [],
       bass: { step: "C", alter: 1 },
     });
     expect(parseCmuChordLabel("N")).toBeNull();

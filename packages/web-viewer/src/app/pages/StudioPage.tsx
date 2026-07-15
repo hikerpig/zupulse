@@ -144,12 +144,14 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                 onClick={() =>
                   dispatchPreview({
                     type: "loop",
-                    range: firstSegment
+                    ...(firstSegment
                       ? {
-                          startTicks: firstSegment.range.start.offsetTicks,
-                          endTicks: firstSegment.range.end.offsetTicks,
+                          range: {
+                            startTicks: firstSegment.range.start.offsetTicks,
+                            endTicks: firstSegment.range.end.offsetTicks,
+                          },
                         }
-                      : undefined,
+                      : {}),
                   })
                 }
               >

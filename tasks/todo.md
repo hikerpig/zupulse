@@ -469,9 +469,9 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] 未保存或 CAS conflict 时不开始导出。
-- [ ] 扩展名/容器保持，取消无副作用。
-- [ ] 导出不替换、重新导入或修改当前 Library Score。
+- [x] 未保存或 CAS conflict 时不开始导出。
+- [x] 扩展名/容器保持，取消无副作用。
+- [x] 导出不替换、重新导入或修改当前 Library Score。
 
 **Verification:** `pnpm vitest run packages/web-viewer/src/features/harmony-studio apps/web-demo/src/library apps/desktop-shell/src && pnpm demo:build && pnpm desktop:build`
 
@@ -480,6 +480,8 @@ feature: harmony-analysis-studio
 **Files likely touched:** `HarmonyStudio.tsx`、`harmonyStudioSession.ts`、Browser/Desktop ScoreFileGateway、相关测试。
 
 **Estimated scope:** Medium: 5 files
+
+**Evidence:** Studio export command 测试覆盖已保存副本导出、原始字节不变与 CAS conflict 拒绝，于 2026-07-15 通过。
 
 ### Checkpoint P5
 

@@ -2,6 +2,7 @@
 
 export * from "./host";
 export * from "./harmonyStudioSession";
+export * from "./harmonyStudioExport";
 export * from "./importJob";
 export * from "./importPresenter";
 export * from "./viewerApp";

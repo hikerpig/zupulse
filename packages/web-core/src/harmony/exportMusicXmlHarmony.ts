@@ -14,6 +14,13 @@ export function exportAnnotatedMusicXml(
   );
 }
 
+export function applyMusicXmlHarmonyPlan(
+  bytes: Uint8Array,
+  insertions: readonly MusicXmlHarmonyInsertion[],
+): Uint8Array {
+  return insertMusicXmlHarmony(bytes, insertions);
+}
+
 export function planAnnotatedMusicXmlExport(
   entries: readonly EffectiveHarmonyEntry[],
   target: { partId: string },

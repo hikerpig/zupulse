@@ -34,6 +34,7 @@ export type ViewerApplicationSnapshot = {
   studio?: {
     libraryScoreId: string;
     status: "loading" | "ready" | "unsaved" | "saving" | "error" | "conflict";
+    availableTrackIds?: readonly string[];
     document?: HarmonyAnalysisDocument;
     error?: string;
   };
@@ -48,6 +49,7 @@ export class ViewerApplication implements ViewerAppHandle {
   private studioIntent = 0;
   private studioOpening: { id: string; promise: Promise<void> } | undefined;
   private readonly studioSessions = new Map<string, HarmonyStudioSession>();
+  private readonly studioAvailableTrackIds = new Map<string, string[]>();
   private destroying = false;
   private snapshot: ViewerApplicationSnapshot = {};
   private readonly listeners = new Set<() => void>();
@@ -182,6 +184,54 @@ export class ViewerApplication implements ViewerAppHandle {
     await session.flush();
   }
 
+  async mergeStudioCorrections(id: string, range: HarmonyCorrection["range"]): Promise<void> {
+    const session = this.studioSessions.get(id);
+    const document = session?.getState().document;
+    if (!session || !document) return;
+    const ordered = [...document.corrections].sort((left, right) =>
+      compareMoments(left.range.start, right.range.start),
+    );
+    const pairIndex = ordered.findIndex((left, index) => {
+      const right = ordered[index + 1];
+      return (
+        right !== undefined &&
+        compareMoments(left.range.start, range.start) <= 0 &&
+        compareMoments(range.end, right.range.end) <= 0 &&
+        compareMoments(left.range.end, right.range.start) === 0
+      );
+    });
+    const left = pairIndex < 0 ? undefined : ordered[pairIndex];
+    const right = pairIndex < 0 ? undefined : ordered[pairIndex + 1];
+    if (!left || !right) return;
+    session.setCorrections(
+      applyCorrectionCommand(document.corrections, { type: "merge", leftId: left.id, rightId: right.id }),
+    );
+    await session.flush();
+  }
+
+  async moveStudioCorrection(id: string, range: HarmonyCorrection["range"], deltaTicks: number): Promise<void> {
+    if (!Number.isInteger(deltaTicks) || deltaTicks === 0) return;
+    const session = this.studioSessions.get(id);
+    const document = session?.getState().document;
+    if (!session || !document || range.start.measureIndex !== range.end.measureIndex) return;
+    const correction = document.corrections.find(
+      (item) => compareMoments(item.range.start, range.start) <= 0 && compareMoments(range.end, item.range.end) <= 0,
+    );
+    if (!correction || correction.range.start.measureIndex !== correction.range.end.measureIndex) return;
+    const start = correction.range.start.offsetTicks + deltaTicks;
+    const end = correction.range.end.offsetTicks + deltaTicks;
+    if (start < 0 || end <= start) return;
+    session.setCorrections(
+      applyCorrectionCommand(document.corrections, {
+        type: "move",
+        id: correction.id,
+        start: { measureIndex: correction.range.start.measureIndex, offsetTicks: start },
+        end: { measureIndex: correction.range.end.measureIndex, offsetTicks: end },
+      }),
+    );
+    await session.flush();
+  }
+
   async setStudioScope(id: string, includedTrackIds: readonly string[]): Promise<void> {
     if (includedTrackIds.length === 0) throw new Error("STUDIO_SCOPE_EMPTY");
     const session = this.studioSessions.get(id);
@@ -197,6 +247,14 @@ export class ViewerApplication implements ViewerAppHandle {
     if (!library || !repository) return this.setStudio(id, { status: "error", error: "和声分析存储不可用" });
     this.setStudio(id, { status: "loading" });
     try {
+      const score = await library.repository.get(id as LibraryScore["id"]);
+      if (score?.format === "musicxml") {
+        const source = await library.repository.readScore(id as LibraryScore["id"]);
+        this.studioAvailableTrackIds.set(
+          id,
+          listMusicXmlPartIds(source.bytes).map((_, index) => `track-${index + 1}`),
+        );
+      }
       const session = this.getStudioSession(id, repository);
       const state = await session.load(() => this.createStudioDocument(id));
       if (intent === this.studioIntent) this.setStudioState(id, state);
@@ -378,6 +436,7 @@ export class ViewerApplication implements ViewerAppHandle {
     if (!this.library) return;
     this.studioSessions.get(id)?.dispose();
     this.studioSessions.delete(id);
+    this.studioAvailableTrackIds.delete(id);
     await this.library.repository.delete(id);
     if (this.snapshot.studio?.libraryScoreId === id) {
       const { studio: _studio, ...snapshot } = this.snapshot;
@@ -457,6 +516,9 @@ export class ViewerApplication implements ViewerAppHandle {
   private setStudioState(libraryScoreId: string, state: HarmonyStudioSessionState): void {
     this.setStudio(libraryScoreId, {
       status: state.status === "analyzing" ? "loading" : state.status,
+      ...(this.studioAvailableTrackIds.has(libraryScoreId)
+        ? { availableTrackIds: this.studioAvailableTrackIds.get(libraryScoreId)! }
+        : {}),
       ...(state.document === null ? {} : { document: state.document }),
       ...(state.error === undefined ? {} : { error: state.error }),
     });

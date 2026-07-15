@@ -268,9 +268,23 @@ describe("ViewerApplication", () => {
       end: { measureIndex: 0, offsetTicks: 4 },
     });
     expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(2);
-    await application.resetStudioCorrection(scoreId, {
+    await application.mergeStudioCorrections(scoreId, {
       start: { measureIndex: 0, offsetTicks: 0 },
       end: { measureIndex: 0, offsetTicks: 4 },
+    });
+    expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(1);
+    await application.moveStudioCorrection(
+      scoreId,
+      { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 4 } },
+      1,
+    );
+    expect(application.getSnapshot().studio?.document?.corrections[0]?.range).toEqual({
+      start: { measureIndex: 0, offsetTicks: 1 },
+      end: { measureIndex: 0, offsetTicks: 5 },
+    });
+    await application.resetStudioCorrection(scoreId, {
+      start: { measureIndex: 0, offsetTicks: 1 },
+      end: { measureIndex: 0, offsetTicks: 5 },
     });
     await application.setStudioCorrection(
       scoreId,

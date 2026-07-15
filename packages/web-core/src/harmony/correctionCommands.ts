@@ -6,6 +6,7 @@ import { compareMoments } from "./schemas";
 export type HarmonyCorrectionCommand =
   | { type: "split"; id: string; at: ScoreWrittenMoment }
   | { type: "reset"; range: ScoreWrittenRange }
+  | { type: "merge"; leftId: string; rightId: string }
   | { type: "move"; id: string; start: ScoreWrittenMoment; end: ScoreWrittenMoment };
 
 export function applyCorrectionCommand(
@@ -13,6 +14,7 @@ export function applyCorrectionCommand(
   command: HarmonyCorrectionCommand,
 ): HarmonyCorrection[] {
   if (command.type === "reset") return normalizeCorrections(corrections, command.range);
+  if (command.type === "merge") return mergeCorrections(corrections, command.leftId, command.rightId);
   const current = corrections.find((item) => item.id === command.id);
   if (!current) return [...corrections];
   if (
@@ -32,4 +34,20 @@ export function applyCorrectionCommand(
       { ...current, range: { start: command.start, end: command.end } },
     );
   return [...corrections];
+}
+
+function mergeCorrections(
+  corrections: readonly HarmonyCorrection[],
+  leftId: string,
+  rightId: string,
+): HarmonyCorrection[] {
+  const left = corrections.find((item) => item.id === leftId);
+  const right = corrections.find((item) => item.id === rightId);
+  if (!left || !right || left.id === right.id) return [...corrections];
+  if (compareMoments(left.range.end, right.range.start) !== 0) return [...corrections];
+  if (JSON.stringify(left.value) !== JSON.stringify(right.value)) return [...corrections];
+  return insertCorrection(
+    corrections.filter((item) => item.id !== leftId && item.id !== rightId),
+    { ...left, range: { start: left.range.start, end: right.range.end } },
+  );
 }

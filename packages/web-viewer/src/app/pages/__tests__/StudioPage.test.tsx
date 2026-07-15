@@ -105,6 +105,7 @@ describe("StudioPage", () => {
       studio: {
         libraryScoreId: "score-1",
         status: "ready",
+        availableTrackIds: ["track-1", "track-2"],
         document: {
           activeRevision: {
             parameters: { scope: { includedTrackIds: ["track-1"] } },
@@ -149,6 +150,7 @@ describe("StudioPage", () => {
       </MemoryRouter>,
     );
     const user = userEvent.setup();
+    expect(within(view.container).getByRole("option", { name: "track-2" })).toBeTruthy();
     const segments = within(view.container).getByRole("list", { name: "分析片段" });
     await user.click(within(segments).getByRole("button", { name: "片段 2" }));
     expect(within(segments).getByRole("button", { name: "片段 2" }).getAttribute("aria-pressed")).toBe("true");

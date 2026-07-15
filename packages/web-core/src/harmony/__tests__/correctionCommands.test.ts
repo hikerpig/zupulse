@@ -18,4 +18,36 @@ describe("correction commands", () => {
       }),
     ).toHaveLength(2);
   });
+
+  it("merges adjacent corrections only when their values match", () => {
+    const right = {
+      ...base,
+      id: "d",
+      range: { start: { measureIndex: 0, offsetTicks: 4 }, end: { measureIndex: 0, offsetTicks: 8 } },
+    };
+    const merged = applyCorrectionCommand([base, right], { type: "merge", leftId: "c", rightId: "d" });
+    expect(merged).toHaveLength(1);
+    expect(merged[0]?.range).toEqual({
+      start: { measureIndex: 0, offsetTicks: 0 },
+      end: { measureIndex: 0, offsetTicks: 8 },
+    });
+    const different = applyCorrectionCommand(
+      [
+        base,
+        { ...right, value: { type: "chord", chord: { root: { step: "C", alter: 0 }, kind: "major", degrees: [] } } },
+      ],
+      { type: "merge", leftId: "c", rightId: "d" },
+    );
+    expect(different).toHaveLength(2);
+  });
+
+  it("moves a correction while preserving its value and id", () => {
+    const moved = applyCorrectionCommand([base], {
+      type: "move",
+      id: "c",
+      start: { measureIndex: 0, offsetTicks: 1 },
+      end: { measureIndex: 0, offsetTicks: 5 },
+    });
+    expect(moved[0]).toMatchObject({ id: "c", range: { start: { offsetTicks: 1 }, end: { offsetTicks: 5 } } });
+  });
 });

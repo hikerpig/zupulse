@@ -12,6 +12,8 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   const storageAvailable = application.hasHarmonyAnalysisStorage();
   const studio = snapshot.studio?.libraryScoreId === libraryScoreId ? snapshot.studio : undefined;
   const studioDocument = studio?.document;
+  const includedTrackIds = studioDocument?.activeRevision.parameters.scope.includedTrackIds ?? [];
+  const availableTrackIds = studio?.availableTrackIds ?? includedTrackIds;
   const [selectedSegmentIndex, setSelectedSegmentIndex] = useState(0);
   const selectedSegment = studioDocument?.activeRevision.segments[selectedSegmentIndex];
   const [exportStatus, setExportStatus] = useState<string>();
@@ -77,7 +79,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                   )
                 }
               >
-                {studioDocument.activeRevision.parameters.scope.includedTrackIds.map((trackId) => (
+                {availableTrackIds.map((trackId) => (
                   <option key={trackId} value={trackId}>
                     {trackId}
                   </option>
@@ -96,7 +98,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                   })
                 }
               >
-                {studioDocument.activeRevision.parameters.scope.includedTrackIds.map((trackId) => (
+                {includedTrackIds.map((trackId) => (
                   <option key={trackId} value={trackId}>
                     {trackId}
                   </option>
@@ -217,6 +219,24 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                   onClick={() => void application.splitStudioCorrection(libraryScoreId!, selectedSegment.range)}
                 >
                   拆分选中修正
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void application.mergeStudioCorrections(libraryScoreId!, selectedSegment.range)}
+                >
+                  合并相邻修正
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void application.moveStudioCorrection(libraryScoreId!, selectedSegment.range, -1)}
+                >
+                  修正左移
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void application.moveStudioCorrection(libraryScoreId!, selectedSegment.range, 1)}
+                >
+                  修正右移
                 </button>
               </>
             ) : null}

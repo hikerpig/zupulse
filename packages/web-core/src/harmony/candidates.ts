@@ -138,18 +138,20 @@ export function generateHarmonyCandidates(
       confidence:
         all.length === 1
           ? 1
-          : Math.max(
-              0,
-              Math.min(
-                1,
-                0.5 + (candidate.localScore - (all[index + 1]?.localScore ?? candidate.localScore - 1)) / 100,
-              ),
+          : clampConfidence(
+              index === 0
+                ? 0.5 + (candidate.localScore - all[1]!.localScore) / maximumDuration / 4
+                : 0.5 - (all[0]!.localScore - candidate.localScore) / maximumDuration / 4,
             ),
     }));
 }
 
 function pitch(pitchClass: number) {
   return { step: steps[pitchClass]!, alter: alters[pitchClass]! };
+}
+
+function clampConfidence(value: number): number {
+  return Math.max(0, Math.min(1, value));
 }
 
 function templatesForRoot(root: number, features: HarmonyFeatureVector): readonly Template[] {

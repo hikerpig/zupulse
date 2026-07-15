@@ -255,6 +255,31 @@ describe("ViewerApplication", () => {
     expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(1);
     expect(application.getSnapshot().studio?.document?.annotationTarget).toEqual({ trackId: "track-1", staffIndex: 1 });
     expect(adapter.parse).toHaveBeenCalledTimes(2);
+    await application.setStudioCorrection(
+      scoreId,
+      { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 4 } },
+      {
+        type: "chord",
+        chord: { root: { step: "C", alter: 0 }, kind: "major", degrees: [] },
+      },
+    );
+    await application.splitStudioCorrection(scoreId, {
+      start: { measureIndex: 0, offsetTicks: 0 },
+      end: { measureIndex: 0, offsetTicks: 4 },
+    });
+    expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(2);
+    await application.resetStudioCorrection(scoreId, {
+      start: { measureIndex: 0, offsetTicks: 0 },
+      end: { measureIndex: 0, offsetTicks: 4 },
+    });
+    await application.setStudioCorrection(
+      scoreId,
+      { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 1 } },
+      {
+        type: "chord",
+        chord: { root: { step: "C", alter: 0 }, kind: "major", degrees: [] },
+      },
+    );
     await expect(application.exportStudio(scoreId)).resolves.toBe("saved");
     expect(exported?.fileName).toBe("score-chords.musicxml");
     expect(new TextDecoder().decode(exported?.bytes)).toContain("<root-step>C</root-step>");

@@ -212,6 +212,12 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                 >
                   重置选中片段
                 </button>
+                <button
+                  type="button"
+                  onClick={() => void application.splitStudioCorrection(libraryScoreId!, selectedSegment.range)}
+                >
+                  拆分选中修正
+                </button>
               </>
             ) : null}
           </>

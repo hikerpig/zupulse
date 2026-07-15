@@ -6,6 +6,7 @@ import {
   importLibraryScores,
   listMusicXmlPartIds,
   projectAlphaTabHarmonyInput,
+  compareMoments,
 } from "@zupulse/web-core";
 import type {
   AnnotationTarget,
@@ -157,6 +158,24 @@ export class ViewerApplication implements ViewerAppHandle {
     const document = session?.getState().document;
     if (!session || !document) return;
     session.setCorrections(applyCorrectionCommand(document.corrections, { type: "reset", range }));
+    await session.flush();
+  }
+
+  async splitStudioCorrection(id: string, range: HarmonyCorrection["range"]): Promise<void> {
+    const session = this.studioSessions.get(id);
+    const document = session?.getState().document;
+    if (!session || !document || range.start.measureIndex !== range.end.measureIndex) return;
+    const correction = document.corrections.find(
+      (item) => compareMoments(item.range.start, range.start) <= 0 && compareMoments(range.end, item.range.end) <= 0,
+    );
+    if (!correction) return;
+    const distance = range.end.offsetTicks - range.start.offsetTicks;
+    if (distance < 2) return;
+    const at = {
+      measureIndex: range.start.measureIndex,
+      offsetTicks: range.start.offsetTicks + Math.floor(distance / 2),
+    };
+    session.setCorrections(applyCorrectionCommand(document.corrections, { type: "split", id: correction.id, at }));
     await session.flush();
   }
 

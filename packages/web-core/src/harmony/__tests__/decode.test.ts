@@ -14,6 +14,7 @@ describe("harmony sequence decoder", () => {
           : [{ chord: chord("G"), localScore: 8, sequenceScore: 8, confidence: 0 }],
       transition: (from, to) => (from.root.step === to.root.step ? 0 : 5),
       maxSegments: 8,
+      maxSpan: 1,
     });
     expect(result.map((segment) => segment.chord.root.step)).toEqual(["C", "G"]);
   });

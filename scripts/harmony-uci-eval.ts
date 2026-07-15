@@ -4,6 +4,7 @@ import { unzipSync } from "fflate";
 import {
   analyzeHarmonyRules,
   chordSymbolSchema,
+  compareMoments,
   createHarmonyAnalysisInput,
   type ChordSymbolInput,
 } from "../packages/web-core/src/index";
@@ -24,7 +25,8 @@ if (!data) throw new Error("UCI data file missing");
 
 const pitchClassByStep = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 } as const;
 type PitchStep = keyof typeof pitchClassByStep;
-const cases = new TextDecoder()
+type UciEvent = { id: string; expected: ReturnType<typeof chordSymbolSchema.parse>; pitchClasses: number[] };
+const events = new TextDecoder()
   .decode(data)
   .trim()
   .split(/\r?\n/)
@@ -44,46 +46,69 @@ const cases = new TextDecoder()
       ...(match[3] === "7" ? { extension: 7 } : {}),
       ...(bass.pitchClass !== root.pitchClass ? { bass: { step: bass.step, alter: bass.alter } } : {}),
     };
-    return [
-      {
-        expected: chordSymbolSchema.parse(expected),
-        input: createHarmonyAnalysisInput({
-          ticksPerQuarter: 480,
-          measures: [{ index: 0, durationTicks: 480, timeSignature: { numerator: 4, denominator: 4 } }],
-          tracks: [
-            {
-              id: "bach",
-              name: "Bach Choral Harmony",
-              isPercussion: false,
-              staves: [
-                {
-                  index: 0,
-                  notes: pitchClasses.map((pitchClass, index) => ({
-                    id: `${columns[0]}:${columns[1]}:${index}`,
-                    moment: { measureIndex: 0, offsetTicks: 0 },
-                    durationTicks: 480,
-                    soundingPitchClass: pitchClass,
-                    voice: index + 1,
-                  })),
-                },
-              ],
-            },
-          ],
-        }),
-      },
-    ];
+    return [{ id: `${columns[0]}:${columns[1]}`, expected: chordSymbolSchema.parse(expected), pitchClasses }];
   });
 
-const results = cases.map(({ expected, input }) => {
-  const segment = analyzeHarmonyRules(input, { includedTrackIds: ["bach"], topK: 8, decisionThreshold: 0 })[0];
-  const alternatives = segment?.alternatives ?? [];
-  return {
-    expected,
-    resolved: segment?.status === "resolved",
-    correct: segment?.status === "resolved" && JSON.stringify(segment.chord) === JSON.stringify(expected),
-    top8: alternatives.some((candidate) => JSON.stringify(candidate.chord) === JSON.stringify(expected)),
-    confidence: segment?.status === "resolved" ? segment.confidence : 0,
-  };
+const groups = new Map<string, UciEvent[]>();
+for (const event of events)
+  groups.set(event.id.split(":")[0]!, [...(groups.get(event.id.split(":")[0]!) ?? []), event]);
+const results = [...groups.values()].flatMap((group) => {
+  const input = createHarmonyAnalysisInput({
+    ticksPerQuarter: 480,
+    measures: group.map((_, index) => ({
+      index,
+      durationTicks: 480,
+      timeSignature: { numerator: 4, denominator: 4 },
+    })),
+    tracks: [
+      {
+        id: "bach",
+        name: "Bach Choral Harmony",
+        isPercussion: false,
+        staves: [
+          {
+            index: 0,
+            notes: group.flatMap((event, measureIndex) =>
+              event.pitchClasses.map((pitchClass, noteIndex) => ({
+                id: `${event.id}:${noteIndex}`,
+                moment: { measureIndex, offsetTicks: 0 },
+                durationTicks: 480,
+                soundingPitchClass: pitchClass,
+                voice: noteIndex + 1,
+              })),
+            ),
+          },
+        ],
+      },
+    ],
+  });
+  const segments = analyzeHarmonyRules(input, { includedTrackIds: ["bach"], topK: 8, decisionThreshold: 0 });
+  return group.map((event, measureIndex) => {
+    const start = { measureIndex, offsetTicks: 0 };
+    const segment = segments.find(
+      (candidate) =>
+        compareMoments(candidate.range.start, start) <= 0 && compareMoments(start, candidate.range.end) < 0,
+    );
+    const alternatives = segment?.alternatives ?? [];
+    return {
+      expected: event.expected,
+      resolved: segment?.status === "resolved",
+      correct: segment?.status === "resolved" && JSON.stringify(segment.chord) === JSON.stringify(event.expected),
+      top8: alternatives.some((candidate) => JSON.stringify(candidate.chord) === JSON.stringify(event.expected)),
+      confidence: segment?.status === "resolved" ? segment.confidence : 0,
+      facets: {
+        root:
+          segment?.status === "resolved" && JSON.stringify(segment.chord.root) === JSON.stringify(event.expected.root),
+        bass:
+          segment?.status === "resolved" && JSON.stringify(segment.chord.bass) === JSON.stringify(event.expected.bass),
+        kind: segment?.status === "resolved" && segment.chord.kind === event.expected.kind,
+        extension: segment?.status === "resolved" && segment.chord.extension === event.expected.extension,
+        alterations:
+          segment?.status === "resolved" &&
+          JSON.stringify(segment.chord.degrees) === JSON.stringify(event.expected.degrees),
+      },
+    };
+  });
 });
 const resolved = results.filter((result) => result.resolved);
 const report = {
@@ -93,6 +118,13 @@ const report = {
     resolvedPrecision: ratio(results.filter((result) => result.correct).length, resolved.length),
     resolvedCoverage: ratio(resolved.length, results.length),
     confidence: calibrationError(results),
+    facets: {
+      root: ratio(resolved.filter((result) => result.facets.root).length, resolved.length),
+      bass: ratio(resolved.filter((result) => result.facets.bass).length, resolved.length),
+      kind: ratio(resolved.filter((result) => result.facets.kind).length, resolved.length),
+      extension: ratio(resolved.filter((result) => result.facets.extension).length, resolved.length),
+      alterations: ratio(resolved.filter((result) => result.facets.alterations).length, resolved.length),
+    },
   },
   citation: manifest.citation,
 };

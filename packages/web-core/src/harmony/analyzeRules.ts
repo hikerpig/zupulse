@@ -35,6 +35,7 @@ export function analyzeHarmonyRules(
       }),
     beamWidth: 16,
     maxSegments: Math.max(64, input.measures.length),
+    maxSpan: 16,
   });
   const segments: HarmonySegment[] = decoded.map((selected) => ({
     status: "resolved",

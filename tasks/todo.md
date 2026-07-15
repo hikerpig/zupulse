@@ -505,7 +505,7 @@ feature: harmony-analysis-studio
 
 **Verification:** harmony eval/benchmark 根脚本 + `pnpm verify`
 
-**Evidence:** `pnpm harmony:eval:uci /tmp/bach-choral-harmony.zip` 可复现 UCI Bach Choral Harmony（5,665 事件，CC BY 4.0）评估；当前 Top-8 oracle recall 20.88%、resolved precision 15.78%、coverage 100%、ECE 56.75%，因此独立评估阈值仍未达到，不能勾选该验收项。
+**Evidence:** `pnpm harmony:eval:uci /tmp/bach-choral-harmony.zip` 可复现 UCI Bach Choral Harmony（5,665 事件，CC BY 4.0）评估；按每个 chorale 分组并使用有界序列解码后的结果为 Top-8 oracle recall 20.19%、resolved precision 15.30%、coverage 100%、confidence calibration error 57.25%，因此独立评估阈值仍未达到，不能勾选该验收项。报告同时输出 root/bass/kind/extension/alterations 分项准确率。
 
 **Dependencies:** Tasks 10, 23
 

@@ -1,0 +1,54 @@
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { TextDecoder, TextEncoder } from "node:util";
+import { describe, expect, it } from "vitest";
+import { insertMusicXmlHarmony } from "../musicXmlRoundTrip";
+import { createMusicXmlAdapter } from "../../musicxml/musicXmlAdapter";
+
+const decode = (bytes: Uint8Array) => new TextDecoder().decode(bytes);
+const encode = (source: string) => new TextEncoder().encode(source);
+const harmony = "<harmony><root><root-step>C</root-step></root><kind>major</kind></harmony>";
+
+describe("insertMusicXmlHarmony", () => {
+  it("inserts harmony into the requested partwise measure without rewriting unknown source content", () => {
+    const source = `<?xml version="1.0"?><score-partwise version="4.0" data-vendor="keep"><part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list><part id="P1"><measure number="1"><attributes><divisions>1</divisions></attributes><!-- retain --><direction placement="above"><direction-type><words>dolce</words></direction-type></direction><note color="#123456"><pitch><step>C</step><octave>4</octave></pitch><duration>1</duration></note></measure></part></score-partwise>`;
+
+    const result = decode(
+      insertMusicXmlHarmony(encode(source), [{ partId: "P1", measureIndex: 0, harmonyXml: harmony }]),
+    );
+
+    expect(result).toContain(`<attributes><divisions>1</divisions></attributes>${harmony}<!-- retain -->`);
+    expect(result).toContain(
+      '<direction placement="above"><direction-type><words>dolce</words></direction-type></direction>',
+    );
+    expect(result).toContain('<note color="#123456">');
+  });
+
+  it("inserts harmony into the requested score-timewise part without changing sibling parts", () => {
+    const source = `<?xml version="1.0"?><score-timewise version="4.0"><part-list><score-part id="P1"><part-name>One</part-name></score-part><score-part id="P2"><part-name>Two</part-name></score-part></part-list><measure number="1"><part id="P1"><note><rest/><duration>1</duration></note></part><part id="P2"><note><pitch><step>D</step><octave>4</octave></pitch><duration>1</duration></note></part></measure></score-timewise>`;
+
+    const result = decode(
+      insertMusicXmlHarmony(encode(source), [{ partId: "P2", measureIndex: 0, harmonyXml: harmony }]),
+    );
+
+    expect(result).toContain(`<part id="P2">${harmony}<note><pitch><step>D</step>`);
+    expect(result).toContain('<part id="P1"><note><rest/><duration>1</duration></note></part>');
+  });
+
+  it("rejects a missing part or measure instead of writing at a nearby location", () => {
+    const source = `<score-partwise version="4.0"><part-list/><part id="P1"><measure number="1"/></part></score-partwise>`;
+
+    expect(() =>
+      insertMusicXmlHarmony(encode(source), [{ partId: "P2", measureIndex: 0, harmonyXml: harmony }]),
+    ).toThrow("target-not-found");
+  });
+
+  it.each(["single-voice.musicxml", "timewise.musicxml"])("can reimport annotated %s", async (name) => {
+    const source = new Uint8Array(await readFile(resolve("test-fixtures/musicxml/generated", name)));
+    const annotated = insertMusicXmlHarmony(source, [{ partId: "P1", measureIndex: 0, harmonyXml: harmony }]);
+
+    const output = await createMusicXmlAdapter().parse({ fileName: name, bytes: annotated });
+
+    expect(output.document.summary.trackCount).toBeGreaterThan(0);
+  });
+});

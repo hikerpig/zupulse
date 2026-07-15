@@ -53,7 +53,7 @@ const events = new TextDecoder()
 const groups = new Map<string, UciEvent[]>();
 for (const event of events)
   groups.set(event.id.split(":")[0]!, [...(groups.get(event.id.split(":")[0]!) ?? []), event]);
-const results = [...groups.values()].flatMap((group) => {
+const results = [...groups.entries()].flatMap(([groupId, group]) => {
   const input = createHarmonyAnalysisInput({
     ticksPerQuarter: 480,
     measures: group.map((_, index) => ({
@@ -93,6 +93,7 @@ const results = [...groups.values()].flatMap((group) => {
     );
     const alternatives = segment?.alternatives ?? [];
     return {
+      groupId,
       expected: event.expected,
       resolved: segment?.status === "resolved",
       correct: segment?.status === "resolved" && JSON.stringify(segment.chord) === JSON.stringify(event.expected),
@@ -112,14 +113,24 @@ const results = [...groups.values()].flatMap((group) => {
     };
   });
 });
-const resolved = results.filter((result) => result.resolved);
+const splitCounts = countSplits(results);
+const evalResults = results.filter((result) => splitFor(result.groupId) === "eval");
+const resolved = evalResults.filter((result) => result.resolved);
+const calibration = createCalibrationModel(results.filter((result) => splitFor(result.groupId) === "train"));
 const report = {
-  corpus: { name: "bach-choral-harmony", source: manifest.source, license: manifest.license, cases: results.length },
+  corpus: {
+    name: "bach-choral-harmony",
+    source: manifest.source,
+    license: manifest.license,
+    cases: evalResults.length,
+    totalCases: results.length,
+    splits: splitCounts,
+  },
   metrics: {
-    top8OracleRecall: ratio(results.filter((result) => result.top8).length, results.length),
-    resolvedPrecision: ratio(results.filter((result) => result.correct).length, resolved.length),
-    resolvedCoverage: ratio(resolved.length, results.length),
-    expectedCalibrationError: calibrationError(results),
+    top8OracleRecall: ratio(evalResults.filter((result) => result.top8).length, evalResults.length),
+    resolvedPrecision: ratio(evalResults.filter((result) => result.correct).length, resolved.length),
+    resolvedCoverage: ratio(resolved.length, evalResults.length),
+    expectedCalibrationError: calibrationError(evalResults, calibration),
     facets: {
       root: ratio(resolved.filter((result) => result.facets.root).length, resolved.length),
       bass: ratio(resolved.filter((result) => result.facets.bass).length, resolved.length),
@@ -136,11 +147,58 @@ function ratio(numerator: number, denominator: number): number {
   return denominator === 0 ? 0 : numerator / denominator;
 }
 
-function calibrationError(results: readonly { confidence: number; correct: boolean }[]): number {
-  return (
-    results.reduce((sum, result) => sum + Math.abs(result.confidence - Number(result.correct)), 0) /
-    (results.length || 1)
+function calibrationError(
+  results: readonly { confidence: number; correct: boolean }[],
+  calibration: (confidence: number) => number,
+): number {
+  const bins = Array.from({ length: 10 }, () => ({ confidence: 0, accuracy: 0, count: 0 }));
+  for (const result of results) {
+    const confidence = calibration(result.confidence);
+    const bin = bins[Math.min(9, Math.floor(confidence * 10))]!;
+    bin.confidence += confidence;
+    bin.accuracy += Number(result.correct);
+    bin.count += 1;
+  }
+  return bins.reduce(
+    (sum, bin) =>
+      sum +
+      (bin.count === 0
+        ? 0
+        : (bin.count / (results.length || 1)) * Math.abs(bin.confidence / bin.count - bin.accuracy / bin.count)),
+    0,
   );
+}
+
+type DatasetSplit = "train" | "tune" | "eval";
+
+function splitFor(groupId: string): DatasetSplit {
+  const bucket = [...groupId].reduce((sum, character) => (sum * 31 + character.charCodeAt(0)) % 5, 0);
+  return bucket === 0 ? "eval" : bucket === 1 ? "tune" : "train";
+}
+
+function countSplits(results: readonly { groupId: string }[]): Record<DatasetSplit, number> {
+  return results.reduce(
+    (counts, result) => {
+      counts[splitFor(result.groupId)] += 1;
+      return counts;
+    },
+    { train: 0, tune: 0, eval: 0 },
+  );
+}
+
+function createCalibrationModel(
+  results: readonly { confidence: number; correct: boolean }[],
+): (confidence: number) => number {
+  const bins = Array.from({ length: 10 }, () => ({ correct: 0, count: 0 }));
+  for (const result of results) {
+    const bin = bins[Math.min(9, Math.floor(result.confidence * 10))]!;
+    bin.correct += Number(result.correct);
+    bin.count += 1;
+  }
+  return (confidence) => {
+    const bin = bins[Math.min(9, Math.floor(confidence * 10))]!;
+    return bin.count === 0 ? confidence : bin.correct / bin.count;
+  };
 }
 
 function pitchNameToPitch(name: string): { step: PitchStep; alter: number; pitchClass: number } {

@@ -24,8 +24,8 @@
 
 - Library Score ID 是 UUID；馆藏去重键是小写 SHA-256 内容哈希。
 - `SheetLibraryRepository` 管理馆藏事实；`ScoreFileGateway` 只管理选择/导出文件。
-- Studio URL 使用 `#/viewer/:libraryScoreId`，不得把临时 Viewer Session ID 放进 URL。
-- 删除必须同时清理托管字节、馆藏记录与练习数据；不得在删除后重建孤儿 sidecar/resume。
+- Viewer URL 使用 `#/viewer/:libraryScoreId`，Studio URL 使用 `#/studio/:libraryScoreId`；两者都不得把临时 Session ID 放进 URL。
+- 删除必须同时清理托管字节、馆藏记录、练习数据与 Harmony Analysis Document；不得在删除后重建孤儿 sidecar/resume/analysis。
 - Browser 与 Desktop 曲谱库相互独立；当前范围不包含云同步、OPFS、分页或额外状态库。
 - Desktop Renderer 不得获得绝对路径；外部文件使用一次性 token，并由 Main 再次校验输入。
 

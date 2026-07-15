@@ -129,13 +129,14 @@ MusicXML 在产品中是用于查看与练习的语义乐谱，不是原制谱�
 
 ### 只读与非目标
 
-- 原始 `.musicxml`、`.xml` 或 `.mxl` 文件始终只读。
+- 原始 `.musicxml`、`.xml` 或 `.mxl` 文件与 Managed Score Copy 始终只读。
 - 循环、速度、批注和轨道显示等练习数据写入 Practice Sidecar，不写回来源文件。
 - 首版不编辑音符、节奏、歌词或排版。
-- 首版不提供“另存为 MusicXML”或修改后导出。
-- 导入流程不承诺未知或不支持的 MusicXML 元素能够 round-trip 保留。
+- 导入流程本身不提供通用“另存为 MusicXML”或从当前业务投影反向序列化的能力。
+- Harmony Analysis Studio 可以按独立规格从原始托管字节生成写有 `<harmony>` 的新副本；它不修改当前馆藏，并负责语义保留未知 MusicXML 元素。
+- 除该和弦标注导出外，导入流程不承诺未知或不支持的 MusicXML 元素能够 round-trip 保留。
 
-未来导出能力需要单独设计完整来源保留、未知元素处理和双向映射，不能直接建立在当前有损的跨格式业务投影上。
+其他导出能力仍需单独设计完整来源保留、未知元素处理和双向映射，不能直接建立在当前有损的跨格式业务投影上。和弦标注导出见 `../superpowers/specs/2026-07-15-harmony-analysis-studio-design.md`。
 
 ### Score Identity 与版本关系
 

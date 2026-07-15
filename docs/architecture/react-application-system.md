@@ -190,38 +190,37 @@ XState（后续局部）  复杂导入工作流
 
 任何新增状态库都必须替代某个现有所有者或解决一个尚未被覆盖的问题，不能只作为 controller snapshot 的第二份副本。
 
-Zustand 不保存 `sessionId`、`ViewerSessionHandle`、`PlaybackController`、文件字节、播放、循环、tempo 或轨道状态。URL、session service、controller、Bridge 与 alphaTab 继续拥有这些事实。Dialog 开关、输入草稿等组件私有状态长期保留在 `useState`；后续只对真实跨 route、跨 feature 且没有现有所有者的客户端状态逐项评估迁移。
+Zustand 不保存 `ViewerSessionHandle`、Studio Session、`PlaybackController`、文件字节、播放、循环、tempo 或轨道状态。URL、application service、controller、Bridge 与 alphaTab 继续拥有这些事实。Dialog 开关、输入草稿等组件私有状态长期保留在 `useState`；后续只对真实跨 route、跨 feature 且没有现有所有者的客户端状态逐项评估迁移。
 
 ## SPA 路由
 
 使用 React Router Data Mode 的 `createHashRouter`：
 
 ```text
-/#/                         空闲 Viewer / 打开文件
-/#/viewer/:sessionId        Viewer 工作区
-/#/*                        NotFound
+/#/                               Sheet Library
+/#/viewer/:libraryScoreId         Viewer 查看与练习工作区
+/#/studio/:libraryScoreId         Studio 分析与编辑工作区
+/#/*                              NotFound
 ```
 
 选择 hash history 是因为同一个 bundle 需要运行在浏览器静态资源地址与 Electron 自定义协议下；刷新或重开窗口时无需服务端把任意路径回退到 `index.html`。
 
-Data Router 只负责 route 匹配、lazy module、错误边界和导航，不通过 loader/action 执行文件选择、Bridge 请求或播放命令。`open-score` feature 调用注入的 application service，Session 创建成功后再导航；`ViewerRoute` 使用 `sessionId` 从注入的 session registry 解析当前会话，避免导航重验证重复触发领域副作用。
+Data Router 只负责 route 匹配、lazy module、错误边界和导航，不通过 loader/action 执行文件选择、Bridge 请求、分析或播放命令。Library Import 完成后导航到 Viewer；ViewerRoute 与 StudioRoute 使用 `libraryScoreId` 调用注入的 application service，从 Managed Score Copy 分别重建自己的 Session。
 
-`ViewerApplication` 从现有 `mountViewerApp()` 提取并保持以下语义：并发打开串行、新 Session 前销毁旧 Session、destroy 后拒绝新操作、清理已接受的打开操作、聚合打开与清理失败，以及转发宿主播放/挂起/关闭命令。它不渲染 UI、不依赖 React/DOM，也不进入 Zustand；React 只订阅其 snapshot 并发送 application command。
+应用 service 从现有 `ViewerApplication` / `mountViewerApp()` 演进并保持以下语义：并发打开串行、新 Workspace Session 前销毁旧 Session、destroy 后拒绝新操作、清理已接受的打开操作、聚合打开与清理失败，以及转发宿主播放/挂起/关闭命令。它以 workspace kind 区分 Viewer 与 Studio，不渲染 UI、不依赖 React/DOM，也不进入 Zustand；React 只订阅其 snapshot 并发送 application command。
 
-已有活动谱时，系统文件选择器打开期间保留旧 Session；用户取消不改变 route 或 Session。选定新文件后先对旧 Session 执行 pause/flush/destroy，再导航到新 `sessionId` 并进入 loading。初始化失败时保留新 Session 的可恢复错误态，不回滚已销毁的旧 Session，也不同时持有两个 alphaTab/audio runtime。
+已有活动谱时，系统文件选择器打开期间保留旧 Session；用户取消不改变 route 或 Session。选定新文件后先对旧 Session 执行 pause/flush/destroy，再导航到新 Library Score 并进入 loading。初始化失败时保留新 Session 的可恢复错误态，不回滚已销毁的旧 Session，也不同时持有两个 alphaTab/audio runtime。
 
 路由约束：
 
-- `sessionId` 是当前进程生成的不透明 ID；URL 禁止出现绝对路径、bookmark、文件 token 或内容 hash。
-- `sessionId` 只在当前 Renderer 生命周期内有效。页面刷新、Renderer 重载或复制 URL 后进入“会话已结束，请重新打开乐谱”的恢复空态，不从 URL 或 sessionStorage 自动恢复文件。
-- `AppShell` 是根 layout route；Viewer route lazy load，避免首页立即加载重型工作区代码。
-- 每个 route 提供自己的 error boundary；Viewer 错误页保留“返回首页”和“重新打开文件”的恢复路径。
-- 打开文件成功后创建 session 再导航；直接访问已失效 session 时显示可恢复空态，不伪造 session。
+- `libraryScoreId` 是持久化 UUID；URL 禁止出现 Viewer/Studio Session ID、绝对路径、bookmark、文件 token 或内容 hash。
+- 页面刷新、Renderer 重载或复制 URL 后从当前宿主的独立 Sheet Library 重建对应 Session；馆藏不存在时显示可返回 Library 的缺失状态。
+- `AppShell` 是根 layout route；Viewer 与 Studio route lazy load，避免 Library 立即加载重型工作区代码。
+- 每个 route 提供自己的 error boundary；Viewer/Studio 错误页保留返回 Library 的恢复路径。
+- 打开馆藏成功后创建对应 Session；不得根据 URL 伪造 Library Score 或 Session。
 - Electron 菜单命令仍经 `ViewerHost.subscribe` 进入应用 service，再由 router/session 分发，不让 Main Process 操作 URL。
 
-第一版不创建 `/settings`、曲库或最近文件页面；这些功能不属于当前 Viewer 边界，等真实产品能力进入范围时再添加 route。
-
-用户重新打开同一份谱后，Practice Sidecar 与 Local Playback Resume 仍按 `Score Identity` 恢复。自动重新获得原文件属于未来 `Persistent File Reference` 能力，不纳入 React 迁移。
+Viewer 的 Practice Sidecar / Local Playback Resume 与 Studio 的 Harmony Analysis Document 由不同 Repository 和 Session 所有；两者不通过 Zustand 共享可变状态。Studio 的详细边界见 ADR 0052 和 `../superpowers/specs/2026-07-15-harmony-analysis-studio-design.md`。
 
 ## Provider 顺序与入口
 

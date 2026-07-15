@@ -2,7 +2,7 @@
 
 ## 目标
 
-Tab Viewer 以 Sheet Library 作为首页，用户导入的 Guitar Pro、MusicXML 与 MXL 文件会成为当前设备上可离线访问的 Library Score。用户从 Library 选择曲谱后进入 Studio 查看和练习。
+Tab Viewer 以 Sheet Library 作为首页，用户导入的 Guitar Pro、MusicXML 与 MXL 文件会成为当前设备上可离线访问的 Library Score。用户从 Library 选择曲谱后进入 Viewer 查看和练习。
 
 Desktop Shell 与 Browser 共享产品语义、领域契约和 React UI，但各自独立维护本地曲谱库：
 
@@ -17,7 +17,7 @@ Desktop Shell 与 Browser 共享产品语义、领域契约和 React UI，但各
 2. **导入后不依赖原文件**：宿主保存 Managed Score Copy，外部原文件被移动或删除不影响馆藏。
 3. **相同内容只收藏一次**：当前设备上一个 Score Identity 只对应一个 Library Score。
 4. **馆藏身份与内容身份分离**：Library Score ID 是 UUID，Score Identity 是内容哈希。
-5. **删除意味着彻底清除**：删除 Library Score 同时删除托管文件、馆藏信息和全部练习数据。
+5. **删除意味着彻底清除**：删除 Library Score 同时删除托管文件、馆藏信息、全部练习数据和派生分析数据。
 6. **存储错误不得导致静默数据丢失**：schema 迁移失败、托管文件缺失或数据损坏时保留已有数据并报错，不自动重建曲谱库。
 
 ## 范围
@@ -33,7 +33,7 @@ Desktop Shell 与 Browser 共享产品语义、领域契约和 React UI，但各
 - 编辑馆藏标题和艺术家，不改写谱文件。
 - 单项导出原始谱文件。
 - 单项彻底删除。
-- 从 Library 打开 Studio，并恢复上次练习状态。
+- 从 Library 打开 Viewer，并恢复上次练习状态。
 - Desktop 与 Browser 独立离线持久化。
 
 ### 非目标
@@ -52,7 +52,7 @@ Desktop Shell 与 Browser 共享产品语义、领域契约和 React UI，但各
 
 ### 冷启动
 
-应用冷启动始终进入 `/` Sheet Library，不自动恢复上次 Studio。默认按“最近活动”排序：
+应用冷启动始终进入 `/` Sheet Library，不自动恢复上次 Viewer。默认按“最近活动”排序：
 
 ```text
 activityAt = max(importedAt, lastOpenedAt)
@@ -81,18 +81,18 @@ activityAt = max(importedAt, lastOpenedAt)
 
 失败详情可展开查看文件名和结构化原因，不逐个弹窗。
 
-### 打开 Studio
+### 打开 Viewer
 
-点击列表行导航到 `/viewer/:libraryScoreId`。Studio 页面使用 Library Score ID 重新读取 Managed Score Copy 并创建临时 Viewer Session。刷新页面或恢复 URL 时可重建 Session；Session ID 不进入 URL。
+点击列表行导航到 `/viewer/:libraryScoreId`。Viewer 页面使用 Library Score ID 重新读取 Managed Score Copy 并创建临时 Viewer Session。刷新页面或恢复 URL 时可重建 Session；Session ID 不进入 URL。
 
-Studio 顶部提供：
+Viewer 顶部提供：
 
 - 返回曲谱库。
 - 馆藏标题与艺术家。
 - “已保存到本机”状态。
 - 导出原始文件。
 
-Studio 不提供删除入口。
+Viewer 不提供删除入口；独立 Studio 同样不提供删除入口。
 
 ### 编辑馆藏信息
 
@@ -107,17 +107,18 @@ Studio 不提供删除入口。
 
 ### 导出
 
-Library 行菜单与 Studio 菜单提供“导出原始文件…”。Repository 读取 Managed Score Copy，Score File Gateway 请求保存位置。导出使用原始文件名，不嵌入 Library Metadata 或练习数据。
+Library 行菜单与 Viewer 菜单提供“导出原始文件…”。Repository 读取 Managed Score Copy，Score File Gateway 请求保存位置。导出使用原始文件名，不嵌入 Library Metadata、练习数据或分析数据。Studio 的“导出带和弦的副本”由独立 Harmony Analysis Studio 规格定义。
 
 ### 删除
 
-删除只从 Library 行菜单发起。确认框必须显示曲名，并明确“曲谱文件和全部练习数据将被永久删除”。确认后原子删除：
+删除只从 Library 行菜单发起。确认框必须显示曲名，并明确“曲谱文件、练习数据和分析数据将被永久删除”。确认后原子删除：
 
 - Managed Score Copy。
 - Library Score 和 Library Metadata。
 - Practice Sidecar。
 - Local Playback Resume。
 - Library Practice Summary。
+- Harmony Analysis Document。
 
 日后重新导入字节内容相同的文件会创建新 Library Score ID，且不恢复旧练习数据。
 
@@ -125,7 +126,7 @@ Library 行菜单与 Studio 菜单提供“导出原始文件…”。Repository
 
 ### 布局
 
-Library 采用紧凑的桌面列表，不使用虚构专辑封面的卡片网格。视觉延续现有暖灰和珊瑚色 Studio 系统，让 Library 像排练目录而不是后台仪表盘。
+Library 采用紧凑的桌面列表，不使用虚构专辑封面的卡片网格。视觉延续现有暖灰和珊瑚色工作台系统，让 Library 像排练目录而不是后台仪表盘。
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -167,7 +168,7 @@ Browser 版在辅助文案中说明站点数据被清理时曲谱库也会被删
 - **No results**：保留搜索和筛选，提供清除条件，不显示导入空状态。
 - **Importing**：导入按钮显示进行中状态；已有列表仍可阅读。
 - **Repository unavailable**：显示不会清除数据的阻塞错误页。
-- **Managed copy missing/corrupt**：保留列表项，进入 Studio 时显示恢复错误，提供导出（若仍可读）和返回 Library。
+- **Managed copy missing/corrupt**：保留列表项，进入 Viewer 或 Studio 时显示恢复错误，提供导出（若仍可读）和返回 Library。
 
 ### 可访问性
 
@@ -315,15 +316,16 @@ type LibraryImportError =
 
 ```text
 /#/                          Sheet Library
-/#/viewer/:libraryScoreId    Studio
+/#/viewer/:libraryScoreId    Viewer
+/#/studio/:libraryScoreId    Harmony Analysis Studio
 /#/*                         Not Found
 ```
 
 `ViewerApplication` 演进为组合端口的应用服务，但不持有持久化事实副本：
 
 - Repository 拥有 Library Score 事实。
-- Router 拥有当前 Library/Studio 位置。
-- Viewer Session 拥有当前谱面运行时。
+- Router 拥有当前 Library/Viewer/Studio 位置。
+- Viewer Session 或 Studio Session 拥有各自当前谱面运行时。
 - React 局部状态拥有搜索词、筛选、排序和对话框草稿。
 
 Library 列表首次进入、导入/更新/删除成功后以及 Browser 页面重新获得焦点时调用 `repository.list()`。MVP 不使用 `BroadcastChannel`，也不引入 TanStack Query。
@@ -339,9 +341,10 @@ library_scores   key: id, unique index: scoreIdentity
 score_files      key: libraryScoreId
 practice_sidecars key: libraryScoreId
 playback_resume  key: libraryScoreId
+harmony_analyses key: libraryScoreId
 ```
 
-元数据、文件字节和练习数据的新建/删除使用单个 readwrite transaction。`score_files` 保存 `Uint8Array`/`ArrayBuffer`，MVP 不引入 OPFS。
+元数据、文件字节、练习数据和分析数据的新建/删除使用单个 readwrite transaction。`score_files` 保存 `Uint8Array`/`ArrayBuffer`，MVP 不引入 OPFS。
 
 启动时尝试 `navigator.storage.persist()`；拒绝或不支持不阻塞使用，但 UI 必须如实告知浏览器本地数据可能被清理。导入前可通过 `navigator.storage.estimate()` 提供辅助诊断，但不以预估结果代替事务错误处理。
 
@@ -350,7 +353,7 @@ playback_resume  key: libraryScoreId
 - IndexedDB 唯一索引防止并发重复导入。
 - 页面重新获得焦点时刷新 Library。
 - 不实时广播 UI 变更。
-- 如另一标签页已删除 Studio 中的曲谱，后续练习写入必须因 Library Score 不存在而失败，不能重建孤儿数据。
+- 如另一标签页已删除 Viewer 或 Studio 中的曲谱，后续练习或分析写入必须因 Library Score 不存在而失败，不能重建孤儿数据。
 
 ## Desktop 存储适配器
 
@@ -527,10 +530,10 @@ IndexedDB quota 不足时当前文件导入失败，已有 Library 不受影响�
 ### UI 与 E2E
 
 - 空 Library 导入第一份曲谱。
-- 单文件导入直接进入 Studio。
+- 单文件导入直接进入 Viewer。
 - 批量导入留在 Library 并显示汇总。
 - 搜索、收藏和排序的键盘交互。
-- Studio 刷新后从 Library Score 重建 Session。
+- Viewer 刷新后从 Library Score 重建 Session。
 - 删除确认文案和焦点恢复。
 - Browser 页面重启后馆藏仍在；Desktop 应用重启进入 Library。
 
@@ -566,10 +569,10 @@ IndexedDB quota 不足时当前文件导入失败，已有 Library 不受影响�
 2. 导入后即使外部原文件被删除，Library Score 仍可离线打开。
 3. 相同字节文件不能在同一曲谱库中产生两份 Library Score。
 4. 不同内容的同名文件作为独立曲谱。
-5. 单导入直接进入 Studio，批量导入留在 Library 并允许部分成功。
+5. 单导入直接进入 Viewer，批量导入留在 Library 并允许部分成功。
 6. `/viewer/:libraryScoreId` 刷新后可重建 Viewer Session。
 7. 编辑馆藏标题不修改谱文件或 Score Identity。
-8. 删除会清除馆藏、托管文件和练习数据，无法从 Studio 发起。
+8. 删除会清除馆藏、托管文件、练习数据和 Harmony Analysis Document，无法从 Viewer 或 Studio 发起。
 9. 单份原始谱文件可导出，馆藏元数据和练习数据不被嵌入。
 10. 两个宿主通过同一套 Repository contract tests。
 11. schema 迁移失败不自动清空曲谱库。
@@ -589,3 +592,4 @@ IndexedDB quota 不足时当前文件导入失败，已有 Library 不受影响�
 - ADR 0049：应用通过领域 Repository/Gateway 访问宿主能力。
 - ADR 0050：schema 迁移失败不重建曲谱库。
 - ADR 0051：Desktop 文件与数据库操作使用 staging/reconciliation 恢复。
+- ADR 0052：Studio 和弦分析与 Viewer 练习分离，并随 Library Score 生命周期清理分析文档。

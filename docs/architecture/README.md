@@ -35,14 +35,15 @@ flowchart LR
 - Browser alphaTab DOM 边界：`browser-demo-alphatab-dom-rendering.md`
 - MusicXML 导入：`musicxml-import-design.md`、`musicxml-import-acceptance.md`
 - Sheet Library 当前规格：`../superpowers/specs/2026-07-12-sheet-library-design.md`
+- Harmony Analysis Studio 规格：`../superpowers/specs/2026-07-15-harmony-analysis-studio-design.md`
 - 架构决策状态：`../adr/README.md`
 
 ## 当前核心不变量
 
 - Library Score ID 是 UUID，Score Identity 是小写 SHA-256。
-- URL 只保存 `libraryScoreId`，Viewer Session 是可重建的运行时状态。
+- Viewer 使用 `#/viewer/:libraryScoreId`，Studio 使用 `#/studio/:libraryScoreId`；两类 Session 都是可重建的运行时状态。
 - Repository 管馆藏，Gateway 管用户选择的外部文件。
-- 删除联动清理馆藏、托管字节、sidecar 和 resume。
+- 删除联动清理馆藏、托管字节、sidecar、resume 和 Harmony Analysis Document。
 - 当前不包含云同步、OPFS、分页、移动端或 MIDI 分析。
 
 ## 历史文档

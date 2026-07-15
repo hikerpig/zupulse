@@ -1,4 +1,20 @@
-# Viewer 术语表
+# Zupulse 术语表
+
+## Viewer
+
+通过 `#/viewer/:libraryScoreId` 打开的查看与练习工作区。当前不生成、编辑或读取 Studio 的 Harmony Analysis Document；未来若要用于练习，必须先定义独立的发布语义。
+
+## Studio
+
+通过 `#/studio/:libraryScoreId` 打开的分析与编辑工作区。它负责生成、修正、预览、保存和导出 Harmony Analysis Document，并与 Viewer 使用独立 Session。
+
+## Studio Session
+
+Studio 打开某份 Library Score 后创建的临时谱面、分析编辑与预览运行时。它不与 Viewer Session 共享可变运行时对象，也不把 Session ID 写入 URL。
+
+## Preview Transport
+
+Studio 中用于播放、定位、临时速度和区间试听的临时播放状态。它不读取或写入 Practice Sidecar、Local Playback Resume 或练习进度，关闭 Studio 后丢弃。
 
 ## App Shell
 
@@ -46,11 +62,71 @@ MusicXML 的压缩容器格式，常用扩展名为 `.mxl`。导入时需要验�
 
 ## Analysis Revision
 
-由某份 Raw MIDI、分析参数和算法版本派生的可重算分析结果。它包含量化、拍号推断、左右手分配、异常检测和基础钢琴谱所需信息。
+由来源谱、分析参数和算法版本派生的一次不可变分析结果。置信度决策阈值属于 Revision 参数且不由 Studio 用户直接调节；重新分析会创建新 Revision，而不是原地改写，并只在完整保存成功后替换 active Revision。MIDI 量化与和弦推断都可以产生 Analysis Revision。
+
+## Harmony Analysis Job
+
+一次可取消的和弦分析计算。重新分析期间继续显示并允许修正当前 active Revision；只有最新且完整成功的 Job 可以结合当时最新的 User Corrections 原子替换 active Revision，失败、取消或被替代的 Job 不得提交。
 
 ## User Corrections
 
-用户针对 MIDI 分析结果保存的修正或覆盖层。它不改写 Raw MIDI，并且必须能够追溯到目标 Analysis Revision 或稳定的原始音乐位置。
+用户针对 Analysis Revision 保存的独立修正或覆盖层。它不改写来源谱或原 Revision，并按稳定的 Score Written Range 锚定；只要来源内容不变，重新分析、更换算法参数或调整 Harmony Analysis Scope 都会保留它。
+
+## Harmony Analysis Document
+
+绑定到 Library Score 的可持久化和弦分析聚合。它保存当前 active Analysis Revision 与 User Corrections，但不包含或改写 Managed Score Copy；首版不持久化旧 Revision 历史，重新分析失败或取消时继续保留原 active Revision。
+
+## Harmony Analysis Repository
+
+独立于 Practice Sidecar、按 Library Score 管理 Harmony Analysis Document 的领域端口。分析数据与馆藏生命周期一致，删除 Library Score 时必须一同删除。
+
+## Harmony Analysis Scope
+
+一次和弦分析纳入的 tracks 集合。默认包含全部有音高的非打击乐 tracks，用户可以在 Studio 中调整；Scope 属于 Analysis Revision，改变它会创建新的 Revision。
+
+## Effective Harmony Projection
+
+把来源中已有的和弦、Analysis Revision 与 User Corrections 合成后的当前有效只读结果。同一区间按 User Corrections、来源和弦、算法结果的顺序取值；它可以保留 Unresolved Harmony 区间，Studio 用它预览，导出器只导出其中已确定的结果。
+
+## Harmony Annotation Target
+
+Studio 预览与导出新增和弦标记时使用的目标 part/staff。它默认指向首个有音高的非打击乐 track 的最上方 staff，属于展示与导出设置，改变它不创建新的 Analysis Revision。
+
+## Chord Symbol
+
+由 root、kind、最高至 13 的 extension、结构化 Chord Degrees 与可选 bass 构成的和弦标签。Studio 通过候选或结构化字段编辑它；首版不把任意文本当作可比较、可重算和可导出的和弦事实。
+
+## Chord Degree
+
+对 Chord Symbol 中某个和弦音级的结构化增加、改变或省略。它用于表达 `b9`、`#9`、`#11`、`b13` 及其组合，而不是为每一种 altered chord 建立独立枚举。
+
+## Spelled Pitch
+
+由字母音名与整数升降记号组成的十二平均律书面音高拼写。等音但拼写不同的 root 或 bass 具有相同声音音高，但属于不同的 Chord Symbol 表达，并会产生不同的 MusicXML。
+
+## No Chord
+
+明确表示某个 Score Written Range 没有和弦的音乐判断，显示为 `N.C.`。它只来自来源标记或用户选择，不能用来表示算法不知道答案。
+
+## Unresolved Harmony
+
+算法因证据不足、候选冲突或置信度低于决策阈值而无法可靠确定 Chord Symbol 的分析状态。它不是 No Chord；Studio 显示候选与原因，用户确认候选使其成为 Harmony Correction 前不把它导出到 MusicXML。
+
+## Harmony Analysis Compatibility
+
+首版 Harmony Analysis 只分析十二平均律音高。含微分音的区间降级为不支持或低置信度，不把微分音量化到最近半音；这不限制来源 MusicXML 的导入和查看。
+
+## Annotated Score Export
+
+把 Effective Harmony Projection 增量写入来源格式与结构后生成的新文件副本。它保持 `.musicxml`、`.xml` 或 `.mxl` 容器、MusicXML 版本以及 partwise/timewise 结构，不修改 Managed Score Copy 或当前 Library Score。
+
+## Functional Harmony Analysis
+
+基于局部调性解释 Roman numeral、重属关系或 T/S/D 功能的独立分析能力。它可以引用已确认的 Chord Symbol，但不属于首版和弦推断、编辑或导出范围。
+
+## Harmony Correction
+
+用户对 Chord Symbol 或 Score Written Range 施加的结构化 User Correction。首版包括替换和弦、重拼写、标记 N.C.、分割、合并和移动边界；它锚定书面区间而非算法 segment ID，重置为来源或算法结果会删除对应 Correction。
 
 ## Native Audio Bridge
 
@@ -79,6 +155,14 @@ Web Core 中播放练习状态的单一入口。它接收 UI 领域命令，维�
 ## Written Position
 
 附着在书面谱面上的位置，由 track 或 part、小节、拍和 tick 表达。用于批注、section 和谱面选择；反复播放不会复制 Written Position。
+
+## Score Written Moment
+
+全谱级、未展开反复的书面时间点，由小节索引与小节内 tick 偏移表示，不绑定 track。它用于定位和弦分析等跨 track 的结果。
+
+## Score Written Range
+
+由 start 与 end 两个 Score Written Moment 界定的半开书面区间。Harmony Analysis 使用它表达和弦区间，反复播放不会复制该区间。
 
 ## Playback Occurrence
 
@@ -114,7 +198,7 @@ Sidecar 中保存播放练习设置的版本化子结构。第一版保存全谱
 
 ## Score Identity
 
-一份谱的稳定身份。第一版由内容指纹和格式内元信息共同生成，用于匹配 sidecar。
+一份谱的内容身份。当前使用来源完整字节的小写 SHA-256；同一宿主内用于 Library 去重，标题、作者和其他格式内元信息不参与计算。
 
 ## Score Import
 

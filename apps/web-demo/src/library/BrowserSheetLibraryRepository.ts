@@ -203,7 +203,7 @@ export class BrowserSheetLibraryRepository implements SheetLibraryRepository, Ha
     return { status: "saved", document: saved };
   }
   async deleteHarmonyAnalysis(libraryScoreId: LibraryScoreId): Promise<void> {
-    await this.delete(libraryScoreId);
+    await this.deleteAnalysis(libraryScoreId);
   }
   async deleteAnalysis(libraryScoreId: LibraryScoreId): Promise<void> {
     const db = await this.getDatabase();

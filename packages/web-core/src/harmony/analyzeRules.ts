@@ -9,7 +9,12 @@ import { scoreHarmonyTransition } from "./transitions";
 
 export function analyzeHarmonyRules(
   input: HarmonyAnalysisInput,
-  options: { includedTrackIds: readonly string[]; topK?: number; decisionThreshold?: number },
+  options: {
+    includedTrackIds: readonly string[];
+    topK?: number;
+    decisionThreshold?: number;
+    maxOptionalBoundariesPerMeasure?: number;
+  },
 ): HarmonySegment[] {
   const included = new Set(options.includedTrackIds);
   const notes = input.tracks
@@ -30,6 +35,9 @@ export function analyzeHarmonyRules(
     ticksPerQuarter: input.ticksPerQuarter,
     measures: input.measures,
     tracks: input.tracks.filter((track) => included.has(track.id) && !track.isPercussion),
+    ...(options.maxOptionalBoundariesPerMeasure === undefined
+      ? {}
+      : { maxOptionalPerMeasure: options.maxOptionalBoundariesPerMeasure }),
   }).moments;
   const decoded = decodeHarmonySequence({
     boundaries,

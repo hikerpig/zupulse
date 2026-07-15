@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { isPitchedMidiNote, parseCmuChordLabel, parseCmuChordLabels, parseStandardMidi } from "../cmuCmaParser";
+import {
+  isPitchedMidiNote,
+  parseCmuChordLabel,
+  parseCmuChordLabels,
+  parseStandardMidi,
+  projectMidiNoteToWindow,
+} from "../cmuCmaParser";
 
 describe("CMU CMA parser", () => {
   it("parses chord qualities, extensions, alterations, and slash bass", () => {
@@ -37,5 +43,17 @@ describe("CMU CMA parser", () => {
   it("excludes the General MIDI percussion channel from harmony evidence", () => {
     expect(isPitchedMidiNote({ startMs: 0, endMs: 1, midi: 36, channel: 9 })).toBe(false);
     expect(isPitchedMidiNote({ startMs: 0, endMs: 1, midi: 36, channel: 8 })).toBe(true);
+  });
+
+  it("preserves onset and overlap duration inside an annotated window", () => {
+    expect(projectMidiNoteToWindow({ startMs: 125, endMs: 625, midi: 60, channel: 0 }, 0, 1000, 480)).toEqual({
+      offsetTicks: 60,
+      durationTicks: 240,
+    });
+    expect(projectMidiNoteToWindow({ startMs: -100, endMs: 100, midi: 60, channel: 0 }, 0, 1000, 480)).toEqual({
+      offsetTicks: 0,
+      durationTicks: 48,
+    });
+    expect(projectMidiNoteToWindow({ startMs: 1000, endMs: 1100, midi: 60, channel: 0 }, 0, 1000, 480)).toBeNull();
   });
 });

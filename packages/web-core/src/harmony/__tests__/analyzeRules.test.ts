@@ -161,5 +161,13 @@ describe("analyzeHarmonyRules", () => {
       "C",
       "G",
     ]);
+
+    const annotationBoundariesOnly = analyzeHarmonyRules(input, {
+      includedTrackIds: ["piano"],
+      topK: 3,
+      decisionThreshold: 0,
+      maxOptionalBoundariesPerMeasure: 0,
+    });
+    expect(annotationBoundariesOnly).toHaveLength(1);
   });
 });

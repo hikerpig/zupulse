@@ -12,6 +12,7 @@ import {
   isPitchedMidiNote,
   parseCmuChordLabel,
   parseStandardMidi,
+  projectMidiNoteToWindow,
   type CmuChordLabel,
   type MidiHarmonyNote,
 } from "./cmuCmaParser";
@@ -80,7 +81,12 @@ for (const chordFile of chordFiles.sort()) {
   const input = createHarmonyInput(labels, notes, maxEndMs, groupId);
   const analysisNotes = input.tracks.flatMap((track) => track.staves.flatMap((staff) => staff.notes));
   emptyNoteEvents += labels.filter((_, index) => notesForLabel(labels, notes, index, maxEndMs).length === 0).length;
-  const segments = analyzeHarmonyRules(input, { includedTrackIds: ["cmu"], topK: 8, decisionThreshold: 0 });
+  const segments = analyzeHarmonyRules(input, {
+    includedTrackIds: ["cmu"],
+    topK: 8,
+    decisionThreshold: 0,
+    maxOptionalBoundariesPerMeasure: 0,
+  });
   boundaryResults.push({
     groupId,
     predicted: new Set(segments.slice(1).map((segment) => segment.range.start.measureIndex)),
@@ -224,16 +230,24 @@ function createHarmonyInput(
         staves: [
           {
             index: 0,
-            notes: labels.flatMap((_, measureIndex) =>
-              notesForLabel(labels, notes, measureIndex, maxEndMs).map((note, noteIndex) => ({
-                id: `${groupId}:${measureIndex}:${noteIndex}`,
-                moment: { measureIndex, offsetTicks: 0 },
-                durationTicks: 480,
-                soundingPitchClass: note.midi % 12,
-                soundingMidi: note.midi,
-                voice: note.channel + 1,
-              })),
-            ),
+            notes: labels.flatMap((label, measureIndex) => {
+              const endMs = labels[measureIndex + 1]?.startMs ?? maxEndMs;
+              return notesForLabel(labels, notes, measureIndex, maxEndMs).flatMap((note, noteIndex) => {
+                const projected = projectMidiNoteToWindow(note, label.startMs, endMs, 480);
+                return projected
+                  ? [
+                      {
+                        id: `${groupId}:${measureIndex}:${noteIndex}`,
+                        moment: { measureIndex, offsetTicks: projected.offsetTicks },
+                        durationTicks: projected.durationTicks,
+                        soundingPitchClass: note.midi % 12,
+                        soundingMidi: note.midi,
+                        voice: note.channel + 1,
+                      },
+                    ]
+                  : [];
+              });
+            }),
           },
         ],
       },

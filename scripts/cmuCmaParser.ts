@@ -7,6 +7,21 @@ export function isPitchedMidiNote(note: MidiHarmonyNote): boolean {
   return note.channel !== 9;
 }
 
+export function projectMidiNoteToWindow(
+  note: MidiHarmonyNote,
+  windowStartMs: number,
+  windowEndMs: number,
+  windowTicks: number,
+): { offsetTicks: number; durationTicks: number } | null {
+  const overlapStart = Math.max(note.startMs, windowStartMs);
+  const overlapEnd = Math.min(note.endMs, windowEndMs);
+  if (overlapEnd <= overlapStart || windowEndMs <= windowStartMs) return null;
+  const scale = windowTicks / (windowEndMs - windowStartMs);
+  const offsetTicks = Math.max(0, Math.floor((overlapStart - windowStartMs) * scale));
+  const endTicks = Math.min(windowTicks, Math.ceil((overlapEnd - windowStartMs) * scale));
+  return { offsetTicks, durationTicks: Math.max(1, endTicks - offsetTicks) };
+}
+
 export function parseCmuChordLabels(text: string): CmuChordLabel[] {
   return text
     .trim()

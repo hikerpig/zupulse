@@ -29,3 +29,30 @@ export function mergeHarmonySegments(segments: readonly HarmonySegment[]): Harmo
   }
   return merged;
 }
+
+export function suppressShortNonChordSegments(
+  segments: readonly HarmonySegment[],
+  maximumDurationTicks: number,
+): HarmonySegment[] {
+  const corrected = [...segments];
+  for (let index = 1; index < corrected.length - 1; index += 1) {
+    const previous = corrected[index - 1];
+    const current = corrected[index];
+    const next = corrected[index + 1];
+    if (
+      previous?.status !== "resolved" ||
+      current?.status !== "resolved" ||
+      next?.status !== "resolved" ||
+      current.range.start.measureIndex !== current.range.end.measureIndex ||
+      current.range.end.offsetTicks - current.range.start.offsetTicks > maximumDurationTicks ||
+      JSON.stringify(previous.chord) !== JSON.stringify(next.chord)
+    )
+      continue;
+    corrected[index] = {
+      ...current,
+      chord: previous.chord,
+      confidence: Math.min(previous.confidence, current.confidence, next.confidence),
+    };
+  }
+  return mergeHarmonySegments(corrected);
+}

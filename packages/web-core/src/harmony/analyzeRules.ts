@@ -2,7 +2,7 @@ import type { HarmonyAnalysisInput } from "./analysisInput";
 import { buildLegalBoundaryLattice } from "./boundaries";
 import { buildHarmonyFeatureCache } from "./features";
 import { generateHarmonyCandidates } from "./candidates";
-import { applyHarmonyConfidence, mergeHarmonySegments } from "./postprocess";
+import { applyHarmonyConfidence, mergeHarmonySegments, suppressShortNonChordSegments } from "./postprocess";
 import type { HarmonySegment } from "./schemas";
 import { decodeHarmonySequence } from "./decode";
 
@@ -49,5 +49,6 @@ export function analyzeHarmonyRules(
       ...(options.topK === undefined ? {} : { topK: options.topK }),
     }),
   }));
-  return mergeHarmonySegments(applyHarmonyConfidence(segments, options.decisionThreshold ?? 0.6));
+  const corrected = suppressShortNonChordSegments(segments, input.ticksPerQuarter / 4);
+  return mergeHarmonySegments(applyHarmonyConfidence(corrected, options.decisionThreshold ?? 0.6));
 }

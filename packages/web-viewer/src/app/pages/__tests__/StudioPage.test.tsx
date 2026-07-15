@@ -65,6 +65,41 @@ describe("StudioPage", () => {
     expect(screen.getByRole("button", { name: "播放预览" })).toBeTruthy();
   });
 
+  it("keeps the previous document visible during reanalysis", () => {
+    const snapshot = {
+      studio: {
+        libraryScoreId: "score-1",
+        status: "analyzing",
+        document: {
+          activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
+          corrections: [],
+          annotationTarget: { trackId: "track-1", staffIndex: 0 },
+        },
+      },
+    };
+    const application = {
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      hasHarmonyAnalysisStorage: () => true,
+      openStudio: async () => undefined,
+      cancelStudioReanalysis: () => undefined,
+      flushStudio: async () => undefined,
+      undoStudio: () => undefined,
+      redoStudio: () => undefined,
+      setStudioScope: async () => undefined,
+      setStudioAnnotationTarget: async () => undefined,
+    } as never;
+    render(
+      <MemoryRouter initialEntries={["/studio/score-1"]}>
+        <Routes>
+          <Route path="/studio/:libraryScoreId" element={<StudioPage application={application} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText(/正在重新分析/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "取消分析" })).toBeTruthy();
+  });
+
   it("reports a completed annotated-score export", async () => {
     const snapshot = {
       studio: {

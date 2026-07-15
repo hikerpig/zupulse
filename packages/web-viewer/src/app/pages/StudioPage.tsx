@@ -61,18 +61,20 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
         <p>{libraryScoreId ? `Library Score: ${libraryScoreId}` : "缺少曲谱 ID"}</p>
         {!storageAvailable ? (
           <p role="alert">和声分析存储不可用</p>
-        ) : studio?.status === "loading" ? (
+        ) : studio?.status === "loading" && !studioDocument ? (
           <p role="status">正在初始化和声分析…</p>
         ) : studio?.status === "error" ? (
           <p role="alert">{studio.error}</p>
         ) : studioDocument ? (
           <>
             <p role="status">
-              {studio.status === "saving"
-                ? "正在保存修正…"
-                : studio.status === "unsaved"
-                  ? "修正尚未保存"
-                  : "已加载分析结果"}
+              {studio.status === "analyzing"
+                ? "正在重新分析…"
+                : studio.status === "saving"
+                  ? "正在保存修正…"
+                  : studio.status === "unsaved"
+                    ? "修正尚未保存"
+                    : "已加载分析结果"}
               （{studioDocument.activeRevision.segments.length} 个片段）
             </p>
             {studio.status === "conflict" ? <p role="alert">{studio.error}</p> : null}
@@ -88,7 +90,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
               </button>
             </div>
             <div aria-label="分析控制">
-              {studio.status === "loading" ? (
+              {studio.status === "analyzing" ? (
                 <button type="button" onClick={() => application.cancelStudioReanalysis(libraryScoreId!)}>
                   取消分析
                 </button>

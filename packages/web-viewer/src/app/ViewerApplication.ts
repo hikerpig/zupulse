@@ -33,7 +33,7 @@ export type ViewerApplicationSnapshot = {
   library?: { scores: readonly LibraryScoreSummary[]; loading: boolean; error?: string; importing?: boolean };
   studio?: {
     libraryScoreId: string;
-    status: "loading" | "ready" | "unsaved" | "saving" | "error" | "conflict";
+    status: "loading" | "analyzing" | "ready" | "unsaved" | "saving" | "error" | "conflict";
     availableTrackIds?: readonly string[];
     document?: HarmonyAnalysisDocument;
     error?: string;
@@ -532,7 +532,7 @@ export class ViewerApplication implements ViewerAppHandle {
 
   private setStudioState(libraryScoreId: string, state: HarmonyStudioSessionState): void {
     this.setStudio(libraryScoreId, {
-      status: state.status === "analyzing" ? "loading" : state.status,
+      status: state.status,
       ...(this.studioAvailableTrackIds.has(libraryScoreId)
         ? { availableTrackIds: this.studioAvailableTrackIds.get(libraryScoreId)! }
         : {}),

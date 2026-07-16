@@ -1,4 +1,4 @@
-import { chordSymbolSchema, type ChordSymbolInput } from "../packages/web-core/src/index";
+import { chordSymbolSchema, type ChordSymbolInput } from "../packages/web-core/src/harmony/schemas";
 
 export type MidiHarmonyNote = { startMs: number; endMs: number; midi: number; channel: number };
 export type CmuChordLabel = { startMs: number; label: string; chord: ChordSymbolInput | null };

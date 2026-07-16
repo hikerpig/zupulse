@@ -3,10 +3,10 @@ import {
   createHarmonyRankerFeatures,
   harmonyChordShape,
   harmonyRankerModelSchema,
-  type ChordSymbolInput,
-  type HarmonyFeatureVector,
   type HarmonyRankerModel,
-} from "../packages/web-core/src/index";
+} from "../packages/web-core/src/harmony/learnedRanker";
+import type { HarmonyFeatureVector } from "../packages/web-core/src/harmony/features";
+import type { ChordSymbolInput } from "../packages/web-core/src/harmony/schemas";
 import { assertTrainingGroups, splitHarmonyGroup } from "./harmonyDatasetSplit";
 
 export type HarmonyTrainingRecord = {
@@ -24,14 +24,19 @@ export function trainHarmonyRanker(
   const training = records.filter((record) => splitHarmonyGroup(record.groupId) !== "eval");
   if (training.length === 0) throw new Error("harmony ranker training set is empty");
   const groupKeys = [...new Set(training.map((record) => `${record.corpus}:${record.groupId}`))].sort();
-  const prototypes = training.map((record) => ({
-    chordShape: harmonyChordShape(record.expected),
-    features: createHarmonyRankerFeatures(record.features, record.expected),
-  }));
+  const prototypeCounts = new Map<string, { chordShape: string; features: number[]; frequency: number }>();
+  for (const record of training) {
+    const chordShape = harmonyChordShape(record.expected);
+    const features = createHarmonyRankerFeatures(record.features, record.expected);
+    const key = `${chordShape}:${features.join("")}`;
+    const existing = prototypeCounts.get(key);
+    prototypeCounts.set(key, { chordShape, features, frequency: (existing?.frequency ?? 0) + 1 });
+  }
+  const prototypes = [...prototypeCounts.values()];
   return harmonyRankerModelSchema.parse({
     version: 1,
-    featureVersion: "relative-pc-v1",
-    algorithmVersion: "prototype-ranker-v1",
+    featureVersion: "relative-pc-presence-v1",
+    algorithmVersion: "frequency-ranker-v2",
     trainingCorpusSha256: [...trainingCorpusSha256].sort(),
     trainingGroupsSha256: createHash("sha256").update(groupKeys.join("\n")).digest("hex"),
     prototypes,

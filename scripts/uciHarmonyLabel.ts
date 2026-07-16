@@ -1,4 +1,4 @@
-import { chordSymbolSchema, type ChordSymbolInput } from "../packages/web-core/src/index";
+import { chordSymbolSchema, type ChordSymbolInput } from "../packages/web-core/src/harmony/schemas";
 
 const pitchClassByStep = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 } as const;
 type PitchStep = keyof typeof pitchClassByStep;

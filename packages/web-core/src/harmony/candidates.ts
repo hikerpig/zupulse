@@ -1,5 +1,6 @@
 import { chordSymbolSchema, type ChordSymbolInput, type ScoreWrittenRange } from "./schemas";
 import type { HarmonyFeatureVector } from "./features";
+import { learnedBassIntervals, scoreHarmonyCandidate, type HarmonyRankerModel } from "./learnedRanker";
 
 export type HarmonyCandidate = {
   chord: ReturnType<typeof chordSymbolSchema.parse>;
@@ -58,6 +59,7 @@ const templates: readonly Template[] = [
   { kind: "power", intervals: [0, 7], important: [7] },
   { kind: "major", extension: 6, intervals: [0, 4, 7, 9], evidence: [4, 9] },
   { kind: "minor", extension: 6, intervals: [0, 3, 7, 9], evidence: [3, 9] },
+  { kind: "diminished", extension: 6, intervals: [0, 3, 6, 9], evidence: [3, 6, 9] },
   { kind: "major", extension: 7, intervals: [0, 4, 7, 11], evidence: [4, 11] },
   { kind: "minor", extension: 7, intervals: [0, 3, 7, 10], evidence: [3, 10] },
   { kind: "major", extension: 9, intervals: [0, 2, 4, 7, 11], evidence: [2, 4, 11] },
@@ -77,18 +79,23 @@ const templates: readonly Template[] = [
 export function generateHarmonyCandidates(
   _range: ScoreWrittenRange,
   features: HarmonyFeatureVector,
-  options: { topK?: number } = {},
+  options: { topK?: number; rankerModel?: HarmonyRankerModel; rankerWeight?: number } = {},
 ): HarmonyCandidate[] {
   const topK = Math.max(1, Math.min(8, options.topK ?? 8));
   const maximumDuration = Math.max(1, ...features.durationByPitchClass);
   const totalDuration = features.durationByPitchClass.reduce((sum, duration) => sum + duration, 0);
-  const roots = features.durationByPitchClass.flatMap((duration, pitchClass) => (duration > 0 ? [pitchClass] : []));
+  const roots =
+    options.rankerModel === undefined
+      ? features.durationByPitchClass.flatMap((duration, pitchClass) => (duration > 0 ? [pitchClass] : []))
+      : learnedRoots(features);
   const candidates = roots.flatMap((root) =>
     templatesForRoot(root, features)
       .filter((template) =>
-        (template.evidence ?? []).every((interval) => features.durationByPitchClass[(root + interval) % 12]! > 0),
+        options.rankerModel === undefined
+          ? (template.evidence ?? []).every((interval) => features.durationByPitchClass[(root + interval) % 12]! > 0)
+          : true,
       )
-      .map((template) => {
+      .flatMap((template) => {
         const pitchClasses = template.intervals.map((interval) => (root + interval) % 12);
         const support = pitchClasses.reduce((sum, pitchClass) => sum + features.durationByPitchClass[pitchClass]!, 0);
         const conflict = totalDuration - support;
@@ -98,12 +105,14 @@ export function generateHarmonyCandidates(
         ).length;
         const bassIsChordTone = features.bassPitchClass === undefined || pitchClasses.includes(features.bassPitchClass);
         const bass =
-          features.bassPitchClass !== undefined && features.bassPitchClass !== root && bassIsChordTone
+          features.bassPitchClass !== undefined &&
+          features.bassPitchClass !== root &&
+          (bassIsChordTone || options.rankerModel !== undefined)
             ? pitch(features.bassPitchClass)
             : undefined;
         const upperExtensionComplexity =
           template.extension === 9 ? 1 : template.extension === 11 ? 2 : template.extension === 13 ? 3 : 0;
-        const localScore =
+        const ruleScore =
           support -
           conflict * 0.75 -
           missing * maximumDuration * 0.6 -
@@ -113,37 +122,92 @@ export function generateHarmonyCandidates(
           upperExtensionComplexity * maximumDuration * 1.5 -
           (bassIsChordTone ? 0 : maximumDuration * 2) +
           (features.bassPitchClass === root ? maximumDuration * 0.1 : 0);
-        const chord = chordSymbolSchema.parse({
+        const chordInput = {
           root: pitch(root),
           kind: template.kind,
           ...(template.extension === undefined ? {} : { extension: template.extension }),
           degrees: template.degrees ?? [],
-          ...(bass ? { bass } : {}),
+        };
+        const learnedBass =
+          options.rankerModel === undefined ? [] : learnedBassIntervals(options.rankerModel, chordInput);
+        const chords =
+          options.rankerModel === undefined || learnedBass.length === 0
+            ? [chordSymbolSchema.parse({ ...chordInput, ...(bass ? { bass } : {}) })]
+            : learnedBass.map((interval) =>
+                chordSymbolSchema.parse({
+                  ...chordInput,
+                  ...(interval === null ? {} : { bass: pitch((root + interval) % 12) }),
+                }),
+              );
+        return chords.map((chord) => {
+          const learnedScore =
+            options.rankerModel === undefined ? 0 : scoreHarmonyCandidate(options.rankerModel, features, chord);
+          const localScore = ruleScore + learnedScore * maximumDuration * (options.rankerWeight ?? 20);
+          const sequenceScore = ruleScore;
+          return { chord, localScore, sequenceScore, confidence: 0 };
         });
-        return { chord, localScore, sequenceScore: localScore, confidence: 0 };
       }),
   );
-  return candidates
-    .sort(
-      (a, b) =>
-        b.localScore - a.localScore ||
-        a.chord.root.step.localeCompare(b.chord.root.step) ||
-        a.chord.root.alter - b.chord.root.alter ||
-        a.chord.kind.localeCompare(b.chord.kind) ||
-        (a.chord.extension ?? 0) - (b.chord.extension ?? 0),
-    )
-    .slice(0, topK)
-    .map((candidate, index, all) => ({
-      ...candidate,
-      confidence:
-        all.length === 1
-          ? 1
-          : clampConfidence(
-              index === 0
-                ? 0.5 + (candidate.localScore - all[1]!.localScore) / maximumDuration / 4
-                : 0.5 - (all[0]!.localScore - candidate.localScore) / maximumDuration / 4,
-            ),
-    }));
+  const sorted = candidates.sort(
+    (a, b) =>
+      b.localScore - a.localScore ||
+      a.chord.root.step.localeCompare(b.chord.root.step) ||
+      a.chord.root.alter - b.chord.root.alter ||
+      a.chord.kind.localeCompare(b.chord.kind) ||
+      (a.chord.extension ?? 0) - (b.chord.extension ?? 0),
+  );
+  const selected = options.rankerModel === undefined ? sorted.slice(0, topK) : selectHybridCandidates(sorted, topK);
+  return selected.map((candidate, index, all) => ({
+    ...candidate,
+    sequenceScore: candidate.sequenceScore,
+    confidence:
+      all.length === 1
+        ? 1
+        : clampConfidence(
+            index === 0
+              ? 0.5 + (candidate.localScore - all[1]!.localScore) / maximumDuration / 4
+              : 0.5 - (all[0]!.localScore - candidate.localScore) / maximumDuration / 4,
+          ),
+  }));
+}
+
+function learnedRoots(features: HarmonyFeatureVector): number[] {
+  const sounds = (pitchClass: number) => features.durationByPitchClass[(pitchClass + 12) % 12]! > 0;
+  return Array.from({ length: 12 }, (_, root) => root).filter(
+    (root) =>
+      sounds(root) ||
+      (sounds(root + 4) && sounds(root + 7)) ||
+      (sounds(root + 3) && sounds(root + 7)) ||
+      (sounds(root + 3) && sounds(root + 6)),
+  );
+}
+
+function selectHybridCandidates(candidates: readonly HarmonyCandidate[], topK: number): HarmonyCandidate[] {
+  const selected: HarmonyCandidate[] = [];
+  const counts = new Map<string, number>();
+  const learnedSlots = Math.max(1, topK - 2);
+  for (const candidate of candidates) {
+    const key = baseChordKey(candidate);
+    if ((counts.get(key) ?? 0) >= 2) continue;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+    selected.push(candidate);
+    if (selected.length === learnedSlots) break;
+  }
+  for (const candidate of [...candidates].sort((a, b) => b.sequenceScore - a.sequenceScore)) {
+    if (selected.includes(candidate)) continue;
+    selected.push(candidate);
+    if (selected.length === topK) break;
+  }
+  return selected.sort((a, b) => b.localScore - a.localScore);
+}
+
+function baseChordKey(candidate: HarmonyCandidate): string {
+  return JSON.stringify({
+    root: candidate.chord.root,
+    kind: candidate.chord.kind,
+    extension: candidate.chord.extension ?? null,
+    degrees: candidate.chord.degrees,
+  });
 }
 
 function pitch(pitchClass: number) {

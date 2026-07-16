@@ -22,4 +22,13 @@ describe("harmony ranker training", () => {
 
     expect(() => trainHarmonyRanker(records, ["1".repeat(64)])).toThrow("eval group");
   });
+
+  it("trains deterministically", () => {
+    const trainId = Array.from({ length: 100 }, (_, index) => `group-${index}`).find(
+      (id) => splitHarmonyGroup(id) === "train",
+    )!;
+    const records = [{ corpus: "fixture", groupId: trainId, expected, features }];
+
+    expect(trainHarmonyRanker(records, ["1".repeat(64)])).toEqual(trainHarmonyRanker(records, ["1".repeat(64)]));
+  });
 });

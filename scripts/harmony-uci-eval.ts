@@ -17,6 +17,9 @@ const manifest = JSON.parse(
   await readFile(new URL("../test-fixtures/harmony/uci-bach-manifest.json", import.meta.url), "utf8"),
 ) as Manifest;
 const archivePath = process.argv[2] ?? process.env.HARMONY_UCI_ZIP;
+const rankerWeight = Number(process.env.HARMONY_RANKER_WEIGHT ?? 20);
+const reportSplit = process.env.HARMONY_REPORT_SPLIT as DatasetSplit | undefined;
+const oracleOnly = process.env.HARMONY_ORACLE_ONLY === "1";
 const archive = archivePath
   ? await readFile(archivePath)
   : new Uint8Array(await (await fetch(manifest.source)).arrayBuffer());
@@ -44,81 +47,95 @@ const groups = new Map<string, UciEvent[]>();
 for (const event of events)
   groups.set(event.id.split(":")[0]!, [...(groups.get(event.id.split(":")[0]!) ?? []), event]);
 const boundaryResults: Array<{ groupId: string; predicted: Set<number>; expected: Set<number> }> = [];
-const results = [...groups.entries()].flatMap(([groupId, group]) => {
-  const notes = group.flatMap((event, measureIndex) =>
-    event.pitchClasses.map((pitchClass, noteIndex) => ({
-      id: `${event.id}:${noteIndex}`,
-      moment: { measureIndex, offsetTicks: 0 },
-      durationTicks: 480,
-      soundingPitchClass: pitchClass,
-      soundingMidi: pitchClass === event.bassPitchClass ? 36 : 60 + pitchClass,
-      voice: noteIndex + 1,
-    })),
-  );
-  const input = createHarmonyAnalysisInput({
-    ticksPerQuarter: 480,
-    measures: group.map((_, index) => ({
-      index,
-      durationTicks: 480,
-      timeSignature: { numerator: 4, denominator: 4 },
-    })),
-    tracks: [
-      {
-        id: "bach",
-        name: "Bach Choral Harmony",
-        isPercussion: false,
-        staves: [
-          {
-            index: 0,
-            notes,
-          },
-        ],
-      },
-    ],
-  });
-  const segments = analyzeHarmonyRules(input, { includedTrackIds: ["bach"], topK: 8, decisionThreshold: 0 });
-  boundaryResults.push({
-    groupId,
-    predicted: new Set(segments.slice(1).map((segment) => segment.range.start.measureIndex)),
-    expected: new Set(
-      group
-        .slice(1)
-        .flatMap((event, index) => (matchesUciHarmonyLabel(event.expected, group[index]!.expected) ? [] : [index + 1])),
-    ),
-  });
-  return group.map((event, measureIndex) => {
-    const start = { measureIndex, offsetTicks: 0 };
-    const segment = segments.find(
-      (candidate) =>
-        compareMoments(candidate.range.start, start) <= 0 && compareMoments(start, candidate.range.end) < 0,
+const results = [...groups.entries()]
+  .filter(([groupId]) => reportSplit === undefined || splitFor(groupId) === reportSplit)
+  .flatMap(([groupId, group]) => {
+    const notes = group.flatMap((event, measureIndex) =>
+      event.pitchClasses.map((pitchClass, noteIndex) => ({
+        id: `${event.id}:${noteIndex}`,
+        moment: { measureIndex, offsetTicks: 0 },
+        durationTicks: 480,
+        soundingPitchClass: pitchClass,
+        soundingMidi: pitchClass === event.bassPitchClass ? 36 : 60 + pitchClass,
+        voice: noteIndex + 1,
+      })),
     );
-    const alternatives = generateOracleCandidates({
+    const input = createHarmonyAnalysisInput({
       ticksPerQuarter: 480,
-      range: { start, end: { measureIndex, offsetTicks: 480 } },
-      notes,
+      measures: group.map((_, index) => ({
+        index,
+        durationTicks: 480,
+        timeSignature: { numerator: 4, denominator: 4 },
+      })),
+      tracks: [
+        {
+          id: "bach",
+          name: "Bach Choral Harmony",
+          isPercussion: false,
+          staves: [
+            {
+              index: 0,
+              notes,
+            },
+          ],
+        },
+      ],
     });
-    return {
+    const segments = oracleOnly
+      ? []
+      : analyzeHarmonyRules(input, {
+          includedTrackIds: ["bach"],
+          topK: 8,
+          decisionThreshold: 0,
+          rankerWeight,
+        });
+    boundaryResults.push({
       groupId,
-      expected: event.expected,
-      resolved: segment?.status === "resolved",
-      correct: segment?.status === "resolved" && matchesUciHarmonyLabel(segment.chord, event.expected),
-      top8: alternatives.some((candidate) => matchesUciHarmonyLabel(candidate.chord, event.expected)),
-      confidence: segment?.status === "resolved" ? segment.confidence : 0,
-      facets: {
-        root:
-          segment?.status === "resolved" && JSON.stringify(segment.chord.root) === JSON.stringify(event.expected.root),
-        bass: segment?.status === "resolved" && chordBassPitchClass(segment.chord) === event.bassPitchClass,
-        kind: segment?.status === "resolved" && segment.chord.kind === event.expected.kind,
-        extension: segment?.status === "resolved" && segment.chord.extension === event.expected.extension,
-        alterations:
-          segment?.status === "resolved" &&
-          JSON.stringify(segment.chord.degrees) === JSON.stringify(event.expected.degrees),
-      },
-    };
+      predicted: new Set(segments.slice(1).map((segment) => segment.range.start.measureIndex)),
+      expected: new Set(
+        group
+          .slice(1)
+          .flatMap((event, index) =>
+            matchesUciHarmonyLabel(event.expected, group[index]!.expected) ? [] : [index + 1],
+          ),
+      ),
+    });
+    return group.map((event, measureIndex) => {
+      const start = { measureIndex, offsetTicks: 0 };
+      const segment = segments.find(
+        (candidate) =>
+          compareMoments(candidate.range.start, start) <= 0 && compareMoments(start, candidate.range.end) < 0,
+      );
+      const alternatives = generateOracleCandidates({
+        ticksPerQuarter: 480,
+        range: { start, end: { measureIndex, offsetTicks: 480 } },
+        notes,
+        rankerWeight,
+      });
+      return {
+        groupId,
+        expected: event.expected,
+        resolved: segment?.status === "resolved",
+        correct: segment?.status === "resolved" && matchesUciHarmonyLabel(segment.chord, event.expected),
+        top8: alternatives.some((candidate) => matchesUciHarmonyLabel(candidate.chord, event.expected)),
+        top1: alternatives[0] !== undefined && matchesUciHarmonyLabel(alternatives[0].chord, event.expected),
+        confidence: segment?.status === "resolved" ? segment.confidence : 0,
+        facets: {
+          root:
+            segment?.status === "resolved" &&
+            JSON.stringify(segment.chord.root) === JSON.stringify(event.expected.root),
+          bass: segment?.status === "resolved" && chordBassPitchClass(segment.chord) === event.bassPitchClass,
+          kind: segment?.status === "resolved" && segment.chord.kind === event.expected.kind,
+          extension: segment?.status === "resolved" && segment.chord.extension === event.expected.extension,
+          alterations:
+            segment?.status === "resolved" &&
+            JSON.stringify(segment.chord.degrees) === JSON.stringify(event.expected.degrees),
+        },
+      };
+    });
   });
-});
 const splitCounts = countSplits(results);
-const evalResults = results.filter((result) => splitFor(result.groupId) === "eval");
+const evalResults = results.filter((result) => splitFor(result.groupId) === (reportSplit ?? "eval"));
 const resolved = evalResults.filter((result) => result.resolved);
 const calibration = createCalibrationModel(results.filter((result) => splitFor(result.groupId) === "train"));
 const report = {
@@ -132,6 +149,7 @@ const report = {
   },
   metrics: {
     top8OracleRecall: ratio(evalResults.filter((result) => result.top8).length, evalResults.length),
+    top1Accuracy: ratio(evalResults.filter((result) => result.top1).length, evalResults.length),
     resolvedPrecision: ratio(evalResults.filter((result) => result.correct).length, resolved.length),
     resolvedCoverage: ratio(resolved.length, evalResults.length),
     boundaryF1: calculateBoundaryF1(boundaryResults.filter((result) => splitFor(result.groupId) === "eval")),

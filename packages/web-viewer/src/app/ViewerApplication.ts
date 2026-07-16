@@ -10,6 +10,7 @@ import {
   projectSourceHarmonyEvents,
   readMusicXmlRootXml,
   compareMoments,
+  bundledHarmonyRankerModel,
 } from "@zupulse/web-core";
 import type {
   AnnotationTarget,
@@ -351,7 +352,7 @@ export class ViewerApplication implements ViewerAppHandle {
       documentVersion: 0,
       activeRevision: {
         id: crypto.randomUUID(),
-        algorithmVersion: "rules-1",
+        algorithmVersion: `rules-${bundledHarmonyRankerModel.algorithmVersion}`,
         createdAt: now,
         parameters: { scope: { includedTrackIds }, topK: 8, decisionThreshold: 0.6 },
         segments: analyzeHarmonyRules(

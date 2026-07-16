@@ -34,6 +34,7 @@ type EvaluationResult = {
   resolved: boolean;
   correct: boolean;
   top8: boolean;
+  top1: boolean;
   confidence: number;
   durationMs: number;
   facets: {
@@ -50,6 +51,9 @@ const manifest = JSON.parse(
   await readFile(new URL("../test-fixtures/harmony/cmu-cma-manifest.json", import.meta.url), "utf8"),
 ) as Manifest;
 const archivePath = process.argv[2] ?? process.env.HARMONY_CMU_ZIP;
+const rankerWeight = Number(process.env.HARMONY_RANKER_WEIGHT ?? 20);
+const reportSplit = process.env.HARMONY_REPORT_SPLIT as DatasetSplit | undefined;
+const oracleOnly = process.env.HARMONY_ORACLE_ONLY === "1";
 const archive = archivePath
   ? await readFile(archivePath)
   : new Uint8Array(await (await fetch(manifest.source)).arrayBuffer());
@@ -67,6 +71,7 @@ const results: EvaluationResult[] = [];
 
 for (const chordFile of chordFiles.sort()) {
   const groupId = chordFile.slice("test/".length, -"_chord.txt".length);
+  if (reportSplit !== undefined && splitFor(groupId) !== reportSplit) continue;
   const midiBytes = entries[`test/${groupId}.mid`];
   if (!midiBytes) continue;
   const notes = parseStandardMidi(midiBytes).filter(isPitchedMidiNote);
@@ -81,12 +86,15 @@ for (const chordFile of chordFiles.sort()) {
   const input = createHarmonyInput(labels, notes, maxEndMs, groupId);
   const analysisNotes = input.tracks.flatMap((track) => track.staves.flatMap((staff) => staff.notes));
   emptyNoteEvents += labels.filter((_, index) => notesForLabel(labels, notes, index, maxEndMs).length === 0).length;
-  const segments = analyzeHarmonyRules(input, {
-    includedTrackIds: ["cmu"],
-    topK: 8,
-    decisionThreshold: 0,
-    maxOptionalBoundariesPerMeasure: 0,
-  });
+  const segments = oracleOnly
+    ? []
+    : analyzeHarmonyRules(input, {
+        includedTrackIds: ["cmu"],
+        topK: 8,
+        decisionThreshold: 0,
+        maxOptionalBoundariesPerMeasure: 0,
+        rankerWeight,
+      });
   boundaryResults.push({
     groupId,
     predicted: new Set(segments.slice(1).map((segment) => segment.range.start.measureIndex)),
@@ -104,6 +112,7 @@ for (const chordFile of chordFiles.sort()) {
       ticksPerQuarter: input.ticksPerQuarter,
       range: { start: moment, end: { measureIndex, offsetTicks: 480 } },
       notes: analysisNotes,
+      rankerWeight,
     });
     const segment = segments.find(
       (candidate) =>
@@ -116,6 +125,7 @@ for (const chordFile of chordFiles.sort()) {
       resolved,
       correct: resolved && JSON.stringify(segment.chord) === JSON.stringify(label.chord),
       top8: alternatives.some((candidate) => JSON.stringify(candidate.chord) === JSON.stringify(label.chord)),
+      top1: JSON.stringify(alternatives[0]?.chord) === JSON.stringify(label.chord),
       confidence: resolved ? segment.confidence : 0,
       durationMs: (labels[measureIndex + 1]?.startMs ?? maxEndMs) - label.startMs,
       facets: {
@@ -129,7 +139,7 @@ for (const chordFile of chordFiles.sort()) {
   }
 }
 
-const evalResults = results.filter((result) => splitFor(result.groupId) === "eval");
+const evalResults = results.filter((result) => splitFor(result.groupId) === (reportSplit ?? "eval"));
 const resolved = evalResults.filter((result) => result.resolved);
 const calibration = createCalibrationModel(results.filter((result) => splitFor(result.groupId) === "train"));
 const report = {
@@ -146,6 +156,7 @@ const report = {
   },
   metrics: {
     top8OracleRecall: ratio(evalResults.filter((result) => result.top8).length, evalResults.length),
+    top1Accuracy: ratio(evalResults.filter((result) => result.top1).length, evalResults.length),
     resolvedPrecision: weightedFraction(
       resolved,
       (result) => result.correct,

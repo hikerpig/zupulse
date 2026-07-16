@@ -8,6 +8,7 @@ import {
 const noteCount = 5_000;
 const measureCount = 40;
 const ticksPerMeasure = 1_920;
+const sampleCount = Number(process.env.HARMONY_BENCHMARK_SAMPLES ?? 20);
 const samples: number[] = [];
 const heapBefore = process.memoryUsage().heapUsed;
 const input = createHarmonyAnalysisInput({
@@ -38,7 +39,7 @@ const input = createHarmonyAnalysisInput({
   ],
 });
 
-for (let index = 0; index < 20; index += 1) {
+for (let index = 0; index < sampleCount; index += 1) {
   const start = performance.now();
   analyzeHarmonyRules(input, { includedTrackIds: ["benchmark-piano"], topK: 8, decisionThreshold: 0.6 });
   samples.push(performance.now() - start);

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generateHarmonyCandidates } from "../candidates";
+import { createHarmonyRankerFeatures, harmonyRankerModelSchema } from "../learnedRanker";
 
 describe("harmony candidates", () => {
   it("ranks a major triad and keeps a deterministic top-k", () => {
@@ -85,5 +86,29 @@ describe("harmony candidates", () => {
         }),
       ]),
     );
+  });
+
+  it("uses learned evidence before applying the Top-K limit", () => {
+    const features = {
+      durationByPitchClass: [480, 0, 0, 480, 480, 0, 0, 480, 0, 0, 0, 0],
+      onsetCountByPitchClass: [1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0],
+      bassPitchClass: 0,
+    };
+    const minor = { root: { step: "C", alter: 0 }, kind: "minor", degrees: [] } as const;
+    const model = harmonyRankerModelSchema.parse({
+      version: 1,
+      featureVersion: "relative-pc-presence-v1",
+      algorithmVersion: "frequency-ranker-v2",
+      trainingCorpusSha256: ["1".repeat(64)],
+      trainingGroupsSha256: "0".repeat(64),
+      prototypes: [{ chordShape: "minor||[]|", features: createHarmonyRankerFeatures(features, minor), frequency: 1 }],
+    });
+    const candidates = generateHarmonyCandidates(
+      { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 480 } },
+      features,
+      { topK: 1, rankerModel: model },
+    );
+
+    expect(candidates[0]!.chord).toMatchObject({ root: { step: "C", alter: 0 }, kind: "minor" });
   });
 });

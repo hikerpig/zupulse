@@ -30,20 +30,20 @@ describe("learned harmony ranker", () => {
     const features = createHarmonyRankerFeatures(featureVector, cMajor);
     const model = harmonyRankerModelSchema.parse({
       version: 1,
-      featureVersion: "relative-pc-v1",
-      algorithmVersion: "prototype-ranker-v1",
+      featureVersion: "relative-pc-presence-v1",
+      algorithmVersion: "frequency-ranker-v2",
       trainingCorpusSha256: ["1".repeat(64)],
       trainingGroupsSha256: "0".repeat(64),
-      prototypes: [{ chordShape: "major||[]", features }],
+      prototypes: [{ chordShape: "major||[]|", features, frequency: 1 }],
     });
-    expect(scoreHarmonyCandidate(model, featureVector, cMajor)).toBe(1);
+    expect(scoreHarmonyCandidate(model, featureVector, cMajor)).toBe(Math.log(2));
   });
 
   it("validates the bundled model asset", async () => {
     const model = harmonyRankerModelSchema.parse(
       JSON.parse(await readFile(new URL("../harmony-ranker-model.json", import.meta.url), "utf8")),
     );
-    expect(model.prototypes.length).toBeGreaterThan(5_000);
+    expect(model.prototypes.length).toBeGreaterThan(10);
     expect(model.trainingCorpusSha256).toHaveLength(2);
   });
 });

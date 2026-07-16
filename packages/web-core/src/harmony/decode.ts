@@ -34,7 +34,7 @@ export function decodeHarmonySequence(input: {
             chord: candidate.chord,
             score:
               previous.score +
-              candidate.localScore +
+              candidate.sequenceScore +
               (previous.path.length ? transition(previous.chord, candidate.chord) : 0),
             candidate,
           };

@@ -6,6 +6,8 @@ import { applyHarmonyConfidence, mergeHarmonySegments, suppressShortNonChordSegm
 import type { HarmonySegment } from "./schemas";
 import { decodeHarmonySequence } from "./decode";
 import { scoreHarmonyTransition } from "./transitions";
+import { bundledHarmonyRankerModel } from "./bundledHarmonyRanker";
+import type { HarmonyRankerModel } from "./learnedRanker";
 
 export function analyzeHarmonyRules(
   input: HarmonyAnalysisInput,
@@ -14,6 +16,8 @@ export function analyzeHarmonyRules(
     topK?: number;
     decisionThreshold?: number;
     maxOptionalBoundariesPerMeasure?: number;
+    rankerModel?: HarmonyRankerModel;
+    rankerWeight?: number;
   },
 ): HarmonySegment[] {
   const included = new Set(options.includedTrackIds);
@@ -44,6 +48,8 @@ export function analyzeHarmonyRules(
     candidates: (range) =>
       generateHarmonyCandidates(range, cache.forRange(range), {
         ...(options.topK === undefined ? {} : { topK: options.topK }),
+        rankerModel: options.rankerModel ?? bundledHarmonyRankerModel,
+        ...(options.rankerWeight === undefined ? {} : { rankerWeight: options.rankerWeight }),
       }),
     transition: (from, to) => scoreHarmonyTransition(from, to) * input.ticksPerQuarter * 0.1,
     beamWidth: 16,
@@ -57,6 +63,8 @@ export function analyzeHarmonyRules(
     confidence: selected.candidate.confidence,
     alternatives: generateHarmonyCandidates(selected.range, cache.forRange(selected.range), {
       ...(options.topK === undefined ? {} : { topK: options.topK }),
+      rankerModel: options.rankerModel ?? bundledHarmonyRankerModel,
+      ...(options.rankerWeight === undefined ? {} : { rankerWeight: options.rankerWeight }),
     }),
   }));
   const corrected = suppressShortNonChordSegments(segments, input.ticksPerQuarter / 4);

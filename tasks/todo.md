@@ -552,7 +552,7 @@ feature: harmony-analysis-studio
 
 **Verification:** 训练脚本测试 + `pnpm vitest run packages/web-core/src/harmony scripts/__tests__`
 
-**Evidence:** `rtk pnpm harmony:train /tmp/bach-choral-harmony.zip /tmp/cma-dataset.zip` 从两份 manifest SHA-256 校验后的 corpus 生成 5,656 个 train/tune 原型；连续生成得到相同资产摘要。训练与 UCI/CMU 评估共享 `splitHarmonyGroup`，训练纯函数遇到 eval group 直接拒绝。模型 Zod schema 固定 `relative-pc-v1`、`prototype-ranker-v1`、两份 corpus 摘要与 training-group 摘要，提交资产通过损坏拒绝和实际读取测试。`rtk pnpm verify:fast` 于 2026-07-16 通过（85 files / 326 tests）。
+**Evidence:** `rtk pnpm harmony:train /tmp/bach-choral-harmony.zip /tmp/cma-dataset.zip` 从两份 manifest SHA-256 校验后的 corpus 生成移调归一化 presence/bass 频次原型；连续生成得到相同资产摘要。训练与 UCI/CMU 评估共享 `splitHarmonyGroup`，训练纯函数遇到 eval group 直接拒绝。模型 Zod schema 固定 `relative-pc-presence-v1`、`frequency-ranker-v2`、两份 corpus 摘要与 training-group 摘要，提交资产通过损坏拒绝和实际读取测试。`rtk pnpm verify:fast` 于 2026-07-16 通过（85 files / 328 tests）。
 
 ### Task 27: 接入学习型候选排序与拒识
 
@@ -560,11 +560,13 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] Top-8 上限、结构化 schema、取消与 Revision 语义保持不变。
-- [ ] ranker 分数参与候选顺序与 confidence，缺失模型时明确失败而非静默换算法。
-- [ ] synthetic golden cases 与现有算法测试不回退。
+- [x] Top-8 上限、结构化 schema、取消与 Revision 语义保持不变。
+- [x] ranker 分数参与候选顺序与 confidence，缺失模型时明确失败而非静默换算法。
+- [x] synthetic golden cases 与现有算法测试不回退。
 
 **Verification:** harmony 单测 + `pnpm verify:fast`
+
+**Evidence:** `frequency-ranker-v2` 在规则候选前加入本地离散统计排序，允许有第三/第五证据的省略根音，并从训练资产生成结构化 slash-bass 变体；最终 Top-8 保留 6 个学习候选与 2 个规则候选，序列累计仍使用规则分，避免学习分尺度诱发伪边界。CMU tune 为 Top-8 96.18%、Top-1 57.96%、resolved precision 35.99%/coverage 100%；UCI tune 为 Top-8 86.86%、Top-1 65.00%、resolved precision 53.41%/coverage 100%。单次 5,000-note benchmark 为 4,626.12 ms；完整 20-sample P95 留待 T28。`rtk pnpm verify:fast` 通过（85 files / 328 tests）。
 
 ### Task 28: 关闭学习模型发布门禁
 

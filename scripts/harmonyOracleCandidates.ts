@@ -1,5 +1,6 @@
 import {
   buildHarmonyFeatureCache,
+  bundledHarmonyRankerModel,
   generateHarmonyCandidates,
   type ScoreWrittenRange,
 } from "../packages/web-core/src/index";
@@ -16,7 +17,12 @@ export function generateOracleCandidates(input: {
   ticksPerQuarter: number;
   range: ScoreWrittenRange;
   notes: readonly OracleNote[];
+  rankerWeight?: number;
 }) {
   const cache = buildHarmonyFeatureCache({ ticksPerQuarter: input.ticksPerQuarter, notes: input.notes });
-  return generateHarmonyCandidates(input.range, cache.forRange(input.range), { topK: 8 });
+  return generateHarmonyCandidates(input.range, cache.forRange(input.range), {
+    topK: 8,
+    rankerModel: bundledHarmonyRankerModel,
+    ...(input.rankerWeight === undefined ? {} : { rankerWeight: input.rankerWeight }),
+  });
 }

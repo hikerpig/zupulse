@@ -18,6 +18,7 @@ import {
 } from "./cmuCmaParser";
 import { generateOracleCandidates } from "./harmonyOracleCandidates";
 import { weightedFraction } from "./harmonyWeightedMetrics";
+import { splitHarmonyGroup as splitFor, type HarmonyDatasetSplit as DatasetSplit } from "./harmonyDatasetSplit";
 
 type Manifest = {
   source: string;
@@ -27,7 +28,6 @@ type Manifest = {
   subset: string;
   eventsWithChordLabels: number;
 };
-type DatasetSplit = "train" | "tune" | "eval";
 type EvaluationResult = {
   groupId: string;
   expected: ChordSymbolInput;
@@ -307,11 +307,6 @@ function calibrationError(
           Math.abs(bin.confidence / bin.durationMs - bin.accuracy / bin.durationMs)),
     0,
   );
-}
-
-function splitFor(groupId: string): DatasetSplit {
-  const bucket = [...groupId].reduce((sum, character) => (sum * 31 + character.charCodeAt(0)) % 5, 0);
-  return bucket === 0 ? "eval" : bucket === 1 ? "tune" : "train";
 }
 
 function countSplits(results: readonly { groupId: string }[]): Record<DatasetSplit, number> {

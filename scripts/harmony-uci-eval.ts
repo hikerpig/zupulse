@@ -9,6 +9,7 @@ import {
 } from "../packages/web-core/src/index";
 import { chordBassPitchClass, matchesUciHarmonyLabel, parseUciHarmonyLabel, pitchNameToPitch } from "./uciHarmonyLabel";
 import { generateOracleCandidates } from "./harmonyOracleCandidates";
+import { splitHarmonyGroup as splitFor, type HarmonyDatasetSplit as DatasetSplit } from "./harmonyDatasetSplit";
 
 type Manifest = { source: string; sha256: string; license: string; citation: string; events: number };
 
@@ -188,13 +189,6 @@ function calibrationError(
         : (bin.count / (results.length || 1)) * Math.abs(bin.confidence / bin.count - bin.accuracy / bin.count)),
     0,
   );
-}
-
-type DatasetSplit = "train" | "tune" | "eval";
-
-function splitFor(groupId: string): DatasetSplit {
-  const bucket = [...groupId].reduce((sum, character) => (sum * 31 + character.charCodeAt(0)) % 5, 0);
-  return bucket === 0 ? "eval" : bucket === 1 ? "tune" : "train";
 }
 
 function countSplits(results: readonly { groupId: string }[]): Record<DatasetSplit, number> {

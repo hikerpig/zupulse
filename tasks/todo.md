@@ -546,11 +546,13 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] 训练脚本只读取 train/tune，模型清单记录 corpus、特征与算法版本摘要。
-- [ ] 推断为离线、确定性纯领域逻辑，不引入 Browser/Electron 或在线服务。
-- [ ] 测试证明 eval group 不能进入训练输入，模型资产损坏会安全失败。
+- [x] 训练脚本只读取 train/tune，模型清单记录 corpus、特征与算法版本摘要。
+- [x] 推断为离线、确定性纯领域逻辑，不引入 Browser/Electron 或在线服务。
+- [x] 测试证明 eval group 不能进入训练输入，模型资产损坏会安全失败。
 
 **Verification:** 训练脚本测试 + `pnpm vitest run packages/web-core/src/harmony scripts/__tests__`
+
+**Evidence:** `rtk pnpm harmony:train /tmp/bach-choral-harmony.zip /tmp/cma-dataset.zip` 从两份 manifest SHA-256 校验后的 corpus 生成 5,656 个 train/tune 原型；连续生成得到相同资产摘要。训练与 UCI/CMU 评估共享 `splitHarmonyGroup`，训练纯函数遇到 eval group 直接拒绝。模型 Zod schema 固定 `relative-pc-v1`、`prototype-ranker-v1`、两份 corpus 摘要与 training-group 摘要，提交资产通过损坏拒绝和实际读取测试。`rtk pnpm verify:fast` 于 2026-07-16 通过（85 files / 326 tests）。
 
 ### Task 27: 接入学习型候选排序与拒识
 

@@ -45,6 +45,7 @@ Zupulse 是本地优先的乐谱查看与练习应用。当前交付面是共享
 - **Functional Harmony Analysis**：基于局部调性解释 Roman numeral 或 T/S/D 功能的独立分析能力；它不属于首版 Chord Symbol 推断范围。
 - **Harmony Correction**：用户对和弦标签或 Score Written Range 施加的结构化修改，包括替换、重拼写、N.C.、分割、合并和移动边界；它锚定书面区间而非算法 segment ID，重置会删除对应 Correction。
 - **Harmony Analysis Compatibility**：首版只分析十二平均律音高；含微分音的区间降级为不支持或低置信度，不把微分音量化到最近半音。
+- **Learned Harmony Ranker**：随应用发布、离线且确定性运行的和弦候选排序与拒识能力；它只处理结构化特征和候选，不直接生成任意和弦文本，训练集与最终评估集严格隔离。
 - **Annotated Score Export**：把 Effective Harmony Projection 增量写入来源格式与结构后生成的新文件副本；它保持来源容器，不修改 Managed Score Copy 或当前 Library Score。
 - **Bridge API**：Renderer 与 Electron Main 之间经版本化 Zod schema 校验的 RPC/事件边界。
 

@@ -18,6 +18,7 @@ ADR 文件保留历史编号；本表决定哪些决策可作为当前实现依�
 - `0039`：共享 Viewer 使用 React 应用壳。
 - `0040`–`0051`：Managed Score Copy、Library 身份/路由、双宿主 Repository、迁移与故障恢复。
 - `0052`：Studio 和弦分析与 Viewer 练习分离，并以独立派生数据层保存和导出。
+- `0053`：以随应用发布的本地学习型 ranker 重排和拒识规则和弦候选。
 
 ## Superseded
 

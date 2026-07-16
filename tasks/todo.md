@@ -539,3 +539,39 @@ feature: harmony-analysis-studio
 
 - [ ] `tasks/plan.md` 的 Exit gate P6 全部通过。
 - [ ] 人工评审后才能把计划状态改为 completed。
+
+### Task 26: 固化本地学习型 ranker 协议
+
+**Description:** 按 ADR 0053 定义固定维度候选特征、train/tune/eval 隔离训练协议和版本化只读模型资产。
+
+**Acceptance criteria:**
+
+- [ ] 训练脚本只读取 train/tune，模型清单记录 corpus、特征与算法版本摘要。
+- [ ] 推断为离线、确定性纯领域逻辑，不引入 Browser/Electron 或在线服务。
+- [ ] 测试证明 eval group 不能进入训练输入，模型资产损坏会安全失败。
+
+**Verification:** 训练脚本测试 + `pnpm vitest run packages/web-core/src/harmony scripts/__tests__`
+
+### Task 27: 接入学习型候选排序与拒识
+
+**Description:** 在规则候选与现有有界序列解码之间应用 ranker，并用 tune 分组选择固定拒识阈值。
+
+**Acceptance criteria:**
+
+- [ ] Top-8 上限、结构化 schema、取消与 Revision 语义保持不变。
+- [ ] ranker 分数参与候选顺序与 confidence，缺失模型时明确失败而非静默换算法。
+- [ ] synthetic golden cases 与现有算法测试不回退。
+
+**Verification:** harmony 单测 + `pnpm verify:fast`
+
+### Task 28: 关闭学习模型发布门禁
+
+**Description:** 用严格隔离 eval 重跑 UCI/CMU 指标、性能预算、双端构建与 E2E，并更新发布证据。
+
+**Acceptance criteria:**
+
+- [ ] Top-8 >= 95%，resolved precision >= 95% 且 coverage >= 70%。
+- [ ] boundary F1 >= 85%，ECE <= 0.10，5,000-note P95 <= 5 秒。
+- [ ] `pnpm verify` 与 `pnpm verify:e2e` 通过。
+
+**Verification:** harmony eval/benchmark + `pnpm verify && pnpm verify:e2e`

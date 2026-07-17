@@ -16,6 +16,29 @@ pnpm harmony:eval:cmu /path/to/cma-dataset.zip
 pnpm harmony:benchmark
 ```
 
+## 分析 MusicXML/MXL
+
+CLI 在 Node.js 中运行与 Browser/Desktop 相同的 `web-core` 投影和和声分析，不需要启动页面：
+
+```bash
+# 同时输出内部 model 与最终 result
+pnpm harmony:cli path/to/score.mxl
+
+# 只输出 MXL 投影后的 HarmonyAnalysisInput
+pnpm harmony:cli path/to/score.mxl --view model
+
+# 只输出最终 HarmonySegment[]
+pnpm harmony:cli path/to/score.mxl --view result
+```
+
+输出为 JSON，可用 shell 重定向保存并比较：
+
+```bash
+pnpm harmony:cli path/to/score.mxl --view result > /tmp/harmony-result.json
+```
+
+`model` 用于检查 MXL 解析后的 measure、track、note、时值和 sounding pitch 是否正确；`result` 用于检查最终 segment、chord、confidence 与 alternatives。CLI 本身不计算准确率：要计算准确率，仍需给谱例配套人工确认的时间区间和标准和弦标签，再加入 regression corpus。
+
 省略 UCI/CMU zip 路径时，评估脚本会从对应 manifest 的 `source` 下载归档；为了离线复现和避免重复下载，推荐显式传入本地文件。
 
 数据清单：

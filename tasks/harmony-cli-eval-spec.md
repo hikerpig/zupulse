@@ -2,7 +2,7 @@
 
 ## Objective
 
-把现有一次性 Harmony CLI 整理成同时适合人和自动化 agent 的 Node.js 工具：
+把现有一次性 Harmony CLI 抽成独立的 private workspace 工具包 `@zupulse/harmony-cli`，同时适合人和自动化 agent：
 
 - 人可以检查 MusicXML/MXL 投影后的内部 model 和最终分析结果；
 - agent 可以通过稳定 JSON 协议、manifest 和退出码执行回归；
@@ -32,7 +32,7 @@ pnpm harmony:cli eval
 pnpm harmony:cli eval test-fixtures/harmony/regressions/manifest.json
 
 # CLI 自身验证
-pnpm vitest run scripts/harmony
+pnpm --filter @zupulse/harmony-cli test
 ```
 
 兼容期内保留旧命令 `pnpm harmony:cli <score> --view ...`，内部映射到 `inspect`；README 只推荐新形式。
@@ -79,17 +79,28 @@ pnpm vitest run scripts/harmony
 - 所有 case 通过时 exit code 为 0；manifest/schema/文件错误或任一 case 失败时非 0。
 - stdout 即使失败也尽量输出结构化报告；面向人的错误摘要写 stderr。
 
+## Tech stack
+
+- 包位置：`tools/harmony-cli`
+- 包名：`@zupulse/harmony-cli`
+- 运行时：Node.js + TypeScript + `vite-node`
+- 领域依赖：`@zupulse/web-core: workspace:*`，只从公共入口导入
+- 校验：复用 workspace 已安装的 Zod 和 Vitest，不增加 CLI 框架
+
 ## Project structure
 
 ```text
-scripts/harmony/
-  cli.ts                 # 极薄进程入口：stdout、stderr、exit code
-  command.ts             # 参数解析与 inspect/eval 分派
-  inspectScore.ts        # MXL -> HarmonyAnalysisInput -> HarmonySegment[]
-  evaluateManifest.ts    # manifest 校验、执行和结构化 diff
-  schemas.ts             # CLI envelope 与 manifest 的 Zod schema
+tools/harmony-cli/
+  package.json           # private workspace 包与 bin/test/typecheck scripts
+  tsconfig.json
   README.md              # 面向人和 agent 的完整协议与示例
-  __tests__/
+  src/
+    cli.ts               # 极薄进程入口：stdout、stderr、exit code
+    command.ts           # 参数解析与 inspect/eval 分派
+    inspectScore.ts      # MXL -> HarmonyAnalysisInput -> HarmonySegment[]
+    evaluateManifest.ts  # manifest 校验、执行和结构化 diff
+    schemas.ts           # CLI envelope 与 manifest 的 Zod schema
+  src/__tests__/
     command.test.ts      # 参数、view、错误与兼容入口
     inspectScore.test.ts # 真实 MXL 投影链
     evaluateManifest.test.ts
@@ -103,7 +114,7 @@ test-fixtures/harmony/regressions/
   turkish-march.gold.json # 将来人工审核后才创建；不先生成伪 gold
 ```
 
-根 `scripts/README.md` 只保留入口导航，详细 CLI 协议下沉到 `scripts/harmony/README.md`。现有 UCI/CMU/train/benchmark 脚本暂不搬迁，避免把目录整理扩大成无关重构。
+`pnpm-workspace.yaml` 增加 `tools/*`。根 `package.json` 的 `harmony:cli` 只作为短命令代理到该包；工具也可用 `pnpm --filter @zupulse/harmony-cli cli -- ...` 独立执行。根 `scripts/README.md` 只保留入口导航，详细 CLI 协议放在工具包自己的 README。现有 UCI/CMU/train/benchmark 脚本暂不搬迁，避免把目录整理扩大成无关重构。
 
 ## Manifest contract
 
@@ -150,7 +161,8 @@ return harmonyInspectReportSchema.parse(report);
 ```
 
 - named export、Prettier 双引号、`exactOptionalPropertyTypes`。
-- 文件系统和 `process` 仅出现在 CLI/eval 边界；分析函数返回数据，不直接打印。
+- 文件系统和 `process` 仅出现在工具包的 CLI/eval 边界；分析函数返回数据，不直接打印。
+- 工具包只能依赖 `@zupulse/web-core` 公共入口，禁止 `../../packages/web-core/src/...` 深导入。
 - 不新增 CLI 框架或参数解析依赖；两个子命令用最小显式解析即可。
 
 ## Testing strategy
@@ -168,7 +180,7 @@ return harmonyInspectReportSchema.parse(report);
 - 校验 CLI 输出和 manifest schema。
 - stdout 保持纯 JSON；warning/error 写 stderr。
 - fixture 读取、解析、分析失败时返回非零退出码。
-- 提交前实际运行 `inspect`、`eval`、相关测试和项目门禁。
+- 提交前实际运行 `inspect`、`eval`、工具包测试/typecheck 和项目门禁。
 
 ### Ask first
 
@@ -182,6 +194,7 @@ return harmonyInspectReportSchema.parse(report);
 - 为方便测试复制同一份谱子。
 - 用结构回归通过率冒充准确率。
 - 让 Node CLI 走一套不同于 Browser/Desktop 的分析算法。
+- 把 CLI 工具源码重新放回通用 `scripts/` 目录。
 
 ## Success criteria
 
@@ -191,6 +204,7 @@ return harmonyInspectReportSchema.parse(report);
 - 一个故意错误的 manifest 能产生结构化失败报告和非零退出码。
 - 进程级测试证明 pnpm 命令可被人和 agent 直接消费。
 - 旧 CLI 调用在兼容期仍可用。
+- `tools/harmony-cli` 可由 workspace filter 独立测试和执行，且架构检查证明它没有深导入 `web-core`。
 - 相关测试、typecheck 和仓库架构检查通过；无关格式债务单独报告。
 
 ## Open questions

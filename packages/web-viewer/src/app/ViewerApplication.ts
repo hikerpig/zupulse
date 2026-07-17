@@ -44,6 +44,8 @@ export type ViewerApplicationSnapshot = {
 export class ViewerApplication implements ViewerAppHandle {
   private active: ViewerSessionHandle | undefined;
   private activeLibraryScoreId: string | undefined;
+  private studioRuntime: ViewerSessionHandle | undefined;
+  private studioRuntimeLibraryScoreId: string | undefined;
   private chain = Promise.resolve();
   private queuedError: unknown;
   private destroyPromise?: Promise<void>;
@@ -88,6 +90,10 @@ export class ViewerApplication implements ViewerAppHandle {
 
   getCurrentSession(): ViewerSessionHandle | undefined {
     return this.active;
+  }
+
+  getCurrentStudioSession(): ViewerSessionHandle | undefined {
+    return this.studioRuntime;
   }
 
   openScore(): Promise<void> {
@@ -266,13 +272,29 @@ export class ViewerApplication implements ViewerAppHandle {
     this.setStudio(id, { status: "loading" });
     try {
       const score = await library.repository.get(id as LibraryScore["id"]);
-      if (score?.format === "musicxml") {
-        const source = await library.repository.readScore(id as LibraryScore["id"]);
-        this.studioAvailableTrackIds.set(
-          id,
-          listMusicXmlPartIds(source.bytes).map((_, index) => `track-${index + 1}`),
-        );
-      }
+      if (!score) throw new Error("曲谱不存在");
+      if (score.format !== "musicxml") throw new Error("仅支持 MusicXML/MXL 曲谱");
+      const source = await library.repository.readScore(id as LibraryScore["id"]);
+      const previousViewer = this.active;
+      const previousStudio = this.studioRuntime;
+      this.active = undefined;
+      this.activeLibraryScoreId = undefined;
+      this.studioRuntime = undefined;
+      this.studioRuntimeLibraryScoreId = undefined;
+      const {
+        currentSessionId: _currentSessionId,
+        currentLibraryScoreId: _currentLibraryScoreId,
+        ...snapshot
+      } = this.snapshot;
+      this.setSnapshot(snapshot);
+      await previousViewer?.destroy();
+      await previousStudio?.destroy();
+      this.studioRuntime = await this.openSession(source);
+      this.studioRuntimeLibraryScoreId = id;
+      this.studioAvailableTrackIds.set(
+        id,
+        listMusicXmlPartIds(source.bytes).map((_, index) => `track-${index + 1}`),
+      );
       const session = this.getStudioSession(id, repository);
       const state = await session.load(() => this.createStudioDocument(id));
       if (intent === this.studioIntent) this.setStudioState(id, state);
@@ -423,9 +445,13 @@ export class ViewerApplication implements ViewerAppHandle {
     const file = await library.repository.readScore(id);
     await library.repository.markOpened(id, new Date().toISOString());
     const previous = this.active;
+    const previousStudio = this.studioRuntime;
     this.active = undefined;
     this.activeLibraryScoreId = undefined;
+    this.studioRuntime = undefined;
+    this.studioRuntimeLibraryScoreId = undefined;
     await previous?.destroy();
+    await previousStudio?.destroy();
     this.active = await this.openSession(file, id);
     this.activeLibraryScoreId = id;
     this.setSnapshot({ ...this.snapshot, currentSessionId: crypto.randomUUID(), currentLibraryScoreId: id });
@@ -464,6 +490,11 @@ export class ViewerApplication implements ViewerAppHandle {
       await this.active?.destroy();
       this.active = undefined;
       this.activeLibraryScoreId = undefined;
+    }
+    if (this.studioRuntimeLibraryScoreId === id) {
+      await this.studioRuntime?.destroy();
+      this.studioRuntime = undefined;
+      this.studioRuntimeLibraryScoreId = undefined;
     }
     await this.refreshLibrary();
   }
@@ -550,12 +581,16 @@ export class ViewerApplication implements ViewerAppHandle {
     await this.chain;
     const openError = this.queuedError;
     const session = this.active;
+    const studioRuntime = this.studioRuntime;
     this.active = undefined;
     this.activeLibraryScoreId = undefined;
+    this.studioRuntime = undefined;
+    this.studioRuntimeLibraryScoreId = undefined;
     this.setSnapshot({});
     let cleanupError: unknown;
     try {
       await session?.destroy();
+      await studioRuntime?.destroy();
     } catch (error) {
       cleanupError = error;
     }

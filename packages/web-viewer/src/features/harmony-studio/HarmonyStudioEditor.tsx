@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { HarmonyCandidate } from "@zupulse/web-core";
 import { formatChordSymbol } from "@zupulse/web-core";
+import styles from "../../app/pages/StudioPage.module.css";
 
 export type HarmonyStudioEditorProps = {
   candidates: readonly HarmonyCandidate[];
@@ -55,10 +56,23 @@ export function HarmonyStudioEditor({
             ? undefined
             : Number(extension);
   return (
-    <section aria-labelledby="harmony-editor-title">
-      <h2 id="harmony-editor-title">和弦候选</h2>
-      {unresolvedReason ? <p role="status">{unresolvedReason}</p> : null}
-      <div role="list" aria-label="结构化和弦候选">
+    <section className={styles.harmonyEditor} aria-labelledby="harmony-editor-title">
+      <div className={styles.editorHeading}>
+        <div>
+          <p className={styles.sectionKicker}>Chord inspector</p>
+          <h2 id="harmony-editor-title">和弦候选</h2>
+          <p>候选按置信度排序，也可以在下方手动构建。</p>
+        </div>
+        <button type="button" onClick={onNoChord}>
+          标记为 N.C.
+        </button>
+      </div>
+      {unresolvedReason ? (
+        <p className={styles.unresolvedReason} role="status">
+          {unresolvedReason}
+        </p>
+      ) : null}
+      <div className={styles.candidateList} role="list" aria-label="结构化和弦候选">
         {candidates.map((candidate, index) => (
           <button
             key={`${candidate.chord.root.step}-${candidate.chord.kind}-${index}`}
@@ -69,115 +83,116 @@ export function HarmonyStudioEditor({
           </button>
         ))}
       </div>
-      <button type="button" onClick={onNoChord}>
-        标记为 N.C.
-      </button>
-      <fieldset>
+      <fieldset className={styles.chordBuilder}>
         <legend>结构化和弦编辑</legend>
-        <label>
-          根音
-          <select aria-label="根音" value={root} onChange={(event) => setRoot(event.target.value as typeof root)}>
-            {steps.map((step) => (
-              <option key={step} value={step}>
-                {step}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          和弦类型
-          <select aria-label="和弦类型" value={kind} onChange={(event) => setKind(event.target.value as typeof kind)}>
-            {kinds.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          扩展音
-          <select aria-label="扩展音" value={extension} onChange={(event) => setExtension(event.target.value)}>
-            <option value="none">无</option>
-            {[6, 7, 9, 11, 13].map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          低音
-          <select aria-label="低音" value={bass} onChange={(event) => setBass(event.target.value)}>
-            <option value="none">无</option>
-            {steps.map((step) => (
-              <option key={step} value={step}>
-                {step}
-              </option>
-            ))}
-          </select>
-        </label>
-        <fieldset>
-          <legend>度数</legend>
-          <label>
-            操作
-            <select
-              aria-label="度数操作"
-              value={degreeOperation}
-              onChange={(event) => {
-                const operation = event.target.value as typeof degreeOperation;
-                setDegreeOperation(operation);
-                if (operation !== "add" && degreeValue === 2) setDegreeValue(3);
-              }}
-            >
-              {degreeOperations.map((operation) => (
-                <option key={operation} value={operation}>
-                  {operation}
+        <div className={styles.chordFields}>
+          <label className={styles.field}>
+            根音
+            <select aria-label="根音" value={root} onChange={(event) => setRoot(event.target.value as typeof root)}>
+              {steps.map((step) => (
+                <option key={step} value={step}>
+                  {step}
                 </option>
               ))}
             </select>
           </label>
-          <label>
-            度数
-            <select
-              aria-label="度数"
-              value={degreeValue}
-              onChange={(event) => setDegreeValue(Number(event.target.value) as typeof degreeValue)}
-            >
-              {degreeValues
-                .filter((value) => degreeOperation === "add" || value !== 2)
-                .map((value) => (
-                  <option key={value} value={value}>
-                    {value}
+          <label className={styles.field}>
+            和弦类型
+            <select aria-label="和弦类型" value={kind} onChange={(event) => setKind(event.target.value as typeof kind)}>
+              {kinds.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={styles.field}>
+            扩展音
+            <select aria-label="扩展音" value={extension} onChange={(event) => setExtension(event.target.value)}>
+              <option value="none">无</option>
+              {[6, 7, 9, 11, 13].map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={styles.field}>
+            低音
+            <select aria-label="低音" value={bass} onChange={(event) => setBass(event.target.value)}>
+              <option value="none">无</option>
+              {steps.map((step) => (
+                <option key={step} value={step}>
+                  {step}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <fieldset className={styles.degreeEditor}>
+          <legend>度数</legend>
+          <div className={styles.degreeControls}>
+            <label className={styles.field}>
+              操作
+              <select
+                aria-label="度数操作"
+                value={degreeOperation}
+                onChange={(event) => {
+                  const operation = event.target.value as typeof degreeOperation;
+                  setDegreeOperation(operation);
+                  if (operation !== "add" && degreeValue === 2) setDegreeValue(3);
+                }}
+              >
+                {degreeOperations.map((operation) => (
+                  <option key={operation} value={operation}>
+                    {operation}
                   </option>
                 ))}
-            </select>
-          </label>
-          <label>
-            变化
-            <select
-              aria-label="度数变化"
-              value={degreeAlter}
-              onChange={(event) => setDegreeAlter(Number(event.target.value) as typeof degreeAlter)}
+              </select>
+            </label>
+            <label className={styles.field}>
+              度数
+              <select
+                aria-label="度数"
+                value={degreeValue}
+                onChange={(event) => setDegreeValue(Number(event.target.value) as typeof degreeValue)}
+              >
+                {degreeValues
+                  .filter((value) => degreeOperation === "add" || value !== 2)
+                  .map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <label className={styles.field}>
+              变化
+              <select
+                aria-label="度数变化"
+                value={degreeAlter}
+                onChange={(event) => setDegreeAlter(Number(event.target.value) as typeof degreeAlter)}
+              >
+                {degreeAlters.map((alter) => (
+                  <option key={alter} value={alter}>
+                    {alter}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={() =>
+                setDegrees((current) => [
+                  ...current.filter((degree) => degree.value !== degreeValue),
+                  { operation: degreeOperation, value: degreeValue, alter: degreeAlter },
+                ])
+              }
             >
-              {degreeAlters.map((alter) => (
-                <option key={alter} value={alter}>
-                  {alter}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            onClick={() =>
-              setDegrees((current) => [
-                ...current.filter((degree) => degree.value !== degreeValue),
-                { operation: degreeOperation, value: degreeValue, alter: degreeAlter },
-              ])
-            }
-          >
-            添加度数
-          </button>
-          <ul aria-label="已选度数">
+              添加度数
+            </button>
+          </div>
+          <ul className={styles.degreeList} aria-label="已选度数">
             {degrees.map((degree) => (
               <li key={degree.value}>
                 {degree.operation} {degree.alter} {degree.value}
@@ -192,6 +207,7 @@ export function HarmonyStudioEditor({
           </ul>
         </fieldset>
         <button
+          className="primary-button"
           type="button"
           onClick={() =>
             onApply({

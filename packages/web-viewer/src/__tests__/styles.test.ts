@@ -7,6 +7,8 @@ describe("alphaTab playback cursor styles", () => {
   it("uses camelCase for local CSS Module class names", async () => {
     const modules = await Promise.all([
       source("../app/pages/PageShell.module.css"),
+      source("../app/pages/StudioPage.module.css"),
+      source("../components/ScoreViewer.module.css"),
       source("../components/Slider.module.css"),
       source("../features/PlaybackWorkspace.module.css"),
       source("../features/SheetLibrary.module.css"),
@@ -34,21 +36,22 @@ describe("alphaTab playback cursor styles", () => {
   });
 
   it("contains score scrolling within the desktop viewport and restores mobile document flow", async () => {
-    const [appCss, workspaceCss] = await Promise.all([
+    const [appCss, scoreCss, workspaceCss] = await Promise.all([
       source("../app/pages/PageShell.module.css"),
+      source("../components/ScoreViewer.module.css"),
       source("../features/PlaybackWorkspace.module.css"),
     ]);
 
     expect(appCss).toMatch(/\.appShell\s*{[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden;/s);
     expect(workspaceCss).toMatch(/\.workspace\s*{[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/s);
-    expect(appCss).toMatch(/\.scoreStageFrame\s*{[^}]*height:\s*100%;[^}]*overflow:\s*auto;/s);
-    expect(appCss).toMatch(/\.scoreViewer\s*{[^}]*height:\s*auto;[^}]*min-height:\s*100%;[^}]*overflow:\s*visible;/s);
+    expect(scoreCss).toMatch(/\.frame\s*{[^}]*height:\s*100%;[^}]*overflow:\s*auto;/s);
+    expect(scoreCss).toMatch(/\.viewer\s*{[^}]*height:\s*auto;[^}]*min-height:\s*100%;[^}]*overflow:\s*visible;/s);
     expect(workspaceCss).toMatch(/\.practicePanel\s*{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;/s);
     expect(appCss).toMatch(
       /@media \(max-width:\s*960px\)[\s\S]*?\.appShell\s*{[^}]*height:\s*auto;[^}]*overflow:\s*visible;/s,
     );
-    expect(appCss).toMatch(
-      /@media \(max-width:\s*960px\)[\s\S]*?\.scoreStageFrame\s*{[^}]*height:\s*auto;[^}]*overflow:\s*visible;/s,
+    expect(scoreCss).toMatch(
+      /@media \(max-width:\s*960px\)[\s\S]*?\.stage:not\(\.compact\) \.frame\s*{[^}]*height:\s*auto;[^}]*overflow:\s*visible;/s,
     );
   });
 
@@ -97,8 +100,8 @@ describe("alphaTab playback cursor styles", () => {
   });
 
   it("uses a compact continuous-surface workbench with a clean score surface", async () => {
-    const [appCss, workspaceCss] = await Promise.all([
-      source("../app/pages/PageShell.module.css"),
+    const [scoreCss, workspaceCss] = await Promise.all([
+      source("../components/ScoreViewer.module.css"),
       source("../features/PlaybackWorkspace.module.css"),
     ]);
 
@@ -106,9 +109,9 @@ describe("alphaTab playback cursor styles", () => {
     expect(workspaceCss).toMatch(/\.transportBar\s*{[^}]*border-bottom:\s*1px solid[^}]*padding:\s*8px 12px;/s);
     expect(workspaceCss).toMatch(/\.transportDivider\s*{[^}]*width:\s*1px;[^}]*align-self:\s*stretch;/s);
     expect(workspaceCss).toMatch(/\.practicePanel\s*{[^}]*top:\s*8px;[^}]*right:\s*8px;[^}]*bottom:\s*8px;/s);
-    expect(appCss).toMatch(/\.scoreViewer\s*{[^}]*background:\s*var\(--bg-score\);/s);
-    expect(appCss).toMatch(
-      /\.scoreViewer :global\(\.at-surface\)\s*{[^}]*display:\s*block;[^}]*background:\s*var\(--bg-score\);/s,
+    expect(scoreCss).toMatch(/\.viewer\s*{[^}]*background:\s*var\(--bg-score\);/s);
+    expect(scoreCss).toMatch(
+      /\.viewer :global\(\.at-surface\)\s*{[^}]*display:\s*block;[^}]*background:\s*var\(--bg-score\);/s,
     );
   });
 
@@ -128,9 +131,9 @@ describe("alphaTab playback cursor styles", () => {
   });
 
   it("keeps third-party score layers below viewer controls through shared stacking tokens", async () => {
-    const [tokensCss, appCss, workspaceCss, libraryCss, alphaTabCss] = await Promise.all([
+    const [tokensCss, scoreCss, workspaceCss, libraryCss, alphaTabCss] = await Promise.all([
       source("../styles/tokens.css"),
-      source("../app/pages/PageShell.module.css"),
+      source("../components/ScoreViewer.module.css"),
       source("../features/PlaybackWorkspace.module.css"),
       source("../features/SheetLibrary.module.css"),
       source("../styles/vendors/alphaTab.css"),
@@ -142,7 +145,7 @@ describe("alphaTab playback cursor styles", () => {
     expect(tokensCss).toMatch(/--z-index-practice-panel:\s*30;/);
     expect(tokensCss).toMatch(/--z-index-library-editor:\s*40;/);
     expect(tokensCss).toMatch(/--z-index-library-dialog:\s*50;/);
-    expect(appCss).toMatch(/\.scoreStage\s*{[^}]*position:\s*relative;[^}]*z-index:\s*var\(--z-index-score\);/s);
+    expect(scoreCss).toMatch(/\.stage\s*{[^}]*position:\s*relative;[^}]*z-index:\s*var\(--z-index-score\);/s);
     expect(workspaceCss).toMatch(/\.transportBar\s*{[^}]*z-index:\s*var\(--z-index-transport\);/s);
     expect(workspaceCss).toMatch(/\.practicePanel\s*{[^}]*z-index:\s*var\(--z-index-practice-panel\);/s);
     expect(libraryCss).toMatch(/\.libraryEditor\s*{[^}]*z-index:\s*var\(--z-index-library-editor\);/s);

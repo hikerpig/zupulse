@@ -19,6 +19,26 @@ describe("MusicXML preflight", () => {
     expect(() => preflightMusicXml(xml("<opus/>"))).toThrow("unsupported");
   });
 
+  it("accepts the standard Recordare MusicXML doctype without allowing arbitrary external entities", () => {
+    expect(
+      preflightMusicXml(
+        xml(
+          `<?xml version="1.0"?><!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 3.1 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd"><score-partwise/>`,
+        ),
+      ),
+    ).toMatchObject({ root: "score-partwise" });
+    expect(() =>
+      preflightMusicXml(xml(`<!DOCTYPE score-partwise SYSTEM "https://example.com/score.dtd"><score-partwise/>`)),
+    ).toThrow("unsupported-format");
+    expect(() =>
+      preflightMusicXml(
+        xml(
+          `<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 3.1 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd" [<!ENTITY secret SYSTEM "file:///etc/passwd">]><score-partwise/>`,
+        ),
+      ),
+    ).toThrow("unsupported-format");
+  });
+
   it("enforces MXL budgets and resolves the declared rootfile", () => {
     const entries = [
       {

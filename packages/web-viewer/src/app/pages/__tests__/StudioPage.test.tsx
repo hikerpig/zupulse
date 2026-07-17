@@ -403,6 +403,8 @@ describe("StudioPage", () => {
     await user.tab();
     expect(document.activeElement?.textContent).toBe("返回查看器");
     await user.tab();
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("放大乐谱预览");
+    await user.tab();
     expect(document.activeElement?.textContent).toBe("撤销修正");
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "s", ctrlKey: true }));
     expect(flushStudio).toHaveBeenCalledWith("score-1");

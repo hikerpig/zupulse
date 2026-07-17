@@ -22,7 +22,9 @@ export type MusicXmlPreflight = {
 export function preflightMusicXml(bytes: Uint8Array): MusicXmlPreflight {
   if (bytes.byteLength > MUSICXML_LIMITS.maxXmlBytes) fail("resource-limit-exceeded");
   const source = new TextDecoder("utf-8", { fatal: true }).decode(bytes).replace(/^\uFEFF/, "");
-  if (/<!DOCTYPE\b[^>]*\b(?:SYSTEM|PUBLIC)\b/i.test(source)) fail("unsupported-format");
+  const doctype = /<!DOCTYPE\b[\s\S]*?>/i.exec(source)?.[0];
+  if (doctype && /\b(?:SYSTEM|PUBLIC)\b/i.test(doctype) && !isStandardMusicXmlDoctype(doctype))
+    fail("unsupported-format");
   const withoutProlog = source.replace(/^\s*(?:<\?xml[\s\S]*?\?>\s*)?(?:<!DOCTYPE[\s\S]*?>\s*)?/, "");
   const rootMatch = /^<(score-partwise|score-timewise)\b([^>]*)>/i.exec(withoutProlog);
   if (!rootMatch) {
@@ -81,6 +83,14 @@ export function preflightMxlEntries(
 
 function normalize(path: string): string {
   return path.replace(/\\/g, "/").replace(/^\.\//, "");
+}
+function isStandardMusicXmlDoctype(doctype: string): boolean {
+  if (doctype.includes("[")) return false;
+  const match =
+    /^<!DOCTYPE\s+(score-(partwise|timewise))\s+PUBLIC\s+["']-\/\/Recordare\/\/DTD MusicXML [^"']+ (Partwise|Timewise)\/\/EN["']\s+["']https?:\/\/(?:www\.)?musicxml\.org\/dtds\/(partwise|timewise)\.dtd["']\s*>$/i.exec(
+      doctype,
+    );
+  return match !== null && match[2]?.toLowerCase() === match[3]?.toLowerCase() && match[2]?.toLowerCase() === match[4];
 }
 function count(source: string, pattern: RegExp): number {
   return source.match(pattern)?.length ?? 0;

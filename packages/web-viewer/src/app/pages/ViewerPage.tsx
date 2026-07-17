@@ -5,6 +5,7 @@ import { Link, useParams } from "react-router";
 import type { ViewerApplication } from "../ViewerApplication";
 import { useAppStore } from "../appStore";
 import { PlaybackWorkspace } from "../../features/PlaybackWorkspace";
+import { ScoreViewer } from "../../components/ScoreViewer";
 import styles from "./PageShell.module.css";
 
 export function ViewerPage({ application, notFound = false }: { application: ViewerApplication; notFound?: boolean }) {
@@ -79,16 +80,7 @@ export function ViewerPage({ application, notFound = false }: { application: Vie
         </div>
       </header>
       <PlaybackWorkspace session={application.getCurrentSession()}>
-        <section className={styles.scoreStage} aria-label="乐谱工作区">
-          <div className={styles.scoreStageFrame}>
-            <section id="alpha-tab" className={`${styles.scoreViewer} score-viewer`} aria-label="乐谱预览">
-              <div className="score-empty-state">
-                <p className="empty-title">打开一份乐谱开始练习</p>
-                <p className="empty-copy">支持 Guitar Pro、.musicxml 与 .mxl，本地读取，不上传文件。</p>
-              </div>
-            </section>
-          </div>
-        </section>
+        <ScoreViewer />
       </PlaybackWorkspace>
     </main>
   );

@@ -306,6 +306,94 @@ describe("ViewerApplication", () => {
     await application.destroy();
   });
 
+  it("replaces the Viewer runtime with a Studio runtime for the routed library score", async () => {
+    const viewerScoreId = "00000000-0000-4000-8000-000000000001";
+    const studioScoreId = "00000000-0000-4000-8000-000000000002";
+    const studioBytes = new TextEncoder().encode(
+      '<score-partwise><part id="P1"><measure><note/></measure></part></score-partwise>',
+    );
+    const destroyViewer = vi.fn(async () => undefined);
+    const destroyStudio = vi.fn(async () => undefined);
+    const openSession = vi
+      .fn()
+      .mockResolvedValueOnce({
+        togglePlayback: async () => undefined,
+        pauseAndFlush: async () => undefined,
+        destroy: destroyViewer,
+      })
+      .mockResolvedValueOnce({
+        togglePlayback: async () => undefined,
+        pauseAndFlush: async () => undefined,
+        destroy: destroyStudio,
+      });
+    let document: HarmonyAnalysisDocument | null = null;
+    const repository: SheetLibraryRepository & HarmonyAnalysisRepository = {
+      initialize: async () => undefined,
+      list: async () => [],
+      get: async (id) => ({
+        id,
+        scoreIdentity: "a".repeat(64),
+        fileName: `${id}.musicxml`,
+        format: "musicxml",
+        title: id,
+        importedAt: "2026-07-15T00:00:00.000Z",
+        isFavorite: false,
+        practice: { hasLoop: false },
+        metadata: {},
+      }),
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async (id) => ({ fileName: `${id}.musicxml`, bytes: studioBytes }),
+      updateMetadata: async () => undefined,
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+      read: async () => document,
+      save: async ({ document: next }) => {
+        document = { ...next, documentVersion: 0 };
+        return { status: "saved", document };
+      },
+    };
+    const adapter: ScoreFormatAdapter = {
+      format: "musicxml",
+      parse: async () => ({
+        runtime: {},
+        diagnostics: [],
+        capabilities: { view: true, playback: false },
+        document: {
+          schemaVersion: "0",
+          summary: { title: "Studio score", trackCount: 1 },
+          tracks: [{ id: "track-1", name: "Piano", staves: [], playback: { muted: false, solo: false, volume: 1 } }],
+          timeline: { ticksPerQuarter: 1, durationTicks: 1 },
+          sections: [],
+        },
+      }),
+    };
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      openSession,
+      {
+        repository,
+        gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
+        adapters: [adapter],
+      },
+    );
+
+    await application.openLibraryScore(viewerScoreId);
+    await application.openStudio(studioScoreId);
+
+    expect(destroyViewer).toHaveBeenCalledOnce();
+    expect(openSession).toHaveBeenLastCalledWith({ fileName: `${studioScoreId}.musicxml`, bytes: studioBytes });
+    expect(application.getSnapshot()).toMatchObject({
+      studio: { libraryScoreId: studioScoreId, status: "ready" },
+    });
+    expect(application.getSnapshot().currentLibraryScoreId).toBeUndefined();
+    await application.destroy();
+    expect(destroyStudio).toHaveBeenCalledOnce();
+  });
+
   it("rejects non-MusicXML scores before creating a Studio document", async () => {
     const scoreId = "00000000-0000-4000-8000-000000000001";
     const repository: SheetLibraryRepository & HarmonyAnalysisRepository = {

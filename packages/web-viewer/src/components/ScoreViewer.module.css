@@ -1,0 +1,142 @@
+@layer components {
+  .stage {
+    position: relative;
+    z-index: var(--z-index-score);
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .frame {
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+    padding: 8px;
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    background: var(--bg-score-shell);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.2),
+      0 4px 14px rgb(24 24 24 / 0.08);
+  }
+
+  .viewer {
+    width: 100%;
+    height: auto;
+    min-width: 0;
+    min-height: 100%;
+    overflow: visible;
+    background: var(--bg-score);
+  }
+
+  .viewer :global(.at-surface) {
+    display: block;
+    background: var(--bg-score);
+  }
+
+  .compact {
+    display: grid;
+    height: min(38vh, 360px);
+    min-height: 220px;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .compact .frame {
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  }
+
+  .previewBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-default);
+    border-bottom: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    background: var(--bg-panel);
+  }
+
+  .previewBar > div {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .previewBar strong {
+    font-size: 13px;
+  }
+
+  .previewBar span {
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+
+  .expandButton {
+    display: grid;
+    width: 34px;
+    min-height: 34px;
+    flex: 0 0 auto;
+    place-items: center;
+    padding: 0;
+  }
+
+  .expandButton svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .expanded {
+    position: fixed;
+    z-index: var(--z-index-library-dialog);
+    inset: 16px;
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    padding: 8px;
+    background: var(--bg-app);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-xl);
+    box-shadow:
+      0 0 0 100vmax rgb(0 0 0 / 0.58),
+      var(--shadow-panel);
+  }
+
+  .expanded .previewBar {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  @media (max-width: 960px) {
+    .stage:not(.compact) {
+      height: auto;
+    }
+
+    .stage:not(.compact) .frame {
+      height: auto;
+      min-height: 72vh;
+      overflow: visible;
+    }
+
+    .stage:not(.compact) .viewer {
+      min-height: calc(72vh - 36px);
+    }
+  }
+
+  @media (max-width: 560px) {
+    .compact {
+      height: 280px;
+      min-height: 200px;
+    }
+
+    .previewBar > div {
+      display: grid;
+      gap: 2px;
+    }
+
+    .expanded {
+      inset: 6px;
+      padding: 4px;
+      border-radius: var(--radius-lg);
+    }
+  }
+}

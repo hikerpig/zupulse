@@ -72,7 +72,7 @@
   --bg-control-active: rgb(242 107 79 / 0.14);
   --bg-score-shell: linear-gradient(180deg, #2e2e2d 0%, #222222 100%);
   --bg-score: #f0ede8;
-  --bg-glow: radial-gradient(circle at top left, rgb(242 107 79 / 0.08), transparent 24%);
+  --bg-glow: radial-gradient(ellipse at top left, rgb(242 107 79 / 0.04), transparent 40%);
   --text-primary: #eae6e0;
   --text-secondary: #bfb9b3;
   --text-tertiary: #7a7a7a;

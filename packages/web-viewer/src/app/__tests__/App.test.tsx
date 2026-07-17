@@ -13,6 +13,7 @@ afterEach(() => {
 
 beforeEach(() => {
   delete document.documentElement.dataset.theme;
+  window.localStorage.clear();
 });
 
 describe("App", () => {
@@ -26,6 +27,8 @@ describe("App", () => {
 
     expect(screen.getByRole("main")).toBeTruthy();
     expect(screen.getByRole("banner")).toBeTruthy();
+    expect(screen.getByRole("navigation", { name: "主要页面" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "逐拍首页" })).toBeTruthy();
     expect(screen.getByRole("region", { name: "乐谱工作区" })).toBeTruthy();
     expect(
       screen.getByText("Studio-style practice workspace for score reading, playback, and loop training."),
@@ -54,8 +57,9 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "关闭练习设置" }));
     expect(screen.queryByRole("complementary", { name: "练习设置" })).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: "Light" }));
+    await user.click(screen.getByRole("button", { name: "切换至浅色主题" }));
     expect(document.documentElement.dataset.theme).toBe("light");
+    expect(window.localStorage.getItem("zupulse-theme")).toBe("light");
     await user.click(screen.getByRole("button", { name: "打开乐谱" }));
     expect(openScore).toHaveBeenCalledOnce();
 
@@ -139,10 +143,11 @@ describe("App", () => {
     );
     render(<App application={application} />);
 
-    const libraryLink = await screen.findByRole("link", { name: "返回曲谱库" });
+    const libraryLink = await screen.findByRole("link", { name: "曲谱库" });
     expect(libraryLink.getAttribute("href")).toBe("#/");
     expect(libraryLink.querySelector("svg.lucide-library-big")).toBeTruthy();
-    expect(screen.getByRole("tooltip").textContent).toBe("返回曲谱库");
+    expect(screen.getByRole("link", { name: "查看器" }).getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("link", { name: "和弦工作室" }).getAttribute("href")).toBe(`#/studio/${id}`);
     await application.destroy();
   });
 
@@ -191,7 +196,7 @@ describe("App", () => {
     render(<App application={application} />);
 
     await waitFor(() => expect(application.hasSession(firstId)).toBe(true));
-    await user.click(screen.getByRole("link", { name: "返回曲谱库" }));
+    await user.click(screen.getByRole("link", { name: "曲谱库" }));
     await user.click((await screen.findByText("Second")).closest("[role='button']")!);
 
     await waitFor(() => expect(window.location.hash).toBe(`#/viewer/${secondId}`));

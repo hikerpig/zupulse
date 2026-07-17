@@ -84,9 +84,9 @@ export function SheetLibrary({
     );
   return (
     <main className={`${pageStyles.appShell} ${styles.libraryShell}`}>
-      <header className={`${pageStyles.contextBar} ${styles.libraryContextBar}`}>
+      <div className={`${pageStyles.contextBar} ${styles.libraryContextBar}`}>
         <div className={pageStyles.contextMain}>
-          <p className={pageStyles.appKicker}>Zupulse</p>
+          <p className={pageStyles.appKicker}>Library</p>
           <h1 className={`${pageStyles.contextTitle} ${styles.libraryTitle}`}>曲谱库</h1>
           <p className={pageStyles.contextSubtitle}>曲谱保存在这台设备上，可离线使用。</p>
         </div>
@@ -98,7 +98,7 @@ export function SheetLibrary({
             批量导入
           </button>
         </div>
-      </header>
+      </div>
       <section className={styles.libraryControls} aria-label="曲谱库筛选">
         <input
           type="text"

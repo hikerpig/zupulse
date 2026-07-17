@@ -1,6 +1,6 @@
 @layer components {
   .studioShell {
-    min-height: 100dvh;
+    min-height: 100%;
     background: var(--bg-glow), var(--bg-app);
   }
 
@@ -76,8 +76,7 @@
     font-size: 12px;
   }
 
-  .statusChip,
-  .backLink {
+  .statusChip {
     display: inline-flex;
     min-height: 34px;
     align-items: center;
@@ -98,17 +97,6 @@
     content: "";
     border-radius: 50%;
     background: var(--status-ready-text);
-  }
-
-  .backLink:hover,
-  .backLink:focus-visible {
-    color: var(--accent-primary);
-    border-color: var(--accent-primary);
-  }
-
-  .backLink:focus-visible {
-    outline: none;
-    box-shadow: var(--focus-ring);
   }
 
   .pageBody {
@@ -478,10 +466,6 @@
     }
 
     .statusChip,
-    .backLink {
-      justify-content: center;
-    }
-
     .pageBody {
       padding: 14px 12px 40px;
     }

@@ -28,11 +28,14 @@ describe("mountViewerApp", () => {
 
     expect(document.documentElement.dataset.theme).toBe("dark");
 
-    document.getElementById("theme-light")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    document
+      .querySelector<HTMLButtonElement>('button[aria-label="切换至浅色主题"]')
+      ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(document.documentElement.dataset.theme).toBe("light");
-    expect(document.getElementById("theme-light")?.getAttribute("aria-pressed")).toBe("true");
 
-    document.getElementById("theme-dark")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    document
+      .querySelector<HTMLButtonElement>('button[aria-label="切换至深色主题"]')
+      ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(document.documentElement.dataset.theme).toBe("dark");
 
     await handle.destroy();

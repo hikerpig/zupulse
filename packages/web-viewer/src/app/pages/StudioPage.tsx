@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useState, useSyncExternalStore } from "react";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 import { reducePreviewTransport } from "@zupulse/web-core";
 import { HarmonyStudioEditor } from "../../features/harmony-studio/HarmonyStudioEditor";
 import { ScoreViewer } from "../../components/ScoreViewer";
@@ -57,9 +57,9 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   }, [application, libraryScoreId, storageAvailable, studio?.status]);
   return (
     <main className={styles.studioShell} aria-labelledby="studio-title">
-      <header className={styles.contextBar}>
+      <div className={styles.contextBar}>
         <div className={styles.contextMain}>
-          <p className={styles.appKicker}>Zupulse · Harmony Analysis</p>
+          <p className={styles.appKicker}>Harmony Analysis</p>
           <h1 id="studio-title">和弦分析工作室</h1>
           <p>校对分析片段、编辑和弦，并将结果保存回曲谱。</p>
         </div>
@@ -67,13 +67,8 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
           <span id="status" className={styles.statusChip} role="status">
             {active ? "曲谱已加载" : "等待曲谱加载"}
           </span>
-          {libraryScoreId ? (
-            <Link className={styles.backLink} to={`/viewer/${libraryScoreId}`}>
-              返回查看器
-            </Link>
-          ) : null}
         </div>
-      </header>
+      </div>
       <div className={styles.pageBody}>
         <h2 id="summary" className="sr-only">
           未打开乐谱

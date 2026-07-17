@@ -36,13 +36,15 @@ describe("alphaTab playback cursor styles", () => {
   });
 
   it("contains score scrolling within the desktop viewport and restores mobile document flow", async () => {
-    const [appCss, scoreCss, workspaceCss] = await Promise.all([
+    const [frameCss, appCss, scoreCss, workspaceCss] = await Promise.all([
+      source("../app/App.module.css"),
       source("../app/pages/PageShell.module.css"),
       source("../components/ScoreViewer.module.css"),
       source("../features/PlaybackWorkspace.module.css"),
     ]);
 
-    expect(appCss).toMatch(/\.appShell\s*{[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden;/s);
+    expect(frameCss).toMatch(/\.appFrame\s*{[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden;/s);
+    expect(appCss).toMatch(/\.appShell\s*{[^}]*height:\s*100%;[^}]*overflow:\s*hidden;/s);
     expect(workspaceCss).toMatch(/\.workspace\s*{[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/s);
     expect(scoreCss).toMatch(/\.frame\s*{[^}]*height:\s*100%;[^}]*overflow:\s*auto;/s);
     expect(scoreCss).toMatch(/\.viewer\s*{[^}]*height:\s*auto;[^}]*min-height:\s*100%;[^}]*overflow:\s*visible;/s);

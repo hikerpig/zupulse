@@ -1,9 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
-import { flushSync } from "react-dom";
-import { LibraryBig } from "lucide-react";
+import { Music } from "lucide-react";
 import { Link, useParams } from "react-router";
 import type { ViewerApplication } from "../ViewerApplication";
-import { useAppStore } from "../appStore";
 import { PlaybackWorkspace } from "../../features/PlaybackWorkspace";
 import { ScoreViewer } from "../../components/ScoreViewer";
 import styles from "./PageShell.module.css";
@@ -11,8 +9,6 @@ import styles from "./PageShell.module.css";
 export function ViewerPage({ application, notFound = false }: { application: ViewerApplication; notFound?: boolean }) {
   const snapshot = useSyncExternalStore(application.subscribe, application.getSnapshot);
   const { libraryScoreId } = useParams();
-  const theme = useAppStore((state) => state.theme);
-  const setTheme = useAppStore((state) => state.setTheme);
   const invalidSession = Boolean(libraryScoreId && !application.hasSession(libraryScoreId));
 
   useEffect(() => {
@@ -22,9 +18,9 @@ export function ViewerPage({ application, notFound = false }: { application: Vie
 
   return (
     <main className={styles.appShell}>
-      <header className={styles.contextBar}>
+      <div className={styles.contextBar}>
         <div className={styles.contextMain}>
-          <p className={styles.appKicker}>Zupulse</p>
+          <p className={styles.appKicker}>Score Viewer</p>
           <h1 id="summary" className={styles.contextTitle} aria-live="polite">
             未打开乐谱
           </h1>
@@ -33,39 +29,15 @@ export function ViewerPage({ application, notFound = false }: { application: Vie
           </p>
         </div>
         <div className={styles.contextActions}>
-          {application.hasLibrary() && (
-            <Link className={styles.iconNavigation} to="/" aria-label="返回曲谱库">
-              <LibraryBig aria-hidden="true" size={19} strokeWidth={1.8} />
-              <span className={styles.iconNavigationTooltip} role="tooltip">
-                返回曲谱库
+          {application.hasLibrary() && libraryScoreId && application.hasHarmonyAnalysisStorage() ? (
+            <Link className={styles.harmonyAction} to={`/studio/${libraryScoreId}`}>
+              <Music aria-hidden="true" size={16} strokeWidth={2} />
+              <span>和弦分析</span>
+              <span className={styles.harmonyActionArrow} aria-hidden="true">
+                →
               </span>
             </Link>
-          )}
-          {application.hasLibrary() && libraryScoreId && application.hasHarmonyAnalysisStorage() ? (
-            <Link className="secondary-button" to={`/studio/${libraryScoreId}`}>
-              和弦分析
-            </Link>
           ) : null}
-          <div className={styles.themeToggle} role="group" aria-label="主题切换">
-            <button
-              id="theme-light"
-              className={styles.themeToggleButton}
-              type="button"
-              aria-pressed={theme === "light"}
-              onClick={() => flushSync(() => setTheme("light"))}
-            >
-              Light
-            </button>
-            <button
-              id="theme-dark"
-              className={styles.themeToggleButton}
-              type="button"
-              aria-pressed={theme === "dark"}
-              onClick={() => flushSync(() => setTheme("dark"))}
-            >
-              Dark
-            </button>
-          </div>
           <p id="status" className={styles.statusChip} role="status">
             {notFound ? "页面不存在" : invalidSession ? "会话已结束，请重新打开乐谱" : "等待选择文件"}
           </p>
@@ -78,7 +50,7 @@ export function ViewerPage({ application, notFound = false }: { application: Vie
             {application.hasLibrary() ? "导入曲谱" : "打开乐谱"}
           </button>
         </div>
-      </header>
+      </div>
       <PlaybackWorkspace session={application.getCurrentSession()}>
         <ScoreViewer />
       </PlaybackWorkspace>

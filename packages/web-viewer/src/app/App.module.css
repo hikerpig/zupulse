@@ -1,0 +1,27 @@
+@layer components {
+  .appFrame {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--bg-app);
+  }
+
+  .routeViewport {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  @media (max-width: 960px) {
+    .appFrame {
+      height: auto;
+      min-height: 100dvh;
+      overflow: visible;
+    }
+
+    .routeViewport {
+      overflow: visible;
+    }
+  }
+}

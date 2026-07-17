@@ -5,6 +5,8 @@ import { AppStoreProvider, useApplyTheme } from "./appStore";
 import { LibraryPage } from "./pages/LibraryPage";
 import { ViewerPage } from "./pages/ViewerPage";
 import { StudioPage } from "./pages/StudioPage";
+import { AppHeader } from "./AppHeader";
+import styles from "./App.module.css";
 
 export function App({ application }: { application: ViewerApplication }) {
   const router = useMemo(
@@ -37,7 +39,14 @@ function ApplicationNavigation({ application }: { application: ViewerApplication
     () => application.subscribeNavigation((libraryScoreId) => void navigate(`/viewer/${libraryScoreId}`)),
     [application, navigate],
   );
-  return <Outlet />;
+  return (
+    <div className={styles.appFrame}>
+      <AppHeader />
+      <div className={styles.routeViewport}>
+        <Outlet />
+      </div>
+    </div>
+  );
 }
 
 function ThemeApplicator({ children }: { children: ReactNode }) {

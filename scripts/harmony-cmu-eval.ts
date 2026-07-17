@@ -169,6 +169,7 @@ const report = {
     ),
     boundaryF1: calculateBoundaryF1(boundaryResults.filter((result) => splitFor(result.groupId) === "eval")),
     expectedCalibrationError: calibrationError(evalResults, calibration),
+    precisionCoverageCurve: precisionCoverageCurve(evalResults),
     facets: {
       root: weightedFraction(
         resolved,
@@ -279,6 +280,25 @@ function notesForLabel(
 
 function ratio(numerator: number, denominator: number): number {
   return denominator === 0 ? 0 : numerator / denominator;
+}
+
+function precisionCoverageCurve(results: readonly { confidence: number; correct: boolean; durationMs: number }[]) {
+  return [0, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99].map((threshold) => {
+    const selected = results.filter((result) => result.confidence >= threshold);
+    return {
+      threshold,
+      precision: weightedFraction(
+        selected,
+        (result) => result.correct,
+        (result) => result.durationMs,
+      ),
+      coverage: weightedFraction(
+        results,
+        (result) => result.confidence >= threshold,
+        (result) => result.durationMs,
+      ),
+    };
+  });
 }
 
 function calculateBoundaryF1(groups: readonly BoundaryResult[]): number {

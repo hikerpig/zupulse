@@ -48,25 +48,26 @@ export function analyzeHarmonyRules(
     candidates: (range) =>
       generateHarmonyCandidates(range, cache.forRange(range), {
         ...(options.topK === undefined ? {} : { topK: options.topK }),
-        rankerModel: options.rankerModel ?? bundledHarmonyRankerModel,
-        ...(options.rankerWeight === undefined ? {} : { rankerWeight: options.rankerWeight }),
       }),
     transition: (from, to) => scoreHarmonyTransition(from, to) * input.ticksPerQuarter * 0.1,
     beamWidth: 16,
     maxSegments: Math.max(64, input.measures.length),
     maxSpan: 16,
   });
-  const segments: HarmonySegment[] = decoded.map((selected) => ({
-    status: "resolved",
-    range: selected.range,
-    chord: selected.chord,
-    confidence: selected.candidate.confidence,
-    alternatives: generateHarmonyCandidates(selected.range, cache.forRange(selected.range), {
+  const segments: HarmonySegment[] = decoded.map((selected) => {
+    const alternatives = generateHarmonyCandidates(selected.range, cache.forRange(selected.range), {
       ...(options.topK === undefined ? {} : { topK: options.topK }),
       rankerModel: options.rankerModel ?? bundledHarmonyRankerModel,
       ...(options.rankerWeight === undefined ? {} : { rankerWeight: options.rankerWeight }),
-    }),
-  }));
+    });
+    return {
+      status: "resolved",
+      range: selected.range,
+      chord: selected.chord,
+      confidence: selected.candidate.confidence,
+      alternatives,
+    };
+  });
   const corrected = suppressShortNonChordSegments(segments, input.ticksPerQuarter / 4);
   return mergeHarmonySegments(applyHarmonyConfidence(corrected, options.decisionThreshold ?? 0.6));
 }

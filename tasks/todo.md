@@ -507,7 +507,7 @@ feature: harmony-analysis-studio
 
 **Verification:** harmony eval/benchmark 根脚本 + `pnpm verify`
 
-**Evidence:** `pnpm harmony:eval:uci /tmp/bach-choral-harmony.zip` 可复现 UCI Bach Choral Harmony（总计 5,665 事件、CC BY 4.0）评估；按 chorale 分组、保留 sounding MIDI/bass、使用有界序列解码，并以 train/tune/eval 分组（3,331/1,157/1,177 事件）后，独立 eval 为 Top-8 oracle recall 76.98%、resolved precision 56.16%、coverage 100%、boundary F1 73.94%、校准后 ECE 1.17%。Top-8 candidate oracle 在 gold window 上独立生成候选，不再与可能跨标注窗口的解码 segment 混算；resolved、boundary 与 confidence 指标仍来自完整序列解码。UCI chord label 比较不再把独立的观测 bass 特征误作 slash-bass 标签，`M7` 按数据中的 major-triad/minor-seventh 音集合映射为 dominant 7；bass 分项单独对照观测 bass。分析器使用去重后的 legal boundary lattice，非末小节 end 归一到下一小节 start，metric boundary 不再越过小节时值；6/7 与复杂 extension 要求对应色彩音硬证据，基础 kind 的三音/挂留音作为 important 证据进行强惩罚但允许真实省略。候选现覆盖 major/minor/dominant 9/11/13、add9/add11/add13，以及证据驱动的 b5/#5/b9/#9/#11/b13 聚合 alteration；degree 与 upper-extension 复杂度先验防止复杂解释主导。生产解码使用非正值的同和弦/五度/其他变化成本，避免正奖励诱发伪边界，并以 0.1 TPQ 弱缩放只参与近似平局消歧。Candidate confidence 使用按最大 pitch-class duration 归一化的 Top-1 margin，时值同比缩放时保持不变，非 Top-1 confidence 相对第一名单调下降。`pnpm harmony:eval:cmu /tmp/cma-dataset.zip` 可复现 CMU CMA CC BY 4.0 流行/键盘测试子集，20 个文件、1,911 个可解析和弦事件，按文件分组后 train/tune/eval 为 1,011/157/743；按产品 Scope 规则排除 General MIDI channel 10 percussion，并将 `m7b5` 规范化为不重复附加 b5 degree 的 half-diminished。每个 MIDI 音按标注窗口保留真实 onset 与 overlap duration，评估解码将 optional boundary budget 设为 0，仅使用标注窗口边界，避免把 note-off 当作额外 gold 边界或扩大 beam；独立 eval 为 Top-8 55.18%、resolved duration precision 22.26%、duration coverage 100%、boundary F1 98.06%、duration-weighted ECE 7.84%。CMU 的 precision、coverage、facets、calibration 按真实标签窗口毫秒时长加权，不再将短事件与长片段等权。两套独立语料均未达到规格阈值，因此不能勾选该验收项；报告同时输出 root/bass/kind/extension/alterations 分项准确率。
+**Evidence:** `pnpm harmony:eval:uci /tmp/bach-choral-harmony.zip` 可复现 UCI Bach Choral Harmony（总计 5,665 事件、CC BY 4.0）评估；按 chorale 分组、保留 sounding MIDI/bass、使用有界序列解码，并以 train/tune/eval 分组（3,331/1,157/1,177 事件）后，最终独立 eval 为 Top-8 oracle recall 87.68%、Top-1 67.54%、resolved precision 55.90%、coverage 100%、boundary F1 73.94%、校准后 ECE 1.08%。Top-8 candidate oracle 在 gold window 上独立生成候选，不再与可能跨标注窗口的解码 segment 混算；resolved、boundary 与 confidence 指标仍来自完整规则序列解码。`pnpm harmony:eval:cmu /tmp/cma-dataset.zip` 可复现 CMU CMA CC BY 4.0 流行/键盘测试子集，20 个文件、1,911 个可解析和弦事件，按文件分组后 train/tune/eval 为 1,011/157/743；最终独立 eval 为 Top-8 64.87%、Top-1 31.36%、resolved duration precision 22.26%、duration coverage 100%、boundary F1 98.06%、duration-weighted ECE 7.84%。本地 TypeScript ranker 只扩充和排序 Top-8 alternatives；生产主序列继续使用规则候选和规则分，避免学习分导致 resolved precision、边界和校准回退。报告另输出 precision/coverage threshold curve，证明当前 confidence 在 coverage >= 70% 时无法达到 95% precision。两套独立语料均未达到规格阈值，因此不能勾选该验收项；2026-07-17 按产品决定结束本轮调参，后续准确率提升重新设计。
 
 **Dependencies:** Tasks 10, 23
 
@@ -566,7 +566,7 @@ feature: harmony-analysis-studio
 
 **Verification:** harmony 单测 + `pnpm verify:fast`
 
-**Evidence:** `frequency-ranker-v2` 在规则候选前加入本地离散统计排序，允许有第三/第五证据的省略根音，并从训练资产生成结构化 slash-bass 变体；最终 Top-8 保留 6 个学习候选与 2 个规则候选，序列累计仍使用规则分，避免学习分尺度诱发伪边界。CMU tune 为 Top-8 96.18%、Top-1 57.96%、resolved precision 35.99%/coverage 100%；UCI tune 为 Top-8 86.86%、Top-1 65.00%、resolved precision 53.41%/coverage 100%。单次 5,000-note benchmark 为 4,626.12 ms；完整 20-sample P95 留待 T28。`rtk pnpm verify:fast` 通过（85 files / 328 tests）。
+**Evidence:** `frequency-ranker-v2` 在 alternatives 中加入本地离散统计排序，允许有第三/第五证据的省略根音，并从训练资产生成结构化 slash-bass 变体；最终 Top-8 保留 6 个学习候选与 2 个规则候选。主序列解码、resolved confidence 和 boundary 保持规则候选/规则分，避免学习分尺度诱发回退。CMU tune 为 Top-8 96.18%、Top-1 57.96%；UCI tune 为 Top-8 86.86%、Top-1 65.00%。模型与推断均为浏览器可运行的静态 JSON + TypeScript，不引入 Torch/Python 运行时。最终性能和全仓门禁见 Task 28 handoff evidence。
 
 ### Task 28: 关闭学习模型发布门禁
 
@@ -579,3 +579,5 @@ feature: harmony-analysis-studio
 - [ ] `pnpm verify` 与 `pnpm verify:e2e` 通过。
 
 **Verification:** harmony eval/benchmark + `pnpm verify && pnpm verify:e2e`
+
+**Status (2026-07-17):** 本轮按产品决定收尾，指标门禁保持未勾选。最终保存点优先保证 Browser/Desktop 可运行与 resolved 行为不回退；Torch 模型不进入浏览器架构。完整 20-sample、5,000-note benchmark 为 analysis P95 750.53 ms、preview reducer P95 0.0018 ms、cancel feedback P95 0.0376 ms，满足性能预算。后续准确率工作应先重新设计模型、运行时预算和 corpus，再恢复此任务。

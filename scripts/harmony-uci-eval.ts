@@ -154,6 +154,7 @@ const report = {
     resolvedCoverage: ratio(resolved.length, evalResults.length),
     boundaryF1: calculateBoundaryF1(boundaryResults.filter((result) => splitFor(result.groupId) === "eval")),
     expectedCalibrationError: calibrationError(evalResults, calibration),
+    precisionCoverageCurve: precisionCoverageCurve(evalResults),
     facets: {
       root: ratio(resolved.filter((result) => result.facets.root).length, resolved.length),
       bass: ratio(resolved.filter((result) => result.facets.bass).length, resolved.length),
@@ -168,6 +169,17 @@ console.log(JSON.stringify(report, null, 2));
 
 function ratio(numerator: number, denominator: number): number {
   return denominator === 0 ? 0 : numerator / denominator;
+}
+
+function precisionCoverageCurve(results: readonly { confidence: number; correct: boolean }[]) {
+  return [0, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99].map((threshold) => {
+    const selected = results.filter((result) => result.confidence >= threshold);
+    return {
+      threshold,
+      precision: ratio(selected.filter((result) => result.correct).length, selected.length),
+      coverage: ratio(selected.length, results.length),
+    };
+  });
 }
 
 function calculateBoundaryF1(

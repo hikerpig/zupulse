@@ -581,3 +581,29 @@ feature: harmony-analysis-studio
 **Verification:** harmony eval/benchmark + `pnpm verify && pnpm verify:e2e`
 
 **Status (2026-07-17):** 本轮按产品决定收尾，指标门禁保持未勾选。最终保存点优先保证 Browser/Desktop 可运行与 resolved 行为不回退；Torch 模型不进入浏览器架构。完整 20-sample、5,000-note benchmark 为 analysis P95 750.53 ms、preview reducer P95 0.0018 ms、cancel feedback P95 0.0376 ms，满足性能预算。后续准确率工作应先重新设计模型、运行时预算和 corpus，再恢复此任务。
+
+## Phase 7: Harmony CLI evaluation tool
+
+### Task 29: 建立独立工具包和 inspect 协议
+
+- [ ] `tools/harmony-cli` 是 private workspace package，只从 `@zupulse/web-core` 公共入口导入。
+- [ ] `inspect` 输出带版本、来源 SHA-256 和 model/result payload 的稳定 JSON envelope。
+- [ ] 旧 `pnpm harmony:cli <score>` 调用在兼容期仍可用。
+
+**Verification:** 工具包 inspect/command/process tests + typecheck
+
+### Task 30: 建立 manifest regression eval
+
+- [ ] Zod 校验 manifest，并相对 manifest 解析 fixture 路径。
+- [ ] Turkish March 的 SHA-256、model/result 摘要进入可审查 manifest。
+- [ ] `eval` 成功返回 0，结构回归失败返回非 0，stdout 均为 JSON。
+
+**Verification:** evaluateManifest unit/integration/process tests
+
+### Task 31: 完成迁移和文档
+
+- [ ] 删除 `scripts/` 中旧 CLI 源码和测试，根命令只做代理。
+- [ ] 工具包 README 面向人和 agent 记录协议；根 scripts README 只链接入口。
+- [ ] 工具包测试/typecheck、`pnpm check:context`、`pnpm check:arch` 和可运行门禁通过。
+
+**Verification:** `pnpm --filter @zupulse/harmony-cli test && pnpm --filter @zupulse/harmony-cli typecheck && pnpm verify:fast`

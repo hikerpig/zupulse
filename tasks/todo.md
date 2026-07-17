@@ -586,11 +586,13 @@ feature: harmony-analysis-studio
 
 ### Task 29: 建立独立工具包和 inspect 协议
 
-- [ ] `tools/harmony-cli` 是 private workspace package，只从 `@zupulse/web-core` 公共入口导入。
-- [ ] `inspect` 输出带版本、来源 SHA-256 和 model/result payload 的稳定 JSON envelope。
-- [ ] 旧 `pnpm harmony:cli <score>` 调用在兼容期仍可用。
+- [x] `tools/harmony-cli` 是 private workspace package，只从 `@zupulse/web-core` 公共入口导入。
+- [x] `inspect` 输出带版本、来源 SHA-256 和 model/result payload 的稳定 JSON envelope。
+- [x] 旧 `pnpm harmony:cli <score>` 调用在兼容期仍可用。
 
 **Verification:** 工具包 inspect/command/process tests + typecheck
+
+**Evidence:** `pnpm --filter @zupulse/harmony-cli test` 通过（2 files / 4 tests），包级 typecheck 通过；`pnpm -s harmony:cli inspect test-fixtures/musicxml/generated/simple.mxl --view model` 的 stdout 可直接由 `jq` 解析，并只包含版本化 envelope、source SHA-256 与 model payload。根命令不再经过子包 `pnpm run`，避免 pnpm banner 污染机器 JSON；工具源码仍完全位于独立 workspace 包。
 
 ### Task 30: 建立 manifest regression eval
 

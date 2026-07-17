@@ -134,6 +134,28 @@ importers:
         specifier: ^5.0.14
         version: 5.0.14(@types/react@19.2.17)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))
 
+  tools/harmony-cli:
+    dependencies:
+      '@zupulse/web-core':
+        specifier: workspace:*
+        version: link:../../packages/web-core
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: ^20.14.0
+        version: 20.19.43
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+      vite-node:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@20.19.43)(terser@5.49.0)
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@20.19.43)(jsdom@24.1.3)(terser@5.49.0)
+
 packages:
 
   '@asamuzakjp/css-color@3.2.0':

@@ -44,7 +44,11 @@ export function parseDcmlPiece(source: {
       key: `fifths:${number(row, "keysig")}`,
     };
   });
-  const notesByStaff = Map.groupBy(parseTsv(source.notes), (row) => number(row, "staff"));
+  const notesByStaff = new Map<number, Row[]>();
+  for (const row of parseTsv(source.notes)) {
+    const staff = number(row, "staff");
+    notesByStaff.set(staff, [...(notesByStaff.get(staff) ?? []), row]);
+  }
   const staves = [...notesByStaff.entries()]
     .sort(([a], [b]) => a - b)
     .map(([staff, rows]) => ({

@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { resolve, sep } from "node:path";
 import { evaluateDcmlCorpus } from "./adapters/dcmlEvaluation";
+import { evaluateAsapCorpus } from "./adapters/asapEvaluation";
+import { evaluatePop909Corpus } from "./adapters/pop909Evaluation";
 import { harmonyDatasetEvalReportSchema, harmonyDatasetManifestSchema, type HarmonyDatasetEvalReport } from "./schemas";
 
 export async function evaluateHarmonyDatasetManifest(
@@ -25,6 +27,25 @@ export async function evaluateHarmonyDatasetManifest(
           forcedEvalGroups: item.forcedEvalGroups,
           ...(item.include === undefined ? {} : { include: item.include }),
           ...(item.groupBy === undefined ? {} : { groupBy: item.groupBy }),
+        }),
+      );
+      continue;
+    }
+    if (item.adapter === "pop909") {
+      cases.push(
+        await evaluatePop909Corpus(datasetPath, {
+          id: item.id,
+          forcedEvalGroups: item.forcedEvalGroups,
+          ...(item.include === undefined ? {} : { include: item.include }),
+        }),
+      );
+      continue;
+    }
+    if (item.adapter === "asap") {
+      cases.push(
+        await evaluateAsapCorpus(datasetPath, {
+          id: item.id,
+          ...(item.include === undefined ? {} : { include: item.include }),
         }),
       );
       continue;

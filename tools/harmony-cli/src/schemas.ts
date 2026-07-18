@@ -60,6 +60,7 @@ const datasetSourceSchema = z
   .strict();
 const datasetCaseBase = {
   id: z.string().min(1),
+  adapterVersion: z.literal("1.0.0"),
   datasetPath: z.string().min(1),
   archivePath: z.string().min(1),
   source: datasetSourceSchema,
@@ -87,6 +88,7 @@ export const harmonyDatasetManifestSchema = z
               ...datasetCaseBase,
               kind: z.literal("ingestion-corpus"),
               adapter: z.literal("asap"),
+              include: z.array(z.string().min(1)).optional(),
             })
             .strict(),
           z
@@ -200,6 +202,8 @@ export const harmonyDatasetEvalReportSchema = z
             failed: z.number().int().nonnegative(),
             notes: z.number().int().nonnegative(),
             measures: z.number().int().nonnegative(),
+            segments: z.number().int().nonnegative(),
+            runtimeMs: z.number().nonnegative(),
           })
           .strict(),
         z

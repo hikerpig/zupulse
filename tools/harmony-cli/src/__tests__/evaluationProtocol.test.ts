@@ -28,6 +28,7 @@ describe("harmony dataset evaluation protocol", () => {
       cases: [
         {
           id: "mozart",
+          adapterVersion: "1.0.0",
           kind: "accuracy-corpus",
           adapter: "dcml",
           datasetPath: "mozart",
@@ -37,6 +38,7 @@ describe("harmony dataset evaluation protocol", () => {
         },
         {
           id: "asap",
+          adapterVersion: "1.0.0",
           kind: "ingestion-corpus",
           adapter: "asap",
           datasetPath: "asap",
@@ -45,6 +47,7 @@ describe("harmony dataset evaluation protocol", () => {
         },
         {
           id: "choco",
+          adapterVersion: "1.0.0",
           kind: "label-prior-corpus",
           adapter: "choco",
           datasetPath: "choco",
@@ -66,6 +69,7 @@ describe("harmony dataset evaluation protocol", () => {
         cases: [
           {
             id: "asap-as-accuracy",
+            adapterVersion: "1.0.0",
             kind: "accuracy-corpus",
             adapter: "asap",
             datasetPath: "asap",

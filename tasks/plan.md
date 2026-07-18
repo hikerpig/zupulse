@@ -197,7 +197,7 @@ P8 数据驱动调优 T32 -> T33 -> T34 -> T35
 - [x] T32：定义 accuracy manifest、gold canonicalization、数据集 provenance 与分组隔离协议。
 - [x] T33：接入 DCML Mozart，先用 K331-3 建立 adapter pilot，再扩展为按奏鸣曲隔离的古典钢琴基线。
 - [x] T34：接入 Distant Listening Corpus 的跨作曲家钢琴子集，建立域外泛化与按和弦族切片报告。
-- [ ] T35：接入 POP909 流行钢琴域；把 ASAP、ChoCo 和 WJazzD 分别限定为解析鲁棒性、标签词表和后续爵士研究数据，不混入主准确率总分。
+- [x] T35：接入 POP909 流行钢琴域；把 ASAP、ChoCo 和 WJazzD 分别限定为解析鲁棒性、标签词表和后续爵士研究数据，不混入主准确率总分。
 
 ### Dataset roles
 
@@ -216,11 +216,13 @@ P8 数据驱动调优 T32 -> T33 -> T34 -> T35
 
 ### Exit gate P8
 
-- [ ] accuracy manifest 能区分 analyzer accuracy、MusicXML ingestion robustness 和 label-only prior，不把三类指标混成一个总分。
-- [ ] train/tune/eval 按完整作品分组；K331 全奏鸣曲只进入 eval，任何调参或统计资产不得读取其 gold。
-- [ ] 报告至少包含 gold mapping coverage、unsupported-label rate、Top-1/Top-8、resolved precision/coverage、boundary F1、ECE，以及按 chord family/corpus 的切片。
-- [ ] 每个候选改动保存相对固定 baseline 的 JSON diff；只接受改善目标误差类且不显著损害已冻结域的改动。
-- [ ] 外部数据可由 manifest 重建且不进入产品 bundle；CLI 测试、typecheck 与 `pnpm verify:fast` 通过。
+- [x] accuracy manifest 能区分 analyzer accuracy、MusicXML ingestion robustness 和 label-only prior，不把三类指标混成一个总分。
+- [x] train/tune/eval 按完整作品分组；K331 全奏鸣曲只进入 eval，任何调参或统计资产不得读取其 gold。
+- [x] 报告至少包含 gold mapping coverage、unsupported-label rate、Top-1/Top-8、resolved precision/coverage、boundary F1、ECE，以及按 chord family/corpus 的切片。
+- [x] 每个候选改动保存相对固定 baseline 的 JSON diff；只接受改善目标误差类且不显著损害已冻结域的改动。
+- [x] 外部数据可由 manifest 重建且不进入产品 bundle；CLI 测试、typecheck 与 `pnpm verify:fast` 通过。
+
+**P8 evidence:** 2026-07-18 完成 DCML Mozart/Schumann/Chopin/Beethoven、POP909 accuracy 与 ASAP ingestion 的真实固定版本运行；ChoCo/WJazzD 被 schema 与 train-only prior guard 限定为 label-only。三个 accuracy baseline 和 `compare` JSON diff 使用 0.005 no-regression 容差。`rtk pnpm verify:fast` 通过（99 files / 362 tests），root `tsc -b`、format、context 与 architecture checks 全部通过。后续准确率实现仍需人工选择目标错误簇，本阶段未修改 analyzer。
 
 ### Dataset sources
 

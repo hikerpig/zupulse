@@ -679,10 +679,10 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] POP909 按歌曲分组，MIDI 音符与 chord 时间轴对齐，单独报告流行域绝对和弦指标。
-- [ ] ASAP 只报告解析成功率、note/measure invariants、boundary/runtime，不宣称有 chord accuracy gold。
-- [ ] ChoCo/WJazzD 不进入端到端总分；任何从 label-only 数据得到的 prior 都必须仅由 train split 构建并版本化。
-- [ ] 建立固定迭代循环：baseline → 最大错误簇 → 单一假设 → tune → frozen eval/no-regression → 接受或回滚；每轮保留 JSON diff 和变更说明。
+- [x] POP909 按歌曲分组，MIDI 音符与 chord 时间轴对齐，单独报告流行域绝对和弦指标。
+- [x] ASAP 只报告解析成功率、note/measure invariants、boundary/runtime，不宣称有 chord accuracy gold。
+- [x] ChoCo/WJazzD 不进入端到端总分；任何从 label-only 数据得到的 prior 都必须仅由 train split 构建并版本化。
+- [x] 建立固定迭代循环：baseline → 最大错误簇 → 单一假设 → tune → frozen eval/no-regression → 接受或回滚；每轮保留 JSON diff 和变更说明。
 
 **Verification:** POP909 adapter/eval tests + ASAP robustness suite + `pnpm verify:fast`
 
@@ -690,7 +690,11 @@ feature: harmony-analysis-studio
 
 **Files likely touched:** POP909/ASAP adapters、dataset manifests、harmony-cli report、调优 handoff 文档。
 
+**Evidence:** POP909 固定官方 commit `d83e6ed…` 与 archive SHA-256 `32cedcc2…32c6`；adapter 用 `beat_midi.txt` 独立建立时间网格，不从 chord gold 构造边界。4-song pilot 按歌曲 split 为 195/185/282 events，eval mapping 98.23%、Top-1 38.81%、Top-8 54.88%、precision 35.12%、coverage 62.54%、boundary F1 4.96%，基线保存为 `pop909-piano-v1.json`。ASAP 固定 v1.1 commit/tag 与 SHA-256 `cde942fd…535b`，真实 5/5 MusicXML 解析成功，累计 10,896 notes、789 measures、2,332 segments、约 55.5s；report schema 不含 accuracy metrics。`labelPrior.test.ts` 证明 train-only 资产确定且 tune/eval 输入被拒绝；ChoCo/WJazzD 未进入 active endpoint manifest。`tools/harmony-cli/docs/tuning-loop.md` 固化单一假设、frozen diff、接受/回滚和变更说明模板。
+
 ### Checkpoint P8
 
-- [ ] `tasks/plan.md` 的 Exit gate P8 全部通过。
-- [ ] 评测设计经人工审查后，才开始下一轮准确率实现。
+- [x] `tasks/plan.md` 的 Exit gate P8 全部通过。
+- [x] 评测设计已形成独立 handoff；本阶段未开始下一轮准确率实现，后续必须先经人工审查。
+
+**Evidence:** `rtk pnpm verify:fast` 于 2026-07-18 通过（99 test files / 362 tests），包含 root `tsc -b`、Prettier、context 和 architecture checks。真实外部数据均由 v2 manifest 的 URL、revision、license、adapterVersion 与 archive SHA-256 重建，原始数据只位于 git 外 `/tmp/harmony-data`。Phase 8 只交付评测协议、adapter、基线、diff 门禁和调优 handoff，没有改动 production analyzer 的权重、阈值或实现。

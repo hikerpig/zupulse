@@ -4,6 +4,7 @@
   "cases": [
     {
       "id": "dcml-mozart-k331-pilot",
+      "adapterVersion": "1.0.0",
       "kind": "accuracy-corpus",
       "adapter": "dcml",
       "datasetPath": "mozart_piano_sonatas-2.3",
@@ -19,6 +20,7 @@
     },
     {
       "id": "dcml-mozart-v2.3",
+      "adapterVersion": "1.0.0",
       "kind": "accuracy-corpus",
       "adapter": "dcml",
       "datasetPath": "mozart_piano_sonatas-2.3",
@@ -33,6 +35,7 @@
     },
     {
       "id": "dcml-schumann-kinderszenen-v2.3",
+      "adapterVersion": "1.0.0",
       "kind": "accuracy-corpus",
       "adapter": "dcml",
       "datasetPath": "schumann_kinderszenen-2.3",
@@ -48,6 +51,7 @@
     },
     {
       "id": "dcml-chopin-mazurkas-v3.2",
+      "adapterVersion": "1.0.0",
       "kind": "accuracy-corpus",
       "adapter": "dcml",
       "datasetPath": "chopin_mazurkas-3.2",
@@ -77,6 +81,7 @@
     },
     {
       "id": "dcml-beethoven-sonatas-v2.5",
+      "adapterVersion": "1.0.0",
       "kind": "accuracy-corpus",
       "adapter": "dcml",
       "datasetPath": "beethoven_piano_sonatas-2.5",
@@ -89,6 +94,43 @@
       },
       "forcedEvalGroups": ["08", "23"],
       "include": ["01-1", "01-2", "01-3", "01-4", "08-1", "08-2", "08-3", "23-1", "23-2", "23-3"]
+    },
+    {
+      "id": "pop909-piano-v1",
+      "adapterVersion": "1.0.0",
+      "kind": "accuracy-corpus",
+      "adapter": "pop909",
+      "datasetPath": "pop909-d83e6ed/POP909",
+      "archivePath": "archives/pop909-d83e6ed.zip",
+      "source": {
+        "url": "https://raw.githubusercontent.com/music-x-lab/POP909-Dataset/d83e6edba6872a704f5d3b8b32f5cb540088dae6/POP909.zip",
+        "revision": "d83e6edba6872a704f5d3b8b32f5cb540088dae6",
+        "license": "MIT",
+        "sha256": "32cedcc22585eff9c090791941a0c4e5e6372daa2a11f7b04bd038f941ac32c6"
+      },
+      "forcedEvalGroups": ["075"],
+      "include": ["001", "075", "225", "525"]
+    },
+    {
+      "id": "asap-musicxml-v1.1",
+      "adapterVersion": "1.0.0",
+      "kind": "ingestion-corpus",
+      "adapter": "asap",
+      "datasetPath": "asap-v1.1/asap-dataset-1.1",
+      "archivePath": "archives/asap-v1.1.zip",
+      "source": {
+        "url": "https://codeload.github.com/fosfrancesco/asap-dataset/zip/refs/tags/v1.1",
+        "revision": "v1.1@fad8d1e8078d0ae47ad2f280b5d022bd2de24784",
+        "license": "CC-BY-NC-SA-4.0",
+        "sha256": "cde942fd71809c185dabce0a095a56cd26addd20f8c6dc3b2bfe91b94bcc535b"
+      },
+      "include": [
+        "Bach/Fugue/bwv_846/xml_score.musicxml",
+        "Beethoven/Piano_Sonatas/17-1/xml_score.musicxml",
+        "Debussy/Pour_le_Piano/1/xml_score.musicxml",
+        "Mozart/Piano_Sonatas/11-3/xml_score.musicxml",
+        "Schumann/Arabeske/xml_score.musicxml"
+      ]
     }
   ]
 }

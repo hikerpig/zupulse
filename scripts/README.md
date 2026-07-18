@@ -18,7 +18,7 @@ pnpm harmony:benchmark
 
 ## MusicXML/MXL CLI
 
-独立工具包 `@zupulse/harmony-cli` 提供 model/result 检查、版本化 manifest 回归和机器可读退出码。使用与协议见 [`tools/harmony-cli/README.md`](../tools/harmony-cli/README.md)。
+独立工具包 `@zupulse/harmony-cli` 提供 model/result 检查、版本化 manifest 回归和机器可读退出码。使用与协议见 [`tools/harmony-cli/README.md`](../tools/harmony-cli/README.md)，数据驱动调优循环见 [`tools/harmony-cli/docs/tuning-loop.md`](../tools/harmony-cli/docs/tuning-loop.md)。
 
 省略 UCI/CMU zip 路径时，评估脚本会从对应 manifest 的 `source` 下载归档；为了离线复现和避免重复下载，推荐显式传入本地文件。
 

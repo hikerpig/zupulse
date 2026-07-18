@@ -55,6 +55,7 @@ describe("evaluateDcmlCorpus", () => {
         cases: [
           {
             id: "mozart-pilot",
+            adapterVersion: "1.0.0",
             kind: "accuracy-corpus",
             adapter: "dcml",
             datasetPath: "mozart",

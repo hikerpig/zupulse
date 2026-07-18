@@ -76,6 +76,13 @@ pnpm -s harmony:cli compare \
 
 `compare` 始终输出逐字段 JSON diff；有回退时 `summary.failed > 0` 且 exit code 为 1。基线当前容差为 0.005。跨作曲家切片把 common triad/seventh、inversion、applied/chromatic、augmented-sixth、Neapolitan、extended/altered 和 unsupported 分开，避免总分掩盖特定和弦族退化。
 
+当前 v2 manifest 还包含两个独立角色：
+
+- `pop909-piano-v1`：从 MIDI 与 beat 网格构造 model，再映射 chord intervals；4 首 pilot 按完整歌曲 split，流行域指标单独冻结在 `pop909-piano-v1.json`。
+- `asap-musicxml-v1.1`：5 首 MusicXML 的 ingestion 样本，只输出 parsed/failed、notes、measures、segments 和 runtime，不输出 chord accuracy。
+
+ChoCo 与 WJazzD 保持 `label-prior-corpus` 角色，不在 active 端到端报告中。任何 label-only prior 必须由 `buildTrainLabelPrior` 从 train-only records 生成；传入 tune/eval 会失败。完整调优顺序和产物规范见 [`docs/tuning-loop.md`](docs/tuning-loop.md)。
+
 ## Manifest
 
 ```json

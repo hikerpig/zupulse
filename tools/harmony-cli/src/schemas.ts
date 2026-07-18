@@ -50,6 +50,152 @@ export const harmonyRegressionManifestSchema = z
   })
   .strict();
 
+const datasetSourceSchema = z
+  .object({
+    url: z.url(),
+    revision: z.string().min(1),
+    license: z.string().min(1),
+    sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  })
+  .strict();
+const datasetCaseBase = {
+  id: z.string().min(1),
+  datasetPath: z.string().min(1),
+  source: datasetSourceSchema,
+};
+
+export const harmonyDatasetManifestSchema = z
+  .object({
+    schemaVersion: z.literal("2.0.0"),
+    id: z.string().min(1),
+    cases: z
+      .array(
+        z.discriminatedUnion("kind", [
+          z
+            .object({
+              ...datasetCaseBase,
+              kind: z.literal("accuracy-corpus"),
+              adapter: z.enum(["dcml", "pop909"]),
+              forcedEvalGroups: z.array(z.string().min(1)),
+              include: z.array(z.string().min(1)).optional(),
+            })
+            .strict(),
+          z
+            .object({
+              ...datasetCaseBase,
+              kind: z.literal("ingestion-corpus"),
+              adapter: z.literal("asap"),
+            })
+            .strict(),
+          z
+            .object({
+              ...datasetCaseBase,
+              kind: z.literal("label-prior-corpus"),
+              adapter: z.enum(["choco", "wjazzd"]),
+            })
+            .strict(),
+        ]),
+      )
+      .min(1),
+  })
+  .strict();
+
+export type HarmonyDatasetManifest = z.infer<typeof harmonyDatasetManifestSchema>;
+
+const fractionSchema = z.number().min(0).max(1);
+const accuracySliceSchema = z
+  .object({
+    cases: z.number().int().nonnegative(),
+    top1Accuracy: fractionSchema,
+    resolvedPrecision: fractionSchema,
+    resolvedCoverage: fractionSchema,
+  })
+  .strict();
+
+export const harmonyAccuracyMetricsSchema = z
+  .object({
+    gold: z
+      .object({
+        total: z.number().int().nonnegative(),
+        mapped: z.number().int().nonnegative(),
+        unsupported: z.number().int().nonnegative(),
+      })
+      .strict(),
+    mappingCoverage: fractionSchema,
+    unsupportedLabelRate: fractionSchema,
+    top1Accuracy: fractionSchema,
+    top8OracleRecall: fractionSchema,
+    resolvedPrecision: fractionSchema,
+    resolvedCoverage: fractionSchema,
+    boundaryF1: fractionSchema,
+    expectedCalibrationError: fractionSchema,
+    facets: z
+      .object({
+        root: fractionSchema,
+        bass: fractionSchema,
+        kind: fractionSchema,
+        extension: fractionSchema,
+        degrees: fractionSchema,
+      })
+      .strict(),
+    slices: z
+      .object({
+        corpus: z.record(z.string(), accuracySliceSchema),
+        chordFamily: z.record(z.string(), accuracySliceSchema),
+      })
+      .strict(),
+  })
+  .strict();
+
+export const harmonyDatasetEvalReportSchema = z
+  .object({
+    schemaVersion: z.literal("2.0.0"),
+    command: z.literal("eval"),
+    manifest: z.string().min(1),
+    summary: z.object({ passed: z.number().int().nonnegative(), failed: z.number().int().nonnegative() }).strict(),
+    cases: z.array(
+      z.discriminatedUnion("kind", [
+        z
+          .object({
+            id: z.string().min(1),
+            kind: z.literal("accuracy-corpus"),
+            adapter: z.enum(["dcml", "pop909"]),
+            status: z.enum(["passed", "failed"]),
+            splits: z.record(z.enum(["train", "tune", "eval"]), z.number().int().nonnegative()),
+            metrics: harmonyAccuracyMetricsSchema,
+          })
+          .strict(),
+        z
+          .object({
+            id: z.string().min(1),
+            kind: z.literal("ingestion-corpus"),
+            adapter: z.literal("asap"),
+            status: z.enum(["passed", "failed"]),
+            files: z.number().int().nonnegative(),
+            parsed: z.number().int().nonnegative(),
+            failed: z.number().int().nonnegative(),
+            notes: z.number().int().nonnegative(),
+            measures: z.number().int().nonnegative(),
+          })
+          .strict(),
+        z
+          .object({
+            id: z.string().min(1),
+            kind: z.literal("label-prior-corpus"),
+            adapter: z.enum(["choco", "wjazzd"]),
+            status: z.enum(["passed", "failed"]),
+            labels: z.number().int().nonnegative(),
+            mapped: z.number().int().nonnegative(),
+            unsupported: z.number().int().nonnegative(),
+          })
+          .strict(),
+      ]),
+    ),
+  })
+  .strict();
+
+export type HarmonyDatasetEvalReport = z.infer<typeof harmonyDatasetEvalReportSchema>;
+
 export const harmonyRegressionCheckSchema = z
   .object({
     field: z.string().min(1),

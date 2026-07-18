@@ -40,6 +40,12 @@
 
 ## 分析方法
 
+### 书面时间与边界
+
+来源 MusicXML 的 divisions 不假设固定为 960。`writtenTime.ts` 对实际 divisions 计算安全 LCM，并要求 source divisions 与内部 tick 往返完全相等；不可整除或超出安全整数的位置会被拒绝。分析在不展开 repeat 的 written timeline 上运行，range 均为左闭右开。
+
+boundary lattice 的小节和必要事件边界不会被剪枝，可选音符边界按稳定顺序受每小节预算限制。后续 decoder 只在这张合法 lattice 上搜索，不产生无法写回来源谱的位置。
+
 ### 规则候选
 
 分析只读取选中且非打击乐的轨道，并优先使用 sounding pitch。每个候选区间会统计十二个 pitch class 的累计时值和 onset，结合最低音、重要和弦音是否存在、非和弦音比例、扩展音证据与结构复杂度生成候选。
@@ -59,6 +65,8 @@ ranker 是静态 JSON + TypeScript 实现，不使用 Torch、Python runtime 或
 - 12 个相对 bass 音程加“无 bass”的 13 维 one-hot。
 
 模型按 chord kind、extension、degrees 和 slash-bass interval 保存频次原型，以原型频次和特征距离评分。当前 Top-8 通常保留六个学习候选和两个规则候选，但 primary chord 始终来自规则序列解码。
+
+这个边界是有意的：早期实验把学习分混入序列累计时，分数尺度差异会降低 resolved precision 和 boundary 稳定性。后续模型若要影响 primary path，必须先在冻结 train/tune/eval 协议下证明目标切片改善，并通过已有域的 no-regression 门禁。
 
 ## 来源、修正与有效结果
 
@@ -93,4 +101,4 @@ ranker 是静态 JSON + TypeScript 实现，不使用 Torch、Python runtime 或
 pnpm vitest run packages/web-core/src/harmony
 ```
 
-训练、真实语料评估和性能 benchmark 见 [`scripts/README.md`](../../../scripts/README.md)。架构决策见 [`ADR 0053`](../../../docs/adr/0053-use-bundled-learned-harmony-ranker.md)。运行时代码和测试结果高于文档；若实现边界变化，应同步更新本文和 ADR。
+训练、真实语料评估和性能 benchmark 见 [`scripts/README.md`](../../../scripts/README.md)，完整系统边界见 [`docs/architecture/harmony-analysis-system.md`](../../../docs/architecture/harmony-analysis-system.md)。架构决策见 [`ADR 0053`](../../../docs/adr/0053-use-bundled-learned-harmony-ranker.md)。运行时代码和测试结果高于文档；若实现边界变化，应同步更新本文和 ADR。

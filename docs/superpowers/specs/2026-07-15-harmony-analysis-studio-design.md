@@ -2,10 +2,10 @@
 
 ## 状态
 
-- 状态：已完成产品与架构访谈，待人工评审后进入实现。
+- 状态：历史设计规格；实现现状见 [`docs/architecture/harmony-analysis-system.md`](../../architecture/harmony-analysis-system.md)。
 - 日期：2026-07-15。
 - 关联决策：ADR 0035、0037、0043、0046、0049、0052。
-- 实现边界：本文件是规格，不授权在评审前修改产品代码。
+- 事实边界：运行时代码、Zod schema、测试、Current ADR 和当前架构文档高于本文。
 
 ## 结论与可行性
 
@@ -834,14 +834,9 @@ Browser 与 Desktop 运行同一组 HarmonyAnalysisRepository contract tests：
 - GP Library Score 显示不支持，不创建分析记录。
 - 删除 score 后已打开 Studio 的后续保存失败且不重建数据。
 
-## 实施与验证计划
+## 当前实现与验证
 
-为避免本规格同时承担领域事实与执行清单，阶段、依赖图、验证矩阵和退出门槛已拆到：
-
-- [`tasks/plan.md`](../../../tasks/plan.md)：七阶段实施计划与验证计划。
-- [`tasks/todo.md`](../../../tasks/todo.md)：25 个单会话任务、逐项验收、命令和预计修改范围。
-
-实现必须从 Phase 0 的书面时间可逆性和 XML/MXL 增量回写关口开始；当前 phase 未通过时不得进入依赖阶段。量化产品验收仍以本规格下节为准。
+阶段性实施清单已经完成归档清理，不再作为项目上下文。当前系统边界、书面时间、分析引擎、持久化、Studio 并发和导出安全见 [`harmony-analysis-system.md`](../../architecture/harmony-analysis-system.md)；核心算法文件说明见 [`packages/web-core/docs/harmony.md`](../../../packages/web-core/docs/harmony.md)；数据集评测与 no-regression 协议见 [`tools/harmony-cli/docs/evaluation.md`](../../../tools/harmony-cli/docs/evaluation.md)。量化产品目标仍可从下节追溯，但当前真实语料基线以版本化 baseline JSON 为准。
 
 ## 验收标准
 

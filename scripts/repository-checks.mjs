@@ -13,14 +13,15 @@ const DEFAULT_CONTEXT = {
     "apps/desktop-shell/AGENTS.md",
     "apps/desktop-shell/src/main/AGENTS.md",
     "docs/architecture/README.md",
+    "docs/architecture/harmony-analysis-system.md",
     "docs/adr/README.md",
+    "packages/web-core/docs/harmony.md",
+    "tools/harmony-cli/docs/evaluation.md",
     "tasks/TEMPLATE.md",
   ],
   historicalFiles: [
     "docs/architecture/viewer-architecture-overview.md",
     "docs/architecture/score-model-bridge-storage-design.md",
-    "tasks/plan.md",
-    "tasks/todo.md",
   ],
 };
 

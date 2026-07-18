@@ -606,8 +606,10 @@ feature: harmony-analysis-studio
 
 ### Task 31: 完成迁移和文档
 
-- [ ] 删除 `scripts/` 中旧 CLI 源码和测试，根命令只做代理。
-- [ ] 工具包 README 面向人和 agent 记录协议；根 scripts README 只链接入口。
-- [ ] 工具包测试/typecheck、`pnpm check:context`、`pnpm check:arch` 和可运行门禁通过。
+- [x] 删除 `scripts/` 中旧 CLI 源码和测试，根命令只做代理。
+- [x] 工具包 README 面向人和 agent 记录协议；根 scripts README 只链接入口。
+- [x] 工具包测试/typecheck、`pnpm check:context`、`pnpm check:arch` 和可运行门禁通过。
 
 **Verification:** `pnpm --filter @zupulse/harmony-cli test && pnpm --filter @zupulse/harmony-cli typecheck && pnpm verify:fast`
+
+**Evidence:** 工具包测试通过（4 files / 8 tests），包括真实子进程 inspect JSON、故意错误 manifest 的 JSON failure report 与 exit code 1；工具包及根 `tsc -b` 通过。根 `pnpm check` 通过（90 files / 340 tests），`pnpm check:context`、`pnpm check:arch` 和全部本次文件 Prettier 检查通过。`pnpm verify:fast` 的完整命令仅被本任务未触及的 `.design_library/tab-viewer-te-braun-theme/metadata.json` 与 `.design_library/zupulse-te-braun-theme/metadata.json` 既有格式问题挡住，未批量改写无关设计资产。

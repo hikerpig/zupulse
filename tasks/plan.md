@@ -176,14 +176,14 @@ P6 发布质量 T24 -> T25
 
 - [x] T29：建立 `@zupulse/harmony-cli` workspace 包与稳定 `inspect` JSON 协议。
 - [x] T30：实现版本化 regression manifest、结构化 `eval` 报告和可靠退出码。
-- [ ] T31：迁移文档与根命令，删除旧 CLI，实现进程级验证并关闭迁移。
+- [x] T31：迁移文档与根命令，删除旧 CLI，实现进程级验证并关闭迁移。
 
 ### Exit gate P7
 
-- [ ] `inspect` 的 model/result/all 输出均通过 schema 和进程级测试。
-- [ ] Turkish March 结构回归由 manifest 与 SHA-256 管理，且不冒充 accuracy gold。
-- [ ] `eval` 成败均输出 JSON，失败时返回非零退出码。
-- [ ] 工具包只依赖 `@zupulse/web-core` 公共入口，相关 typecheck、测试和仓库门禁通过。
+- [x] `inspect` 的 model/result/all 输出均通过 schema 和进程级测试。
+- [x] Turkish March 结构回归由 manifest 与 SHA-256 管理，且不冒充 accuracy gold。
+- [x] `eval` 成败均输出 JSON，失败时返回非零退出码。
+- [x] 工具包只依赖 `@zupulse/web-core` 公共入口，相关 typecheck、测试和仓库门禁通过。
 
 ## Verification plan
 

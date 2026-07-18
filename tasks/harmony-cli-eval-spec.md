@@ -91,7 +91,7 @@ pnpm --filter @zupulse/harmony-cli test
 
 ```text
 tools/harmony-cli/
-  package.json           # private workspace 包与 bin/test/typecheck scripts
+  package.json           # private workspace 包与 cli/test/typecheck scripts
   tsconfig.json
   README.md              # 面向人和 agent 的完整协议与示例
   src/

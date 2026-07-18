@@ -40,6 +40,10 @@ Roman numeral gold 通过 global/local key、相对五度 root/bass 和 chord ty
 
 K331 全奏鸣曲固定为 eval。仓库中的 Turkish March MXL 与 DCML K331-3 来自不同版本，书面小节数不同，禁止按 measure number 强行拼接。
 
+K331-3 pilot 不直接读取 MSCX、MusicXML 或仓库中的 Turkish March MXL。它从同一 DCML 版本的 `measures/K331-3.measures.tsv` 与 `notes/K331-3.notes.tsv` 构造无答案泄漏的 `HarmonyAnalysisInput`，再把 analyzer 输出与 `harmonies/K331-3.harmonies.tsv` 规范化得到的专家 gold 比较。三份 TSV 共享 `quarterbeats_all_endings` 时间轴；`MS3/K331-3.mscx` 只是它们的制谱来源，不参与 CLI 执行。
+
+当前比较是 gold-onset anchored：每条 gold 使用覆盖其起点的预测 segment，并按完整 gold duration 加权；它不是预测/gold 区间切分后的 duration-overlap confusion matrix。因此预测在 gold 区间中间改变和弦不会被拆分计分，两个 gold onset 之间的额外预测边界也不会被完整计为 false positive。现有指标适合确定性回归；若用于更严格的边界调优，应先升级为区间重叠评测。
+
 ### POP909
 
 POP909 adapter 解析标准 MIDI 音符和 tempo，用 `beat_midi.txt` 建立 independent written grid，再映射 `chord_midi.txt` intervals。这样 gold 只用于评测，不向 boundary lattice 泄漏正确答案。General MIDI channel 10 percussion 不作为和声证据。

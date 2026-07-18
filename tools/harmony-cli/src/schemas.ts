@@ -61,6 +61,7 @@ const datasetSourceSchema = z
 const datasetCaseBase = {
   id: z.string().min(1),
   datasetPath: z.string().min(1),
+  archivePath: z.string().min(1),
   source: datasetSourceSchema,
 };
 
@@ -163,6 +164,28 @@ export const harmonyDatasetEvalReportSchema = z
             status: z.enum(["passed", "failed"]),
             splits: z.record(z.enum(["train", "tune", "eval"]), z.number().int().nonnegative()),
             metrics: harmonyAccuracyMetricsSchema,
+            errors: z.array(
+              z
+                .object({
+                  pieceId: z.string().min(1),
+                  groupId: z.string().min(1),
+                  measureIndex: z.number().int().nonnegative(),
+                  offsetTicks: z.number().int().nonnegative(),
+                  label: z.string().min(1),
+                  family: z.string().min(1),
+                  category: z.enum([
+                    "unsupported-label",
+                    "unresolved",
+                    "root",
+                    "bass",
+                    "kind",
+                    "extension",
+                    "degrees",
+                    "boundary",
+                  ]),
+                })
+                .strict(),
+            ),
           })
           .strict(),
         z

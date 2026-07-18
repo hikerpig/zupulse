@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "2.0.0",
+  "id": "harmony-datasets-v2",
+  "cases": [
+    {
+      "id": "dcml-mozart-k331-pilot",
+      "kind": "accuracy-corpus",
+      "adapter": "dcml",
+      "datasetPath": "mozart_piano_sonatas-2.3",
+      "archivePath": "archives/mozart-v2.3.zip",
+      "source": {
+        "url": "https://github.com/DCMLab/mozart_piano_sonatas/archive/refs/tags/v2.3.zip",
+        "revision": "v2.3@5337257a5318711e6302cfe85c3f1a6ade3c6271",
+        "license": "CC-BY-NC-SA-4.0",
+        "sha256": "70c401e1aa48843326400992c3a61225e4425190d39d64b242a6c1d0fdc3ef87"
+      },
+      "forcedEvalGroups": ["K331"],
+      "include": ["K331-3"]
+    },
+    {
+      "id": "dcml-mozart-v2.3",
+      "kind": "accuracy-corpus",
+      "adapter": "dcml",
+      "datasetPath": "mozart_piano_sonatas-2.3",
+      "archivePath": "archives/mozart-v2.3.zip",
+      "source": {
+        "url": "https://github.com/DCMLab/mozart_piano_sonatas/archive/refs/tags/v2.3.zip",
+        "revision": "v2.3@5337257a5318711e6302cfe85c3f1a6ade3c6271",
+        "license": "CC-BY-NC-SA-4.0",
+        "sha256": "70c401e1aa48843326400992c3a61225e4425190d39d64b242a6c1d0fdc3ef87"
+      },
+      "forcedEvalGroups": ["K331"]
+    }
+  ]
+}

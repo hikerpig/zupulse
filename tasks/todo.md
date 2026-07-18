@@ -622,10 +622,10 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] manifest 固定 corpus URL、版本/commit、许可、SHA-256、adapter 版本和 split group。
-- [ ] gold canonicalization 把 Roman numeral + local/global key 映射到绝对 root/kind/bass/degrees，并显式记录 unsupported，而不是猜测映射。
-- [ ] train/tune/eval 以完整作品为最小分组；评测进程证明 tune/train 代码不能读取 eval gold。
-- [ ] 报告分开输出 mapping coverage、unsupported-label rate、Top-1/Top-8、resolved precision/coverage、boundary F1、ECE 和 corpus/chord-family slices。
+- [x] manifest 固定 corpus URL、版本/commit、许可、SHA-256、adapter 版本和 split group。
+- [x] gold canonicalization 把 Roman numeral + local/global key 映射到绝对 root/kind/bass/degrees，并显式记录 unsupported，而不是猜测映射。
+- [x] train/tune/eval 以完整作品为最小分组；评测进程证明 tune/train 代码不能读取 eval gold。
+- [x] 报告分开输出 mapping coverage、unsupported-label rate、Top-1/Top-8、resolved precision/coverage、boundary F1、ECE 和 corpus/chord-family slices。
 
 **Verification:** harmony-cli schema/unit/process tests + typecheck
 
@@ -633,22 +633,26 @@ feature: harmony-analysis-studio
 
 **Files likely touched:** `tools/harmony-cli/src/schemas.ts`、accuracy evaluator/adapters、CLI tests、corpus manifest 文档。
 
+**Evidence:** `harmony-datasets-v2` manifest 严格区分 accuracy/ingestion/label-prior 三种 case，固定 URL、revision、license、archive SHA-256、adapter 与作品 holdout。`evaluationProtocol.test.ts` 锁定作品级确定 split、K331 强制 eval 和 eval-group training 拒绝；`accuracyMetrics.test.ts` 锁定 gold mapping、Top-1/Top-8、precision/coverage、boundary F1、ECE、facets 与 slices。v1 structural manifest 保持兼容。
+
 ### Task 33: 建立 DCML Mozart pilot 与基线
 
 **Description:** 从 DCML `notes.tsv`、`measures.tsv` 构造内部 model，从 `harmonies.tsv` 构造 gold；先跑 K331-3，再扩展 18 首钢琴奏鸣曲，并按奏鸣曲隔离 split。
 
 **Acceptance criteria:**
 
-- [ ] K331-3 adapter 的 note/onset/duration、meter/key 和 harmony onset 通过小型人工抽查 fixture。
-- [ ] K331 全奏鸣曲固定为 eval，不参与阈值、权重、词频或模型资产选择。
-- [ ] 现有 147 小节 Turkish March MXL 仍只做结构回归；DCML 127 小节版本不按 measure number 与其强行对齐。
-- [ ] 生成首份 Mozart baseline JSON、错误样本索引和错误分类（边界、root、kind、bass/inversion、extension/degree、拒识）。
+- [x] K331-3 adapter 的 note/onset/duration、meter/key 和 harmony onset 通过小型人工抽查 fixture。
+- [x] K331 全奏鸣曲固定为 eval，不参与阈值、权重、词频或模型资产选择。
+- [x] 现有 147 小节 Turkish March MXL 仍只做结构回归；DCML v2.3 的 137 个书面小节不按 measure number 与其强行对齐。
+- [x] 生成首份 Mozart baseline JSON、错误样本索引和错误分类（边界、root、kind、bass/inversion、extension/degree、拒识）。
 
 **Verification:** adapter golden tests + pinned K331-3 accuracy eval + full Mozart report
 
 **Dependencies:** Task 32
 
 **Files likely touched:** `tools/harmony-cli/src/adapters/dcml*`、外部 corpus manifest、gold fixtures、README。
+
+**Evidence:** DCML adapter 使用 `quarterbeats_all_endings` 建立书面时间，能处理 alternate-ending 空 onset/duration 与省略全空 `gracenote` 列；gold 由 global/local key、相对五度 root/bass 和 `chord_type` 规范化，Ger/Fr/It 与未支持 changes 明确计入 unsupported。固定 v2.3 archive SHA-256 为 `70c401e1...c3ef87`。真实 K331-3 为 128 gold、118 mapped，Top-8 73.36%、resolved precision 46.65%、coverage 73.36%、boundary F1 79.05%。完整 Mozart split 为 8,720/2,157/4,395；eval mapped 3,720/4,395，Top-8 50.71%、precision 40.32%、coverage 83.62%、boundary F1 84.70%。基线保存于 `test-fixtures/harmony/baselines/dcml-mozart-v2.3.json`，报告另带最多 200 条定位到 piece/measure/offset 的错误索引。
 
 ### Task 34: 建立 DCML 跨作曲家泛化门禁
 

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0.0",
+  "sourceManifest": "harmony-datasets-v2",
+  "datasetRevision": "v2.3@5337257a5318711e6302cfe85c3f1a6ade3c6271",
+  "algorithmVersion": "web-core@0.1.0",
+  "cases": {
+    "dcml-mozart-k331-pilot": {
+      "splits": { "train": 0, "tune": 0, "eval": 128 },
+      "gold": { "total": 128, "mapped": 118, "unsupported": 10 },
+      "mappingCoverage": 0.921875,
+      "top1Accuracy": 0.5,
+      "top8OracleRecall": 0.7336065573770492,
+      "resolvedPrecision": 0.4664804469273743,
+      "resolvedCoverage": 0.7336065573770492,
+      "boundaryF1": 0.7904761904761904,
+      "expectedCalibrationError": 0.27394808743169397
+    },
+    "dcml-mozart-v2.3": {
+      "splits": { "train": 8720, "tune": 2157, "eval": 4395 },
+      "gold": { "total": 4395, "mapped": 3720, "unsupported": 675 },
+      "mappingCoverage": 0.8464163822525598,
+      "top1Accuracy": 0.24315873415596406,
+      "top8OracleRecall": 0.507072106102577,
+      "resolvedPrecision": 0.40318735098506714,
+      "resolvedCoverage": 0.836166372869974,
+      "boundaryF1": 0.8469873150105708,
+      "expectedCalibrationError": 0.3209909172339916
+    }
+  }
+}

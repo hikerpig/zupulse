@@ -55,6 +55,16 @@ pnpm -s harmony:cli eval path/to/manifest.json
 
 当前 Turkish March case 是 `structural-regression`：它只锁定解析模型和算法结果摘要，不代表和弦正确。只有人工审核的时间区间与和弦标签才能成为 accuracy gold。
 
+### Dataset eval
+
+Phase 8 的 v2 manifest 把带专家 gold 的 accuracy、只有谱面结构的 ingestion robustness、只有标签的 prior corpus 分开。外部数据不进 git；下载并解压到本地目录后运行：
+
+```bash
+pnpm -s harmony:cli eval test-fixtures/harmony/datasets/manifest.json --data-root /path/to/harmony-data
+```
+
+`data-root` 下必须同时存在 manifest 声明的 archive 和解压目录。CLI 先校验 archive SHA-256，再运行 adapter。DCML 报告包含作品级 split、mapping/unsupported、Top-1/Top-8、resolved precision/coverage、boundary F1、ECE、facets、chord-family slices 和最多 200 条错误定位。当前固定 Mozart 数据为 v2.3；K331 整首奏鸣曲强制属于 eval。
+
 ## Manifest
 
 ```json

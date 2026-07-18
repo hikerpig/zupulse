@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { evaluateHarmonyDatasetManifest } from "./evaluateDatasetManifest";
 import { inspectHarmonyScore } from "./inspectScore";
 import {
   harmonyEvalReportSchema,
@@ -11,8 +12,16 @@ import {
 
 type RegressionSummary = HarmonyRegressionManifest["cases"][number]["expected"] & { sha256: string };
 
-export async function evaluateHarmonyManifest(path: string): Promise<HarmonyEvalReport> {
-  const manifest = harmonyRegressionManifestSchema.parse(JSON.parse(await readFile(path, "utf8")));
+export async function evaluateHarmonyManifest(
+  path: string,
+  options: { dataRoot?: string } = {},
+): Promise<HarmonyEvalReport | import("./schemas").HarmonyDatasetEvalReport> {
+  const raw = JSON.parse(await readFile(path, "utf8")) as { schemaVersion?: unknown };
+  if (raw.schemaVersion === "2.0.0") {
+    if (!options.dataRoot) throw new Error("dataset manifest requires --data-root <directory>");
+    return evaluateHarmonyDatasetManifest(path, options.dataRoot);
+  }
+  const manifest = harmonyRegressionManifestSchema.parse(raw);
   const cases = await Promise.all(
     manifest.cases.map(async (item) => {
       const inspected = await inspectHarmonyScore(resolve(dirname(path), item.score), "all");

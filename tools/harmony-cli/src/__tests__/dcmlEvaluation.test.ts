@@ -1,0 +1,104 @@
+import { createHash } from "node:crypto";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { resolve } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import { evaluateDcmlCorpus } from "../adapters/dcmlEvaluation";
+import { evaluateHarmonyManifest } from "../evaluateManifest";
+
+const directories: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
+});
+
+describe("evaluateDcmlCorpus", () => {
+  it("evaluates a work-level holdout and reports canonical mapping metrics", async () => {
+    const root = await mkdtemp(resolve(tmpdir(), "zupulse-dcml-"));
+    directories.push(root);
+    await createMiniDcmlCorpus(root);
+
+    const result = await evaluateDcmlCorpus(root, {
+      id: "mozart-pilot",
+      include: ["K331-3"],
+      forcedEvalGroups: ["K331"],
+    });
+
+    expect(result).toMatchObject({
+      id: "mozart-pilot",
+      kind: "accuracy-corpus",
+      adapter: "dcml",
+      status: "passed",
+      splits: { train: 0, tune: 0, eval: 2 },
+      metrics: { gold: { total: 2, mapped: 2, unsupported: 0 }, mappingCoverage: 1 },
+    });
+  });
+
+  it("evaluates a checksummed v2 manifest through the CLI evaluator", async () => {
+    const dataRoot = await mkdtemp(resolve(tmpdir(), "zupulse-datasets-"));
+    directories.push(dataRoot);
+    await createMiniDcmlCorpus(resolve(dataRoot, "mozart"));
+    const archive = new Uint8Array([1, 2, 3]);
+    await writeFile(resolve(dataRoot, "mozart.zip"), archive);
+    const manifestPath = resolve(dataRoot, "manifest.json");
+    await writeFile(
+      manifestPath,
+      JSON.stringify({
+        schemaVersion: "2.0.0",
+        id: "dataset-fixture",
+        cases: [
+          {
+            id: "mozart-pilot",
+            kind: "accuracy-corpus",
+            adapter: "dcml",
+            datasetPath: "mozart",
+            archivePath: "mozart.zip",
+            source: {
+              url: "https://example.test/mozart.zip",
+              revision: "fixture",
+              license: "CC-BY-NC-SA-4.0",
+              sha256: createHash("sha256").update(archive).digest("hex"),
+            },
+            forcedEvalGroups: ["K331"],
+            include: ["K331-3"],
+          },
+        ],
+      }),
+    );
+
+    await expect(evaluateHarmonyManifest(manifestPath, { dataRoot })).resolves.toMatchObject({
+      schemaVersion: "2.0.0",
+      command: "eval",
+      summary: { passed: 1, failed: 0 },
+    });
+  });
+});
+
+async function createMiniDcmlCorpus(root: string): Promise<void> {
+  await Promise.all(["measures", "notes", "harmonies"].map((name) => mkdir(resolve(root, name), { recursive: true })));
+  await writeFile(
+    resolve(root, "measures/K331-3.measures.tsv"),
+    ["mc\tmn\tquarterbeats\tduration_qb\tkeysig\ttimesig", "1\t1\t0\t4\t0\t4/4", "2\t2\t4\t4\t0\t4/4"].join("\n"),
+  );
+  await writeFile(
+    resolve(root, "notes/K331-3.notes.tsv"),
+    [
+      "mc\tquarterbeats\tduration_qb\tmc_onset\tstaff\tvoice\tgracenote\tnominal_duration\ttied\ttpc\tmidi",
+      "1\t0\t4\t0\t1\t1\t\t1\t\t0\t60",
+      "1\t0\t4\t0\t1\t2\t\t1\t\t4\t64",
+      "1\t0\t4\t0\t1\t3\t\t1\t\t1\t67",
+      "2\t4\t4\t0\t1\t1\t\t1\t\t1\t67",
+      "2\t4\t4\t0\t1\t2\t\t1\t\t5\t71",
+      "2\t4\t4\t0\t1\t3\t\t1\t\t2\t74",
+      "2\t4\t4\t0\t1\t4\t\t1\t\t-2\t77",
+    ].join("\n"),
+  );
+  await writeFile(
+    resolve(root, "harmonies/K331-3.harmonies.tsv"),
+    [
+      "mc\tquarterbeats\tduration_qb\tglobalkey\tlocalkey\tlabel\tchord_type\troot\tbass_note\tchanges",
+      "1\t0\t4\tC\tI\tI\tM\t0\t0\t",
+      "2\t4\t4\tC\tI\tV7\tMm7\t1\t1\t",
+    ].join("\n"),
+  );
+}

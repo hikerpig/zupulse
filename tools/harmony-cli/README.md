@@ -63,7 +63,18 @@ Phase 8 的 v2 manifest 把带专家 gold 的 accuracy、只有谱面结构的 i
 pnpm -s harmony:cli eval test-fixtures/harmony/datasets/manifest.json --data-root /path/to/harmony-data
 ```
 
-`data-root` 下必须同时存在 manifest 声明的 archive 和解压目录。CLI 先校验 archive SHA-256，再运行 adapter。DCML 报告包含作品级 split、mapping/unsupported、Top-1/Top-8、resolved precision/coverage、boundary F1、ECE、facets、chord-family slices 和最多 200 条错误定位。当前固定 Mozart 数据为 v2.3；K331 整首奏鸣曲强制属于 eval。
+`data-root` 下必须同时存在 manifest 声明的 archive 和解压目录。CLI 先校验 archive SHA-256，再运行 adapter。DCML 报告包含作品级 split、mapping/unsupported、Top-1/Top-8、resolved precision/coverage、boundary F1、ECE、facets、chord-family slices 和最多 50 条错误定位。当前固定 Mozart 数据为 v2.3；K331 整首奏鸣曲强制属于 eval。可用 `--case <id>` 只运行一个 corpus。
+
+冻结基线比较会锁定 split/gold 数量；mapping、Top-1/Top-8、precision、coverage、boundary F1 只允许在容差内下降，ECE 只允许在容差内上升：
+
+```bash
+pnpm -s harmony:cli eval test-fixtures/harmony/datasets/manifest.json \
+  --data-root /path/to/harmony-data > /tmp/current.json
+pnpm -s harmony:cli compare \
+  test-fixtures/harmony/baselines/dcml-cross-corpus.json /tmp/current.json
+```
+
+`compare` 始终输出逐字段 JSON diff；有回退时 `summary.failed > 0` 且 exit code 为 1。基线当前容差为 0.005。跨作曲家切片把 common triad/seventh、inversion、applied/chromatic、augmented-sixth、Neapolitan、extended/altered 和 unsupported 分开，避免总分掩盖特定和弦族退化。
 
 ## Manifest
 

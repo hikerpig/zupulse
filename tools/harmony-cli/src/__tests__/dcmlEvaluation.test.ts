@@ -3,7 +3,8 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { evaluateDcmlCorpus } from "../adapters/dcmlEvaluation";
+import { dcmlGroupId, evaluateDcmlCorpus } from "../adapters/dcmlEvaluation";
+import { runHarmonyCommand } from "../command";
 import { evaluateHarmonyManifest } from "../evaluateManifest";
 
 const directories: string[] = [];
@@ -13,6 +14,11 @@ afterEach(async () => {
 });
 
 describe("evaluateDcmlCorpus", () => {
+  it("groups sonata movements together and can freeze a whole corpus as one work", () => {
+    expect(dcmlGroupId("01-3", "prefix-before-hyphen", "beethoven")).toBe("01");
+    expect(dcmlGroupId("n03", "corpus", "schumann-kinderszenen")).toBe("schumann-kinderszenen");
+  });
+
   it("evaluates a work-level holdout and reports canonical mapping metrics", async () => {
     const root = await mkdtemp(resolve(tmpdir(), "zupulse-dcml-"));
     directories.push(root);
@@ -66,9 +72,39 @@ describe("evaluateDcmlCorpus", () => {
       }),
     );
 
-    await expect(evaluateHarmonyManifest(manifestPath, { dataRoot })).resolves.toMatchObject({
+    const report = await evaluateHarmonyManifest(manifestPath, { dataRoot, caseId: "mozart-pilot" });
+    expect(report).toMatchObject({
       schemaVersion: "2.0.0",
       command: "eval",
+      summary: { passed: 1, failed: 0 },
+    });
+    if (report.schemaVersion !== "2.0.0" || report.cases[0]?.kind !== "accuracy-corpus") {
+      throw new Error("expected accuracy report");
+    }
+    const reportPath = resolve(dataRoot, "report.json");
+    const baselinePath = resolve(dataRoot, "baseline.json");
+    const {
+      facets: _facets,
+      slices: _slices,
+      unsupportedLabelRate: _unsupportedLabelRate,
+      ...baselineMetrics
+    } = report.cases[0].metrics;
+    await writeFile(reportPath, JSON.stringify(report));
+    await writeFile(
+      baselinePath,
+      JSON.stringify({
+        schemaVersion: "1.0.0",
+        sourceManifest: "dataset-fixture",
+        datasetRevision: "fixture",
+        algorithmVersion: "fixture",
+        tolerance: 0.005,
+        cases: {
+          "mozart-pilot": { splits: report.cases[0].splits, ...baselineMetrics },
+        },
+      }),
+    );
+    await expect(runHarmonyCommand(["compare", baselinePath, reportPath])).resolves.toMatchObject({
+      command: "compare",
       summary: { passed: 1, failed: 0 },
     });
   });

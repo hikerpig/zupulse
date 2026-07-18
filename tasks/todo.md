@@ -652,7 +652,7 @@ feature: harmony-analysis-studio
 
 **Files likely touched:** `tools/harmony-cli/src/adapters/dcml*`、外部 corpus manifest、gold fixtures、README。
 
-**Evidence:** DCML adapter 使用 `quarterbeats_all_endings` 建立书面时间，能处理 alternate-ending 空 onset/duration 与省略全空 `gracenote` 列；gold 由 global/local key、相对五度 root/bass 和 `chord_type` 规范化，Ger/Fr/It 与未支持 changes 明确计入 unsupported。固定 v2.3 archive SHA-256 为 `70c401e1...c3ef87`。真实 K331-3 为 128 gold、118 mapped，Top-8 73.36%、resolved precision 46.65%、coverage 73.36%、boundary F1 79.05%。完整 Mozart split 为 8,720/2,157/4,395；eval mapped 3,720/4,395，Top-8 50.71%、precision 40.32%、coverage 83.62%、boundary F1 84.70%。基线保存于 `test-fixtures/harmony/baselines/dcml-mozart-v2.3.json`，报告另带最多 200 条定位到 piece/measure/offset 的错误索引。
+**Evidence:** DCML adapter 使用 `quarterbeats_all_endings` 建立书面时间，能处理 alternate-ending 空 onset/duration 与省略全空 `gracenote` 列；gold 由 global/local key、相对五度 root/bass 和 `chord_type` 规范化，Ger/Fr/It 与未支持 changes 明确计入 unsupported。固定 v2.3 archive SHA-256 为 `70c401e1...c3ef87`。真实 K331-3 为 128 gold、118 mapped，Top-8 73.36%、resolved precision 46.65%、coverage 73.36%、boundary F1 79.05%。完整 Mozart split 为 8,720/2,157/4,395；eval mapped 3,720/4,395，Top-8 50.71%、precision 40.32%、coverage 83.62%、boundary F1 84.70%。基线保存于 `test-fixtures/harmony/baselines/dcml-mozart-v2.3.json`，报告另带最多 50 条定位到 piece/measure/offset 的错误索引。
 
 ### Task 34: 建立 DCML 跨作曲家泛化门禁
 
@@ -660,16 +660,18 @@ feature: harmony-analysis-studio
 
 **Acceptance criteria:**
 
-- [ ] 每个 corpus 以作品为组并有固定 split；同一作品的 movement 不跨 split。
-- [ ] 报告分别展示 common triads/sevenths、inversions、applied/chromatic、augmented-sixth/Neapolitan、extended/altered 与 unsupported。
-- [ ] 调优遵循冻结域 no-regression：目标切片改善时，Mozart holdout 和此前冻结 corpus 的主指标不得超过约定容差回退。
-- [ ] corpus 下载留在 git 外缓存，manifest 可校验并复建输入。
+- [x] 每个 corpus 以作品为组并有固定 split；同一作品的 movement 不跨 split。
+- [x] 报告分别展示 common triads/sevenths、inversions、applied/chromatic、augmented-sixth/Neapolitan、extended/altered 与 unsupported。
+- [x] 调优遵循冻结域 no-regression：目标切片改善时，Mozart holdout 和此前冻结 corpus 的主指标不得超过约定容差回退。
+- [x] corpus 下载留在 git 外缓存，manifest 可校验并复建输入。
 
 **Verification:** multi-corpus eval + deterministic report diff tests
 
 **Dependencies:** Task 33
 
 **Files likely touched:** DCML adapter 共用层、corpus manifests、report diff/summary。
+
+**Evidence:** manifest 固定 Schumann Kinderszenen v2.3、Chopin Mazurkas v3.2 与 Beethoven Sonatas v2.5 的 tag/commit、许可和 archive SHA-256；sonata/movement 由前缀归为同一作品，Schumann cycle 整体冻结。真实 eval 分别为 Schumann 948 gold（Top-8 76.60%、precision 71.45%、coverage 82.44%）、Chopin 1,197 gold（65.51%、56.00%、83.43%）、Beethoven 2,060 gold（38.76%、30.20%、81.61%）。`dcml-cross-corpus.json` 固化三域基线，容差 0.005；`harmony:cli compare` 锁定 split/gold 并按指标方向生成确定性 diff 和失败 exit code。报告的 chord-family slices 明确区分 triad、seventh、inversion、applied/chromatic、augmented-sixth、Neapolitan、extended/altered 与 unsupported。外部 archive 与解压目录只存在 `data-root` 缓存，不进入 git。
 
 ### Task 35: 增加流行域并冻结下一轮调优循环
 

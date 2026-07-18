@@ -61,6 +61,26 @@ describe("parseDcmlPiece", () => {
     expect(piece.gold[1]).not.toHaveProperty("chord");
   });
 
+  it("separates inversion and applied/chromatic slices", () => {
+    const inversion = parseDcmlPiece({
+      corpus: "mozart",
+      groupId: "K331",
+      measures,
+      notes,
+      harmonies: harmonies.replace("V7\tMm7\t1\t1", "V6\tM\t1\t0"),
+    });
+    const applied = parseDcmlPiece({
+      corpus: "mozart",
+      groupId: "K331",
+      measures,
+      notes,
+      harmonies: harmonies.replace("C\tI\tV7", "C\tV\tV7"),
+    });
+
+    expect(inversion.gold[1]?.family).toBe("inversion");
+    expect(applied.gold[1]?.family).toBe("applied-chromatic");
+  });
+
   it("accepts a sparse notes table that omits the all-empty gracenote column", () => {
     const withoutGraceColumn = notes
       .split("\n")

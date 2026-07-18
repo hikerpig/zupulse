@@ -30,6 +30,65 @@
         "sha256": "70c401e1aa48843326400992c3a61225e4425190d39d64b242a6c1d0fdc3ef87"
       },
       "forcedEvalGroups": ["K331"]
+    },
+    {
+      "id": "dcml-schumann-kinderszenen-v2.3",
+      "kind": "accuracy-corpus",
+      "adapter": "dcml",
+      "datasetPath": "schumann_kinderszenen-2.3",
+      "archivePath": "archives/schumann-kinderszenen-v2.3.zip",
+      "source": {
+        "url": "https://github.com/DCMLab/schumann_kinderszenen/archive/refs/tags/v2.3.zip",
+        "revision": "v2.3@ee929c1556bc937fe1ea7303cac4476e37caa4d1",
+        "license": "CC-BY-NC-SA-4.0",
+        "sha256": "428d6cd47ecae165d29b862fc7f405e49f1556678e83a9ef26e466a85b19eb04"
+      },
+      "forcedEvalGroups": ["dcml-schumann-kinderszenen-v2.3"],
+      "groupBy": "corpus"
+    },
+    {
+      "id": "dcml-chopin-mazurkas-v3.2",
+      "kind": "accuracy-corpus",
+      "adapter": "dcml",
+      "datasetPath": "chopin_mazurkas-3.2",
+      "archivePath": "archives/chopin-mazurkas-v3.2.zip",
+      "source": {
+        "url": "https://github.com/DCMLab/chopin_mazurkas/archive/refs/tags/v3.2.zip",
+        "revision": "v3.2@5931135e614985023b96de2a291c74b7ef90b287",
+        "license": "CC-BY-NC-SA-4.0",
+        "sha256": "437e4d3946db16e0b70ffb3c943b97724174c02c7fcf3d84c92b513bf20b15cd"
+      },
+      "forcedEvalGroups": ["BI60", "BI145"],
+      "include": [
+        "BI60-1op06-1",
+        "BI60-2op06-2",
+        "BI60-3op06-3",
+        "BI60-4op06-4",
+        "BI105-2op30-2",
+        "BI105-3op30-3",
+        "BI105-4op30-4",
+        "BI145-1op50-1",
+        "BI145-2op50-2",
+        "BI145-3op50-3",
+        "BI162-1op63-1",
+        "BI162-2op63-2",
+        "BI162-3op63-3"
+      ]
+    },
+    {
+      "id": "dcml-beethoven-sonatas-v2.5",
+      "kind": "accuracy-corpus",
+      "adapter": "dcml",
+      "datasetPath": "beethoven_piano_sonatas-2.5",
+      "archivePath": "archives/beethoven-piano-sonatas-v2.5.zip",
+      "source": {
+        "url": "https://github.com/DCMLab/beethoven_piano_sonatas/archive/refs/tags/v2.5.zip",
+        "revision": "v2.5@ea7181bff88abc8713257234f7ec4033178c57a9",
+        "license": "CC-BY-NC-SA-4.0",
+        "sha256": "99fe459b386ffc8ca8bffe52bdce02dd6780390890fab32a129d2561672b2ae1"
+      },
+      "forcedEvalGroups": ["08", "23"],
+      "include": ["01-1", "01-2", "01-3", "01-4", "08-1", "08-2", "08-3", "23-1", "23-2", "23-3"]
     }
   ]
 }

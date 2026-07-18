@@ -7,7 +7,12 @@ import { parseDcmlPiece } from "./dcml";
 
 export async function evaluateDcmlCorpus(
   root: string,
-  options: { id: string; include?: readonly string[]; forcedEvalGroups: readonly string[] },
+  options: {
+    id: string;
+    include?: readonly string[];
+    forcedEvalGroups: readonly string[];
+    groupBy?: "prefix-before-hyphen" | "corpus";
+  },
 ) {
   const files = (await readdir(resolve(root, "harmonies")))
     .filter((name) => name.endsWith(".harmonies.tsv"))
@@ -28,7 +33,7 @@ export async function evaluateDcmlCorpus(
     category: "unsupported-label" | "unresolved" | "root" | "bass" | "kind" | "extension" | "degrees" | "boundary";
   }> = [];
   for (const pieceId of files) {
-    const groupId = pieceId.split("-")[0]!;
+    const groupId = dcmlGroupId(pieceId, options.groupBy ?? "prefix-before-hyphen", options.id);
     const split = assignDatasetSplit(groupId, options.forcedEvalGroups);
     const piece = parseDcmlPiece({
       corpus: options.id,
@@ -51,7 +56,7 @@ export async function evaluateDcmlCorpus(
       const predictedBoundary =
         index > 0 && segments.some((candidate) => compareMoments(candidate.range.start, gold.range.start) === 0);
       const category = errorCategory(gold.chord, segment, expectedBoundary, predictedBoundary);
-      if (category && errors.length < 200) {
+      if (category && errors.length < 50) {
         errors.push({
           pieceId,
           groupId,
@@ -86,6 +91,10 @@ export async function evaluateDcmlCorpus(
     metrics: calculateAccuracyMetrics(evalObservations),
     errors,
   };
+}
+
+export function dcmlGroupId(pieceId: string, mode: "prefix-before-hyphen" | "corpus", corpusId: string): string {
+  return mode === "corpus" ? corpusId : pieceId.split("-")[0]!;
 }
 
 function sameChord(a: ChordSymbolInput | undefined, b: ChordSymbolInput | undefined): boolean {

@@ -196,7 +196,7 @@ P8 数据驱动调优 T32 -> T33 -> T34 -> T35
 
 - [x] T32：定义 accuracy manifest、gold canonicalization、数据集 provenance 与分组隔离协议。
 - [x] T33：接入 DCML Mozart，先用 K331-3 建立 adapter pilot，再扩展为按奏鸣曲隔离的古典钢琴基线。
-- [ ] T34：接入 Distant Listening Corpus 的跨作曲家钢琴子集，建立域外泛化与按和弦族切片报告。
+- [x] T34：接入 Distant Listening Corpus 的跨作曲家钢琴子集，建立域外泛化与按和弦族切片报告。
 - [ ] T35：接入 POP909 流行钢琴域；把 ASAP、ChoCo 和 WJazzD 分别限定为解析鲁棒性、标签词表和后续爵士研究数据，不混入主准确率总分。
 
 ### Dataset roles

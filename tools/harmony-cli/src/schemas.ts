@@ -79,6 +79,7 @@ export const harmonyDatasetManifestSchema = z
               adapter: z.enum(["dcml", "pop909"]),
               forcedEvalGroups: z.array(z.string().min(1)),
               include: z.array(z.string().min(1)).optional(),
+              groupBy: z.enum(["prefix-before-hyphen", "corpus"]).optional(),
             })
             .strict(),
           z
@@ -218,6 +219,76 @@ export const harmonyDatasetEvalReportSchema = z
   .strict();
 
 export type HarmonyDatasetEvalReport = z.infer<typeof harmonyDatasetEvalReportSchema>;
+
+const accuracyBaselineCaseSchema = z
+  .object({
+    splits: z
+      .object({
+        train: z.number().int().nonnegative(),
+        tune: z.number().int().nonnegative(),
+        eval: z.number().int().nonnegative(),
+      })
+      .strict(),
+    gold: z
+      .object({
+        total: z.number().int().nonnegative(),
+        mapped: z.number().int().nonnegative(),
+        unsupported: z.number().int().nonnegative(),
+      })
+      .strict(),
+    mappingCoverage: fractionSchema,
+    top1Accuracy: fractionSchema,
+    top8OracleRecall: fractionSchema,
+    resolvedPrecision: fractionSchema,
+    resolvedCoverage: fractionSchema,
+    boundaryF1: fractionSchema,
+    expectedCalibrationError: fractionSchema,
+  })
+  .strict();
+
+export const harmonyAccuracyBaselineSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    sourceManifest: z.string().min(1),
+    datasetRevision: z.string().min(1),
+    algorithmVersion: z.string().min(1),
+    tolerance: fractionSchema,
+    cases: z.record(z.string().min(1), accuracyBaselineCaseSchema),
+  })
+  .strict();
+
+export const harmonyBaselineComparisonReportSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    command: z.literal("compare"),
+    baseline: z.string().min(1),
+    report: z.string().min(1),
+    summary: z.object({ passed: z.number().int().nonnegative(), failed: z.number().int().nonnegative() }).strict(),
+    cases: z.array(
+      z
+        .object({
+          id: z.string().min(1),
+          status: z.enum(["passed", "failed"]),
+          checks: z.array(
+            z
+              .object({
+                field: z.string().min(1),
+                expected: z.number(),
+                actual: z.number(),
+                direction: z.enum(["equal", "higher", "lower"]),
+                tolerance: z.number().nonnegative(),
+                status: z.enum(["passed", "failed"]),
+              })
+              .strict(),
+          ),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+export type HarmonyAccuracyBaseline = z.infer<typeof harmonyAccuracyBaselineSchema>;
+export type HarmonyBaselineComparisonReport = z.infer<typeof harmonyBaselineComparisonReportSchema>;
 
 export const harmonyRegressionCheckSchema = z
   .object({

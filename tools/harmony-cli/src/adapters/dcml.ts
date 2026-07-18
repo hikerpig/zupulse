@@ -109,6 +109,7 @@ export function parseDcmlPiece(source: {
 function canonicalizeDcmlHarmony(row: Row): { family: string; chord?: ChordSymbolInput } {
   const type = required(row, "chord_type", false);
   if (["Ger", "Fr", "It"].includes(type)) return { family: "augmented-sixth" };
+  if (/^N(?:6)?$/.test(required(row, "label"))) return { family: "neapolitan" };
   if (required(row, "changes", false) !== "") return { family: "altered" };
   const shape = chordShape(type);
   if (!shape) return { family: "unsupported" };
@@ -117,7 +118,7 @@ function canonicalizeDcmlHarmony(row: Row): { family: string; chord?: ChordSymbo
     const rootFifths = localTonic + number(row, "root");
     const bassFifths = localTonic + number(row, "bass_note");
     return {
-      family: shape.extension === undefined ? "triad" : shape.extension > 7 ? "extended" : "seventh",
+      family: dcmlChordFamily(row, shape, rootFifths, bassFifths),
       chord: chordSymbolSchema.parse({
         root: pitchFromFifths(rootFifths),
         kind: shape.kind,
@@ -129,6 +130,20 @@ function canonicalizeDcmlHarmony(row: Row): { family: string; chord?: ChordSymbo
   } catch {
     return { family: "unsupported" };
   }
+}
+
+function dcmlChordFamily(
+  row: Row,
+  shape: NonNullable<ReturnType<typeof chordShape>>,
+  rootFifths: number,
+  bassFifths: number,
+): string {
+  if (!/^[Ii]$/.test(required(row, "localkey")) || /^[#b]/.test(required(row, "label"))) {
+    return "applied-chromatic";
+  }
+  if (rootFifths !== bassFifths) return "inversion";
+  if (shape.extension !== undefined && shape.extension > 7) return "extended";
+  return shape.extension === undefined ? "triad" : "seventh";
 }
 
 function chordShape(

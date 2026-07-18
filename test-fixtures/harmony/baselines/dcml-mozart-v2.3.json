@@ -3,6 +3,7 @@
   "sourceManifest": "harmony-datasets-v2",
   "datasetRevision": "v2.3@5337257a5318711e6302cfe85c3f1a6ade3c6271",
   "algorithmVersion": "web-core@0.1.0",
+  "tolerance": 0.005,
   "cases": {
     "dcml-mozart-k331-pilot": {
       "splits": { "train": 0, "tune": 0, "eval": 128 },

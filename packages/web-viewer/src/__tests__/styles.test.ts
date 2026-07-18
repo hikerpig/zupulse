@@ -20,10 +20,20 @@ describe("alphaTab playback cursor styles", () => {
     }
   });
 
-  it("does not load stylesheets that violate the offline CSP", async () => {
-    const css = await source("../styles.css");
+  it("loads Space Grotesk from Google Fonts and permits only its hosts", async () => {
+    const [css, browserHtml, desktopHtml] = await Promise.all([
+      source("../styles.css"),
+      source("../../../../apps/web-demo/index.html"),
+      source("../../../../apps/desktop-shell/index.html"),
+    ]);
 
-    expect(css).not.toMatch(/@import\s+url\(['"]?https?:\/\//);
+    expect(css).toContain(
+      '@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");',
+    );
+    for (const html of [browserHtml, desktopHtml]) {
+      expect(html).toContain("style-src 'self' 'unsafe-inline' https://fonts.googleapis.com");
+      expect(html).toContain("font-src 'self' https://fonts.gstatic.com");
+    }
   });
 
   it("makes cursors, played elements, and selections visible", async () => {

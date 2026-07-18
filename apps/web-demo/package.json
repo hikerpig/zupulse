@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "rspack serve --host 127.0.0.1",
+    "dev": "rspack serve --mode development",
     "build": "rspack build && node ./scripts/verify-assets.mjs",
     "test:e2e": "playwright test -c playwright.config.ts"
   },

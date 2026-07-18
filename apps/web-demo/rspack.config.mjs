@@ -1,65 +1,24 @@
-import { CopyRspackPlugin, HtmlRspackPlugin } from "@rspack/core";
-import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
+import { alphaTabDist, createWebRspackConfig } from "../../tools/builder/rspack.mjs";
 import { fileURLToPath } from "node:url";
 
 const demoRoot = fileURLToPath(new URL(".", import.meta.url));
-const requireFromWebCore = createRequire(new URL("../../packages/web-core/package.json", import.meta.url));
-const alphaTabDist = dirname(requireFromWebCore.resolve("@coderline/alphatab"));
 const isE2e = process.env.PLAYWRIGHT_TEST === "1";
 
-/** @type {import("@rspack/core").Configuration} */
-const config = {
-  context: demoRoot,
-  ...(isE2e ? { lazyCompilation: false } : {}),
-  entry: {
-    main: "./src/main.ts",
-  },
-  output: {
-    clean: true,
-    filename: "[name].[contenthash].js",
-    module: true,
-    path: fileURLToPath(new URL("./dist/", import.meta.url)),
-  },
-  experiments: {
-    outputModule: true,
-  },
-  externalsType: "module-import",
-  externals: {
-    "@coderline/alphatab": "/alphatab/alphaTab.mjs",
-  },
-  performance: {
-    maxAssetSize: 2 * 1024 * 1024,
-    maxEntrypointSize: 2 * 1024 * 1024,
-  },
-  resolve: {
-    extensions: [".tsx", ".ts", ".js"],
-  },
-  module: {
-    rules: [
-      {
-        test: /\.tsx?$/,
-        loader: "builtin:swc-loader",
-        options: {
-          jsc: {
-            parser: {
-              syntax: "typescript",
-              tsx: true,
-            },
-            transform: { react: { runtime: "automatic" } },
-          },
-        },
-        type: "javascript/auto",
-      },
-      {
-        test: /\.css$/,
-        type: "css/auto",
-      },
-    ],
-    parser: {
-      "css/auto": { namedExports: false },
+const createConfig = (_env, argv) => ({
+  ...createWebRspackConfig({
+    context: demoRoot,
+    mode: argv.mode ?? "production",
+    entry: { main: "./src/main.ts" },
+    output: {
+      clean: true,
+      filename: "[name].[contenthash].js",
+      module: true,
+      path: fileURLToPath(new URL("./dist/", import.meta.url)),
     },
-  },
+    htmlOptions: { template: "./index.html", scriptLoading: "module" },
+  }),
+  ...(isE2e ? { lazyCompilation: false } : {}),
+  experiments: { outputModule: true },
   watchOptions: {
     ignored: ["**/node_modules/**", "**/dist/**"],
     poll: 1000,
@@ -75,33 +34,6 @@ const config = {
       },
     ],
   },
-  plugins: [
-    new HtmlRspackPlugin({
-      template: "./index.html",
-      scriptLoading: "module",
-    }),
-    new CopyRspackPlugin({
-      patterns: [
-        {
-          from: join(alphaTabDist, "alphaTab*.mjs"),
-          to: "alphatab/[name][ext]",
-        },
-        {
-          from: join(alphaTabDist, "font"),
-          to: "alphatab/font/",
-        },
-        {
-          from: join(alphaTabDist, "soundfont/sonivox.sf3"),
-          to: "alphatab/soundfont/sonivox.sf3",
-        },
-        {
-          from: join(alphaTabDist, "soundfont/LICENSE"),
-          to: "alphatab/soundfont/LICENSE",
-          toType: "file",
-        },
-      ],
-    }),
-  ],
-};
+});
 
-export default config;
+export default createConfig;

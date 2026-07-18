@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "harmony-regressions-v1",
+  "cases": [
+    {
+      "id": "turkish-march-structure",
+      "kind": "structural-regression",
+      "score": "../../musicxml/rondo-alla-turca-turkish-march.mxl",
+      "sha256": "1cb6b0c657f9013ba7ead4e7cb80e54e5b47e544dcfbfa396d6e5eefb05de386",
+      "expected": {
+        "model": { "measures": 147, "tracks": 1, "staves": 2, "notes": 1736 },
+        "result": { "segments": 365, "resolved": 305, "unresolved": 60 }
+      }
+    }
+  ]
+}

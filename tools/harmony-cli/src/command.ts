@@ -1,9 +1,18 @@
 import { resolve } from "node:path";
+import { evaluateHarmonyManifest } from "./evaluateManifest";
 import { inspectHarmonyScore, type InspectView } from "./inspectScore";
-import { harmonyInspectReportSchema, type HarmonyInspectReport } from "./schemas";
+import { harmonyInspectReportSchema, type HarmonyEvalReport, type HarmonyInspectReport } from "./schemas";
 
-export async function runHarmonyCommand(args: string[], context: { cwd?: string } = {}): Promise<HarmonyInspectReport> {
+export async function runHarmonyCommand(
+  args: string[],
+  context: { cwd?: string } = {},
+): Promise<HarmonyInspectReport | HarmonyEvalReport> {
   const normalized = args[0] === "--" ? args.slice(1) : args;
+  const cwd = context.cwd ?? process.env.INIT_CWD ?? process.cwd();
+  if (normalized[0] === "eval") {
+    const path = normalized[1] ?? "test-fixtures/harmony/regressions/manifest.json";
+    return evaluateHarmonyManifest(resolve(cwd, path));
+  }
   const positional = normalized[0] === "inspect" ? normalized.slice(1) : normalized;
   const path = positional[0];
   const viewIndex = positional.indexOf("--view");
@@ -11,10 +20,7 @@ export async function runHarmonyCommand(args: string[], context: { cwd?: string 
   if (!path || !view || !["all", "model", "result"].includes(view)) {
     throw new Error("usage: harmony:cli inspect <score.musicxml|score.mxl> [--view all|model|result]");
   }
-  const inspected = await inspectHarmonyScore(
-    resolve(context.cwd ?? process.env.INIT_CWD ?? process.cwd(), path),
-    view,
-  );
+  const inspected = await inspectHarmonyScore(resolve(cwd, path), view);
   return harmonyInspectReportSchema.parse({
     schemaVersion: "1.0.0",
     command: "inspect",

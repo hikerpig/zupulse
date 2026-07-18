@@ -596,11 +596,13 @@ feature: harmony-analysis-studio
 
 ### Task 30: 建立 manifest regression eval
 
-- [ ] Zod 校验 manifest，并相对 manifest 解析 fixture 路径。
-- [ ] Turkish March 的 SHA-256、model/result 摘要进入可审查 manifest。
-- [ ] `eval` 成功返回 0，结构回归失败返回非 0，stdout 均为 JSON。
+- [x] Zod 校验 manifest，并相对 manifest 解析 fixture 路径。
+- [x] Turkish March 的 SHA-256、model/result 摘要进入可审查 manifest。
+- [x] `eval` 成功返回 0，结构回归失败返回非 0，stdout 均为 JSON。
 
 **Verification:** evaluateManifest unit/integration/process tests
+
+**Evidence:** `pnpm --filter @zupulse/harmony-cli test` 通过（3 files / 6 tests），包括 Turkish March 真实 MXL integration 和可审查字段差异；typecheck 通过。`pnpm -s harmony:cli eval` 的 stdout 可直接由 `jq` 解析，报告 `harmony-regressions-v1` 为 1 passed / 0 failed；CLI 在 eval report 含 failed case 时设置非零退出码，进程级证据由 T31 锁定。
 
 ### Task 31: 完成迁移和文档
 

@@ -175,7 +175,7 @@ P6 发布质量 T24 -> T25
 目标：把一次性 Node 脚本迁移为适合人和 agent 的独立、可版本化 workspace 工具包。
 
 - [x] T29：建立 `@zupulse/harmony-cli` workspace 包与稳定 `inspect` JSON 协议。
-- [ ] T30：实现版本化 regression manifest、结构化 `eval` 报告和可靠退出码。
+- [x] T30：实现版本化 regression manifest、结构化 `eval` 报告和可靠退出码。
 - [ ] T31：迁移文档与根命令，删除旧 CLI，实现进程级验证并关闭迁移。
 
 ### Exit gate P7

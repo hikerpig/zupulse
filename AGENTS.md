@@ -31,6 +31,7 @@
 
 ## 代码约定
 
+- 文件和目录命名遵循 `docs/conventions/file-naming.md`。
 - TypeScript 开启 `exactOptionalPropertyTypes`：可选字段不存在时省略属性，禁止显式赋值 `undefined`。
 - 所有跨进程与持久化输入使用现有 Zod schema；新增 Bridge API 同时添加 request、response、capability 和测试。
 - 使用 named export、Prettier 双引号和 `__tests__/*.test.ts(x)`；仅 `__tests__` 与 `e2e` 可引用测试框架。

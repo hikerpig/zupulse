@@ -3,7 +3,12 @@
   "productType": "Digital Music Practice Workspace",
   "kitType": "dashboard",
   "language": "zh",
+  "role": "upstream-theme-library",
   "readOrder": [
+    {
+      "path": "../../DESIGN.md",
+      "why": "先确认当前产品设计契约、事实源顺序和 Agent 工作协议。"
+    },
     {
       "path": "SKILL.md",
       "why": "先掌握 #f26b4f 主色、#f0ede8/#1a1a1a 中性色、Space Grotesk 与 IBM Plex Mono、4px 基准间距、36/40/44/48px 控件高度、6/10/14/20px 圆角。"
@@ -13,8 +18,12 @@
       "why": "结构化 token 理解源。"
     },
     {
+      "path": "runtime-token-map.json",
+      "why": "确认哪些主题原语已经被产品运行时正式采用。"
+    },
+    {
       "path": "colors_and_type.css",
-      "why": "运行时变量接入源。"
+      "why": "主题 CSS 投影，仅在维护主题或映射时读取。"
     },
     {
       "path": "specs/reference-braun.png",
@@ -26,7 +35,9 @@
     }
   ],
   "runtime": {
-    "tokenSource": "css.json",
-    "cssSource": "colors_and_type.css"
+    "productTokenSource": "../../packages/web-viewer/src/styles/tokens.css",
+    "adoptedTokenMap": "runtime-token-map.json",
+    "themeTokenSource": "css.json",
+    "themeCssProjection": "colors_and_type.css"
   }
 }

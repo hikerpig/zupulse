@@ -7,6 +7,7 @@ const DEFAULT_CONTEXT = {
   requiredFiles: [
     "AGENTS.md",
     "CONTEXT.md",
+    "DESIGN.md",
     "packages/web-core/AGENTS.md",
     "packages/web-viewer/AGENTS.md",
     "apps/web-demo/AGENTS.md",
@@ -23,6 +24,13 @@ const DEFAULT_CONTEXT = {
     "docs/architecture/viewer-architecture-overview.md",
     "docs/architecture/score-model-bridge-storage-design.md",
   ],
+};
+
+const DEFAULT_DESIGN = {
+  designPath: "DESIGN.md",
+  sourceCssPath: ".design_library/zupulse-te-braun-theme/colors_and_type.css",
+  runtimeCssPath: "packages/web-viewer/src/styles/tokens.css",
+  mapPath: ".design_library/zupulse-te-braun-theme/runtime-token-map.json",
 };
 
 const RUNTIME_TSCONFIGS = [
@@ -80,6 +88,79 @@ export async function checkArchitecture(root) {
     if (types.includes("vitest")) errors.push(`${path}: runtime compiler types must not include "vitest"`);
   }
   return errors.sort();
+}
+
+export async function checkDesign(root, options = DEFAULT_DESIGN) {
+  const errors = [];
+  const design = await read(join(root, options.designPath));
+  const sourceCss = await read(join(root, options.sourceCssPath));
+  const runtimeCss = await read(join(root, options.runtimeCssPath));
+  const mapContents = await read(join(root, options.mapPath));
+
+  for (const [path, contents] of [
+    [options.designPath, design],
+    [options.sourceCssPath, sourceCss],
+    [options.runtimeCssPath, runtimeCss],
+    [options.mapPath, mapContents],
+  ]) {
+    if (contents === undefined) errors.push(`${path}: required design file is missing`);
+  }
+  if (design !== undefined && !/^---\r?\n[\s\S]*?^status: current\r?$/m.test(design)) {
+    errors.push(`${options.designPath}: expected frontmatter status: current`);
+  }
+  if (sourceCss === undefined || runtimeCss === undefined || mapContents === undefined) return errors.sort();
+
+  let mappings;
+  try {
+    mappings = JSON.parse(mapContents).mappings;
+  } catch {
+    return [...errors, `${options.mapPath}: expected valid JSON`].sort();
+  }
+  if (!Array.isArray(mappings)) return [...errors, `${options.mapPath}: expected a mappings array`].sort();
+
+  const sourceScopes = cssVariableScopes(sourceCss);
+  const runtimeScopes = cssVariableScopes(runtimeCss);
+  for (const mapping of mappings) {
+    const sourceValue = resolveCssVariable(sourceScopes, mapping.sourceScope, mapping.source);
+    if (sourceValue === undefined) {
+      errors.push(`${options.mapPath}: source token ${mapping.sourceScope} ${mapping.source} is missing`);
+      continue;
+    }
+    const runtimeValue = resolveCssVariable(runtimeScopes, mapping.runtimeScope, mapping.runtime);
+    if (runtimeValue === undefined) {
+      errors.push(`${options.mapPath}: runtime token ${mapping.runtimeScope} ${mapping.runtime} is missing`);
+      continue;
+    }
+    if (sourceValue !== runtimeValue) {
+      errors.push(
+        `${options.mapPath}: token drift ${mapping.sourceScope} ${mapping.source} (${sourceValue}) != ${mapping.runtimeScope} ${mapping.runtime} (${runtimeValue})`,
+      );
+    }
+  }
+  return errors.sort();
+}
+
+function cssVariableScopes(css) {
+  const scopes = new Map();
+  const normalized = css.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^@import[^\r\n]*\r?\n/gm, "");
+  for (const block of normalized.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const selector = block[1].trim();
+    const variables = new Map();
+    for (const declaration of block[2].matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) {
+      variables.set(declaration[1], declaration[2].trim().toLowerCase());
+    }
+    if (variables.size > 0) scopes.set(selector, variables);
+  }
+  return scopes;
+}
+
+function resolveCssVariable(scopes, scope, token, seen = new Set()) {
+  const key = `${scope} ${token}`;
+  if (seen.has(key)) return undefined;
+  seen.add(key);
+  const value = scopes.get(scope)?.get(token) ?? (scope === ":root" ? undefined : scopes.get(":root")?.get(token));
+  const reference = value?.match(/^var\((--[\w-]+)\)$/)?.[1];
+  return reference === undefined ? value : resolveCssVariable(scopes, scope, reference, seen);
 }
 
 function importSpecifiers(line) {
@@ -145,9 +226,15 @@ async function main() {
   const root = join(dirname(fileURLToPath(import.meta.url)), "..");
   const command = process.argv[2];
   const errors =
-    command === "context" ? await checkContext(root) : command === "arch" ? await checkArchitecture(root) : [];
-  if (command !== "context" && command !== "arch") {
-    console.error("Usage: node scripts/repository-checks.mjs <context|arch>");
+    command === "context"
+      ? await checkContext(root)
+      : command === "arch"
+        ? await checkArchitecture(root)
+        : command === "design"
+          ? await checkDesign(root)
+          : [];
+  if (command !== "context" && command !== "arch" && command !== "design") {
+    console.error("Usage: node scripts/repository-checks.mjs <context|arch|design>");
     process.exitCode = 2;
     return;
   }

@@ -1,0 +1,142 @@
+{
+  "mappings": [
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-radius-sm",
+      "runtimeScope": ":root",
+      "runtime": "--radius-sm"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-radius-md",
+      "runtimeScope": ":root",
+      "runtime": "--radius-md"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-radius-lg",
+      "runtimeScope": ":root",
+      "runtime": "--radius-lg"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-radius-xl",
+      "runtimeScope": ":root",
+      "runtime": "--radius-xl"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-primary-500",
+      "runtimeScope": ":root[data-theme=\"light\"]",
+      "runtime": "--accent-primary"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-primary-600",
+      "runtimeScope": ":root[data-theme=\"light\"]",
+      "runtime": "--accent-primary-hover"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-neutral-50",
+      "runtimeScope": ":root[data-theme=\"light\"]",
+      "runtime": "--bg-app"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-neutral-900",
+      "runtimeScope": ":root[data-theme=\"light\"]",
+      "runtime": "--text-primary"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-neutral-600",
+      "runtimeScope": ":root[data-theme=\"light\"]",
+      "runtime": "--text-secondary"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-neutral-400",
+      "runtimeScope": ":root[data-theme=\"light\"]",
+      "runtime": "--text-tertiary"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-neutral-200",
+      "runtimeScope": ":root[data-theme=\"light\"]",
+      "runtime": "--border-default"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-neutral-300",
+      "runtimeScope": ":root[data-theme=\"light\"]",
+      "runtime": "--border-strong"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-primary-400",
+      "runtimeScope": ":root[data-theme=\"dark\"]",
+      "runtime": "--accent-primary"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-primary-300",
+      "runtimeScope": ":root[data-theme=\"dark\"]",
+      "runtime": "--accent-primary-hover"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-neutral-900",
+      "runtimeScope": ":root[data-theme=\"dark\"]",
+      "runtime": "--bg-app"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-neutral-300",
+      "runtimeScope": ":root[data-theme=\"dark\"]",
+      "runtime": "--text-secondary"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-neutral-500",
+      "runtimeScope": ":root[data-theme=\"dark\"]",
+      "runtime": "--text-tertiary"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-neutral-700",
+      "runtimeScope": ":root[data-theme=\"dark\"]",
+      "runtime": "--border-default"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-neutral-600",
+      "runtimeScope": ":root[data-theme=\"dark\"]",
+      "runtime": "--border-strong"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-signal-blue",
+      "runtimeScope": ":root[data-theme=\"light\"]",
+      "runtime": "--signal-blue"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-signal-pink",
+      "runtimeScope": ":root[data-theme=\"light\"]",
+      "runtime": "--signal-pink"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-signal-purple",
+      "runtimeScope": ":root[data-theme=\"light\"]",
+      "runtime": "--signal-purple"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--zupulse-signal-yellow",
+      "runtimeScope": ":root[data-theme=\"light\"]",
+      "runtime": "--signal-yellow"
+    }
+  ]
+}

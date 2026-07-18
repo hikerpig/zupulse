@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { checkArchitecture, checkContext } from "../repository-checks.mjs";
+import { checkArchitecture, checkContext, checkDesign } from "../repository-checks.mjs";
 
 const roots: string[] = [];
 
@@ -82,6 +82,86 @@ describe("checkArchitecture", () => {
     expect(await checkArchitecture(root)).toEqual([
       'packages/web-core/src/runtime.ts:1: runtime module must not import test framework "vitest"',
       'packages/web-core/tsconfig.json: runtime compiler types must not include "vitest"',
+    ]);
+  });
+});
+
+describe("checkDesign", () => {
+  it("accepts a current design contract whose adopted tokens match", async () => {
+    const root = await fixture({
+      "DESIGN.md": "---\nstatus: current\n---\n\n# Design\n",
+      "theme.css":
+        '@import url("font.css");\n/* theme tokens */\n:root { --brand-accent: #f26b4f; --brand-radius: 6px; }\n.dark { --brand-accent: #f5826a; }\n',
+      "runtime.css":
+        ':root { --radius-sm: 6px; }\n:root[data-theme="light"] { --accent-primary: #f26b4f; }\n:root[data-theme="dark"] { --accent-primary: #f5826a; }\n',
+      "token-map.json": JSON.stringify({
+        mappings: [
+          {
+            sourceScope: ":root",
+            source: "--brand-radius",
+            runtimeScope: ":root",
+            runtime: "--radius-sm",
+          },
+          {
+            sourceScope: ":root",
+            source: "--brand-accent",
+            runtimeScope: ':root[data-theme="light"]',
+            runtime: "--accent-primary",
+          },
+          {
+            sourceScope: ".dark",
+            source: "--brand-accent",
+            runtimeScope: ':root[data-theme="dark"]',
+            runtime: "--accent-primary",
+          },
+        ],
+      }),
+    });
+
+    await expect(
+      checkDesign(root, {
+        designPath: "DESIGN.md",
+        sourceCssPath: "theme.css",
+        runtimeCssPath: "runtime.css",
+        mapPath: "token-map.json",
+      }),
+    ).resolves.toEqual([]);
+  });
+
+  it("reports missing endpoints and values that drift", async () => {
+    const root = await fixture({
+      "DESIGN.md": "# Design\n",
+      "theme.css": ":root { --brand-accent: #f26b4f; }\n",
+      "runtime.css": ':root[data-theme="light"] { --accent-primary: #000000; }\n',
+      "token-map.json": JSON.stringify({
+        mappings: [
+          {
+            sourceScope: ":root",
+            source: "--brand-accent",
+            runtimeScope: ':root[data-theme="light"]',
+            runtime: "--accent-primary",
+          },
+          {
+            sourceScope: ":root",
+            source: "--missing",
+            runtimeScope: ":root",
+            runtime: "--also-missing",
+          },
+        ],
+      }),
+    });
+
+    expect(
+      await checkDesign(root, {
+        designPath: "DESIGN.md",
+        sourceCssPath: "theme.css",
+        runtimeCssPath: "runtime.css",
+        mapPath: "token-map.json",
+      }),
+    ).toEqual([
+      "DESIGN.md: expected frontmatter status: current",
+      "token-map.json: source token :root --missing is missing",
+      'token-map.json: token drift :root --brand-accent (#f26b4f) != :root[data-theme="light"] --accent-primary (#000000)',
     ]);
   });
 });

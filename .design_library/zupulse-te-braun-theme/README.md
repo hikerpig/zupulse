@@ -6,9 +6,21 @@ This system is written for a dashboard-oriented practice environment with a futu
 ## Source
 
 - Narrative source: `phase2-brand-analyst.json`
-- Token source: `colors_and_type.css`
+- Machine-readable token source: `css.json`
+- Theme CSS projection: `colors_and_type.css`
+- Product design contract: `../../DESIGN.md`
+- Product runtime tokens: `../../packages/web-viewer/src/styles/tokens.css`
 - Product type: Digital Music Practice Workspace
 - Brand language: 中文
+
+## Role in the product
+
+本目录是 Zupulse 的上游主题资料库，保存品牌原语、组件语义和视觉参考。它不直接导入应用，
+也不自动覆盖运行时 CSS。产品界面先遵循根 `DESIGN.md`，组件只消费
+`packages/web-viewer/src/styles/tokens.css` 中的运行时语义 token。
+
+`runtime-token-map.json` 记录已经正式采用的主题原语与运行时语义 token。未出现在映射中的
+主题值仍是候选设计资料，不代表当前产品已经采用。
 
 ## What this design system covers
 
@@ -103,14 +115,15 @@ This system is written for a dashboard-oriented practice environment with a futu
 ## Index
 
 - `README.md` — 当前品牌说明，面向设计师，聚焦 foundations 与文档语义。
-- `colors_and_type.css` — 运行时 token 源，包含颜色、字体、间距、尺寸、圆角、阴影、动效与布局变量。
+- `colors_and_type.css` — 主题 CSS 投影，包含颜色、字体、间距、尺寸、圆角、阴影、动效与布局变量。
 - `css.json` — token 的结构化映射文件，可用于程序化检索同一套变量。
+- `runtime-token-map.json` — 已采用主题原语到产品运行时语义 token 的受控映射。
 - `specs/reference-braun.png` — 品牌参考图像之一。
 - `specs/reference-teenage-engineering.png` — 品牌参考图像之一。
 
 ## Caveats / known substitutions
 
 1. **Space Grotesk** 和 **IBM Plex Mono** 通过 `@import` 远程加载；当字体不可用时，系统会分别退回 `sans-serif` 与 `monospace`。这能保留结构，但会削弱标题几何感与数据栏位的品牌特征。
-2. 颜色 token 在 `colors_and_type.css` 中带有 `AI-generated` 注释，因此当前色阶应被视为已落地的重建结果；设计讨论应以这些 CSS 值为准。尤其是 coded accents 的职责已经被收敛为小面积节奏与分类信号，不应再把它们外推成新的主品牌色。
+2. 颜色 token 在 `colors_and_type.css` 中带有 `AI-generated` 注释，因此它们是主题重建结果，不自动等于产品运行时事实。已采用范围以 `runtime-token-map.json` 为准，当前实际值仍以应用 `tokens.css` 为准。尤其是 coded accents 的职责已经被收敛为小面积节奏与分类信号，不应再把它们外推成新的主品牌色。
 3. 当前说明文档只展开 token 与品牌叙事，不展开组件、预览页或 UI kit 的行为细节；因此这里适合作为 foundations 依据，不适合作为组件契约来源。
 4. 品牌样例文案仅能确认 `"播放" "循环" "轨道" "速度" "打开乐谱"` 这组高频界面词，说明系统的语言方向已经明确，但更长篇的叙述性文案仍需沿着“专业、直接、可扫描”的原则继续扩写。

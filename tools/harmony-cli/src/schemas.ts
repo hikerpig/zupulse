@@ -293,7 +293,6 @@ export const harmonyBaselineComparisonReportSchema = z
 
 export type HarmonyAccuracyBaseline = z.infer<typeof harmonyAccuracyBaselineSchema>;
 export type HarmonyBaselineComparisonReport = z.infer<typeof harmonyBaselineComparisonReportSchema>;
-
 export const harmonyRegressionCheckSchema = z
   .object({
     field: z.string().min(1),

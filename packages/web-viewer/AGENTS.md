@@ -9,10 +9,14 @@
 
 ## 实现约定
 
+- 修改 UI、CSS、主题、布局或交互状态前先读根 `DESIGN.md`；只有修改主题、token 或基础组件时，
+  才继续读取 `.design_library/zupulse-te-braun-theme` 的相关文件。
 - 路由使用持久 `libraryScoreId`，刷新时从 Repository 重建临时 Viewer Session。
 - 优先使用语义 HTML；交互变化覆盖键盘、焦点、loading、empty 和 error 状态。
 - 命令式 alphaTab 生命周期集中在 Viewer adapter/工作区边界，不散入普通组件。
 - UI 测试优先按 role/name 观察用户结果，不断言实现细节。
+- 组件只消费 `src/styles/tokens.css` 中的运行时语义 token，不直接消费 theme library 的原始色阶；
+  长期设计决策同步回根 `DESIGN.md`，不得只留在局部 CSS 或任务讨论中。
 
 参考：`src/app/App.tsx` 展示路由组合；`src/app/ViewerApplication.ts` 展示端口编排；
 `src/app/__tests__/App.test.tsx` 展示用户视角测试。最小验证：

@@ -11,7 +11,8 @@
 5. Historical / Superseded 文档、已完成计划和讨论稿，仅作历史证据。
 
 项目导航从 `docs/architecture/README.md` 开始；产品术语以 `CONTEXT.md` 和
-`docs/architecture/glossary.md` 为准。
+`docs/architecture/glossary.md` 为准。涉及 UI、主题、布局或交互设计时，以根
+`DESIGN.md` 作为当前设计契约入口。
 
 ## 项目结构
 
@@ -49,13 +50,14 @@
 | Electron、Bridge、SQLite | `apps/desktop-shell/AGENTS.md`                   |
 | Electron Main 或托管文件 | `apps/desktop-shell/src/main/AGENTS.md`          |
 | 架构决策                 | `docs/architecture/README.md` 与相关 Current ADR |
+| UI、主题、布局和交互设计 | `DESIGN.md` 与 `packages/web-viewer/AGENTS.md`   |
 
 ## 验证阶梯
 
 - 快速门禁：`pnpm verify:fast`
 - 全量类型、单测与构建：`pnpm verify`
 - Browser 与 Desktop E2E：`pnpm verify:e2e`
-- 单独排错：`pnpm check:context`、`pnpm check:arch`、`pnpm check`
+- 单独排错：`pnpm check:context`、`pnpm check:arch`、`pnpm check:design`、`pnpm check`
 - 格式：`pnpm format:check`；历史格式债务只报告未触及文件，不批量重写。
 
 每次实现以最小相关测试开始，完成前执行与风险相称的上层门禁，并在交付时报告实际运行结果。

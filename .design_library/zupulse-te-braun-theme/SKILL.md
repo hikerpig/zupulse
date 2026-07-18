@@ -6,13 +6,16 @@ user-invocable: true
 
 # zupulse Design Skill
 
-使用这个设计系统生成 Digital Music Practice Workspace 的 dashboard 界面。
-先用 `css.json` 理解 token，再用 `colors_and_type.css` 接入运行时变量。
+使用这个主题资料库辅助设计 Zupulse Digital Music Practice Workspace。先读项目根
+`DESIGN.md` 确认当前产品契约；只有修改主题、token 或基础组件时，再用 `css.json`
+理解品牌原语。应用运行时只消费 `packages/web-viewer/src/styles/tokens.css`，不得直接导入
+本目录的 `colors_and_type.css`。
 
 ## Quick map
 
 - `css.json` — 结构化 token 理解源。
-- `colors_and_type.css` — 运行时颜色、字体、间距、圆角、阴影变量源。
+- `colors_and_type.css` — 主题 CSS 投影，不是产品运行时入口。
+- `runtime-token-map.json` — 已正式采用的主题原语到运行时语义 token 映射。
 - `specs/reference-braun.png` — Braun-like order 参考。
 - `specs/reference-teenage-engineering.png` — Teenage Engineering color rhythm 参考。
 - `library-consumption.json` — 推荐读取顺序。

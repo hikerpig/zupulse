@@ -11,7 +11,7 @@ source_spec: docs/superpowers/specs/2026-07-15-harmony-analysis-studio-design.md
 
 ## Overview
 
-把 Harmony Analysis Studio 分成七个可独立验收的阶段：先关闭书面时间与 XML/MXL 回写风险，再建立领域模型和分析引擎，然后依次交付双宿主持久化、Studio 编辑竖切、导出竖切和发布质量门禁。每个阶段都必须留下可运行证据；上一个阶段的退出门槛未通过时，不进入依赖它的阶段。
+把 Harmony Analysis Studio 分成九个可独立验收的阶段：先关闭书面时间与 XML/MXL 回写风险，再建立领域模型和分析引擎，然后依次交付双宿主持久化、Studio 编辑竖切、导出竖切、发布质量门禁、CLI 工具与数据驱动调优基准。每个阶段都必须留下可运行证据；上一个阶段的退出门槛未通过时，不进入依赖它的阶段。
 
 详细任务与逐项验收见 [`tasks/todo.md`](todo.md)，产品与技术语义仍以[设计规格](../docs/superpowers/specs/2026-07-15-harmony-analysis-studio-design.md)为准。
 
@@ -48,6 +48,11 @@ P5 导出 T21 -> T22 -> T23
                          │
                          v
 P6 发布质量 T24 -> T25
+
+P7 CLI 工具 T29 -> T30 -> T31
+                         │
+                         v
+P8 数据驱动调优 T32 -> T33 -> T34 -> T35
 ```
 
 ## Phase 0: Feasibility gates
@@ -184,6 +189,47 @@ P6 发布质量 T24 -> T25
 - [x] Turkish March 结构回归由 manifest 与 SHA-256 管理，且不冒充 accuracy gold。
 - [x] `eval` 成败均输出 JSON，失败时返回非零退出码。
 - [x] 工具包只依赖 `@zupulse/web-core` 公共入口，相关 typecheck、测试和仓库门禁通过。
+
+## Phase 8: Data-driven harmony tuning benchmark
+
+目标：把 CLI 从结构回归升级为可复现的专家标注准确率评测，先建立可信基线和误差分类，再开始任何新一轮模型设计。
+
+- [ ] T32：定义 accuracy manifest、gold canonicalization、数据集 provenance 与分组隔离协议。
+- [ ] T33：接入 DCML Mozart，先用 K331-3 建立 adapter pilot，再扩展为按奏鸣曲隔离的古典钢琴基线。
+- [ ] T34：接入 Distant Listening Corpus 的跨作曲家钢琴子集，建立域外泛化与按和弦族切片报告。
+- [ ] T35：接入 POP909 流行钢琴域；把 ASAP、ChoCo 和 WJazzD 分别限定为解析鲁棒性、标签词表和后续爵士研究数据，不混入主准确率总分。
+
+### Dataset roles
+
+| Dataset                       | Role                                | Input / gold                                             | Decision                                              |
+| ----------------------------- | ----------------------------------- | -------------------------------------------------------- | ----------------------------------------------------- |
+| DCML Mozart Piano Sonatas     | 首要准确率基准                      | `notes`/`measures` TSV + 专家 `harmonies` TSV            | 立即接入；K331-3 先做 pilot，K331 整部固定 holdout    |
+| DCML Distant Listening Corpus | 古典跨风格泛化                      | 同一 DCML schema 的 score notes + harmony labels         | 第二阶段；先选 Beethoven/Chopin/Schumann 等钢琴子集   |
+| POP909                        | 流行钢琴域外评测                    | 多轨 MIDI（含钢琴伴奏）+ 时间区间 chord labels           | 第三阶段；单独报告绝对和弦指标                        |
+| ASAP                          | MusicXML/节拍解析鲁棒性             | MusicXML/MIDI + beat/downbeat/key-signature，无和声 gold | 只做 ingestion/boundary stress，不计算 chord accuracy |
+| ChoCo                         | 标签规范化与 progression prior 研究 | 标准化 chord annotations，常缺少可对应的完整符号音符     | 不作为端到端主 benchmark                              |
+| WJazzD                        | 后续爵士探索                        | solo events + beat-level accompanying chord              | 延后；输入是独奏而非完整伴奏，不能直接代表谱面识别    |
+
+所有外部 corpus 默认只在开发机缓存，不提交原始数据。manifest 必须固定来源 URL、版本或 commit、许可、文件摘要和 adapter 版本。DCML、ASAP、ChoCo 均为 CC BY-NC-SA 4.0，只能作为开发/研究评测输入；POP909 仓库标注为 MIT，但在重新分发歌曲 MIDI 前仍需单独审查底层作品权利。
+
+现有 Turkish March MXL 保持 `structural-regression`。其内部投影为 147 小节，而 DCML K331-3 标注版本为 127 小节，禁止按小节号直接拼接 gold。T33 先从 DCML 自身 TSV 构造 `HarmonyAnalysisInput` 与 gold；跨版本 MusicXML 对齐另以音高/节拍指纹实现并单独计量对齐覆盖率。
+
+### Exit gate P8
+
+- [ ] accuracy manifest 能区分 analyzer accuracy、MusicXML ingestion robustness 和 label-only prior，不把三类指标混成一个总分。
+- [ ] train/tune/eval 按完整作品分组；K331 全奏鸣曲只进入 eval，任何调参或统计资产不得读取其 gold。
+- [ ] 报告至少包含 gold mapping coverage、unsupported-label rate、Top-1/Top-8、resolved precision/coverage、boundary F1、ECE，以及按 chord family/corpus 的切片。
+- [ ] 每个候选改动保存相对固定 baseline 的 JSON diff；只接受改善目标误差类且不显著损害已冻结域的改动。
+- [ ] 外部数据可由 manifest 重建且不进入产品 bundle；CLI 测试、typecheck 与 `pnpm verify:fast` 通过。
+
+### Dataset sources
+
+- DCML Mozart Piano Sonatas: https://github.com/DCMLab/mozart_piano_sonatas
+- DCML Distant Listening Corpus: https://github.com/DCMLab/distant_listening_corpus
+- POP909: https://github.com/music-x-lab/POP909-Dataset
+- ASAP: https://github.com/fosfrancesco/asap-dataset
+- ChoCo: https://zenodo.org/records/7193888
+- WJazzD format: https://jazzomat.hfm-weimar.de/dbformat/dbformat.html
 
 ## Verification plan
 

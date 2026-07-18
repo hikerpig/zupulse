@@ -613,3 +613,78 @@ feature: harmony-analysis-studio
 **Verification:** `pnpm --filter @zupulse/harmony-cli test && pnpm --filter @zupulse/harmony-cli typecheck && pnpm verify:fast`
 
 **Evidence:** 工具包测试通过（4 files / 8 tests），包括真实子进程 inspect JSON、故意错误 manifest 的 JSON failure report 与 exit code 1；工具包及根 `tsc -b` 通过。根 `pnpm check` 通过（90 files / 340 tests），`pnpm check:context`、`pnpm check:arch` 和全部本次文件 Prettier 检查通过。`pnpm verify:fast` 的完整命令仅被本任务未触及的 `.design_library/tab-viewer-te-braun-theme/metadata.json` 与 `.design_library/zupulse-te-braun-theme/metadata.json` 既有格式问题挡住，未批量改写无关设计资产。
+
+## Phase 8: Data-driven harmony tuning benchmark
+
+### Task 32: 定义 accuracy eval 协议
+
+**Description:** 扩展 harmony-cli manifest，使结构回归、带 gold 的分析准确率、解析鲁棒性成为不同 case kind；定义外部 corpus provenance、canonical gold 和作品级 split。
+
+**Acceptance criteria:**
+
+- [ ] manifest 固定 corpus URL、版本/commit、许可、SHA-256、adapter 版本和 split group。
+- [ ] gold canonicalization 把 Roman numeral + local/global key 映射到绝对 root/kind/bass/degrees，并显式记录 unsupported，而不是猜测映射。
+- [ ] train/tune/eval 以完整作品为最小分组；评测进程证明 tune/train 代码不能读取 eval gold。
+- [ ] 报告分开输出 mapping coverage、unsupported-label rate、Top-1/Top-8、resolved precision/coverage、boundary F1、ECE 和 corpus/chord-family slices。
+
+**Verification:** harmony-cli schema/unit/process tests + typecheck
+
+**Dependencies:** Task 31
+
+**Files likely touched:** `tools/harmony-cli/src/schemas.ts`、accuracy evaluator/adapters、CLI tests、corpus manifest 文档。
+
+### Task 33: 建立 DCML Mozart pilot 与基线
+
+**Description:** 从 DCML `notes.tsv`、`measures.tsv` 构造内部 model，从 `harmonies.tsv` 构造 gold；先跑 K331-3，再扩展 18 首钢琴奏鸣曲，并按奏鸣曲隔离 split。
+
+**Acceptance criteria:**
+
+- [ ] K331-3 adapter 的 note/onset/duration、meter/key 和 harmony onset 通过小型人工抽查 fixture。
+- [ ] K331 全奏鸣曲固定为 eval，不参与阈值、权重、词频或模型资产选择。
+- [ ] 现有 147 小节 Turkish March MXL 仍只做结构回归；DCML 127 小节版本不按 measure number 与其强行对齐。
+- [ ] 生成首份 Mozart baseline JSON、错误样本索引和错误分类（边界、root、kind、bass/inversion、extension/degree、拒识）。
+
+**Verification:** adapter golden tests + pinned K331-3 accuracy eval + full Mozart report
+
+**Dependencies:** Task 32
+
+**Files likely touched:** `tools/harmony-cli/src/adapters/dcml*`、外部 corpus manifest、gold fixtures、README。
+
+### Task 34: 建立 DCML 跨作曲家泛化门禁
+
+**Description:** 利用 Distant Listening Corpus 的统一 schema，按难度逐步加入 Beethoven、Chopin、Schumann 等钢琴子集，测量古典时期与织体变化下的域外退化。
+
+**Acceptance criteria:**
+
+- [ ] 每个 corpus 以作品为组并有固定 split；同一作品的 movement 不跨 split。
+- [ ] 报告分别展示 common triads/sevenths、inversions、applied/chromatic、augmented-sixth/Neapolitan、extended/altered 与 unsupported。
+- [ ] 调优遵循冻结域 no-regression：目标切片改善时，Mozart holdout 和此前冻结 corpus 的主指标不得超过约定容差回退。
+- [ ] corpus 下载留在 git 外缓存，manifest 可校验并复建输入。
+
+**Verification:** multi-corpus eval + deterministic report diff tests
+
+**Dependencies:** Task 33
+
+**Files likely touched:** DCML adapter 共用层、corpus manifests、report diff/summary。
+
+### Task 35: 增加流行域并冻结下一轮调优循环
+
+**Description:** 接入 POP909 MIDI + chord intervals 作为独立流行钢琴评测；用 ASAP 压测 MusicXML ingestion/boundary，用 ChoCo 研究标签映射与 progression prior，WJazzD 留作后续爵士专项。
+
+**Acceptance criteria:**
+
+- [ ] POP909 按歌曲分组，MIDI 音符与 chord 时间轴对齐，单独报告流行域绝对和弦指标。
+- [ ] ASAP 只报告解析成功率、note/measure invariants、boundary/runtime，不宣称有 chord accuracy gold。
+- [ ] ChoCo/WJazzD 不进入端到端总分；任何从 label-only 数据得到的 prior 都必须仅由 train split 构建并版本化。
+- [ ] 建立固定迭代循环：baseline → 最大错误簇 → 单一假设 → tune → frozen eval/no-regression → 接受或回滚；每轮保留 JSON diff 和变更说明。
+
+**Verification:** POP909 adapter/eval tests + ASAP robustness suite + `pnpm verify:fast`
+
+**Dependencies:** Task 34
+
+**Files likely touched:** POP909/ASAP adapters、dataset manifests、harmony-cli report、调优 handoff 文档。
+
+### Checkpoint P8
+
+- [ ] `tasks/plan.md` 的 Exit gate P8 全部通过。
+- [ ] 评测设计经人工审查后，才开始下一轮准确率实现。

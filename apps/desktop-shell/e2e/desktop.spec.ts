@@ -9,6 +9,7 @@ const musicXmlFixture = fileURLToPath(
   new URL("../../../test-fixtures/musicxml/generated/single-voice.musicxml", import.meta.url),
 );
 const mxlFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/generated/simple.mxl", import.meta.url));
+const reviewedFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/K331-3_reviewed.mxl", import.meta.url));
 
 async function launch(userData: string): Promise<ElectronApplication> {
   return electron.launch({ args: [".", `--user-data-dir=${userData}`] });
@@ -143,6 +144,7 @@ test("opens a saved MusicXML Studio document", async () => {
     await expect(window.getByRole("link", { name: "和弦分析" })).toBeVisible();
     await window.getByRole("link", { name: "和弦分析" }).click();
     await expect(window.getByRole("heading", { name: "和弦分析工作室" })).toBeVisible();
+    await expect(window.locator("details").filter({ hasText: "分析设置" })).not.toHaveAttribute("open", "");
     const splitter = window.getByRole("separator", { name: "调整乐谱与分析面板宽度" });
     await splitter.focus();
     await window.keyboard.press("ArrowRight");
@@ -163,6 +165,37 @@ test("opens a saved MusicXML Studio document", async () => {
     await window.getByRole("button", { name: "导出标注曲谱" }).click();
     await expect(window.getByText("已导出标注曲谱")).toBeVisible();
     await expect.poll(async () => new TextDecoder().decode(await readFile(exportPath))).toContain("<harmony>");
+  } finally {
+    await app.close();
+    await rm(userData, { recursive: true, force: true });
+  }
+});
+
+test("synchronizes a reviewed Studio selection and closes its runtime", async () => {
+  const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-reviewed-studio-"));
+  const app = await launch(userData);
+  try {
+    const window = await app.firstWindow();
+    await chooseFixture(app, reviewedFixture);
+    await window.getByRole("button", { name: "导入曲谱" }).first().click();
+    await window.getByRole("link", { name: "和弦分析" }).click();
+    await expect(window.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible({
+      timeout: 30_000,
+    });
+    const list = window.getByRole("list", { name: "分析片段" });
+    const segments = list.getByRole("button");
+    const distantSegment = segments.last();
+    await distantSegment.click();
+    await expect(distantSegment).toHaveAttribute("aria-pressed", "true");
+    await window.locator("#alpha-tab").evaluate((host) => {
+      host.dispatchEvent(
+        new CustomEvent("alphaTab.beatMouseDown", {
+          detail: { displayStart: 0, voice: { bar: { index: 0 } } },
+        }),
+      );
+    });
+    await expect(distantSegment).toHaveAttribute("aria-pressed", "false");
+    await expect(list.locator('[aria-pressed="true"]')).toHaveCount(1);
   } finally {
     await app.close();
     await rm(userData, { recursive: true, force: true });

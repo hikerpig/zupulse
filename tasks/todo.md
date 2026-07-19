@@ -15,7 +15,7 @@
   - [x] Task 13：独立分栏组件、键盘/指针约束、窄屏堆叠与独立滚动均有测试和真实视口证据。
   - [x] Task 14：有效范围 master-detail 已抽为独立组件，筛选、隐藏项说明与完整键盘焦点行为均有组件测试。
   - [x] Task 15：默认折叠设置、单行 Transport、固定导出与完整状态/桌面/窄屏/深浅主题均已验证。
-  - [ ] Task 16–17：Browser 已完成 reviewed 曲谱双向选择与 5/5 E2E；Desktop 尚待补同构选择与销毁证据。
+  - [x] Task 16–17：Browser/Desktop 均完成 reviewed 曲谱双向选择与 5/5 E2E，销毁、lifecycle 与路径隔离另有单测证据。
   - [ ] Task 18：命令门禁和文档已更新；由于 Task 9、11、13–17 尚有缺口，最终 Definition of Done 未达成。
 
 ## Phase 1：Fail-fast foundations
@@ -475,15 +475,15 @@
 
 **Acceptance criteria:**
 
-- [ ] Desktop 能完成分栏、双向选择、修正预览和局部试听。
-- [ ] Studio runtime 销毁后音频与事件订阅停止，不影响应用 lifecycle ack。
-- [ ] E2E 与测试代码不依赖绝对用户路径，不新增 Bridge request/response/capability。
+- [x] Desktop 能完成分栏、双向选择、修正预览和局部试听。
+- [x] Studio runtime 销毁后音频与事件订阅停止，不影响应用 lifecycle ack。
+- [x] E2E 与测试代码不依赖绝对用户路径，不新增 Bridge request/response/capability。
 
 **Verification:**
 
-- [ ] `pnpm --filter @zupulse/desktop-shell test:e2e`
-- [ ] `pnpm --filter @zupulse/desktop-shell build`
-- [ ] `pnpm check:arch`
+- [x] `pnpm --filter @zupulse/desktop-shell test:e2e`
+- [x] `pnpm --filter @zupulse/desktop-shell build`
+- [x] `pnpm check:arch`
 
 **Dependencies:** Tasks 15–16
 

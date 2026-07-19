@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { useParams } from "react-router";
-import { reducePreviewTransport, type ScoreWrittenRange } from "@zupulse/web-core";
+import { formatChordSymbol, reducePreviewTransport, type ScoreWrittenRange } from "@zupulse/web-core";
 import {
   createHarmonyRangeViewItems,
   filterHarmonyRangeViewItems,
@@ -58,6 +58,10 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   const [exportStatus, setExportStatus] = useState<string>();
   const [rangeFilter, setRangeFilter] = useState<HarmonyRangeFilter>("all");
   const displayedRanges = filterHarmonyRangeViewItems(ranges, rangeFilter, selectedRange?.key);
+  const selectRange = (item: (typeof displayedRanges)[number]) => {
+    setFallbackSelectedKey(item.key);
+    application.selectStudioRange(libraryScoreId!, item.effective.range);
+  };
   const [preferences, setPreferences] = useState(() => loadStudioPreferences(browserStorage()));
   const updatePreferences = (next: Partial<typeof preferences>) =>
     setPreferences((current) => {
@@ -419,18 +423,48 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                         type="button"
                         aria-label={`片段 ${index + 1}`}
                         aria-pressed={selectedRange?.key === item.key}
-                        onClick={() => {
-                          setFallbackSelectedKey(item.key);
-                          const selectRange = (application as unknown as Partial<typeof application>).selectStudioRange;
-                          if (typeof selectRange === "function")
-                            selectRange.call(application, libraryScoreId!, item.effective.range);
+                        onClick={() => selectRange(item)}
+                        onKeyDown={(event) => {
+                          const currentIndex = displayedRanges.findIndex((candidate) => candidate.key === item.key);
+                          const pageSize = 5;
+                          const nextIndex =
+                            event.key === "ArrowUp"
+                              ? currentIndex - 1
+                              : event.key === "ArrowDown"
+                                ? currentIndex + 1
+                                : event.key === "Home"
+                                  ? 0
+                                  : event.key === "End"
+                                    ? displayedRanges.length - 1
+                                    : event.key === "PageUp"
+                                      ? currentIndex - pageSize
+                                      : event.key === "PageDown"
+                                        ? currentIndex + pageSize
+                                        : undefined;
+                          if (nextIndex === undefined) return;
+                          event.preventDefault();
+                          const destination =
+                            displayedRanges[Math.max(0, Math.min(displayedRanges.length - 1, nextIndex))];
+                          if (!destination) return;
+                          selectRange(destination);
+                          const buttons =
+                            event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("button");
+                          buttons?.[Math.max(0, Math.min(displayedRanges.length - 1, nextIndex))]?.focus();
                         }}
                       >
                         <span>
-                          {item.effective.type === "no-chord" ? "N.C." : `区间 ${String(index + 1).padStart(2, "0")}`}
+                          {item.effective.type === "chord"
+                            ? formatChordSymbol(item.effective.chord)
+                            : item.effective.type === "no-chord"
+                              ? "N.C."
+                              : "未解决"}
                         </span>
                         <small>
-                          小节 {item.effective.range.start.measureIndex + 1} · {item.origin}
+                          第 {item.effective.range.start.measureIndex + 1} 小节 ·
+                          {{ correction: "用户修正", source: "来源谱", analysis: "算法" }[item.origin]}
+                          {item.confidence
+                            ? ` · ${item.confidence === "high" ? "高" : item.confidence === "medium" ? "中" : "低"}置信度`
+                            : ""}
                         </small>
                       </button>
                     ))}

@@ -135,6 +135,7 @@ describe("StudioPage", () => {
   });
 
   it("selects any analysis segment instead of pinning the inspector to the first segment", async () => {
+    const selectStudioRange = vi.fn();
     const snapshot = {
       studio: {
         libraryScoreId: "score-1",
@@ -175,6 +176,7 @@ describe("StudioPage", () => {
       exportStudio: async () => "saved" as const,
       setStudioCorrection: async () => undefined,
       resetStudioCorrection: async () => undefined,
+      selectStudioRange,
     } as never;
     const view = render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -186,6 +188,12 @@ describe("StudioPage", () => {
     const user = userEvent.setup();
     expect(within(view.container).getByRole("option", { name: "track-2" })).toBeTruthy();
     const segments = within(view.container).getByRole("list", { name: "分析片段" });
+    await user.click(within(segments).getByRole("button", { name: "片段 1" }));
+    await user.keyboard("{ArrowDown}");
+    expect(selectStudioRange).toHaveBeenLastCalledWith("score-1", {
+      start: { measureIndex: 1, offsetTicks: 0 },
+      end: { measureIndex: 1, offsetTicks: 1 },
+    });
     await user.click(within(segments).getByRole("button", { name: "片段 2" }));
     expect(within(segments).getByRole("button", { name: "片段 2" }).getAttribute("aria-pressed")).toBe("true");
   });

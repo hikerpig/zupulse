@@ -2,7 +2,7 @@
 
 ## 状态
 
-- 阶段：Checkpoint A 已完成实现验证；全量快速门禁受仓库缺失的既有 fixture 阻塞，等待人工确认。
+- 阶段：Phase 4 验收完成；`pnpm verify` 的 Studio、类型、构建与 377 项单测通过，另有 2 项既有 Harmony CLI 测试受缺失 fixture 阻塞。
 - 规格：`docs/superpowers/specs/2026-07-19-studio-workspace-tuning-design.md`。
 - 计划：`tasks/plan.md`。
 - 执行规则：严格按依赖顺序；每项测试先行；任务完成后立即勾选验收与验证项。

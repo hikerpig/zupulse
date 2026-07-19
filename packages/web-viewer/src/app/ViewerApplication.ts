@@ -636,6 +636,10 @@ export class ViewerApplication implements ViewerAppHandle {
     const ranges = state.document === null ? undefined : this.getStudioRanges(libraryScoreId, state.document);
     const previousSelection =
       this.snapshot.studio?.libraryScoreId === libraryScoreId ? this.snapshot.studio.selection : undefined;
+    const selection =
+      ranges === undefined || previousSelection === undefined
+        ? undefined
+        : restoreHarmonySelection(ranges, previousSelection.focus);
     if (ranges && this.studioRuntimeLibraryScoreId === libraryScoreId) {
       this.studioRuntime?.applyPreview(ranges.map((item) => item.effective));
     }
@@ -646,9 +650,7 @@ export class ViewerApplication implements ViewerAppHandle {
         : {}),
       ...(state.document === null ? {} : { document: state.document }),
       ...(ranges === undefined ? {} : { ranges }),
-      ...(ranges === undefined || previousSelection === undefined
-        ? {}
-        : { selection: restoreHarmonySelection(ranges, previousSelection.focus) }),
+      ...(selection === undefined ? {} : { selection }),
       ...(state.error === undefined ? {} : { error: state.error }),
     });
   }

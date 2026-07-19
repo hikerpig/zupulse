@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { useParams } from "react-router";
-import { reducePreviewTransport } from "@zupulse/web-core";
+import { reducePreviewTransport, type ScoreWrittenRange } from "@zupulse/web-core";
 import {
   createHarmonyRangeViewItems,
   filterHarmonyRangeViewItems,
@@ -355,7 +355,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                         if (selectedRange)
                           (
                             application as unknown as {
-                              setStudioPreviewLoop?: (id: string, range: typeof selectedRange.effective.range) => void;
+                              setStudioPreviewLoop?: (id: string, range: ScoreWrittenRange) => void;
                             }
                           ).setStudioPreviewLoop?.(libraryScoreId!, selectedRange.effective.range);
                         dispatchPreview({
@@ -425,7 +425,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                     <>
                       <HarmonyStudioEditor
                         candidates={selectedSegment?.alternatives ?? []}
-                        {...(selectedSegment.status === "unresolved"
+                        {...(selectedSegment?.status === "unresolved"
                           ? { unresolvedReason: selectedSegment.reason }
                           : {})}
                         onSelect={(candidate) =>

@@ -8,6 +8,21 @@ import type {
 } from "@zupulse/web-core";
 import { ViewerApplication } from "../ViewerApplication";
 
+function studioRuntime(destroy = async () => undefined) {
+  return {
+    getSnapshot: () => ({ status: "ready" as const }),
+    subscribeSelection: () => () => undefined,
+    subscribeErrors: () => () => undefined,
+    highlight: () => ({ status: "unavailable" as const }),
+    applyPreview: () => ({ status: "unavailable" as const }),
+    togglePlayback: () => ({ status: "unavailable" as const }),
+    setPosition: () => ({ status: "unavailable" as const }),
+    setSpeed: () => ({ status: "unavailable" as const }),
+    setLoop: () => ({ status: "unavailable" as const }),
+    destroy,
+  };
+}
+
 describe("ViewerApplication", () => {
   it("keeps cancellation on the current session and replaces a selected file", async () => {
     const destroy = vi.fn(async () => undefined);
@@ -126,6 +141,18 @@ describe("ViewerApplication", () => {
         },
         adapters: [adapter],
       },
+      async () => ({
+        getSnapshot: () => ({ status: "ready" }),
+        subscribeSelection: () => () => undefined,
+        subscribeErrors: () => () => undefined,
+        highlight: () => ({ status: "unavailable" }),
+        applyPreview: () => ({ status: "unavailable" }),
+        togglePlayback: () => ({ status: "unavailable" }),
+        setPosition: () => ({ status: "unavailable" }),
+        setSpeed: () => ({ status: "unavailable" }),
+        setLoop: () => ({ status: "unavailable" }),
+        destroy: async () => undefined,
+      }),
     );
     const navigate = vi.fn();
     const unsubscribe = application.subscribeNavigation(navigate);
@@ -218,6 +245,7 @@ describe("ViewerApplication", () => {
         },
         adapters: [adapter],
       },
+      async () => studioRuntime(),
     );
     await Promise.all([application.openStudio(scoreId), application.openStudio(scoreId)]);
     expect(application.getSnapshot().studio).toMatchObject({ libraryScoreId: scoreId, status: "ready" });
@@ -379,13 +407,14 @@ describe("ViewerApplication", () => {
         gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
         adapters: [adapter],
       },
+      async () => studioRuntime(destroyStudio),
     );
 
     await application.openLibraryScore(viewerScoreId);
     await application.openStudio(studioScoreId);
 
     expect(destroyViewer).toHaveBeenCalledOnce();
-    expect(openSession).toHaveBeenLastCalledWith({ fileName: `${studioScoreId}.musicxml`, bytes: studioBytes });
+    expect(openSession).toHaveBeenCalledOnce();
     expect(application.getSnapshot()).toMatchObject({
       studio: { libraryScoreId: studioScoreId, status: "ready" },
     });

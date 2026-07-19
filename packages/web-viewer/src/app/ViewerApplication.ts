@@ -27,6 +27,14 @@ import { insertCorrection } from "@zupulse/web-core";
 import { HarmonyStudioSession } from "../harmonyStudioSession";
 import type { HarmonyStudioSessionState } from "../harmonyStudioSession";
 import { exportHarmonyStudioDocument } from "../harmonyStudioExport";
+import type { StudioScoreRuntime } from "../studio-score-runtime";
+import {
+  createHarmonyRangeViewItems,
+  restoreHarmonySelection,
+  selectContainingHarmonyRange,
+  type HarmonyRangeViewItem,
+  type HarmonySelection,
+} from "../features/harmony-studio/harmony-range-view-model";
 
 export type ViewerApplicationSnapshot = {
   currentSessionId?: string;
@@ -37,6 +45,9 @@ export type ViewerApplicationSnapshot = {
     status: "loading" | "analyzing" | "ready" | "unsaved" | "saving" | "error" | "conflict";
     availableTrackIds?: readonly string[];
     document?: HarmonyAnalysisDocument;
+    ranges?: readonly HarmonyRangeViewItem[];
+    selection?: HarmonySelection;
+    previewError?: string;
     error?: string;
   };
 };
@@ -44,8 +55,10 @@ export type ViewerApplicationSnapshot = {
 export class ViewerApplication implements ViewerAppHandle {
   private active: ViewerSessionHandle | undefined;
   private activeLibraryScoreId: string | undefined;
-  private studioRuntime: ViewerSessionHandle | undefined;
+  private studioRuntime: StudioScoreRuntime | undefined;
   private studioRuntimeLibraryScoreId: string | undefined;
+  private studioSelectionDetach: (() => void) | undefined;
+  private studioErrorDetach: (() => void) | undefined;
   private chain = Promise.resolve();
   private queuedError: unknown;
   private destroyPromise?: Promise<void>;
@@ -53,6 +66,7 @@ export class ViewerApplication implements ViewerAppHandle {
   private studioOpening: { id: string; promise: Promise<void> } | undefined;
   private readonly studioSessions = new Map<string, HarmonyStudioSession>();
   private readonly studioAvailableTrackIds = new Map<string, string[]>();
+  private readonly studioSources = new Map<string, { rootXml: string; partIds: readonly string[] }>();
   private destroying = false;
   private snapshot: ViewerApplicationSnapshot = {};
   private readonly listeners = new Set<() => void>();
@@ -67,6 +81,7 @@ export class ViewerApplication implements ViewerAppHandle {
       gateway: ScoreFileGateway;
       adapters: readonly ScoreFormatAdapter[];
     },
+    private readonly openStudioRuntime?: (file: ViewerFile) => Promise<StudioScoreRuntime>,
   ) {
     this.unsubscribe = host.subscribe((event) => this.onHostEvent(event));
     if (library) void this.refreshLibrary();
@@ -92,7 +107,7 @@ export class ViewerApplication implements ViewerAppHandle {
     return this.active;
   }
 
-  getCurrentStudioSession(): ViewerSessionHandle | undefined {
+  getCurrentStudioSession(): StudioScoreRuntime | undefined {
     return this.studioRuntime;
   }
 
@@ -156,6 +171,44 @@ export class ViewerApplication implements ViewerAppHandle {
     };
     session.setCorrections(document.corrections);
     await session.flush();
+  }
+
+  selectStudioRange(id: string, range: HarmonyCorrection["range"]): void {
+    const studio = this.snapshot.studio;
+    if (studio?.libraryScoreId !== id) return;
+    this.studioRuntime?.highlight(range);
+    this.setStudio(id, { ...studio, selection: { focus: range.start, range } });
+  }
+
+  toggleStudioPreview(id: string): void {
+    if (this.studioRuntimeLibraryScoreId === id) this.studioRuntime?.togglePlayback();
+  }
+
+  setStudioPreviewPosition(id: string, positionTicks: number): void {
+    if (this.studioRuntimeLibraryScoreId === id) this.studioRuntime?.setPosition(positionTicks);
+  }
+
+  setStudioPreviewSpeed(id: string, speed: number): void {
+    if (this.studioRuntimeLibraryScoreId === id) this.studioRuntime?.setSpeed(speed);
+  }
+
+  setStudioPreviewLoop(id: string, range: HarmonyCorrection["range"]): void {
+    if (this.studioRuntimeLibraryScoreId === id) this.studioRuntime?.setLoop(range);
+  }
+
+  retryStudioPreview(id: string): void {
+    const studio = this.snapshot.studio;
+    if (studio?.libraryScoreId !== id || !studio.ranges || this.studioRuntimeLibraryScoreId !== id) return;
+    this.studioRuntime?.applyPreview(studio.ranges.map((item) => item.effective));
+    const { previewError: _previewError, ...nextStudio } = studio;
+    this.setStudio(id, nextStudio);
+  }
+
+  private selectStudioMoment(id: string, moment: { measureIndex: number; offsetTicks: number }): void {
+    const studio = this.snapshot.studio;
+    if (studio?.libraryScoreId !== id || !studio.ranges) return;
+    const selection = selectContainingHarmonyRange(studio.ranges, moment);
+    if (selection) this.setStudio(id, { ...studio, selection });
   }
 
   async setStudioAnnotationTarget(id: string, annotationTarget: AnnotationTarget): Promise<void> {
@@ -275,8 +328,16 @@ export class ViewerApplication implements ViewerAppHandle {
       if (!score) throw new Error("曲谱不存在");
       if (score.format !== "musicxml") throw new Error("仅支持 MusicXML/MXL 曲谱");
       const source = await library.repository.readScore(id as LibraryScore["id"]);
+      this.studioSources.set(id, {
+        rootXml: readMusicXmlRootXml(source.bytes),
+        partIds: listMusicXmlPartIds(source.bytes),
+      });
       const previousViewer = this.active;
       const previousStudio = this.studioRuntime;
+      this.studioSelectionDetach?.();
+      this.studioSelectionDetach = undefined;
+      this.studioErrorDetach?.();
+      this.studioErrorDetach = undefined;
       this.active = undefined;
       this.activeLibraryScoreId = undefined;
       this.studioRuntime = undefined;
@@ -289,8 +350,16 @@ export class ViewerApplication implements ViewerAppHandle {
       this.setSnapshot(snapshot);
       await previousViewer?.destroy();
       await previousStudio?.destroy();
-      this.studioRuntime = await this.openSession(source);
+      if (!this.openStudioRuntime) throw new Error("Studio runtime is not configured");
+      this.studioRuntime = await this.openStudioRuntime(source);
       this.studioRuntimeLibraryScoreId = id;
+      this.studioSelectionDetach = this.studioRuntime.subscribeSelection((moment) =>
+        this.selectStudioMoment(id, moment),
+      );
+      this.studioErrorDetach = this.studioRuntime.subscribeErrors((error) => {
+        const studio = this.snapshot.studio;
+        if (studio?.libraryScoreId === id) this.setStudio(id, { ...studio, previewError: error.message });
+      });
       this.studioAvailableTrackIds.set(
         id,
         listMusicXmlPartIds(source.bytes).map((_, index) => `track-${index + 1}`),
@@ -481,6 +550,7 @@ export class ViewerApplication implements ViewerAppHandle {
     this.studioSessions.get(id)?.dispose();
     this.studioSessions.delete(id);
     this.studioAvailableTrackIds.delete(id);
+    this.studioSources.delete(id);
     await this.library.repository.delete(id);
     if (this.snapshot.studio?.libraryScoreId === id) {
       const { studio: _studio, ...snapshot } = this.snapshot;
@@ -563,18 +633,50 @@ export class ViewerApplication implements ViewerAppHandle {
   }
 
   private setStudioState(libraryScoreId: string, state: HarmonyStudioSessionState): void {
+    const ranges = state.document === null ? undefined : this.getStudioRanges(libraryScoreId, state.document);
+    const previousSelection =
+      this.snapshot.studio?.libraryScoreId === libraryScoreId ? this.snapshot.studio.selection : undefined;
+    if (ranges && this.studioRuntimeLibraryScoreId === libraryScoreId) {
+      this.studioRuntime?.applyPreview(ranges.map((item) => item.effective));
+    }
     this.setStudio(libraryScoreId, {
       status: state.status,
       ...(this.studioAvailableTrackIds.has(libraryScoreId)
         ? { availableTrackIds: this.studioAvailableTrackIds.get(libraryScoreId)! }
         : {}),
       ...(state.document === null ? {} : { document: state.document }),
+      ...(ranges === undefined ? {} : { ranges }),
+      ...(ranges === undefined || previousSelection === undefined
+        ? {}
+        : { selection: restoreHarmonySelection(ranges, previousSelection.focus) }),
       ...(state.error === undefined ? {} : { error: state.error }),
     });
   }
 
+  private getStudioRanges(libraryScoreId: string, document: HarmonyAnalysisDocument): HarmonyRangeViewItem[] {
+    const source = this.studioSources.get(libraryScoreId);
+    const scoreEnd = document.activeRevision.segments.reduce(
+      (end, segment) => (compareMoments(segment.range.end, end) > 0 ? segment.range.end : end),
+      { measureIndex: 0, offsetTicks: 0 },
+    );
+    const partId = source?.partIds[trackIndexFromId(document.annotationTarget.trackId)];
+    const projection = effectiveHarmonyProjection({
+      revision: document.activeRevision.segments,
+      source:
+        source === undefined || partId === undefined
+          ? []
+          : projectSourceHarmonyEvents(parseSourceHarmonyEvents(source.rootXml, partId), scoreEnd),
+      corrections: document.corrections,
+    });
+    return createHarmonyRangeViewItems(projection, document.activeRevision.segments);
+  }
+
   private async destroyOnce(): Promise<void> {
     this.unsubscribe();
+    this.studioSelectionDetach?.();
+    this.studioSelectionDetach = undefined;
+    this.studioErrorDetach?.();
+    this.studioErrorDetach = undefined;
     this.navigationListeners.clear();
     for (const studioSession of this.studioSessions.values()) studioSession.dispose();
     this.studioSessions.clear();

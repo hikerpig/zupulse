@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useState, useSyncExternalStore } from "react";
 import { useParams } from "react-router";
 import { reducePreviewTransport } from "@zupulse/web-core";
+import { createHarmonyRangeViewItems } from "../../features/harmony-studio/harmony-range-view-model";
 import { HarmonyStudioEditor } from "../../features/harmony-studio/HarmonyStudioEditor";
 import { ScoreViewer } from "../../components/ScoreViewer";
 import type { ViewerApplication } from "../ViewerApplication";
@@ -18,8 +19,29 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   const studioDocument = studio?.document;
   const includedTrackIds = studioDocument?.activeRevision.parameters.scope.includedTrackIds ?? [];
   const availableTrackIds = studio?.availableTrackIds ?? includedTrackIds;
-  const [selectedSegmentIndex, setSelectedSegmentIndex] = useState(0);
-  const selectedSegment = studioDocument?.activeRevision.segments[selectedSegmentIndex];
+  const ranges =
+    studio?.ranges ??
+    (studioDocument
+      ? createHarmonyRangeViewItems(
+          studioDocument.activeRevision.segments.map((segment) =>
+            segment.status === "resolved"
+              ? { type: "chord" as const, range: segment.range, chord: segment.chord, origin: "analysis" as const }
+              : {
+                  type: "unresolved" as const,
+                  range: segment.range,
+                  reason: segment.reason,
+                  alternatives: segment.alternatives,
+                  origin: "analysis" as const,
+                },
+          ),
+          studioDocument.activeRevision.segments,
+        )
+      : []);
+  const [fallbackSelectedKey, setFallbackSelectedKey] = useState<string>();
+  const selectedRange = studio?.selection
+    ? ranges.find((item) => item.effective.range === studio.selection?.range)
+    : ranges.find((item) => item.key === fallbackSelectedKey);
+  const selectedSegment = selectedRange?.analysis;
   const [exportStatus, setExportStatus] = useState<string>();
   const [preview, dispatchPreview] = useReducer(reducePreviewTransport, {
     status: "paused",
@@ -147,6 +169,21 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                   {studio.error}
                 </p>
               ) : null}
+              {studio.previewError ? (
+                <p className={styles.alert} role="alert">
+                  预览不可用：{studio.previewError}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      (application as unknown as { retryStudioPreview?: (id: string) => void }).retryStudioPreview?.(
+                        libraryScoreId!,
+                      )
+                    }
+                  >
+                    重试预览
+                  </button>
+                </p>
+              ) : null}
 
               <div className={styles.utilityGrid}>
                 <section className={styles.utilityPanel} aria-labelledby="analysis-settings-title">
@@ -207,7 +244,12 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                     <button
                       className="primary-button"
                       type="button"
-                      onClick={() => dispatchPreview({ type: preview.status === "playing" ? "pause" : "play" })}
+                      onClick={() => {
+                        (
+                          application as unknown as { toggleStudioPreview?: (id: string) => void }
+                        ).toggleStudioPreview?.(libraryScoreId!);
+                        dispatchPreview({ type: preview.status === "playing" ? "pause" : "play" });
+                      }}
                     >
                       {preview.status === "playing" ? "暂停预览" : "播放预览"}
                     </button>
@@ -219,9 +261,13 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                         min="0"
                         max="10000"
                         value={preview.positionTicks}
-                        onChange={(event) =>
-                          dispatchPreview({ type: "seek", positionTicks: Number(event.currentTarget.value) })
-                        }
+                        onChange={(event) => {
+                          const positionTicks = Number(event.currentTarget.value);
+                          (
+                            application as unknown as { setStudioPreviewPosition?: (id: string, ticks: number) => void }
+                          ).setStudioPreviewPosition?.(libraryScoreId!, positionTicks);
+                          dispatchPreview({ type: "seek", positionTicks });
+                        }}
                       />
                     </label>
                     <label className={styles.field}>
@@ -229,9 +275,13 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                       <select
                         aria-label="预览速度"
                         value={preview.speed}
-                        onChange={(event) =>
-                          dispatchPreview({ type: "speed", speed: Number(event.currentTarget.value) })
-                        }
+                        onChange={(event) => {
+                          const speed = Number(event.currentTarget.value);
+                          (
+                            application as unknown as { setStudioPreviewSpeed?: (id: string, speed: number) => void }
+                          ).setStudioPreviewSpeed?.(libraryScoreId!, speed);
+                          dispatchPreview({ type: "speed", speed });
+                        }}
                       >
                         {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
                           <option key={speed} value={speed}>
@@ -242,20 +292,26 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                     </label>
                     <button
                       type="button"
-                      disabled={!selectedSegment}
-                      onClick={() =>
+                      disabled={!selectedRange}
+                      onClick={() => {
+                        if (selectedRange)
+                          (
+                            application as unknown as {
+                              setStudioPreviewLoop?: (id: string, range: typeof selectedRange.effective.range) => void;
+                            }
+                          ).setStudioPreviewLoop?.(libraryScoreId!, selectedRange.effective.range);
                         dispatchPreview({
                           type: "loop",
-                          ...(selectedSegment
+                          ...(selectedRange
                             ? {
                                 range: {
-                                  startTicks: selectedSegment.range.start.offsetTicks,
-                                  endTicks: selectedSegment.range.end.offsetTicks,
+                                  startTicks: selectedRange.effective.range.start.offsetTicks,
+                                  endTicks: selectedRange.effective.range.end.offsetTicks,
                                 },
                               }
                             : {}),
-                        })
-                      }
+                        });
+                      }}
                     >
                       {preview.loop ? "取消选中片段循环" : "循环选中片段"}
                     </button>
@@ -271,42 +327,51 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                     <p>选择片段进行和弦校对。</p>
                   </div>
                   <div className={styles.segmentList} role="list" aria-label="分析片段">
-                    {studioDocument.activeRevision.segments.map((segment, index) => (
+                    {ranges.map((item, index) => (
                       <button
-                        key={`${segment.range.start.measureIndex}:${segment.range.start.offsetTicks}`}
+                        key={item.key}
                         type="button"
                         aria-label={`片段 ${index + 1}`}
-                        aria-pressed={index === selectedSegmentIndex}
-                        onClick={() => setSelectedSegmentIndex(index)}
+                        aria-pressed={selectedRange?.key === item.key}
+                        onClick={() => {
+                          setFallbackSelectedKey(item.key);
+                          const selectRange = (application as unknown as Partial<typeof application>).selectStudioRange;
+                          if (typeof selectRange === "function")
+                            selectRange.call(application, libraryScoreId!, item.effective.range);
+                        }}
                       >
-                        <span>片段 {String(index + 1).padStart(2, "0")}</span>
-                        <small>小节 {segment.range.start.measureIndex + 1}</small>
+                        <span>
+                          {item.effective.type === "no-chord" ? "N.C." : `区间 ${String(index + 1).padStart(2, "0")}`}
+                        </span>
+                        <small>
+                          小节 {item.effective.range.start.measureIndex + 1} · {item.origin}
+                        </small>
                       </button>
                     ))}
                   </div>
                 </aside>
                 <div className={styles.editorPane}>
-                  {selectedSegment ? (
+                  {selectedRange ? (
                     <>
                       <HarmonyStudioEditor
-                        candidates={selectedSegment.alternatives}
+                        candidates={selectedSegment?.alternatives ?? []}
                         {...(selectedSegment.status === "unresolved"
                           ? { unresolvedReason: selectedSegment.reason }
                           : {})}
                         onSelect={(candidate) =>
-                          void application.setStudioCorrection(libraryScoreId!, selectedSegment.range, {
+                          void application.setStudioCorrection(libraryScoreId!, selectedRange.effective.range, {
                             type: "chord",
                             chord: candidate.chord,
                           })
                         }
                         onApply={(chord) =>
-                          void application.setStudioCorrection(libraryScoreId!, selectedSegment.range, {
+                          void application.setStudioCorrection(libraryScoreId!, selectedRange.effective.range, {
                             type: "chord",
                             chord,
                           })
                         }
                         onNoChord={() =>
-                          void application.setStudioCorrection(libraryScoreId!, selectedSegment.range, {
+                          void application.setStudioCorrection(libraryScoreId!, selectedRange.effective.range, {
                             type: "no-chord",
                           })
                         }
@@ -314,20 +379,24 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                       <div className={styles.segmentActions} aria-label="片段修正操作">
                         <button
                           type="button"
-                          onClick={() => void application.resetStudioCorrection(libraryScoreId!, selectedSegment.range)}
+                          onClick={() =>
+                            void application.resetStudioCorrection(libraryScoreId!, selectedRange.effective.range)
+                          }
                         >
                           重置选中片段
                         </button>
                         <button
                           type="button"
-                          onClick={() => void application.splitStudioCorrection(libraryScoreId!, selectedSegment.range)}
+                          onClick={() =>
+                            void application.splitStudioCorrection(libraryScoreId!, selectedRange.effective.range)
+                          }
                         >
                           拆分选中修正
                         </button>
                         <button
                           type="button"
                           onClick={() =>
-                            void application.mergeStudioCorrections(libraryScoreId!, selectedSegment.range)
+                            void application.mergeStudioCorrections(libraryScoreId!, selectedRange.effective.range)
                           }
                         >
                           合并相邻修正
@@ -335,7 +404,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                         <button
                           type="button"
                           onClick={() =>
-                            void application.moveStudioCorrection(libraryScoreId!, selectedSegment.range, -1)
+                            void application.moveStudioCorrection(libraryScoreId!, selectedRange.effective.range, -1)
                           }
                         >
                           修正左移
@@ -343,7 +412,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                         <button
                           type="button"
                           onClick={() =>
-                            void application.moveStudioCorrection(libraryScoreId!, selectedSegment.range, 1)
+                            void application.moveStudioCorrection(libraryScoreId!, selectedRange.effective.range, 1)
                           }
                         >
                           修正右移

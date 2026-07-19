@@ -44,7 +44,7 @@ export function createDefaultOpenSession(
     const summary = required<HTMLElement>(ownerDocument, "summary");
     renderViewerState(status, summary, { status: "loading", message: "正在加载文件" });
     alphaTabHost.replaceChildren();
-    const api = dependencies.createApi(alphaTabHost, alphaTabSettings(scoreScrollElement));
+    const api = dependencies.createApi(alphaTabHost, createViewerAlphaTabSettings(scoreScrollElement));
     const adapter = dependencies.createAdapter(api);
     let controller: PlaybackController | undefined;
     try {
@@ -151,7 +151,7 @@ function required<T extends HTMLElement>(ownerDocument: Document, id: string): T
   return element as T;
 }
 
-function alphaTabSettings(scrollElement: HTMLElement): unknown {
+export function createViewerAlphaTabSettings(scrollElement: HTMLElement): unknown {
   const chineseSerifFonts = "Georgia, 'Songti SC', 'STSong', SimSun, 'Noto Serif SC', serif";
   const chineseSansFonts = "Arial, 'PingFang SC', 'Microsoft YaHei', 'Heiti SC', 'Noto Sans SC', sans-serif";
   return {

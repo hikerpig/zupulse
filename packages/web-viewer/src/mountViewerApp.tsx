@@ -4,17 +4,24 @@ import { flushSync } from "react-dom";
 import type { ViewerAppHandle, ViewerFile, ViewerHost, ViewerSessionHandle } from "./host";
 import { App } from "./app/App";
 import { ViewerApplication } from "./app/ViewerApplication";
+import { createStudioScoreRuntime, type StudioScoreRuntime } from "./studio-score-runtime";
 import type { ScoreFileGateway, ScoreFormatAdapter, SheetLibraryRepository } from "@zupulse/web-core";
 
 export type ViewerAppDependencies = {
   host: ViewerHost;
   openSession(file: ViewerFile, libraryScoreId?: string): Promise<ViewerSessionHandle>;
+  openStudioRuntime?(file: ViewerFile): Promise<StudioScoreRuntime>;
   library?: { repository: SheetLibraryRepository; gateway: ScoreFileGateway; adapters: readonly ScoreFormatAdapter[] };
 };
 
 export function mountViewerApp(rootElement: HTMLElement, dependencies: ViewerAppDependencies): ViewerAppHandle {
   const root = createRoot(rootElement);
-  const application = new ViewerApplication(dependencies.host, dependencies.openSession, dependencies.library);
+  const application = new ViewerApplication(
+    dependencies.host,
+    dependencies.openSession,
+    dependencies.library,
+    dependencies.openStudioRuntime ?? ((file) => createStudioScoreRuntime(rootElement.ownerDocument, file)),
+  );
   flushSync(() =>
     root.render(
       <StrictMode>

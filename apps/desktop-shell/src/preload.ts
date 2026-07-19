@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
-import { bridgeEventSchema, bridgeRequestSchema } from "@zupulse/web-core";
+import { bridgeEventSchema, bridgeRequestSchema } from "@zupulse/web-core/bridge/schemas";
 
 contextBridge.exposeInMainWorld("zupulseBridge", {
   request(value: unknown): Promise<unknown> {

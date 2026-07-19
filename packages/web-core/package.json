@@ -5,6 +5,10 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./bridge/schemas": "./src/bridge/schemas.ts"
+  },
   "dependencies": {
     "@coderline/alphatab": "^1.8.4",
     "fflate": "0.8.3",

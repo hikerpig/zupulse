@@ -377,6 +377,7 @@ describe("createDefaultOpenSession cleanup", () => {
     const [alphaTabHost, settings] = createApi.mock.calls[0] as [
       HTMLElement,
       {
+        core: { includeNoteBounds: boolean };
         player: { scrollElement: HTMLElement };
         display: { resources: { secondaryGlyphColor: string } };
       },
@@ -387,8 +388,10 @@ describe("createDefaultOpenSession cleanup", () => {
         enableCursor: true,
         enableAnimatedBeatCursor: true,
         enableElementHighlighting: true,
+        enableUserInteraction: true,
       }),
     );
+    expect(settings.core.includeNoteBounds).toBe(true);
     expect(settings.player.scrollElement).toBe(alphaTabHost.parentElement);
     expect(settings.display.resources.secondaryGlyphColor).toBe("#000000");
   });

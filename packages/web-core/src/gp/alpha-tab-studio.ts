@@ -70,7 +70,19 @@ export function attachAlphaTabBeatSelection(
 export function attachAlphaTabScoreSelection(
   api: AlphaTabStudioApiLike,
   select: (moment: ScoreWrittenMoment) => void,
+  eventTarget?: EventTarget,
 ): () => void {
+  if (eventTarget) {
+    const onBeat = (event: Event) => select(toScoreWrittenMoment((event as CustomEvent<AlphaTabStudioBeat>).detail));
+    const onNote = (event: Event) =>
+      select(toScoreWrittenMoment((event as CustomEvent<AlphaTabStudioNote>).detail.beat));
+    eventTarget.addEventListener("alphaTab.beatMouseDown", onBeat);
+    eventTarget.addEventListener("alphaTab.noteMouseDown", onNote);
+    return () => {
+      eventTarget.removeEventListener("alphaTab.beatMouseDown", onBeat);
+      eventTarget.removeEventListener("alphaTab.noteMouseDown", onNote);
+    };
+  }
   const detachBeat = attachAlphaTabBeatSelection(api, select);
   const detachNote = api.noteMouseDown?.on((note) => select(toScoreWrittenMoment(note.beat))) ?? (() => {});
   return () => {

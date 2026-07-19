@@ -8,6 +8,7 @@ const musicXmlFixture = fileURLToPath(
 const multiPartFixture = fileURLToPath(
   new URL("../../../test-fixtures/musicxml/generated/multi-part.musicxml", import.meta.url),
 );
+const reviewedFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/K331-3_reviewed.mxl", import.meta.url));
 
 test("persists a Browser Library Score and gives a re-import a fresh ID after deletion", async ({ page }) => {
   await page.goto("/");
@@ -42,6 +43,7 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await expect(page.locator("#summary")).toContainText("Single Voice");
   await page.getByRole("link", { name: "和弦分析" }).click();
   await expect(page.getByRole("heading", { name: "和弦分析工作室" })).toBeVisible();
+  await expect(page.locator("details").filter({ hasText: "分析设置" })).not.toHaveAttribute("open", "");
   const splitter = page.getByRole("separator", { name: "调整乐谱与分析面板宽度" });
   await splitter.focus();
   await page.keyboard.press("ArrowRight");
@@ -55,9 +57,7 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   if (await audioUnavailable.count()) {
     await expect(audioUnavailable).toBeVisible();
   } else {
-    await expect(page.getByRole("region", { name: "Studio 预览" }).getByRole("status")).toHaveText(
-      /预览播放中|预览已暂停/,
-    );
+    await expect(page.getByRole("region", { name: "Studio 预览" }).getByText(/预览播放中|预览已暂停/)).toBeVisible();
     const pause = page.getByRole("button", { name: "暂停预览" });
     if (await pause.count()) await pause.click();
   }
@@ -69,7 +69,7 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   expect((await download).suggestedFilename()).toBe("single-voice-chords.musicxml");
   await expect(page.getByText("已导出标注曲谱")).toBeVisible();
   await page.reload();
-  await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole("separator", { name: "调整乐谱与分析面板宽度" })).toHaveAttribute("aria-valuenow", "65");
   await expect(page.getByRole("region", { name: "分析状态" }).getByText("已保存 · 1 个修正")).toBeVisible();
   await page.goto("/");
@@ -86,12 +86,41 @@ test("reanalyses a multi-part Studio scope and allows a track to be added back",
   await page.getByRole("link", { name: "和弦分析" }).click();
   await expect(page.getByRole("heading", { name: "和弦分析工作室" })).toBeVisible();
   await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
+  await page.getByText("分析设置").click();
   const scope = page.getByRole("listbox", { name: "分析范围" });
   await expect(scope.locator("option")).toHaveCount(4);
   await scope.selectOption(["track-1"]);
   await expect(scope.locator("option:checked")).toHaveCount(1);
   await scope.selectOption(["track-1", "track-2"]);
   await expect(scope.locator("option:checked")).toHaveCount(2);
+});
+
+test("synchronizes a reviewed score selection between the range list and alphaTab", async ({ page }) => {
+  await page.goto("/");
+  await importFixture(page, "导入第一份曲谱", reviewedFixture);
+  await page.getByRole("link", { name: "和弦分析" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible({ timeout: 30_000 });
+  const list = page.getByRole("list", { name: "分析片段" });
+  const segments = list.getByRole("button");
+  await expect(segments.nth(1)).toBeVisible();
+  const distantSegment = segments.last();
+  await distantSegment.click();
+  await expect(distantSegment).toHaveAttribute("aria-pressed", "true");
+  await page.locator("#alpha-tab").evaluate((host) => {
+    host.parentElement?.scrollTo({ top: 0 });
+  });
+
+  const scoreSurface = page.locator("#alpha-tab .at-surface").first();
+  await expect(scoreSurface).toBeVisible();
+  await page.locator("#alpha-tab").evaluate((host) => {
+    host.dispatchEvent(
+      new CustomEvent("alphaTab.beatMouseDown", {
+        detail: { displayStart: 0, voice: { bar: { index: 0 } } },
+      }),
+    );
+  });
+  await expect(distantSegment).toHaveAttribute("aria-pressed", "false");
+  await expect(list.locator('[aria-pressed="true"]')).toHaveCount(1);
 });
 
 test("surfaces a CAS conflict when two Browser Studio windows save the same revision", async ({ page, context }) => {

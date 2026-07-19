@@ -157,6 +157,7 @@ export function createViewerAlphaTabSettings(scrollElement: HTMLElement): unknow
   return {
     core: {
       useWorkers: false,
+      includeNoteBounds: true,
       scriptFile: ALPHATAB_ASSETS.scriptFile,
       fontDirectory: ALPHATAB_ASSETS.fontDirectory,
     },
@@ -165,6 +166,7 @@ export function createViewerAlphaTabSettings(scrollElement: HTMLElement): unknow
       enableCursor: true,
       enableAnimatedBeatCursor: true,
       enableElementHighlighting: true,
+      enableUserInteraction: true,
       scrollElement,
       soundFont: ALPHATAB_ASSETS.soundFont,
     },

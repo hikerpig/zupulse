@@ -125,7 +125,7 @@ export async function createStudioScoreRuntime(
       audioListeners.add(listener);
       return () => audioListeners.delete(listener);
     },
-    subscribeSelection: (listener) => attachAlphaTabScoreSelection(studioApi, listener),
+    subscribeSelection: (listener) => attachAlphaTabScoreSelection(studioApi, listener, host),
     subscribeErrors: (listener) => attachAlphaTabPreviewErrors(studioApi, listener),
     highlight: (range) => highlightAlphaTabWrittenRange(studioApi, range),
     applyPreview: (entries) => {

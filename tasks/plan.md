@@ -68,7 +68,7 @@ T1 与 T2 可独立开展。T7 可在 T3 完成后与 T5/T6 并行，但 T4–T6
   - 打开/关闭 Studio 只创建和销毁 Studio runtime；测试证明不会调用 playback persistence 或 Viewer Playback Controller。
   - 分两次小提交接入共享层与宿主层，每个实现任务不超过 5 个文件。
 
-- [ ] **T4 — 谱面与 Effective Harmony Range 双向选择切片**
+- [x] **T4 — 谱面与 Effective Harmony Range 双向选择切片**
   - 把 application source context、effective projection、Harmony Selection 与 Studio 页面接通。
   - 完成点击 Beat 选列表、点击列表高亮/按需滚动谱面、空白点击和投影更新后的焦点恢复。
   - 覆盖半开边界、筛选隐藏项、用户滚动期间不抢滚动和 reduced-motion。
@@ -101,7 +101,7 @@ T1 与 T2 可独立开展。T7 可在 T3 完成后与 T5/T6 并行，但 T4–T6
   - 完成“全部/待确认/已修正”筛选、临时显示隐藏选择，以及 Arrow/Home/End/Page/Enter/Escape 键盘与焦点返回。
   - 编辑命令始终使用选中 range，不重新引入 index 身份。
 
-- [ ] **T9 — 右栏空间重组与响应式状态补全**
+- [x] **T9 — 右栏空间重组与响应式状态补全**
   - 收紧命令栏，设置默认折叠，Preview Transport 单行化，导出栏固定到底部。
   - 覆盖 loading、empty、analyzing、unsaved、saving、conflict、preview error、audio unavailable、无选择，以及 Light/Dark/桌面/窄屏。
   - 对照 `DESIGN.md` 的 Studio 9/10 密度、Anti-Slop 与双主题同构自审。

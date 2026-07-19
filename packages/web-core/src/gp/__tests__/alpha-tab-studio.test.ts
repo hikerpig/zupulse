@@ -76,6 +76,20 @@ describe("attachAlphaTabBeatSelection", () => {
 });
 
 describe("attachAlphaTabScoreSelection", () => {
+  it("uses alphaTab public DOM events when a score host is available", () => {
+    const target = new EventTarget();
+    const selected: unknown[] = [];
+    const detach = attachAlphaTabScoreSelection({}, (moment) => selected.push(moment), target);
+    const event = new Event("alphaTab.beatMouseDown");
+    Object.defineProperty(event, "detail", { value: beat(2, 12) });
+
+    target.dispatchEvent(event);
+    detach();
+    target.dispatchEvent(event);
+
+    expect(selected).toEqual([{ measureIndex: 2, offsetTicks: 12 }]);
+  });
+
   it("maps note clicks through their owning beat and detaches every listener", () => {
     let beatHandler: ((value: ReturnType<typeof beat>) => void) | undefined;
     let noteHandler: ((value: { beat: ReturnType<typeof beat> }) => void) | undefined;

@@ -8,14 +8,14 @@
 - 执行规则：严格按依赖顺序；每项测试先行；任务完成后立即勾选验收与验证项。
 - 逐项审计（2026-07-19）：
   - [x] Task 1–8：范围模型、公开 alphaTab 能力、独立 runtime、宿主接入及可重建投影已有实现和测试证据。
-  - [ ] Task 9：核心选择与空白点击反馈已接通；仍缺克制滚动和完整半开边界用户测试。
+  - [x] Task 9：双向选择、空白反馈、半开边界、按需滚动与选择恢复均有单测/组件/E2E 证据。
   - [x] Task 10：完整有效和弦预览、开关、恢复和非阻塞错误降级已实现。
   - [x] Task 11：runtime snapshot/命令、soundfont loading/error、audio-unavailable、stopped 与销毁清理均有测试证据。
   - [x] Task 12：版本化、容错的 split/preview 偏好及测试已完成。
   - [x] Task 13：独立分栏组件、键盘/指针约束、窄屏堆叠与独立滚动均有测试和真实视口证据。
   - [x] Task 14：有效范围 master-detail 已抽为独立组件，筛选、隐藏项说明与完整键盘焦点行为均有组件测试。
-  - [ ] Task 15：多数状态与布局已实现；设置默认折叠、固定导出栏和完整视觉/窄屏验收未完成。
-  - [ ] Task 16–17：两端 E2E 均通过核心流程；尚未证明真正谱面 Beat↔列表双向选择、完整预览错误恢复和 runtime 销毁音频停止。
+  - [x] Task 15：默认折叠设置、单行 Transport、固定导出与完整状态/桌面/窄屏/深浅主题均已验证。
+  - [ ] Task 16–17：Browser 已完成 reviewed 曲谱双向选择与 5/5 E2E；Desktop 尚待补同构选择与销毁证据。
   - [ ] Task 18：命令门禁和文档已更新；由于 Task 9、11、13–17 尚有缺口，最终 Definition of Done 未达成。
 
 ## Phase 1：Fail-fast foundations
@@ -245,14 +245,14 @@
 **Acceptance criteria:**
 
 - [x] 点击谱面 Beat/Note 选择覆盖它的 Effective Harmony Range；空白点击不吸附、不创建 Correction。
-- [ ] 点击列表高亮完整 range，只在目标不可见时滚动谱面；谱面点击同理只按需滚动列表。
-- [ ] 拆分、合并、重新分析后按焦点时刻恢复选择，不跳回第一项；播放头不改变选择。
+- [x] 点击列表高亮完整 range，只在目标不可见时滚动谱面；谱面点击同理只按需滚动列表。
+- [x] 拆分、合并、重新分析后按焦点时刻恢复选择，不跳回第一项；播放头不改变选择。
 
 **Verification:**
 
 - [x] `pnpm vitest run packages/web-viewer/src/app/pages/__tests__/StudioPage.test.tsx`
 - [x] `pnpm vitest run packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`
-- [ ] 键盘/鼠标用户视角测试覆盖半开边界与空白位置。
+- [x] 键盘/鼠标用户视角测试覆盖半开边界与空白位置。
 
 **Dependencies:** Tasks 2, 7–8
 
@@ -335,14 +335,14 @@
 
 **Acceptance criteria:**
 
-- [ ] 默认分栏 60/40、预览开启；比例被限制在规格安全边界。
-- [ ] Browser 与 Desktop Renderer 共用相同 key/解析逻辑；损坏 JSON、SecurityError 与 quota failure 不影响 Studio。
-- [ ] 偏好不包含 libraryScoreId、Harmony Selection、Transport 或 Document 数据。
+- [x] 默认分栏 60/40、预览开启；比例被限制在规格安全边界。
+- [x] Browser 与 Desktop Renderer 共用相同 key/解析逻辑；损坏 JSON、SecurityError 与 quota failure 不影响 Studio。
+- [x] 偏好不包含 libraryScoreId、Harmony Selection、Transport 或 Document 数据。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-viewer/src/app/__tests__/studio-preferences.test.ts`
-- [ ] `pnpm typecheck`
+- [x] `pnpm vitest run packages/web-viewer/src/app/__tests__/studio-preferences.test.ts`
+- [x] `pnpm typecheck`
 
 **Dependencies:** None
 
@@ -413,15 +413,15 @@
 
 **Acceptance criteria:**
 
-- [ ] 常规桌面视口无需滚到页面底部即可访问保存、设置、试听、列表、编辑与导出。
-- [ ] loading、empty、analyzing、unsaved、saving、conflict、preview error、audio unavailable 与无选择都有稳定就地状态。
-- [ ] Light/Dark、960px 临界宽度与窄屏同构；符合 Studio 9/10 密度、Anti-Slop 和最小点击目标。
+- [x] 常规桌面视口无需滚到页面底部即可访问保存、设置、试听、列表、编辑与导出。
+- [x] loading、empty、analyzing、unsaved、saving、conflict、preview error、audio unavailable 与无选择都有稳定就地状态。
+- [x] Light/Dark、960px 临界宽度与窄屏同构；符合 Studio 9/10 密度、Anti-Slop 和最小点击目标。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-viewer/src/app/pages/__tests__/StudioPage.test.tsx`
-- [ ] `pnpm vitest run packages/web-viewer/src/__tests__/styles.test.ts`
-- [ ] `pnpm check:design`
+- [x] `pnpm vitest run packages/web-viewer/src/app/pages/__tests__/StudioPage.test.tsx`
+- [x] `pnpm vitest run packages/web-viewer/src/__tests__/styles.test.ts`
+- [x] `pnpm check:design`
 
 **Dependencies:** Tasks 10–11, 13–14
 
@@ -437,7 +437,7 @@
 
 ## Checkpoint C：Complete workspace
 
-- [ ] Tasks 12–15 全部完成。
+- [x] Tasks 12–15 全部完成。
 - [ ] `pnpm verify`
 - [ ] 桌面长列表可访问到底，乐谱、列表和编辑器滚动互不锁死。
 - [ ] Light/Dark、桌面/窄屏、键盘、焦点恢复、错误降级与 reduced-motion 均有验证证据。
@@ -450,14 +450,14 @@
 
 **Acceptance criteria:**
 
-- [ ] 可拖动分栏并在重开 Studio 后恢复比例。
-- [ ] 谱面与列表双向选择可见，Correction 后 alphaTab 和弦更新且 unresolved 不显示虚假和弦。
-- [ ] Preview Transport 产生真实播放状态，Studio 操作不污染 Viewer resume/practice 数据。
+- [x] 可拖动分栏并在重开 Studio 后恢复比例。
+- [x] 谱面与列表双向选择可见，Correction 后 alphaTab 和弦更新且 unresolved 不显示虚假和弦。
+- [x] Preview Transport 产生真实播放状态，Studio 操作不污染 Viewer resume/practice 数据。
 
 **Verification:**
 
-- [ ] `pnpm --filter @zupulse/web-demo test:e2e`
-- [ ] `pnpm --filter @zupulse/web-demo build`
+- [x] `pnpm --filter @zupulse/web-demo test:e2e`
+- [x] `pnpm --filter @zupulse/web-demo build`
 
 **Dependencies:** Task 15
 

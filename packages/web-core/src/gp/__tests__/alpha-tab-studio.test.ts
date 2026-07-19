@@ -276,6 +276,18 @@ describe("Studio alphaTab preview transport", () => {
     expect(api.playbackRange).toEqual({ startTick: 2, endTick: 6 });
     expect(api.isLooping).toBe(true);
   });
+
+  it("clears the local loop without changing the current position", () => {
+    const api = {
+      score,
+      tickPosition: 9,
+      playbackRange: { startTick: 2, endTick: 6 } as { startTick: number; endTick: number } | null,
+      isLooping: true,
+    };
+
+    expect(setAlphaTabPreviewLoop(api, undefined)).toEqual({ status: "looped" });
+    expect(api).toMatchObject({ tickPosition: 9, playbackRange: null, isLooping: false });
+  });
 });
 
 describe("attachAlphaTabPreviewErrors", () => {

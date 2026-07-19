@@ -16,7 +16,11 @@ function studioRuntime({
   applyPreview?: () => { status: "unavailable" };
 } = {}) {
   return {
-    getSnapshot: () => ({ status: "ready" as const }),
+    getSnapshot: () => ({
+      status: "ready" as const,
+      transport: { status: "paused" as const, positionTicks: 0, speed: 1 },
+    }),
+    subscribeTransport: () => () => undefined,
     subscribeSelection: () => () => undefined,
     subscribeErrors: () => () => undefined,
     highlight: () => ({ status: "unavailable" as const }),
@@ -148,7 +152,8 @@ describe("ViewerApplication", () => {
         adapters: [adapter],
       },
       async () => ({
-        getSnapshot: () => ({ status: "ready" }),
+        getSnapshot: () => ({ status: "ready", transport: { status: "paused", positionTicks: 0, speed: 1 } }),
+        subscribeTransport: () => () => undefined,
         subscribeSelection: () => () => undefined,
         subscribeErrors: () => () => undefined,
         highlight: () => ({ status: "unavailable" }),

@@ -200,10 +200,17 @@ describe("StudioPage", () => {
 
   it("keeps preview transport local to Studio", async () => {
     const playViewer = vi.fn();
+    const toggleStudioPreview = vi.fn();
+    const setStudioPreviewLoop = vi.fn();
     const snapshot = {
       studio: {
         libraryScoreId: "score-1",
         status: "ready",
+        transport: { status: "playing", positionTicks: 0, speed: 1 },
+        selection: {
+          focus: { measureIndex: 0, offsetTicks: 0 },
+          range: { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 4 } },
+        },
         document: {
           activeRevision: {
             parameters: { scope: { includedTrackIds: ["track-1"] } },
@@ -230,6 +237,8 @@ describe("StudioPage", () => {
       redoStudio: () => undefined,
       setStudioScope: async () => undefined,
       setStudioAnnotationTarget: async () => undefined,
+      toggleStudioPreview,
+      setStudioPreviewLoop,
       playback: { play: playViewer },
     } as never;
     const view = render(
@@ -240,9 +249,11 @@ describe("StudioPage", () => {
       </MemoryRouter>,
     );
     const user = userEvent.setup();
-    await user.click(within(view.container).getByRole("button", { name: "播放预览" }));
+    await user.click(within(view.container).getByRole("button", { name: "暂停预览" }));
     await user.click(within(view.container).getByRole("button", { name: "循环选中片段" }));
     expect(within(view.container).getByText("预览播放中")).toBeTruthy();
+    expect(toggleStudioPreview).toHaveBeenCalledWith("score-1");
+    expect(setStudioPreviewLoop).toHaveBeenCalledWith("score-1", expect.anything());
     expect(playViewer).not.toHaveBeenCalled();
   });
 

@@ -1,6 +1,6 @@
-import { useEffect, useReducer, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { useEffect, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { useParams } from "react-router";
-import { formatChordSymbol, reducePreviewTransport, type ScoreWrittenRange } from "@zupulse/web-core";
+import { formatChordSymbol } from "@zupulse/web-core";
 import {
   createHarmonyRangeViewItems,
   filterHarmonyRangeViewItems,
@@ -18,6 +18,18 @@ function browserStorage(): Storage | undefined {
   } catch {
     return undefined;
   }
+}
+
+function sameRange(
+  left: { start: { measureIndex: number; offsetTicks: number }; end: { measureIndex: number; offsetTicks: number } },
+  right: { start: { measureIndex: number; offsetTicks: number }; end: { measureIndex: number; offsetTicks: number } },
+): boolean {
+  return (
+    left.start.measureIndex === right.start.measureIndex &&
+    left.start.offsetTicks === right.start.offsetTicks &&
+    left.end.measureIndex === right.end.measureIndex &&
+    left.end.offsetTicks === right.end.offsetTicks
+  );
 }
 
 export function StudioPage({ application }: { application: ViewerApplication }) {
@@ -52,7 +64,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
       : []);
   const [fallbackSelectedKey, setFallbackSelectedKey] = useState<string>();
   const selectedRange = studio?.selection
-    ? ranges.find((item) => item.effective.range === studio.selection?.range)
+    ? ranges.find((item) => sameRange(item.effective.range, studio.selection!.range))
     : ranges.find((item) => item.key === fallbackSelectedKey);
   const selectedSegment = selectedRange?.analysis;
   const [exportStatus, setExportStatus] = useState<string>();
@@ -69,11 +81,11 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
       saveStudioPreferences(browserStorage(), updated);
       return updated;
     });
-  const [preview, dispatchPreview] = useReducer(reducePreviewTransport, {
+  const preview = studio?.transport ?? {
     status: "paused",
     positionTicks: 0,
     speed: 1,
-  });
+  };
   useEffect(() => {
     if (libraryScoreId && storageAvailable) void application.openStudio(libraryScoreId);
   }, [application, libraryScoreId, storageAvailable]);
@@ -323,10 +335,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                       className="primary-button"
                       type="button"
                       onClick={() => {
-                        (
-                          application as unknown as { toggleStudioPreview?: (id: string) => void }
-                        ).toggleStudioPreview?.(libraryScoreId!);
-                        dispatchPreview({ type: preview.status === "playing" ? "pause" : "play" });
+                        application.toggleStudioPreview(libraryScoreId!);
                       }}
                     >
                       {preview.status === "playing" ? "暂停预览" : "播放预览"}
@@ -341,10 +350,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                         value={preview.positionTicks}
                         onChange={(event) => {
                           const positionTicks = Number(event.currentTarget.value);
-                          (
-                            application as unknown as { setStudioPreviewPosition?: (id: string, ticks: number) => void }
-                          ).setStudioPreviewPosition?.(libraryScoreId!, positionTicks);
-                          dispatchPreview({ type: "seek", positionTicks });
+                          application.setStudioPreviewPosition(libraryScoreId!, positionTicks);
                         }}
                       />
                     </label>
@@ -355,10 +361,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                         value={preview.speed}
                         onChange={(event) => {
                           const speed = Number(event.currentTarget.value);
-                          (
-                            application as unknown as { setStudioPreviewSpeed?: (id: string, speed: number) => void }
-                          ).setStudioPreviewSpeed?.(libraryScoreId!, speed);
-                          dispatchPreview({ type: "speed", speed });
+                          application.setStudioPreviewSpeed(libraryScoreId!, speed);
                         }}
                       >
                         {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
@@ -372,23 +375,10 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                       type="button"
                       disabled={!selectedRange}
                       onClick={() => {
-                        if (selectedRange)
-                          (
-                            application as unknown as {
-                              setStudioPreviewLoop?: (id: string, range: ScoreWrittenRange) => void;
-                            }
-                          ).setStudioPreviewLoop?.(libraryScoreId!, selectedRange.effective.range);
-                        dispatchPreview({
-                          type: "loop",
-                          ...(selectedRange
-                            ? {
-                                range: {
-                                  startTicks: selectedRange.effective.range.start.offsetTicks,
-                                  endTicks: selectedRange.effective.range.end.offsetTicks,
-                                },
-                              }
-                            : {}),
-                        });
+                        application.setStudioPreviewLoop(
+                          libraryScoreId!,
+                          preview.loop ? undefined : selectedRange?.effective.range,
+                        );
                       }}
                     >
                       {preview.loop ? "取消选中片段循环" : "循环选中片段"}

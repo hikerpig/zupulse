@@ -14,6 +14,7 @@ import {
   type AlphaTabPreviewTransportResult,
   type AlphaTabStudioApiLike,
   type EffectiveHarmonyEntry,
+  type PreviewTransportState,
   type ScoreWrittenMoment,
   type ScoreWrittenRange,
 } from "@zupulse/web-core";
@@ -21,10 +22,15 @@ import type { ViewerFile } from "./host";
 import { presentScoreFile } from "./importPresenter";
 import { createViewerAlphaTabSettings } from "./viewerApp";
 
-export type StudioScoreRuntimeSnapshot = { status: "ready" | "error"; error?: string };
+export type StudioScoreRuntimeSnapshot = {
+  status: "ready" | "error";
+  transport: PreviewTransportState;
+  error?: string;
+};
 
 export type StudioScoreRuntime = {
   getSnapshot(): StudioScoreRuntimeSnapshot;
+  subscribeTransport(listener: (transport: PreviewTransportState) => void): () => void;
   subscribeSelection(listener: (moment: ScoreWrittenMoment) => void): () => void;
   subscribeErrors(listener: (error: Error) => void): () => void;
   highlight(range: ScoreWrittenRange): ReturnType<typeof highlightAlphaTabWrittenRange>;
@@ -32,7 +38,7 @@ export type StudioScoreRuntime = {
   togglePlayback(): AlphaTabPreviewTransportResult;
   setPosition(positionTicks: number): AlphaTabPreviewTransportResult;
   setSpeed(speed: number): AlphaTabPreviewTransportResult;
-  setLoop(range: ScoreWrittenRange): AlphaTabPreviewTransportResult;
+  setLoop(range: ScoreWrittenRange | undefined): AlphaTabPreviewTransportResult;
   destroy(): Promise<void>;
 };
 
@@ -76,8 +82,31 @@ export async function createStudioScoreRuntime(
 
   const studioApi = api as unknown as AlphaTabStudioApiLike;
   let restorePreview: (() => void) | undefined;
+  let transport: PreviewTransportState = {
+    status: "paused",
+    positionTicks: studioApi.tickPosition ?? 0,
+    speed: studioApi.playbackSpeed ?? 1,
+  };
+  const transportListeners = new Set<(value: PreviewTransportState) => void>();
+  const publishTransport = (next: PreviewTransportState) => {
+    transport = next;
+    for (const listener of transportListeners) listener(transport);
+  };
+  const detachPlayerState = studioApi.playerStateChanged?.on((state) => {
+    const status = String(state).toLowerCase().includes("play") ? "playing" : "paused";
+    publishTransport({ ...transport, status });
+  });
+  const detachPlayerPosition = studioApi.playerPositionChanged?.on((event) => {
+    const tickPosition = (event as { tickPosition?: unknown }).tickPosition;
+    if (typeof tickPosition === "number" && Number.isFinite(tickPosition))
+      publishTransport({ ...transport, positionTicks: Math.max(0, tickPosition) });
+  });
   return {
-    getSnapshot: () => ({ status: "ready" }),
+    getSnapshot: () => ({ status: "ready", transport }),
+    subscribeTransport: (listener) => {
+      transportListeners.add(listener);
+      return () => transportListeners.delete(listener);
+    },
     subscribeSelection: (listener) => attachAlphaTabScoreSelection(studioApi, listener),
     subscribeErrors: (listener) => attachAlphaTabPreviewErrors(studioApi, listener),
     highlight: (range) => highlightAlphaTabWrittenRange(studioApi, range),
@@ -88,11 +117,41 @@ export async function createStudioScoreRuntime(
       if (result.status === "applied") restorePreview = result.restore;
       return result;
     },
-    togglePlayback: () => toggleAlphaTabPreviewPlayback(studioApi),
-    setPosition: (positionTicks) => setAlphaTabPreviewPosition(studioApi, positionTicks),
-    setSpeed: (speed) => setAlphaTabPreviewSpeed(studioApi, speed),
-    setLoop: (range) => setAlphaTabPreviewLoop(studioApi, range),
+    togglePlayback: () => {
+      const result = toggleAlphaTabPreviewPlayback(studioApi);
+      if (result.status === "toggled")
+        publishTransport({ ...transport, status: transport.status === "playing" ? "paused" : "playing" });
+      return result;
+    },
+    setPosition: (positionTicks) => {
+      const result = setAlphaTabPreviewPosition(studioApi, positionTicks);
+      if (result.status === "positioned") publishTransport({ ...transport, positionTicks });
+      return result;
+    },
+    setSpeed: (speed) => {
+      const result = setAlphaTabPreviewSpeed(studioApi, speed);
+      if (result.status === "sped") publishTransport({ ...transport, speed });
+      return result;
+    },
+    setLoop: (range) => {
+      const result = setAlphaTabPreviewLoop(studioApi, range);
+      if (result.status === "looped") {
+        const { loop: _loop, ...withoutLoop } = transport;
+        publishTransport(
+          range === undefined
+            ? withoutLoop
+            : {
+                ...transport,
+                loop: { startTicks: range.start.offsetTicks, endTicks: range.end.offsetTicks },
+              },
+        );
+      }
+      return result;
+    },
     destroy: async () => {
+      detachPlayerState?.();
+      detachPlayerPosition?.();
+      transportListeners.clear();
       restorePreview?.();
       restorePreview = undefined;
       api.destroy?.();

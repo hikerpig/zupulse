@@ -28,7 +28,10 @@ describe("createStudioScoreRuntime", () => {
     expect(dependencies.createApi).toHaveBeenCalledOnce();
     expect(dependencies.presentFile).toHaveBeenCalledOnce();
     expect(dependencies.waitForScore).toHaveBeenCalledWith(api);
-    expect(runtime.getSnapshot()).toEqual({ status: "ready" });
+    expect(runtime.getSnapshot()).toEqual({
+      status: "ready",
+      transport: { status: "paused", positionTicks: 0, speed: 1 },
+    });
     await runtime.destroy();
     expect(destroy).toHaveBeenCalledOnce();
   });

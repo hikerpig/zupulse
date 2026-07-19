@@ -31,6 +31,8 @@ export type AlphaTabStudioApiLike = {
   scrollToCursor?: () => void;
   renderTracks?: (tracks: AlphaTabStudioScore["tracks"]) => void;
   error?: { on(handler: (error: unknown) => void): () => void };
+  playerStateChanged?: { on(handler: (state: unknown) => void): () => void };
+  playerPositionChanged?: { on(handler: (event: unknown) => void): () => void };
   playPause?: () => void;
   tickPosition?: number;
   playbackSpeed?: number;
@@ -106,10 +108,15 @@ export function setAlphaTabPreviewSpeed(api: AlphaTabStudioApiLike, speed: numbe
 
 export function setAlphaTabPreviewLoop(
   api: AlphaTabStudioApiLike,
-  range: ScoreWrittenRange,
+  range: ScoreWrittenRange | undefined,
 ): AlphaTabPreviewTransportResult {
   const score = api.score;
   if (!score) return { status: "unavailable" };
+  if (range === undefined) {
+    api.playbackRange = null;
+    api.isLooping = false;
+    return { status: "looped" };
+  }
   const startTick = toAbsoluteTick(score, range.start);
   const endTick = toAbsoluteTick(score, range.end);
   if (startTick === undefined || endTick === undefined || startTick >= endTick) return { status: "unrepresentable" };

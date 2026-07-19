@@ -22,6 +22,7 @@ import type {
   ScoreFormatAdapter,
   SheetLibraryRepository,
   LibraryScoreSummary,
+  PreviewTransportState,
 } from "@zupulse/web-core";
 import { insertCorrection } from "@zupulse/web-core";
 import { HarmonyStudioSession } from "../harmonyStudioSession";
@@ -47,6 +48,7 @@ export type ViewerApplicationSnapshot = {
     document?: HarmonyAnalysisDocument;
     ranges?: readonly HarmonyRangeViewItem[];
     selection?: HarmonySelection;
+    transport?: PreviewTransportState;
     previewError?: string;
     error?: string;
   };
@@ -60,6 +62,7 @@ export class ViewerApplication implements ViewerAppHandle {
   private studioPreviewEnabled = true;
   private studioSelectionDetach: (() => void) | undefined;
   private studioErrorDetach: (() => void) | undefined;
+  private studioTransportDetach: (() => void) | undefined;
   private chain = Promise.resolve();
   private queuedError: unknown;
   private destroyPromise?: Promise<void>;
@@ -182,19 +185,27 @@ export class ViewerApplication implements ViewerAppHandle {
   }
 
   toggleStudioPreview(id: string): void {
-    if (this.studioRuntimeLibraryScoreId === id) this.studioRuntime?.togglePlayback();
+    if (this.studioRuntimeLibraryScoreId !== id) return;
+    this.studioRuntime?.togglePlayback();
+    this.syncStudioTransport(id);
   }
 
   setStudioPreviewPosition(id: string, positionTicks: number): void {
-    if (this.studioRuntimeLibraryScoreId === id) this.studioRuntime?.setPosition(positionTicks);
+    if (this.studioRuntimeLibraryScoreId !== id) return;
+    this.studioRuntime?.setPosition(positionTicks);
+    this.syncStudioTransport(id);
   }
 
   setStudioPreviewSpeed(id: string, speed: number): void {
-    if (this.studioRuntimeLibraryScoreId === id) this.studioRuntime?.setSpeed(speed);
+    if (this.studioRuntimeLibraryScoreId !== id) return;
+    this.studioRuntime?.setSpeed(speed);
+    this.syncStudioTransport(id);
   }
 
-  setStudioPreviewLoop(id: string, range: HarmonyCorrection["range"]): void {
-    if (this.studioRuntimeLibraryScoreId === id) this.studioRuntime?.setLoop(range);
+  setStudioPreviewLoop(id: string, range: HarmonyCorrection["range"] | undefined): void {
+    if (this.studioRuntimeLibraryScoreId !== id) return;
+    this.studioRuntime?.setLoop(range);
+    this.syncStudioTransport(id);
   }
 
   retryStudioPreview(id: string): void {
@@ -356,6 +367,8 @@ export class ViewerApplication implements ViewerAppHandle {
       this.studioSelectionDetach = undefined;
       this.studioErrorDetach?.();
       this.studioErrorDetach = undefined;
+      this.studioTransportDetach?.();
+      this.studioTransportDetach = undefined;
       this.active = undefined;
       this.activeLibraryScoreId = undefined;
       this.studioRuntime = undefined;
@@ -378,6 +391,7 @@ export class ViewerApplication implements ViewerAppHandle {
         const studio = this.snapshot.studio;
         if (studio?.libraryScoreId === id) this.setStudio(id, { ...studio, previewError: error.message });
       });
+      this.studioTransportDetach = this.studioRuntime.subscribeTransport(() => this.syncStudioTransport(id));
       this.studioAvailableTrackIds.set(
         id,
         listMusicXmlPartIds(source.bytes).map((_, index) => `track-${index + 1}`),
@@ -671,6 +685,9 @@ export class ViewerApplication implements ViewerAppHandle {
       ...(state.document === null ? {} : { document: state.document }),
       ...(ranges === undefined ? {} : { ranges }),
       ...(selection === undefined ? {} : { selection }),
+      ...(this.studioRuntimeLibraryScoreId === libraryScoreId && this.studioRuntime
+        ? { transport: this.studioRuntime.getSnapshot().transport }
+        : {}),
       ...(state.error === undefined ? {} : { error: state.error }),
       ...(previewError === undefined ? {} : { previewError }),
     });
@@ -686,6 +703,13 @@ export class ViewerApplication implements ViewerAppHandle {
     } catch (error) {
       return error instanceof Error ? error.message : "和弦预览失败";
     }
+  }
+
+  private syncStudioTransport(libraryScoreId: string): void {
+    const studio = this.snapshot.studio;
+    if (studio?.libraryScoreId !== libraryScoreId || this.studioRuntimeLibraryScoreId !== libraryScoreId) return;
+    const transport = this.studioRuntime?.getSnapshot().transport;
+    if (transport) this.setStudio(libraryScoreId, { ...studio, transport });
   }
 
   private getStudioRanges(libraryScoreId: string, document: HarmonyAnalysisDocument): HarmonyRangeViewItem[] {
@@ -712,6 +736,8 @@ export class ViewerApplication implements ViewerAppHandle {
     this.studioSelectionDetach = undefined;
     this.studioErrorDetach?.();
     this.studioErrorDetach = undefined;
+    this.studioTransportDetach?.();
+    this.studioTransportDetach = undefined;
     this.navigationListeners.clear();
     for (const studioSession of this.studioSessions.values()) studioSession.dispose();
     this.studioSessions.clear();

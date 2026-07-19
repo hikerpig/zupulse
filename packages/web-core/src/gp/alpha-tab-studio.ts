@@ -31,6 +31,8 @@ export type AlphaTabStudioApiLike = {
   scrollToCursor?: () => void;
   renderTracks?: (tracks: AlphaTabStudioScore["tracks"]) => void;
   error?: { on(handler: (error: unknown) => void): () => void };
+  soundFontLoad?: { on(handler: (progress: unknown) => void): () => void };
+  soundFontLoaded?: { on(handler: () => void): () => void };
   playerStateChanged?: { on(handler: (state: unknown) => void): () => void };
   playerPositionChanged?: { on(handler: (event: unknown) => void): () => void };
   playPause?: () => void;

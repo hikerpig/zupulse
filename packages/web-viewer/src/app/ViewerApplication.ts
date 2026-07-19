@@ -28,7 +28,7 @@ import { insertCorrection } from "@zupulse/web-core";
 import { HarmonyStudioSession } from "../harmonyStudioSession";
 import type { HarmonyStudioSessionState } from "../harmonyStudioSession";
 import { exportHarmonyStudioDocument } from "../harmonyStudioExport";
-import type { StudioScoreRuntime } from "../studio-score-runtime";
+import type { StudioScoreRuntime, StudioScoreRuntimeSnapshot } from "../studio-score-runtime";
 import {
   createHarmonyRangeViewItems,
   restoreHarmonySelection,
@@ -50,6 +50,7 @@ export type ViewerApplicationSnapshot = {
     selection?: HarmonySelection;
     selectionNotice?: string;
     transport?: PreviewTransportState;
+    audioStatus?: StudioScoreRuntimeSnapshot["audio"];
     previewError?: string;
     audioError?: string;
     error?: string;
@@ -65,6 +66,7 @@ export class ViewerApplication implements ViewerAppHandle {
   private studioSelectionDetach: (() => void) | undefined;
   private studioErrorDetach: (() => void) | undefined;
   private studioTransportDetach: (() => void) | undefined;
+  private studioAudioDetach: (() => void) | undefined;
   private chain = Promise.resolve();
   private queuedError: unknown;
   private destroyPromise?: Promise<void>;
@@ -383,6 +385,8 @@ export class ViewerApplication implements ViewerAppHandle {
       this.studioErrorDetach = undefined;
       this.studioTransportDetach?.();
       this.studioTransportDetach = undefined;
+      this.studioAudioDetach?.();
+      this.studioAudioDetach = undefined;
       this.active = undefined;
       this.activeLibraryScoreId = undefined;
       this.studioRuntime = undefined;
@@ -406,6 +410,7 @@ export class ViewerApplication implements ViewerAppHandle {
         if (studio?.libraryScoreId === id) this.setStudio(id, { ...studio, previewError: error.message });
       });
       this.studioTransportDetach = this.studioRuntime.subscribeTransport(() => this.syncStudioTransport(id));
+      this.studioAudioDetach = this.studioRuntime.subscribeAudio?.(() => this.syncStudioTransport(id));
       this.studioAvailableTrackIds.set(
         id,
         listMusicXmlPartIds(source.bytes).map((_, index) => `track-${index + 1}`),
@@ -700,7 +705,10 @@ export class ViewerApplication implements ViewerAppHandle {
       ...(ranges === undefined ? {} : { ranges }),
       ...(selection === undefined ? {} : { selection }),
       ...(this.studioRuntimeLibraryScoreId === libraryScoreId && this.studioRuntime
-        ? { transport: this.studioRuntime.getSnapshot().transport }
+        ? {
+            transport: this.studioRuntime.getSnapshot().transport,
+            audioStatus: this.studioRuntime.getSnapshot().audio,
+          }
         : {}),
       ...(state.error === undefined ? {} : { error: state.error }),
       ...(previewError === undefined ? {} : { previewError }),
@@ -722,8 +730,13 @@ export class ViewerApplication implements ViewerAppHandle {
   private syncStudioTransport(libraryScoreId: string): void {
     const studio = this.snapshot.studio;
     if (studio?.libraryScoreId !== libraryScoreId || this.studioRuntimeLibraryScoreId !== libraryScoreId) return;
-    const transport = this.studioRuntime?.getSnapshot().transport;
-    if (transport) this.setStudio(libraryScoreId, { ...studio, transport });
+    const runtimeSnapshot = this.studioRuntime?.getSnapshot();
+    if (runtimeSnapshot)
+      this.setStudio(libraryScoreId, {
+        ...studio,
+        transport: runtimeSnapshot.transport,
+        audioStatus: runtimeSnapshot.audio,
+      });
   }
 
   private setStudioAudioError(libraryScoreId: string, status: string | undefined): void {
@@ -765,6 +778,8 @@ export class ViewerApplication implements ViewerAppHandle {
     this.studioErrorDetach = undefined;
     this.studioTransportDetach?.();
     this.studioTransportDetach = undefined;
+    this.studioAudioDetach?.();
+    this.studioAudioDetach = undefined;
     this.navigationListeners.clear();
     for (const studioSession of this.studioSessions.values()) studioSession.dispose();
     this.studioSessions.clear();

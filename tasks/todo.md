@@ -10,7 +10,7 @@
   - [x] Task 1–8：范围模型、公开 alphaTab 能力、独立 runtime、宿主接入及可重建投影已有实现和测试证据。
   - [ ] Task 9：核心选择与空白点击反馈已接通；仍缺克制滚动和完整半开边界用户测试。
   - [x] Task 10：完整有效和弦预览、开关、恢复和非阻塞错误降级已实现。
-  - [ ] Task 11：runtime snapshot/命令与 audio-unavailable 已接通；尚未覆盖 soundfont loading/error 与 stopped 状态。
+  - [x] Task 11：runtime snapshot/命令、soundfont loading/error、audio-unavailable、stopped 与销毁清理均有测试证据。
   - [x] Task 12：版本化、容错的 split/preview 偏好及测试已完成。
   - [ ] Task 13：分栏行为已实现；尚未抽出计划中的组件，窄屏/指针滚动争用的用户测试也未补齐。
   - [ ] Task 14：有效范围列表、筛选、隐藏项说明及完整键盘焦点行为已实现；待随 Task 13 抽取后补独立组件测试。
@@ -299,15 +299,15 @@
 
 **Acceptance criteria:**
 
-- [ ] Preview Transport 实际驱动 Studio alphaTab，UI 状态来自 runtime 事件，不再只是 React 自报状态。
-- [ ] 循环使用当前 Effective Harmony Range 的局部书面范围，不执行 repeat jump；取消循环恢复正常完整播放。
-- [ ] soundfont loading/error、audio unavailable、playing/paused/stopped 和销毁清理完整；Viewer playback/persistence spy 未被调用。
+- [x] Preview Transport 实际驱动 Studio alphaTab，UI 状态来自 runtime 事件，不再只是 React 自报状态。
+- [x] 循环使用当前 Effective Harmony Range 的局部书面范围，不执行 repeat jump；取消循环恢复正常完整播放。
+- [x] soundfont loading/error、audio unavailable、playing/paused/stopped 和销毁清理完整；Viewer playback/persistence spy 未被调用。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-viewer/src/app/pages/__tests__/StudioPage.test.tsx`
-- [ ] `pnpm vitest run packages/web-viewer/src/__tests__/studio-score-runtime.test.ts`
-- [ ] `pnpm vitest run packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`
+- [x] `pnpm vitest run packages/web-viewer/src/app/pages/__tests__/StudioPage.test.tsx`
+- [x] `pnpm vitest run packages/web-viewer/src/__tests__/studio-score-runtime.test.ts`
+- [x] `pnpm vitest run packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`
 
 **Dependencies:** Tasks 7, 9–10
 

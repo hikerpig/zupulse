@@ -25,12 +25,14 @@ import { createViewerAlphaTabSettings } from "./viewerApp";
 export type StudioScoreRuntimeSnapshot = {
   status: "ready" | "error";
   transport: PreviewTransportState;
+  audio: "loading" | "ready" | "error" | "unavailable";
   error?: string;
 };
 
 export type StudioScoreRuntime = {
   getSnapshot(): StudioScoreRuntimeSnapshot;
   subscribeTransport(listener: (transport: PreviewTransportState) => void): () => void;
+  subscribeAudio?(listener: (audio: StudioScoreRuntimeSnapshot["audio"]) => void): () => void;
   subscribeSelection(listener: (moment: ScoreWrittenMoment) => void): () => void;
   subscribeErrors(listener: (error: Error) => void): () => void;
   highlight(range: ScoreWrittenRange): ReturnType<typeof highlightAlphaTabWrittenRange>;
@@ -87,13 +89,20 @@ export async function createStudioScoreRuntime(
     positionTicks: studioApi.tickPosition ?? 0,
     speed: studioApi.playbackSpeed ?? 1,
   };
+  let audio: StudioScoreRuntimeSnapshot["audio"] = studioApi.playPause ? "loading" : "unavailable";
   const transportListeners = new Set<(value: PreviewTransportState) => void>();
+  const audioListeners = new Set<(value: StudioScoreRuntimeSnapshot["audio"]) => void>();
   const publishTransport = (next: PreviewTransportState) => {
     transport = next;
     for (const listener of transportListeners) listener(transport);
   };
+  const publishAudio = (next: StudioScoreRuntimeSnapshot["audio"]) => {
+    audio = next;
+    for (const listener of audioListeners) listener(audio);
+  };
   const detachPlayerState = studioApi.playerStateChanged?.on((state) => {
-    const status = String(state).toLowerCase().includes("play") ? "playing" : "paused";
+    const event = state as { state?: number; stopped?: boolean };
+    const status = event.state === 1 ? "playing" : event.stopped ? "stopped" : "paused";
     publishTransport({ ...transport, status });
   });
   const detachPlayerPosition = studioApi.playerPositionChanged?.on((event) => {
@@ -101,11 +110,20 @@ export async function createStudioScoreRuntime(
     if (typeof tickPosition === "number" && Number.isFinite(tickPosition))
       publishTransport({ ...transport, positionTicks: Math.max(0, tickPosition) });
   });
+  const detachSoundFontLoad = studioApi.soundFontLoad?.on(() => publishAudio("loading"));
+  const detachSoundFontLoaded = studioApi.soundFontLoaded?.on(() => publishAudio("ready"));
+  const detachAudioError = studioApi.error?.on(() => {
+    if (audio !== "ready" && audio !== "unavailable") publishAudio("error");
+  });
   return {
-    getSnapshot: () => ({ status: "ready", transport }),
+    getSnapshot: () => ({ status: "ready", transport, audio }),
     subscribeTransport: (listener) => {
       transportListeners.add(listener);
       return () => transportListeners.delete(listener);
+    },
+    subscribeAudio: (listener) => {
+      audioListeners.add(listener);
+      return () => audioListeners.delete(listener);
     },
     subscribeSelection: (listener) => attachAlphaTabScoreSelection(studioApi, listener),
     subscribeErrors: (listener) => attachAlphaTabPreviewErrors(studioApi, listener),
@@ -151,7 +169,11 @@ export async function createStudioScoreRuntime(
     destroy: async () => {
       detachPlayerState?.();
       detachPlayerPosition?.();
+      detachSoundFontLoad?.();
+      detachSoundFontLoaded?.();
+      detachAudioError?.();
       transportListeners.clear();
+      audioListeners.clear();
       restorePreview?.();
       restorePreview = undefined;
       api.destroy?.();

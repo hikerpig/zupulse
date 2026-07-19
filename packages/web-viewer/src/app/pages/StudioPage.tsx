@@ -93,6 +93,18 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
     positionTicks: 0,
     speed: 1,
   };
+  const previewStatusLabel =
+    preview.status === "playing" ? "预览播放中" : preview.status === "stopped" ? "预览已停止" : "预览已暂停";
+  const audioStatusLabel =
+    studio?.audioStatus === "loading"
+      ? "音频加载中"
+      : studio?.audioStatus === "ready"
+        ? "音频已就绪"
+        : studio?.audioStatus === "error"
+          ? "音频加载失败"
+          : studio?.audioStatus === "unavailable"
+            ? "音频不可用"
+            : undefined;
   useEffect(() => {
     if (libraryScoreId && storageAvailable) void application.openStudio(libraryScoreId);
   }, [application, libraryScoreId, storageAvailable]);
@@ -339,7 +351,8 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                   <div className={styles.panelHeading}>
                     <span>PREVIEW</span>
                     <h3>片段试听</h3>
-                    <p role="status">{preview.status === "playing" ? "预览播放中" : "预览已暂停"}</p>
+                    <p role="status">{previewStatusLabel}</p>
+                    {audioStatusLabel ? <p role="status">{audioStatusLabel}</p> : null}
                     <button
                       type="button"
                       onClick={() => updatePreferences({ previewEnabled: !preferences.previewEnabled })}

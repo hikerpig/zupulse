@@ -267,6 +267,7 @@ describe("StudioPage", () => {
         libraryScoreId: "score-1",
         status: "ready",
         transport: { status: "playing", positionTicks: 0, speed: 1 },
+        audioStatus: "loading",
         selection: {
           focus: { measureIndex: 0, offsetTicks: 0 },
           range: { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 4 } },
@@ -312,6 +313,7 @@ describe("StudioPage", () => {
     await user.click(within(view.container).getByRole("button", { name: "暂停预览" }));
     await user.click(within(view.container).getByRole("button", { name: "循环选中片段" }));
     expect(within(view.container).getByText("预览播放中")).toBeTruthy();
+    expect(within(view.container).getByText("音频加载中")).toBeTruthy();
     expect(toggleStudioPreview).toHaveBeenCalledWith("score-1");
     expect(setStudioPreviewLoop).toHaveBeenCalledWith("score-1", expect.anything());
     expect(playViewer).not.toHaveBeenCalled();

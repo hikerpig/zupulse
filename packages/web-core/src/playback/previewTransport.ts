@@ -1,5 +1,5 @@
 export type PreviewTransportState = {
-  status: "paused" | "playing";
+  status: "stopped" | "paused" | "playing";
   positionTicks: number;
   speed: number;
   loop?: { startTicks: number; endTicks: number };

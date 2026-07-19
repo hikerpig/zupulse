@@ -84,7 +84,7 @@ T1 与 T2 可独立开展。T7 可在 T3 完成后与 T5/T6 并行，但 T4–T6
 - [x] Studio 关闭重开后 Document 保留、Harmony Selection 不持久化、预览偏好恢复。
 - [x] 运行 Studio/web-core 相关测试与 `pnpm verify:fast`。
 
-- [ ] **T6 — 真实 Preview Transport 切片**
+- [x] **T6 — 真实 Preview Transport 切片**
   - 用 Studio runtime 驱动播放/暂停、seek、speed 和当前有效区间循环。
   - 区间循环采用局部书面时间，不执行 repeat jump；播放头不改变 Harmony Selection。
   - 覆盖 soundfont loading/error、audio unavailable、销毁清理，并证明 Viewer practice/resume 不受影响。

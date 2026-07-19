@@ -637,9 +637,13 @@ export class ViewerApplication implements ViewerAppHandle {
     const previousSelection =
       this.snapshot.studio?.libraryScoreId === libraryScoreId ? this.snapshot.studio.selection : undefined;
     const selection =
-      ranges === undefined || previousSelection === undefined
+      ranges === undefined
         ? undefined
-        : restoreHarmonySelection(ranges, previousSelection.focus);
+        : previousSelection === undefined
+          ? ranges[0] === undefined
+            ? undefined
+            : { focus: ranges[0].effective.range.start, range: ranges[0].effective.range }
+          : restoreHarmonySelection(ranges, previousSelection.focus);
     if (ranges && this.studioRuntimeLibraryScoreId === libraryScoreId) {
       this.studioRuntime?.applyPreview(ranges.map((item) => item.effective));
     }

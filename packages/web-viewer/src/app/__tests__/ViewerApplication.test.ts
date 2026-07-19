@@ -8,13 +8,19 @@ import type {
 } from "@zupulse/web-core";
 import { ViewerApplication } from "../ViewerApplication";
 
-function studioRuntime(destroy = async () => undefined) {
+function studioRuntime({
+  destroy = async () => undefined,
+  applyPreview = () => ({ status: "unavailable" as const }),
+}: {
+  destroy?: () => Promise<void>;
+  applyPreview?: () => { status: "unavailable" };
+} = {}) {
   return {
     getSnapshot: () => ({ status: "ready" as const }),
     subscribeSelection: () => () => undefined,
     subscribeErrors: () => () => undefined,
     highlight: () => ({ status: "unavailable" as const }),
-    applyPreview: () => ({ status: "unavailable" as const }),
+    applyPreview,
     togglePlayback: () => ({ status: "unavailable" as const }),
     setPosition: () => ({ status: "unavailable" as const }),
     setSpeed: () => ({ status: "unavailable" as const }),
@@ -245,10 +251,19 @@ describe("ViewerApplication", () => {
         },
         adapters: [adapter],
       },
-      async () => studioRuntime(),
+      async () =>
+        studioRuntime({
+          applyPreview: () => {
+            throw new Error("预览渲染失败");
+          },
+        }),
     );
     await Promise.all([application.openStudio(scoreId), application.openStudio(scoreId)]);
-    expect(application.getSnapshot().studio).toMatchObject({ libraryScoreId: scoreId, status: "ready" });
+    expect(application.getSnapshot().studio).toMatchObject({
+      libraryScoreId: scoreId,
+      status: "ready",
+      previewError: "预览渲染失败",
+    });
     await application.setStudioAnnotationTarget(scoreId, { trackId: "track-1", staffIndex: 1 });
     expect(application.getSnapshot().studio?.document?.annotationTarget).toEqual({ trackId: "track-1", staffIndex: 1 });
     expect(adapter.parse).toHaveBeenCalledOnce();
@@ -407,7 +422,7 @@ describe("ViewerApplication", () => {
         gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
         adapters: [adapter],
       },
-      async () => studioRuntime(destroyStudio),
+      async () => studioRuntime({ destroy: destroyStudio }),
     );
 
     await application.openLibraryScore(viewerScoreId);

@@ -75,17 +75,26 @@ export async function createStudioScoreRuntime(
   }
 
   const studioApi = api as unknown as AlphaTabStudioApiLike;
+  let restorePreview: (() => void) | undefined;
   return {
     getSnapshot: () => ({ status: "ready" }),
     subscribeSelection: (listener) => attachAlphaTabScoreSelection(studioApi, listener),
     subscribeErrors: (listener) => attachAlphaTabPreviewErrors(studioApi, listener),
     highlight: (range) => highlightAlphaTabWrittenRange(studioApi, range),
-    applyPreview: (entries) => applyAlphaTabHarmonyPreview(studioApi, entries),
+    applyPreview: (entries) => {
+      restorePreview?.();
+      restorePreview = undefined;
+      const result = applyAlphaTabHarmonyPreview(studioApi, entries);
+      if (result.status === "applied") restorePreview = result.restore;
+      return result;
+    },
     togglePlayback: () => toggleAlphaTabPreviewPlayback(studioApi),
     setPosition: (positionTicks) => setAlphaTabPreviewPosition(studioApi, positionTicks),
     setSpeed: (speed) => setAlphaTabPreviewSpeed(studioApi, speed),
     setLoop: (range) => setAlphaTabPreviewLoop(studioApi, range),
     destroy: async () => {
+      restorePreview?.();
+      restorePreview = undefined;
       api.destroy?.();
     },
   };

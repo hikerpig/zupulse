@@ -9,7 +9,16 @@ import {
 import { HarmonyStudioEditor } from "../../features/harmony-studio/HarmonyStudioEditor";
 import { ScoreViewer } from "../../components/ScoreViewer";
 import type { ViewerApplication } from "../ViewerApplication";
+import { loadStudioPreferences, saveStudioPreferences } from "../studio-preferences";
 import styles from "./StudioPage.module.css";
+
+function browserStorage(): Storage | undefined {
+  try {
+    return window.localStorage;
+  } catch {
+    return undefined;
+  }
+}
 
 export function StudioPage({ application }: { application: ViewerApplication }) {
   const { libraryScoreId } = useParams();
@@ -49,19 +58,13 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   const [exportStatus, setExportStatus] = useState<string>();
   const [rangeFilter, setRangeFilter] = useState<HarmonyRangeFilter>("all");
   const displayedRanges = filterHarmonyRangeViewItems(ranges, rangeFilter, selectedRange?.key);
-  const [split, setSplit] = useState(() => {
-    try {
-      const value = Number(window.localStorage.getItem("zupulse.studio.split"));
-      return value >= 40 && value <= 75 ? value : 60;
-    } catch {
-      return 60;
-    }
-  });
-  useEffect(() => {
-    try {
-      window.localStorage.setItem("zupulse.studio.split", String(split));
-    } catch {}
-  }, [split]);
+  const [preferences, setPreferences] = useState(() => loadStudioPreferences(browserStorage()));
+  const updatePreferences = (next: Partial<typeof preferences>) =>
+    setPreferences((current) => {
+      const updated = { ...current, ...next };
+      saveStudioPreferences(browserStorage(), updated);
+      return updated;
+    });
   const [preview, dispatchPreview] = useReducer(reducePreviewTransport, {
     status: "paused",
     positionTicks: 0,
@@ -70,6 +73,9 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   useEffect(() => {
     if (libraryScoreId && storageAvailable) void application.openStudio(libraryScoreId);
   }, [application, libraryScoreId, storageAvailable]);
+  useEffect(() => {
+    if (libraryScoreId && active) application.setStudioPreviewEnabled(libraryScoreId, preferences.previewEnabled);
+  }, [active, application, libraryScoreId, preferences.previewEnabled]);
   useEffect(() => {
     if (!libraryScoreId || !storageAvailable) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -100,7 +106,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
     <main
       className={styles.studioShell}
       aria-labelledby="studio-title"
-      style={{ "--studio-left": `${split}%` } as CSSProperties}
+      style={{ "--studio-left": `${preferences.split}%` } as CSSProperties}
     >
       <div className={styles.contextBar}>
         <div className={styles.contextMain}>
@@ -128,12 +134,14 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
           aria-orientation="vertical"
           aria-valuemin={40}
           aria-valuemax={75}
-          aria-valuenow={split}
+          aria-valuenow={preferences.split}
           tabIndex={0}
-          onDoubleClick={() => setSplit(60)}
+          onDoubleClick={() => updatePreferences({ split: 60 })}
           onKeyDown={(event) => {
-            if (event.key === "ArrowLeft") setSplit((value) => Math.max(40, value - 5));
-            if (event.key === "ArrowRight") setSplit((value) => Math.min(75, value + 5));
+            if (event.key === "ArrowLeft") updatePreferences({ split: Math.max(40, preferences.split - 5) });
+            if (event.key === "ArrowRight") updatePreferences({ split: Math.min(75, preferences.split + 5) });
+            if (event.key === "Home") updatePreferences({ split: 40 });
+            if (event.key === "End") updatePreferences({ split: 75 });
           }}
           onPointerDown={(event) => {
             const parent = event.currentTarget.parentElement;
@@ -141,7 +149,9 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
             event.currentTarget.setPointerCapture(event.pointerId);
             const update = (clientX: number) => {
               const bounds = parent.getBoundingClientRect();
-              setSplit(Math.min(75, Math.max(40, Math.round(((clientX - bounds.left) / bounds.width) * 100))));
+              updatePreferences({
+                split: Math.min(75, Math.max(40, Math.round(((clientX - bounds.left) / bounds.width) * 100))),
+              });
             };
             const move = (moveEvent: PointerEvent) => update(moveEvent.clientX);
             event.currentTarget.addEventListener("pointermove", move);
@@ -297,6 +307,12 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                     <span>PREVIEW</span>
                     <h3>片段试听</h3>
                     <p role="status">{preview.status === "playing" ? "预览播放中" : "预览已暂停"}</p>
+                    <button
+                      type="button"
+                      onClick={() => updatePreferences({ previewEnabled: !preferences.previewEnabled })}
+                    >
+                      {preferences.previewEnabled ? "隐藏和弦预览" : "显示和弦预览"}
+                    </button>
                   </div>
                   <div className={styles.previewControls}>
                     <button

@@ -57,6 +57,7 @@ export class ViewerApplication implements ViewerAppHandle {
   private activeLibraryScoreId: string | undefined;
   private studioRuntime: StudioScoreRuntime | undefined;
   private studioRuntimeLibraryScoreId: string | undefined;
+  private studioPreviewEnabled = true;
   private studioSelectionDetach: (() => void) | undefined;
   private studioErrorDetach: (() => void) | undefined;
   private chain = Promise.resolve();
@@ -199,9 +200,26 @@ export class ViewerApplication implements ViewerAppHandle {
   retryStudioPreview(id: string): void {
     const studio = this.snapshot.studio;
     if (studio?.libraryScoreId !== id || !studio.ranges || this.studioRuntimeLibraryScoreId !== id) return;
-    this.studioRuntime?.applyPreview(studio.ranges.map((item) => item.effective));
+    const previewError = this.applyStudioPreview(id, studio.ranges);
+    if (previewError) {
+      this.setStudio(id, { ...studio, previewError });
+      return;
+    }
     const { previewError: _previewError, ...nextStudio } = studio;
     this.setStudio(id, nextStudio);
+  }
+
+  setStudioPreviewEnabled(id: string, enabled: boolean): void {
+    if (this.studioRuntimeLibraryScoreId !== id) return;
+    this.studioPreviewEnabled = enabled;
+    const studio = this.snapshot.studio;
+    if (studio?.libraryScoreId !== id || !studio.ranges) return;
+    const previewError = this.applyStudioPreview(id, studio.ranges);
+    const { previewError: _previousPreviewError, ...nextStudio } = studio;
+    this.setStudio(id, {
+      ...nextStudio,
+      ...(previewError === undefined ? {} : { previewError }),
+    });
   }
 
   private selectStudioMoment(id: string, moment: { measureIndex: number; offsetTicks: number }): void {
@@ -644,9 +662,7 @@ export class ViewerApplication implements ViewerAppHandle {
             ? undefined
             : { focus: ranges[0].effective.range.start, range: ranges[0].effective.range }
           : restoreHarmonySelection(ranges, previousSelection.focus);
-    if (ranges && this.studioRuntimeLibraryScoreId === libraryScoreId) {
-      this.studioRuntime?.applyPreview(ranges.map((item) => item.effective));
-    }
+    const previewError = ranges === undefined ? undefined : this.applyStudioPreview(libraryScoreId, ranges);
     this.setStudio(libraryScoreId, {
       status: state.status,
       ...(this.studioAvailableTrackIds.has(libraryScoreId)
@@ -656,7 +672,20 @@ export class ViewerApplication implements ViewerAppHandle {
       ...(ranges === undefined ? {} : { ranges }),
       ...(selection === undefined ? {} : { selection }),
       ...(state.error === undefined ? {} : { error: state.error }),
+      ...(previewError === undefined ? {} : { previewError }),
     });
+  }
+
+  private applyStudioPreview(libraryScoreId: string, ranges: readonly HarmonyRangeViewItem[]): string | undefined {
+    if (this.studioRuntimeLibraryScoreId !== libraryScoreId) return undefined;
+    try {
+      const result = this.studioRuntime?.applyPreview(
+        this.studioPreviewEnabled ? ranges.map((item) => item.effective) : [],
+      );
+      return result?.status === "applied" ? undefined : "无法在当前乐谱上显示和弦预览";
+    } catch (error) {
+      return error instanceof Error ? error.message : "和弦预览失败";
+    }
   }
 
   private getStudioRanges(libraryScoreId: string, document: HarmonyAnalysisDocument): HarmonyRangeViewItem[] {

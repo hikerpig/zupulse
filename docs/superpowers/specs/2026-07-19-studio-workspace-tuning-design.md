@@ -18,7 +18,7 @@ Studio 应成为全宽、高密度的桌面和弦校对工作台：用户能同�
 - 当前 alphaTab 不显示 Effective Harmony Projection。
 - 当前 Studio Preview Transport 只更新本地 React 状态，没有驱动 alphaTab。
 
-实现验收记录：Studio 已使用独立 runtime、可恢复 60/40 分栏、Effective Harmony Range 选择和临时 alphaTab 预览；Transport 状态从 runtime snapshot 驱动。2026-07-19 的 `pnpm verify`、Browser E2E（4/4）与 Desktop E2E（4/4）均通过。无音频的 Browser 自动化 renderer 保持 paused 或显示 audio-unavailable；Desktop E2E 覆盖实际 playing 状态。
+实现验收记录：Studio 已使用独立 runtime、可恢复 60/40 分栏、Effective Harmony Range master-detail、alphaTab Beat/Note 双向选择和完整有效和弦预览；Transport 与 soundfont/audio 状态均由 runtime snapshot 驱动。2026-07-19 的 `pnpm verify:fast`、`pnpm verify`（105 个测试文件、390 项测试及双构建）和 `pnpm verify:e2e` 均通过，Browser/Desktop E2E 分别 5/5，并使用 `K331-3_reviewed.mxl` 验证长列表选择。无音频的 Browser 自动化 renderer 保持 paused 或显示 audio-unavailable；Desktop E2E 覆盖实际 playing 与 runtime 关闭路径。
 
 ## 术语
 

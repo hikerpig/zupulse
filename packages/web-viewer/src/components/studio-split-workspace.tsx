@@ -21,8 +21,8 @@ export function StudioSplitWorkspace({
   onSplitChange(value: number): void;
   score: ReactNode;
   analysis: ReactNode;
-  scoreClassName?: string;
-  analysisClassName?: string;
+  scoreClassName?: string | undefined;
+  analysisClassName?: string | undefined;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const previousUserSelect = useRef("");

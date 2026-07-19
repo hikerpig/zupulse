@@ -80,7 +80,7 @@ T1 与 T2 可独立开展。T7 可在 T3 完成后与 T5/T6 并行，但 T4–T6
 
 ### Checkpoint B: Core Studio loop
 
-- [ ] 在 Browser 中手工完成“点击谱面→选中区间→应用候选→谱面预览更新”。
+- [x] 在 Browser 中手工完成“点击谱面→选中区间→应用候选→谱面预览更新”。
 - [x] Studio 关闭重开后 Document 保留、Harmony Selection 不持久化、预览偏好恢复。
 - [x] 运行 Studio/web-core 相关测试与 `pnpm verify:fast`。
 
@@ -108,24 +108,24 @@ T1 与 T2 可独立开展。T7 可在 T3 完成后与 T5/T6 并行，但 T4–T6
 
 ### Checkpoint C: Complete workspace
 
-- [ ] 桌面长列表可以访问到底；两栏与列表/编辑器滚动互不锁死。
-- [ ] 全键盘路径、焦点恢复、错误降级和窄屏堆叠通过用户视角测试。
+- [x] 桌面长列表可以访问到底；两栏与列表/编辑器滚动互不锁死。
+- [x] 全键盘路径、焦点恢复、错误降级和窄屏堆叠通过用户视角测试。
 - [x] 运行 `pnpm verify`。
 
 ### Phase 4: Cross-host acceptance
 
-- [ ] **T10 — Browser/Desktop E2E、回归与活规格收尾**
+- [x] **T10 — Browser/Desktop E2E、回归与活规格收尾**
   - 为两个宿主覆盖 Studio 打开、分栏、双向选择、Correction 预览、真实试听与预览错误恢复的关键路径。
   - 运行完整门禁，修正实现中发现的规格偏差，并把最终文件/命令同步到活规格和架构文档。
   - 不用扩大 timeout、删除断言或跳过测试掩盖失败。
 
 ### Checkpoint D: Definition of Done
 
-- [ ] 所有规格验收标准具有自动化测试或明确的双宿主手工证据。
+- [x] 所有规格验收标准具有自动化测试或明确的双宿主手工证据。
 - [x] `pnpm verify:fast`、`pnpm verify`、`pnpm verify:e2e` 全部通过。
 - [x] 无新增依赖、schema、Bridge API、深导入或 alphaTab 私有 API。
 - [x] Managed Score Copy、Viewer practice/resume 与 Harmony Analysis Document 边界保持不变。
-- [ ] 活规格、`CONTEXT.md`、glossary、`DESIGN.md` 与当前架构说明一致。
+- [x] 活规格、`CONTEXT.md`、glossary、`DESIGN.md` 与当前架构说明一致。
 
 ## Verification Checkpoints
 

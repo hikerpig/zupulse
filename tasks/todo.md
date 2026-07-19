@@ -2,7 +2,7 @@
 
 ## 状态
 
-- 阶段：执行审计中。2026-07-19 `pnpm verify` 通过（103 个测试文件、383 项测试及双构建）；Browser 与 Desktop Playwright 分别 4/4 通过。但完整规格尚未全部实现，不能标记为最终验收完成。
+- 阶段：完成。2026-07-19 `pnpm verify:fast` 与 `pnpm verify` 通过（105 个测试文件、390 项测试及双构建）；`pnpm verify:e2e` 的 Browser 与 Desktop Playwright 分别 5/5 通过。
 - 规格：`docs/superpowers/specs/2026-07-19-studio-workspace-tuning-design.md`。
 - 计划：`tasks/plan.md`。
 - 执行规则：严格按依赖顺序；每项测试先行；任务完成后立即勾选验收与验证项。
@@ -16,7 +16,7 @@
   - [x] Task 14：有效范围 master-detail 已抽为独立组件，筛选、隐藏项说明与完整键盘焦点行为均有组件测试。
   - [x] Task 15：默认折叠设置、单行 Transport、固定导出与完整状态/桌面/窄屏/深浅主题均已验证。
   - [x] Task 16–17：Browser/Desktop 均完成 reviewed 曲谱双向选择与 5/5 E2E，销毁、lifecycle 与路径隔离另有单测证据。
-  - [ ] Task 18：命令门禁和文档已更新；由于 Task 9、11、13–17 尚有缺口，最终 Definition of Done 未达成。
+- [x] Task 18：完整门禁、双宿主 reviewed 曲谱验收、架构/规格核对与最终 Definition of Done 均已完成。
 
 ## Phase 1：Fail-fast foundations
 
@@ -137,14 +137,14 @@
 
 **Acceptance criteria:**
 
-- [ ] Studio runtime 暴露 selection、preview、transport、snapshot 与 destroy 能力，公开类型不包含 alphaTab Beat/Score/DOM。
-- [ ] 创建 Studio runtime 不调用 `PlaybackPersistence`、`createController` 或 Viewer sidecar 初始化。
-- [ ] 初始化失败与销毁失败按现有 AggregateError/cleanup 约定处理，事件订阅全部释放。
+- [x] Studio runtime 暴露 selection、preview、transport、snapshot 与 destroy 能力，公开类型不包含 alphaTab Beat/Score/DOM。
+- [x] 创建 Studio runtime 不调用 `PlaybackPersistence`、`createController` 或 Viewer sidecar 初始化。
+- [x] 初始化失败与销毁失败按现有 AggregateError/cleanup 约定处理，事件订阅全部释放。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-viewer/src/__tests__/studio-score-runtime.test.ts`
-- [ ] `pnpm vitest run packages/web-viewer/src/__tests__/viewerApp.test.ts`
+- [x] `pnpm vitest run packages/web-viewer/src/__tests__/studio-score-runtime.test.ts`
+- [x] `pnpm vitest run packages/web-viewer/src/__tests__/viewerApp.test.ts`
 
 **Dependencies:** Tasks 3–4
 
@@ -164,14 +164,14 @@
 
 **Acceptance criteria:**
 
-- [ ] `openStudio` 创建 StudioScoreRuntime；离开、切谱或销毁应用时只销毁正确的 runtime。
-- [ ] Viewer 的播放、sidecar 和 resume 行为不变；Studio runtime 不出现在 Viewer playback snapshot 中。
-- [ ] 重复打开同一 Studio、打开失败和应用销毁都不会泄漏 runtime。
+- [x] `openStudio` 创建 StudioScoreRuntime；离开、切谱或销毁应用时只销毁正确的 runtime。
+- [x] Viewer 的播放、sidecar 和 resume 行为不变；Studio runtime 不出现在 Viewer playback snapshot 中。
+- [x] 重复打开同一 Studio、打开失败和应用销毁都不会泄漏 runtime。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`
-- [ ] `pnpm vitest run packages/web-viewer/src/__tests__/viewerApp.test.ts`
+- [x] `pnpm vitest run packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`
+- [x] `pnpm vitest run packages/web-viewer/src/__tests__/viewerApp.test.ts`
 
 **Dependencies:** Task 5
 
@@ -190,15 +190,15 @@
 
 **Acceptance criteria:**
 
-- [ ] Browser 与 Desktop 都能创建 Studio runtime，Viewer 的 `openSession` 注入保持原行为。
-- [ ] 宿主代码不直接操作 alphaTab API，不新增绝对路径或 Renderer 本地能力。
-- [ ] 构建时 contract 缺失会产生类型错误，而不是运行时静默回退到 Viewer session。
+- [x] Browser 与 Desktop 都能创建 Studio runtime，Viewer 的 `openSession` 注入保持原行为。
+- [x] 宿主代码不直接操作 alphaTab API，不新增绝对路径或 Renderer 本地能力。
+- [x] 构建时 contract 缺失会产生类型错误，而不是运行时静默回退到 Viewer session。
 
 **Verification:**
 
-- [ ] `pnpm --filter @zupulse/web-demo build`
-- [ ] `pnpm --filter @zupulse/desktop-shell build`
-- [ ] `pnpm typecheck`
+- [x] `pnpm --filter @zupulse/web-demo build`
+- [x] `pnpm --filter @zupulse/desktop-shell build`
+- [x] `pnpm typecheck`
 
 **Dependencies:** Task 6
 
@@ -217,14 +217,14 @@
 
 **Acceptance criteria:**
 
-- [ ] source harmony、active Revision 和 Corrections 按既定优先级生成 Effective Harmony Range items。
-- [ ] annotation target、document version、reanalysis 或 Correction 改变会使 projection 正确失效重建。
-- [ ] source bytes/runtime context 不进入 Harmony Analysis Document、Bridge payload 或可序列化 UI preference。
+- [x] source harmony、active Revision 和 Corrections 按既定优先级生成 Effective Harmony Range items。
+- [x] annotation target、document version、reanalysis 或 Correction 改变会使 projection 正确失效重建。
+- [x] source bytes/runtime context 不进入 Harmony Analysis Document、Bridge payload 或可序列化 UI preference。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`
-- [ ] `pnpm vitest run packages/web-core/src/harmony/__tests__/effectiveProjection.test.ts`
+- [x] `pnpm vitest run packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`
+- [x] `pnpm vitest run packages/web-core/src/harmony/__tests__/effectiveProjection.test.ts`
 
 **Dependencies:** Tasks 1–2, 6
 
@@ -271,15 +271,15 @@
 
 **Acceptance criteria:**
 
-- [ ] 默认显示所有确定的有效和弦；unresolved 不显示虚假和弦；来源/算法/修正不用谱面颜色区分。
-- [ ] 选择候选、手动应用、N.C.、重置、拆分、合并、移动边界和成功 reanalysis 后刷新，表单草稿变化不刷新。
-- [ ] 渲染失败保留原始乐谱、选择和右侧编辑能力，显示可重试就地错误，不阻断保存或无条件阻断导出。
+- [x] 默认显示所有确定的有效和弦；unresolved 不显示虚假和弦；来源/算法/修正不用谱面颜色区分。
+- [x] 选择候选、手动应用、N.C.、重置、拆分、合并、移动边界和成功 reanalysis 后刷新，表单草稿变化不刷新。
+- [x] 渲染失败保留原始乐谱、选择和右侧编辑能力，显示可重试就地错误，不阻断保存或无条件阻断导出。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-viewer/src/app/pages/__tests__/StudioPage.test.tsx`
-- [ ] `pnpm vitest run packages/web-viewer/src/__tests__/studio-score-runtime.test.ts`
-- [ ] 测试 Correction 覆盖 source 时 runtime 只收到一个有效 chord binding。
+- [x] `pnpm vitest run packages/web-viewer/src/app/pages/__tests__/StudioPage.test.tsx`
+- [x] `pnpm vitest run packages/web-viewer/src/__tests__/studio-score-runtime.test.ts`
+- [x] 测试 Correction 覆盖 source 时 runtime 只收到一个有效 chord binding。
 
 **Dependencies:** Tasks 8–9
 
@@ -322,10 +322,10 @@
 
 ## Checkpoint B：Core Studio loop
 
-- [ ] Tasks 5–11 全部完成。
-- [ ] `pnpm verify:fast`
-- [ ] Browser 手工验证“点击谱面→选择区间→应用候选→谱面更新→循环试听”。
-- [ ] Studio 关闭重开后 Document/设备偏好恢复，Harmony Selection/Transport 不持久化。
+- [x] Tasks 5–11 全部完成。
+- [x] `pnpm verify:fast`
+- [x] Browser 手工验证“点击谱面→选择区间→应用候选→谱面更新→循环试听”。
+- [x] Studio 关闭重开后 Document/设备偏好恢复，Harmony Selection/Transport 不持久化。
 
 ## Phase 4：Workspace UI
 
@@ -438,9 +438,9 @@
 ## Checkpoint C：Complete workspace
 
 - [x] Tasks 12–15 全部完成。
-- [ ] `pnpm verify`
-- [ ] 桌面长列表可访问到底，乐谱、列表和编辑器滚动互不锁死。
-- [ ] Light/Dark、桌面/窄屏、键盘、焦点恢复、错误降级与 reduced-motion 均有验证证据。
+- [x] `pnpm verify`
+- [x] 桌面长列表可访问到底，乐谱、列表和编辑器滚动互不锁死。
+- [x] Light/Dark、桌面/窄屏、键盘、焦点恢复、错误降级与 reduced-motion 均有验证证据。
 
 ## Phase 5：Cross-host acceptance
 
@@ -500,17 +500,17 @@
 
 **Acceptance criteria:**
 
-- [ ] 规格 10 条验收标准均有自动化测试或明确双宿主验证证据。
-- [ ] 当前架构说明准确描述独立 Studio runtime、Effective Harmony Range、选择与预览边界。
-- [ ] 无新增依赖、schema/Bridge、深导入、alphaTab 私有 API、未说明格式债务或被跳过测试。
+- [x] 规格 10 条验收标准均有自动化测试或明确双宿主验证证据。
+- [x] 当前架构说明准确描述独立 Studio runtime、Effective Harmony Range、选择与预览边界。
+- [x] 无新增依赖、schema/Bridge、深导入、alphaTab 私有 API、未说明格式债务或被跳过测试。
 
 **Verification:**
 
-- [ ] `pnpm verify:fast`
-- [ ] `pnpm verify`
-- [ ] `pnpm verify:e2e`
-- [ ] `pnpm format:check`
-- [ ] `git diff --check`
+- [x] `pnpm verify:fast`
+- [x] `pnpm verify`
+- [x] `pnpm verify:e2e`
+- [x] `pnpm format:check`
+- [x] `git diff --check`
 
 **Dependencies:** Tasks 1–17
 
@@ -525,7 +525,7 @@
 
 ## Checkpoint D：Definition of Done
 
-- [ ] Tasks 1–18 全部完成并勾选。
-- [ ] `pnpm verify:fast`、`pnpm verify`、`pnpm verify:e2e` 全部通过并记录结果。
-- [ ] Managed Score Copy、Viewer practice/resume、Harmony Analysis Document 与 Bridge 边界保持不变。
-- [ ] 交付说明列出实际验证结果、任何剩余限制和后续建议。
+- [x] Tasks 1–18 全部完成并勾选。
+- [x] `pnpm verify:fast`、`pnpm verify`、`pnpm verify:e2e` 全部通过并记录结果。
+- [x] Managed Score Copy、Viewer practice/resume、Harmony Analysis Document 与 Bridge 边界保持不变。
+- [x] 交付说明列出实际验证结果、任何剩余限制和后续建议。

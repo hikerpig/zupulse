@@ -34,6 +34,7 @@ Zupulse 是本地优先的乐谱查看与练习应用。当前交付面是共享
 - **Harmony Analysis Job**：一次可取消的和弦分析计算；重新分析期间保留当前 active Revision 与 Corrections，只有最新且完整成功的 Job 可以原子替换 active Revision。
 - **User Corrections**：用户按 Score Written Range 对 Analysis Revision 保存的独立修正层；它不修改来源谱或原 Revision，并在来源内容不变时跨 Revision 保留。
 - **Effective Harmony Projection**：把来源和弦、Analysis Revision 与 User Corrections 合成后的当前有效只读结果；同一区间按 User Corrections、来源和弦、算法结果的顺序取值，供预览和导出使用，并可保留 Unresolved Harmony 区间。
+- **Effective Harmony Range**：Effective Harmony Projection 中一个连续的 Score Written Range，是 Studio 列表、谱面预览和 Harmony Selection 直接操作的对象；它可追溯到用户修正、来源和弦、算法结果或未解决状态。
 - **Score Written Moment**：全谱级、未展开反复的书面时间点，由小节索引与小节内 tick 偏移表示，不绑定 track。
 - **Score Written Range**：由两个 Score Written Moment 界定的半开书面区间，用于定位全谱级和弦结果。
 - **Harmony Annotation Target**：Studio 预览与导出新增和弦标记时使用的目标 part/staff；默认是首个有音高的非打击乐 track 的最上方 staff，改变它不触发重新分析。
@@ -44,6 +45,7 @@ Zupulse 是本地优先的乐谱查看与练习应用。当前交付面是共享
 - **Unresolved Harmony**：算法因证据不足、候选冲突或置信度低于决策阈值而无法可靠确定和弦的分析状态；它不是 No Chord，用户确认候选前不导出到 MusicXML。
 - **Functional Harmony Analysis**：基于局部调性解释 Roman numeral 或 T/S/D 功能的独立分析能力；它不属于首版 Chord Symbol 推断范围。
 - **Harmony Correction**：用户对和弦标签或 Score Written Range 施加的结构化修改，包括替换、重拼写、N.C.、分割、合并和移动边界；它锚定书面区间而非算法 segment ID，重置会删除对应 Correction。
+- **Harmony Selection**：Studio 中当前用于导航、高亮和指定编辑目标的临时 Score Written Range；它本身不属于 User Corrections，也不随 Harmony Analysis Document 持久化。
 - **Harmony Analysis Compatibility**：首版只分析十二平均律音高；含微分音的区间降级为不支持或低置信度，不把微分音量化到最近半音。
 - **Learned Harmony Ranker**：随应用发布、离线且确定性运行的和弦候选排序与拒识能力；它只处理结构化特征和候选，不直接生成任意和弦文本，训练集与最终评估集严格隔离。
 - **Annotated Score Export**：把 Effective Harmony Projection 增量写入来源格式与结构后生成的新文件副本；它保持来源容器，不修改 Managed Score Copy 或当前 Library Score。

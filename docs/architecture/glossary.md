@@ -94,6 +94,10 @@ MusicXML 的压缩容器格式，常用扩展名为 `.mxl`。导入时需要验�
 
 把来源中已有的和弦、Analysis Revision 与 User Corrections 合成后的当前有效只读结果。同一区间按 User Corrections、来源和弦、算法结果的顺序取值；它可以保留 Unresolved Harmony 区间，Studio 用它预览，导出器只导出其中已确定的结果。
 
+## Effective Harmony Range
+
+Effective Harmony Projection 中一个连续的 Score Written Range，是 Studio 列表、谱面预览和 Harmony Selection 直接操作的对象。它可追溯到用户修正、来源和弦、算法结果或未解决状态；原始 Analysis Revision segment 不是修正后的界面事实。
+
 ## Harmony Annotation Target
 
 Studio 预览与导出新增和弦标记时使用的目标 part/staff。它默认指向首个有音高的非打击乐 track 的最上方 staff，属于展示与导出设置，改变它不创建新的 Analysis Revision。
@@ -133,6 +137,10 @@ Studio 预览与导出新增和弦标记时使用的目标 part/staff。它默�
 ## Harmony Correction
 
 用户对 Chord Symbol 或 Score Written Range 施加的结构化 User Correction。首版包括替换和弦、重拼写、标记 N.C.、分割、合并和移动边界；它锚定书面区间而非算法 segment ID，重置为来源或算法结果会删除对应 Correction。
+
+## Harmony Selection
+
+Studio 中当前用于导航、高亮和指定编辑目标的临时 Score Written Range。它本身不属于 User Corrections，也不随 Harmony Analysis Document 持久化；谱面定位不会隐式修改分析边界。
 
 ## Native Audio Bridge
 

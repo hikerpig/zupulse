@@ -143,6 +143,10 @@ test("opens a saved MusicXML Studio document", async () => {
     await expect(window.getByRole("link", { name: "和弦分析" })).toBeVisible();
     await window.getByRole("link", { name: "和弦分析" }).click();
     await expect(window.getByRole("heading", { name: "和弦分析工作室" })).toBeVisible();
+    const splitter = window.getByRole("separator", { name: "调整乐谱与分析面板宽度" });
+    await splitter.focus();
+    await window.keyboard.press("ArrowRight");
+    await expect(splitter).toHaveAttribute("aria-valuenow", "65");
     await expect(window.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
     await expect(window.getByRole("heading", { name: "和弦候选" })).toBeVisible();
     await window.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();

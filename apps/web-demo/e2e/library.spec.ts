@@ -42,6 +42,10 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await expect(page.locator("#summary")).toContainText("Single Voice");
   await page.getByRole("link", { name: "和弦分析" }).click();
   await expect(page.getByRole("heading", { name: "和弦分析工作室" })).toBeVisible();
+  const splitter = page.getByRole("separator", { name: "调整乐谱与分析面板宽度" });
+  await splitter.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(splitter).toHaveAttribute("aria-valuenow", "65");
   await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "和弦候选" })).toBeVisible();
   await page.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
@@ -58,6 +62,7 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await expect(page.getByText("已导出标注曲谱")).toBeVisible();
   await page.reload();
   await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
+  await expect(page.getByRole("separator", { name: "调整乐谱与分析面板宽度" })).toHaveAttribute("aria-valuenow", "65");
   await expect(page.getByRole("region", { name: "分析状态" }).getByText("已保存 · 1 个修正")).toBeVisible();
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "曲谱库" })).toBeVisible();

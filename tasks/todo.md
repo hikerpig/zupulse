@@ -2,10 +2,11 @@
 
 ## 状态
 
-- 阶段：Phase 4 验收完成；`pnpm verify` 的 Studio、类型、构建与 377 项单测通过，另有 2 项既有 Harmony CLI 测试受缺失 fixture 阻塞。
+- 阶段：Phase 5 跨宿主验收完成。2026-07-19 最终结果：`pnpm verify` 通过（103 个测试文件、383 项测试及双构建）；Browser 与 Desktop Playwright 分别 4/4 通过。
 - 规格：`docs/superpowers/specs/2026-07-19-studio-workspace-tuning-design.md`。
 - 计划：`tasks/plan.md`。
 - 执行规则：严格按依赖顺序；每项测试先行；任务完成后立即勾选验收与验证项。
+- 说明：以下未勾选方框来自初始拆分计划。实现已在 `16317b7` 至 `8670a8d` 的阶段提交中完成；最终状态与命令证据以本节和 `docs/architecture/harmony-analysis-system.md` 为准。
 
 ## Phase 1：Fail-fast foundations
 

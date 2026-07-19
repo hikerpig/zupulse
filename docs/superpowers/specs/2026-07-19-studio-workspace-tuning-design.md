@@ -2,7 +2,7 @@
 
 ## 状态
 
-- 状态：待确认。
+- 状态：已实现并验收。
 - 日期：2026-07-19。
 - 范围：Studio 布局、Harmony Selection、有效和弦预览与 Preview Transport。
 - 事实边界：运行时代码、Zod schema、测试、Current ADR、`docs/architecture/harmony-analysis-system.md` 和根 `DESIGN.md` 高于本文。
@@ -17,6 +17,8 @@ Studio 应成为全宽、高密度的桌面和弦校对工作台：用户能同�
 - 当前选择只是 Revision segment 的数组索引，不能与谱面或修正后的有效结果稳定联动。
 - 当前 alphaTab 不显示 Effective Harmony Projection。
 - 当前 Studio Preview Transport 只更新本地 React 状态，没有驱动 alphaTab。
+
+实现验收记录：Studio 已使用独立 runtime、可恢复 60/40 分栏、Effective Harmony Range 选择和临时 alphaTab 预览；Transport 状态从 runtime snapshot 驱动。2026-07-19 的 `pnpm verify`、Browser E2E（4/4）与 Desktop E2E（4/4）均通过。无音频的 Browser 自动化 renderer 保持 paused 或显示 audio-unavailable；Desktop E2E 覆盖实际 playing 状态。
 
 ## 术语
 

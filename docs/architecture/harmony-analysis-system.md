@@ -23,6 +23,14 @@ Managed Score Copy
 
 Harmony Studio 只对 MusicXML Library Score 开放。Viewer 的练习 sidecar、播放恢复和摘要不读取 Harmony Analysis Document；Studio Preview Transport 也不写这些状态。
 
+## Studio 工作区
+
+Studio 使用独立的 `StudioScoreRuntime`，不创建 Viewer 的 `PlaybackController`，也不接触练习 sidecar 或续播数据。页面是全视口可调双栏：设备级偏好以版本化 localStorage 保存 60/40 分栏与派生和弦预览开关，损坏或不可用 storage 时安全回退。窄视口堆叠为乐谱后接分析区。
+
+右栏的事实源是 Effective Harmony Range，而非 Revision 数组下标。谱面 Beat/Note 点击与列表选择以书面 range 联动；选择恢复使用书面焦点时刻。列表显示当前有效和弦、来源和置信度，并支持筛选与键盘导航。
+
+Studio runtime 以公开 alphaTab API 临时投影完整 Effective Harmony Projection；每次刷新先恢复上次派生绑定，因而不会重复叠加来源和弦。预览渲染失败和音频不可用均为就地状态，不阻止 Correction 保存或导出。Transport snapshot 由 runtime 拥有，播放、定位、速度和线性局部循环不写入 Viewer 练习状态。
+
 ## 书面时间与分析输入
 
 `ScoreWrittenMoment` 使用 `measureIndex + offsetTicks` 表达不展开 repeat 的书面位置。MusicXML divisions 可能包含 7、11 等不能被固定 960 tick 精确表示的值，因此 [`writtenTime.ts`](../../packages/web-core/src/harmony/writtenTime.ts) 对实际 divisions 计算安全 LCM：

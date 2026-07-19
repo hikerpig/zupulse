@@ -42,6 +42,7 @@ export * from "./storage/schemas";
 export * from "./storage/sqliteSchema";
 export * from "./gp/alphaTabAdapter";
 export * from "./gp/alphaTabBrowser";
+export * from "./gp/alpha-tab-studio";
 export * from "./gp/gpOpenFlow";
 export * from "./gp/gpFormatAdapter";
 export * from "./playback/types";

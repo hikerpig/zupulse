@@ -2,7 +2,7 @@
 
 ## 状态
 
-- 阶段：Phase 3 / Tasks，等待人工确认。
+- 阶段：Checkpoint A 已完成实现验证；全量快速门禁受仓库缺失的既有 fixture 阻塞，等待人工确认。
 - 规格：`docs/superpowers/specs/2026-07-19-studio-workspace-tuning-design.md`。
 - 计划：`tasks/plan.md`。
 - 执行规则：严格按依赖顺序；每项测试先行；任务完成后立即勾选验收与验证项。
@@ -64,14 +64,14 @@
 
 **Acceptance criteria:**
 
-- [ ] Beat/Note 事件映射为精确 Score Written Moment，并可安全解除订阅。
-- [ ] Score Written Range 可映射到起止 Beat；不可表示位置返回结构化错误，不吸附或取整。
-- [ ] 高亮与滚动只调用 alphaTab 1.8.4 公共 API，不查询 alphaTab DOM 或访问私有字段。
+- [x] Beat/Note 事件映射为精确 Score Written Moment，并可安全解除订阅。
+- [x] Score Written Range 可映射到起止 Beat；不可表示位置返回结构化错误，不吸附或取整。
+- [x] 高亮与滚动只调用 alphaTab 1.8.4 公共 API，不查询 alphaTab DOM 或访问私有字段。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-core/src/gp/__tests__/alpha-tab-studio.test.ts`
-- [ ] `pnpm typecheck`
+- [x] `pnpm vitest run packages/web-core/src/gp/__tests__/alpha-tab-studio.test.ts`
+- [x] `pnpm typecheck`
 
 **Dependencies:** None
 
@@ -90,15 +90,15 @@
 
 **Acceptance criteria:**
 
-- [ ] Correction 覆盖来源和弦时目标 Beat 只绑定一个有效和弦；关闭派生预览可恢复来源内容。
-- [ ] 同小节多个合法边界可显示不同和弦，unresolved 不生成虚假 chord binding，N.C. 语义明确。
-- [ ] 局部播放范围、速度、seek、播放/暂停和错误事件只通过公共 API 工作，循环不执行结构跳转。
+- [x] Correction 覆盖来源和弦时目标 Beat 只绑定一个有效和弦；关闭派生预览可恢复来源内容。
+- [x] 同小节多个合法边界可显示不同和弦，unresolved 不生成虚假 chord binding，N.C. 语义明确。
+- [x] 局部播放范围、速度、seek、播放/暂停和错误事件只通过公共 API 工作，循环不执行结构跳转。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-core/src/gp/__tests__/alpha-tab-studio.test.ts`
-- [ ] `pnpm vitest run packages/web-core/src/musicxml/__tests__/musicXmlAcceptance.test.ts`
-- [ ] 使用 `test-fixtures/musicxml` 中真实 fixture 完成无重复和弦断言。
+- [x] `pnpm vitest run packages/web-core/src/gp/__tests__/alpha-tab-studio.test.ts`
+- [x] `pnpm vitest run packages/web-core/src/musicxml/__tests__/musicXmlAcceptance.test.ts`
+- [x] 使用 `test-fixtures/musicxml` 中真实 fixture 完成无重复和弦断言。
 
 **Dependencies:** Task 3
 
@@ -113,9 +113,9 @@
 
 ## Checkpoint A：Runtime feasibility
 
-- [ ] Tasks 1–4 全部完成。
-- [ ] `pnpm verify:fast`
-- [ ] 确认真实 fixture 可以无重复地替换来源和弦，并支持拍内边界、选择高亮和局部试听。
+- [x] Tasks 1–4 全部完成。
+- [ ] `pnpm verify:fast`（非本次改动：缺少 `test-fixtures/musicxml/rondo-alla-turca-turkish-march.mxl`，导致两项 Harmony CLI 回归失败。）
+- [x] 确认真实 fixture 可以无重复地替换来源和弦，并支持拍内边界、选择高亮和局部试听。
 - [ ] 若不成立，停止实现并回到 `tasks/plan.md` 技术门禁，不采用 DOM overlay 或私有 API。
 
 ## Phase 2：Independent Studio runtime

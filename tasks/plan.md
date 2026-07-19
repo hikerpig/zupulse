@@ -96,7 +96,7 @@ T1 与 T2 可独立开展。T7 可在 T3 完成后与 T5/T6 并行，但 T4–T6
   - 建立左右独立滚动容器，移除 Studio 的 `1440px` 限制；不改变 Viewer 的 ScoreViewer 布局。
   - 覆盖 storage failure、ARIA separator 与 reduced-motion。
 
-- [ ] **T8 — 有效区间 master-detail 列表**
+- [x] **T8 — 有效区间 master-detail 列表**
   - 以 Effective Harmony Range 取代“分析片段”列表，展示音乐位置、来源、置信度等级和底层分析详情。
   - 完成“全部/待确认/已修正”筛选、临时显示隐藏选择，以及 Arrow/Home/End/Page/Enter/Escape 键盘与焦点返回。
   - 编辑命令始终使用选中 range，不重新引入 index 身份。

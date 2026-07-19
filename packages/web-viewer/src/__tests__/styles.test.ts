@@ -12,6 +12,7 @@ describe("alphaTab playback cursor styles", () => {
       source("../components/studio-split-workspace.module.css"),
       source("../components/Slider.module.css"),
       source("../features/PlaybackWorkspace.module.css"),
+      source("../features/harmony-studio/harmony-range-workspace.module.css"),
       source("../features/SheetLibrary.module.css"),
     ]);
 

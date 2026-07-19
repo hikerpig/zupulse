@@ -13,7 +13,7 @@
   - [x] Task 11：runtime snapshot/命令、soundfont loading/error、audio-unavailable、stopped 与销毁清理均有测试证据。
   - [x] Task 12：版本化、容错的 split/preview 偏好及测试已完成。
   - [x] Task 13：独立分栏组件、键盘/指针约束、窄屏堆叠与独立滚动均有测试和真实视口证据。
-  - [ ] Task 14：有效范围列表、筛选、隐藏项说明及完整键盘焦点行为已实现；待随 Task 13 抽取后补独立组件测试。
+  - [x] Task 14：有效范围 master-detail 已抽为独立组件，筛选、隐藏项说明与完整键盘焦点行为均有组件测试。
   - [ ] Task 15：多数状态与布局已实现；设置默认折叠、固定导出栏和完整视觉/窄屏验收未完成。
   - [ ] Task 16–17：两端 E2E 均通过核心流程；尚未证明真正谱面 Beat↔列表双向选择、完整预览错误恢复和 runtime 销毁音频停止。
   - [ ] Task 18：命令门禁和文档已更新；由于 Task 9、11、13–17 尚有缺口，最终 Definition of Done 未达成。
@@ -392,7 +392,7 @@
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-viewer/src/features/harmony-studio/__tests__/harmony-range-workspace.test.tsx`
+- [x] `pnpm vitest run packages/web-viewer/src/features/harmony-studio/__tests__/harmony-range-workspace.test.tsx`
 - [x] `pnpm vitest run packages/web-viewer/src/app/pages/__tests__/StudioPage.test.tsx`
 
 **Dependencies:** Tasks 2, 9, 13

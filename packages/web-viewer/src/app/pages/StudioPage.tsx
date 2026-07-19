@@ -1,11 +1,7 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useParams } from "react-router";
-import { formatChordSymbol } from "@zupulse/web-core";
-import {
-  createHarmonyRangeViewItems,
-  filterHarmonyRangeViewItems,
-  type HarmonyRangeFilter,
-} from "../../features/harmony-studio/harmony-range-view-model";
+import { createHarmonyRangeViewItems } from "../../features/harmony-studio/harmony-range-view-model";
+import { HarmonyRangeWorkspace } from "../../features/harmony-studio/harmony-range-workspace";
 import { HarmonyStudioEditor } from "../../features/harmony-studio/HarmonyStudioEditor";
 import { ScoreViewer } from "../../components/ScoreViewer";
 import { StudioSplitWorkspace } from "../../components/studio-split-workspace";
@@ -69,16 +65,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
     : ranges.find((item) => item.key === fallbackSelectedKey);
   const selectedSegment = selectedRange?.analysis;
   const [exportStatus, setExportStatus] = useState<string>();
-  const [rangeFilter, setRangeFilter] = useState<HarmonyRangeFilter>("all");
-  const displayedRanges = filterHarmonyRangeViewItems(ranges, rangeFilter, selectedRange?.key);
-  const selectedRangeIsTemporarilyVisible =
-    selectedRange !== undefined &&
-    rangeFilter !== "all" &&
-    ((rangeFilter === "unresolved" && selectedRange.effective.type !== "unresolved") ||
-      (rangeFilter === "corrected" && selectedRange.origin !== "correction"));
-  const segmentListRef = useRef<HTMLDivElement>(null);
-  const editorPaneRef = useRef<HTMLDivElement>(null);
-  const selectRange = (item: (typeof displayedRanges)[number]) => {
+  const selectRange = (item: (typeof ranges)[number]) => {
     setFallbackSelectedKey(item.key);
     application.selectStudioRange(libraryScoreId!, item.effective.range);
   };
@@ -384,107 +371,12 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                   </section>
                 </div>
 
-                <section className={styles.chordWorkspace} aria-labelledby="segments-title">
-                  <aside className={styles.segmentRail}>
-                    <div className={styles.panelHeading}>
-                      <span>SEGMENTS</span>
-                      <h3 id="segments-title">分析片段</h3>
-                      <p>选择片段进行和弦校对。</p>
-                    </div>
-                    <div className={styles.rangeFilters} role="group" aria-label="和弦区间筛选">
-                      {(["all", "unresolved", "corrected"] as const).map((filter) => (
-                        <button
-                          key={filter}
-                          type="button"
-                          aria-pressed={rangeFilter === filter}
-                          onClick={() => setRangeFilter(filter)}
-                        >
-                          {{ all: "全部", unresolved: "待确认", corrected: "已修正" }[filter]}
-                        </button>
-                      ))}
-                    </div>
-                    {selectedRangeIsTemporarilyVisible ? (
-                      <p className={styles.filterNotice} role="status" aria-label="筛选选择说明">
-                        当前选择不符合筛选条件，已临时显示。
-                      </p>
-                    ) : null}
-                    <div ref={segmentListRef} className={styles.segmentList} role="list" aria-label="分析片段">
-                      {displayedRanges.map((item, index) => (
-                        <button
-                          key={item.key}
-                          type="button"
-                          aria-label={`片段 ${index + 1}`}
-                          aria-pressed={selectedRange?.key === item.key}
-                          data-range-key={item.key}
-                          onClick={() => selectRange(item)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") {
-                              event.preventDefault();
-                              selectRange(item);
-                              editorPaneRef.current?.focus();
-                              return;
-                            }
-                            const currentIndex = displayedRanges.findIndex((candidate) => candidate.key === item.key);
-                            const pageSize = 5;
-                            const nextIndex =
-                              event.key === "ArrowUp"
-                                ? currentIndex - 1
-                                : event.key === "ArrowDown"
-                                  ? currentIndex + 1
-                                  : event.key === "Home"
-                                    ? 0
-                                    : event.key === "End"
-                                      ? displayedRanges.length - 1
-                                      : event.key === "PageUp"
-                                        ? currentIndex - pageSize
-                                        : event.key === "PageDown"
-                                          ? currentIndex + pageSize
-                                          : undefined;
-                            if (nextIndex === undefined) return;
-                            event.preventDefault();
-                            const destination =
-                              displayedRanges[Math.max(0, Math.min(displayedRanges.length - 1, nextIndex))];
-                            if (!destination) return;
-                            selectRange(destination);
-                            const buttons =
-                              event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("button");
-                            buttons?.[Math.max(0, Math.min(displayedRanges.length - 1, nextIndex))]?.focus();
-                          }}
-                        >
-                          <span>
-                            {item.effective.type === "chord"
-                              ? formatChordSymbol(item.effective.chord)
-                              : item.effective.type === "no-chord"
-                                ? "N.C."
-                                : "未解决"}
-                          </span>
-                          <small>
-                            第 {item.effective.range.start.measureIndex + 1} 小节 ·
-                            {{ correction: "用户修正", source: "来源谱", analysis: "算法" }[item.origin]}
-                            {item.confidence
-                              ? ` · ${item.confidence === "high" ? "高" : item.confidence === "medium" ? "中" : "低"}置信度`
-                              : ""}
-                          </small>
-                        </button>
-                      ))}
-                    </div>
-                  </aside>
-                  <div
-                    ref={editorPaneRef}
-                    className={styles.editorPane}
-                    role="region"
-                    aria-label="和弦编辑器"
-                    tabIndex={-1}
-                    onKeyDown={(event) => {
-                      if (event.key !== "Escape" || !selectedRange) return;
-                      event.preventDefault();
-                      const buttons = segmentListRef.current?.querySelectorAll<HTMLButtonElement>("[data-range-key]");
-                      Array.from(buttons ?? [])
-                        .find((button) => button.dataset.rangeKey === selectedRange.key)
-                        ?.focus();
-                    }}
-                  >
-                    {selectedRange ? (
+                <HarmonyRangeWorkspace
+                  ranges={ranges}
+                  {...(selectedRange ? { selectedKey: selectedRange.key } : {})}
+                  onSelect={selectRange}
+                  editor={
+                    selectedRange ? (
                       <>
                         <HarmonyStudioEditor
                           candidates={selectedSegment?.alternatives ?? []}
@@ -554,9 +446,9 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                       </>
                     ) : (
                       <p className={styles.emptyState}>当前分析没有可编辑片段。</p>
-                    )}
-                  </div>
-                </section>
+                    )
+                  }
+                />
 
                 <footer className={styles.exportBar}>
                   <div>

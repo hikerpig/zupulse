@@ -2,11 +2,21 @@
 
 ## 状态
 
-- 阶段：Phase 5 跨宿主验收完成。2026-07-19 最终结果：`pnpm verify` 通过（103 个测试文件、383 项测试及双构建）；Browser 与 Desktop Playwright 分别 4/4 通过。
+- 阶段：执行审计中。2026-07-19 `pnpm verify` 通过（103 个测试文件、383 项测试及双构建）；Browser 与 Desktop Playwright 分别 4/4 通过。但完整规格尚未全部实现，不能标记为最终验收完成。
 - 规格：`docs/superpowers/specs/2026-07-19-studio-workspace-tuning-design.md`。
 - 计划：`tasks/plan.md`。
 - 执行规则：严格按依赖顺序；每项测试先行；任务完成后立即勾选验收与验证项。
-- 说明：以下未勾选方框来自初始拆分计划。实现已在 `16317b7` 至 `8670a8d` 的阶段提交中完成；最终状态与命令证据以本节和 `docs/architecture/harmony-analysis-system.md` 为准。
+- 逐项审计（2026-07-19）：
+  - [x] Task 1–8：范围模型、公开 alphaTab 能力、独立 runtime、宿主接入及可重建投影已有实现和测试证据。
+  - [ ] Task 9：核心选择已接通；仍缺空白点击提示、克制滚动和完整半开边界用户测试。
+  - [x] Task 10：完整有效和弦预览、开关、恢复和非阻塞错误降级已实现。
+  - [ ] Task 11：runtime snapshot/命令与 audio-unavailable 已接通；尚未覆盖 soundfont loading/error 与 stopped 状态。
+  - [x] Task 12：版本化、容错的 split/preview 偏好及测试已完成。
+  - [ ] Task 13：分栏行为已实现；尚未抽出计划中的组件，窄屏/指针滚动争用的用户测试也未补齐。
+  - [ ] Task 14：有效范围列表、筛选和部分键盘导航已实现；Enter/Escape 焦点返回、隐藏项说明与完整列表组件测试未完成。
+  - [ ] Task 15：多数状态与布局已实现；设置默认折叠、固定导出栏和完整视觉/窄屏验收未完成。
+  - [ ] Task 16–17：两端 E2E 均通过核心流程；尚未证明真正谱面 Beat↔列表双向选择、完整预览错误恢复和 runtime 销毁音频停止。
+  - [ ] Task 18：命令门禁和文档已更新；由于 Task 9、11、13–17 尚有缺口，最终 Definition of Done 未达成。
 
 ## Phase 1：Fail-fast foundations
 
@@ -115,9 +125,9 @@
 ## Checkpoint A：Runtime feasibility
 
 - [x] Tasks 1–4 全部完成。
-- [ ] `pnpm verify:fast`（非本次改动：缺少 `test-fixtures/musicxml/rondo-alla-turca-turkish-march.mxl`，导致两项 Harmony CLI 回归失败。）
+- [x] `pnpm verify:fast`（K331 fixture 已修复，当前完整门禁通过。）
 - [x] 确认真实 fixture 可以无重复地替换来源和弦，并支持拍内边界、选择高亮和局部试听。
-- [ ] 若不成立，停止实现并回到 `tasks/plan.md` 技术门禁，不采用 DOM overlay 或私有 API。
+- [x] 未触发回退：未采用 DOM overlay 或私有 API。
 
 ## Phase 2：Independent Studio runtime
 

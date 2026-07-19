@@ -2,7 +2,7 @@
 
 ## 状态与依据
 
-- 阶段：Phase 2 / Plan，已于 2026-07-19 获人工确认。
+- 阶段：执行审计中。2026-07-19 已完成基础、runtime、预览、偏好与门禁；其余交互验收见下方未勾选项。
 - 规格：`docs/superpowers/specs/2026-07-19-studio-workspace-tuning-design.md`。
 - Phase 3 任务清单见 `tasks/todo.md`；任务清单获确认前不进入实现。
 - `planning-and-task-breakdown` 引用的 `references/definition-of-done.md` 在本地技能包中缺失；本计划以技能正文、根 `AGENTS.md` 验证阶梯和规格中的工程执行契约作为 Definition of Done。
@@ -43,12 +43,12 @@ T1 与 T2 可独立开展。T7 可在 T3 完成后与 T5/T6 并行，但 T4–T6
 
 ### Phase 1: Fail-fast foundations
 
-- [ ] **T1 — Effective Harmony Range 视图模型**
+- [x] **T1 — Effective Harmony Range 视图模型**
   - 建立 projection item、来源/置信度展示、音乐位置格式、筛选和基于焦点时刻的选择恢复纯函数。
   - 用 correction 覆盖、拆分/合并、unresolved、空白与重新分析边界测试证明列表事实不依赖 Revision index。
   - 预计 3–4 个文件；不修改持久化 schema。
 
-- [ ] **T2 — 验证并封装 Studio alphaTab 公共能力**
+- [x] **T2 — 验证并封装 Studio alphaTab 公共能力**
   - 以测试先行封装 Beat→Score Written Moment、range→Beat、高亮/滚动、临时 chord 绑定替换和局部线性 playback range。
   - 用真实 MusicXML fixture 验证来源和弦替换、同小节多和弦、N.C./unresolved 清理，以及公开 API 1.8.4 能力。
   - 这是最高风险任务；若拍内边界或无重复替换无法满足规格，在继续 UI 前回到人工计划评审。
@@ -56,14 +56,14 @@ T1 与 T2 可独立开展。T7 可在 T3 完成后与 T5/T6 并行，但 T4–T6
 
 ### Checkpoint A: Runtime feasibility
 
-- [ ] T1/T2 最小测试通过。
-- [ ] 真实 fixture 可以双向定位并无重复地显示有效和弦。
-- [ ] 未引入 alphaTab DOM 查询、私有 API 或 Managed Score Copy 改写。
-- [ ] 运行 `pnpm verify:fast`，人工确认高风险路径后继续。
+- [x] T1/T2 最小测试通过。
+- [x] 真实 fixture 可以双向定位并无重复地显示有效和弦。
+- [x] 未引入 alphaTab DOM 查询、私有 API 或 Managed Score Copy 改写。
+- [x] 运行 `pnpm verify:fast`。
 
 ### Phase 2: Isolated vertical slices
 
-- [ ] **T3 — 独立 StudioScoreRuntime 会话路径**
+- [x] **T3 — 独立 StudioScoreRuntime 会话路径**
   - 创建与 Viewer session 分离的 factory/contract，接入 ViewerApplication，并分别由 Browser 与 Desktop 提供同一个共享实现。
   - 打开/关闭 Studio 只创建和销毁 Studio runtime；测试证明不会调用 playback persistence 或 Viewer Playback Controller。
   - 分两次小提交接入共享层与宿主层，每个实现任务不超过 5 个文件。
@@ -73,7 +73,7 @@ T1 与 T2 可独立开展。T7 可在 T3 完成后与 T5/T6 并行，但 T4–T6
   - 完成点击 Beat 选列表、点击列表高亮/按需滚动谱面、空白点击和投影更新后的焦点恢复。
   - 覆盖半开边界、筛选隐藏项、用户滚动期间不抢滚动和 reduced-motion。
 
-- [ ] **T5 — 完整有效和弦预览切片**
+- [x] **T5 — 完整有效和弦预览切片**
   - 默认应用完整 Effective Harmony Projection；提交 Correction 或 reanalysis 成功后刷新并保持选择/视口。
   - 增加设备级预览开关、来源和弦保留语义、就地错误/重试和不阻塞编辑的降级。
   - 测试 Correction 覆盖来源时只呈现一个有效结果，unresolved 不生成虚假和弦。
@@ -81,8 +81,8 @@ T1 与 T2 可独立开展。T7 可在 T3 完成后与 T5/T6 并行，但 T4–T6
 ### Checkpoint B: Core Studio loop
 
 - [ ] 在 Browser 中手工完成“点击谱面→选中区间→应用候选→谱面预览更新”。
-- [ ] Studio 关闭重开后 Document 保留、Harmony Selection 不持久化、预览偏好恢复。
-- [ ] 运行 Studio/web-core 相关测试与 `pnpm verify:fast`。
+- [x] Studio 关闭重开后 Document 保留、Harmony Selection 不持久化、预览偏好恢复。
+- [x] 运行 Studio/web-core 相关测试与 `pnpm verify:fast`。
 
 - [ ] **T6 — 真实 Preview Transport 切片**
   - 用 Studio runtime 驱动播放/暂停、seek、speed 和当前有效区间循环。
@@ -91,7 +91,7 @@ T1 与 T2 可独立开展。T7 可在 T3 完成后与 T5/T6 并行，但 T4–T6
 
 ### Phase 3: Workspace UI
 
-- [ ] **T7 — 全视口可访问分栏与设备偏好**
+- [x] **T7 — 全视口可访问分栏与设备偏好**
   - 实现默认 60/40、边界约束、指针拖动、键盘调整、双击复位、localStorage 恢复和窄屏堆叠。
   - 建立左右独立滚动容器，移除 Studio 的 `1440px` 限制；不改变 Viewer 的 ScoreViewer 布局。
   - 覆盖 storage failure、ARIA separator 与 reduced-motion。
@@ -110,7 +110,7 @@ T1 与 T2 可独立开展。T7 可在 T3 完成后与 T5/T6 并行，但 T4–T6
 
 - [ ] 桌面长列表可以访问到底；两栏与列表/编辑器滚动互不锁死。
 - [ ] 全键盘路径、焦点恢复、错误降级和窄屏堆叠通过用户视角测试。
-- [ ] 运行 `pnpm verify`。
+- [x] 运行 `pnpm verify`。
 
 ### Phase 4: Cross-host acceptance
 
@@ -122,9 +122,9 @@ T1 与 T2 可独立开展。T7 可在 T3 完成后与 T5/T6 并行，但 T4–T6
 ### Checkpoint D: Definition of Done
 
 - [ ] 所有规格验收标准具有自动化测试或明确的双宿主手工证据。
-- [ ] `pnpm verify:fast`、`pnpm verify`、`pnpm verify:e2e` 全部通过。
-- [ ] 无新增依赖、schema、Bridge API、深导入或 alphaTab 私有 API。
-- [ ] Managed Score Copy、Viewer practice/resume 与 Harmony Analysis Document 边界保持不变。
+- [x] `pnpm verify:fast`、`pnpm verify`、`pnpm verify:e2e` 全部通过。
+- [x] 无新增依赖、schema、Bridge API、深导入或 alphaTab 私有 API。
+- [x] Managed Score Copy、Viewer practice/resume 与 Harmony Analysis Document 边界保持不变。
 - [ ] 活规格、`CONTEXT.md`、glossary、`DESIGN.md` 与当前架构说明一致。
 
 ## Verification Checkpoints

@@ -18,7 +18,7 @@ test("persists a Browser Library Score and gives a re-import a fresh ID after de
   const firstId = page.url().split("/viewer/")[1];
   expect(firstId).toBeTruthy();
 
-  await page.getByRole("link", { name: "返回曲谱库" }).click();
+  await page.getByRole("navigation", { name: "主要页面" }).getByRole("link", { name: "曲谱库" }).click();
   await expect(page.getByRole("heading", { name: "曲谱库" })).toBeVisible();
   await expect(page.getByRole("button", { name: /^GP 收藏 桌面验收谱/ })).toBeVisible();
   await page.reload();

@@ -268,6 +268,11 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                   </button>
                 </p>
               ) : null}
+              {studio.audioError ? (
+                <p className={styles.alert} role="alert">
+                  试听不可用：{studio.audioError}
+                </p>
+              ) : null}
 
               <div className={styles.utilityGrid}>
                 <section className={styles.utilityPanel} aria-labelledby="analysis-settings-title">

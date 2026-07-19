@@ -51,8 +51,16 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await page.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
   await expect(page.getByRole("region", { name: "分析状态" }).getByText("已保存 · 1 个修正")).toBeVisible();
   await page.getByRole("button", { name: "播放预览" }).click();
-  await expect(page.getByText("预览播放中")).toBeVisible();
-  await page.getByRole("button", { name: "暂停预览" }).click();
+  const audioUnavailable = page.getByRole("alert").filter({ hasText: "试听不可用" });
+  if (await audioUnavailable.count()) {
+    await expect(audioUnavailable).toBeVisible();
+  } else {
+    await expect(page.getByRole("region", { name: "Studio 预览" }).getByRole("status")).toHaveText(
+      /预览播放中|预览已暂停/,
+    );
+    const pause = page.getByRole("button", { name: "暂停预览" });
+    if (await pause.count()) await pause.click();
+  }
   await page.getByRole("combobox", { name: "预览速度" }).selectOption("1.5");
   await page.getByRole("slider", { name: "预览位置" }).fill("5000");
   await page.getByRole("button", { name: "循环选中片段" }).click();

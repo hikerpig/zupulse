@@ -50,6 +50,7 @@ export type ViewerApplicationSnapshot = {
     selection?: HarmonySelection;
     transport?: PreviewTransportState;
     previewError?: string;
+    audioError?: string;
     error?: string;
   };
 };
@@ -186,26 +187,30 @@ export class ViewerApplication implements ViewerAppHandle {
 
   toggleStudioPreview(id: string): void {
     if (this.studioRuntimeLibraryScoreId !== id) return;
-    this.studioRuntime?.togglePlayback();
+    const result = this.studioRuntime?.togglePlayback();
     this.syncStudioTransport(id);
+    this.setStudioAudioError(id, result?.status);
   }
 
   setStudioPreviewPosition(id: string, positionTicks: number): void {
     if (this.studioRuntimeLibraryScoreId !== id) return;
-    this.studioRuntime?.setPosition(positionTicks);
+    const result = this.studioRuntime?.setPosition(positionTicks);
     this.syncStudioTransport(id);
+    this.setStudioAudioError(id, result?.status);
   }
 
   setStudioPreviewSpeed(id: string, speed: number): void {
     if (this.studioRuntimeLibraryScoreId !== id) return;
-    this.studioRuntime?.setSpeed(speed);
+    const result = this.studioRuntime?.setSpeed(speed);
     this.syncStudioTransport(id);
+    this.setStudioAudioError(id, result?.status);
   }
 
   setStudioPreviewLoop(id: string, range: HarmonyCorrection["range"] | undefined): void {
     if (this.studioRuntimeLibraryScoreId !== id) return;
-    this.studioRuntime?.setLoop(range);
+    const result = this.studioRuntime?.setLoop(range);
     this.syncStudioTransport(id);
+    this.setStudioAudioError(id, result?.status);
   }
 
   retryStudioPreview(id: string): void {
@@ -710,6 +715,19 @@ export class ViewerApplication implements ViewerAppHandle {
     if (studio?.libraryScoreId !== libraryScoreId || this.studioRuntimeLibraryScoreId !== libraryScoreId) return;
     const transport = this.studioRuntime?.getSnapshot().transport;
     if (transport) this.setStudio(libraryScoreId, { ...studio, transport });
+  }
+
+  private setStudioAudioError(libraryScoreId: string, status: string | undefined): void {
+    const studio = this.snapshot.studio;
+    if (studio?.libraryScoreId !== libraryScoreId) return;
+    if (status === "unavailable" || status === "unrepresentable") {
+      this.setStudio(libraryScoreId, { ...studio, audioError: "当前环境无法播放预览" });
+      return;
+    }
+    if (studio.audioError !== undefined) {
+      const { audioError: _audioError, ...nextStudio } = studio;
+      this.setStudio(libraryScoreId, nextStudio);
+    }
   }
 
   private getStudioRanges(libraryScoreId: string, document: HarmonyAnalysisDocument): HarmonyRangeViewItem[] {

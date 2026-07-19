@@ -45,7 +45,7 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "和弦候选" })).toBeVisible();
   await page.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
-  await expect(page.getByText("已保存 1 个修正")).toBeVisible();
+  await expect(page.getByRole("region", { name: "分析状态" }).getByText("已保存 · 1 个修正")).toBeVisible();
   await page.getByRole("button", { name: "播放预览" }).click();
   await expect(page.getByText("预览播放中")).toBeVisible();
   await page.getByRole("button", { name: "暂停预览" }).click();
@@ -58,7 +58,7 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await expect(page.getByText("已导出标注曲谱")).toBeVisible();
   await page.reload();
   await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
-  await expect(page.getByText("已保存 1 个修正")).toBeVisible();
+  await expect(page.getByRole("region", { name: "分析状态" }).getByText("已保存 · 1 个修正")).toBeVisible();
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "曲谱库" })).toBeVisible();
   await page.getByRole("button", { name: "删除 Single Voice", exact: true }).click();
@@ -92,7 +92,7 @@ test("surfaces a CAS conflict when two Browser Studio windows save the same revi
   await expect(stalePage.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
 
   await page.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
-  await expect(page.getByText("已保存 1 个修正")).toBeVisible();
+  await expect(page.getByRole("region", { name: "分析状态" }).getByText("已保存 · 1 个修正")).toBeVisible();
   await stalePage.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
   await expect(stalePage.getByRole("alert")).toContainText("版本冲突");
   await stalePage.close();

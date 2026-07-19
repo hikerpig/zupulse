@@ -146,7 +146,7 @@ test("opens a saved MusicXML Studio document", async () => {
     await expect(window.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
     await expect(window.getByRole("heading", { name: "和弦候选" })).toBeVisible();
     await window.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
-    await expect(window.getByText("已保存 1 个修正")).toBeVisible();
+    await expect(window.getByRole("region", { name: "分析状态" }).getByText("已保存 · 1 个修正")).toBeVisible();
     await window.getByRole("button", { name: "播放预览" }).click();
     await expect(window.getByText("预览播放中")).toBeVisible();
     await window.getByRole("button", { name: "暂停预览" }).click();

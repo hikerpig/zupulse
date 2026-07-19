@@ -1,7 +1,11 @@
-import { useEffect, useReducer, useState, useSyncExternalStore } from "react";
+import { useEffect, useReducer, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { useParams } from "react-router";
 import { reducePreviewTransport } from "@zupulse/web-core";
-import { createHarmonyRangeViewItems } from "../../features/harmony-studio/harmony-range-view-model";
+import {
+  createHarmonyRangeViewItems,
+  filterHarmonyRangeViewItems,
+  type HarmonyRangeFilter,
+} from "../../features/harmony-studio/harmony-range-view-model";
 import { HarmonyStudioEditor } from "../../features/harmony-studio/HarmonyStudioEditor";
 import { ScoreViewer } from "../../components/ScoreViewer";
 import type { ViewerApplication } from "../ViewerApplication";
@@ -43,6 +47,21 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
     : ranges.find((item) => item.key === fallbackSelectedKey);
   const selectedSegment = selectedRange?.analysis;
   const [exportStatus, setExportStatus] = useState<string>();
+  const [rangeFilter, setRangeFilter] = useState<HarmonyRangeFilter>("all");
+  const displayedRanges = filterHarmonyRangeViewItems(ranges, rangeFilter, selectedRange?.key);
+  const [split, setSplit] = useState(() => {
+    try {
+      const value = Number(window.localStorage.getItem("zupulse.studio.split"));
+      return value >= 40 && value <= 75 ? value : 60;
+    } catch {
+      return 60;
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("zupulse.studio.split", String(split));
+    } catch {}
+  }, [split]);
   const [preview, dispatchPreview] = useReducer(reducePreviewTransport, {
     status: "paused",
     positionTicks: 0,
@@ -78,7 +97,11 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
     };
   }, [application, libraryScoreId, storageAvailable, studio?.status]);
   return (
-    <main className={styles.studioShell} aria-labelledby="studio-title">
+    <main
+      className={styles.studioShell}
+      aria-labelledby="studio-title"
+      style={{ "--studio-left": `${split}%` } as CSSProperties}
+    >
       <div className={styles.contextBar}>
         <div className={styles.contextMain}>
           <p className={styles.appKicker}>Harmony Analysis</p>
@@ -95,7 +118,42 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
         <h2 id="summary" className="sr-only">
           未打开乐谱
         </h2>
-        <ScoreViewer compact expandable />
+        <div className={styles.scorePane}>
+          <ScoreViewer compact expandable />
+        </div>
+        <div
+          className={styles.splitter}
+          role="separator"
+          aria-label="调整乐谱与分析面板宽度"
+          aria-orientation="vertical"
+          aria-valuemin={40}
+          aria-valuemax={75}
+          aria-valuenow={split}
+          tabIndex={0}
+          onDoubleClick={() => setSplit(60)}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowLeft") setSplit((value) => Math.max(40, value - 5));
+            if (event.key === "ArrowRight") setSplit((value) => Math.min(75, value + 5));
+          }}
+          onPointerDown={(event) => {
+            const parent = event.currentTarget.parentElement;
+            if (!parent) return;
+            event.currentTarget.setPointerCapture(event.pointerId);
+            const update = (clientX: number) => {
+              const bounds = parent.getBoundingClientRect();
+              setSplit(Math.min(75, Math.max(40, Math.round(((clientX - bounds.left) / bounds.width) * 100))));
+            };
+            const move = (moveEvent: PointerEvent) => update(moveEvent.clientX);
+            event.currentTarget.addEventListener("pointermove", move);
+            event.currentTarget.addEventListener(
+              "pointerup",
+              () => {
+                event.currentTarget.removeEventListener("pointermove", move);
+              },
+              { once: true },
+            );
+          }}
+        />
         <section className={styles.analysisRegion} aria-label="分析状态">
           <div className={styles.analysisHeading}>
             <div>
@@ -326,8 +384,20 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                     <h3 id="segments-title">分析片段</h3>
                     <p>选择片段进行和弦校对。</p>
                   </div>
+                  <div className={styles.rangeFilters} role="group" aria-label="和弦区间筛选">
+                    {(["all", "unresolved", "corrected"] as const).map((filter) => (
+                      <button
+                        key={filter}
+                        type="button"
+                        aria-pressed={rangeFilter === filter}
+                        onClick={() => setRangeFilter(filter)}
+                      >
+                        {{ all: "全部", unresolved: "待确认", corrected: "已修正" }[filter]}
+                      </button>
+                    ))}
+                  </div>
                   <div className={styles.segmentList} role="list" aria-label="分析片段">
-                    {ranges.map((item, index) => (
+                    {displayedRanges.map((item, index) => (
                       <button
                         key={item.key}
                         type="button"

@@ -101,14 +101,44 @@
 
   .pageBody {
     display: grid;
-    gap: 16px;
-    width: min(1440px, 100%);
-    margin: 0 auto;
-    padding: 20px 24px 56px;
+    grid-template-columns: minmax(0, var(--studio-left, 60%)) 10px minmax(360px, 1fr);
+    gap: 0;
+    width: 100%;
+    min-height: calc(100vh - 86px);
+    padding: 0;
+  }
+
+  .pageBody > :global(.sr-only) {
+    grid-column: 1 / -1;
+  }
+
+  .scorePane,
+  .analysisRegion {
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .scorePane {
+    padding: 20px;
+    background: var(--bg-app);
+  }
+
+  .splitter {
+    cursor: col-resize;
+    touch-action: none;
+    border-inline: 1px solid var(--border-default);
+    background: var(--bg-panel-muted);
+  }
+
+  .splitter:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: -2px;
   }
 
   .analysisRegion {
     min-width: 0;
+    padding: 20px 24px 56px;
   }
 
   .analysisHeading,
@@ -265,6 +295,18 @@
     max-height: 560px;
     margin-top: 16px;
     overflow: auto;
+  }
+
+  .rangeFilters {
+    display: flex;
+    gap: 4px;
+    margin-top: 14px;
+  }
+
+  .rangeFilters button[aria-pressed="true"] {
+    color: var(--text-primary);
+    border-color: var(--accent-primary);
+    background: var(--accent-soft);
   }
 
   .segmentList button {
@@ -468,6 +510,21 @@
     .statusChip,
     .pageBody {
       padding: 14px 12px 40px;
+    }
+
+    .pageBody {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .scorePane,
+    .analysisRegion {
+      overflow: visible;
+      padding: 0;
+    }
+
+    .splitter {
+      display: none;
     }
 
     .scoreId {

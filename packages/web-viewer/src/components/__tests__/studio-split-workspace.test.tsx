@@ -17,7 +17,7 @@ describe("StudioSplitWorkspace", () => {
     fireEvent.keyDown(separator, { key: "End" });
     fireEvent.doubleClick(separator);
 
-    expect(onSplitChange.mock.calls.map(([value]) => value)).toEqual([55, 65, 40, 75, 60]);
+    expect(onSplitChange.mock.calls.map(([value]) => value)).toEqual([55, 65, 40, 75, 40]);
     expect(separator.getAttribute("aria-valuenow")).toBe("60");
   });
 

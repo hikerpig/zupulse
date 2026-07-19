@@ -6,7 +6,7 @@ export type StudioPreferences = {
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
 
 const storageKey = "zupulse.studio.preferences";
-const defaults: StudioPreferences = { split: 60, previewEnabled: true };
+const defaults: StudioPreferences = { split: 40, previewEnabled: true };
 
 export function loadStudioPreferences(storage: StorageLike | undefined): StudioPreferences {
   if (!storage) return defaults;

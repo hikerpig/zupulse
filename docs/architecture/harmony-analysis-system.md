@@ -25,7 +25,7 @@ Harmony Studio 只对 MusicXML Library Score 开放。Viewer 的练习 sidecar�
 
 ## Studio 工作区
 
-Studio 使用独立的 `StudioScoreRuntime`，不创建 Viewer 的 `PlaybackController`，也不接触练习 sidecar 或续播数据。页面是全视口可调双栏：设备级偏好以版本化 localStorage 保存 60/40 分栏与派生和弦预览开关，损坏或不可用 storage 时安全回退。窄视口堆叠为乐谱后接分析区。
+Studio 使用独立的 `StudioScoreRuntime`，不创建 Viewer 的 `PlaybackController`，也不接触练习 sidecar 或续播数据。页面是全视口可调双栏，默认左侧乐谱 40%、右侧分析 60%；用户调整后的比例与派生和弦预览开关作为版本化设备偏好保存在 localStorage，损坏或不可用 storage 时安全回退。窄视口堆叠为乐谱后接分析区。
 
 右栏的事实源是 Effective Harmony Range，而非 Revision 数组下标。谱面 Beat/Note 点击与列表选择以书面 range 联动；选择恢复使用书面焦点时刻。列表显示当前有效和弦、来源和置信度，并支持筛选与键盘导航。
 

@@ -3,7 +3,7 @@ import styles from "./studio-split-workspace.module.css";
 
 const MIN_SPLIT = 40;
 const MAX_SPLIT = 75;
-const DEFAULT_SPLIT = 60;
+const DEFAULT_SPLIT = 40;
 
 function clampSplit(value: number): number {
   return Math.min(MAX_SPLIT, Math.max(MIN_SPLIT, value));

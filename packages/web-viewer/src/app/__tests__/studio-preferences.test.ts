@@ -11,16 +11,16 @@ function storage(initial: Record<string, string> = {}) {
 
 describe("Studio preferences", () => {
   it("uses safe defaults for missing, malformed, and out-of-range stored values", () => {
-    expect(loadStudioPreferences(storage())).toEqual({ split: 60, previewEnabled: true });
+    expect(loadStudioPreferences(storage())).toEqual({ split: 40, previewEnabled: true });
     expect(loadStudioPreferences(storage({ "zupulse.studio.preferences": "not-json" }))).toEqual({
-      split: 60,
+      split: 40,
       previewEnabled: true,
     });
     expect(
       loadStudioPreferences(
         storage({ "zupulse.studio.preferences": JSON.stringify({ version: 1, split: 5, previewEnabled: false }) }),
       ),
-    ).toEqual({ split: 60, previewEnabled: true });
+    ).toEqual({ split: 40, previewEnabled: true });
   });
 
   it("persists only the versioned device preferences", () => {
@@ -41,7 +41,7 @@ describe("Studio preferences", () => {
         throw new DOMException("denied", "SecurityError");
       },
     };
-    expect(loadStudioPreferences(unavailable)).toEqual({ split: 60, previewEnabled: true });
+    expect(loadStudioPreferences(unavailable)).toEqual({ split: 40, previewEnabled: true });
     expect(() => saveStudioPreferences(unavailable, { split: 60, previewEnabled: true })).not.toThrow();
   });
 });

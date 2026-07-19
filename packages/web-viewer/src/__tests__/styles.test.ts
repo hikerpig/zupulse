@@ -29,6 +29,7 @@ describe("alphaTab playback cursor styles", () => {
     ]);
 
     expect(splitCss).toMatch(/\.pane\s*{[^}]*min-height:\s*0;[^}]*overflow:\s*auto;/s);
+    expect(splitCss).toMatch(/--studio-left,\s*40%/);
     expect(splitCss).toMatch(
       /@media \(max-width:\s*960px\)[\s\S]*?\.workspace\s*{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/s,
     );

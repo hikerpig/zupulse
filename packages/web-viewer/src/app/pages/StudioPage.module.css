@@ -99,19 +99,6 @@
     background: var(--status-ready-text);
   }
 
-  .pageBody {
-    display: grid;
-    grid-template-columns: minmax(0, var(--studio-left, 60%)) 10px minmax(360px, 1fr);
-    gap: 0;
-    width: 100%;
-    min-height: calc(100vh - 86px);
-    padding: 0;
-  }
-
-  .pageBody > :global(.sr-only) {
-    grid-column: 1 / -1;
-  }
-
   .scorePane,
   .analysisRegion {
     min-width: 0;
@@ -122,18 +109,6 @@
   .scorePane {
     padding: 20px;
     background: var(--bg-app);
-  }
-
-  .splitter {
-    cursor: col-resize;
-    touch-action: none;
-    border-inline: 1px solid var(--border-default);
-    background: var(--bg-panel-muted);
-  }
-
-  .splitter:focus-visible {
-    outline: 2px solid var(--accent-primary);
-    outline-offset: -2px;
   }
 
   .analysisRegion {
@@ -217,6 +192,14 @@
 
   .utilityPanel {
     padding: 16px;
+  }
+
+  .utilityPanel > summary {
+    cursor: pointer;
+  }
+
+  .utilityPanel[open] > summary {
+    margin-bottom: 12px;
   }
 
   .panelHeading > span {
@@ -452,6 +435,9 @@
   }
 
   .exportBar {
+    position: sticky;
+    z-index: 2;
+    bottom: 0;
     margin-top: 12px;
     padding: 16px;
   }
@@ -518,19 +504,10 @@
       padding: 14px 12px 40px;
     }
 
-    .pageBody {
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-
     .scorePane,
     .analysisRegion {
       overflow: visible;
       padding: 0;
-    }
-
-    .splitter {
-      display: none;
     }
 
     .scoreId {

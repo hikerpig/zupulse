@@ -186,6 +186,7 @@ describe("StudioPage", () => {
       </MemoryRouter>,
     );
     const user = userEvent.setup();
+    expect(within(view.container).getByText("分析设置").closest("details")?.hasAttribute("open")).toBe(false);
     expect(within(view.container).getByRole("option", { name: "track-2" })).toBeTruthy();
     const segments = within(view.container).getByRole("list", { name: "分析片段" });
     await user.click(within(segments).getByRole("button", { name: "片段 1" }));

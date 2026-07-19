@@ -9,6 +9,7 @@ describe("alphaTab playback cursor styles", () => {
       source("../app/pages/PageShell.module.css"),
       source("../app/pages/StudioPage.module.css"),
       source("../components/ScoreViewer.module.css"),
+      source("../components/studio-split-workspace.module.css"),
       source("../components/Slider.module.css"),
       source("../features/PlaybackWorkspace.module.css"),
       source("../features/SheetLibrary.module.css"),
@@ -18,6 +19,20 @@ describe("alphaTab playback cursor styles", () => {
       const localCss = css.replaceAll(/:global\([^)]*\)/g, "");
       expect(localCss).not.toMatch(/\.[a-zA-Z_][\w-]*-[\w-]*/);
     }
+  });
+
+  it("keeps the Studio panes independently scrollable and stacks them at the narrow breakpoint", async () => {
+    const [splitCss, studioCss] = await Promise.all([
+      source("../components/studio-split-workspace.module.css"),
+      source("../app/pages/StudioPage.module.css"),
+    ]);
+
+    expect(splitCss).toMatch(/\.pane\s*{[^}]*min-height:\s*0;[^}]*overflow:\s*auto;/s);
+    expect(splitCss).toMatch(
+      /@media \(max-width:\s*960px\)[\s\S]*?\.workspace\s*{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/s,
+    );
+    expect(splitCss).toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.splitter\s*{[^}]*display:\s*none;/s);
+    expect(studioCss).toMatch(/\.exportBar\s*{[^}]*position:\s*sticky;[^}]*bottom:\s*0;/s);
   });
 
   it("loads Space Grotesk from Google Fonts and permits only its hosts", async () => {

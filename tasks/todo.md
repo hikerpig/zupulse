@@ -12,7 +12,7 @@
   - [x] Task 10：完整有效和弦预览、开关、恢复和非阻塞错误降级已实现。
   - [x] Task 11：runtime snapshot/命令、soundfont loading/error、audio-unavailable、stopped 与销毁清理均有测试证据。
   - [x] Task 12：版本化、容错的 split/preview 偏好及测试已完成。
-  - [ ] Task 13：分栏行为已实现；尚未抽出计划中的组件，窄屏/指针滚动争用的用户测试也未补齐。
+  - [x] Task 13：独立分栏组件、键盘/指针约束、窄屏堆叠与独立滚动均有测试和真实视口证据。
   - [ ] Task 14：有效范围列表、筛选、隐藏项说明及完整键盘焦点行为已实现；待随 Task 13 抽取后补独立组件测试。
   - [ ] Task 15：多数状态与布局已实现；设置默认折叠、固定导出栏和完整视觉/窄屏验收未完成。
   - [ ] Task 16–17：两端 E2E 均通过核心流程；尚未证明真正谱面 Beat↔列表双向选择、完整预览错误恢复和 runtime 销毁音频停止。
@@ -359,14 +359,14 @@
 
 **Acceptance criteria:**
 
-- [ ] separator 具有正确 role、方向、当前值和可访问名称，Arrow/Home/End 可调整，双击恢复 60/40。
-- [ ] 指针拖动遵守左右最小宽度；拖动时不选择文本、不触发联动滚动，结束后保存比例。
-- [ ] 窄视口移除 separator 并按乐谱→分析顺序堆叠；Viewer 页面布局不受影响。
+- [x] separator 具有正确 role、方向、当前值和可访问名称，Arrow/Home/End 可调整，双击恢复 60/40。
+- [x] 指针拖动遵守左右最小宽度；拖动时不选择文本、不触发联动滚动，结束后保存比例。
+- [x] 窄视口移除 separator 并按乐谱→分析顺序堆叠；Viewer 页面布局不受影响。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-viewer/src/components/__tests__/studio-split-workspace.test.tsx`
-- [ ] `pnpm vitest run packages/web-viewer/src/components/__tests__/ScoreViewer.test.tsx`
+- [x] `pnpm vitest run packages/web-viewer/src/components/__tests__/studio-split-workspace.test.tsx`
+- [x] `pnpm vitest run packages/web-viewer/src/components/__tests__/ScoreViewer.test.tsx`
 
 **Dependencies:** Task 12
 

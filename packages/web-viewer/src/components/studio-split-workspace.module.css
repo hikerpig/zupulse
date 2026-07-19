@@ -1,0 +1,42 @@
+@layer components {
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, var(--studio-left, 60%)) 10px minmax(360px, 1fr);
+    width: 100%;
+    min-height: calc(100vh - 86px);
+  }
+
+  .pane {
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .splitter {
+    cursor: col-resize;
+    touch-action: none;
+    border-inline: 1px solid var(--border-default);
+    background: var(--bg-panel-muted);
+  }
+
+  .splitter:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: -2px;
+  }
+
+  @media (max-width: 960px) {
+    .workspace {
+      display: flex;
+      min-height: auto;
+      flex-direction: column;
+    }
+
+    .splitter {
+      display: none;
+    }
+
+    .pane {
+      overflow: visible;
+    }
+  }
+}

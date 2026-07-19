@@ -8,12 +8,12 @@
 - 执行规则：严格按依赖顺序；每项测试先行；任务完成后立即勾选验收与验证项。
 - 逐项审计（2026-07-19）：
   - [x] Task 1–8：范围模型、公开 alphaTab 能力、独立 runtime、宿主接入及可重建投影已有实现和测试证据。
-  - [ ] Task 9：核心选择已接通；仍缺空白点击提示、克制滚动和完整半开边界用户测试。
+  - [ ] Task 9：核心选择与空白点击反馈已接通；仍缺克制滚动和完整半开边界用户测试。
   - [x] Task 10：完整有效和弦预览、开关、恢复和非阻塞错误降级已实现。
   - [ ] Task 11：runtime snapshot/命令与 audio-unavailable 已接通；尚未覆盖 soundfont loading/error 与 stopped 状态。
   - [x] Task 12：版本化、容错的 split/preview 偏好及测试已完成。
   - [ ] Task 13：分栏行为已实现；尚未抽出计划中的组件，窄屏/指针滚动争用的用户测试也未补齐。
-  - [ ] Task 14：有效范围列表、筛选和部分键盘导航已实现；Enter/Escape 焦点返回、隐藏项说明与完整列表组件测试未完成。
+  - [ ] Task 14：有效范围列表、筛选、隐藏项说明及完整键盘焦点行为已实现；待随 Task 13 抽取后补独立组件测试。
   - [ ] Task 15：多数状态与布局已实现；设置默认折叠、固定导出栏和完整视觉/窄屏验收未完成。
   - [ ] Task 16–17：两端 E2E 均通过核心流程；尚未证明真正谱面 Beat↔列表双向选择、完整预览错误恢复和 runtime 销毁音频停止。
   - [ ] Task 18：命令门禁和文档已更新；由于 Task 9、11、13–17 尚有缺口，最终 Definition of Done 未达成。
@@ -244,14 +244,14 @@
 
 **Acceptance criteria:**
 
-- [ ] 点击谱面 Beat/Note 选择覆盖它的 Effective Harmony Range；空白点击不吸附、不创建 Correction。
+- [x] 点击谱面 Beat/Note 选择覆盖它的 Effective Harmony Range；空白点击不吸附、不创建 Correction。
 - [ ] 点击列表高亮完整 range，只在目标不可见时滚动谱面；谱面点击同理只按需滚动列表。
 - [ ] 拆分、合并、重新分析后按焦点时刻恢复选择，不跳回第一项；播放头不改变选择。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-viewer/src/app/pages/__tests__/StudioPage.test.tsx`
-- [ ] `pnpm vitest run packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`
+- [x] `pnpm vitest run packages/web-viewer/src/app/pages/__tests__/StudioPage.test.tsx`
+- [x] `pnpm vitest run packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`
 - [ ] 键盘/鼠标用户视角测试覆盖半开边界与空白位置。
 
 **Dependencies:** Tasks 2, 7–8
@@ -386,14 +386,14 @@
 
 **Acceptance criteria:**
 
-- [ ] 列表与谱面当前有效结果一一对应，Correction 后不出现旧 segment index 错位。
-- [ ] “全部/待确认/已修正”筛选正确；谱面选择隐藏项时临时显示并说明原因。
-- [ ] Arrow/Home/End/PageUp/PageDown、Enter、Escape 和焦点恢复按规格工作，表单输入不被劫持。
+- [x] 列表与谱面当前有效结果一一对应，Correction 后不出现旧 segment index 错位。
+- [x] “全部/待确认/已修正”筛选正确；谱面选择隐藏项时临时显示并说明原因。
+- [x] Arrow/Home/End/PageUp/PageDown、Enter、Escape 和焦点恢复按规格工作，表单输入不被劫持。
 
 **Verification:**
 
 - [ ] `pnpm vitest run packages/web-viewer/src/features/harmony-studio/__tests__/harmony-range-workspace.test.tsx`
-- [ ] `pnpm vitest run packages/web-viewer/src/app/pages/__tests__/StudioPage.test.tsx`
+- [x] `pnpm vitest run packages/web-viewer/src/app/pages/__tests__/StudioPage.test.tsx`
 
 **Dependencies:** Tasks 2, 9, 13
 

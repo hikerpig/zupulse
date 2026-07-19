@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { useParams } from "react-router";
 import { formatChordSymbol } from "@zupulse/web-core";
 import {
@@ -70,6 +70,13 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   const [exportStatus, setExportStatus] = useState<string>();
   const [rangeFilter, setRangeFilter] = useState<HarmonyRangeFilter>("all");
   const displayedRanges = filterHarmonyRangeViewItems(ranges, rangeFilter, selectedRange?.key);
+  const selectedRangeIsTemporarilyVisible =
+    selectedRange !== undefined &&
+    rangeFilter !== "all" &&
+    ((rangeFilter === "unresolved" && selectedRange.effective.type !== "unresolved") ||
+      (rangeFilter === "corrected" && selectedRange.origin !== "correction"));
+  const segmentListRef = useRef<HTMLDivElement>(null);
+  const editorPaneRef = useRef<HTMLDivElement>(null);
   const selectRange = (item: (typeof displayedRanges)[number]) => {
     setFallbackSelectedKey(item.key);
     application.selectStudioRange(libraryScoreId!, item.effective.range);
@@ -273,6 +280,11 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                   试听不可用：{studio.audioError}
                 </p>
               ) : null}
+              {studio.selectionNotice ? (
+                <p className={styles.emptyState} role="status" aria-label="谱面选择说明">
+                  {studio.selectionNotice}
+                </p>
+              ) : null}
 
               <div className={styles.utilityGrid}>
                 <section className={styles.utilityPanel} aria-labelledby="analysis-settings-title">
@@ -411,15 +423,27 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                       </button>
                     ))}
                   </div>
-                  <div className={styles.segmentList} role="list" aria-label="分析片段">
+                  {selectedRangeIsTemporarilyVisible ? (
+                    <p className={styles.filterNotice} role="status" aria-label="筛选选择说明">
+                      当前选择不符合筛选条件，已临时显示。
+                    </p>
+                  ) : null}
+                  <div ref={segmentListRef} className={styles.segmentList} role="list" aria-label="分析片段">
                     {displayedRanges.map((item, index) => (
                       <button
                         key={item.key}
                         type="button"
                         aria-label={`片段 ${index + 1}`}
                         aria-pressed={selectedRange?.key === item.key}
+                        data-range-key={item.key}
                         onClick={() => selectRange(item)}
                         onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            selectRange(item);
+                            editorPaneRef.current?.focus();
+                            return;
+                          }
                           const currentIndex = displayedRanges.findIndex((candidate) => candidate.key === item.key);
                           const pageSize = 5;
                           const nextIndex =
@@ -465,7 +489,21 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                     ))}
                   </div>
                 </aside>
-                <div className={styles.editorPane}>
+                <div
+                  ref={editorPaneRef}
+                  className={styles.editorPane}
+                  role="region"
+                  aria-label="和弦编辑器"
+                  tabIndex={-1}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Escape" || !selectedRange) return;
+                    event.preventDefault();
+                    const buttons = segmentListRef.current?.querySelectorAll<HTMLButtonElement>("[data-range-key]");
+                    Array.from(buttons ?? [])
+                      .find((button) => button.dataset.rangeKey === selectedRange.key)
+                      ?.focus();
+                  }}
+                >
                   {selectedRange ? (
                     <>
                       <HarmonyStudioEditor

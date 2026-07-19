@@ -48,6 +48,7 @@ export type ViewerApplicationSnapshot = {
     document?: HarmonyAnalysisDocument;
     ranges?: readonly HarmonyRangeViewItem[];
     selection?: HarmonySelection;
+    selectionNotice?: string;
     transport?: PreviewTransportState;
     previewError?: string;
     audioError?: string;
@@ -242,7 +243,15 @@ export class ViewerApplication implements ViewerAppHandle {
     const studio = this.snapshot.studio;
     if (studio?.libraryScoreId !== id || !studio.ranges) return;
     const selection = selectContainingHarmonyRange(studio.ranges, moment);
-    if (selection) this.setStudio(id, { ...studio, selection });
+    if (selection) {
+      const { selectionNotice: _selectionNotice, ...nextStudio } = studio;
+      this.setStudio(id, { ...nextStudio, selection });
+      return;
+    }
+    this.setStudio(id, {
+      ...studio,
+      selectionNotice: "该位置没有有效和弦区间，已保留当前选择。",
+    });
   }
 
   async setStudioAnnotationTarget(id: string, annotationTarget: AnnotationTarget): Promise<void> {

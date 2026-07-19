@@ -196,6 +196,66 @@ describe("StudioPage", () => {
     });
     await user.click(within(segments).getByRole("button", { name: "片段 2" }));
     expect(within(segments).getByRole("button", { name: "片段 2" }).getAttribute("aria-pressed")).toBe("true");
+    await user.keyboard("{Enter}");
+    expect(document.activeElement).toBe(within(view.container).getByRole("region", { name: "和弦编辑器" }));
+    await user.keyboard("{Escape}");
+    expect(document.activeElement).toBe(within(segments).getByRole("button", { name: "片段 2" }));
+    await user.click(within(view.container).getByRole("button", { name: "已修正" }));
+    expect(within(view.container).getByRole("status", { name: "筛选选择说明" }).textContent).toContain(
+      "当前选择不符合筛选条件，已临时显示",
+    );
+  });
+
+  it("explains an uncovered score position without changing the current range", () => {
+    const selectedRange = {
+      start: { measureIndex: 0, offsetTicks: 0 },
+      end: { measureIndex: 0, offsetTicks: 4 },
+    };
+    const snapshot = {
+      studio: {
+        libraryScoreId: "score-1",
+        status: "ready",
+        selection: { focus: selectedRange.start, range: selectedRange },
+        selectionNotice: "该位置没有有效和弦区间，已保留当前选择。",
+        document: {
+          activeRevision: {
+            parameters: { scope: { includedTrackIds: ["track-1"] } },
+            segments: [
+              {
+                status: "unresolved",
+                range: selectedRange,
+                alternatives: [],
+                reason: "low-confidence",
+              },
+            ],
+          },
+          corrections: [],
+          annotationTarget: { trackId: "track-1", staffIndex: 0 },
+        },
+      },
+    };
+    const application = {
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      hasHarmonyAnalysisStorage: () => true,
+      openStudio: async () => undefined,
+      setStudioPreviewEnabled: () => undefined,
+      undoStudio: () => undefined,
+      redoStudio: () => undefined,
+      setStudioScope: async () => undefined,
+      setStudioAnnotationTarget: async () => undefined,
+    } as never;
+
+    render(
+      <MemoryRouter initialEntries={["/studio/score-1"]}>
+        <Routes>
+          <Route path="/studio/:libraryScoreId" element={<StudioPage application={application} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("status", { name: "谱面选择说明" }).textContent).toContain("没有有效和弦区间");
+    expect(screen.getByRole("list", { name: "分析片段" }).querySelector('[aria-pressed="true"]')).toBeTruthy();
   });
 
   it("keeps preview transport local to Studio", async () => {

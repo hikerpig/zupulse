@@ -93,7 +93,7 @@ ChoCo 与 WJazzD 保持 `label-prior-corpus` 角色，不在 active 端到端报
     {
       "id": "turkish-march-structure",
       "kind": "structural-regression",
-      "score": "../../musicxml/rondo-alla-turca-turkish-march.mxl",
+      "score": "../../musicxml/K331-3_reviewed.mxl",
       "sha256": "...",
       "expected": {
         "model": { "measures": 147, "tracks": 1, "staves": 2, "notes": 1736 },

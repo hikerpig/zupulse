@@ -27,10 +27,7 @@ describe("harmony CLI process", () => {
       const manifest = JSON.parse(await readFile(sourceManifest, "utf8")) as {
         cases: Array<{ score: string; expected: { result: { segments: number } } }>;
       };
-      manifest.cases[0]!.score = relative(
-        directory,
-        resolve(root, "test-fixtures/musicxml/rondo-alla-turca-turkish-march.mxl"),
-      );
+      manifest.cases[0]!.score = relative(directory, resolve(root, "test-fixtures/musicxml/K331-3_reviewed.mxl"));
       manifest.cases[0]!.expected.result.segments = 0;
       const path = resolve(directory, "manifest.json");
       await writeFile(path, JSON.stringify(manifest));

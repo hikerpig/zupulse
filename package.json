@@ -11,7 +11,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "[ -f .git ] || simple-git-hooks",
-    "test": "vitest run",
+    "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run",
     "typecheck": "tsc -b",
     "check": "pnpm typecheck && pnpm test",
     "verify:fast": "pnpm check:context && pnpm check:arch && pnpm check:design && pnpm format:check && pnpm check",

@@ -107,7 +107,8 @@ describe("alphaTab playback cursor styles", () => {
     expect(frameCss).toMatch(/\.appFrame\s*{[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden;/s);
     expect(appCss).toMatch(/\.appShell\s*{[^}]*height:\s*100%;[^}]*overflow:\s*hidden;/s);
     expect(workspaceCss).toMatch(/\.workspace\s*{[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/s);
-    expect(scoreCss).toMatch(/\.frame\s*{[^}]*height:\s*100%;[^}]*overflow:\s*auto;/s);
+    expect(scoreCss).toMatch(/\.stage\s*{[^}]*height:\s*100%;[^}]*overflow:\s*scroll;/s);
+    expect(scoreCss).toMatch(/\.frame\s*{[^}]*min-height:\s*0;[^}]*overflow:\s*auto;/s);
     expect(scoreCss).toMatch(/\.viewer\s*{[^}]*height:\s*auto;[^}]*min-height:\s*100%;[^}]*overflow:\s*visible;/s);
     expect(workspaceCss).toMatch(/\.practicePanel\s*{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;/s);
     expect(appCss).toMatch(

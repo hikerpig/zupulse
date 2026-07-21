@@ -5,10 +5,10 @@
     height: 100%;
     min-width: 0;
     min-height: 0;
+    overflow: scroll;
   }
 
   .frame {
-    height: 100%;
     min-height: 0;
     overflow: auto;
     padding: 8px;
@@ -50,9 +50,7 @@
     justify-content: space-between;
     gap: 16px;
     padding: 10px 12px;
-    /* border: 1px solid var(--border-default); */
     border-bottom: 0;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     background: var(--bg-panel);
   }
 

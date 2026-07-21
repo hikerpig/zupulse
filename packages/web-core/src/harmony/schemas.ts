@@ -4,6 +4,7 @@ import type { ScoreWrittenMoment } from "./writtenTime";
 const uuidSchema = z.string().uuid();
 const timestampSchema = z.iso.datetime();
 const hashSchema = z.string().regex(/^[a-f0-9]{64}$/i);
+const roundScore = (value: number): number => Number(value.toFixed(2));
 
 export const spelledPitchSchema = z
   .object({
@@ -139,7 +140,23 @@ export const harmonyAnalysisRevisionSchema = z
       .strict(),
     segments: z.array(harmonySegmentSchema),
   })
-  .strict();
+  .strict()
+  .transform((revision) => ({
+    ...revision,
+    parameters: { ...revision.parameters, decisionThreshold: roundScore(revision.parameters.decisionThreshold) },
+    segments: revision.segments.map((segment) => ({
+      ...segment,
+      ...(segment.status === "resolved" ? { confidence: roundScore(segment.confidence) } : {}),
+      alternatives: segment.alternatives
+        .filter((alternative) => alternative.confidence >= revision.parameters.decisionThreshold)
+        .map((alternative) => ({
+          ...alternative,
+          localScore: roundScore(alternative.localScore),
+          sequenceScore: roundScore(alternative.sequenceScore),
+          confidence: roundScore(alternative.confidence),
+        })),
+    })),
+  }));
 export const harmonyCorrectionValueSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("chord"), chord: chordSymbolSchema }).strict(),
   z.object({ type: z.literal("no-chord") }).strict(),

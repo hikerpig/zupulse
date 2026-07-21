@@ -69,6 +69,8 @@ ASAP adapter 通过 production MusicXML 投影和 analyzer 打开固定的跨作
 
 完整 chord 相等要求 root、bass、kind、extension 和 degrees 都一致。报告另外输出这些 facets，以及 corpus/chord-family slices；最多保留 50 条定位到 piece、group、measure、offset、label、family 和错误类别的样本。
 
+Top-1/Top-8 使用 analyzer 独立生成的 `alternatives`，不是 primary path。相邻同和弦 segment 合并后的 alternatives 仍必须稳定去重且最多为 8；primary chord 不承诺位于 alternatives 第一项或一定包含在列表中。
+
 ## 当前冻结基线
 
 以下是版本化 baseline JSON 的便读摘要；比较时以 JSON 文件为准：

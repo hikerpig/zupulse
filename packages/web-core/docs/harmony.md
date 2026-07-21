@@ -20,6 +20,8 @@
 
 生产入口是 [`analyzeRules.ts`](../src/harmony/analyzeRules.ts)。当前实现刻意让规则候选负责主序列、primary chord、boundary 和 confidence；bundled ranker 只改善 alternatives。学习分不进入序列累计，因为两种分数尺度混合会损害 resolved precision 和边界稳定性。
 
+`alternatives` 是独立排序的候选列表，不承诺第一项等于或一定包含 primary chord。相邻同和弦 segment 合并时，候选按原顺序稳定去重并始终限制为最多 8 个；评测不得把合并前多个列表拼接成大于 Top-8 的 oracle。
+
 ## 核心文件
 
 | 文件                                                                    | 职责                                                                                  |

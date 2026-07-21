@@ -3,7 +3,7 @@
 ## Phase 1: 评测可信度
 
 - [x] Task 1：合并后 alternatives 去重并硬限制 Top-8。
-- [ ] Task 2：增加全量错误簇、置信度分箱和 precision/coverage curve。
+- [x] Task 2：增加全量错误簇、置信度分箱和 precision/coverage curve。
 - [ ] Task 3：增加 interval-overlap 与容差 boundary 诊断。
 - [ ] Checkpoint A：冻结 corrected baseline，只选择一个最大错误簇。
 

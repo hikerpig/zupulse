@@ -1,7 +1,13 @@
-import { analyzeHarmonyRules, compareMoments, type ChordSymbolInput } from "@zupulse/web-core";
+import { analyzeHarmonyRules, compareMoments } from "@zupulse/web-core";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { calculateAccuracyMetrics, type AccuracyObservation } from "../accuracyMetrics";
+import {
+  calculateAccuracyMetrics,
+  classifyAccuracyError,
+  shouldIncludeDiagnosticSample,
+  type AccuracyErrorCategory,
+  type AccuracyObservation,
+} from "../accuracyMetrics";
 import { assignDatasetSplit } from "../evaluationProtocol";
 import { parsePop909Piece } from "./pop909";
 
@@ -25,7 +31,7 @@ export async function evaluatePop909Corpus(
     offsetTicks: number;
     label: string;
     family: string;
-    category: "unsupported-label" | "unresolved" | "root" | "bass" | "kind" | "extension" | "degrees" | "boundary";
+    category: AccuracyErrorCategory;
   }> = [];
   for (const song of songs) {
     const directory = resolve(root, song);
@@ -50,19 +56,7 @@ export async function evaluatePop909Corpus(
       const expectedBoundary = index > 0 && !same(previous?.chord, gold.chord);
       const predictedBoundary =
         index > 0 && segments.some((candidate) => compareMoments(candidate.range.start, gold.range.start) === 0);
-      const category = errorCategory(gold.chord, segment, expectedBoundary, predictedBoundary);
-      if (category && errors.length < 50) {
-        errors.push({
-          pieceId: song,
-          groupId: song,
-          measureIndex: gold.range.start.measureIndex,
-          offsetTicks: gold.range.start.offsetTicks,
-          label: gold.label,
-          family: gold.family,
-          category,
-        });
-      }
-      observations.push({
+      const observation: AccuracyObservation = {
         groupId: song,
         corpus: options.id,
         family: gold.family,
@@ -74,7 +68,20 @@ export async function evaluatePop909Corpus(
         alternatives: segment?.alternatives.map((candidate) => candidate.chord) ?? [],
         expectedBoundary,
         predictedBoundary,
-      });
+      };
+      const category = classifyAccuracyError(observation);
+      if (category && shouldIncludeDiagnosticSample(errors, category)) {
+        errors.push({
+          pieceId: song,
+          groupId: song,
+          measureIndex: gold.range.start.measureIndex,
+          offsetTicks: gold.range.start.offsetTicks,
+          label: gold.label,
+          family: gold.family,
+          category,
+        });
+      }
+      observations.push(observation);
     }
   }
   return {
@@ -86,23 +93,6 @@ export async function evaluatePop909Corpus(
     metrics: calculateAccuracyMetrics(observations),
     errors,
   };
-}
-
-function errorCategory(
-  expected: ChordSymbolInput | undefined,
-  segment: ReturnType<typeof analyzeHarmonyRules>[number] | undefined,
-  expectedBoundary: boolean,
-  predictedBoundary: boolean,
-) {
-  if (!expected) return "unsupported-label" as const;
-  if (segment?.status !== "resolved") return "unresolved" as const;
-  if (!same(segment.chord.root, expected.root)) return "root" as const;
-  if (!same(segment.chord.bass, expected.bass)) return "bass" as const;
-  if (segment.chord.kind !== expected.kind) return "kind" as const;
-  if (segment.chord.extension !== expected.extension) return "extension" as const;
-  if (!same(segment.chord.degrees, expected.degrees)) return "degrees" as const;
-  if (expectedBoundary && !predictedBoundary) return "boundary" as const;
-  return undefined;
 }
 
 function same(a: unknown, b: unknown): boolean {

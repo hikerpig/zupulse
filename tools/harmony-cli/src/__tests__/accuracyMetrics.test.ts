@@ -1,6 +1,6 @@
 import type { ChordSymbolInput } from "@zupulse/web-core";
 import { describe, expect, it } from "vitest";
-import { calculateAccuracyMetrics, type AccuracyObservation } from "../accuracyMetrics";
+import { calculateAccuracyMetrics, shouldIncludeDiagnosticSample, type AccuracyObservation } from "../accuracyMetrics";
 import { harmonyAccuracyMetricsSchema } from "../schemas";
 
 const cMajor: ChordSymbolInput = { root: { step: "C", alter: 0 }, kind: "major", degrees: [] };
@@ -65,5 +65,38 @@ describe("calculateAccuracyMetrics", () => {
       corpus: { fixture: { cases: 2, top1Accuracy: 2 / 3 } },
       chordFamily: { triad: { cases: 2, top1Accuracy: 2 / 3 } },
     });
+    expect(metrics).toMatchObject({
+      diagnostics: {
+        outcomes: {
+          "resolved-correct": { cases: 1, weight: 2 },
+          "unresolved-oracle-hit": { cases: 1, weight: 1 },
+          "unsupported-label": { cases: 1, weight: 1 },
+        },
+        outcomesByFamily: {
+          triad: {
+            "resolved-correct": { cases: 1, weight: 2 },
+            "unresolved-oracle-hit": { cases: 1, weight: 1 },
+          },
+        },
+        errors: {
+          "unresolved-oracle-hit": { cases: 1, weight: 1 },
+        },
+        confidenceBins: expect.arrayContaining([
+          expect.objectContaining({ index: 0, cases: 1, weight: 1, averageConfidence: 0, accuracy: 0 }),
+          expect.objectContaining({ index: 8, cases: 1, weight: 2, averageConfidence: 0.8, accuracy: 1 }),
+        ]),
+        precisionCoverageCurve: expect.arrayContaining([
+          { threshold: 0, precision: 1, coverage: 2 / 3 },
+          { threshold: 0.9, precision: 0, coverage: 0 },
+        ]),
+      },
+    });
+  });
+
+  it("caps deterministic diagnostic samples per error category", () => {
+    const samples = Array.from({ length: 5 }, () => ({ category: "unresolved-oracle-hit" as const }));
+
+    expect(shouldIncludeDiagnosticSample(samples, "unresolved-oracle-hit")).toBe(false);
+    expect(shouldIncludeDiagnosticSample(samples, "unresolved-oracle-miss")).toBe(true);
   });
 });

@@ -71,6 +71,10 @@ ASAP adapter 通过 production MusicXML 投影和 analyzer 打开固定的跨作
 
 Top-1/Top-8 使用 analyzer 独立生成的 `alternatives`，不是 primary path。相邻同和弦 segment 合并后的 alternatives 仍必须稳定去重且最多为 8；primary chord 不承诺位于 alternatives 第一项或一定包含在列表中。
 
+dataset eval report 从 `2.1.0` 起增加 `diagnostics`：全量 observation 按数量和时长统计 outcome，并按 chord family 展开；unresolved 明确拆成 alternatives 第一名正确、Top-8 内命中和 Top-8 缺失。报告同时给出 10 个 confidence bins，以及固定阈值上的 post-decision precision/coverage curve。当前 unresolved 已丢弃 primary chord 和原始 confidence，因此这条 curve 只比较现有 resolved 结果在更高阈值下的拒识行为，不能用来模拟降低当前决策阈值；raw primary calibration 属于后续算法迭代。
+
+错误定位样本按 category 各保留最多 5 条、总数最多 50 条，顺序由 corpus/piece 的稳定遍历决定。`diagnostics.errors` 才是全量错误簇计数，不能再用样本数组长度判断最大错误簇。既有 accuracy baseline 仍使用 `1.0.0`，compare 会忽略新增 diagnostics，因此无需迁移 baseline 数值。
+
 ## 当前冻结基线
 
 以下是版本化 baseline JSON 的便读摘要；比较时以 JSON 文件为准：

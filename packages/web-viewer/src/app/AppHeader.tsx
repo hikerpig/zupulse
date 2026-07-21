@@ -1,6 +1,7 @@
-import { LibraryBig, Moon, Music2, Sun } from "lucide-react";
+import { LibraryBig, Moon, Sun } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 import { flushSync } from "react-dom";
+import { LogoMark } from "../components/LogoMark";
 import { useAppStore } from "./appStore";
 import styles from "./AppHeader.module.css";
 
@@ -14,9 +15,7 @@ export function AppHeader() {
   return (
     <header className={styles.header}>
       <NavLink className={styles.brand ?? ""} to="/" aria-label="逐拍首页">
-        <span className={styles.logoMark} aria-hidden="true">
-          <Music2 size={18} strokeWidth={2.2} />
-        </span>
+        <LogoMark size={32} />
         <span className={styles.wordmark}>
           <strong>逐拍</strong>
           <span>ZUPULSE</span>

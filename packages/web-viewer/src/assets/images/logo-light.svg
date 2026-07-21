@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Zupulse logo mark — Pulse Z Clean">
+  <title>Zupulse — Pulse Z Clean (G1 Light, centered)</title>
+  <rect width="128" height="128" rx="28" fill="#f5f2ed"/>
+
+  <g stroke="#141414" stroke-width="1.6" stroke-linecap="round" fill="none">
+    <line x1="20" y1="40" x2="108" y2="40"/>
+    <line x1="20" y1="52" x2="108" y2="52"/>
+    <line x1="20" y1="64" x2="108" y2="64"/>
+    <line x1="20" y1="76" x2="108" y2="76"/>
+    <line x1="20" y1="88" x2="108" y2="88"/>
+  </g>
+
+  <g fill="#f26b4f">
+    <circle cx="50.1" cy="40" r="4.5"/>
+    <circle cx="88.1" cy="40" r="4.5"/>
+    <circle cx="64" cy="64" r="4.5"/>
+    <circle cx="39.5" cy="88" r="4.5"/>
+    <circle cx="78.1" cy="88" r="4.5"/>
+  </g>
+</svg>

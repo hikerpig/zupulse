@@ -37,20 +37,9 @@
 
   .brand {
     width: fit-content;
-    gap: 9px;
+    gap: 10px;
     color: var(--text-primary);
     text-decoration: none;
-  }
-
-  .logoMark {
-    display: grid;
-    width: 32px;
-    height: 32px;
-    color: var(--text-on-accent);
-    border-radius: 8px 8px 8px 2px;
-    background: var(--accent-primary);
-    place-items: center;
-    transform: rotate(-2deg);
   }
 
   .wordmark {

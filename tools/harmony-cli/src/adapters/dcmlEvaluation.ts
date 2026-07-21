@@ -1,7 +1,13 @@
 import { analyzeHarmonyRules, compareMoments, type ChordSymbolInput } from "@zupulse/web-core";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { calculateAccuracyMetrics, type AccuracyObservation } from "../accuracyMetrics";
+import {
+  calculateAccuracyMetrics,
+  classifyAccuracyError,
+  shouldIncludeDiagnosticSample,
+  type AccuracyErrorCategory,
+  type AccuracyObservation,
+} from "../accuracyMetrics";
 import { assignDatasetSplit } from "../evaluationProtocol";
 import { parseDcmlPiece } from "./dcml";
 
@@ -30,7 +36,7 @@ export async function evaluateDcmlCorpus(
     offsetTicks: number;
     label: string;
     family: string;
-    category: "unsupported-label" | "unresolved" | "root" | "bass" | "kind" | "extension" | "degrees" | "boundary";
+    category: AccuracyErrorCategory;
   }> = [];
   for (const pieceId of files) {
     const groupId = dcmlGroupId(pieceId, options.groupBy ?? "prefix-before-hyphen", options.id);
@@ -55,19 +61,7 @@ export async function evaluateDcmlCorpus(
       const expectedBoundary = index > 0 && !sameChord(previous?.chord, gold.chord);
       const predictedBoundary =
         index > 0 && segments.some((candidate) => compareMoments(candidate.range.start, gold.range.start) === 0);
-      const category = errorCategory(gold.chord, segment, expectedBoundary, predictedBoundary);
-      if (category && errors.length < 50) {
-        errors.push({
-          pieceId,
-          groupId,
-          measureIndex: gold.range.start.measureIndex,
-          offsetTicks: gold.range.start.offsetTicks,
-          label: gold.label,
-          family: gold.family,
-          category,
-        });
-      }
-      evalObservations.push({
+      const observation: AccuracyObservation = {
         groupId,
         corpus: options.id,
         family: gold.family,
@@ -79,7 +73,20 @@ export async function evaluateDcmlCorpus(
         alternatives: segment?.alternatives.map((candidate) => candidate.chord) ?? [],
         expectedBoundary,
         predictedBoundary,
-      });
+      };
+      const category = classifyAccuracyError(observation);
+      if (category && shouldIncludeDiagnosticSample(errors, category)) {
+        errors.push({
+          pieceId,
+          groupId,
+          measureIndex: gold.range.start.measureIndex,
+          offsetTicks: gold.range.start.offsetTicks,
+          label: gold.label,
+          family: gold.family,
+          category,
+        });
+      }
+      evalObservations.push(observation);
     }
   }
   return {
@@ -98,26 +105,5 @@ export function dcmlGroupId(pieceId: string, mode: "prefix-before-hyphen" | "cor
 }
 
 function sameChord(a: ChordSymbolInput | undefined, b: ChordSymbolInput | undefined): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
-
-function errorCategory(
-  expected: ChordSymbolInput | undefined,
-  segment: ReturnType<typeof analyzeHarmonyRules>[number] | undefined,
-  expectedBoundary: boolean,
-  predictedBoundary: boolean,
-) {
-  if (!expected) return "unsupported-label" as const;
-  if (segment?.status !== "resolved") return "unresolved" as const;
-  if (!sameValue(segment.chord.root, expected.root)) return "root" as const;
-  if (!sameValue(segment.chord.bass, expected.bass)) return "bass" as const;
-  if (segment.chord.kind !== expected.kind) return "kind" as const;
-  if (segment.chord.extension !== expected.extension) return "extension" as const;
-  if (!sameValue(segment.chord.degrees, expected.degrees)) return "degrees" as const;
-  if (expectedBoundary && !predictedBoundary) return "boundary" as const;
-  return undefined;
-}
-
-function sameValue(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }

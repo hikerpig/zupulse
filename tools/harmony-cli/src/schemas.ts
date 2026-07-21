@@ -115,6 +115,29 @@ const accuracySliceSchema = z
     resolvedCoverage: fractionSchema,
   })
   .strict();
+const accuracyOutcomeSchema = z.enum([
+  "unsupported-label",
+  "unresolved-oracle-top1",
+  "unresolved-oracle-hit",
+  "unresolved-oracle-miss",
+  "resolved-correct",
+  "resolved-wrong",
+]);
+const accuracyErrorCategorySchema = z.enum([
+  "unsupported-label",
+  "unresolved-oracle-top1",
+  "unresolved-oracle-hit",
+  "unresolved-oracle-miss",
+  "root",
+  "bass",
+  "kind",
+  "extension",
+  "degrees",
+  "boundary",
+]);
+const diagnosticBucketSchema = z
+  .object({ cases: z.number().int().nonnegative(), weight: z.number().nonnegative() })
+  .strict();
 
 export const harmonyAccuracyMetricsSchema = z
   .object({
@@ -148,12 +171,35 @@ export const harmonyAccuracyMetricsSchema = z
         chordFamily: z.record(z.string(), accuracySliceSchema),
       })
       .strict(),
+    diagnostics: z
+      .object({
+        outcomes: z.partialRecord(accuracyOutcomeSchema, diagnosticBucketSchema),
+        outcomesByFamily: z.record(z.string(), z.partialRecord(accuracyOutcomeSchema, diagnosticBucketSchema)),
+        errors: z.partialRecord(accuracyErrorCategorySchema, diagnosticBucketSchema),
+        confidenceBins: z
+          .array(
+            z
+              .object({
+                index: z.number().int().min(0).max(9),
+                cases: z.number().int().nonnegative(),
+                weight: z.number().nonnegative(),
+                averageConfidence: fractionSchema,
+                accuracy: fractionSchema,
+              })
+              .strict(),
+          )
+          .length(10),
+        precisionCoverageCurve: z.array(
+          z.object({ threshold: fractionSchema, precision: fractionSchema, coverage: fractionSchema }).strict(),
+        ),
+      })
+      .strict(),
   })
   .strict();
 
 export const harmonyDatasetEvalReportSchema = z
   .object({
-    schemaVersion: z.literal("2.0.0"),
+    schemaVersion: z.literal("2.1.0"),
     command: z.literal("eval"),
     manifest: z.string().min(1),
     summary: z.object({ passed: z.number().int().nonnegative(), failed: z.number().int().nonnegative() }).strict(),
@@ -176,16 +222,7 @@ export const harmonyDatasetEvalReportSchema = z
                   offsetTicks: z.number().int().nonnegative(),
                   label: z.string().min(1),
                   family: z.string().min(1),
-                  category: z.enum([
-                    "unsupported-label",
-                    "unresolved",
-                    "root",
-                    "bass",
-                    "kind",
-                    "extension",
-                    "degrees",
-                    "boundary",
-                  ]),
+                  category: accuracyErrorCategorySchema,
                 })
                 .strict(),
             ),

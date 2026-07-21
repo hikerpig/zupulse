@@ -23,7 +23,13 @@ export function mergeHarmonySegments(segments: readonly HarmonySegment[]): Harmo
         ...previous,
         range: { start: previous.range.start, end: segment.range.end },
         confidence: Math.min(previous.confidence, segment.confidence),
-        alternatives: [...previous.alternatives, ...segment.alternatives],
+        alternatives: [...previous.alternatives, ...segment.alternatives]
+          .filter(
+            (candidate, index, alternatives) =>
+              alternatives.findIndex((item) => JSON.stringify(item.chord) === JSON.stringify(candidate.chord)) ===
+              index,
+          )
+          .slice(0, 8),
       };
     } else merged.push(segment);
   }

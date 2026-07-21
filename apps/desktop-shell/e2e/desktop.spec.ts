@@ -143,16 +143,16 @@ test("opens a saved MusicXML Studio document", async () => {
     await window.getByRole("button", { name: "导入曲谱" }).first().click();
     await expect(window.getByRole("link", { name: "和弦分析" })).toBeVisible();
     await window.getByRole("link", { name: "和弦分析" }).click();
-    await expect(window.getByRole("heading", { name: "和弦分析工作室" })).toBeVisible();
+    await expect(window.getByRole("heading", { level: 1, name: "和弦分析" })).toBeVisible();
     await expect(window.locator("details").filter({ hasText: "分析设置" })).not.toHaveAttribute("open", "");
     const splitter = window.getByRole("separator", { name: "调整乐谱与分析面板宽度" });
     await splitter.focus();
     await window.keyboard.press("ArrowRight");
-    await expect(splitter).toHaveAttribute("aria-valuenow", "65");
-    await expect(window.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
+    await expect(splitter).toHaveAttribute("aria-valuenow", "45");
+    await expect(window.getByRole("status", { name: "分析文档状态" })).toContainText("已保存");
     await expect(window.getByRole("heading", { name: "和弦候选" })).toBeVisible();
     await window.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
-    await expect(window.getByRole("region", { name: "分析状态" }).getByText("已保存 · 1 个修正")).toBeVisible();
+    await expect(window.getByRole("status", { name: "分析文档状态" })).toContainText("1 个修正 · 已保存");
     await window.getByRole("button", { name: "播放预览" }).click();
     await expect(window.getByText("预览播放中")).toBeVisible();
     await window.getByRole("button", { name: "暂停预览" }).click();
@@ -179,7 +179,7 @@ test("synchronizes a reviewed Studio selection and closes its runtime", async ()
     await chooseFixture(app, reviewedFixture);
     await window.getByRole("button", { name: "导入曲谱" }).first().click();
     await window.getByRole("link", { name: "和弦分析" }).click();
-    await expect(window.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible({
+    await expect(window.getByRole("status", { name: "分析文档状态" })).toContainText("已保存", {
       timeout: 30_000,
     });
     const list = window.getByRole("list", { name: "分析片段" });

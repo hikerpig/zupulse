@@ -72,17 +72,28 @@ export function HarmonyStudioEditor({
           {unresolvedReason}
         </p>
       ) : null}
-      <div className={styles.candidateList} role="list" aria-label="结构化和弦候选">
-        {candidates.map((candidate, index) => (
-          <button
-            key={`${candidate.chord.root.step}-${candidate.chord.kind}-${index}`}
-            type="button"
-            onClick={() => onSelect(candidate)}
-          >
-            {formatChordSymbol(candidate.chord)} · {Math.round(candidate.confidence * 100)}%
-          </button>
-        ))}
-      </div>
+      {candidates.length > 0 ? (
+        <div className={styles.candidateList} role="list" aria-label="结构化和弦候选">
+          {candidates.map((candidate, index) => {
+            const priority = index === 0 ? "preferred" : candidate.confidence === 0 ? "low" : "standard";
+            const priorityLabel = priority === "preferred" ? "首选" : priority === "low" ? "低置信度" : "候选";
+            return (
+              <button
+                key={`${candidate.chord.root.step}-${candidate.chord.kind}-${index}`}
+                type="button"
+                data-priority={priority}
+                onClick={() => onSelect(candidate)}
+              >
+                <span className={styles.candidatePriority}>{priorityLabel}</span>
+                <strong>{formatChordSymbol(candidate.chord)}</strong>
+                <span>· {Math.round(candidate.confidence * 100)}%</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <p className={styles.candidateEmpty}>当前片段没有高置信度候选，可在下方手动构建。</p>
+      )}
       <fieldset className={styles.chordBuilder}>
         <legend>结构化和弦编辑</legend>
         <div className={styles.chordFields}>

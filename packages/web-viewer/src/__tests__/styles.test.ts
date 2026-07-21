@@ -30,11 +30,45 @@ describe("alphaTab playback cursor styles", () => {
 
     expect(splitCss).toMatch(/\.pane\s*{[^}]*min-height:\s*0;[^}]*overflow:\s*auto;/s);
     expect(splitCss).toMatch(/--studio-left,\s*40%/);
+    expect(splitCss).toMatch(/\.workspace\s*{[^}]*height:\s*100%;/s);
     expect(splitCss).toMatch(
       /@media \(max-width:\s*960px\)[\s\S]*?\.workspace\s*{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/s,
     );
     expect(splitCss).toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.splitter\s*{[^}]*display:\s*none;/s);
-    expect(studioCss).toMatch(/\.exportBar\s*{[^}]*position:\s*sticky;[^}]*bottom:\s*0;/s);
+    expect(splitCss).toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.workspace\s*{[^}]*height:\s*auto;/s);
+    expect(studioCss).not.toMatch(/\.exportBar\s*{/);
+    expect(studioCss).toMatch(/\.analysisRegion\s*{[^}]*padding:\s*20px 24px;/s);
+    expect(studioCss).toMatch(/\.utilityGrid\s*>\s*details\s*{[^}]*align-self:\s*start;[^}]*height:\s*fit-content;/s);
+  });
+
+  it("gives the Studio range rail room for vertically stacked segment metadata", async () => {
+    const css = await source("../features/harmony-studio/harmony-range-workspace.module.css");
+
+    expect(css).toMatch(/\.workspace\s*{[^}]*grid-template-columns:\s*250px\s+minmax\(0,\s*1fr\);/s);
+    expect(css).toMatch(
+      /\.list button\s*{[^}]*align-items:\s*flex-start;[^}]*flex-direction:\s*column;[^}]*gap:\s*4px;/s,
+    );
+    expect(css).toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.workspace\s*{[^}]*grid-template-columns:\s*1fr;/s);
+  });
+
+  it("reserves card boundaries for the primary Studio workspace and sticky export action", async () => {
+    const [studioCss, rangeCss] = await Promise.all([
+      source("../app/pages/StudioPage.module.css"),
+      source("../features/harmony-studio/harmony-range-workspace.module.css"),
+    ]);
+
+    expect(studioCss).toMatch(
+      /\.utilityPanel\s*{[^}]*border:\s*0;[^}]*border-top:\s*1px solid var\(--border-default\);[^}]*background:\s*transparent;[^}]*box-shadow:\s*none;/s,
+    );
+    expect(studioCss).toMatch(
+      /\.candidateList\s*{[^}]*border:\s*0;[^}]*border-bottom:\s*1px solid var\(--border-default\);[^}]*background:\s*transparent;/s,
+    );
+    expect(studioCss).toMatch(/\.chordBuilder\s*{[^}]*border:\s*1px solid var\(--border-default\);/s);
+    expect(studioCss).toMatch(
+      /\.degreeEditor\s*{[^}]*border:\s*0;[^}]*border-top:\s*1px solid var\(--border-default\);/s,
+    );
+    expect(studioCss).not.toMatch(/\.exportBar\s*{/);
+    expect(rangeCss).toMatch(/\.workspace\s*{[^}]*border:\s*1px solid var\(--border-default\);/s);
   });
 
   it("loads Space Grotesk from Google Fonts and permits only its hosts", async () => {

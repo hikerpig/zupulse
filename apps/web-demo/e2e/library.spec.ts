@@ -42,16 +42,16 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await importFixture(page, "导入第一份曲谱", musicXmlFixture);
   await expect(page.locator("#summary")).toContainText("Single Voice");
   await page.getByRole("link", { name: "和弦分析" }).click();
-  await expect(page.getByRole("heading", { name: "和弦分析工作室" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "和弦分析" })).toBeVisible();
   await expect(page.locator("details").filter({ hasText: "分析设置" })).not.toHaveAttribute("open", "");
   const splitter = page.getByRole("separator", { name: "调整乐谱与分析面板宽度" });
   await splitter.focus();
   await page.keyboard.press("ArrowRight");
-  await expect(splitter).toHaveAttribute("aria-valuenow", "65");
-  await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
+  await expect(splitter).toHaveAttribute("aria-valuenow", "45");
+  await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("已保存");
   await expect(page.getByRole("heading", { name: "和弦候选" })).toBeVisible();
   await page.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
-  await expect(page.getByRole("region", { name: "分析状态" }).getByText("已保存 · 1 个修正")).toBeVisible();
+  await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("1 个修正 · 已保存");
   await page.getByRole("button", { name: "播放预览" }).click();
   const audioUnavailable = page.getByRole("alert").filter({ hasText: "试听不可用" });
   if (await audioUnavailable.count()) {
@@ -69,9 +69,9 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   expect((await download).suggestedFilename()).toBe("single-voice-chords.musicxml");
   await expect(page.getByText("已导出标注曲谱")).toBeVisible();
   await page.reload();
-  await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole("separator", { name: "调整乐谱与分析面板宽度" })).toHaveAttribute("aria-valuenow", "65");
-  await expect(page.getByRole("region", { name: "分析状态" }).getByText("已保存 · 1 个修正")).toBeVisible();
+  await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("已保存", { timeout: 30_000 });
+  await expect(page.getByRole("separator", { name: "调整乐谱与分析面板宽度" })).toHaveAttribute("aria-valuenow", "45");
+  await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("1 个修正 · 已保存");
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "曲谱库" })).toBeVisible();
   await page.getByRole("button", { name: "删除 Single Voice", exact: true }).click();
@@ -84,8 +84,8 @@ test("reanalyses a multi-part Studio scope and allows a track to be added back",
   await page.goto("/");
   await importFixture(page, "导入第一份曲谱", multiPartFixture);
   await page.getByRole("link", { name: "和弦分析" }).click();
-  await expect(page.getByRole("heading", { name: "和弦分析工作室" })).toBeVisible();
-  await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "和弦分析" })).toBeVisible();
+  await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("已保存");
   await page.getByText("分析设置").click();
   const scope = page.getByRole("listbox", { name: "分析范围" });
   await expect(scope.locator("option")).toHaveCount(4);
@@ -99,7 +99,7 @@ test("synchronizes a reviewed score selection between the range list and alphaTa
   await page.goto("/");
   await importFixture(page, "导入第一份曲谱", reviewedFixture);
   await page.getByRole("link", { name: "和弦分析" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("已保存", { timeout: 30_000 });
   const list = page.getByRole("list", { name: "分析片段" });
   const segments = list.getByRole("button");
   await expect(segments.nth(1)).toBeVisible();
@@ -127,14 +127,14 @@ test("surfaces a CAS conflict when two Browser Studio windows save the same revi
   await page.goto("/");
   await importFixture(page, "导入第一份曲谱", musicXmlFixture);
   await page.getByRole("link", { name: "和弦分析" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
+  await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("已保存");
 
   const stalePage = await context.newPage();
   await stalePage.goto(page.url());
-  await expect(stalePage.getByRole("status").filter({ hasText: "已加载分析结果" })).toBeVisible();
+  await expect(stalePage.getByRole("status", { name: "分析文档状态" })).toContainText("已保存");
 
   await page.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
-  await expect(page.getByRole("region", { name: "分析状态" }).getByText("已保存 · 1 个修正")).toBeVisible();
+  await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("1 个修正 · 已保存");
   await stalePage.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
   await expect(stalePage.getByRole("alert")).toContainText("版本冲突");
   await stalePage.close();

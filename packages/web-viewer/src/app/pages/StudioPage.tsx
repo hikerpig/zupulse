@@ -5,7 +5,7 @@ import { HarmonyRangeWorkspace } from "../../features/harmony-studio/harmony-ran
 import { HarmonyStudioEditor } from "../../features/harmony-studio/HarmonyStudioEditor";
 import { ScoreViewer } from "../../components/ScoreViewer";
 import { StudioSplitWorkspace } from "../../components/studio-split-workspace";
-import type { ViewerApplication } from "../ViewerApplication";
+import type { ViewerApplication, ViewerApplicationSnapshot } from "../ViewerApplication";
 import { loadStudioPreferences, saveStudioPreferences } from "../studio-preferences";
 import styles from "./StudioPage.module.css";
 
@@ -27,6 +27,20 @@ function sameRange(
     left.end.measureIndex === right.end.measureIndex &&
     left.end.offsetTicks === right.end.offsetTicks
   );
+}
+
+function documentStatusLabel(
+  status: NonNullable<ViewerApplicationSnapshot["studio"]>["status"],
+  segmentCount: number,
+  correctionCount: number,
+): string {
+  const counts = `${segmentCount} 个片段 · ${correctionCount} 个修正`;
+  if (status === "saving") return `正在保存 · ${counts}`;
+  if (status === "analyzing") return `正在重新分析 · ${counts}`;
+  if (status === "unsaved") return `${counts} · 修正尚未保存`;
+  if (status === "conflict") return `保存冲突 · ${counts} · 修正尚未保存`;
+  if (status === "error") return `处理失败 · ${counts} · 修正尚未保存`;
+  return `${counts} · 已保存`;
 }
 
 export function StudioPage({ application }: { application: ViewerApplication }) {
@@ -126,19 +140,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
     };
   }, [application, libraryScoreId, storageAvailable, studio?.status]);
   return (
-    <main className={styles.studioShell} aria-labelledby="studio-title">
-      <div className={styles.contextBar}>
-        <div className={styles.contextMain}>
-          <p className={styles.appKicker}>Harmony Analysis</p>
-          <h1 id="studio-title">和弦分析工作室</h1>
-          <p>校对分析片段、编辑和弦，并将结果保存回曲谱。</p>
-        </div>
-        <div className={styles.contextActions}>
-          <span id="status" className={styles.statusChip} role="status">
-            {active ? "曲谱已加载" : "等待曲谱加载"}
-          </span>
-        </div>
-      </div>
+    <main className={styles.studioShell} aria-label="和弦分析工作室">
       <StudioSplitWorkspace
         split={preferences.split}
         onSplitChange={(split) => updatePreferences({ split })}
@@ -146,10 +148,12 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
         analysisClassName={styles.analysisRegion}
         score={
           <>
-            <h2 id="summary" className="sr-only">
-              未打开乐谱
-            </h2>
-            <ScoreViewer compact expandable />
+            {!active ? (
+              <h2 id="summary" className="sr-only">
+                未打开乐谱
+              </h2>
+            ) : null}
+            <ScoreViewer expandable />
           </>
         }
         analysis={
@@ -157,10 +161,9 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
             <div className={styles.analysisHeading}>
               <div>
                 <p className={styles.sectionKicker}>Chord workspace</p>
-                <h2>和弦分析</h2>
+                <h1>和弦分析</h1>
                 <p>选择片段并确认候选，或使用结构化字段精确修正。</p>
               </div>
-              <p className={styles.scoreId}>{libraryScoreId ? `Library Score: ${libraryScoreId}` : "缺少曲谱 ID"}</p>
             </div>
             {!storageAvailable ? (
               <p className={styles.alert} role="alert">
@@ -170,7 +173,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
               <p className={styles.emptyState} role="status">
                 正在初始化和声分析…
               </p>
-            ) : studio?.status === "error" ? (
+            ) : studio?.status === "error" && !studioDocument ? (
               <p className={styles.alert} role="alert">
                 {studio.error}
               </p>
@@ -178,22 +181,16 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
               <>
                 <div className={styles.commandBar}>
                   <div className={styles.documentStatus}>
-                    <p role="status">
-                      {studio.status === "analyzing"
-                        ? "正在重新分析…"
-                        : studio.status === "saving"
-                          ? "正在保存修正…"
-                          : studio.status === "unsaved"
-                            ? "修正尚未保存"
-                            : "已加载分析结果"}
+                    <p role="status" aria-label="分析文档状态">
+                      {documentStatusLabel(
+                        studio.status,
+                        studioDocument.activeRevision.segments.length,
+                        studioDocument.corrections.length,
+                      )}
                     </p>
-                    <span>{studioDocument.activeRevision.segments.length} 个片段</span>
-                    <span>
-                      {studio.status === "ready" ? "已保存" : "待保存"} · {studioDocument.corrections.length} 个修正
-                    </span>
                   </div>
                   <div className={styles.commandGroups}>
-                    <div className={styles.buttonGroup} aria-label="修正历史">
+                    <div className={styles.buttonGroup} role="group" aria-label="修正历史">
                       <button type="button" onClick={() => application.undoStudio(libraryScoreId!)}>
                         撤销修正
                       </button>
@@ -201,7 +198,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                         重做修正
                       </button>
                     </div>
-                    <div className={styles.buttonGroup} aria-label="分析控制">
+                    <div className={styles.buttonGroup} role="group" aria-label="分析控制">
                       {studio.status === "analyzing" ? (
                         <button type="button" onClick={() => application.cancelStudioReanalysis(libraryScoreId!)}>
                           取消分析
@@ -218,10 +215,28 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                       >
                         立即保存
                       </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void application
+                            .exportStudio(libraryScoreId!)
+                            .then((result) => setExportStatus(result === "saved" ? "已导出标注曲谱" : "已取消导出"))
+                            .catch((error: unknown) =>
+                              setExportStatus(error instanceof Error ? error.message : "导出失败"),
+                            )
+                        }
+                      >
+                        导出标注曲谱
+                      </button>
                     </div>
                   </div>
                 </div>
-                {studio.status === "conflict" ? (
+                {exportStatus ? (
+                  <p className={styles.exportStatus} role="status">
+                    {exportStatus}
+                  </p>
+                ) : null}
+                {studio.status === "conflict" || studio.status === "error" ? (
                   <p className={styles.alert} role="alert">
                     {studio.error}
                   </p>
@@ -449,30 +464,6 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                     )
                   }
                 />
-
-                <footer className={styles.exportBar}>
-                  <div>
-                    <h3>导出分析结果</h3>
-                    <p>将当前和弦标注写入一份新的曲谱文件。</p>
-                  </div>
-                  <button
-                    className="primary-button"
-                    type="button"
-                    onClick={() =>
-                      void application
-                        .exportStudio(libraryScoreId!)
-                        .then((result) => setExportStatus(result === "saved" ? "已导出标注曲谱" : "已取消导出"))
-                        .catch((error: unknown) => setExportStatus(error instanceof Error ? error.message : "导出失败"))
-                    }
-                  >
-                    导出标注曲谱
-                  </button>
-                  {exportStatus ? (
-                    <p className={styles.exportStatus} role="status">
-                      {exportStatus}
-                    </p>
-                  ) : null}
-                </footer>
               </>
             ) : (
               <p className={styles.emptyState}>首次分析、修正与导出将在此工作区完成。</p>

@@ -24,10 +24,79 @@ describe("StudioPage", () => {
         </Routes>
       </MemoryRouter>,
     );
-    expect(screen.getByRole("heading", { name: "和弦分析工作室" })).toBeTruthy();
-    expect(screen.getByText("Library Score: score-1")).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "和弦分析" })).toBeTruthy();
+    expect(screen.queryByText("Harmony Analysis")).toBeNull();
+    expect(screen.queryByText("等待曲谱加载")).toBeNull();
+    expect(screen.getByRole("region", { name: "乐谱工作区" }).className).not.toMatch(/compact/i);
+    expect(screen.queryByText(/Library Score:|score-1/)).toBeNull();
+    expect(screen.getByRole("heading", { name: "未打开乐谱" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "撤销修正" })).toBeNull();
     expect(screen.queryByText(/session/i)).toBeNull();
+  });
+
+  it.each([
+    ["ready", "0 个片段 · 0 个修正 · 已保存"],
+    ["unsaved", "0 个片段 · 0 个修正 · 修正尚未保存"],
+    ["saving", "正在保存 · 0 个片段 · 0 个修正"],
+    ["analyzing", "正在重新分析 · 0 个片段 · 0 个修正"],
+    ["conflict", "保存冲突 · 0 个片段 · 0 个修正 · 修正尚未保存"],
+    ["error", "处理失败 · 0 个片段 · 0 个修正 · 修正尚未保存"],
+  ] as const)("summarizes the %s Studio document state once", (status, expected) => {
+    const snapshot = {
+      studio: {
+        libraryScoreId: "score-1",
+        status,
+        ...(status === "conflict" || status === "error" ? { error: "保存失败" } : {}),
+        document: {
+          activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
+          corrections: [],
+          annotationTarget: { trackId: "track-1", staffIndex: 0 },
+        },
+      },
+    };
+    const application = {
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      hasHarmonyAnalysisStorage: () => true,
+      openStudio: async () => undefined,
+      undoStudio: () => undefined,
+      redoStudio: () => undefined,
+      setStudioScope: async () => undefined,
+      setStudioAnnotationTarget: async () => undefined,
+    } as never;
+    render(
+      <MemoryRouter initialEntries={["/studio/score-1"]}>
+        <Routes>
+          <Route path="/studio/:libraryScoreId" element={<StudioPage application={application} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("status", { name: "分析文档状态" }).textContent).toBe(expected);
+  });
+
+  it("does not expose the missing-score heading after the score session is active", () => {
+    const snapshot = {
+      currentLibraryScoreId: "score-1",
+      studio: { libraryScoreId: "score-1", status: "loading" },
+    };
+    const application = {
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      hasHarmonyAnalysisStorage: () => true,
+      getCurrentStudioSession: () => ({}),
+      openStudio: async () => undefined,
+      setStudioPreviewEnabled: () => undefined,
+    } as never;
+    render(
+      <MemoryRouter initialEntries={["/studio/score-1"]}>
+        <Routes>
+          <Route path="/studio/:libraryScoreId" element={<StudioPage application={application} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole("heading", { name: "未打开乐谱" })).toBeNull();
   });
 
   it("keeps the Studio document visible while an autosave is pending", () => {
@@ -130,8 +199,10 @@ describe("StudioPage", () => {
       </MemoryRouter>,
     );
     const user = userEvent.setup();
-    await user.click(within(view.container).getByRole("button", { name: "导出标注曲谱" }));
+    const analysisControls = within(view.container).getByRole("group", { name: "分析控制" });
+    await user.click(within(analysisControls).getByRole("button", { name: "导出标注曲谱" }));
     expect(await within(view.container).findByText("已导出标注曲谱")).toBeTruthy();
+    expect(within(view.container).queryByRole("contentinfo")).toBeNull();
   });
 
   it("selects any analysis segment instead of pinning the inspector to the first segment", async () => {

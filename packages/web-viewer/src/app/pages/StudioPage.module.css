@@ -1,34 +1,10 @@
 @layer components {
   .studioShell {
-    min-height: 100%;
+    height: 100%;
+    min-height: 0;
     background: var(--bg-glow), var(--bg-app);
   }
 
-  .contextBar {
-    position: sticky;
-    z-index: var(--z-index-transport);
-    top: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    padding: 16px 24px;
-    border-bottom: 1px solid var(--border-default);
-    background: var(--bg-shell);
-    backdrop-filter: blur(12px);
-  }
-
-  :global(:root.desktop-shell) .contextBar {
-    padding-left: 88px;
-    -webkit-app-region: drag;
-  }
-
-  :global(:root.desktop-shell) .contextActions {
-    -webkit-app-region: no-drag;
-  }
-
-  .contextMain,
-  .contextActions,
   .buttonGroup,
   .commandGroups,
   .previewControls,
@@ -37,14 +13,6 @@
     align-items: center;
   }
 
-  .contextMain {
-    min-width: 0;
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 3px;
-  }
-
-  .contextActions,
   .buttonGroup,
   .commandGroups,
   .previewControls,
@@ -52,7 +20,6 @@
     gap: 8px;
   }
 
-  .appKicker,
   .sectionKicker {
     margin: 0;
     color: var(--accent-primary);
@@ -62,41 +29,11 @@
     text-transform: uppercase;
   }
 
-  .contextMain h1 {
-    margin: 0;
-    font-size: 22px;
-    line-height: 1.2;
-  }
-
-  .contextMain > p:last-child,
   .analysisHeading > div > p:last-child,
   .editorHeading > div > p:last-child {
     margin: 0;
     color: var(--text-secondary);
     font-size: 12px;
-  }
-
-  .statusChip {
-    display: inline-flex;
-    min-height: 34px;
-    align-items: center;
-    padding: 0 12px;
-    color: var(--text-primary);
-    font-size: 12px;
-    text-decoration: none;
-    white-space: nowrap;
-    border: 1px solid var(--border-default);
-    border-radius: 999px;
-    background: var(--bg-elevated);
-  }
-
-  .statusChip::before {
-    width: 7px;
-    height: 7px;
-    margin-right: 8px;
-    content: "";
-    border-radius: 50%;
-    background: var(--status-ready-text);
   }
 
   .scorePane,
@@ -107,18 +44,16 @@
   }
 
   .scorePane {
-    padding: 20px;
     background: var(--bg-app);
   }
 
   .analysisRegion {
     min-width: 0;
-    padding: 20px 24px 56px;
+    padding: 20px 24px;
   }
 
   .analysisHeading,
   .commandBar,
-  .exportBar,
   .editorHeading {
     display: flex;
     align-items: center;
@@ -130,21 +65,10 @@
     padding: 10px 2px 0;
   }
 
-  .analysisHeading h2 {
+  .analysisHeading h1 {
     margin: 2px 0 4px;
     font-size: clamp(28px, 4vw, 40px);
     letter-spacing: -0.035em;
-  }
-
-  .scoreId {
-    max-width: 46ch;
-    overflow: hidden;
-    margin: 0;
-    color: var(--text-tertiary);
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 10px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .commandBar {
@@ -160,18 +84,10 @@
     min-width: 0;
   }
 
-  .documentStatus p,
-  .documentStatus span {
+  .documentStatus p {
     margin: 0;
     font-size: 12px;
-  }
-
-  .documentStatus p {
     font-weight: 700;
-  }
-
-  .documentStatus span {
-    color: var(--text-secondary);
   }
 
   .utilityGrid {
@@ -181,9 +97,12 @@
     margin-top: 12px;
   }
 
-  .utilityPanel,
-  .chordWorkspace,
-  .exportBar {
+  .utilityGrid > details {
+    align-self: start;
+    height: fit-content;
+  }
+
+  .chordWorkspace {
     border: 1px solid var(--border-default);
     border-radius: var(--radius-lg);
     background: var(--bg-panel);
@@ -191,7 +110,12 @@
   }
 
   .utilityPanel {
-    padding: 16px;
+    padding: 12px 0;
+    border: 0;
+    border-top: 1px solid var(--border-default);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
   .utilityPanel > summary {
@@ -209,14 +133,12 @@
     letter-spacing: 0.12em;
   }
 
-  .panelHeading h3,
-  .exportBar h3 {
+  .panelHeading h3 {
     margin: 2px 0 0;
     font-size: 15px;
   }
 
-  .panelHeading p,
-  .exportBar p {
+  .panelHeading p {
     margin: 3px 0 0;
     color: var(--text-secondary);
     font-size: 12px;
@@ -343,34 +265,70 @@
     gap: 8px;
     min-height: 52px;
     margin-top: 16px;
-    padding: 12px;
-    border: 1px dashed var(--border-strong);
-    border-radius: var(--radius-md);
-    background: var(--bg-panel-muted);
+    padding: 12px 0;
+    border: 0;
+    border-bottom: 1px solid var(--border-default);
+    border-radius: 0;
+    background: transparent;
   }
 
   .candidateList button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     color: var(--text-primary);
     border-color: var(--accent-primary);
     background: var(--accent-soft);
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 12px;
   }
 
-  .candidateList:empty::after {
-    align-self: center;
+  .candidateList button[data-priority="preferred"] {
+    min-height: 38px;
+    font-size: 14px;
+    border-width: 2px;
+  }
+
+  .candidateList button[data-priority="low"] {
+    color: var(--text-secondary);
+    border-color: var(--border-strong);
+    border-style: dashed;
+    background: transparent;
+  }
+
+  .candidatePriority {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+  }
+
+  .candidateList button[data-priority="low"] .candidatePriority {
+    color: var(--text-tertiary);
+  }
+
+  .candidateEmpty {
+    min-height: 52px;
+    margin: 16px 0 0;
+    padding: 12px 0;
     color: var(--text-tertiary);
     font-size: 12px;
-    content: "当前片段没有高置信度候选，可在下方手动构建。";
+    border-bottom: 1px solid var(--border-default);
   }
 
-  .chordBuilder,
-  .degreeEditor {
+  .chordBuilder {
     min-width: 0;
     margin: 20px 0 0;
     padding: 16px;
     border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
+  }
+
+  .degreeEditor {
+    min-width: 0;
+    margin: 20px 0 0;
+    padding: 16px 0 0;
+    border: 0;
+    border-top: 1px solid var(--border-default);
+    border-radius: 0;
   }
 
   .chordBuilder > legend,
@@ -434,17 +392,11 @@
     border-top: 1px solid var(--border-default);
   }
 
-  .exportBar {
-    position: sticky;
-    z-index: 2;
-    bottom: 0;
-    margin-top: 12px;
-    padding: 16px;
-  }
-
   .exportStatus {
-    margin: 0;
+    margin: 8px 12px 0;
     color: var(--status-ready-text);
+    font-size: 12px;
+    text-align: right;
   }
 
   .alert,
@@ -463,7 +415,6 @@
   }
 
   @media (max-width: 960px) {
-    .contextBar,
     .commandBar {
       align-items: flex-start;
     }
@@ -483,35 +434,18 @@
   }
 
   @media (max-width: 680px) {
-    .contextBar,
-    .contextActions,
     .analysisHeading,
     .commandBar,
     .commandGroups,
-    .exportBar,
     .editorHeading {
       align-items: stretch;
       flex-direction: column;
-    }
-
-    .contextBar {
-      position: static;
-      padding: 16px;
-    }
-
-    .statusChip,
-    .pageBody {
-      padding: 14px 12px 40px;
     }
 
     .scorePane,
     .analysisRegion {
       overflow: visible;
       padding: 0;
-    }
-
-    .scoreId {
-      max-width: 100%;
     }
 
     .fieldGrid,
@@ -543,12 +477,6 @@
 
     .editorPane {
       padding: 18px;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .studioShell * {
-      transition-duration: 0.01ms !important;
     }
   }
 }

@@ -3,7 +3,7 @@
     display: grid;
     grid-template-columns: minmax(0, var(--studio-left, 40%)) 10px minmax(360px, 1fr);
     width: 100%;
-    min-height: calc(100vh - 86px);
+    height: 100%;
   }
 
   .pane {
@@ -27,6 +27,7 @@
   @media (max-width: 960px) {
     .workspace {
       display: flex;
+      height: auto;
       min-height: auto;
       flex-direction: column;
     }

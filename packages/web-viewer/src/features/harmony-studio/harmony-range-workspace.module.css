@@ -1,7 +1,7 @@
 @layer components {
   .workspace {
     display: grid;
-    grid-template-columns: 220px minmax(0, 1fr);
+    grid-template-columns: 250px minmax(0, 1fr);
     min-height: 400px;
     margin-top: 12px;
     overflow: hidden;
@@ -65,8 +65,9 @@
 
   .list button {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
     width: 100%;
     text-align: left;
   }
@@ -74,6 +75,7 @@
   .list small {
     color: var(--text-tertiary);
     font-size: 10px;
+    line-height: 1.35;
   }
 
   .editor {

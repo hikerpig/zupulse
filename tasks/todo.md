@@ -16,12 +16,12 @@
 
 ## Phase 3: Confidence 与拒识
 
-- [ ] Task 7：定义 primary-path confidence features。
-- [ ] Task 8：用 train-only 数据拟合单调 calibration。
-- [ ] Task 9：只在 tune 上按 precision floor 选择 threshold。
-- [ ] Checkpoint C：冻结代码、资产、阈值和 algorithmVersion。
+- [x] Task 7：验证 deterministic primary local-margin confidence。
+- [x] Task 8：拟合并验证 train-only weighted PAVA；因跨语料 ECE 回退未发布资产。
+- [x] Task 9：tune-only threshold `0.23` 通过局部门禁；随失败资产整体回滚。
+- [x] Checkpoint C：冻结候选并执行无调参 eval；失败后未移动 baseline。
 
 ## Phase 4: Frozen eval
 
-- [ ] Task 10：一次性运行 K331、全量 Mozart、跨 DCML、POP909、ASAP 与性能门禁。
-- [ ] 通过则提交 report diff 和说明；失败则回滚候选，不移动 baseline。
+- [x] Task 10：运行 K331、跨 DCML、POP909 与 ASAP frozen eval；Schumann ECE 门禁失败。
+- [x] 已回滚 calibration/threshold 候选，保留 Phase 2 与通用校准工具，未移动 baseline。

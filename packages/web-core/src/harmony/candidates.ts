@@ -205,10 +205,11 @@ export function selectHybridCandidates(
     selected.push(candidate);
     if (selected.length === learnedSlots) break;
   }
+  if (selected.length >= topK) return selected.slice(0, topK);
   for (const candidate of [...candidates].sort((a, b) => b.sequenceScore - a.sequenceScore)) {
     if (selected.includes(candidate)) continue;
     selected.push(candidate);
-    if (selected.length === topK) break;
+    if (selected.length >= topK) break;
   }
   return selected.sort((a, b) => b.localScore - a.localScore);
 }

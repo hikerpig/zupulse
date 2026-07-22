@@ -147,6 +147,7 @@ describe("harmony candidates", () => {
       { topK: 1, rankerModel: model },
     );
 
+    expect(candidates).toHaveLength(1);
     expect(candidates[0]!.chord).toMatchObject({ root: { step: "C", alter: 0 }, kind: "minor" });
   });
 

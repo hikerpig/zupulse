@@ -52,7 +52,8 @@ pnpm -s harmony:cli compare \
 8. **数据量和可复现性要在模型复杂度之前解决。** 完整语料导出可能耗时数十分钟，任何序列化错误若在末尾才暴露会浪费整轮运行。score 在生成边界统一用十进制定点语义保留最多两位小数，完整 group-set hash 先校验，再按排序后的 group ID 做确定性上限采样；相同输入的 Chopin 导出已经验证为字节一致。
 9. **旧 eval 不能因改名继续充当新 holdout。** K331、Schumann、Chopin、Beethoven 和 POP909 的既有指标已参与过选择，只能作为 historical regression。v3 已在训练前预登记 Beethoven `01`、Chopin `BI105` 和 POP909 `225` 为 final holdout；在代码、模型、calibration 和 threshold 全部冻结前不得查看其 gold 指标。
 10. **最终对照必须同批运行。** v3 final evaluator 在同一冻结命令里产出 candidate 与 rule-only baseline，确保作品、映射和 gold 完全一致；查看结果后只做接受/拒绝，不再改变 feature、模型、calibration 或 threshold。
-11. **模型选择要有停止条件。** 线性 reranker 达标就停止增加复杂度；若线性失败而主要错误是 oracle miss 或 boundary misalignment，也应停止 reranker 路线。只有 oracle-hit 子集上 train 与 tune 都显示稳定、跨语料的非线性剩余误差，才触发离线 MLP。
+11. **候选 Top-1 不等于生产 primary。** 当前 `top1Accuracy` 使用 `alternatives[0]`，不会反映 MLP reranker 改选的 chord。Task 16 final 暴露了这一评测盲点；下一轮必须增加 threshold 前 predicted-primary accuracy，并把候选排序与最终决策指标分开命名。
+12. **模型选择要有停止条件。** 线性 reranker 达标就停止增加复杂度；若线性失败而主要错误是 oracle miss 或 boundary misalignment，也应停止 reranker 路线。只有 oracle-hit 子集上 train 与 tune 都显示稳定、跨语料的非线性剩余误差，才触发离线 MLP。
 
 完整失败记录见仓库根目录的 [`tasks/harmony-tuning-failures.md`](../../../tasks/harmony-tuning-failures.md)。
 
@@ -66,6 +67,6 @@ pnpm -s harmony:cli compare \
 4. **执行 Checkpoint D。** 线性达标则直接进入集成，不引入 PyTorch。线性未达标时，先按 oracle-hit/miss、chord family 和 feature residual 切片：若错误主要来自候选缺失或边界，停止并另立候选/边界任务；只有线性在 train 和各 corpus tune 都欠拟合、残差呈稳定交互模式时，才训练最多两层的离线 MLP。
 5. **仅在必要时比较 MLP。** MLP 必须在相同 records 和 split 上相对线性再提升至少 `0.02`，每 corpus 回退不超过 `0.005`。PyTorch 只属于开发训练环境；导出两位小数 JSON 后，必须验证 PyTorch 与 TypeScript logits 在量化容差内一致。
 6. **固定 boundary 接入 primary。** 模型只重排 decoder 已选 range 的 Top-8，不进入 DP、不改变 range search。rule score、model logit 和 primary confidence 保持不同字段和语义；接入后重新测 P95，预算不超过当前 analyzer 的 `1.25x`。
-7. **重新校准再一次性验收。** primary 冻结后，用多语料 train 拟合 confidence，只用 tune 选择 threshold。代码、资产 hash、feature version、calibration 和 threshold 全部冻结后，才运行一次 v3 final holdout；随后再跑历史 regression、ASAP 和 benchmark。任一硬门禁失败则整轮拒绝，不移动 baseline。
+7. **重新校准再一次性验收（已执行并拒绝）。** primary 冻结后，多语料 PAVA 在全部 tune corpus 改善 ECE，threshold `0.46` 满足 aggregate precision floor；但一次性 v3 final 的 POP909 ECE 回退，历史 DCML coverage 也未过门禁。资产和阈值已回滚，baseline 未移动。
 
 Task 13–16 的逐项验收清单见仓库根目录 [`tasks/plan.md`](../../../tasks/plan.md) 与 [`tasks/todo.md`](../../../tasks/todo.md)。

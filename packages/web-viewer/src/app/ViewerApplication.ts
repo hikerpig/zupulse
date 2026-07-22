@@ -11,8 +11,6 @@ import {
   readMusicXmlRootXml,
   compareMoments,
   bundledHarmonyPrimaryMlp,
-  bundledHarmonyPrimaryCalibration,
-  BUNDLED_HARMONY_DECISION_THRESHOLD,
   bundledHarmonyRankerModel,
 } from "@zupulse/web-core";
 import type {
@@ -530,19 +528,19 @@ export class ViewerApplication implements ViewerAppHandle {
       documentVersion: 0,
       activeRevision: {
         id: crypto.randomUUID(),
-        algorithmVersion: `rules-${bundledHarmonyRankerModel.algorithmVersion}-${bundledHarmonyPrimaryMlp.algorithmVersion}-${bundledHarmonyPrimaryCalibration.algorithmVersion}`,
+        algorithmVersion: `rules-${bundledHarmonyRankerModel.algorithmVersion}-${bundledHarmonyPrimaryMlp.algorithmVersion}`,
         createdAt: now,
         parameters: {
           scope: { includedTrackIds },
           topK: 8,
-          decisionThreshold: BUNDLED_HARMONY_DECISION_THRESHOLD,
+          decisionThreshold: 0.6,
         },
         segments: analyzeHarmonyRules(
           projectAlphaTabHarmonyInput(parsed.runtime as Parameters<typeof projectAlphaTabHarmonyInput>[0]),
           {
             includedTrackIds,
             topK: 8,
-            decisionThreshold: BUNDLED_HARMONY_DECISION_THRESHOLD,
+            decisionThreshold: 0.6,
           },
         ),
       },

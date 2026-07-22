@@ -34,4 +34,4 @@
 - [x] Checkpoint D：train/tune 均稳定欠拟合，已触发离线小型 MLP；final holdout 未运行。
 - [x] Task 14：16-unit 离线 MLP 相对线性 tune `+0.0961`，量化 JSON/TypeScript 等价且无 Torch runtime。
 - [x] Task 15：MLP 在冻结 postprocess range 上默认启用，P95 `0.9966x`，logit/rule/confidence 语义分离。
-- [ ] Task 16：多语料 calibration、tune threshold 与一次 v3 frozen eval。
+- [x] Task 16：多语料 calibration、tune threshold 与一次 v3 frozen eval；POP909 ECE 与历史 DCML coverage 门禁失败，已拒绝并回滚生产默认。

@@ -692,3 +692,79 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 **Dependencies:** Task 21
 
 **Estimated scope:** M
+
+## Task 23：导出 train-only boundary evidence records
+
+**Description:** 从 dense note-event lattice 为每个非小节线候选边界提取固定特征，并用同作品的专家和弦变化边界生成二分类标签。训练入口只接受 train role，tune 仅能通过 evaluation-only 入口读取，eval/final holdout 一律拒绝。
+
+**Acceptance criteria:**
+
+- [ ] 特征固定为 metric strength、bass change、held-note continuity、onset pitch-class mass、前后 pitch-set change，并记录 feature version。
+- [ ] 特征只读取 MusicXML/MIDI/DCML notes 与 meter；gold 只生成训练标签，不进入产品推理输入。
+- [ ] records 与所有浮点资产最多保留两位小数，输出顺序确定。
+
+**Verification:**
+
+- [ ] 失败测试先证明单旋律起音和真实低音/音集变化可区分。
+- [ ] train/tune/eval role 隔离测试通过。
+
+**Dependencies:** Task 22
+
+**Estimated scope:** M
+
+## Task 24：训练并验证轻量线性 boundary classifier
+
+**Description:** 使用现有 TypeScript 训练模式拟合带 class balancing 的 logistic classifier，导出量化 JSON；分别报告 train/tune precision、recall、F1 与保留边界密度，不引入产品 PyTorch runtime。
+
+**Acceptance criteria:**
+
+- [ ] 训练确定、拒绝非 train reports，模型 schema 严格且权重最多两位小数。
+- [ ] tune 阈值选择预登记为：满足 recall 不低于 dense `-0.01` 后，优先最小 segment density，再比较 F1。
+- [ ] 若线性模型 train 与 tune 都欠拟合，才记录后续小型离线 MLP 触发条件。
+
+**Verification:**
+
+- [ ] trainer 单测覆盖可分数据、class imbalance 与 tune-only evaluation。
+- [ ] CLI round-trip 测试证明模型可保存、解析和复现指标。
+
+**Dependencies:** Task 23
+
+**Estimated scope:** M
+
+## Task 25：以 opt-in learned boundary policy 接入 analyzer
+
+**Description:** 在 web-core 增加纯 TypeScript boundary classifier 推理。小节线与 musical beats 固定保留，其他 dense note-event 边界只有模型分数达到冻结阈值时保留；默认 production policy 仍不变。
+
+**Acceptance criteria:**
+
+- [ ] bundler/runtime 不依赖训练工具、gold 或 Python/PyTorch。
+- [ ] 模型缺失或显式关闭时行为确定且不会静默切换 production 默认。
+- [ ] analyzer、CLI report 与 schema 能明确记录 learned policy/model version。
+
+**Verification:**
+
+- [ ] web-core 单测覆盖小节线、拍点、模型接受/拒绝与稳定 tie。
+- [ ] harmony-cli adapter/command/schema 测试通过。
+
+**Dependencies:** Task 24
+
+**Estimated scope:** M
+
+## Task 26：序贯 tune 门禁与发布决策
+
+**Description:** 先在 Mozart tune 比较 dense 与 learned policy；只有 interval accuracy、predicted-primary 与 boundary recall 容差全部通过，才扩展 Beethoven、Chopin、POP909 tune，随后才运行历史 regression/frozen eval。
+
+**Acceptance criteria:**
+
+- [ ] 首个失败 corpus 立即停止，不按 corpus 特判、不读取 final holdout 调参。
+- [ ] 发布要求 segment density 至少下降 10%，interval/predicted-primary 回退不超过 `0.005`，boundary recall 回退不超过 `0.01`。
+- [ ] 未通过时保留 opt-in 资产与复现实验，production 默认、algorithmVersion 和 baseline 均不移动。
+
+**Verification:**
+
+- [ ] checkpoint 保存 records hash、模型、阈值、逐 corpus 指标和决定。
+- [ ] `pnpm --filter @zupulse/harmony-cli test`、`pnpm verify:fast`、`pnpm harmony:benchmark`。
+
+**Dependencies:** Task 25
+
+**Estimated scope:** M

@@ -44,3 +44,10 @@
 - [x] Task 20：生产默认未切换、baseline 未移动；K331 历史诊断与拒绝结论已记录。
 - [x] Task 21：实现 metric + strong simultaneous-onset boundary gate。
 - [x] Task 22：Mozart tune interval 门禁失败，未发布、未移动 baseline，并记录后续 boundary-evidence 方向。
+
+## Phase 7: Train-only Boundary Evidence
+
+- [ ] Task 23：导出严格 split 隔离的 boundary evidence records。
+- [ ] Task 24：训练并 tune 轻量线性 boundary classifier。
+- [ ] Task 25：以 opt-in learned boundary policy 接入 TypeScript analyzer。
+- [ ] Task 26：执行序贯 tune 门禁并决定是否发布。

@@ -360,6 +360,7 @@ export const harmonyDatasetEvalReportSchema = z
             status: z.enum(["passed", "failed"]),
             reportSplit: z.enum(["train", "tune", "eval"]),
             decisionThreshold: fractionSchema,
+            boundaryPolicy: z.enum(["dense-note-events", "metric-beats"]),
             sourceRevision: z.string().min(1),
             reportGroupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
             splits: z.record(z.enum(["train", "tune", "eval"]), z.number().int().nonnegative()),
@@ -444,6 +445,7 @@ const accuracyBaselineCaseSchema = z
       })
       .strict()
       .optional(),
+    boundaryPolicy: z.enum(["dense-note-events", "metric-beats"]).optional(),
   })
   .strict();
 

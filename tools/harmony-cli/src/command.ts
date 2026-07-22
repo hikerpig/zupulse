@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import type { HarmonyBoundaryPolicy } from "@zupulse/web-core";
 import { compareBaselineFiles } from "./compareBaselineFiles";
 import { buildHarmonyCalibrationAssetFile, type HarmonyCalibrationAsset } from "./confidenceCalibration";
 import { evaluateHarmonyManifest } from "./evaluateManifest";
@@ -104,6 +105,8 @@ export async function runHarmonyCommand(
     const thresholdIndex = normalized.indexOf("--decision-threshold");
     const rawDecisionThreshold = thresholdIndex < 0 ? undefined : normalized[thresholdIndex + 1];
     const decisionThreshold = rawDecisionThreshold === undefined ? undefined : Number(rawDecisionThreshold);
+    const boundaryPolicyIndex = normalized.indexOf("--boundary-policy");
+    const boundaryPolicy = boundaryPolicyIndex < 0 ? undefined : normalized[boundaryPolicyIndex + 1];
     if (splitIndex >= 0 && (reportSplit === undefined || !["train", "tune", "eval"].includes(reportSplit)))
       throw new Error("--split must be train, tune, or eval");
     if (
@@ -114,11 +117,14 @@ export async function runHarmonyCommand(
         decisionThreshold > 1)
     )
       throw new Error("--decision-threshold must be between 0 and 1");
+    if (boundaryPolicyIndex >= 0 && boundaryPolicy !== "dense-note-events" && boundaryPolicy !== "metric-beats")
+      throw new Error("--boundary-policy must be dense-note-events or metric-beats");
     return evaluateHarmonyManifest(resolve(cwd, path), {
       ...(dataRoot === undefined ? {} : { dataRoot: resolve(cwd, dataRoot) }),
       ...(caseId === undefined ? {} : { caseId }),
       ...(reportSplit === undefined ? {} : { reportSplit: reportSplit as DatasetSplit }),
       ...(decisionThreshold === undefined ? {} : { decisionThreshold }),
+      ...(boundaryPolicy === undefined ? {} : { boundaryPolicy: boundaryPolicy as HarmonyBoundaryPolicy }),
     });
   }
   const positional = normalized[0] === "inspect" ? normalized.slice(1) : normalized;

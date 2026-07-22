@@ -1,4 +1,9 @@
-import { analyzeHarmonyRules, buildLegalBoundaryLattice, compareMoments } from "@zupulse/web-core";
+import {
+  analyzeHarmonyRules,
+  buildLegalBoundaryLattice,
+  compareMoments,
+  type HarmonyBoundaryPolicy,
+} from "@zupulse/web-core";
 import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -28,10 +33,12 @@ export async function evaluatePop909Corpus(
     reportSplit?: DatasetSplit;
     decisionThreshold?: number;
     primaryRerankerModel?: false;
+    boundaryPolicy?: HarmonyBoundaryPolicy;
   },
 ) {
   const reportSplit = options.reportSplit ?? "eval";
   const decisionThreshold = options.decisionThreshold ?? 0.6;
+  const boundaryPolicy = options.boundaryPolicy ?? "dense-note-events";
   const songs = (await readdir(root, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory() && /^\d{3}$/.test(entry.name))
     .map((entry) => entry.name)
@@ -74,6 +81,7 @@ export async function evaluatePop909Corpus(
       topK: 8,
       decisionThreshold,
       ...(options.primaryRerankerModel === false ? { primaryRerankerModel: false } : {}),
+      boundaryPolicy,
     });
     predictedSegments += segments.length;
     const primarySegments =
@@ -84,6 +92,7 @@ export async function evaluatePop909Corpus(
             topK: 8,
             decisionThreshold: 0,
             ...(options.primaryRerankerModel === false ? { primaryRerankerModel: false } : {}),
+            boundaryPolicy,
           });
     intervalDiagnostics.push(
       calculateIntervalOverlapDiagnostics({
@@ -147,6 +156,7 @@ export async function evaluatePop909Corpus(
     sourceRevision: options.sourceRevision,
     reportGroupsSha256: hashGroups(reportGroups),
     decisionThreshold,
+    boundaryPolicy,
     splits,
     metrics: calculateAccuracyMetrics(observations, mergeIntervalOverlapDiagnostics(intervalDiagnostics), {
       predictedSegments,

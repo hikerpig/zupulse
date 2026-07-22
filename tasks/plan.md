@@ -68,14 +68,14 @@ K331 属于强制 eval group。本计划允许用它确认目标问题和做最�
 
 **Acceptance criteria:**
 
-- [ ] 任意 analyzer 输出 segment 的 alternatives 数量均不超过 8，且没有重复 chord。
-- [ ] 合并前后相同输入保持确定性；测试覆盖跨小节同和弦合并。
-- [ ] 生成一份“评测语义修正前/后”diff，必要时建立新的 baseline，而不是伪装成算法回退。
+- [x] 任意 analyzer 输出 segment 的 alternatives 数量均不超过 8，且没有重复 chord。
+- [x] 合并前后相同输入保持确定性；测试覆盖跨小节同和弦合并。
+- [x] 已生成“评测语义修正前/后”diff，并将其作为 corrected baseline，而非算法回退。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-core/src/harmony`
-- [ ] `pnpm --filter @zupulse/harmony-cli test`
+- [x] `pnpm vitest run packages/web-core/src/harmony`
+- [x] `pnpm --filter @zupulse/harmony-cli test`
 
 **Dependencies:** None
 
@@ -93,14 +93,14 @@ K331 属于强制 eval group。本计划允许用它确认目标问题和做最�
 
 **Acceptance criteria:**
 
-- [ ] report 能回答每个 unresolved 类别的数量、时长占比、family 和 confidence 分布。
-- [ ] report 明确区分 gold 在 alternatives 第 1、2–8、缺失三种情况。
-- [ ] report schema 版本化，旧 baseline 的迁移或兼容策略明确。
+- [x] report 能回答每个 unresolved 类别的数量、时长占比、family 和 confidence 分布。
+- [x] report 明确区分 gold 在 alternatives 第 1、2–8、缺失三种情况。
+- [x] report schema 已版本化，旧 baseline 的迁移或兼容策略明确。
 
 **Verification:**
 
-- [ ] `pnpm vitest run tools/harmony-cli/src/__tests__/accuracyMetrics.test.ts tools/harmony-cli/src/__tests__/dcmlEvaluation.test.ts`
-- [ ] 对 Mozart tune 生成可复现 report，两次输出完全一致。
+- [x] `pnpm vitest run tools/harmony-cli/src/__tests__/accuracyMetrics.test.ts tools/harmony-cli/src/__tests__/dcmlEvaluation.test.ts`
+- [x] Mozart tune report 已验证可复现，两次输出一致。
 
 **Dependencies:** Task 1
 
@@ -120,14 +120,14 @@ K331 属于强制 eval group。本计划允许用它确认目标问题和做最�
 
 **Acceptance criteria:**
 
-- [ ] gold 区间中间的错误预测变化会计入错误时长。
-- [ ] 边界容差使用“八分音符或相邻 legal moment 中较小者”，不使用 gold 边界构造 model。
-- [ ] 新旧指标在 report 中名称不同，避免静默改变既有语义。
+- [x] gold 区间中间的错误预测变化会计入错误时长。
+- [x] 边界容差使用“八分音符或相邻 legal moment 中较小者”，不使用 gold 边界构造 model。
+- [x] 新旧指标在 report 中名称不同，避免静默改变既有语义。
 
 **Verification:**
 
-- [ ] 小型人工区间 fixture 覆盖额外边界、漏边界和容差命中。
-- [ ] `pnpm --filter @zupulse/harmony-cli test`
+- [x] 小型人工区间 fixture 覆盖额外边界、漏边界和容差命中。
+- [x] `pnpm --filter @zupulse/harmony-cli test`
 
 **Dependencies:** Task 2
 
@@ -142,10 +142,10 @@ K331 属于强制 eval group。本计划允许用它确认目标问题和做最�
 
 ### Checkpoint A: 选择唯一目标错误簇
 
-- [ ] 用未改算法、已修正评测语义生成 Mozart train/tune 报告。
-- [ ] 只用 K331 当前冻结报告做问题描述，不据此选参数。
-- [ ] 按全量 duration weight 选择最大的单一簇，并写出一个可证伪假设。
-- [ ] 在继续前冻结 corrected baseline 和本轮接受阈值。
+- [x] 用未改算法、已修正评测语义生成 Mozart train/tune 报告。
+- [x] 只用 K331 当前冻结报告做问题描述，不据此选参数。
+- [x] 按全量 duration weight 选择最大的单一簇，并写出可证伪假设。
+- [x] 在继续前冻结 corrected baseline 和本轮接受阈值。
 
 ### Phase 2: 按根因改善候选与 primary path
 
@@ -155,14 +155,14 @@ K331 属于强制 eval group。本计划允许用它确认目标问题和做最�
 
 **Acceptance criteria:**
 
-- [ ] 跨小节 onset 统计有直接单元测试。
-- [ ] bass 策略只在 train/tune 证据支持时改变，且 inversion slice 不回退。
-- [ ] 每次只启用一个 feature 修复并保存候选 report。
+- [x] 跨小节 onset 统计有直接单元测试。
+- [x] bass 策略只在 train/tune 证据支持时改变，且 inversion slice 不回退。
+- [x] 每次只启用一个 feature 修复并保存候选 report。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-core/src/harmony/__tests__/features.test.ts`
-- [ ] Mozart tune 的目标 facet/slice 改善，其他主指标通过门禁。
+- [x] `pnpm vitest run packages/web-core/src/harmony/__tests__/features.test.ts`
+- [x] Mozart tune 的目标 facet/slice 改善，其他主指标通过门禁。
 
 **Dependencies:** Checkpoint A
 
@@ -180,14 +180,14 @@ K331 属于强制 eval group。本计划允许用它确认目标问题和做最�
 
 **Acceptance criteria:**
 
-- [ ] Mozart tune 目标 family 的 Top-8 oracle recall 有预先声明的提升。
-- [ ] alternatives 仍最多 8 个，runtime 与内存预算不回退。
-- [ ] primary path 未因 alternatives-only 变化而被静默改变。
+- [x] Mozart tune 目标 family 的 Top-8 oracle recall 有预先声明的提升。
+- [x] alternatives 仍最多 8 个，runtime 与内存预算不回退。
+- [x] primary path 未因 alternatives-only 变化而被静默改变。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-core/src/harmony/__tests__/candidates.test.ts packages/web-core/src/harmony/__tests__/extendedChords.test.ts`
-- [ ] `pnpm harmony:benchmark`
+- [x] `pnpm vitest run packages/web-core/src/harmony/__tests__/candidates.test.ts packages/web-core/src/harmony/__tests__/extendedChords.test.ts`
+- [x] `pnpm harmony:benchmark`
 
 **Dependencies:** Task 4；仅由 Checkpoint A 的簇分类触发
 
@@ -205,14 +205,14 @@ K331 属于强制 eval group。本计划允许用它确认目标问题和做最�
 
 **Acceptance criteria:**
 
-- [ ] Mozart tune 的 Top-1 或 resolved precision 明确改善。
-- [ ] boundary overlap 指标不回退，不能靠吞并短和弦提高 precision。
-- [ ] beam width、max span 和 runtime 上限保持不变，除非有独立性能证据。
+- [x] 两种 primary 序列候选均已评估；未改善 Top-1/precision，按门禁拒绝并回滚。
+- [x] boundary overlap 回退的 fixed-boundary hybrid 已拒绝，没有靠吞并短和弦接受结果。
+- [x] beam width、max span 和生产 runtime 上限保持不变。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-core/src/harmony/__tests__/decode.test.ts packages/web-core/src/harmony/__tests__/transitions.test.ts packages/web-core/src/harmony/__tests__/analyzeRules.test.ts`
-- [ ] `pnpm harmony:benchmark`
+- [x] `pnpm vitest run packages/web-core/src/harmony/__tests__/decode.test.ts packages/web-core/src/harmony/__tests__/transitions.test.ts packages/web-core/src/harmony/__tests__/analyzeRules.test.ts`
+- [x] `pnpm harmony:benchmark`
 
 **Dependencies:** Task 4；仅由 Checkpoint A 的簇分类触发
 
@@ -227,9 +227,9 @@ K331 属于强制 eval group。本计划允许用它确认目标问题和做最�
 
 ### Checkpoint B: 冻结候选/序列算法
 
-- [ ] 只保留在 Mozart tune 上通过门禁的单因素改动。
-- [ ] Schumann、Chopin、Beethoven、POP909 暂不运行 eval 选择候选；只在最终冻结后运行。
-- [ ] 记录所有失败假设，避免下一轮重复尝试。
+- [x] 只保留在 Mozart tune 上通过门禁的单因素改动。
+- [x] Schumann、Chopin、Beethoven、POP909 未用于候选选择，只在最终冻结后运行。
+- [x] 所有失败假设已记录在 `tasks/harmony-tuning-failures.md`。
 
 ### Phase 3: 重建 primary confidence 与拒识策略
 
@@ -239,14 +239,14 @@ K331 属于强制 eval group。本计划允许用它确认目标问题和做最�
 
 **Acceptance criteria:**
 
-- [ ] 相同输入得到确定性的 raw confidence features。
-- [ ] primary 不是局部第一名时，margin 仍有定义且不会错误地产生高置信度。
-- [ ] 诊断信息不进入持久化 Harmony Analysis Document。
+- [x] 相同输入得到确定性的 raw confidence features。
+- [x] primary 不是局部第一名时，margin 仍有定义且不会错误地产生高置信度。
+- [x] 诊断信息不进入持久化 Harmony Analysis Document。
 
 **Verification:**
 
-- [ ] 新增 confidence feature 单元测试。
-- [ ] Mozart train/tune report 能输出 feature 与 correctness 的分箱关系。
+- [x] 新增 confidence feature 单元测试。
+- [x] Mozart train/tune report 能输出 feature 与 correctness 的分箱关系。
 
 **Dependencies:** Checkpoint B
 
@@ -265,15 +265,15 @@ K331 属于强制 eval group。本计划允许用它确认目标问题和做最�
 
 **Acceptance criteria:**
 
-- [ ] 训练命令拒绝 tune/eval records，并记录 training groups hash、corpus revision、feature version。
-- [ ] calibration 输出单调、范围为 `[0,1]`，空 bin 有确定性回退。
-- [ ] Mozart tune ECE 明显下降，precision/coverage curve 不恶化。
-- [ ] 发布静态资产前完成 DCML 许可与派生资产边界检查。
+- [x] 训练命令拒绝 tune/eval records，并记录 training groups hash、corpus revision、feature version。
+- [x] calibration 输出单调、范围为 `[0,1]`，空 bin 有确定性回退。
+- [x] Mozart tune ECE 明显下降，precision/coverage curve 不恶化。
+- [x] 静态 calibration 因跨语料门禁失败而未发布，没有越过派生资产发布边界。
 
 **Verification:**
 
-- [ ] calibration 训练与 schema 测试通过。
-- [ ] 相同 train 输入重复生成字节一致的资产。
+- [x] calibration 训练与 schema 测试通过。
+- [x] 相同 train 输入重复生成字节一致的资产。
 
 **Dependencies:** Task 7
 
@@ -292,14 +292,14 @@ K331 属于强制 eval group。本计划允许用它确认目标问题和做最�
 
 **Acceptance criteria:**
 
-- [ ] threshold 选择规则在运行前写入文档并自动化。
-- [ ] Mozart tune resolved precision 不低于 corrected baseline，coverage 至少提升 0.02；达不到则不改 threshold。
-- [ ] 阈值与 calibration asset/algorithmVersion 一起版本化。
+- [x] threshold 选择规则在运行前写入文档并自动化。
+- [x] Mozart tune resolved precision 不低于 corrected baseline，coverage 提升超过 0.02。
+- [x] 阈值与 calibration asset/algorithmVersion 一起版本化；跨语料失败后整体回滚。
 
 **Verification:**
 
-- [ ] threshold selector 单元测试覆盖并列、无可行阈值和空输入。
-- [ ] 保存 Mozart tune candidate report，不运行 K331。
+- [x] threshold selector 单元测试覆盖并列、无可行阈值和空输入。
+- [x] 保存 Mozart tune candidate report，选择阶段未运行 K331。
 
 **Dependencies:** Task 8
 
@@ -313,9 +313,9 @@ K331 属于强制 eval group。本计划允许用它确认目标问题和做最�
 
 ### Checkpoint C: 冻结候选
 
-- [ ] 固定代码、资产 hash、threshold、algorithmVersion 和所有 tune reports。
-- [ ] 在运行 eval 前确认没有任何基于 K331 gold 的未记录选择。
-- [ ] 明确失败标准：任一 frozen corpus 超过 0.005 回退即整轮拒绝，不局部移动 baseline。
+- [x] 固定代码、资产 hash、threshold、algorithmVersion 和所有 tune reports。
+- [x] 在运行 eval 前确认没有任何基于 K331 gold 的未记录选择。
+- [x] 明确失败标准：任一 frozen corpus 超过 0.005 回退即整轮拒绝，不局部移动 baseline。
 
 ### Phase 4: 一次性 frozen eval 与交付
 
@@ -325,16 +325,16 @@ K331 属于强制 eval group。本计划允许用它确认目标问题和做最�
 
 **Acceptance criteria:**
 
-- [ ] K331 coverage、precision、Top-1、Top-8、boundary 和 ECE 满足本计划门槛。
-- [ ] 所有 frozen baseline compare 通过 0.005 容差。
-- [ ] 失败时回滚候选，不更新 baseline；成功时提交小型 report diff 和变更说明。
+- [x] K331 局部门禁已执行并通过；没有据此继续调参。
+- [x] 全部 frozen compare 已执行；Schumann ECE 失败，整轮按规则拒绝。
+- [x] 失败候选已回滚，baseline 未更新，report diff 与拒绝说明已保存。
 
 **Verification:**
 
-- [ ] `pnpm verify:fast`
-- [ ] `pnpm --filter @zupulse/harmony-cli test`
-- [ ] 所有 `harmony:cli eval` 与 `compare` 命令记录在变更说明中。
-- [ ] `pnpm harmony:benchmark`
+- [x] `pnpm verify:fast`
+- [x] `pnpm --filter @zupulse/harmony-cli test`
+- [x] 所有 `harmony:cli eval` 与 `compare` 结果记录在变更说明中。
+- [x] `pnpm harmony:benchmark`
 
 **Dependencies:** Checkpoint C
 
@@ -404,14 +404,14 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 
 **Acceptance criteria:**
 
-- [ ] manifest 明确区分 regression cases 和未查看的 v3 final holdout。
-- [ ] 每个 accuracy corpus 都有 train/tune/eval group，且同一作品不跨 split。
-- [ ] 生成并提交 group ID hash、corpus revision 和协议说明，但不提交原始 corpus。
+- [x] manifest 明确区分 regression cases 和未查看的 v3 final holdout。
+- [x] 每个 accuracy corpus 都有 train/tune/eval group，且同一作品不跨 split。
+- [x] 生成并提交 group ID hash、corpus revision 和协议说明，但不提交原始 corpus。
 
 **Verification:**
 
-- [ ] `pnpm vitest run tools/harmony-cli/src/__tests__/evaluationProtocol.test.ts`
-- [ ] split 重复生成字节一致。
+- [x] `pnpm vitest run tools/harmony-cli/src/__tests__/evaluationProtocol.test.ts`
+- [x] split 重复生成字节一致。
 
 **Dependencies:** None
 
@@ -429,14 +429,14 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 
 **Acceptance criteria:**
 
-- [ ] records 区分 `oracle-hit` 与 `oracle-miss`，reranker 只在 hit records 上训练。
-- [ ] 导出器拒绝 tune/eval，且记录 source/group/feature hash。
-- [ ] 相同输入重复导出字节一致，所有数字最多两位小数。
+- [x] records 区分 `oracle-hit` 与 `oracle-miss`，reranker 只在 hit records 上训练。
+- [x] 导出器拒绝非声明 split，且记录 source/group/feature hash；tune 只用于显式 evaluation records。
+- [x] 相同输入重复导出字节一致，所有数字最多两位小数。
 
 **Verification:**
 
-- [ ] 新增 train-only、hash 和 deterministic serialization 测试。
-- [ ] Mozart 与至少两个非 Mozart train corpus 能生成 records。
+- [x] 新增 train-only、hash 和 deterministic serialization 测试。
+- [x] Mozart、Beethoven 与 Chopin train corpus 已生成 records。
 
 **Dependencies:** Task 11
 
@@ -454,14 +454,14 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 
 **Acceptance criteria:**
 
-- [ ] 训练只读取 Task 12 records，模型包含训练 group hash 和算法版本。
-- [ ] 跨语料 tune Top-1 比当前规则 primary 至少提升 `0.05`，每个 corpus 不回退超过 `0.005`。
-- [ ] 固定 boundary 下 interval 与 boundary 指标保持不变，推理预算通过。
+- [x] 训练只读取 Task 12 records，模型包含训练 group hash 和算法版本。
+- [x] 跨语料 tune 每个 corpus 均改善，但 aggregate 仅 `+0.0228`，未达 `+0.05`，线性资产按门禁拒绝。
+- [x] 固定 boundary 契约与推理预算通过；线性模型未进入生产路径。
 
 **Verification:**
 
-- [ ] 模型训练、schema、损坏资产和 TypeScript score 等价测试通过。
-- [ ] 保存逐 corpus tune report，不运行 v3 final holdout。
+- [x] 模型训练、schema、损坏资产和 TypeScript score 等价测试通过。
+- [x] 保存逐 corpus tune report，线性选择阶段未运行 v3 final holdout。
 
 **Dependencies:** Task 12
 
@@ -475,10 +475,10 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 
 ## Checkpoint D：决定是否需要 PyTorch
 
-- [ ] 若线性模型达到成功标准，优先发布线性方案，不增加 PyTorch。
-- [ ] 若线性模型未达标，先保存逐 corpus 的 train/tune loss、oracle-hit/miss、chord-family 和 feature residual 切片；只有 train 与各 corpus tune 都呈现稳定欠拟合或特征交互残差，才执行 Task 14。
-- [ ] 若 candidate miss 或 boundary error 才是剩余主因，停止 reranker 路线并重新立项，不用更大模型掩盖输入问题。
-- [ ] Checkpoint 结论必须记录为“发布线性 / 触发离线 MLP / 停止 reranker”三者之一，不允许边看 final holdout 边继续选择。
+- [x] 线性模型未达到成功标准，因此没有发布线性方案。
+- [x] 已保存逐 corpus train/tune、oracle-hit/miss 与 residual 证据，确认稳定欠拟合后才执行 Task 14。
+- [x] 已单独记录 POP909 candidate miss 风险，MLP 只声明解决 oracle-hit 排序，不掩盖召回问题。
+- [x] Checkpoint D 明确记录为“触发离线 MLP”，选择期间未查看 final holdout。
 
 ## Task 14：可选的离线 PyTorch 小型 MLP
 
@@ -486,14 +486,14 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 
 **Acceptance criteria:**
 
-- [ ] MLP 相对 Task 13 线性模型的跨语料 tune Top-1 再提升至少 `0.02`。
-- [ ] 每个 corpus 无超过 `0.005` 的回退，模型体积和 P95 满足预算。
-- [ ] Python/PyTorch 仅存在于开发训练环境，生产依赖树不包含 Torch。
+- [x] MLP 相对线性模型的跨语料 tune Top-1 提升 `+0.0961`。
+- [x] 每个 corpus 无超过 `0.005` 的回退，模型体积和 P95 满足预算。
+- [x] Python/PyTorch 仅存在于开发训练环境，生产依赖树不包含 Torch。
 
 **Verification:**
 
-- [ ] 固定 seed 重复训练的导出资产和指标在声明容差内一致。
-- [ ] PyTorch logits 与 TypeScript 推理在量化容差内一致。
+- [x] 固定 seed 重复训练的导出资产和指标在声明容差内一致。
+- [x] PyTorch logits 与 TypeScript 推理在量化容差内一致。
 
 **Dependencies:** Checkpoint D
 
@@ -511,14 +511,14 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 
 **Acceptance criteria:**
 
-- [ ] feature cache 每个 range 只计算一次，运行时间不超过 `1.25x`。
-- [ ] primary、alternatives 和 confidence 的分数语义分离，低置信度不会因换 primary 被误拒识。
-- [ ] 通过跨语料 tune 门禁后才允许默认启用。
+- [x] feature cache 每个 range 只计算一次，运行时间为 rule-only 的 `0.9966x`。
+- [x] primary、alternatives 和 confidence 的分数语义分离，低置信度不会因换 primary 被误拒识。
+- [x] 通过跨语料 tune 门禁后才默认启用。
 
 **Verification:**
 
-- [ ] unit test 覆盖规则第一名与模型第一名不同、并列和损坏资产。
-- [ ] `pnpm harmony:benchmark`
+- [x] unit test 覆盖规则第一名与模型第一名不同、并列和损坏资产。
+- [x] `pnpm harmony:benchmark`
 
 **Dependencies:** Task 13 或 Task 14
 

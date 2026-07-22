@@ -1,6 +1,11 @@
 import type { ChordSymbolInput } from "@zupulse/web-core";
 import { describe, expect, it } from "vitest";
-import { calculateAccuracyMetrics, shouldIncludeDiagnosticSample, type AccuracyObservation } from "../accuracyMetrics";
+import {
+  calculateAccuracyMetrics,
+  classifyAccuracyOutcome,
+  shouldIncludeDiagnosticSample,
+  type AccuracyObservation,
+} from "../accuracyMetrics";
 import { harmonyAccuracyMetricsSchema } from "../schemas";
 
 const cMajor: ChordSymbolInput = { root: { step: "C", alter: 0 }, kind: "major", degrees: [] };
@@ -98,5 +103,23 @@ describe("calculateAccuracyMetrics", () => {
 
     expect(shouldIncludeDiagnosticSample(samples, "unresolved-oracle-hit")).toBe(false);
     expect(shouldIncludeDiagnosticSample(samples, "unresolved-oracle-miss")).toBe(true);
+  });
+
+  it("separates resolved selection errors from candidate misses", () => {
+    const observation = (alternatives: ChordSymbolInput[]): AccuracyObservation => ({
+      groupId: "work-a",
+      corpus: "fixture",
+      family: "triad",
+      weight: 1,
+      expected: cMajor,
+      predicted: gMajor,
+      alternatives,
+      confidence: 0.8,
+      expectedBoundary: false,
+      predictedBoundary: false,
+    });
+
+    expect(classifyAccuracyOutcome(observation([gMajor, cMajor]))).toBe("resolved-wrong-oracle-hit");
+    expect(classifyAccuracyOutcome(observation([gMajor]))).toBe("resolved-wrong-oracle-miss");
   });
 });

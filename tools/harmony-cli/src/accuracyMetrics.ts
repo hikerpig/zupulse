@@ -22,7 +22,8 @@ export type AccuracyOutcome =
   | "unresolved-oracle-hit"
   | "unresolved-oracle-miss"
   | "resolved-correct"
-  | "resolved-wrong";
+  | "resolved-wrong-oracle-hit"
+  | "resolved-wrong-oracle-miss";
 export type AccuracyErrorCategory =
   | "unsupported-label"
   | "unresolved-oracle-top1"
@@ -122,7 +123,10 @@ export function classifyAccuracyOutcome(item: AccuracyObservation): AccuracyOutc
       ? "unresolved-oracle-hit"
       : "unresolved-oracle-miss";
   }
-  return sameChord(item.predicted, expected) ? "resolved-correct" : "resolved-wrong";
+  if (sameChord(item.predicted, expected)) return "resolved-correct";
+  return item.alternatives.some((candidate) => sameChord(candidate, expected))
+    ? "resolved-wrong-oracle-hit"
+    : "resolved-wrong-oracle-miss";
 }
 
 export function classifyAccuracyError(item: AccuracyObservation): AccuracyErrorCategory | undefined {

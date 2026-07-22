@@ -130,19 +130,20 @@ export function generateHarmonyCandidates(
         };
         const learnedBass =
           options.rankerModel === undefined ? [] : learnedBassIntervals(options.rankerModel, chordInput);
-        const chords =
-          options.rankerModel === undefined || learnedBass.length === 0
-            ? [chordSymbolSchema.parse({ ...chordInput, ...(bass ? { bass } : {}) })]
-            : learnedBass.map((interval) =>
-                chordSymbolSchema.parse({
-                  ...chordInput,
-                  ...(interval === null
-                    ? {}
-                    : {
-                        bass: pitch((root + interval) % 12, features.spellingByPitchClass?.[(root + interval) % 12]),
-                      }),
+        const chordInputs = [
+          { ...chordInput, ...(bass ? { bass } : {}) },
+          ...learnedBass.map((interval) => ({
+            ...chordInput,
+            ...(interval === null
+              ? {}
+              : {
+                  bass: pitch((root + interval) % 12, features.spellingByPitchClass?.[(root + interval) % 12]),
                 }),
-              );
+          })),
+        ];
+        const chords = [
+          ...new Map(chordInputs.map((input) => [JSON.stringify(input), chordSymbolSchema.parse(input)])).values(),
+        ];
         return chords.map((chord) => {
           const learnedScore =
             options.rankerModel === undefined ? 0 : scoreHarmonyCandidate(options.rankerModel, features, chord);

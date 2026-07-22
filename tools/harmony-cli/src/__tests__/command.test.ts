@@ -52,4 +52,10 @@ describe("harmony CLI inspect command", () => {
       "--decision-threshold must be between 0 and 1",
     );
   });
+
+  it("requires explicit protocol, data root, case, and output for ranking records", async () => {
+    await expect(runHarmonyCommand(["ranking-records", "manifest.json"])).rejects.toThrow(
+      "usage: harmony:cli ranking-records",
+    );
+  });
 });

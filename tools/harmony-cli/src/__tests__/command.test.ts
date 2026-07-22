@@ -34,4 +34,13 @@ describe("harmony CLI inspect command", () => {
 
     expect(report.source.name).toBe("simple.mxl");
   });
+
+  it("rejects an invalid dataset report split before reading the manifest", async () => {
+    await expect(runHarmonyCommand(["eval", "missing.json", "--split", "invalid"])).rejects.toThrow(
+      "--split must be train, tune, or eval",
+    );
+    await expect(runHarmonyCommand(["eval", "missing.json", "--split"])).rejects.toThrow(
+      "--split must be train, tune, or eval",
+    );
+  });
 });

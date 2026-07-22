@@ -77,6 +77,8 @@ dataset eval report 从 `2.1.0` 起增加 `diagnostics`：全量 observation 按
 
 report `2.2.0` 新增 `diagnostics.intervalOverlap`。它在每个 mapped gold range 内按预测与 gold 的联合边界累计 correct、wrong 和 unresolved ticks，因而会完整计入 gold 区间中间的错误和弦变化。`boundaries` 对变化边界做一对一匹配，容差取八分音符与目标位置相邻 legal moment 距离的较小值，并分别报告 `overSegmented`、`underSegmented` 和容差 F1。原有 gold-onset `boundaryF1` 保留用于 frozen baseline 连续性，两种指标不得混名。
 
+report `2.3.0` 为 accuracy case 增加 `reportSplit`。CLI 的 `--split train|tune|eval` 只改变哪些作品进入 metrics/diagnostics，不改变 manifest 的完整 split counts；默认值是 eval。train 用于拟合资产，tune 用于选择已声明候选，只有 eval report 可以进入 frozen baseline compare。该开关不改变作品级 split，也不能覆盖 `forcedEvalGroups`，所以 K331 始终只能出现在 eval report。
+
 ## 当前冻结基线
 
 以下是版本化 baseline JSON 的便读摘要；比较时以 JSON 文件为准：

@@ -13,7 +13,7 @@ import {
   type AccuracyErrorCategory,
   type AccuracyObservation,
 } from "../accuracyMetrics";
-import { assignDatasetSplit } from "../evaluationProtocol";
+import { assignDatasetSplit, type DatasetSplit } from "../evaluationProtocol";
 import {
   calculateIntervalOverlapDiagnostics,
   mergeIntervalOverlapDiagnostics,
@@ -28,8 +28,10 @@ export async function evaluateDcmlCorpus(
     include?: readonly string[];
     forcedEvalGroups: readonly string[];
     groupBy?: "prefix-before-hyphen" | "corpus";
+    reportSplit?: DatasetSplit;
   },
 ) {
+  const reportSplit = options.reportSplit ?? "eval";
   const files = (await readdir(resolve(root, "harmonies")))
     .filter((name) => name.endsWith(".harmonies.tsv"))
     .map((name) => name.slice(0, -".harmonies.tsv".length))
@@ -60,7 +62,7 @@ export async function evaluateDcmlCorpus(
       harmonies: await readFile(resolve(root, `harmonies/${pieceId}.harmonies.tsv`), "utf8"),
     });
     splitCounts[split] += piece.gold.length;
-    if (split !== "eval") continue;
+    if (split !== reportSplit) continue;
     const segments = analyzeHarmonyRules(piece.input, { includedTrackIds: ["dcml"], topK: 8 });
     intervalDiagnostics.push(
       calculateIntervalOverlapDiagnostics({
@@ -114,6 +116,7 @@ export async function evaluateDcmlCorpus(
     kind: "accuracy-corpus" as const,
     adapter: "dcml" as const,
     status: "passed" as const,
+    reportSplit,
     splits: splitCounts,
     metrics: calculateAccuracyMetrics(evalObservations, mergeIntervalOverlapDiagnostics(intervalDiagnostics)),
     errors,

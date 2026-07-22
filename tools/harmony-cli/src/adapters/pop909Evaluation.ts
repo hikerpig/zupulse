@@ -8,7 +8,7 @@ import {
   type AccuracyErrorCategory,
   type AccuracyObservation,
 } from "../accuracyMetrics";
-import { assignDatasetSplit } from "../evaluationProtocol";
+import { assignDatasetSplit, type DatasetSplit } from "../evaluationProtocol";
 import {
   calculateIntervalOverlapDiagnostics,
   mergeIntervalOverlapDiagnostics,
@@ -18,8 +18,14 @@ import { parsePop909Piece } from "./pop909";
 
 export async function evaluatePop909Corpus(
   root: string,
-  options: { id: string; include?: readonly string[]; forcedEvalGroups: readonly string[] },
+  options: {
+    id: string;
+    include?: readonly string[];
+    forcedEvalGroups: readonly string[];
+    reportSplit?: DatasetSplit;
+  },
 ) {
+  const reportSplit = options.reportSplit ?? "eval";
   const songs = (await readdir(root, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory() && /^\d{3}$/.test(entry.name))
     .map((entry) => entry.name)
@@ -50,7 +56,7 @@ export async function evaluatePop909Corpus(
     });
     const split = assignDatasetSplit(song, options.forcedEvalGroups);
     splits[split] += piece.gold.length;
-    if (split !== "eval") continue;
+    if (split !== reportSplit) continue;
     const segments = analyzeHarmonyRules(piece.input, { includedTrackIds: ["pop909"], topK: 8 });
     intervalDiagnostics.push(
       calculateIntervalOverlapDiagnostics({
@@ -104,6 +110,7 @@ export async function evaluatePop909Corpus(
     kind: "accuracy-corpus" as const,
     adapter: "pop909" as const,
     status: "passed" as const,
+    reportSplit,
     splits,
     metrics: calculateAccuracyMetrics(observations, mergeIntervalOverlapDiagnostics(intervalDiagnostics)),
     errors,

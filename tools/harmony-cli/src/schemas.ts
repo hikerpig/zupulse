@@ -216,6 +216,19 @@ export const harmonyAccuracyMetricsSchema = z
               .strict(),
           )
           .length(10),
+        calibrationBins: z
+          .array(
+            z
+              .object({
+                index: z.number().int().min(0).max(99),
+                cases: z.number().int().nonnegative(),
+                weight: z.number().nonnegative(),
+                averageConfidence: fractionSchema,
+                accuracy: fractionSchema,
+              })
+              .strict(),
+          )
+          .length(100),
         precisionCoverageCurve: z.array(
           z.object({ threshold: fractionSchema, precision: fractionSchema, coverage: fractionSchema }).strict(),
         ),
@@ -226,7 +239,7 @@ export const harmonyAccuracyMetricsSchema = z
 
 export const harmonyDatasetEvalReportSchema = z
   .object({
-    schemaVersion: z.literal("2.4.0"),
+    schemaVersion: z.literal("2.5.0"),
     command: z.literal("eval"),
     manifest: z.string().min(1),
     summary: z.object({ passed: z.number().int().nonnegative(), failed: z.number().int().nonnegative() }).strict(),
@@ -239,6 +252,9 @@ export const harmonyDatasetEvalReportSchema = z
             adapter: z.enum(["dcml", "pop909"]),
             status: z.enum(["passed", "failed"]),
             reportSplit: z.enum(["train", "tune", "eval"]),
+            decisionThreshold: fractionSchema,
+            sourceRevision: z.string().min(1),
+            reportGroupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
             splits: z.record(z.enum(["train", "tune", "eval"]), z.number().int().nonnegative()),
             metrics: harmonyAccuracyMetricsSchema,
             errors: z.array(

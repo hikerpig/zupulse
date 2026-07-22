@@ -12,6 +12,7 @@ export async function evaluateHarmonyDatasetManifest(
   dataRoot: string,
   caseId?: string,
   reportSplit: DatasetSplit = "eval",
+  decisionThreshold = 0.6,
 ): Promise<HarmonyDatasetEvalReport> {
   const manifest = harmonyDatasetManifestSchema.parse(JSON.parse(await readFile(path, "utf8")));
   const selected = caseId === undefined ? manifest.cases : manifest.cases.filter((item) => item.id === caseId);
@@ -26,10 +27,12 @@ export async function evaluateHarmonyDatasetManifest(
       cases.push(
         await evaluateDcmlCorpus(datasetPath, {
           id: item.id,
+          sourceRevision: item.source.revision,
           forcedEvalGroups: item.forcedEvalGroups,
           ...(item.include === undefined ? {} : { include: item.include }),
           ...(item.groupBy === undefined ? {} : { groupBy: item.groupBy }),
           reportSplit,
+          decisionThreshold,
         }),
       );
       continue;
@@ -38,9 +41,11 @@ export async function evaluateHarmonyDatasetManifest(
       cases.push(
         await evaluatePop909Corpus(datasetPath, {
           id: item.id,
+          sourceRevision: item.source.revision,
           forcedEvalGroups: item.forcedEvalGroups,
           ...(item.include === undefined ? {} : { include: item.include }),
           reportSplit,
+          decisionThreshold,
         }),
       );
       continue;
@@ -57,7 +62,7 @@ export async function evaluateHarmonyDatasetManifest(
     throw new Error(`dataset adapter not implemented: ${item.adapter}`);
   }
   return harmonyDatasetEvalReportSchema.parse({
-    schemaVersion: "2.4.0",
+    schemaVersion: "2.5.0",
     command: "eval",
     manifest: manifest.id,
     summary: {

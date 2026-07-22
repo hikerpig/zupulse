@@ -81,6 +81,8 @@ report `2.3.0` 为 accuracy case 增加 `reportSplit`。CLI 的 `--split train|t
 
 report `2.4.0` 将原来的 `resolved-wrong` 拆成 `resolved-wrong-oracle-hit` 与 `resolved-wrong-oracle-miss`。前者表示正确和弦已在最多八个 alternatives 中、但 primary path 选错；后者表示候选集本身缺失，分别用于触发 sequence/ranking 与 candidate-recall 优化。
 
+report `2.5.0` 为 accuracy case 增加 `decisionThreshold`。CLI 的 `--decision-threshold 0..1` 只控制本次分析的拒识阈值，默认保持 `0.6`；拟合校准器时使用 `0` 观察未经拒识的 primary confidence，冻结评测仍使用预先选定的产品阈值。
+
 ## 当前冻结基线
 
 以下是版本化 baseline JSON 的便读摘要；比较时以 JSON 文件为准：

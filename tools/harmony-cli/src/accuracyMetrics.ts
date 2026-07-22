@@ -61,6 +61,13 @@ export type AccuracyMetrics = {
       averageConfidence: number;
       accuracy: number;
     }>;
+    calibrationBins: Array<{
+      index: number;
+      cases: number;
+      weight: number;
+      averageConfidence: number;
+      accuracy: number;
+    }>;
     precisionCoverageCurve: Array<{ threshold: number; precision: number; coverage: number }>;
   };
 };
@@ -175,6 +182,7 @@ function createDiagnostics(
     errors,
     intervalOverlap,
     confidenceBins: createConfidenceBins(observations),
+    calibrationBins: createConfidenceBins(observations, 100),
     precisionCoverageCurve: createPrecisionCoverageCurve(observations),
   };
 }
@@ -201,8 +209,9 @@ function addDiagnostic(
 
 function createConfidenceBins(
   observations: readonly AccuracyObservation[],
+  binCount = 10,
 ): AccuracyMetrics["diagnostics"]["confidenceBins"] {
-  const bins = Array.from({ length: 10 }, (_, index) => ({
+  const bins = Array.from({ length: binCount }, (_, index) => ({
     index,
     cases: 0,
     weight: 0,
@@ -212,7 +221,7 @@ function createConfidenceBins(
   for (const item of observations) {
     if (!item.expected) continue;
     const confidence = Math.max(0, Math.min(1, item.confidence));
-    const bin = bins[Math.min(9, Math.floor(confidence * 10))]!;
+    const bin = bins[Math.min(binCount - 1, Math.floor(confidence * binCount))]!;
     bin.cases += 1;
     bin.weight += item.weight;
     bin.confidence += confidence * item.weight;

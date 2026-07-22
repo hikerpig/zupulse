@@ -4,6 +4,7 @@ import {
   compareMoments,
   type ChordSymbolInput,
 } from "@zupulse/web-core";
+import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
@@ -25,13 +26,16 @@ export async function evaluateDcmlCorpus(
   root: string,
   options: {
     id: string;
+    sourceRevision: string;
     include?: readonly string[];
     forcedEvalGroups: readonly string[];
     groupBy?: "prefix-before-hyphen" | "corpus";
     reportSplit?: DatasetSplit;
+    decisionThreshold?: number;
   },
 ) {
   const reportSplit = options.reportSplit ?? "eval";
+  const decisionThreshold = options.decisionThreshold ?? 0.6;
   const files = (await readdir(resolve(root, "harmonies")))
     .filter((name) => name.endsWith(".harmonies.tsv"))
     .map((name) => name.slice(0, -".harmonies.tsv".length))
@@ -41,6 +45,7 @@ export async function evaluateDcmlCorpus(
 
   const splitCounts = { train: 0, tune: 0, eval: 0 };
   const evalObservations: AccuracyObservation[] = [];
+  const reportGroups = new Set<string>();
   const intervalDiagnostics: IntervalOverlapDiagnostics[] = [];
   const errors: Array<{
     pieceId: string;
@@ -63,7 +68,12 @@ export async function evaluateDcmlCorpus(
     });
     splitCounts[split] += piece.gold.length;
     if (split !== reportSplit) continue;
-    const segments = analyzeHarmonyRules(piece.input, { includedTrackIds: ["dcml"], topK: 8 });
+    reportGroups.add(groupId);
+    const segments = analyzeHarmonyRules(piece.input, {
+      includedTrackIds: ["dcml"],
+      topK: 8,
+      decisionThreshold,
+    });
     intervalDiagnostics.push(
       calculateIntervalOverlapDiagnostics({
         ticksPerQuarter: piece.input.ticksPerQuarter,
@@ -117,10 +127,19 @@ export async function evaluateDcmlCorpus(
     adapter: "dcml" as const,
     status: "passed" as const,
     reportSplit,
+    sourceRevision: options.sourceRevision,
+    reportGroupsSha256: hashGroups(reportGroups),
+    decisionThreshold,
     splits: splitCounts,
     metrics: calculateAccuracyMetrics(evalObservations, mergeIntervalOverlapDiagnostics(intervalDiagnostics)),
     errors,
   };
+}
+
+function hashGroups(groups: ReadonlySet<string>): string {
+  return createHash("sha256")
+    .update([...groups].sort().join("\n"))
+    .digest("hex");
 }
 
 export function dcmlGroupId(pieceId: string, mode: "prefix-before-hyphen" | "corpus", corpusId: string): string {

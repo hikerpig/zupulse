@@ -39,3 +39,14 @@ pnpm -s harmony:cli compare \
 ```
 
 每轮变更说明至少记录：目标错误簇、假设、改动参数或代码、train/tune 证据、所有 frozen diff、接受或回滚结论。原始 corpus 和临时 report 留在 git 外；只提交 manifest、固定小型 baseline/diff 和说明。
+
+## 已验证的经验
+
+1. **先区分候选缺失、primary 选错和 boundary 错。** Mozart tune 的 Top-1 为 `0.3727`、Top-8 为 `0.7975`，当前最大机会不是继续无差别扩大模板，而是让 primary selector 从已有 Top-8 中选对。Top-8 miss 仍需按 root、kind、extension、bass 和 boundary 分开处理。
+2. **学习分不能直接混入规则序列分。** 将 hybrid candidate pool 放进每个 DP range 会把运行时间从约两分钟放大到四分钟以上；固定 boundary 的二次 hybrid rerank 又使 coverage 和 interval accuracy 大幅下降。重试前必须先缓存 range features，并让候选 logits、transition 和 confidence 使用明确的独立尺度。
+3. **局部 calibration 通过不等于可发布。** Mozart train-only PAVA 在 Mozart tune 和 K331 上通过，但 Schumann ECE 从 `0.0910` 回退到 `0.1560`，因此已整体回滚。未来 confidence 资产必须使用多语料 train，并对每个 frozen corpus 单独验收，不能只看合并均值。
+4. **评测修复与算法提升必须分开。** Top-8 去重上限、全量错误簇、interval overlap 和跨小节 onset correctness 都先独立提交；否则无法判断提升来自模型还是指标语义变化。
+5. **低 threshold 不是准确率方案。** threshold 只能在 calibration 后按预先声明的 precision floor 选择；任何 frozen corpus 超过 `0.005` 回退都应整轮拒绝，不得在看到 eval 后增加域特判。
+6. **学习工具和产品运行时是两个决策。** 可以用 PyTorch 离线训练和比较模型，但第一版发布资产应优先导出为小型 JSON，由确定性 TypeScript 推理。只有小模型已经证明准确率收益、且 TypeScript 推理成为瓶颈时，才评估 ONNX/WASM；当前没有引入 PyTorch runtime 的证据。
+
+完整失败记录见仓库根目录的 [`tasks/harmony-tuning-failures.md`](../../../tasks/harmony-tuning-failures.md)。

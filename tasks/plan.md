@@ -718,14 +718,14 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 
 **Acceptance criteria:**
 
-- [ ] 训练确定、拒绝非 train reports，模型 schema 严格且权重最多两位小数。
-- [ ] tune 阈值选择预登记为：满足 recall 不低于 dense `-0.01` 后，优先最小 segment density，再比较 F1。
-- [ ] 若线性模型 train 与 tune 都欠拟合，才记录后续小型离线 MLP 触发条件。
+- [x] 训练确定、拒绝非 train reports，模型 schema 严格且权重最多两位小数。
+- [x] tune 阈值选择预登记为：满足 recall 不低于 dense `-0.01` 后，优先最小 segment density，再比较 F1。
+- [x] 若线性模型 train 与 tune 都欠拟合，才记录后续小型离线 MLP 触发条件。
 
 **Verification:**
 
-- [ ] trainer 单测覆盖可分数据、class imbalance 与 tune-only evaluation。
-- [ ] CLI round-trip 测试证明模型可保存、解析和复现指标。
+- [x] trainer 单测覆盖可分数据、class imbalance 与 tune-only evaluation。
+- [x] CLI round-trip 测试证明模型可保存、解析和复现指标。
 
 **Dependencies:** Task 23
 

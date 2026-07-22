@@ -48,6 +48,6 @@
 ## Phase 7: Train-only Boundary Evidence
 
 - [x] Task 23：导出严格 split 隔离的 boundary evidence records。
-- [ ] Task 24：训练并 tune 轻量线性 boundary classifier。
+- [x] Task 24：训练并 tune 轻量线性 boundary classifier。
 - [ ] Task 25：以 opt-in learned boundary policy 接入 TypeScript analyzer。
 - [ ] Task 26：执行序贯 tune 门禁并决定是否发布。

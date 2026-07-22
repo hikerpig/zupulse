@@ -16,7 +16,7 @@ export function createBoundaryEvidenceFeatures(
     .filter((note) => note.soundingPitchClass !== undefined)
     .map((note) => ({
       pitchClass: note.soundingPitchClass!,
-      midi: note.soundingMidi,
+      ...(note.soundingMidi === undefined ? {} : { midi: note.soundingMidi }),
       start: (starts[note.moment.measureIndex] ?? 0) + note.moment.offsetTicks,
       end: (starts[note.moment.measureIndex] ?? 0) + note.moment.offsetTicks + note.durationTicks,
     }));

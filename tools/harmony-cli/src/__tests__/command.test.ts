@@ -43,4 +43,13 @@ describe("harmony CLI inspect command", () => {
       "--split must be train, tune, or eval",
     );
   });
+
+  it("rejects an invalid decision threshold before reading the manifest", async () => {
+    await expect(runHarmonyCommand(["eval", "missing.json", "--decision-threshold", "invalid"])).rejects.toThrow(
+      "--decision-threshold must be between 0 and 1",
+    );
+    await expect(runHarmonyCommand(["eval", "missing.json", "--decision-threshold", "1.1"])).rejects.toThrow(
+      "--decision-threshold must be between 0 and 1",
+    );
+  });
 });

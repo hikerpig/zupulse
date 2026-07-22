@@ -1,4 +1,5 @@
 import { analyzeHarmonyRules, buildLegalBoundaryLattice, compareMoments } from "@zupulse/web-core";
+import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
@@ -20,12 +21,15 @@ export async function evaluatePop909Corpus(
   root: string,
   options: {
     id: string;
+    sourceRevision: string;
     include?: readonly string[];
     forcedEvalGroups: readonly string[];
     reportSplit?: DatasetSplit;
+    decisionThreshold?: number;
   },
 ) {
   const reportSplit = options.reportSplit ?? "eval";
+  const decisionThreshold = options.decisionThreshold ?? 0.6;
   const songs = (await readdir(root, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory() && /^\d{3}$/.test(entry.name))
     .map((entry) => entry.name)
@@ -35,6 +39,7 @@ export async function evaluatePop909Corpus(
 
   const splits = { train: 0, tune: 0, eval: 0 };
   const observations: AccuracyObservation[] = [];
+  const reportGroups = new Set<string>();
   const intervalDiagnostics: IntervalOverlapDiagnostics[] = [];
   const errors: Array<{
     pieceId: string;
@@ -57,7 +62,12 @@ export async function evaluatePop909Corpus(
     const split = assignDatasetSplit(song, options.forcedEvalGroups);
     splits[split] += piece.gold.length;
     if (split !== reportSplit) continue;
-    const segments = analyzeHarmonyRules(piece.input, { includedTrackIds: ["pop909"], topK: 8 });
+    reportGroups.add(song);
+    const segments = analyzeHarmonyRules(piece.input, {
+      includedTrackIds: ["pop909"],
+      topK: 8,
+      decisionThreshold,
+    });
     intervalDiagnostics.push(
       calculateIntervalOverlapDiagnostics({
         ticksPerQuarter: piece.input.ticksPerQuarter,
@@ -111,10 +121,19 @@ export async function evaluatePop909Corpus(
     adapter: "pop909" as const,
     status: "passed" as const,
     reportSplit,
+    sourceRevision: options.sourceRevision,
+    reportGroupsSha256: hashGroups(reportGroups),
+    decisionThreshold,
     splits,
     metrics: calculateAccuracyMetrics(observations, mergeIntervalOverlapDiagnostics(intervalDiagnostics)),
     errors,
   };
+}
+
+function hashGroups(groups: ReadonlySet<string>): string {
+  return createHash("sha256")
+    .update([...groups].sort().join("\n"))
+    .digest("hex");
 }
 
 function same(a: unknown, b: unknown): boolean {

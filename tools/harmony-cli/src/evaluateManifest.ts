@@ -15,12 +15,18 @@ type RegressionSummary = HarmonyRegressionManifest["cases"][number]["expected"] 
 
 export async function evaluateHarmonyManifest(
   path: string,
-  options: { dataRoot?: string; caseId?: string; reportSplit?: DatasetSplit } = {},
+  options: { dataRoot?: string; caseId?: string; reportSplit?: DatasetSplit; decisionThreshold?: number } = {},
 ): Promise<HarmonyEvalReport | import("./schemas").HarmonyDatasetEvalReport> {
   const raw = JSON.parse(await readFile(path, "utf8")) as { schemaVersion?: unknown };
   if (raw.schemaVersion === "2.0.0") {
     if (!options.dataRoot) throw new Error("dataset manifest requires --data-root <directory>");
-    return evaluateHarmonyDatasetManifest(path, options.dataRoot, options.caseId, options.reportSplit);
+    return evaluateHarmonyDatasetManifest(
+      path,
+      options.dataRoot,
+      options.caseId,
+      options.reportSplit,
+      options.decisionThreshold,
+    );
   }
   const manifest = harmonyRegressionManifestSchema.parse(raw);
   const cases = await Promise.all(

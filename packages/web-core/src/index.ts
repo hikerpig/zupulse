@@ -23,6 +23,7 @@ export * from "./harmony/sourceHarmony";
 export * from "./harmony/boundaries";
 export * from "./harmony/features";
 export * from "./harmony/candidates";
+export * from "./harmony/confidenceCalibration";
 export * from "./harmony/decode";
 export * from "./harmony/transitions";
 export * from "./harmony/postprocess";

@@ -64,7 +64,9 @@ describe("POP909 adapter", () => {
         writeFile(resolve(root, "001/chord_midi.txt"), "0\t0.5\tC:maj\n0.5\t1\tG:7/5\n"),
       ]);
 
-      await expect(evaluatePop909Corpus(root, { id: "pop909", forcedEvalGroups: ["001"] })).resolves.toMatchObject({
+      await expect(
+        evaluatePop909Corpus(root, { id: "pop909", sourceRevision: "fixture", forcedEvalGroups: ["001"] }),
+      ).resolves.toMatchObject({
         adapter: "pop909",
         splits: { train: 0, tune: 0, eval: 2 },
         metrics: { gold: { total: 2, mapped: 2 } },

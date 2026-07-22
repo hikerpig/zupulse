@@ -26,16 +26,19 @@ describe("evaluateDcmlCorpus", () => {
 
     const result = await evaluateDcmlCorpus(root, {
       id: "mozart-pilot",
+      sourceRevision: "fixture",
       include: ["K331-3"],
       forcedEvalGroups: ["K331"],
     });
 
     expect(result).toMatchObject({
       id: "mozart-pilot",
+      sourceRevision: "fixture",
       kind: "accuracy-corpus",
       adapter: "dcml",
       status: "passed",
       reportSplit: "eval",
+      decisionThreshold: 0.6,
       splits: { train: 0, tune: 0, eval: 2 },
       metrics: { gold: { total: 2, mapped: 2, unsupported: 0 }, mappingCoverage: 1 },
     });
@@ -90,11 +93,11 @@ describe("evaluateDcmlCorpus", () => {
 
     const report = await evaluateHarmonyManifest(manifestPath, { dataRoot, caseId: "mozart-pilot" });
     expect(report).toMatchObject({
-      schemaVersion: "2.4.0",
+      schemaVersion: "2.5.0",
       command: "eval",
       summary: { passed: 1, failed: 0 },
     });
-    if (report.schemaVersion !== "2.4.0" || report.cases[0]?.kind !== "accuracy-corpus") {
+    if (report.schemaVersion !== "2.5.0" || report.cases[0]?.kind !== "accuracy-corpus") {
       throw new Error("expected accuracy report");
     }
     const reportPath = resolve(dataRoot, "report.json");

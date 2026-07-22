@@ -69,7 +69,7 @@ pnpm -s harmony:cli eval test-fixtures/harmony/datasets/manifest.json \
 
 `data-root` 下必须同时存在 manifest 声明的 archive 和解压目录。CLI 先校验 archive SHA-256，再运行 adapter。DCML 报告包含作品级 split、mapping/unsupported、Top-1/Top-8、resolved precision/coverage、boundary F1、ECE、facets、chord-family slices 和最多 50 条错误定位。当前固定 Mozart 数据为 v2.3；K331 整首奏鸣曲强制属于 eval。可用 `--case <id>` 只运行一个 corpus。
 
-dataset manifest 当前为 `2.0.0`，生成的 eval report 为 `2.4.0`。accuracy case 的 `reportSplit` 明确本次指标来自 train、tune 还是 eval；省略 `--split` 时固定为 eval，baseline compare 会拒绝非 eval report。report 的 `diagnostics` 提供全量错误簇、family outcome、confidence bins、post-decision precision/coverage curve，以及按联合区间计算的 duration overlap 与容差 boundary 指标；`resolved-wrong-oracle-hit` 和 `resolved-wrong-oracle-miss` 分别表示主路径选择错误与候选缺失。`errors` 只保存每类有限的定位样本，不用于统计簇大小。
+dataset manifest 当前为 `2.0.0`，生成的 eval report 为 `2.5.0`。accuracy case 的 `reportSplit` 明确本次指标来自 train、tune 还是 eval；省略 `--split` 时固定为 eval，baseline compare 会拒绝非 eval report。`--decision-threshold 0..1` 可生成校准所需的未拒识报告，默认仍为 `0.6`，实际值记录在 accuracy case。report 的 `diagnostics` 提供全量错误簇、family outcome、confidence bins、post-decision precision/coverage curve，以及按联合区间计算的 duration overlap 与容差 boundary 指标；`resolved-wrong-oracle-hit` 和 `resolved-wrong-oracle-miss` 分别表示主路径选择错误与候选缺失。`errors` 只保存每类有限的定位样本，不用于统计簇大小。
 
 冻结基线比较会锁定 split/gold 数量；mapping、Top-1/Top-8、precision、coverage、boundary F1 只允许在容差内下降，ECE 只允许在容差内上升：
 

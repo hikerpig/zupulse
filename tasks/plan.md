@@ -621,14 +621,14 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 
 **Acceptance criteria:**
 
-- [ ] segment density 明显下降，predicted-primary accuracy 或 interval accuracy 不回退超过 `0.005`。
-- [ ] boundary recall 不回退超过 `0.01`，每个 corpus 单独验收。
-- [ ] policy 与所有参数写入 report/algorithmVersion，不能按 corpus 特判。
+- [x] segment density 明显下降，但两种 policy 的 interval accuracy 均回退超过 `0.005`，已拒绝。
+- [x] boundary 指标已逐项检查；没有用 aggregate 掩盖失败项。
+- [x] policy 写入 report，未按 corpus 特判；失败 policy 未进入生产 algorithmVersion。
 
 **Verification:**
 
-- [ ] 保存逐 corpus tune 对照和接受/拒绝说明。
-- [ ] `pnpm harmony:benchmark` 不超过当前 P95 的 `1.25x`。
+- [x] Mozart tune 首个门禁已失败，因此停止扩展其他 corpus，并保存对照与拒绝说明。
+- [x] `pnpm harmony:benchmark` 通过；失败 policy 未进入生产路径。
 
 **Dependencies:** Task 18
 
@@ -640,16 +640,55 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 
 **Acceptance criteria:**
 
-- [ ] K331 前 8 小节的 segment 数量减少，长时值 A minor/E minor 区域不再被旋律变化反复切碎。
-- [ ] 所有 frozen baseline 的主指标、ECE、interval overlap 与 boundary 门禁通过；失败则不移动 baseline。
-- [ ] 接受或拒绝结论、复现命令与实际 K331 输出写入 checkpoint。
+- [x] K331 segment density 在 opt-in policy 下明显下降，但不作为发布选择证据。
+- [x] Mozart tune 首个硬门禁失败，按条件未运行全量 frozen baseline，也未移动 baseline。
+- [x] 拒绝结论、复现指标与 K331 历史诊断写入 checkpoint。
 
 **Verification:**
 
-- [ ] `pnpm verify:fast`
-- [ ] `pnpm --filter @zupulse/harmony-cli test`
-- [ ] `pnpm harmony:benchmark`
+- [x] `pnpm verify:fast`
+- [x] `pnpm --filter @zupulse/harmony-cli test`
+- [x] `pnpm harmony:benchmark`
 
 **Dependencies:** Task 19
+
+**Estimated scope:** M
+
+## Task 21：只恢复强起音 note boundary
+
+**Description:** 在 metric beats 上，只恢复同一时刻至少两个不同 pitch class 同时起音的 note boundary；不使用 note end，不读取 gold boundary，不按语料特判。阈值 `2` 在运行新的 tune report 前冻结。
+
+**Acceptance criteria:**
+
+- [x] 单旋律、经过音和重复八度不会产生边界；两个以上不同 pitch class 的同步起音会产生边界。
+- [x] musical beats、mandatory boundary 与复合拍脉冲语义保持不变。
+- [x] 默认生产 policy 保持不变；strong-onset 未通过 tune 门禁。
+
+**Verification:**
+
+- [x] boundary 失败测试先于实现，并覆盖单音、重复八度与多 pitch-class 起音。
+- [x] segment density 下降 `24.2%`，但 interval accuracy 回退 `0.0086`，超过门禁，已拒绝。
+
+**Dependencies:** Task 20
+
+**Estimated scope:** M
+
+## Task 22：冻结 strong-onset 候选并决定是否发布
+
+**Description:** strong-onset 通过 Mozart tune 后，才扩展 Beethoven、Chopin、POP909 tune；全部通过后运行历史 regression、ASAP 和 benchmark。任一语料失败即保留 opt-in 并记录，不调整阈值。
+
+**Acceptance criteria:**
+
+- [x] Mozart tune 首个 corpus 未通过 interval 容差，因此按序贯门禁停止后续语料。
+- [x] Viewer/CLI 默认与 algorithmVersion 未更新，baseline 未移动。
+- [x] Mozart report、K331 前 8 小节实际输出和拒绝 checkpoint 已保存。
+
+**Verification:**
+
+- [x] `pnpm verify:fast`
+- [x] `pnpm --filter @zupulse/harmony-cli test`
+- [x] `pnpm harmony:benchmark`
+
+**Dependencies:** Task 21
 
 **Estimated scope:** M

@@ -117,8 +117,16 @@ export async function runHarmonyCommand(
         decisionThreshold > 1)
     )
       throw new Error("--decision-threshold must be between 0 and 1");
-    if (boundaryPolicyIndex >= 0 && boundaryPolicy !== "dense-note-events" && boundaryPolicy !== "metric-beats")
-      throw new Error("--boundary-policy must be dense-note-events or metric-beats");
+    if (
+      boundaryPolicyIndex >= 0 &&
+      boundaryPolicy !== "dense-note-events" &&
+      boundaryPolicy !== "metric-beats" &&
+      boundaryPolicy !== "metric-half-beats" &&
+      boundaryPolicy !== "metric-strong-onsets"
+    )
+      throw new Error(
+        "--boundary-policy must be dense-note-events, metric-beats, metric-half-beats, or metric-strong-onsets",
+      );
     return evaluateHarmonyManifest(resolve(cwd, path), {
       ...(dataRoot === undefined ? {} : { dataRoot: resolve(cwd, dataRoot) }),
       ...(caseId === undefined ? {} : { caseId }),

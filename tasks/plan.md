@@ -699,14 +699,14 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 
 **Acceptance criteria:**
 
-- [ ] 特征固定为 metric strength、bass change、held-note continuity、onset pitch-class mass、前后 pitch-set change，并记录 feature version。
-- [ ] 特征只读取 MusicXML/MIDI/DCML notes 与 meter；gold 只生成训练标签，不进入产品推理输入。
-- [ ] records 与所有浮点资产最多保留两位小数，输出顺序确定。
+- [x] 特征固定为 metric strength、bass change、held-note continuity、onset pitch-class mass、前后 pitch-set change，并记录 feature version。
+- [x] 特征只读取 MusicXML/MIDI/DCML notes 与 meter；gold 只生成训练标签，不进入产品推理输入。
+- [x] records 与所有浮点资产最多保留两位小数，输出顺序确定。
 
 **Verification:**
 
-- [ ] 失败测试先证明单旋律起音和真实低音/音集变化可区分。
-- [ ] train/tune/eval role 隔离测试通过。
+- [x] 失败测试先证明单旋律起音和真实低音/音集变化可区分。
+- [x] train/tune/eval role 隔离测试通过。
 
 **Dependencies:** Task 22
 

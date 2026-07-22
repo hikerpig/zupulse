@@ -2,6 +2,7 @@ import {
   chordSymbolSchema,
   harmonyAnalysisInputSchema,
   harmonySegmentSchema,
+  scoreWrittenMomentSchema,
   scoreWrittenRangeSchema,
 } from "@zupulse/web-core";
 import { z } from "zod";
@@ -203,6 +204,39 @@ export const harmonyRankingRecordsReportSchema = z.preprocess((input) => {
 }, harmonyRankingRecordsReportV11Schema);
 
 export type HarmonyRankingRecordsReport = z.infer<typeof harmonyRankingRecordsReportSchema>;
+
+export const harmonyBoundaryRecordsReportSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    command: z.literal("boundary-records"),
+    split: z.enum(["train", "tune"]),
+    featureVersion: z.literal("boundary-evidence-v1"),
+    groupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    sources: z.array(
+      z
+        .object({
+          caseId: z.string().min(1),
+          revision: z.string().min(1),
+          groupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
+        })
+        .strict(),
+    ),
+    records: z.array(
+      z
+        .object({
+          id: z.string().min(1),
+          corpus: z.string().min(1),
+          groupId: z.string().min(1),
+          moment: scoreWrittenMomentSchema,
+          target: z.union([z.literal(0), z.literal(1)]),
+          features: z.array(twoDecimalScoreSchema).length(5),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+export type HarmonyBoundaryRecordsReport = z.infer<typeof harmonyBoundaryRecordsReportSchema>;
 
 const fractionSchema = z.number().min(0).max(1);
 const accuracySliceSchema = z

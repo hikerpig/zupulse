@@ -65,6 +65,28 @@ describe("harmony CLI inspect command", () => {
     );
   });
 
+  it("requires explicit inputs and split for boundary records", async () => {
+    await expect(runHarmonyCommand(["boundary-records", "manifest.json"])).rejects.toThrow(
+      "usage: harmony:cli boundary-records",
+    );
+    await expect(
+      runHarmonyCommand([
+        "boundary-records",
+        "manifest.json",
+        "--protocol",
+        "protocol.json",
+        "--data-root",
+        "data",
+        "--case",
+        "mozart",
+        "--output",
+        "records.json",
+        "--split",
+        "eval",
+      ]),
+    ).rejects.toThrow("boundary records --split must be train or tune");
+  });
+
   it("rejects invalid ranking-record splits before reading files", async () => {
     await expect(
       runHarmonyCommand([

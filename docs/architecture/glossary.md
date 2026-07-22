@@ -76,9 +76,15 @@ MusicXML 的压缩容器格式，常用扩展名为 `.mxl`。导入时需要验�
 
 ## Learned Harmony Ranker
 
-随应用发布、离线且确定性运行的和弦候选排序与拒识能力。它接收结构化和声特征与规则候选，
-输出候选分数和置信度，不直接生成任意文本标签。模型版本属于 Analysis Revision 的算法版本，
-训练/调参与最终评估分组严格隔离。
+随应用发布、离线且确定性运行的和弦候选排序能力。frequency ranker 用结构化和声特征扩充并排序
+Top-8 alternatives；Primary Harmony Reranker 再从冻结 range 的 Top-8 中选择 primary。模型不直接生成
+任意文本标签，版本属于 Analysis Revision 的算法版本，训练/调参与最终评估分组严格隔离。
+
+## Primary Harmony Reranker
+
+在规则 boundary、短片段抑制和相邻段合并全部完成后，从最终 Top-8 中选择 primary Chord Symbol 的
+量化小型 MLP。它不能新增候选、改变 Score Written Range 或把 model logit 写成 confidence；PyTorch
+只用于离线训练，Browser、Electron 和 CLI 产品路径使用确定性 TypeScript 推理。
 
 ## User Corrections
 

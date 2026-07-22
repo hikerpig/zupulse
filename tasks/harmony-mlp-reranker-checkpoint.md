@@ -29,6 +29,17 @@
 
 Task 14 的门槛是相对线性 aggregate 至少 `+0.02`，且每个 corpus 不回退超过 `0.005`。量化 MLP 全部门禁通过，接受进入 Task 15。该结论只覆盖 oracle-hit 排序；POP909 较高的 candidate-miss 仍是独立问题。
 
+## Task 15 固定边界集成
+
+- MLP 在规则 decode、短片段抑制、confidence decision 和 merge 全部完成后运行；之后不再执行 boundary 或 merge 操作。
+- rule-only 与 MLP 分支的 range、alternatives 和 decision confidence 由单元测试锁定；MLP 只替换 resolved segment 的 `chord`。
+- 模型在一次分析开始时只校验一次，所有最终 range 复用现有 feature cache。
+- 5,000 notes、20 samples benchmark：rule-only P95 `858.91ms`，MLP P95 `855.98ms`，ratio `0.9966`；heap delta `139.93MB/256MB`。
+- bundled MLP 已成为默认 primary selector；`primaryRerankerModel: false` 是显式 rule-only 训练/回归路径。
+- 新 Analysis Revision 的 `algorithmVersion` 同时记录 frequency ranker 与 MLP 版本。
+
+Task 15 的 `1.25x` 性能、固定 boundary、损坏资产和分数语义门禁通过。MLP logit 没有写入 Segment；当前 confidence 仍是独立规则信号，Task 16 必须在冻结 primary 后重新校准。
+
 ## 复现命令
 
 ```bash

@@ -60,6 +60,7 @@ function createRecords(request: RankingRecordRequest): HarmonyRankingRecord[] {
     includedTrackIds: request.includedTrackIds,
     topK: 8,
     decisionThreshold: 0,
+    primaryRerankerModel: false,
   });
   return segments.flatMap((segment) => {
     const gold = bestOverlappingGold(segment.range, request.gold, request.input);

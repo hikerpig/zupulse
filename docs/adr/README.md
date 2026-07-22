@@ -25,6 +25,7 @@ ADR 文件保留历史编号；本表决定哪些决策可作为当前实现依�
 - `0057`：Renderer 与 Electron Main 共用 `@zupulse/app-i18n` 中的 i18next core catalog。
 - `0058`–`0063`：iPad 薄 SwiftUI/WKWebView 壳、单一版本化 Bridge、token 二进制数据面、受控网络、
   Zod contract 事实源与构建时 Web 资产。
+- `0064`：在冻结规则边界后，以量化小型 MLP 从 Top-8 选择 primary 和弦。
 
 ## Proposed
 

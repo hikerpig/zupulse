@@ -10,6 +10,7 @@ import {
   projectSourceHarmonyEvents,
   readMusicXmlRootXml,
   compareMoments,
+  bundledHarmonyPrimaryMlp,
   bundledHarmonyRankerModel,
 } from "@zupulse/web-core";
 import type {
@@ -522,7 +523,7 @@ export class ViewerApplication implements ViewerAppHandle {
       documentVersion: 0,
       activeRevision: {
         id: crypto.randomUUID(),
-        algorithmVersion: `rules-${bundledHarmonyRankerModel.algorithmVersion}`,
+        algorithmVersion: `rules-${bundledHarmonyRankerModel.algorithmVersion}-${bundledHarmonyPrimaryMlp.algorithmVersion}`,
         createdAt: now,
         parameters: { scope: { includedTrackIds }, topK: 8, decisionThreshold: 0.6 },
         segments: analyzeHarmonyRules(

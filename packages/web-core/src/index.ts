@@ -34,6 +34,7 @@ export * from "./harmony/musicXmlRoundTrip";
 export * from "./harmony/learnedRanker";
 export * from "./harmony/linearReranker";
 export * from "./harmony/mlpReranker";
+export * from "./harmony/bundledHarmonyPrimaryMlp";
 export * from "./harmony/bundledHarmonyRanker";
 export * from "./score/positions";
 export * from "./bridge/types";

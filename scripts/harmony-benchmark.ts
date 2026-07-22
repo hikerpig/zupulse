@@ -1,6 +1,7 @@
 import { performance } from "node:perf_hooks";
 import {
   analyzeHarmonyRules,
+  bundledHarmonyPrimaryMlp,
   createHarmonyAnalysisInput,
   reducePreviewTransport,
 } from "../packages/web-core/src/index";
@@ -9,7 +10,6 @@ const noteCount = 5_000;
 const measureCount = 40;
 const ticksPerMeasure = 1_920;
 const sampleCount = Number(process.env.HARMONY_BENCHMARK_SAMPLES ?? 20);
-const samples: number[] = [];
 const heapBefore = process.memoryUsage().heapUsed;
 const input = createHarmonyAnalysisInput({
   ticksPerQuarter: 480,
@@ -39,13 +39,24 @@ const input = createHarmonyAnalysisInput({
   ],
 });
 
-for (let index = 0; index < sampleCount; index += 1) {
-  const start = performance.now();
-  analyzeHarmonyRules(input, { includedTrackIds: ["benchmark-piano"], topK: 8, decisionThreshold: 0.6 });
-  samples.push(performance.now() - start);
-}
-samples.sort((left, right) => left - right);
-const p95 = samples[Math.ceil(samples.length * 0.95) - 1]!;
+const benchmarkAnalysis = (withReranker: boolean) => {
+  const samples: number[] = [];
+  for (let index = 0; index < sampleCount; index += 1) {
+    const start = performance.now();
+    analyzeHarmonyRules(input, {
+      includedTrackIds: ["benchmark-piano"],
+      topK: 8,
+      decisionThreshold: 0.6,
+      primaryRerankerModel: withReranker ? bundledHarmonyPrimaryMlp : false,
+    });
+    samples.push(performance.now() - start);
+  }
+  samples.sort((left, right) => left - right);
+  return samples[Math.ceil(samples.length * 0.95) - 1]!;
+};
+const baselineP95 = benchmarkAnalysis(false);
+const rerankedP95 = benchmarkAnalysis(true);
+const rerankerRatio = rerankedP95 / baselineP95;
 const previewSamples: number[] = [];
 const cancelSamples: number[] = [];
 for (let index = 0; index < 100; index += 1) {
@@ -68,14 +79,18 @@ console.log(
   JSON.stringify(
     {
       noteCount,
-      samples: samples.length,
-      analysisP95Ms: Number(p95.toFixed(2)),
+      samples: sampleCount,
+      analysisP95Ms: Number(rerankedP95.toFixed(2)),
+      baselineAnalysisP95Ms: Number(baselineP95.toFixed(2)),
+      rerankerRatio: Number(rerankerRatio.toFixed(4)),
       previewReducerP95Ms: Number(previewP95.toFixed(4)),
       cancelFeedbackP95Ms: Number(cancelP95.toFixed(4)),
       resourceBudget: { heapDeltaMb: Number(heapDeltaMb.toFixed(2)), maxHeapDeltaMb: 256 },
-      budgets: { analysisP95Ms: 5_000, uiAndCancelP95Ms: 100 },
+      budgets: { analysisP95Ms: 5_000, maxRerankerRatio: 1.25, uiAndCancelP95Ms: 100 },
     },
     null,
     2,
   ),
 );
+if (rerankedP95 > 5_000 || rerankerRatio > 1.25 || previewP95 > 100 || cancelP95 > 100 || heapDeltaMb > 256)
+  process.exitCode = 1;

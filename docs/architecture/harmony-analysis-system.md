@@ -50,8 +50,9 @@ MusicXML/alphaTab 投影生成可序列化 `HarmonyAnalysisInput`，保留 measu
 2. 用区间缓存统计 pitch-class duration、onset、bass、voice coverage 等特征。
 3. evidence-driven 生成 triad、sus、power、6/7/9/11/13、add、altered 与 inversion 候选。
 4. 用规则 LocalScore、弱 Transition prior 和有界 beam search 选择全局序列。
-5. bundled TypeScript ranker 只扩充和排序 Top-8 alternatives；primary sequence、boundary 和 confidence 保持规则路径。
-6. 抑制短暂非和弦片段、合并相邻同和弦，并按固定 threshold 输出 resolved/unresolved。
+5. bundled frequency ranker 扩充和排序 Top-8 alternatives。
+6. 抑制短暂非和弦片段、合并相邻同和弦，并用独立 confidence threshold 输出 resolved/unresolved。
+7. 两位小数 MLP 只在冻结的最终 range 上从 Top-8 选择 primary，不改变 boundary 或 confidence。
 
 模型是静态 JSON 和确定性 TypeScript，不需要 Torch、Python、浏览器网络请求或在线服务。模型损坏会明确失败，不能静默切换算法。
 

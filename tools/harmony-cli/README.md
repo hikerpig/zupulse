@@ -82,7 +82,28 @@ pnpm -s harmony:cli ranking-records test-fixtures/harmony/datasets/manifest.json
   --max-train-groups 3
 ```
 
-导出器先校验 archive、corpus revision 和完整 group-set hash，再只处理 v3 `train` group；tune、regression 和 final holdout 不会生成 records。`--max-train-groups` 按排序后的 group ID 做确定性上限采样，不改变完整语料校验。每条记录来自生产 analyzer 的实际 range 和 Top-8，标记 `oracle-hit`/`oracle-miss`，特征及 score 最多两位小数。
+导出器先校验 archive、corpus revision 和完整 group-set hash，默认只处理 v3 `train` group；`tune` 必须显式请求，regression 和 final holdout 永远不会生成 records。`--max-train-groups` 按排序后的 group ID 做确定性上限采样，不改变完整语料校验。每条记录来自生产 analyzer 的实际 range 和 Top-8，标记 `oracle-hit`/`oracle-miss`，特征及 score 最多两位小数。
+
+为线性 reranker 生成选择报告时显式使用 `--split tune`；该报告不能进入训练，final holdout 也不能由此命令导出：
+
+```bash
+pnpm -s harmony:cli ranking-records test-fixtures/harmony/datasets/manifest.json \
+  --protocol test-fixtures/harmony/datasets/protocol-v3.json \
+  --data-root /path/to/harmony-data --case dcml-mozart-v2.3 \
+  --split tune --output /tmp/mozart-ranking-tune.json
+```
+
+训练器只接受 train reports，并对 corpus 和完整作品做等权处理；评测器只接受 tune reports：
+
+```bash
+pnpm -s harmony:reranker train /tmp/harmony-linear.json \
+  /tmp/mozart-ranking-train.json /tmp/beethoven-ranking-train.json
+
+pnpm -s harmony:reranker evaluate /tmp/harmony-linear.json \
+  /tmp/mozart-ranking-tune.json /tmp/beethoven-ranking-tune.json
+```
+
+模型是带来源 hash 的两位小数 JSON 权重；PyTorch 不参与这一基线，也不进入产品运行时。
 
 冻结基线比较会锁定 split/gold 数量；mapping、Top-1/Top-8、precision、coverage、boundary F1 只允许在容差内下降，ECE 只允许在容差内上升：
 

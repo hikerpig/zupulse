@@ -25,3 +25,13 @@
 
 - [x] Task 10：运行 K331、跨 DCML、POP909 与 ASAP frozen eval；Schumann ECE 门禁失败。
 - [x] 已回滚 calibration/threshold 候选，保留 Phase 2 与通用校准工具，未移动 baseline。
+
+## Phase 5: 跨语料 Primary Reranker
+
+- [ ] Task 11：预登记未污染的 v3 作品级 holdout；旧 eval 降级为 regression。
+- [ ] Task 12：导出 train-only、固定生产 range 的 Top-8 ranking records。
+- [ ] Task 13：先训练并验证无新运行依赖的线性 reranker。
+- [ ] Checkpoint D：依据线性基线和错误切片决定是否需要 PyTorch。
+- [ ] Task 14（条件触发）：离线训练小型 MLP，导出 JSON，不引入 Torch runtime。
+- [ ] Task 15：在冻结 boundary 上接入 primary reranker，并保持分数语义分离。
+- [ ] Task 16：多语料 calibration、tune threshold 与一次 v3 frozen eval。

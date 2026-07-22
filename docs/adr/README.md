@@ -24,6 +24,18 @@ ADR 文件保留历史编号；本表决定哪些决策可作为当前实现依�
 - `0056`：生产 UI 只展示本地化 Application Issue，不直接展示原始异常或任意技术详情。
 - `0057`：Renderer 与 Electron Main 共用 `@zupulse/app-i18n` 中的 i18next core catalog。
 
+## Proposed
+
+- `0054`：iPad 使用薄 SwiftUI/WKWebView 壳，共享 React Library 与 Viewer；个人原型阶段复用
+  IndexedDB，正式产品化前重新评审持久化与迁移。
+- `0055`：iPad Bridge 使用单一版本化 RPC 通道承载请求、响应与宿主事件。
+- `0056`：iPad Bridge 的 JSON 控制面与一次性 token 二进制数据面分离。
+- `0057`：iPad WebView 允许访问受控 HTTPS 服务，但顶层页面锁定在应用 origin，普通外链交给
+  Safari。
+- `0058`：Zod 继续作为 iPad Bridge 契约事实源，首版生成 manifest、手写 Swift DTO，并以双端
+  fixtures 防止漂移。
+- `0059`：iPad Web 资产在 App 构建时生成且不提交，Xcode 与 CI 共用同一脚本和资源 manifest。
+
 ## Superseded
 
 - `0004`、`0008` 的首版 CloudKit/同步承诺由 `0031` 取代。

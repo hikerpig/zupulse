@@ -22,6 +22,8 @@ Zupulse 是本地优先的乐谱查看与练习应用。当前交付面是共享
 - **Score File Gateway**：请求用户选择导入文件或选择导出位置的宿主端口，不管理馆藏。
 - **Viewer**：通过 `#/viewer/:libraryScoreId` 打开的查看与练习工作区；当前不读取 Studio 的 Harmony Analysis Document。
 - **Studio**：通过 `#/studio/:libraryScoreId` 打开的分析、编辑、预览、保存与导出工作区；Harmony Analysis Document 只在这里生效。
+- **iPad Practice Player**：规划中的原生 iPad 交付面，以本地 Sheet Library 和 Viewer 前台练习为
+  首版核心；它不是 Desktop Shell 的全量移植，Studio、后台播放和跨设备同步需独立进入产品范围。
 - **Viewer Session**：Viewer 中临时的谱面、播放和练习运行时；URL 不保存 Session ID。
 - **Studio Session**：Studio 中临时的谱面、分析编辑与预览运行时；与同一 Library Score 的 Viewer Session 不共享可变运行时对象。
 - **Preview Transport**：Studio 中用于播放、定位和区间试听的临时播放状态；关闭 Studio 后丢弃，不读写练习数据或续播位置。
@@ -49,7 +51,8 @@ Zupulse 是本地优先的乐谱查看与练习应用。当前交付面是共享
 - **Harmony Analysis Compatibility**：首版只分析十二平均律音高；含微分音的区间降级为不支持或低置信度，不把微分音量化到最近半音。
 - **Learned Harmony Ranker**：随应用发布、离线且确定性运行的和弦候选排序与拒识能力；它只处理结构化特征和候选，不直接生成任意和弦文本，训练集与最终评估集严格隔离。
 - **Annotated Score Export**：把 Effective Harmony Projection 增量写入来源格式与结构后生成的新文件副本；它保持来源容器，不修改 Managed Score Copy 或当前 Library Score。
-- **Bridge API**：Renderer 与 Electron Main 之间经版本化 Zod schema 校验的 RPC/事件边界。
+- **Bridge API**：共享 React 应用与受信任平台宿主之间经版本化 schema 校验的 RPC/事件边界；
+  Electron 与 iPad 使用不同传输适配器，但不得创造不同的领域语义。
 
 完整术语见 `docs/architecture/glossary.md`。当前架构和决策入口见
 `docs/architecture/README.md`；若历史文档与本页冲突，以根 `AGENTS.md` 的事实源顺序处理。

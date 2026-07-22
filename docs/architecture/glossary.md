@@ -20,13 +20,19 @@ Studio 中用于播放、定位、临时速度和区间试听的临时播放状�
 
 平台原生应用壳层。macOS 与 iOS 第一版负责文件访问、窗口导航、系统权限、本地存储、同步入口和原生能力桥接。
 
+## iPad Practice Player
+
+规划中的原生 iPad 交付面，以本地 Sheet Library 和 Viewer 前台练习为首版核心。它不是 Desktop
+Shell 的全量移植；Studio、后台播放和跨设备同步只有经过独立产品决策后才进入范围。
+
 ## Basic Piano Score
 
 从 MIDI 事件量化得到的基础钢琴谱。第一版目标是可练习、可定位、可修正，不追求出版级排版。
 
 ## Bridge API
 
-Web Viewer Core 与 Native Shell 之间的通信协议。用于文件访问、sidecar 读写、同步状态、播放状态和平台能力调用。
+共享 React 应用与受信任平台宿主之间的版本化通信协议。Electron 与 iPad 可以使用不同传输适配器，
+但文件访问、生命周期、持久化和其他平台能力不得因此产生不同的领域语义。
 
 ## Content Fingerprint
 

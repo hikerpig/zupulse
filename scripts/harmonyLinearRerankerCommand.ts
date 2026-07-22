@@ -1,9 +1,10 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { linearHarmonyRerankerModelSchema } from "../packages/web-core/src";
+import { linearHarmonyRerankerModelSchema, mlpHarmonyRerankerModelSchema } from "../packages/web-core/src";
 import { harmonyRankingRecordsReportSchema } from "../tools/harmony-cli/src/schemas";
 import {
   evaluateLinearHarmonyReranker,
   evaluateLinearHarmonyRerankerTrainingFit,
+  evaluateMlpHarmonyReranker,
   trainLinearHarmonyReranker,
 } from "./harmonyLinearRerankerTraining";
 
@@ -41,7 +42,18 @@ export async function runLinearHarmonyRerankerCommand(args: readonly string[]) {
       ...evaluateLinearHarmonyRerankerTrainingFit(model, await readReports(reportPaths)),
     };
   }
-  throw new Error("usage: harmony:reranker <train|evaluate|evaluate-train> ...");
+  if (command === "evaluate-mlp") {
+    const modelPath = args[1];
+    const reportPaths = args.slice(2);
+    if (!modelPath || reportPaths.length === 0)
+      throw new Error("usage: harmony:reranker evaluate-mlp <model.json> <tune-records.json...>");
+    const model = mlpHarmonyRerankerModelSchema.parse(JSON.parse(await readFile(modelPath, "utf8")));
+    return {
+      command: "evaluate-mlp-reranker" as const,
+      ...evaluateMlpHarmonyReranker(model, await readReports(reportPaths)),
+    };
+  }
+  throw new Error("usage: harmony:reranker <train|evaluate|evaluate-train|evaluate-mlp> ...");
 }
 
 async function readReports(paths: readonly string[]) {

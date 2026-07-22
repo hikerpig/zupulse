@@ -58,4 +58,23 @@ describe("harmony CLI inspect command", () => {
       "usage: harmony:cli ranking-records",
     );
   });
+
+  it("rejects invalid ranking-record splits before reading files", async () => {
+    await expect(
+      runHarmonyCommand([
+        "ranking-records",
+        "manifest.json",
+        "--protocol",
+        "protocol.json",
+        "--data-root",
+        "data",
+        "--case",
+        "fixture",
+        "--output",
+        "records.json",
+        "--split",
+        "eval",
+      ]),
+    ).rejects.toThrow("ranking records --split must be train or tune");
+  });
 });

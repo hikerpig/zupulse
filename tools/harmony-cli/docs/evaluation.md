@@ -87,7 +87,9 @@ report `2.5.0` 为 accuracy case 增加 `decisionThreshold`。CLI 的 `--decisio
 
 [`protocol-v3.json`](../../../test-fixtures/harmony/datasets/protocol-v3.json) 在下一轮 primary reranker 训练前冻结新的作品级 final holdout：Beethoven `01`、Chopin `BI105` 和 POP909 `225`。这些 group 不得进入 ranking records、训练、tune 或 threshold 选择。现有 K331 与已经查看过指标的跨语料 cases 只保留为 regression，不能再作为新的泛化声明。
 
-Task 16 冻结后的生产 confidence 是 MLP Top-1 softmax probability 经多语料 train-only weighted PAVA 得到的校准概率，默认 threshold 为 `0.46`。该阈值只用 tune 按 aggregate precision `>= 0.70` 后最大化 coverage 选出。`eval-v3-final` 会在一次命令中对预登记 final groups 同时生成 candidate 与历史 rule-only（threshold `0.60`）报告；最终结果只能用于接受或拒绝，不得再次调参。
+Task 16 曾冻结 MLP Top-1 softmax probability + 多语料 train-only weighted PAVA，并在 tune 上按 aggregate precision `>= 0.70` 后最大化 coverage 得到 threshold `0.46`。一次性 v3 final 中 POP909 ECE 回退，历史 DCML regression 又因 coverage 下降失败，因此该资产与阈值未发布，生产默认仍为 Task 15 的 rule confidence + threshold `0.60`。`eval-v3-final` 保留用于未来冻结候选与 rule-only baseline 的同批对照。
+
+注意：现有 `top1Accuracy` 衡量 `alternatives[0]`，不是 reranker 选出的最终 `predicted` primary。它适合候选排序诊断，但不能单独衡量 primary reranker；当前只能结合 `resolvedPrecision`/`resolvedCoverage` 判断发布行为。下一轮应先新增 threshold 前的 predicted-primary 指标，再开展新的模型实验。
 
 未显式登记的 group 继续使用确定性 hash 分配；原本落入 `eval` bucket 的 group 在 v3 中也只作为 regression。协议记录完整 corpus group-set SHA-256 和 revision，运行时重新枚举 group 后必须匹配，防止 corpus 漂移或遗漏作品。
 

@@ -1,9 +1,4 @@
-import {
-  analyzeHarmonyRules,
-  BUNDLED_HARMONY_DECISION_THRESHOLD,
-  buildLegalBoundaryLattice,
-  compareMoments,
-} from "@zupulse/web-core";
+import { analyzeHarmonyRules, buildLegalBoundaryLattice, compareMoments } from "@zupulse/web-core";
 import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -36,7 +31,7 @@ export async function evaluatePop909Corpus(
   },
 ) {
   const reportSplit = options.reportSplit ?? "eval";
-  const decisionThreshold = options.decisionThreshold ?? BUNDLED_HARMONY_DECISION_THRESHOLD;
+  const decisionThreshold = options.decisionThreshold ?? 0.6;
   const songs = (await readdir(root, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory() && /^\d{3}$/.test(entry.name))
     .map((entry) => entry.name)

@@ -3,7 +3,6 @@ import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import {
   analyzeHarmonyRules,
-  BUNDLED_HARMONY_DECISION_THRESHOLD,
   createDefaultHarmonyScope,
   createMusicXmlAdapter,
   projectAlphaTabHarmonyInput,
@@ -18,7 +17,7 @@ export async function inspectHarmonyScore(path: string, view: InspectView) {
   const result = analyzeHarmonyRules(model, {
     ...createDefaultHarmonyScope(model),
     topK: 8,
-    decisionThreshold: BUNDLED_HARMONY_DECISION_THRESHOLD,
+    decisionThreshold: 0.6,
   });
   return {
     source: { name: basename(path), sha256: createHash("sha256").update(bytes).digest("hex") },

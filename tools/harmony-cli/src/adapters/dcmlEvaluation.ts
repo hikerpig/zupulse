@@ -1,6 +1,5 @@
 import {
   analyzeHarmonyRules,
-  BUNDLED_HARMONY_DECISION_THRESHOLD,
   buildLegalBoundaryLattice,
   compareMoments,
   type ChordSymbolInput,
@@ -38,7 +37,7 @@ export async function evaluateDcmlCorpus(
   },
 ) {
   const reportSplit = options.reportSplit ?? "eval";
-  const decisionThreshold = options.decisionThreshold ?? BUNDLED_HARMONY_DECISION_THRESHOLD;
+  const decisionThreshold = options.decisionThreshold ?? 0.6;
   const groupMode = options.groupBy ?? "prefix-before-hyphen";
   const files = (await readdir(resolve(root, "harmonies")))
     .filter((name) => name.endsWith(".harmonies.tsv"))

@@ -536,16 +536,16 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 
 **Acceptance criteria:**
 
-- [ ] calibration 在每个 tune corpus 改善或保持 ECE，而非只改善加权总分。
-- [ ] threshold 满足 precision floor 后最大化 coverage，规则在查看结果前冻结。
-- [ ] v3 holdout、历史 regression、ASAP 和 benchmark 全部门禁通过，否则整轮回滚。
+- [x] calibration 在每个 tune corpus 改善 ECE，而非只改善加权总分。
+- [x] threshold 满足 precision floor 后最大化 coverage，规则在查看结果前冻结。
+- [x] v3 holdout、历史 regression、ASAP 和 benchmark 已执行；POP909 ECE 与历史 DCML coverage 失败，按规则整轮回滚。
 
 **Verification:**
 
-- [ ] `pnpm verify:fast`
-- [ ] `pnpm --filter @zupulse/harmony-cli test`
-- [ ] `pnpm harmony:benchmark`
-- [ ] 保存全部 compare 结果和接受/拒绝说明。
+- [x] `pnpm verify:fast`
+- [x] `pnpm --filter @zupulse/harmony-cli test`
+- [x] `pnpm harmony:benchmark`
+- [x] 保存全部 compare 结果和拒绝说明。
 
 **Dependencies:** Task 15
 

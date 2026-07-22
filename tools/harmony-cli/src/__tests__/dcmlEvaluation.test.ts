@@ -40,7 +40,7 @@ describe("evaluateDcmlCorpus", () => {
       adapter: "dcml",
       status: "passed",
       reportSplit: "eval",
-      decisionThreshold: 0.46,
+      decisionThreshold: 0.6,
       splits: { train: 0, tune: 0, eval: 2 },
       metrics: { gold: { total: 2, mapped: 2, unsupported: 0 }, mappingCoverage: 1 },
     });
@@ -173,7 +173,7 @@ describe("evaluateDcmlCorpus", () => {
         cases: [
           {
             id: "mozart-pilot",
-            decisionThreshold: 0.46,
+            decisionThreshold: 0.6,
             reportSplit: "eval",
             reportGroupsSha256: hashDatasetGroups(["K331"]),
             splits: { eval: 2, train: 0, tune: 0 },

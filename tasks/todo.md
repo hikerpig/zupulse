@@ -40,5 +40,7 @@
 
 - [x] Task 17：补齐 threshold 前 predicted-primary accuracy 与 segment density。
 - [x] Task 18：增加 opt-in `metric-beats` boundary policy，默认暂不改变。
-- [ ] Task 19：只用 train/tune 比较 dense 与 metric harmonic rhythm。
-- [ ] Task 20：冻结候选后运行历史回归；通过才切换默认，否则记录并拒绝。
+- [x] Task 19：Mozart tune 否定 metric/half-beat，未继续污染其他 corpus。
+- [x] Task 20：生产默认未切换、baseline 未移动；K331 历史诊断与拒绝结论已记录。
+- [x] Task 21：实现 metric + strong simultaneous-onset boundary gate。
+- [x] Task 22：Mozart tune interval 门禁失败，未发布、未移动 baseline，并记录后续 boundary-evidence 方向。

@@ -75,7 +75,7 @@ pnpm -s harmony:cli eval test-fixtures/harmony/datasets/manifest.json \
   --boundary-policy metric-beats
 ```
 
-`metric-beats` 只保留小节线、音乐拍点和 mandatory boundary；实际 policy 会写入 accuracy case。
+`metric-beats` 只保留小节线、音乐拍点和 mandatory boundary；若它漏掉拍内真实变化，唯一预登记的折中方案是 `metric-half-beats`。实际 policy 会写入 accuracy case。
 
 `data-root` 下必须同时存在 manifest 声明的 archive 和解压目录。CLI 先校验 archive SHA-256，再运行 adapter。DCML 报告包含作品级 split、mapping/unsupported、Top-1/Top-8、resolved precision/coverage、boundary F1、ECE、facets、chord-family slices 和最多 50 条错误定位。当前固定 Mozart 数据为 v2.3；K331 整首奏鸣曲强制属于 eval。可用 `--case <id>` 只运行一个 corpus。
 

@@ -3,7 +3,7 @@ import type { ScoreWrittenMoment } from "./writtenTime";
 import { compareMoments } from "./schemas";
 
 export type LegalBoundaryLattice = { moments: ScoreWrittenMoment[]; mandatory: Set<string> };
-export type HarmonyBoundaryPolicy = "dense-note-events" | "metric-beats";
+export type HarmonyBoundaryPolicy = "dense-note-events" | "metric-beats" | "metric-half-beats" | "metric-strong-onsets";
 
 export function buildLegalBoundaryLattice(
   input: Pick<HarmonyAnalysisInput, "ticksPerQuarter" | "measures" | "tracks"> & {
@@ -27,26 +27,34 @@ export function buildLegalBoundaryLattice(
       { measureIndex: measure.index, offsetTicks: 0 },
       { measureIndex: measure.index, offsetTicks: measure.durationTicks },
     ];
+    const notes = input.tracks
+      .flatMap((track) => track.staves.flatMap((staff) => staff.notes))
+      .filter((note) => note.moment.measureIndex === measure.index);
     const noteMoments =
-      input.policy === "metric-beats"
-        ? []
-        : input.tracks
-            .flatMap((track) =>
-              track.staves.flatMap((staff) =>
-                staff.notes.flatMap((note) => [
-                  note.moment,
-                  { measureIndex: note.moment.measureIndex, offsetTicks: note.moment.offsetTicks + note.durationTicks },
-                ]),
-              ),
-            )
-            .filter((moment) => moment.measureIndex === measure.index);
+      input.policy === "metric-strong-onsets"
+        ? [...new Set(notes.map((note) => note.moment.offsetTicks))].flatMap((offsetTicks) => {
+            const pitchClasses = new Set(
+              notes
+                .filter((note) => note.moment.offsetTicks === offsetTicks)
+                .flatMap((note) => (note.soundingPitchClass === undefined ? [] : [note.soundingPitchClass])),
+            );
+            return pitchClasses.size >= 2 ? [{ measureIndex: measure.index, offsetTicks }] : [];
+          })
+        : input.policy !== undefined && input.policy !== "dense-note-events"
+          ? []
+          : notes.flatMap((note) => [
+              note.moment,
+              { measureIndex: note.moment.measureIndex, offsetTicks: note.moment.offsetTicks + note.durationTicks },
+            ]);
     const denominatorBeat = (input.ticksPerQuarter * 4) / measure.timeSignature.denominator;
-    const beat =
-      input.policy === "metric-beats" &&
+    const musicalBeat =
+      input.policy !== undefined &&
+      input.policy !== "dense-note-events" &&
       measure.timeSignature.numerator > 3 &&
       measure.timeSignature.numerator % 3 === 0
         ? denominatorBeat * 3
         : denominatorBeat;
+    const beat = input.policy === "metric-half-beats" ? musicalBeat / 2 : musicalBeat;
     const metric = Array.from({ length: Math.ceil(measure.durationTicks / beat) }, (_, index) => ({
       measureIndex: measure.index,
       offsetTicks: index * beat,

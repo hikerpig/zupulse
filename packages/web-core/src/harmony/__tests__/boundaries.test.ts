@@ -118,4 +118,80 @@ describe("harmony legal boundaries", () => {
       { measureIndex: 0, offsetTicks: 480 },
     ]);
   });
+
+  it("supports a deterministic half-beat compromise without note-event boundaries", () => {
+    const simple = buildLegalBoundaryLattice({
+      ticksPerQuarter: 960,
+      measures: [{ index: 0, durationTicks: 1920, timeSignature: { numerator: 2, denominator: 4 } }],
+      tracks: [],
+      policy: "metric-half-beats",
+    });
+    const compound = buildLegalBoundaryLattice({
+      ticksPerQuarter: 960,
+      measures: [{ index: 0, durationTicks: 2880, timeSignature: { numerator: 6, denominator: 8 } }],
+      tracks: [],
+      policy: "metric-half-beats",
+    });
+
+    expect(simple.moments.map((moment) => moment.offsetTicks)).toEqual([0, 480, 960, 1440, 1920]);
+    expect(compound.moments.map((moment) => moment.offsetTicks)).toEqual([0, 720, 1440, 2160, 2880]);
+  });
+
+  it("restores only simultaneous multi-pitch onsets in strong-onset policy", () => {
+    const result = buildLegalBoundaryLattice({
+      ticksPerQuarter: 480,
+      measures: [{ index: 0, durationTicks: 960, timeSignature: { numerator: 2, denominator: 4 } }],
+      tracks: [
+        {
+          id: "piano",
+          isPercussion: false,
+          staves: [
+            {
+              index: 0,
+              notes: [
+                {
+                  id: "single",
+                  moment: { measureIndex: 0, offsetTicks: 120 },
+                  durationTicks: 120,
+                  soundingPitchClass: 7,
+                  voice: 1,
+                },
+                {
+                  id: "octave-a",
+                  moment: { measureIndex: 0, offsetTicks: 240 },
+                  durationTicks: 120,
+                  soundingPitchClass: 0,
+                  voice: 1,
+                },
+                {
+                  id: "octave-b",
+                  moment: { measureIndex: 0, offsetTicks: 240 },
+                  durationTicks: 120,
+                  soundingPitchClass: 0,
+                  voice: 2,
+                },
+                {
+                  id: "chord-a",
+                  moment: { measureIndex: 0, offsetTicks: 360 },
+                  durationTicks: 120,
+                  soundingPitchClass: 0,
+                  voice: 1,
+                },
+                {
+                  id: "chord-b",
+                  moment: { measureIndex: 0, offsetTicks: 360 },
+                  durationTicks: 120,
+                  soundingPitchClass: 4,
+                  voice: 2,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      policy: "metric-strong-onsets",
+    });
+
+    expect(result.moments.map((moment) => moment.offsetTicks)).toEqual([0, 360, 480, 960]);
+  });
 });

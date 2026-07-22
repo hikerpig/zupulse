@@ -84,7 +84,7 @@ export async function evaluateHarmonyV3FinalHoldout(
 
   function buildReport(manifestId: string, cases: HarmonyDatasetEvalReport["cases"]): HarmonyDatasetEvalReport {
     return harmonyDatasetEvalReportSchema.parse({
-      schemaVersion: "2.5.0",
+      schemaVersion: "2.6.0",
       command: "eval",
       manifest: manifestId,
       summary: {

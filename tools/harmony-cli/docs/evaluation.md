@@ -83,6 +83,8 @@ report `2.4.0` 将原来的 `resolved-wrong` 拆成 `resolved-wrong-oracle-hit` 
 
 report `2.5.0` 为 accuracy case 增加 `decisionThreshold`。CLI 的 `--decision-threshold 0..1` 只控制本次分析的拒识阈值，默认保持 `0.6`；拟合校准器时使用 `0` 观察未经拒识的 primary confidence，冻结评测仍使用预先选定的产品阈值。
 
+report `2.6.0` 将候选排序与最终 primary 分开：`top1Accuracy` 仍表示 `alternatives[0]`，`predictedPrimaryAccuracy` 表示 threshold 前 reranker 选出的 primary；`segmentDensity` 记录生产输出的 segment 数量、小节数和每小节片段数。threshold 前诊断由 evaluator 的独立分析路径生成，不写入 Harmony Analysis Document。
+
 ## v3 预登记协议
 
 [`protocol-v3.json`](../../../test-fixtures/harmony/datasets/protocol-v3.json) 在下一轮 primary reranker 训练前冻结新的作品级 final holdout：Beethoven `01`、Chopin `BI105` 和 POP909 `225`。这些 group 不得进入 ranking records、训练、tune 或 threshold 选择。现有 K331 与已经查看过指标的跨语料 cases 只保留为 regression，不能再作为新的泛化声明。

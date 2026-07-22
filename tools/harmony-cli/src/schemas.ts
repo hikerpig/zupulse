@@ -138,6 +138,31 @@ const accuracyErrorCategorySchema = z.enum([
 const diagnosticBucketSchema = z
   .object({ cases: z.number().int().nonnegative(), weight: z.number().nonnegative() })
   .strict();
+const intervalOverlapDiagnosticsSchema = z
+  .object({
+    overlap: z
+      .object({
+        mappedDurationTicks: z.number().int().nonnegative(),
+        correctDurationTicks: z.number().int().nonnegative(),
+        wrongDurationTicks: z.number().int().nonnegative(),
+        unresolvedDurationTicks: z.number().int().nonnegative(),
+        accuracy: fractionSchema,
+        resolvedPrecision: fractionSchema,
+        resolvedCoverage: fractionSchema,
+      })
+      .strict(),
+    boundaries: z
+      .object({
+        expected: z.number().int().nonnegative(),
+        predicted: z.number().int().nonnegative(),
+        truePositive: z.number().int().nonnegative(),
+        overSegmented: z.number().int().nonnegative(),
+        underSegmented: z.number().int().nonnegative(),
+        f1: fractionSchema,
+      })
+      .strict(),
+  })
+  .strict();
 
 export const harmonyAccuracyMetricsSchema = z
   .object({
@@ -176,6 +201,7 @@ export const harmonyAccuracyMetricsSchema = z
         outcomes: z.partialRecord(accuracyOutcomeSchema, diagnosticBucketSchema),
         outcomesByFamily: z.record(z.string(), z.partialRecord(accuracyOutcomeSchema, diagnosticBucketSchema)),
         errors: z.partialRecord(accuracyErrorCategorySchema, diagnosticBucketSchema),
+        intervalOverlap: intervalOverlapDiagnosticsSchema,
         confidenceBins: z
           .array(
             z
@@ -199,7 +225,7 @@ export const harmonyAccuracyMetricsSchema = z
 
 export const harmonyDatasetEvalReportSchema = z
   .object({
-    schemaVersion: z.literal("2.1.0"),
+    schemaVersion: z.literal("2.2.0"),
     command: z.literal("eval"),
     manifest: z.string().min(1),
     summary: z.object({ passed: z.number().int().nonnegative(), failed: z.number().int().nonnegative() }).strict(),

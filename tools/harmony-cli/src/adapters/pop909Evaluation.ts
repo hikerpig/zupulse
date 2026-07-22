@@ -1,4 +1,4 @@
-import { analyzeHarmonyRules, compareMoments } from "@zupulse/web-core";
+import { analyzeHarmonyRules, buildLegalBoundaryLattice, compareMoments } from "@zupulse/web-core";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
@@ -9,6 +9,11 @@ import {
   type AccuracyObservation,
 } from "../accuracyMetrics";
 import { assignDatasetSplit } from "../evaluationProtocol";
+import {
+  calculateIntervalOverlapDiagnostics,
+  mergeIntervalOverlapDiagnostics,
+  type IntervalOverlapDiagnostics,
+} from "../intervalMetrics";
 import { parsePop909Piece } from "./pop909";
 
 export async function evaluatePop909Corpus(
@@ -24,6 +29,7 @@ export async function evaluatePop909Corpus(
 
   const splits = { train: 0, tune: 0, eval: 0 };
   const observations: AccuracyObservation[] = [];
+  const intervalDiagnostics: IntervalOverlapDiagnostics[] = [];
   const errors: Array<{
     pieceId: string;
     groupId: string;
@@ -46,6 +52,15 @@ export async function evaluatePop909Corpus(
     splits[split] += piece.gold.length;
     if (split !== "eval") continue;
     const segments = analyzeHarmonyRules(piece.input, { includedTrackIds: ["pop909"], topK: 8 });
+    intervalDiagnostics.push(
+      calculateIntervalOverlapDiagnostics({
+        ticksPerQuarter: piece.input.ticksPerQuarter,
+        measures: piece.input.measures,
+        legalMoments: buildLegalBoundaryLattice(piece.input).moments,
+        gold: piece.gold.flatMap((item) => (item.chord ? [{ range: item.range, chord: item.chord }] : [])),
+        predicted: segments,
+      }),
+    );
     for (const [index, gold] of piece.gold.entries()) {
       const segment = segments.find(
         (candidate) =>
@@ -90,7 +105,7 @@ export async function evaluatePop909Corpus(
     adapter: "pop909" as const,
     status: "passed" as const,
     splits,
-    metrics: calculateAccuracyMetrics(observations),
+    metrics: calculateAccuracyMetrics(observations, mergeIntervalOverlapDiagnostics(intervalDiagnostics)),
     errors,
   };
 }

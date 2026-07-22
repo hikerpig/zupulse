@@ -1,4 +1,9 @@
-import { analyzeHarmonyRules, compareMoments, type ChordSymbolInput } from "@zupulse/web-core";
+import {
+  analyzeHarmonyRules,
+  buildLegalBoundaryLattice,
+  compareMoments,
+  type ChordSymbolInput,
+} from "@zupulse/web-core";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
@@ -9,6 +14,11 @@ import {
   type AccuracyObservation,
 } from "../accuracyMetrics";
 import { assignDatasetSplit } from "../evaluationProtocol";
+import {
+  calculateIntervalOverlapDiagnostics,
+  mergeIntervalOverlapDiagnostics,
+  type IntervalOverlapDiagnostics,
+} from "../intervalMetrics";
 import { parseDcmlPiece } from "./dcml";
 
 export async function evaluateDcmlCorpus(
@@ -29,6 +39,7 @@ export async function evaluateDcmlCorpus(
 
   const splitCounts = { train: 0, tune: 0, eval: 0 };
   const evalObservations: AccuracyObservation[] = [];
+  const intervalDiagnostics: IntervalOverlapDiagnostics[] = [];
   const errors: Array<{
     pieceId: string;
     groupId: string;
@@ -51,6 +62,15 @@ export async function evaluateDcmlCorpus(
     splitCounts[split] += piece.gold.length;
     if (split !== "eval") continue;
     const segments = analyzeHarmonyRules(piece.input, { includedTrackIds: ["dcml"], topK: 8 });
+    intervalDiagnostics.push(
+      calculateIntervalOverlapDiagnostics({
+        ticksPerQuarter: piece.input.ticksPerQuarter,
+        measures: piece.input.measures,
+        legalMoments: buildLegalBoundaryLattice(piece.input).moments,
+        gold: piece.gold.flatMap((item) => (item.chord ? [{ range: item.range, chord: item.chord }] : [])),
+        predicted: segments,
+      }),
+    );
     for (const [index, gold] of piece.gold.entries()) {
       const segment = segments.find(
         (candidate) =>
@@ -95,7 +115,7 @@ export async function evaluateDcmlCorpus(
     adapter: "dcml" as const,
     status: "passed" as const,
     splits: splitCounts,
-    metrics: calculateAccuracyMetrics(evalObservations),
+    metrics: calculateAccuracyMetrics(evalObservations, mergeIntervalOverlapDiagnostics(intervalDiagnostics)),
     errors,
   };
 }

@@ -75,6 +75,8 @@ dataset eval report 从 `2.1.0` 起增加 `diagnostics`：全量 observation 按
 
 错误定位样本按 category 各保留最多 5 条、总数最多 50 条，顺序由 corpus/piece 的稳定遍历决定。`diagnostics.errors` 才是全量错误簇计数，不能再用样本数组长度判断最大错误簇。既有 accuracy baseline 仍使用 `1.0.0`，compare 会忽略新增 diagnostics，因此无需迁移 baseline 数值。
 
+report `2.2.0` 新增 `diagnostics.intervalOverlap`。它在每个 mapped gold range 内按预测与 gold 的联合边界累计 correct、wrong 和 unresolved ticks，因而会完整计入 gold 区间中间的错误和弦变化。`boundaries` 对变化边界做一对一匹配，容差取八分音符与目标位置相邻 legal moment 距离的较小值，并分别报告 `overSegmented`、`underSegmented` 和容差 F1。原有 gold-onset `boundaryF1` 保留用于 frozen baseline 连续性，两种指标不得混名。
+
 ## 当前冻结基线
 
 以下是版本化 baseline JSON 的便读摘要；比较时以 JSON 文件为准：

@@ -1,4 +1,5 @@
 import { chordSymbolSchema, type ChordSymbolInput } from "@zupulse/web-core";
+import { mergeIntervalOverlapDiagnostics, type IntervalOverlapDiagnostics } from "./intervalMetrics";
 
 export type AccuracyObservation = {
   groupId: string;
@@ -51,6 +52,7 @@ export type AccuracyMetrics = {
     outcomes: Partial<Record<AccuracyOutcome, DiagnosticBucket>>;
     outcomesByFamily: Record<string, Partial<Record<AccuracyOutcome, DiagnosticBucket>>>;
     errors: Partial<Record<AccuracyErrorCategory, DiagnosticBucket>>;
+    intervalOverlap: IntervalOverlapDiagnostics;
     confidenceBins: Array<{
       index: number;
       cases: number;
@@ -62,7 +64,10 @@ export type AccuracyMetrics = {
   };
 };
 
-export function calculateAccuracyMetrics(observations: readonly AccuracyObservation[]): AccuracyMetrics {
+export function calculateAccuracyMetrics(
+  observations: readonly AccuracyObservation[],
+  intervalOverlap: IntervalOverlapDiagnostics = mergeIntervalOverlapDiagnostics([]),
+): AccuracyMetrics {
   const mapped = observations.filter((item): item is AccuracyObservation & { expected: ChordSymbolInput } =>
     Boolean(item.expected),
   );
@@ -104,7 +109,7 @@ export function calculateAccuracyMetrics(observations: readonly AccuracyObservat
       corpus: createSlices(mapped, (item) => item.corpus),
       chordFamily: createSlices(mapped, (item) => item.family),
     },
-    diagnostics: createDiagnostics(observations),
+    diagnostics: createDiagnostics(observations, intervalOverlap),
   };
 }
 
@@ -145,7 +150,10 @@ export function shouldIncludeDiagnosticSample(
   return samples.length < 50 && samples.filter((sample) => sample.category === category).length < 5;
 }
 
-function createDiagnostics(observations: readonly AccuracyObservation[]): AccuracyMetrics["diagnostics"] {
+function createDiagnostics(
+  observations: readonly AccuracyObservation[],
+  intervalOverlap: IntervalOverlapDiagnostics,
+): AccuracyMetrics["diagnostics"] {
   const outcomes: Partial<Record<AccuracyOutcome, DiagnosticBucket>> = {};
   const outcomesByFamily: Record<string, Partial<Record<AccuracyOutcome, DiagnosticBucket>>> = {};
   const errors: Partial<Record<AccuracyErrorCategory, DiagnosticBucket>> = {};
@@ -161,6 +169,7 @@ function createDiagnostics(observations: readonly AccuracyObservation[]): Accura
     outcomes,
     outcomesByFamily,
     errors,
+    intervalOverlap,
     confidenceBins: createConfidenceBins(observations),
     precisionCoverageCurve: createPrecisionCoverageCurve(observations),
   };

@@ -83,6 +83,12 @@ report `2.4.0` 将原来的 `resolved-wrong` 拆成 `resolved-wrong-oracle-hit` 
 
 report `2.5.0` 为 accuracy case 增加 `decisionThreshold`。CLI 的 `--decision-threshold 0..1` 只控制本次分析的拒识阈值，默认保持 `0.6`；拟合校准器时使用 `0` 观察未经拒识的 primary confidence，冻结评测仍使用预先选定的产品阈值。
 
+## v3 预登记协议
+
+[`protocol-v3.json`](../../../test-fixtures/harmony/datasets/protocol-v3.json) 在下一轮 primary reranker 训练前冻结新的作品级 final holdout：Beethoven `01`、Chopin `BI105` 和 POP909 `225`。这些 group 不得进入 ranking records、训练、tune 或 threshold 选择。现有 K331 与已经查看过指标的跨语料 cases 只保留为 regression，不能再作为新的泛化声明。
+
+未显式登记的 group 继续使用确定性 hash 分配；原本落入 `eval` bucket 的 group 在 v3 中也只作为 regression。协议记录完整 corpus group-set SHA-256 和 revision，运行时重新枚举 group 后必须匹配，防止 corpus 漂移或遗漏作品。
+
 ## 当前冻结基线
 
 以下是版本化 baseline JSON 的便读摘要；比较时以 JSON 文件为准：

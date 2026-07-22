@@ -54,6 +54,8 @@ export async function evaluateDcmlCorpus(
   const evalObservations: AccuracyObservation[] = [];
   const reportGroups = new Set<string>();
   const intervalDiagnostics: IntervalOverlapDiagnostics[] = [];
+  let reportMeasures = 0;
+  let predictedSegments = 0;
   const errors: Array<{
     pieceId: string;
     groupId: string;
@@ -76,12 +78,23 @@ export async function evaluateDcmlCorpus(
     splitCounts[split] += piece.gold.length;
     if (split !== reportSplit) continue;
     reportGroups.add(groupId);
+    reportMeasures += piece.input.measures.length;
     const segments = analyzeHarmonyRules(piece.input, {
       includedTrackIds: ["dcml"],
       topK: 8,
       decisionThreshold,
       ...(options.primaryRerankerModel === false ? { primaryRerankerModel: false } : {}),
     });
+    predictedSegments += segments.length;
+    const primarySegments =
+      decisionThreshold === 0
+        ? segments
+        : analyzeHarmonyRules(piece.input, {
+            includedTrackIds: ["dcml"],
+            topK: 8,
+            decisionThreshold: 0,
+            ...(options.primaryRerankerModel === false ? { primaryRerankerModel: false } : {}),
+          });
     intervalDiagnostics.push(
       calculateIntervalOverlapDiagnostics({
         ticksPerQuarter: piece.input.ticksPerQuarter,
@@ -98,6 +111,11 @@ export async function evaluateDcmlCorpus(
           compareMoments(gold.range.start, candidate.range.end) < 0,
       );
       const previous = piece.gold[index - 1];
+      const primarySegment = primarySegments.find(
+        (candidate) =>
+          compareMoments(candidate.range.start, gold.range.start) <= 0 &&
+          compareMoments(gold.range.start, candidate.range.end) < 0,
+      );
       const expectedBoundary = index > 0 && !sameChord(previous?.chord, gold.chord);
       const predictedBoundary =
         index > 0 && segments.some((candidate) => compareMoments(candidate.range.start, gold.range.start) === 0);
@@ -110,6 +128,7 @@ export async function evaluateDcmlCorpus(
         ...(segment?.status === "resolved"
           ? { predicted: segment.chord, confidence: segment.confidence }
           : { confidence: 0 }),
+        ...(primarySegment?.status === "resolved" ? { primary: primarySegment.chord } : {}),
         alternatives: segment?.alternatives.map((candidate) => candidate.chord) ?? [],
         expectedBoundary,
         predictedBoundary,
@@ -139,7 +158,10 @@ export async function evaluateDcmlCorpus(
     reportGroupsSha256: hashGroups(reportGroups),
     decisionThreshold,
     splits: splitCounts,
-    metrics: calculateAccuracyMetrics(evalObservations, mergeIntervalOverlapDiagnostics(intervalDiagnostics)),
+    metrics: calculateAccuracyMetrics(evalObservations, mergeIntervalOverlapDiagnostics(intervalDiagnostics), {
+      predictedSegments,
+      measures: reportMeasures,
+    }),
     errors,
   };
 }

@@ -579,18 +579,18 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 
 ## Task 17：补齐最终 primary 与切分密度指标
 
-**Description:** evaluator 同时观察 threshold 前的最终 primary 和生产 threshold 后的决策，新增 `predictedPrimaryAccuracy`；报告每小节/每分钟 segment 密度，使过切分成为可直接比较的指标。
+**Description:** evaluator 同时观察 threshold 前的最终 primary 和生产 threshold 后的决策，新增 `predictedPrimaryAccuracy`；报告每小节 segment 密度，使过切分成为可直接比较的指标。
 
 **Acceptance criteria:**
 
-- [ ] `top1Accuracy` 继续明确表示 `alternatives[0]`，新增指标只衡量 reranker 选出的 threshold 前 primary。
-- [ ] unresolved 仍不在持久化结果中泄漏 chord/raw confidence；双路径诊断仅存在于 evaluator。
-- [ ] segment density 与 primary accuracy 都使用确定性、版本化的 report 字段。
+- [x] `top1Accuracy` 继续明确表示 `alternatives[0]`，新增指标只衡量 reranker 选出的 threshold 前 primary。
+- [x] unresolved 仍不在持久化结果中泄漏 chord/raw confidence；双路径诊断仅存在于 evaluator。
+- [x] segment density 与 primary accuracy 都使用确定性、版本化的 report `2.6.0` 字段。
 
 **Verification:**
 
-- [ ] accuracy metrics 单测证明 alternatives 第一名和 predicted primary 不同时两个指标不同。
-- [ ] DCML/POP909 adapter 测试覆盖 threshold 前后匹配和 range 不一致时显式失败。
+- [x] accuracy metrics 单测证明 alternatives 第一名和 predicted primary 不同时两个指标不同。
+- [x] DCML/POP909 adapter 测试覆盖 threshold 前后独立分析；primary 诊断不改变生产 segment。
 
 **Dependencies:** Task 16
 

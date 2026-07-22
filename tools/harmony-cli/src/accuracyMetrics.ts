@@ -9,13 +9,20 @@ export type AccuracyObservation = {
   expected?: ChordSymbolInput;
   unsupportedLabel?: string;
   predicted?: ChordSymbolInput;
+  primary?: ChordSymbolInput;
   alternatives: readonly ChordSymbolInput[];
   confidence: number;
   expectedBoundary: boolean;
   predictedBoundary: boolean;
 };
 
-type SliceMetrics = { cases: number; top1Accuracy: number; resolvedPrecision: number; resolvedCoverage: number };
+type SliceMetrics = {
+  cases: number;
+  top1Accuracy: number;
+  predictedPrimaryAccuracy: number;
+  resolvedPrecision: number;
+  resolvedCoverage: number;
+};
 export type AccuracyOutcome =
   | "unsupported-label"
   | "unresolved-oracle-top1"
@@ -42,11 +49,13 @@ export type AccuracyMetrics = {
   mappingCoverage: number;
   unsupportedLabelRate: number;
   top1Accuracy: number;
+  predictedPrimaryAccuracy: number;
   top8OracleRecall: number;
   resolvedPrecision: number;
   resolvedCoverage: number;
   boundaryF1: number;
   expectedCalibrationError: number;
+  segmentDensity: { predictedSegments: number; measures: number; segmentsPerMeasure: number };
   facets: { root: number; bass: number; kind: number; extension: number; degrees: number };
   slices: { corpus: Record<string, SliceMetrics>; chordFamily: Record<string, SliceMetrics> };
   diagnostics: {
@@ -75,6 +84,7 @@ export type AccuracyMetrics = {
 export function calculateAccuracyMetrics(
   observations: readonly AccuracyObservation[],
   intervalOverlap: IntervalOverlapDiagnostics = mergeIntervalOverlapDiagnostics([]),
+  segmentation: { predictedSegments: number; measures: number } = { predictedSegments: 0, measures: 0 },
 ): AccuracyMetrics {
   const mapped = observations.filter((item): item is AccuracyObservation & { expected: ChordSymbolInput } =>
     Boolean(item.expected),
@@ -96,6 +106,7 @@ export function calculateAccuracyMetrics(
     mappingCoverage: ratio(mapped.length, observations.length),
     unsupportedLabelRate: ratio(observations.length - mapped.length, observations.length),
     top1Accuracy: weightedRatio(mapped, (item) => sameChord(item.alternatives[0], item.expected)),
+    predictedPrimaryAccuracy: weightedRatio(mapped, (item) => sameChord(item.primary, item.expected)),
     top8OracleRecall: weightedRatio(mapped, (item) =>
       item.alternatives.some((candidate) => sameChord(candidate, item.expected)),
     ),
@@ -106,6 +117,10 @@ export function calculateAccuracyMetrics(
         ? 0
         : (2 * boundaryPrecision * boundaryRecall) / (boundaryPrecision + boundaryRecall),
     expectedCalibrationError: calibrationError(mapped),
+    segmentDensity: {
+      ...segmentation,
+      segmentsPerMeasure: ratio(segmentation.predictedSegments, segmentation.measures),
+    },
     facets: {
       root: weightedRatio(resolved, (item) => same(item.predicted.root, item.expected.root)),
       bass: weightedRatio(resolved, (item) => same(item.predicted.bass, item.expected.bass)),
@@ -265,6 +280,7 @@ function createSlices(
         {
           cases: items.length,
           top1Accuracy: weightedRatio(items, (item) => sameChord(item.alternatives[0], item.expected)),
+          predictedPrimaryAccuracy: weightedRatio(items, (item) => sameChord(item.primary, item.expected)),
           resolvedPrecision: weightedRatio(resolved, (item) => sameChord(item.predicted, item.expected)),
           resolvedCoverage: ratio(totalWeight(resolved), totalWeight(items)),
         },

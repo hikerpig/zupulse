@@ -38,7 +38,7 @@
 
 ## Phase 6: Harmonic Rhythm 与边界稀疏化
 
-- [ ] Task 17：补齐 threshold 前 predicted-primary accuracy 与 segment density。
+- [x] Task 17：补齐 threshold 前 predicted-primary accuracy 与 segment density。
 - [ ] Task 18：增加 opt-in `metric-beats` boundary policy，默认暂不改变。
 - [ ] Task 19：只用 train/tune 比较 dense 与 metric harmonic rhythm。
 - [ ] Task 20：冻结候选后运行历史回归；通过才切换默认，否则记录并拒绝。

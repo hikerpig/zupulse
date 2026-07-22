@@ -209,6 +209,7 @@ const accuracySliceSchema = z
   .object({
     cases: z.number().int().nonnegative(),
     top1Accuracy: fractionSchema,
+    predictedPrimaryAccuracy: fractionSchema,
     resolvedPrecision: fractionSchema,
     resolvedCoverage: fractionSchema,
   })
@@ -275,11 +276,19 @@ export const harmonyAccuracyMetricsSchema = z
     mappingCoverage: fractionSchema,
     unsupportedLabelRate: fractionSchema,
     top1Accuracy: fractionSchema,
+    predictedPrimaryAccuracy: fractionSchema,
     top8OracleRecall: fractionSchema,
     resolvedPrecision: fractionSchema,
     resolvedCoverage: fractionSchema,
     boundaryF1: fractionSchema,
     expectedCalibrationError: fractionSchema,
+    segmentDensity: z
+      .object({
+        predictedSegments: z.number().int().nonnegative(),
+        measures: z.number().int().nonnegative(),
+        segmentsPerMeasure: z.number().nonnegative(),
+      })
+      .strict(),
     facets: z
       .object({
         root: fractionSchema,
@@ -337,7 +346,7 @@ export const harmonyAccuracyMetricsSchema = z
 
 export const harmonyDatasetEvalReportSchema = z
   .object({
-    schemaVersion: z.literal("2.5.0"),
+    schemaVersion: z.literal("2.6.0"),
     command: z.literal("eval"),
     manifest: z.string().min(1),
     summary: z.object({ passed: z.number().int().nonnegative(), failed: z.number().int().nonnegative() }).strict(),
@@ -421,11 +430,20 @@ const accuracyBaselineCaseSchema = z
       .strict(),
     mappingCoverage: fractionSchema,
     top1Accuracy: fractionSchema,
+    predictedPrimaryAccuracy: fractionSchema.optional(),
     top8OracleRecall: fractionSchema,
     resolvedPrecision: fractionSchema,
     resolvedCoverage: fractionSchema,
     boundaryF1: fractionSchema,
     expectedCalibrationError: fractionSchema,
+    segmentDensity: z
+      .object({
+        predictedSegments: z.number().int().nonnegative(),
+        measures: z.number().int().nonnegative(),
+        segmentsPerMeasure: z.number().nonnegative(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 

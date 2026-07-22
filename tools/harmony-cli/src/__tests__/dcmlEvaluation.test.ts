@@ -42,7 +42,12 @@ describe("evaluateDcmlCorpus", () => {
       reportSplit: "eval",
       decisionThreshold: 0.6,
       splits: { train: 0, tune: 0, eval: 2 },
-      metrics: { gold: { total: 2, mapped: 2, unsupported: 0 }, mappingCoverage: 1 },
+      metrics: {
+        gold: { total: 2, mapped: 2, unsupported: 0 },
+        mappingCoverage: 1,
+        predictedPrimaryAccuracy: expect.any(Number),
+        segmentDensity: { predictedSegments: expect.any(Number), measures: 2, segmentsPerMeasure: expect.any(Number) },
+      },
     });
     expect(result.metrics.diagnostics).toMatchObject({
       intervalOverlap: {
@@ -50,6 +55,8 @@ describe("evaluateDcmlCorpus", () => {
         boundaries: { expected: 1, predicted: expect.any(Number) },
       },
     });
+    expect(result.metrics.segmentDensity.predictedSegments).toBeGreaterThan(0);
+    expect(result.metrics.predictedPrimaryAccuracy).toBeGreaterThan(0);
 
     const tune = await evaluateDcmlCorpus(root, {
       id: "mozart-pilot",
@@ -111,11 +118,11 @@ describe("evaluateDcmlCorpus", () => {
 
     const report = await evaluateHarmonyManifest(manifestPath, { dataRoot, caseId: "mozart-pilot" });
     expect(report).toMatchObject({
-      schemaVersion: "2.5.0",
+      schemaVersion: "2.6.0",
       command: "eval",
       summary: { passed: 1, failed: 0 },
     });
-    if (report.schemaVersion !== "2.5.0" || report.cases[0]?.kind !== "accuracy-corpus") {
+    if (report.schemaVersion !== "2.6.0" || report.cases[0]?.kind !== "accuracy-corpus") {
       throw new Error("expected accuracy report");
     }
     const reportPath = resolve(dataRoot, "report.json");
@@ -166,7 +173,7 @@ describe("evaluateDcmlCorpus", () => {
     );
     await expect(evaluateHarmonyV3FinalHoldout(manifestPath, protocolPath, dataRoot)).resolves.toMatchObject({
       candidate: {
-        schemaVersion: "2.5.0",
+        schemaVersion: "2.6.0",
         command: "eval",
         manifest: "dataset-fixture:protocol-fixture:final-holdout:candidate",
         summary: { passed: 1, failed: 0 },

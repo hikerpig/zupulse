@@ -44,6 +44,8 @@ export async function evaluatePop909Corpus(
   const observations: AccuracyObservation[] = [];
   const reportGroups = new Set<string>();
   const intervalDiagnostics: IntervalOverlapDiagnostics[] = [];
+  let reportMeasures = 0;
+  let predictedSegments = 0;
   const errors: Array<{
     pieceId: string;
     groupId: string;
@@ -66,12 +68,23 @@ export async function evaluatePop909Corpus(
     splits[split] += piece.gold.length;
     if (split !== reportSplit) continue;
     reportGroups.add(song);
+    reportMeasures += piece.input.measures.length;
     const segments = analyzeHarmonyRules(piece.input, {
       includedTrackIds: ["pop909"],
       topK: 8,
       decisionThreshold,
       ...(options.primaryRerankerModel === false ? { primaryRerankerModel: false } : {}),
     });
+    predictedSegments += segments.length;
+    const primarySegments =
+      decisionThreshold === 0
+        ? segments
+        : analyzeHarmonyRules(piece.input, {
+            includedTrackIds: ["pop909"],
+            topK: 8,
+            decisionThreshold: 0,
+            ...(options.primaryRerankerModel === false ? { primaryRerankerModel: false } : {}),
+          });
     intervalDiagnostics.push(
       calculateIntervalOverlapDiagnostics({
         ticksPerQuarter: piece.input.ticksPerQuarter,
@@ -88,6 +101,11 @@ export async function evaluatePop909Corpus(
           compareMoments(gold.range.start, candidate.range.end) < 0,
       );
       const previous = piece.gold[index - 1];
+      const primarySegment = primarySegments.find(
+        (candidate) =>
+          compareMoments(candidate.range.start, gold.range.start) <= 0 &&
+          compareMoments(gold.range.start, candidate.range.end) < 0,
+      );
       const expectedBoundary = index > 0 && !same(previous?.chord, gold.chord);
       const predictedBoundary =
         index > 0 && segments.some((candidate) => compareMoments(candidate.range.start, gold.range.start) === 0);
@@ -100,6 +118,7 @@ export async function evaluatePop909Corpus(
         ...(segment?.status === "resolved"
           ? { predicted: segment.chord, confidence: segment.confidence }
           : { confidence: 0 }),
+        ...(primarySegment?.status === "resolved" ? { primary: primarySegment.chord } : {}),
         alternatives: segment?.alternatives.map((candidate) => candidate.chord) ?? [],
         expectedBoundary,
         predictedBoundary,
@@ -129,7 +148,10 @@ export async function evaluatePop909Corpus(
     reportGroupsSha256: hashGroups(reportGroups),
     decisionThreshold,
     splits,
-    metrics: calculateAccuracyMetrics(observations, mergeIntervalOverlapDiagnostics(intervalDiagnostics)),
+    metrics: calculateAccuracyMetrics(observations, mergeIntervalOverlapDiagnostics(intervalDiagnostics), {
+      predictedSegments,
+      measures: reportMeasures,
+    }),
     errors,
   };
 }

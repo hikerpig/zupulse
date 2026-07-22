@@ -21,6 +21,7 @@ describe("calculateAccuracyMetrics", () => {
         weight: 2,
         expected: cMajor,
         predicted: cMajor,
+        primary: cMajor,
         alternatives: [cMajor],
         confidence: 0.8,
         expectedBoundary: true,
@@ -32,6 +33,7 @@ describe("calculateAccuracyMetrics", () => {
         family: "triad",
         weight: 1,
         expected: gMajor,
+        primary: gMajor,
         alternatives: [cMajor, gMajor],
         confidence: 0,
         expectedBoundary: true,
@@ -50,7 +52,7 @@ describe("calculateAccuracyMetrics", () => {
       },
     ];
 
-    const metrics = calculateAccuracyMetrics(observations);
+    const metrics = calculateAccuracyMetrics(observations, undefined, { predictedSegments: 6, measures: 3 });
 
     expect(() => harmonyAccuracyMetricsSchema.parse(metrics)).not.toThrow();
 
@@ -59,10 +61,12 @@ describe("calculateAccuracyMetrics", () => {
       mappingCoverage: 2 / 3,
       unsupportedLabelRate: 1 / 3,
       top1Accuracy: 2 / 3,
+      predictedPrimaryAccuracy: 1,
       top8OracleRecall: 1,
       resolvedPrecision: 1,
       resolvedCoverage: 2 / 3,
       boundaryF1: 2 / 3,
+      segmentDensity: { predictedSegments: 6, measures: 3, segmentsPerMeasure: 2 },
     });
     expect(metrics.expectedCalibrationError).toBeCloseTo(2 / 15);
     expect(metrics.facets).toEqual({ root: 1, bass: 1, kind: 1, extension: 1, degrees: 1 });
@@ -96,6 +100,27 @@ describe("calculateAccuracyMetrics", () => {
         ]),
       },
     });
+  });
+
+  it("separates alternatives ranking from the threshold-before predicted primary", () => {
+    const metrics = calculateAccuracyMetrics([
+      {
+        groupId: "work-a",
+        corpus: "fixture",
+        family: "triad",
+        weight: 1,
+        expected: cMajor,
+        primary: cMajor,
+        alternatives: [gMajor, cMajor],
+        confidence: 0,
+        expectedBoundary: false,
+        predictedBoundary: false,
+      },
+    ]);
+
+    expect(metrics.top1Accuracy).toBe(0);
+    expect(metrics.predictedPrimaryAccuracy).toBe(1);
+    expect(metrics.resolvedCoverage).toBe(0);
   });
 
   it("caps deterministic diagnostic samples per error category", () => {

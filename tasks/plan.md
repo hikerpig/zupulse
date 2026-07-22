@@ -364,3 +364,204 @@ K331 属于强制 eval group。本计划允许用它确认目标问题和做最�
 - 当前详细 K331 report 和外部 DCML `data-root` 不在工作区中；执行阶段需要重新提供本地路径或重新生成 report。
 - corrected Top-8 baseline 很可能低于现有 oracle recall；这是评测语义修复，应单独评审后再开始算法优化。
 - 若 Mozart tune 的最大错误簇不是 unresolved，而是 resolved-wrong，本轮应优先提升 precision，不应强行追求减少 unresolved。
+
+---
+
+# 下一轮计划：跨语料 Primary Candidate Reranker
+
+## 目标与边界
+
+下一轮只解决“正确和弦已在 Top-8、但 primary 选错”的问题。Mozart tune 当前 Top-1 `0.3727`、Top-8 `0.7975`，约 42 个百分点的差距证明这一目标优先于继续扩张模板。boundary、candidate generation、confidence 和 threshold 在本轮保持冻结，避免再次混合多个因素。
+
+PyTorch 只作为可选的离线训练工具，不进入 Browser、Electron 或 CLI 运行时。先建立无需新依赖的线性 reranker 基线；只有小型 MLP 明确超过线性基线时，才导出两位小数权重并用 TypeScript 推理。当前静态 ranker 继续只服务 alternatives，直到新模型通过完整门禁。
+
+K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 case 只能作为历史回归集，不能再作为无污染的泛化声明。开始训练前必须先用确定性 group hash 登记新的最终 holdout，之后不得查看其 gold 指标直至冻结。
+
+## 成功标准
+
+- 新 holdout 在训练前登记并保持作品级隔离；train/tune/eval group hash 和 corpus revision 全部写入资产。
+- 固定 rule boundary 下，跨语料 tune Top-1 至少绝对提升 `0.05`；Top-8、interval overlap 和 boundary 指标不得下降超过 `0.005`。
+- 每个 tune corpus 的 Top-1 不下降超过 `0.005`，不能用 Mozart 的收益覆盖其他风格回退。
+- 推理 P95 不超过当前 analyzer 的 `1.25x`，资产损坏明确失败。
+- frozen eval 任一 corpus 的主指标或 ECE 回退超过 `0.005`，整轮拒绝且不移动 baseline。
+
+## 依赖顺序
+
+```text
+新 holdout + 当前生产 baseline
+  → 固定 range 的 ranking records
+  → 线性 reranker baseline
+  → 可选 PyTorch 小型 MLP
+  → TypeScript 等价推理
+  → sequence integration（仍保持 boundary 冻结）
+  → 独立 calibration
+  → 一次 frozen eval
+```
+
+## Task 11：建立未污染的 v3 评测协议
+
+**Description:** 在读取新 gold 指标前，用现有 deterministic split 函数登记新的作品级 holdout；保留 K331 和当前 baseline 作为 regression，不再将它们用于选择或新的泛化声明。
+
+**Acceptance criteria:**
+
+- [ ] manifest 明确区分 regression cases 和未查看的 v3 final holdout。
+- [ ] 每个 accuracy corpus 都有 train/tune/eval group，且同一作品不跨 split。
+- [ ] 生成并提交 group ID hash、corpus revision 和协议说明，但不提交原始 corpus。
+
+**Verification:**
+
+- [ ] `pnpm vitest run tools/harmony-cli/src/__tests__/evaluationProtocol.test.ts`
+- [ ] split 重复生成字节一致。
+
+**Dependencies:** None
+
+**Files likely touched:**
+
+- `test-fixtures/harmony/datasets/manifest.json`
+- `tools/harmony-cli/src/evaluationProtocol.ts`
+- `tools/harmony-cli/docs/evaluation.md`
+
+**Estimated scope:** S–M
+
+## Task 12：导出固定范围的候选排序训练记录
+
+**Description:** 从当前生产 analyzer 的冻结 range 和 Top-8 导出 train-only ranking records，记录候选特征、gold candidate index、duration weight 和 candidate miss；不得用 gold boundary 构造产品输入。
+
+**Acceptance criteria:**
+
+- [ ] records 区分 `oracle-hit` 与 `oracle-miss`，reranker 只在 hit records 上训练。
+- [ ] 导出器拒绝 tune/eval，且记录 source/group/feature hash。
+- [ ] 相同输入重复导出字节一致，所有数字最多两位小数。
+
+**Verification:**
+
+- [ ] 新增 train-only、hash 和 deterministic serialization 测试。
+- [ ] Mozart 与至少两个非 Mozart train corpus 能生成 records。
+
+**Dependencies:** Task 11
+
+**Files likely touched:**
+
+- `tools/harmony-cli/src/` 下的 ranking-record exporter
+- `tools/harmony-cli/src/schemas.ts`
+- 相邻 `__tests__`
+
+**Estimated scope:** M
+
+## Task 13：训练无新运行依赖的线性 reranker
+
+**Description:** 先用 pairwise logistic 或 listwise softmax 建立最小基线，输入复用现有 candidate features，并按 corpus/group 做等权或上限采样，避免 Mozart 数量支配模型。
+
+**Acceptance criteria:**
+
+- [ ] 训练只读取 Task 12 records，模型包含训练 group hash 和算法版本。
+- [ ] 跨语料 tune Top-1 比当前规则 primary 至少提升 `0.05`，每个 corpus 不回退超过 `0.005`。
+- [ ] 固定 boundary 下 interval 与 boundary 指标保持不变，推理预算通过。
+
+**Verification:**
+
+- [ ] 模型训练、schema、损坏资产和 TypeScript score 等价测试通过。
+- [ ] 保存逐 corpus tune report，不运行 v3 final holdout。
+
+**Dependencies:** Task 12
+
+**Files likely touched:**
+
+- `scripts/` 下的线性训练脚本
+- `packages/web-core/src/harmony/` 下的候选 reranker 与静态资产
+- 相邻测试
+
+**Estimated scope:** M
+
+## Checkpoint D：决定是否需要 PyTorch
+
+- [ ] 若线性模型达到成功标准，优先发布线性方案，不增加 PyTorch。
+- [ ] 若线性模型未达标，但 train/tune loss 和错误切片显示明显非线性剩余信号，才执行 Task 14。
+- [ ] 若 candidate miss 或 boundary error 才是剩余主因，停止 reranker 路线并重新立项，不用更大模型掩盖输入问题。
+
+## Task 14：可选的离线 PyTorch 小型 MLP
+
+**Description:** 仅在 Checkpoint D 触发时，用同一 records 训练最多两层的小型 MLP；不引入时序 Transformer，不改变候选和 boundary。训练完成后导出量化到两位小数的 JSON 权重。
+
+**Acceptance criteria:**
+
+- [ ] MLP 相对 Task 13 线性模型的跨语料 tune Top-1 再提升至少 `0.02`。
+- [ ] 每个 corpus 无超过 `0.005` 的回退，模型体积和 P95 满足预算。
+- [ ] Python/PyTorch 仅存在于开发训练环境，生产依赖树不包含 Torch。
+
+**Verification:**
+
+- [ ] 固定 seed 重复训练的导出资产和指标在声明容差内一致。
+- [ ] PyTorch logits 与 TypeScript 推理在量化容差内一致。
+
+**Dependencies:** Checkpoint D
+
+**Files likely touched:**
+
+- `scripts/` 下的可选训练脚本
+- `packages/web-core/src/harmony/` 下的静态 MLP inference
+- 相邻测试和许可说明
+
+**Estimated scope:** M
+
+## Task 15：在冻结 boundary 上接入 primary reranker
+
+**Description:** reranker 只重排当前 decoder 已选 range 的 Top-8，并以独立、可解释的 logits 选择 primary；不重新运行 range search，不把模型分直接混入旧 rule sequence score。
+
+**Acceptance criteria:**
+
+- [ ] feature cache 每个 range 只计算一次，运行时间不超过 `1.25x`。
+- [ ] primary、alternatives 和 confidence 的分数语义分离，低置信度不会因换 primary 被误拒识。
+- [ ] 通过跨语料 tune 门禁后才允许默认启用。
+
+**Verification:**
+
+- [ ] unit test 覆盖规则第一名与模型第一名不同、并列和损坏资产。
+- [ ] `pnpm harmony:benchmark`
+
+**Dependencies:** Task 13 或 Task 14
+
+**Files likely touched:**
+
+- `packages/web-core/src/harmony/analyzeRules.ts`
+- `packages/web-core/src/harmony/` 下的 reranker
+- 相邻测试
+
+**Estimated scope:** M
+
+## Task 16：重新校准并执行一次 v3 frozen eval
+
+**Description:** primary 冻结后再用多语料 train 拟合 confidence calibration，只在 tune 选择 threshold；最后一次运行预登记的 v3 holdout，并将历史 cases 仅作为 regression compare。
+
+**Acceptance criteria:**
+
+- [ ] calibration 在每个 tune corpus 改善或保持 ECE，而非只改善加权总分。
+- [ ] threshold 满足 precision floor 后最大化 coverage，规则在查看结果前冻结。
+- [ ] v3 holdout、历史 regression、ASAP 和 benchmark 全部门禁通过，否则整轮回滚。
+
+**Verification:**
+
+- [ ] `pnpm verify:fast`
+- [ ] `pnpm --filter @zupulse/harmony-cli test`
+- [ ] `pnpm harmony:benchmark`
+- [ ] 保存全部 compare 结果和接受/拒绝说明。
+
+**Dependencies:** Task 15
+
+**Files likely touched:**
+
+- `tools/harmony-cli/src/confidenceCalibration.ts`
+- `tools/harmony-cli/docs/tuning-loop.md`
+- `test-fixtures/harmony/baselines/*.json`（仅全部通过后）
+
+**Estimated scope:** M
+
+## 下一轮风险
+
+| Risk                         | Impact                   | Mitigation                                        |
+| ---------------------------- | ------------------------ | ------------------------------------------------- |
+| 已查看的 eval 被继续用于选择 | 泛化结论失真             | 预登记 v3 holdout；旧 cases 降级为 regression     |
+| 单一作曲家支配训练           | 跨风格 ECE/Top-1 回退    | corpus-balanced sampling；逐 corpus tune gate     |
+| 模型改善局部排序却破坏时长   | 产品结果更碎或更短       | 本轮冻结 boundary；单独检查 interval overlap      |
+| PyTorch 进入产品依赖         | 包体、兼容与部署成本上升 | 只离线训练；导出 JSON + TypeScript inference      |
+| DCML 派生资产许可不清楚      | 无法发布模型             | 训练前审查每个 corpus 许可并在资产写入 provenance |

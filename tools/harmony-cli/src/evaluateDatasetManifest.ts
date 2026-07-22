@@ -53,7 +53,7 @@ export async function evaluateHarmonyDatasetManifest(
     throw new Error(`dataset adapter not implemented: ${item.adapter}`);
   }
   return harmonyDatasetEvalReportSchema.parse({
-    schemaVersion: "2.1.0",
+    schemaVersion: "2.2.0",
     command: "eval",
     manifest: manifest.id,
     summary: {

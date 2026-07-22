@@ -35,3 +35,10 @@
 - [x] Task 14：16-unit 离线 MLP 相对线性 tune `+0.0961`，量化 JSON/TypeScript 等价且无 Torch runtime。
 - [x] Task 15：MLP 在冻结 postprocess range 上默认启用，P95 `0.9966x`，logit/rule/confidence 语义分离。
 - [x] Task 16：多语料 calibration、tune threshold 与一次 v3 frozen eval；POP909 ECE 与历史 DCML coverage 门禁失败，已拒绝并回滚生产默认。
+
+## Phase 6: Harmonic Rhythm 与边界稀疏化
+
+- [ ] Task 17：补齐 threshold 前 predicted-primary accuracy 与 segment density。
+- [ ] Task 18：增加 opt-in `metric-beats` boundary policy，默认暂不改变。
+- [ ] Task 19：只用 train/tune 比较 dense 与 metric harmonic rhythm。
+- [ ] Task 20：冻结候选后运行历史回归；通过才切换默认，否则记录并拒绝。

@@ -566,3 +566,90 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 | 模型改善局部排序却破坏时长   | 产品结果更碎或更短       | 本轮冻结 boundary；单独检查 interval overlap      |
 | PyTorch 进入产品依赖         | 包体、兼容与部署成本上升 | 只离线训练；导出 JSON + TypeScript inference      |
 | DCML 派生资产许可不清楚      | 无法发布模型             | 训练前审查每个 corpus 许可并在资产写入 provenance |
+
+---
+
+# 下一轮计划：Harmonic Rhythm 与边界稀疏化
+
+## 目标与冻结边界
+
+本轮先解决 K331 中“旋律音符变化被误当作换和弦”的过切分问题，不扩大 chord 模板、不训练更大的 primary 模型，也不调整 confidence threshold。现有 dense boundary、候选生成、MLP primary 与 threshold `0.60` 作为对照；新策略先 opt-in，只有 train/tune 与全部历史门禁通过后才允许成为默认。
+
+评测必须把三个概念分开：`alternatives[0]` 的候选排序准确率、threshold 前最终 primary 的准确率、threshold 后的 precision/coverage。任何减少 segment 数量的方案都必须同时检查 interval overlap、boundary recall 与 predicted-primary accuracy，不能靠吞并真实和弦变化制造表面改善。
+
+## Task 17：补齐最终 primary 与切分密度指标
+
+**Description:** evaluator 同时观察 threshold 前的最终 primary 和生产 threshold 后的决策，新增 `predictedPrimaryAccuracy`；报告每小节/每分钟 segment 密度，使过切分成为可直接比较的指标。
+
+**Acceptance criteria:**
+
+- [ ] `top1Accuracy` 继续明确表示 `alternatives[0]`，新增指标只衡量 reranker 选出的 threshold 前 primary。
+- [ ] unresolved 仍不在持久化结果中泄漏 chord/raw confidence；双路径诊断仅存在于 evaluator。
+- [ ] segment density 与 primary accuracy 都使用确定性、版本化的 report 字段。
+
+**Verification:**
+
+- [ ] accuracy metrics 单测证明 alternatives 第一名和 predicted primary 不同时两个指标不同。
+- [ ] DCML/POP909 adapter 测试覆盖 threshold 前后匹配和 range 不一致时显式失败。
+
+**Dependencies:** Task 16
+
+**Estimated scope:** M
+
+## Task 18：增加稀疏 metric boundary policy
+
+**Description:** 在 `buildLegalBoundaryLattice` 增加 opt-in policy。`dense-note-events` 保持当前行为；`metric-beats` 只保留小节线、拍点和显式 mandatory boundary。音符起止不能再默认成为候选边界。
+
+**Acceptance criteria:**
+
+- [ ] 默认 policy 在本任务提交中保持不变，确保增量可回滚。
+- [ ] `metric-beats` 在 2/4、3/4、4/4、复合拍号与弱起小节上生成确定性边界。
+- [ ] mandatory boundary 无论 policy 均保留；barline 仍只表示一次。
+
+**Verification:**
+
+- [ ] 先写失败测试，再实现 policy；`packages/web-core/src/harmony/__tests__/boundaries.test.ts` 通过。
+- [ ] analyzer 测试证明同一拍内音符起止不会在 metric policy 下制造片段。
+
+**Dependencies:** Task 17
+
+**Estimated scope:** S–M
+
+## Task 19：只在 train/tune 选择 harmonic-rhythm 策略
+
+**Description:** 为 evaluator 增加显式 boundary policy，比较 dense 与 metric-beats。先看 Mozart/K331 同源 train/tune，再看 Beethoven、Chopin、POP909 tune；不读取新的 final holdout。若纯 metric policy 漏掉真实拍内变化，则只新增一个预先定义的 half-beat policy，不使用 gold 边界做输入。
+
+**Acceptance criteria:**
+
+- [ ] segment density 明显下降，predicted-primary accuracy 或 interval accuracy 不回退超过 `0.005`。
+- [ ] boundary recall 不回退超过 `0.01`，每个 corpus 单独验收。
+- [ ] policy 与所有参数写入 report/algorithmVersion，不能按 corpus 特判。
+
+**Verification:**
+
+- [ ] 保存逐 corpus tune 对照和接受/拒绝说明。
+- [ ] `pnpm harmony:benchmark` 不超过当前 P95 的 `1.25x`。
+
+**Dependencies:** Task 18
+
+**Estimated scope:** M
+
+## Task 20：冻结 harmonic-rhythm 候选并回归
+
+**Description:** 只有 Task 19 通过时才切换生产默认；随后运行 K331 历史 regression、完整 DCML、POP909、ASAP 与性能门禁。若 metric policy 失败则保留 opt-in 工具并记录原因，不用更大模型掩盖 boundary 问题。
+
+**Acceptance criteria:**
+
+- [ ] K331 前 8 小节的 segment 数量减少，长时值 A minor/E minor 区域不再被旋律变化反复切碎。
+- [ ] 所有 frozen baseline 的主指标、ECE、interval overlap 与 boundary 门禁通过；失败则不移动 baseline。
+- [ ] 接受或拒绝结论、复现命令与实际 K331 输出写入 checkpoint。
+
+**Verification:**
+
+- [ ] `pnpm verify:fast`
+- [ ] `pnpm --filter @zupulse/harmony-cli test`
+- [ ] `pnpm harmony:benchmark`
+
+**Dependencies:** Task 19
+
+**Estimated scope:** M

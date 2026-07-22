@@ -16,10 +16,10 @@
 
 ## Phase 3: Confidence 与拒识
 
-- [ ] Task 7：定义 primary-path confidence features。
-- [ ] Task 8：用 train-only 数据拟合单调 calibration。
-- [ ] Task 9：只在 tune 上按 precision floor 选择 threshold。
-- [ ] Checkpoint C：冻结代码、资产、阈值和 algorithmVersion。
+- [x] Task 7：定义 primary-path confidence feature（`primary-local-margin-v1`）。
+- [x] Task 8：用 train-only 数据拟合 100-bin weighted PAVA calibration。
+- [x] Task 9：只在 tune 上按 precision floor 选择 threshold `0.23`。
+- [x] Checkpoint C：冻结代码、资产、阈值和 algorithmVersion。
 
 ## Phase 4: Frozen eval
 

@@ -3,9 +3,12 @@ import {
   createLinearHarmonyFeatures,
   LINEAR_HARMONY_FEATURE_LENGTH,
   linearHarmonyRerankerModelSchema,
+  mlpHarmonyRerankerModelSchema,
   rankHarmonyCandidatesLinear,
+  rankHarmonyCandidatesMlp,
   type LinearHarmonyCandidateInput,
   type LinearHarmonyRerankerModel,
+  type MlpHarmonyRerankerModel,
 } from "../packages/web-core/src";
 import { harmonyRankingRecordsReportSchema, type HarmonyRankingRecordsReport } from "../tools/harmony-cli/src/schemas";
 
@@ -47,36 +50,60 @@ export function evaluateLinearHarmonyReranker(
   modelInput: LinearHarmonyRerankerModel,
   reportInputs: readonly HarmonyRankingRecordsReport[],
 ): LinearHarmonyEvaluation {
-  return evaluateReports(modelInput, reportInputs, "tune", "evaluation requires tune reports");
+  const model = linearHarmonyRerankerModelSchema.parse(modelInput);
+  return evaluateReports(
+    reportInputs,
+    "tune",
+    "evaluation requires tune reports",
+    (record) => rankHarmonyCandidatesLinear(model, record.candidates, record.primaryIndex)[0]?.index,
+  );
 }
 
 export function evaluateLinearHarmonyRerankerTrainingFit(
   modelInput: LinearHarmonyRerankerModel,
   reportInputs: readonly HarmonyRankingRecordsReport[],
 ): LinearHarmonyEvaluation {
-  return evaluateReports(modelInput, reportInputs, "train", "training-fit evaluation requires train reports");
+  const model = linearHarmonyRerankerModelSchema.parse(modelInput);
+  return evaluateReports(
+    reportInputs,
+    "train",
+    "training-fit evaluation requires train reports",
+    (record) => rankHarmonyCandidatesLinear(model, record.candidates, record.primaryIndex)[0]?.index,
+  );
+}
+
+export function evaluateMlpHarmonyReranker(
+  modelInput: MlpHarmonyRerankerModel,
+  reportInputs: readonly HarmonyRankingRecordsReport[],
+): LinearHarmonyEvaluation {
+  const model = mlpHarmonyRerankerModelSchema.parse(modelInput);
+  return evaluateReports(
+    reportInputs,
+    "tune",
+    "evaluation requires tune reports",
+    (record) => rankHarmonyCandidatesMlp(model, record.candidates, record.primaryIndex)[0]?.index,
+  );
 }
 
 function evaluateReports(
-  modelInput: LinearHarmonyRerankerModel,
   reportInputs: readonly HarmonyRankingRecordsReport[],
   split: "train" | "tune",
   splitError: string,
+  selectIndex: (record: RankingRecord) => number | undefined,
 ): LinearHarmonyEvaluation {
-  const model = linearHarmonyRerankerModelSchema.parse(modelInput);
   const reports = reportInputs.map((report) => harmonyRankingRecordsReportSchema.parse(report));
   if (reports.length === 0) throw new Error("linear reranker evaluation reports are empty");
   if (reports.some((report) => report.split !== split)) throw new Error(splitError);
   const records = reports.flatMap((report) => report.records).filter(isOracleHit);
   const corpusNames = [...new Set(records.map((record) => record.corpus))].sort();
   return {
-    aggregate: top1Metrics(model, records),
+    aggregate: top1Metrics(records, selectIndex),
     corpora: Object.fromEntries(
       corpusNames.map((corpus) => [
         corpus,
         top1Metrics(
-          model,
           records.filter((record) => record.corpus === corpus),
+          selectIndex,
         ),
       ]),
     ),
@@ -125,15 +152,17 @@ function updateListwise(weights: number[], example: WeightedExample, learningRat
   }
 }
 
-function top1Metrics(model: LinearHarmonyRerankerModel, records: readonly RankingRecord[]): Top1Metrics {
+function top1Metrics(
+  records: readonly RankingRecord[],
+  selectIndex: (record: RankingRecord) => number | undefined,
+): Top1Metrics {
   let totalWeight = 0;
   let baselineWeight = 0;
   let modelWeight = 0;
   for (const record of records) {
     totalWeight += record.weight;
     if (record.primaryIndex === record.targetIndex) baselineWeight += record.weight;
-    if (rankHarmonyCandidatesLinear(model, record.candidates, record.primaryIndex)[0]?.index === record.targetIndex)
-      modelWeight += record.weight;
+    if (selectIndex(record) === record.targetIndex) modelWeight += record.weight;
   }
   const baselineTop1 = totalWeight === 0 ? 0 : baselineWeight / totalWeight;
   const modelTop1 = totalWeight === 0 ? 0 : modelWeight / totalWeight;

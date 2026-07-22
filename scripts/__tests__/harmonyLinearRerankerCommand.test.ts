@@ -2,7 +2,7 @@ import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { linearHarmonyRerankerModelSchema } from "../../packages/web-core/src";
+import { LINEAR_HARMONY_FEATURE_LENGTH, linearHarmonyRerankerModelSchema } from "../../packages/web-core/src";
 import { runLinearHarmonyRerankerCommand } from "../harmonyLinearRerankerCommand";
 
 const chord = { root: { step: "C", alter: 0 }, kind: "major", degrees: [] };
@@ -40,6 +40,7 @@ describe("linear harmony reranker command", () => {
     const trainPath = join(root, "train.json");
     const tunePath = join(root, "tune.json");
     const modelPath = join(root, "model.json");
+    const mlpPath = join(root, "mlp.json");
     await writeFile(trainPath, JSON.stringify(report("train")));
     await writeFile(tunePath, JSON.stringify(report("tune")));
 
@@ -55,6 +56,25 @@ describe("linear harmony reranker command", () => {
     });
     expect(await runLinearHarmonyRerankerCommand(["evaluate-train", modelPath, trainPath])).toMatchObject({
       command: "evaluate-linear-reranker-training-fit",
+      aggregate: { modelTop1: 1 },
+    });
+    await writeFile(
+      mlpPath,
+      JSON.stringify({
+        version: 1,
+        featureVersion: "candidate-linear-v2",
+        algorithmVersion: "mlp-relu-v1",
+        trainingSourcesSha256: ["a".repeat(64)],
+        trainingGroupsSha256: "b".repeat(64),
+        hiddenSize: 1,
+        hiddenWeights: [1, ...Array(LINEAR_HARMONY_FEATURE_LENGTH - 1).fill(0)],
+        hiddenBias: [0],
+        outputWeights: [1],
+        outputBias: 0,
+      }),
+    );
+    expect(await runLinearHarmonyRerankerCommand(["evaluate-mlp", mlpPath, tunePath])).toMatchObject({
+      command: "evaluate-mlp-reranker",
       aggregate: { modelTop1: 1 },
     });
   });

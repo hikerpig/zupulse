@@ -107,6 +107,20 @@ pnpm -s harmony:reranker evaluate /tmp/harmony-linear.json \
 
 ranking report `1.1.0` 显式记录 `split` 和 `groupsSha256`。训练器可只读迁移早期 train-only `1.0.0` report 的 `trainingGroupsSha256`，但所有新导出都写 `1.1.0`。
 
+仅当 Checkpoint D 触发时，可用本地 PyTorch 离线训练最多两层的 MLP；`--tune-report` 会用量化后的权重重新评测：
+
+```bash
+python3 scripts/train-harmony-mlp.py /tmp/harmony-mlp.json \
+  /tmp/mozart-ranking-train.json /tmp/beethoven-ranking-train.json \
+  --tune-report /tmp/mozart-ranking-tune.json \
+  --tune-report /tmp/beethoven-ranking-tune.json
+
+pnpm -s harmony:reranker evaluate-mlp /tmp/harmony-mlp.json \
+  /tmp/mozart-ranking-tune.json /tmp/beethoven-ranking-tune.json
+```
+
+训练脚本不属于 workspace 依赖，Browser、Electron 和 harmony CLI 均不加载 PyTorch。
+
 冻结基线比较会锁定 split/gold 数量；mapping、Top-1/Top-8、precision、coverage、boundary F1 只允许在容差内下降，ECE 只允许在容差内上升：
 
 ```bash

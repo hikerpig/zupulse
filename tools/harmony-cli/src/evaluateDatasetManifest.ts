@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import { HARMONY_DECISION_THRESHOLD } from "@zupulse/web-core";
 import { readFile } from "node:fs/promises";
 import { resolve, sep } from "node:path";
 import { evaluateDcmlCorpus } from "./adapters/dcmlEvaluation";
@@ -13,8 +12,7 @@ export async function evaluateHarmonyDatasetManifest(
   dataRoot: string,
   caseId?: string,
   reportSplit: DatasetSplit = "eval",
-  decisionThreshold = HARMONY_DECISION_THRESHOLD,
-  rawConfidence = false,
+  decisionThreshold = 0.6,
 ): Promise<HarmonyDatasetEvalReport> {
   const manifest = harmonyDatasetManifestSchema.parse(JSON.parse(await readFile(path, "utf8")));
   const selected = caseId === undefined ? manifest.cases : manifest.cases.filter((item) => item.id === caseId);
@@ -35,7 +33,6 @@ export async function evaluateHarmonyDatasetManifest(
           ...(item.groupBy === undefined ? {} : { groupBy: item.groupBy }),
           reportSplit,
           decisionThreshold,
-          rawConfidence,
         }),
       );
       continue;
@@ -49,7 +46,6 @@ export async function evaluateHarmonyDatasetManifest(
           ...(item.include === undefined ? {} : { include: item.include }),
           reportSplit,
           decisionThreshold,
-          rawConfidence,
         }),
       );
       continue;

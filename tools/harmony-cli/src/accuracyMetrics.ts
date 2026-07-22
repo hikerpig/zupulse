@@ -240,10 +240,7 @@ function createPrecisionCoverageCurve(
   const mapped = observations.filter((item): item is AccuracyObservation & { expected: ChordSymbolInput } =>
     Boolean(item.expected),
   );
-  const thresholds = [
-    ...new Set([0, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99, ...mapped.map((item) => item.confidence)]),
-  ].sort((a, b) => a - b);
-  return thresholds.map((threshold) => {
+  return [0, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99].map((threshold) => {
     const selected = mapped.filter((item) => item.predicted !== undefined && item.confidence >= threshold);
     return {
       threshold,

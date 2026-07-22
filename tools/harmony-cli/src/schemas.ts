@@ -121,7 +121,8 @@ const accuracyOutcomeSchema = z.enum([
   "unresolved-oracle-hit",
   "unresolved-oracle-miss",
   "resolved-correct",
-  "resolved-wrong",
+  "resolved-wrong-oracle-hit",
+  "resolved-wrong-oracle-miss",
 ]);
 const accuracyErrorCategorySchema = z.enum([
   "unsupported-label",
@@ -225,7 +226,7 @@ export const harmonyAccuracyMetricsSchema = z
 
 export const harmonyDatasetEvalReportSchema = z
   .object({
-    schemaVersion: z.literal("2.3.0"),
+    schemaVersion: z.literal("2.4.0"),
     command: z.literal("eval"),
     manifest: z.string().min(1),
     summary: z.object({ passed: z.number().int().nonnegative(), failed: z.number().int().nonnegative() }).strict(),

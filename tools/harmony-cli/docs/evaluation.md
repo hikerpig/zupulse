@@ -79,6 +79,8 @@ report `2.2.0` 新增 `diagnostics.intervalOverlap`。它在每个 mapped gold r
 
 report `2.3.0` 为 accuracy case 增加 `reportSplit`。CLI 的 `--split train|tune|eval` 只改变哪些作品进入 metrics/diagnostics，不改变 manifest 的完整 split counts；默认值是 eval。train 用于拟合资产，tune 用于选择已声明候选，只有 eval report 可以进入 frozen baseline compare。该开关不改变作品级 split，也不能覆盖 `forcedEvalGroups`，所以 K331 始终只能出现在 eval report。
 
+report `2.4.0` 将原来的 `resolved-wrong` 拆成 `resolved-wrong-oracle-hit` 与 `resolved-wrong-oracle-miss`。前者表示正确和弦已在最多八个 alternatives 中、但 primary path 选错；后者表示候选集本身缺失，分别用于触发 sequence/ranking 与 candidate-recall 优化。
+
 ## 当前冻结基线
 
 以下是版本化 baseline JSON 的便读摘要；比较时以 JSON 文件为准：

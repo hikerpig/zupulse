@@ -10,7 +10,7 @@
 ## Phase 2: 候选与主序列
 
 - [ ] Task 4：修正 feature correctness（source pitch spelling 已通过 tune 门禁；继续逐项验证）。
-- [ ] Task 5：仅在 oracle miss 最大时优化候选多样性。
+- [ ] Task 5：优化候选多样性（已触发：inversion candidate miss 为 195040 ticks）。
 - [ ] Task 6：仅在 oracle hit 但 primary 错时优化序列选择。
 - [ ] Checkpoint B：在 Mozart tune 上冻结候选/序列算法。
 

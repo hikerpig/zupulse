@@ -52,4 +52,10 @@ describe("harmony CLI inspect command", () => {
       "--decision-threshold must be between 0 and 1",
     );
   });
+
+  it("only permits raw confidence for an unthresholded train report", async () => {
+    await expect(runHarmonyCommand(["eval", "missing.json", "--raw-confidence"])).rejects.toThrow(
+      "--raw-confidence requires --split train --decision-threshold 0",
+    );
+  });
 });

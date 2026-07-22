@@ -1,4 +1,9 @@
-import { analyzeHarmonyRules, buildLegalBoundaryLattice, compareMoments } from "@zupulse/web-core";
+import {
+  analyzeHarmonyRules,
+  buildLegalBoundaryLattice,
+  compareMoments,
+  HARMONY_DECISION_THRESHOLD,
+} from "@zupulse/web-core";
 import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -26,10 +31,11 @@ export async function evaluatePop909Corpus(
     forcedEvalGroups: readonly string[];
     reportSplit?: DatasetSplit;
     decisionThreshold?: number;
+    rawConfidence?: boolean;
   },
 ) {
   const reportSplit = options.reportSplit ?? "eval";
-  const decisionThreshold = options.decisionThreshold ?? 0.6;
+  const decisionThreshold = options.decisionThreshold ?? HARMONY_DECISION_THRESHOLD;
   const songs = (await readdir(root, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory() && /^\d{3}$/.test(entry.name))
     .map((entry) => entry.name)
@@ -67,6 +73,7 @@ export async function evaluatePop909Corpus(
       includedTrackIds: ["pop909"],
       topK: 8,
       decisionThreshold,
+      ...(options.rawConfidence ? { calibrationModel: null } : {}),
     });
     intervalDiagnostics.push(
       calculateIntervalOverlapDiagnostics({

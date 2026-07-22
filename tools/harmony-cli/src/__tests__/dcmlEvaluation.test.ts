@@ -38,7 +38,7 @@ describe("evaluateDcmlCorpus", () => {
       adapter: "dcml",
       status: "passed",
       reportSplit: "eval",
-      decisionThreshold: 0.6,
+      decisionThreshold: 0.23,
       splits: { train: 0, tune: 0, eval: 2 },
       metrics: { gold: { total: 2, mapped: 2, unsupported: 0 }, mappingCoverage: 1 },
     });

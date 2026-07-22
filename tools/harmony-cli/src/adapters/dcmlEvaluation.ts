@@ -2,6 +2,7 @@ import {
   analyzeHarmonyRules,
   buildLegalBoundaryLattice,
   compareMoments,
+  HARMONY_DECISION_THRESHOLD,
   type ChordSymbolInput,
 } from "@zupulse/web-core";
 import { createHash } from "node:crypto";
@@ -32,10 +33,11 @@ export async function evaluateDcmlCorpus(
     groupBy?: "prefix-before-hyphen" | "corpus";
     reportSplit?: DatasetSplit;
     decisionThreshold?: number;
+    rawConfidence?: boolean;
   },
 ) {
   const reportSplit = options.reportSplit ?? "eval";
-  const decisionThreshold = options.decisionThreshold ?? 0.6;
+  const decisionThreshold = options.decisionThreshold ?? HARMONY_DECISION_THRESHOLD;
   const files = (await readdir(resolve(root, "harmonies")))
     .filter((name) => name.endsWith(".harmonies.tsv"))
     .map((name) => name.slice(0, -".harmonies.tsv".length))
@@ -73,6 +75,7 @@ export async function evaluateDcmlCorpus(
       includedTrackIds: ["dcml"],
       topK: 8,
       decisionThreshold,
+      ...(options.rawConfidence ? { calibrationModel: null } : {}),
     });
     intervalDiagnostics.push(
       calculateIntervalOverlapDiagnostics({

@@ -5,6 +5,7 @@ import {
   analyzeHarmonyRules,
   createDefaultHarmonyScope,
   createMusicXmlAdapter,
+  HARMONY_DECISION_THRESHOLD,
   projectAlphaTabHarmonyInput,
 } from "@zupulse/web-core";
 
@@ -17,7 +18,7 @@ export async function inspectHarmonyScore(path: string, view: InspectView) {
   const result = analyzeHarmonyRules(model, {
     ...createDefaultHarmonyScope(model),
     topK: 8,
-    decisionThreshold: 0.6,
+    decisionThreshold: HARMONY_DECISION_THRESHOLD,
   });
   return {
     source: { name: basename(path), sha256: createHash("sha256").update(bytes).digest("hex") },

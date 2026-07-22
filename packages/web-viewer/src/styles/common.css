@@ -110,3 +110,37 @@ button:focus-visible {
     var(--meter-track) 100%
   );
 }
+
+.scrollable {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  scrollbar-gutter: auto;
+  transition: scrollbar-color 140ms ease;
+}
+
+.scrollable::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollable::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: transparent;
+  transition: background-color 140ms ease;
+}
+
+.scrollable:hover {
+  scrollbar-color: var(--border-default) transparent;
+}
+
+.scrollable:hover::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+}
+
+.scrollable::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}

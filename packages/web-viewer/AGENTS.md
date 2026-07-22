@@ -17,6 +17,8 @@
 - UI 测试优先按 role/name 观察用户结果，不断言实现细节。
 - 组件只消费 `src/styles/tokens.css` 中的运行时语义 token，不直接消费 theme library 的原始色阶；
   长期设计决策同步回根 `DESIGN.md`，不得只留在局部 CSS 或任务讨论中。
+- 滚动容器使用 `src/styles/common.css` 中的 `.scrollable` 工具类：默认隐藏滚动条，hover 时淡入；
+  自身可滚动的组件（如 `ScoreViewer`）直接加类，外层布局容器不重复加滚动行为。
 
 参考：`src/app/App.tsx` 展示路由组合；`src/app/ViewerApplication.ts` 展示端口编排；
 `src/app/__tests__/App.test.tsx` 展示用户视角测试。最小验证：

@@ -16,7 +16,7 @@ export function ScoreViewer({ compact = false, expandable = false }: { compact?:
 
   return (
     <section
-      className={`${styles.stage} ${compact ? styles.compact : ""} ${expanded ? styles.expanded : ""}`}
+      className={`scrollable ${styles.stage} ${compact ? styles.compact : ""} ${expanded ? styles.expanded : ""}`}
       aria-label="乐谱工作区"
     >
       {expandable ? (

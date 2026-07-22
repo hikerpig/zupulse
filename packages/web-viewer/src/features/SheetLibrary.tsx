@@ -83,7 +83,7 @@ export function SheetLibrary({
       </section>
     );
   return (
-    <main className={`${pageStyles.appShell} ${styles.libraryShell}`}>
+    <main className={`${pageStyles.appShell} ${styles.libraryShell} scrollable`}>
       <div className={`${pageStyles.contextBar} ${styles.libraryContextBar}`}>
         <div className={pageStyles.contextMain}>
           <p className={pageStyles.appKicker}>Library</p>
@@ -137,7 +137,7 @@ export function SheetLibrary({
               <strong>{visible.length}</strong> / {scores.length} 份曲谱
             </p>
           </div>
-          <ul className={styles.libraryList}>
+          <ul className={`${styles.libraryList} scrollable`}>
             {visible.map((score) => (
               <li
                 key={score.id}

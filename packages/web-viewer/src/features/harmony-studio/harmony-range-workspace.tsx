@@ -49,7 +49,7 @@ export function HarmonyRangeWorkspace({
             当前选择不符合筛选条件，已临时显示。
           </p>
         ) : null}
-        <div ref={listRef} className={styles.list} role="list" aria-label="分析片段">
+        <div ref={listRef} className={`${styles.list} scrollable`} role="list" aria-label="分析片段">
           {displayedRanges.map((item, index) => (
             <button
               key={item.key}

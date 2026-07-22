@@ -108,7 +108,7 @@ export function generateHarmonyCandidates(
           features.bassPitchClass !== undefined &&
           features.bassPitchClass !== root &&
           (bassIsChordTone || options.rankerModel !== undefined)
-            ? pitch(features.bassPitchClass)
+            ? pitch(features.bassPitchClass, features.spellingByPitchClass?.[features.bassPitchClass])
             : undefined;
         const upperExtensionComplexity =
           template.extension === 9 ? 1 : template.extension === 11 ? 2 : template.extension === 13 ? 3 : 0;
@@ -123,7 +123,7 @@ export function generateHarmonyCandidates(
           (bassIsChordTone ? 0 : maximumDuration * 2) +
           (features.bassPitchClass === root ? maximumDuration * 0.1 : 0);
         const chordInput = {
-          root: pitch(root),
+          root: pitch(root, features.spellingByPitchClass?.[root]),
           kind: template.kind,
           ...(template.extension === undefined ? {} : { extension: template.extension }),
           degrees: template.degrees ?? [],
@@ -136,7 +136,11 @@ export function generateHarmonyCandidates(
             : learnedBass.map((interval) =>
                 chordSymbolSchema.parse({
                   ...chordInput,
-                  ...(interval === null ? {} : { bass: pitch((root + interval) % 12) }),
+                  ...(interval === null
+                    ? {}
+                    : {
+                        bass: pitch((root + interval) % 12, features.spellingByPitchClass?.[(root + interval) % 12]),
+                      }),
                 }),
               );
         return chords.map((chord) => {
@@ -210,8 +214,8 @@ function baseChordKey(candidate: HarmonyCandidate): string {
   });
 }
 
-function pitch(pitchClass: number) {
-  return { step: steps[pitchClass]!, alter: alters[pitchClass]! };
+function pitch(pitchClass: number, sourceSpelling?: ChordSymbolInput["root"]) {
+  return sourceSpelling ?? { step: steps[pitchClass]!, alter: alters[pitchClass]! };
 }
 
 function clampConfidence(value: number): number {

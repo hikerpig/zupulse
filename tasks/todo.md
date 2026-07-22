@@ -5,11 +5,11 @@
 - [x] Task 1：合并后 alternatives 去重并硬限制 Top-8。
 - [x] Task 2：增加全量错误簇、置信度分箱和 precision/coverage curve。
 - [x] Task 3：增加 interval-overlap 与容差 boundary 诊断。
-- [ ] Checkpoint A：冻结 corrected baseline，只选择一个最大错误簇。
+- [x] Checkpoint A：冻结 corrected baseline，只选择一个最大错误簇（root exact-spelling）。
 
 ## Phase 2: 候选与主序列
 
-- [ ] Task 4：修正跨小节 onset/bass 等 feature correctness。
+- [ ] Task 4：修正 feature correctness（source pitch spelling 已通过 tune 门禁；继续逐项验证）。
 - [ ] Task 5：仅在 oracle miss 最大时优化候选多样性。
 - [ ] Task 6：仅在 oracle hit 但 primary 错时优化序列选择。
 - [ ] Checkpoint B：在 Mozart tune 上冻结候选/序列算法。

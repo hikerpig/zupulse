@@ -28,6 +28,7 @@
     "harmony:eval:cmu": "vite-node scripts/harmony-cmu-eval.ts",
     "harmony:train": "vite-node scripts/train-harmony-ranker.ts",
     "harmony:reranker": "vite-node scripts/run-harmony-linear-reranker.ts",
+    "harmony:boundary": "vite-node scripts/run-harmony-boundary.ts",
     "harmony:benchmark": "vite-node scripts/harmony-benchmark.ts",
     "harmony:cli": "vite-node tools/harmony-cli/src/cli.ts",
     "demo:dev": "pnpm --filter @zupulse/web-demo dev",

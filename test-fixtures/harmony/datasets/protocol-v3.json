@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "3.0.0",
+  "id": "harmony-evaluation-v3",
+  "historicalRegressionCases": [
+    "dcml-mozart-k331-pilot",
+    "dcml-mozart-v2.3",
+    "dcml-schumann-kinderszenen-v2.3",
+    "dcml-chopin-mazurkas-v3.2",
+    "dcml-beethoven-sonatas-v2.5",
+    "pop909-piano-v1"
+  ],
+  "corpora": [
+    {
+      "caseId": "dcml-beethoven-sonatas-v2.5",
+      "sourceRevision": "v2.5@ea7181bff88abc8713257234f7ec4033178c57a9",
+      "groupsSha256": "d69ffe6b620c006cdda567337505b73a7716770b0d979f40dfaa98d06b3bf5e2",
+      "finalHoldoutGroups": ["01"],
+      "regressionGroups": ["08", "23"]
+    },
+    {
+      "caseId": "dcml-chopin-mazurkas-v3.2",
+      "sourceRevision": "v3.2@5931135e614985023b96de2a291c74b7ef90b287",
+      "groupsSha256": "7843ddb0ec4a52a695c854c559862240371920711d59a675a65f16842a079864",
+      "finalHoldoutGroups": ["BI105"],
+      "regressionGroups": ["BI60", "BI145"]
+    },
+    {
+      "caseId": "pop909-piano-v1",
+      "sourceRevision": "d83e6edba6872a704f5d3b8b32f5cb540088dae6",
+      "groupsSha256": "8d77490091e12c60e36435a5f56d8f207a11e2df03d007e77b4bcf9603e89e3e",
+      "finalHoldoutGroups": ["225"],
+      "regressionGroups": ["001", "075", "525"]
+    }
+  ]
+}

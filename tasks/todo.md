@@ -28,7 +28,7 @@
 
 ## Phase 5: 跨语料 Primary Reranker
 
-- [ ] Task 11：预登记未污染的 v3 作品级 holdout；旧 eval 降级为 regression。
+- [x] Task 11：预登记未污染的 v3 作品级 holdout；旧 eval 降级为 regression。
 - [ ] Task 12：导出 train-only、固定生产 range 的 Top-8 ranking records。
 - [ ] Task 13：先训练并验证无新运行依赖的线性 reranker。
 - [ ] Checkpoint D：依据线性基线和错误切片决定是否需要 PyTorch。

@@ -106,6 +106,35 @@ export const harmonyDatasetManifestSchema = z
 
 export type HarmonyDatasetManifest = z.infer<typeof harmonyDatasetManifestSchema>;
 
+const evaluationProtocolCorpusV3Schema = z
+  .object({
+    caseId: z.string().min(1),
+    sourceRevision: z.string().min(1),
+    groupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    finalHoldoutGroups: z.array(z.string().min(1)).min(1),
+    regressionGroups: z.array(z.string().min(1)),
+  })
+  .strict()
+  .superRefine((corpus, context) => {
+    const overlap = corpus.finalHoldoutGroups.find((group) => corpus.regressionGroups.includes(group));
+    if (overlap)
+      context.addIssue({
+        code: "custom",
+        message: `group cannot be both final holdout and regression: ${overlap}`,
+      });
+  });
+
+export const harmonyEvaluationProtocolV3Schema = z
+  .object({
+    schemaVersion: z.literal("3.0.0"),
+    id: z.string().min(1),
+    historicalRegressionCases: z.array(z.string().min(1)),
+    corpora: z.array(evaluationProtocolCorpusV3Schema).min(1),
+  })
+  .strict();
+
+export type HarmonyEvaluationProtocolV3 = z.infer<typeof harmonyEvaluationProtocolV3Schema>;
+
 const fractionSchema = z.number().min(0).max(1);
 const accuracySliceSchema = z
   .object({

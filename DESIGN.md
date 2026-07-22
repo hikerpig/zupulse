@@ -38,10 +38,9 @@ Zupulse 是面向长期练习、乐谱查看与和声分析的桌面级数字音
 
 ## 核心原则
 
-- **乐谱优先**：乐谱阅读面是 Viewer 中最亮、最安静的视觉中心。
+- **乐谱优先**：乐谱阅读面是视觉中心，保持最亮、最安静；禁止纹理、噪点、玻璃和品牌色铺底。
 - **结构先于装饰**：优先使用布局、细边界和表面层级，不依赖卡片、阴影或颜色堆叠。
-- **单一滚动所有权**：每个工作区明确一个主要滚动宿主，内部内容默认随内容展开，避免嵌套滚动、裁切与无意义空白。
-- **滚动条只在需要时显示**：使用 `.scrollable` 工具类，默认隐藏滚动条，hover 时淡入，不预留固定 gutter，保留最大可用宽度。
+- **滚动与阅读面**：每个工作区只有一个主要滚动宿主，使用 `.scrollable` 默认隐藏滚动条、hover 淡入；内容随展开，避免嵌套滚动与无意义空白。
 - **紧凑但不拥挤**：高密度来自稳定分仓、对齐和可扫描性，不来自缩小点击目标。
 - **颜色有职责**：珊瑚色表达主操作和关键激活；语义色表达状态；signal 色只做音乐编码。
 - **状态完整**：设计必须覆盖 loading、empty、error、disabled、focus、selected 等完整周期。
@@ -71,7 +70,6 @@ Zupulse 是面向长期练习、乐谱查看与和声分析的桌面级数字音
 - 轻微材质只允许出现在 App Shell、Transport 和控制仓外壳。
 - 内容区依靠纯色、边界与间距建立层级。
 - 噪点、渐变和内高光必须克制，不得成为第一视觉印象。
-- 乐谱阅读面禁止纹理、噪点、玻璃和品牌色铺底。
 
 ### Typography
 
@@ -106,8 +104,7 @@ Zupulse 是面向长期练习、乐谱查看与和声分析的桌面级数字音
 - 允许最高信息密度，但来源和弦、算法结果、用户修正和未解决状态必须可区分。
 - 编辑、预览与分析状态使用稳定区域，避免依赖临时 toast 传递关键事实。
 - 专业密度不能牺牲键盘操作、可读性或错误恢复。
-- 桌面 Studio 使用可调分栏同时呈现乐谱与分析工作区；两侧建立明确滚动边界，窄屏再回退为上下结构。
-- 乐谱预览栏与谱面构成一个连续阅读面，不拆成嵌套卡片；所在 Pane 管理可用高度与滚动，内部谱面随内容展开。
+- 桌面 Studio 使用可调分栏同时呈现乐谱与分析工作区；窄屏回退为上下结构。
 - 乐谱预览表达 Effective Harmony Projection 的当前音乐结果，来源与置信度留在分析详情中，不用多色和弦污染读谱面。
 - 谱面与 Effective Harmony Range 双向定位，但 Harmony Selection 本身不得隐式创建或修改 User Correction。
 
@@ -119,27 +116,23 @@ Zupulse 是面向长期练习、乐谱查看与和声分析的桌面级数字音
 
 ## 完整状态
 
-UI 修改至少检查与目标相关的状态：
+每处 UI 修改至少覆盖目标相关的状态，且必须通过文本、结构或图标表达，不能只依赖颜色。
 
 - 通用：rest、hover、active、focus、disabled、loading、empty、error、selected、unsaved。
-- Viewer：playing、paused、seeking、loop enabled、loop invalid、muted、soloed、audio unavailable、restored。
+- Viewer：playing、paused、seeking、loop enabled / invalid、muted、soloed、audio unavailable、restored。
 - Studio：analyzing、cancelled、stale、unresolved、source-derived、algorithm-derived、user-corrected。
-
-状态必须通过文本、结构或图标表达，不能只依赖颜色。
 
 ## Anti-Slop
 
 Zupulse 不是营销落地页、SaaS 管理后台、赛博音乐概念图或硬件拟物复制。
 
-- 不把每个功能组包装成独立悬浮卡片。
+- 不通过卡片包装、大圆角、pill 和阴影代替结构与层级。
 - 不在所有标题上添加 uppercase、宽字距、mono eyebrow。
 - 不使用没有真实语义的状态点、版本号、编号标签或精确数字。
 - 不让所有按钮具有相同权重，也不把所有可点击元素染成珊瑚色。
 - 不混用暖灰和冷灰表面体系，不为单个页面创造第二主强调色。
 - 不使用霓虹、外发光、大面积玻璃或高饱和渐变。
-- 不通过大圆角、pill 和阴影代替信息架构。
-- 不用动画装饰静态内容，不在乐谱面添加材质。
-- 不增加营销 Hero、口号或与练习流程无关的说明文案。
+- 不用动画装饰静态内容，不增加营销 Hero、口号或与练习流程无关的说明文案。
 
 ## Agent 工作协议
 

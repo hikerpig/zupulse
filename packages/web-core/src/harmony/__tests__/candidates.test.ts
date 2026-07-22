@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generateHarmonyCandidates } from "../candidates";
-import { createHarmonyRankerFeatures, harmonyRankerModelSchema } from "../learnedRanker";
+import { createHarmonyRankerFeatures, harmonyChordShape, harmonyRankerModelSchema } from "../learnedRanker";
 
 describe("harmony candidates", () => {
   it("ranks a major triad and keeps a deterministic top-k", () => {
@@ -148,5 +148,46 @@ describe("harmony candidates", () => {
     );
 
     expect(candidates[0]!.chord).toMatchObject({ root: { step: "C", alter: 0 }, kind: "minor" });
+  });
+
+  it("keeps the observed chord-tone bass when the learned catalog omits that inversion", () => {
+    const features = {
+      durationByPitchClass: [960, 0, 0, 0, 960, 0, 0, 960, 0, 0, 0, 0],
+      onsetCountByPitchClass: [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
+      bassPitchClass: 4,
+    };
+    const rootPosition = { root: { step: "C", alter: 0 }, kind: "major", degrees: [] } as const;
+    const model = harmonyRankerModelSchema.parse({
+      version: 1,
+      featureVersion: "relative-pc-presence-v1",
+      algorithmVersion: "frequency-ranker-v2",
+      trainingCorpusSha256: ["1".repeat(64)],
+      trainingGroupsSha256: "0".repeat(64),
+      prototypes: [
+        {
+          chordShape: harmonyChordShape(rootPosition),
+          features: createHarmonyRankerFeatures(features, rootPosition),
+          frequency: 1,
+        },
+      ],
+    });
+
+    const candidates = generateHarmonyCandidates(
+      { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 960 } },
+      features,
+      { topK: 8, rankerModel: model },
+    );
+
+    expect(
+      candidates.some(
+        ({ chord }) =>
+          chord.root.step === "C" &&
+          chord.root.alter === 0 &&
+          chord.kind === "major" &&
+          chord.extension === undefined &&
+          chord.degrees.length === 0 &&
+          chord.bass?.step === "E",
+      ),
+    ).toBe(true);
   });
 });

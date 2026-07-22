@@ -1,6 +1,6 @@
 # iPad Practice Player Task List
 
-> Progress: Task 1 completed and verified on 2026-07-22.
+> Progress: Tasks 1–2 completed and verified on 2026-07-22.
 
 ## Task 1: 建立 iPad Web workspace
 
@@ -35,20 +35,22 @@
 
 ## Task 2: 生成并验证 iPad Web 资源 manifest
 
+**Status:** Completed (2026-07-22)
+
 **Description:** 为 iPad Web 产物生成 build hash、Bridge version 和静态资源 hash manifest，增加
 规格要求的根命令。Xcode 与 CI 后续只能复用这个入口，不能另写复制逻辑。
 
 **Acceptance criteria:**
 
-- [ ] `pnpm ipad:web:build` 生成 HTML、JS、alphaTab、Worker、AudioWorklet、字体、SoundFont、许可证
+- [x] `pnpm ipad:web:build` 生成 HTML、JS、alphaTab、Worker、AudioWorklet、字体、SoundFont、许可证
       与 manifest。
-- [ ] 缺失文件、hash 不一致或 manifest 中 Bridge version 漂移时验证失败。
-- [ ] 根命令存在且不会修改 Git 跟踪目录。
+- [x] 缺失文件、hash 不一致或 manifest 中 Bridge version 漂移时验证失败。
+- [x] 根命令存在且不会修改 Git 跟踪目录。
 
 **Verification:**
 
-- [ ] `pnpm vitest run tools/builder/__tests__/rspack.test.ts`
-- [ ] `pnpm ipad:web:build`
+- [x] `pnpm vitest run tools/builder/__tests__/rspack.test.ts`
+- [x] `pnpm ipad:web:build`
 
 **Dependencies:** Task 1
 

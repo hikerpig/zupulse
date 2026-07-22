@@ -34,7 +34,8 @@
     "desktop:build": "pnpm --filter @zupulse/desktop-shell build",
     "desktop:start": "pnpm --filter @zupulse/desktop-shell start",
     "desktop:test:e2e": "pnpm --filter @zupulse/desktop-shell test:e2e",
-    "desktop:package": "pnpm --filter @zupulse/desktop-shell package"
+    "desktop:package": "pnpm --filter @zupulse/desktop-shell package",
+    "ipad:web:build": "node apps/ipad-shell/scripts/build-web-assets.mjs"
   },
   "workspaces": [
     "packages/*",

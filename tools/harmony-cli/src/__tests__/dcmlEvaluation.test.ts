@@ -58,6 +58,15 @@ describe("evaluateDcmlCorpus", () => {
     expect(result.metrics.segmentDensity.predictedSegments).toBeGreaterThan(0);
     expect(result.metrics.predictedPrimaryAccuracy).toBeGreaterThan(0);
 
+    const metric = await evaluateDcmlCorpus(root, {
+      id: "mozart-pilot",
+      sourceRevision: "fixture",
+      include: ["K331-3"],
+      forcedEvalGroups: ["K331"],
+      boundaryPolicy: "metric-beats",
+    });
+    expect(metric.boundaryPolicy).toBe("metric-beats");
+
     const tune = await evaluateDcmlCorpus(root, {
       id: "mozart-pilot",
       include: ["K331-3"],

@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import type { HarmonyBoundaryPolicy } from "@zupulse/web-core";
 import { dirname, resolve } from "node:path";
 import { evaluateHarmonyDatasetManifest } from "./evaluateDatasetManifest";
 import type { DatasetSplit } from "./evaluationProtocol";
@@ -15,7 +16,13 @@ type RegressionSummary = HarmonyRegressionManifest["cases"][number]["expected"] 
 
 export async function evaluateHarmonyManifest(
   path: string,
-  options: { dataRoot?: string; caseId?: string; reportSplit?: DatasetSplit; decisionThreshold?: number } = {},
+  options: {
+    dataRoot?: string;
+    caseId?: string;
+    reportSplit?: DatasetSplit;
+    decisionThreshold?: number;
+    boundaryPolicy?: HarmonyBoundaryPolicy;
+  } = {},
 ): Promise<HarmonyEvalReport | import("./schemas").HarmonyDatasetEvalReport> {
   const raw = JSON.parse(await readFile(path, "utf8")) as { schemaVersion?: unknown };
   if (raw.schemaVersion === "2.0.0") {
@@ -26,6 +33,7 @@ export async function evaluateHarmonyManifest(
       options.caseId,
       options.reportSplit,
       options.decisionThreshold,
+      options.boundaryPolicy,
     );
   }
   const manifest = harmonyRegressionManifestSchema.parse(raw);

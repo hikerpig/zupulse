@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import type { HarmonyBoundaryPolicy } from "@zupulse/web-core";
 import { readFile } from "node:fs/promises";
 import { resolve, sep } from "node:path";
 import { evaluateDcmlCorpus } from "./adapters/dcmlEvaluation";
@@ -13,6 +14,7 @@ export async function evaluateHarmonyDatasetManifest(
   caseId?: string,
   reportSplit: DatasetSplit = "eval",
   decisionThreshold = 0.6,
+  boundaryPolicy: HarmonyBoundaryPolicy = "dense-note-events",
 ): Promise<HarmonyDatasetEvalReport> {
   const manifest = harmonyDatasetManifestSchema.parse(JSON.parse(await readFile(path, "utf8")));
   const selected = caseId === undefined ? manifest.cases : manifest.cases.filter((item) => item.id === caseId);
@@ -33,6 +35,7 @@ export async function evaluateHarmonyDatasetManifest(
           ...(item.groupBy === undefined ? {} : { groupBy: item.groupBy }),
           reportSplit,
           decisionThreshold,
+          boundaryPolicy,
         }),
       );
       continue;
@@ -46,6 +49,7 @@ export async function evaluateHarmonyDatasetManifest(
           ...(item.include === undefined ? {} : { include: item.include }),
           reportSplit,
           decisionThreshold,
+          boundaryPolicy,
         }),
       );
       continue;

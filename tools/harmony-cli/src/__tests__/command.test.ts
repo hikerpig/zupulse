@@ -53,6 +53,12 @@ describe("harmony CLI inspect command", () => {
     );
   });
 
+  it("rejects an invalid boundary policy before reading the manifest", async () => {
+    await expect(runHarmonyCommand(["eval", "missing.json", "--boundary-policy", "notes"])).rejects.toThrow(
+      "--boundary-policy must be dense-note-events or metric-beats",
+    );
+  });
+
   it("requires explicit protocol, data root, case, and output for ranking records", async () => {
     await expect(runHarmonyCommand(["ranking-records", "manifest.json"])).rejects.toThrow(
       "usage: harmony:cli ranking-records",

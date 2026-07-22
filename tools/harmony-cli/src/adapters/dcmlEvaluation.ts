@@ -1,5 +1,6 @@
 import {
   analyzeHarmonyRules,
+  BUNDLED_HARMONY_DECISION_THRESHOLD,
   buildLegalBoundaryLattice,
   compareMoments,
   type ChordSymbolInput,
@@ -28,18 +29,25 @@ export async function evaluateDcmlCorpus(
     id: string;
     sourceRevision: string;
     include?: readonly string[];
+    includeGroups?: readonly string[];
     forcedEvalGroups: readonly string[];
     groupBy?: "prefix-before-hyphen" | "corpus";
     reportSplit?: DatasetSplit;
     decisionThreshold?: number;
+    primaryRerankerModel?: false;
   },
 ) {
   const reportSplit = options.reportSplit ?? "eval";
-  const decisionThreshold = options.decisionThreshold ?? 0.6;
+  const decisionThreshold = options.decisionThreshold ?? BUNDLED_HARMONY_DECISION_THRESHOLD;
+  const groupMode = options.groupBy ?? "prefix-before-hyphen";
   const files = (await readdir(resolve(root, "harmonies")))
     .filter((name) => name.endsWith(".harmonies.tsv"))
     .map((name) => name.slice(0, -".harmonies.tsv".length))
     .filter((id) => options.include === undefined || options.include.includes(id))
+    .filter(
+      (id) =>
+        options.includeGroups === undefined || options.includeGroups.includes(dcmlGroupId(id, groupMode, options.id)),
+    )
     .sort();
   if (files.length === 0) throw new Error(`no DCML harmony files found in ${root}`);
 
@@ -57,7 +65,7 @@ export async function evaluateDcmlCorpus(
     category: AccuracyErrorCategory;
   }> = [];
   for (const pieceId of files) {
-    const groupId = dcmlGroupId(pieceId, options.groupBy ?? "prefix-before-hyphen", options.id);
+    const groupId = dcmlGroupId(pieceId, groupMode, options.id);
     const split = assignDatasetSplit(groupId, options.forcedEvalGroups);
     const piece = parseDcmlPiece({
       corpus: options.id,
@@ -73,6 +81,7 @@ export async function evaluateDcmlCorpus(
       includedTrackIds: ["dcml"],
       topK: 8,
       decisionThreshold,
+      ...(options.primaryRerankerModel === false ? { primaryRerankerModel: false } : {}),
     });
     intervalDiagnostics.push(
       calculateIntervalOverlapDiagnostics({

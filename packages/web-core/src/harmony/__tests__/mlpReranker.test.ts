@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { LINEAR_HARMONY_FEATURE_LENGTH } from "../linearReranker";
-import { mlpHarmonyRerankerModelSchema, rankHarmonyCandidatesMlp } from "../mlpReranker";
+import {
+  createMlpHarmonyPrimarySelector,
+  mlpHarmonyRerankerModelSchema,
+  rankHarmonyCandidatesMlp,
+} from "../mlpReranker";
 
 const candidates = [
   {
@@ -34,10 +38,15 @@ function model() {
 
 describe("MLP harmony reranker", () => {
   it("ranks candidates with deterministic TypeScript inference", () => {
-    expect(rankHarmonyCandidatesMlp(mlpHarmonyRerankerModelSchema.parse(model()), candidates, 0)).toEqual([
+    const parsed = mlpHarmonyRerankerModelSchema.parse(model());
+    expect(rankHarmonyCandidatesMlp(parsed, candidates, 0)).toEqual([
       { index: 1, logit: 1 },
       { index: 0, logit: 0 },
     ]);
+    expect(createMlpHarmonyPrimarySelector(parsed)(candidates, 0)).toEqual({
+      index: 1,
+      rawConfidence: expect.closeTo(Math.exp(1) / (Math.exp(1) + 1), 10),
+    });
   });
 
   it("rejects malformed or over-precise assets", () => {

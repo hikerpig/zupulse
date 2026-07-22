@@ -41,6 +41,7 @@ describe("linear harmony reranker command", () => {
     const tunePath = join(root, "tune.json");
     const modelPath = join(root, "model.json");
     const mlpPath = join(root, "mlp.json");
+    const calibrationPath = join(root, "calibration.json");
     await writeFile(trainPath, JSON.stringify(report("train")));
     await writeFile(tunePath, JSON.stringify(report("tune")));
 
@@ -77,5 +78,18 @@ describe("linear harmony reranker command", () => {
       command: "evaluate-mlp-reranker",
       aggregate: { modelTop1: 1 },
     });
+    expect(await runLinearHarmonyRerankerCommand(["calibrate-mlp", calibrationPath, mlpPath, trainPath])).toMatchObject(
+      { command: "calibrate-mlp-confidence", output: calibrationPath },
+    );
+    expect(
+      await runLinearHarmonyRerankerCommand([
+        "evaluate-calibration",
+        calibrationPath,
+        mlpPath,
+        tunePath,
+        "--precision-floor",
+        "0.7",
+      ]),
+    ).toMatchObject({ command: "evaluate-mlp-calibration", recommendedThreshold: expect.any(Number) });
   });
 });

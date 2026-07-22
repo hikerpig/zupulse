@@ -1,4 +1,9 @@
-import { analyzeHarmonyRules, buildLegalBoundaryLattice, compareMoments } from "@zupulse/web-core";
+import {
+  analyzeHarmonyRules,
+  BUNDLED_HARMONY_DECISION_THRESHOLD,
+  buildLegalBoundaryLattice,
+  compareMoments,
+} from "@zupulse/web-core";
 import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -23,17 +28,20 @@ export async function evaluatePop909Corpus(
     id: string;
     sourceRevision: string;
     include?: readonly string[];
+    includeGroups?: readonly string[];
     forcedEvalGroups: readonly string[];
     reportSplit?: DatasetSplit;
     decisionThreshold?: number;
+    primaryRerankerModel?: false;
   },
 ) {
   const reportSplit = options.reportSplit ?? "eval";
-  const decisionThreshold = options.decisionThreshold ?? 0.6;
+  const decisionThreshold = options.decisionThreshold ?? BUNDLED_HARMONY_DECISION_THRESHOLD;
   const songs = (await readdir(root, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory() && /^\d{3}$/.test(entry.name))
     .map((entry) => entry.name)
     .filter((id) => options.include === undefined || options.include.includes(id))
+    .filter((id) => options.includeGroups === undefined || options.includeGroups.includes(id))
     .sort();
   if (songs.length === 0) throw new Error(`no POP909 songs found in ${root}`);
 
@@ -67,6 +75,7 @@ export async function evaluatePop909Corpus(
       includedTrackIds: ["pop909"],
       topK: 8,
       decisionThreshold,
+      ...(options.primaryRerankerModel === false ? { primaryRerankerModel: false } : {}),
     });
     intervalDiagnostics.push(
       calculateIntervalOverlapDiagnostics({

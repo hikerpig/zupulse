@@ -8,8 +8,13 @@ import { decodeHarmonySequence } from "./decode";
 import { scoreHarmonyTransition } from "./transitions";
 import { bundledHarmonyRankerModel } from "./bundledHarmonyRanker";
 import { createHarmonyRankerFeatures, type HarmonyRankerModel } from "./learnedRanker";
-import { createMlpHarmonyReranker, type MlpHarmonyRerankerModel } from "./mlpReranker";
+import { createMlpHarmonyPrimarySelector, type MlpHarmonyRerankerModel } from "./mlpReranker";
 import { bundledHarmonyPrimaryMlp } from "./bundledHarmonyPrimaryMlp";
+import { applyHarmonyCalibration, type MlpHarmonyCalibrationAsset } from "./confidenceCalibration";
+import {
+  BUNDLED_HARMONY_DECISION_THRESHOLD,
+  bundledHarmonyPrimaryCalibration,
+} from "./bundledHarmonyPrimaryCalibration";
 
 export function analyzeHarmonyRules(
   input: HarmonyAnalysisInput,
@@ -21,6 +26,7 @@ export function analyzeHarmonyRules(
     rankerModel?: HarmonyRankerModel;
     rankerWeight?: number;
     primaryRerankerModel?: MlpHarmonyRerankerModel | false;
+    primaryConfidenceCalibration?: MlpHarmonyCalibrationAsset | false;
   },
 ): HarmonySegment[] {
   const included = new Set(options.includedTrackIds);
@@ -39,10 +45,15 @@ export function analyzeHarmonyRules(
       ),
     );
   const cache = buildHarmonyFeatureCache({ ticksPerQuarter: input.ticksPerQuarter, notes });
-  const rerankPrimary =
+  const usesBundledPrimary = options.primaryRerankerModel === undefined;
+  const selectPrimary =
     options.primaryRerankerModel === false
       ? undefined
-      : createMlpHarmonyReranker(options.primaryRerankerModel ?? bundledHarmonyPrimaryMlp);
+      : createMlpHarmonyPrimarySelector(options.primaryRerankerModel ?? bundledHarmonyPrimaryMlp);
+  const primaryCalibration =
+    options.primaryConfidenceCalibration === false
+      ? undefined
+      : (options.primaryConfidenceCalibration ?? (usesBundledPrimary ? bundledHarmonyPrimaryCalibration : undefined));
   const boundaries = buildLegalBoundaryLattice({
     ticksPerQuarter: input.ticksPerQuarter,
     measures: input.measures,
@@ -78,16 +89,16 @@ export function analyzeHarmonyRules(
     };
   });
   const corrected = suppressShortNonChordSegments(segments, input.ticksPerQuarter / 4);
-  // Abstention remains based on the independent rule confidence until Task 16 calibrates the frozen MLP primary.
-  const finalized = mergeHarmonySegments(applyHarmonyConfidence(corrected, options.decisionThreshold ?? 0.6));
-  if (rerankPrimary === undefined) return finalized;
-  return finalized.map((segment) => {
+  if (selectPrimary === undefined)
+    return mergeHarmonySegments(applyHarmonyConfidence(corrected, options.decisionThreshold ?? 0.6));
+  const finalized = mergeHarmonySegments(corrected);
+  const reranked = finalized.map((segment) => {
     if (segment.status !== "resolved" || segment.alternatives.length === 0) return segment;
     const rangeFeatures = cache.forRange(segment.range);
     const rulePrimaryIndex = segment.alternatives.findIndex(
       (candidate) => JSON.stringify(candidate.chord) === JSON.stringify(segment.chord),
     );
-    const selected = rerankPrimary(
+    const selected = selectPrimary(
       segment.alternatives.map((candidate) => ({
         ...candidate,
         features: createHarmonyRankerFeatures(rangeFeatures, candidate.chord),
@@ -95,7 +106,20 @@ export function analyzeHarmonyRules(
         ruleSequenceScore: candidate.sequenceScore,
       })),
       rulePrimaryIndex,
-    )[0];
-    return selected === undefined ? segment : { ...segment, chord: segment.alternatives[selected.index]!.chord };
+    );
+    return selected === undefined
+      ? segment
+      : {
+          ...segment,
+          chord: segment.alternatives[selected.index]!.chord,
+          confidence:
+            primaryCalibration === undefined
+              ? segment.confidence
+              : applyHarmonyCalibration(selected.rawConfidence, primaryCalibration),
+        };
   });
+  return applyHarmonyConfidence(
+    reranked,
+    options.decisionThreshold ?? (primaryCalibration === undefined ? 0.6 : BUNDLED_HARMONY_DECISION_THRESHOLD),
+  );
 }

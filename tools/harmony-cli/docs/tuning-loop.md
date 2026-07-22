@@ -51,7 +51,8 @@ pnpm -s harmony:cli compare \
 7. **训练记录必须复用生产 range，不能用 gold 修正边界。** v3 exporter 已能从冻结 analyzer range 导出 Top-8、gold overlap、oracle hit/miss 和候选特征。Mozart train 有 `15,359` 条记录，其中 `8,990` 条 oracle-hit；三个 Beethoven train group 有 `5,218/3,307` 条，三个 Chopin train group 有 `1,132/840` 条。后两项只是确定性上限采样，不是语料准确率，但足以证明跨语料存在可训练的候选排序信号。
 8. **数据量和可复现性要在模型复杂度之前解决。** 完整语料导出可能耗时数十分钟，任何序列化错误若在末尾才暴露会浪费整轮运行。score 在生成边界统一用十进制定点语义保留最多两位小数，完整 group-set hash 先校验，再按排序后的 group ID 做确定性上限采样；相同输入的 Chopin 导出已经验证为字节一致。
 9. **旧 eval 不能因改名继续充当新 holdout。** K331、Schumann、Chopin、Beethoven 和 POP909 的既有指标已参与过选择，只能作为 historical regression。v3 已在训练前预登记 Beethoven `01`、Chopin `BI105` 和 POP909 `225` 为 final holdout；在代码、模型、calibration 和 threshold 全部冻结前不得查看其 gold 指标。
-10. **模型选择要有停止条件。** 线性 reranker 达标就停止增加复杂度；若线性失败而主要错误是 oracle miss 或 boundary misalignment，也应停止 reranker 路线。只有 oracle-hit 子集上 train 与 tune 都显示稳定、跨语料的非线性剩余误差，才触发离线 MLP。
+10. **最终对照必须同批运行。** v3 final evaluator 在同一冻结命令里产出 candidate 与 rule-only baseline，确保作品、映射和 gold 完全一致；查看结果后只做接受/拒绝，不再改变 feature、模型、calibration 或 threshold。
+11. **模型选择要有停止条件。** 线性 reranker 达标就停止增加复杂度；若线性失败而主要错误是 oracle miss 或 boundary misalignment，也应停止 reranker 路线。只有 oracle-hit 子集上 train 与 tune 都显示稳定、跨语料的非线性剩余误差，才触发离线 MLP。
 
 完整失败记录见仓库根目录的 [`tasks/harmony-tuning-failures.md`](../../../tasks/harmony-tuning-failures.md)。
 

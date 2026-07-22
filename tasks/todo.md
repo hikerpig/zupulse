@@ -10,9 +10,9 @@
 ## Phase 2: 候选与主序列
 
 - [x] Task 4：修正 feature correctness（source spelling 与跨小节 onset 均已通过 tune 门禁）。
-- [ ] Task 5：优化候选多样性（observed-bass 生成与槽位策略已通过；继续按剩余 miss 分布逐轮验证）。
-- [ ] Task 6：仅在 oracle hit 但 primary 错时优化序列选择。
-- [ ] Checkpoint B：在 Mozart tune 上冻结候选/序列算法。
+- [x] Task 5：优化候选多样性（observed-bass 生成、槽位策略与 onset correction 已通过）。
+- [x] Task 6：验证 primary 序列候选（两种 hybrid primary 方案均未过门禁，维持 rule-only）。
+- [x] Checkpoint B：已在 Mozart tune 上冻结候选/序列算法。
 
 ## Phase 3: Confidence 与拒识
 

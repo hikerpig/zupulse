@@ -8,10 +8,6 @@ import { decodeHarmonySequence } from "./decode";
 import { scoreHarmonyTransition } from "./transitions";
 import { bundledHarmonyRankerModel } from "./bundledHarmonyRanker";
 import type { HarmonyRankerModel } from "./learnedRanker";
-import { applyHarmonyCalibration, type HarmonyCalibrationModel } from "./confidenceCalibration";
-import { bundledHarmonyCalibrationModel } from "./bundledHarmonyCalibration";
-
-export const HARMONY_DECISION_THRESHOLD = 0.23;
 
 export function analyzeHarmonyRules(
   input: HarmonyAnalysisInput,
@@ -22,7 +18,6 @@ export function analyzeHarmonyRules(
     maxOptionalBoundariesPerMeasure?: number;
     rankerModel?: HarmonyRankerModel;
     rankerWeight?: number;
-    calibrationModel?: HarmonyCalibrationModel | null;
   },
 ): HarmonySegment[] {
   const included = new Set(options.includedTrackIds);
@@ -66,21 +61,14 @@ export function analyzeHarmonyRules(
       rankerModel: options.rankerModel ?? bundledHarmonyRankerModel,
       ...(options.rankerWeight === undefined ? {} : { rankerWeight: options.rankerWeight }),
     });
-    const calibrationModel =
-      options.calibrationModel === undefined ? bundledHarmonyCalibrationModel : options.calibrationModel;
     return {
       status: "resolved",
       range: selected.range,
       chord: selected.chord,
-      confidence:
-        calibrationModel === null
-          ? selected.candidate.confidence
-          : applyHarmonyCalibration(selected.candidate.confidence, calibrationModel),
+      confidence: selected.candidate.confidence,
       alternatives,
     };
   });
   const corrected = suppressShortNonChordSegments(segments, input.ticksPerQuarter / 4);
-  return mergeHarmonySegments(
-    applyHarmonyConfidence(corrected, options.decisionThreshold ?? HARMONY_DECISION_THRESHOLD),
-  );
+  return mergeHarmonySegments(applyHarmonyConfidence(corrected, options.decisionThreshold ?? 0.6));
 }

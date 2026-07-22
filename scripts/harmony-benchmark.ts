@@ -2,7 +2,6 @@ import { performance } from "node:perf_hooks";
 import {
   analyzeHarmonyRules,
   createHarmonyAnalysisInput,
-  HARMONY_DECISION_THRESHOLD,
   reducePreviewTransport,
 } from "../packages/web-core/src/index";
 
@@ -42,11 +41,7 @@ const input = createHarmonyAnalysisInput({
 
 for (let index = 0; index < sampleCount; index += 1) {
   const start = performance.now();
-  analyzeHarmonyRules(input, {
-    includedTrackIds: ["benchmark-piano"],
-    topK: 8,
-    decisionThreshold: HARMONY_DECISION_THRESHOLD,
-  });
+  analyzeHarmonyRules(input, { includedTrackIds: ["benchmark-piano"], topK: 8, decisionThreshold: 0.6 });
   samples.push(performance.now() - start);
 }
 samples.sort((left, right) => left - right);

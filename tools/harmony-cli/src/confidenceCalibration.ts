@@ -85,27 +85,6 @@ export async function buildHarmonyCalibrationAssetFile(
   return buildHarmonyCalibrationAsset(reportCase, createHash("sha256").update(bytes).digest("hex"));
 }
 
-export async function selectDecisionThresholdFile(
-  reportPath: string,
-  precisionFloor: number,
-  caseId?: string,
-): Promise<{ caseId: string; precisionFloor: number; threshold?: number }> {
-  const report = harmonyDatasetEvalReportSchema.parse(JSON.parse(await readFile(reportPath, "utf8")));
-  const reportCase = report.cases.find(
-    (candidate) => candidate.kind === "accuracy-corpus" && (caseId === undefined || candidate.id === caseId),
-  );
-  if (!reportCase || reportCase.kind !== "accuracy-corpus")
-    throw new Error(`accuracy report case not found: ${caseId ?? "*"}`);
-  if (reportCase.reportSplit !== "tune") throw new Error("threshold selection requires a tune report");
-  if (reportCase.decisionThreshold !== 0) throw new Error("threshold selection requires decisionThreshold 0");
-  const threshold = selectDecisionThreshold(reportCase.metrics.diagnostics.precisionCoverageCurve, precisionFloor);
-  return {
-    caseId: reportCase.id,
-    precisionFloor,
-    ...(threshold === undefined ? {} : { threshold }),
-  };
-}
-
 export function fitWeightedIsotonicCalibration(bins: readonly CalibrationBin[]): IsotonicCalibrationStep[] {
   const blocks: Array<CalibrationBin & { probability: number }> = [];
   for (const bin of bins) {
@@ -127,14 +106,7 @@ export function fitWeightedIsotonicCalibration(bins: readonly CalibrationBin[]):
       });
     }
   }
-  return blocks.map(({ upperBound, probability }) => ({
-    upperBound: roundScore(upperBound),
-    probability: roundScore(probability),
-  }));
-}
-
-function roundScore(value: number): number {
-  return Math.round(value * 100) / 100;
+  return blocks.map(({ upperBound, probability }) => ({ upperBound, probability }));
 }
 
 export function selectDecisionThreshold(

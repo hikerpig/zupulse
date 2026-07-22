@@ -36,6 +36,44 @@ describe("harmony candidates", () => {
     expect(candidates.some((candidate) => candidate.chord.bass?.step === "E")).toBe(true);
   });
 
+  it("uses source spellings for enharmonic roots and bass notes", () => {
+    const candidates = generateHarmonyCandidates(
+      { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 960 } },
+      {
+        durationByPitchClass: [0, 0, 0, 960, 0, 0, 0, 960, 0, 0, 960, 0],
+        onsetCountByPitchClass: [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0],
+        spellingByPitchClass: [
+          undefined,
+          undefined,
+          undefined,
+          { step: "E", alter: -1 },
+          undefined,
+          undefined,
+          undefined,
+          { step: "G", alter: 0 },
+          undefined,
+          undefined,
+          { step: "B", alter: -1 },
+          undefined,
+        ],
+        bassPitchClass: 10,
+      },
+      { topK: 8 },
+    );
+
+    expect(candidates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          chord: expect.objectContaining({
+            root: { step: "E", alter: -1 },
+            kind: "major",
+            bass: { step: "B", alter: -1 },
+          }),
+        }),
+      ]),
+    );
+  });
+
   it.each([
     {
       name: "dominant inversion",

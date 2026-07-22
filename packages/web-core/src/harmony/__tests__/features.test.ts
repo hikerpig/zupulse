@@ -42,4 +42,31 @@ describe("harmony feature cache", () => {
         .bassPitchClass,
     ).toBe(4);
   });
+
+  it("keeps the duration-dominant source spelling for each pitch class", () => {
+    const cache = buildHarmonyFeatureCache({
+      ticksPerQuarter: 960,
+      notes: [
+        {
+          moment: { measureIndex: 0, offsetTicks: 0 },
+          durationTicks: 960,
+          soundingPitchClass: 10,
+          spelling: { step: "B", alter: -1 },
+          voice: 1,
+        },
+        {
+          moment: { measureIndex: 0, offsetTicks: 0 },
+          durationTicks: 240,
+          soundingPitchClass: 10,
+          spelling: { step: "A", alter: 1 },
+          voice: 2,
+        },
+      ],
+    });
+
+    expect(
+      cache.forRange({ start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 960 } })
+        .spellingByPitchClass[10],
+    ).toEqual({ step: "B", alter: -1 });
+  });
 });

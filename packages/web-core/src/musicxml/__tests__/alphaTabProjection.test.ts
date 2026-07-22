@@ -46,4 +46,44 @@ describe("alphaTab MusicXML projection", () => {
       { soundingPitchClass: 4 },
     ]);
   });
+
+  it("projects key-aware source spellings for harmony candidates", () => {
+    const input = projectAlphaTabHarmonyInput({
+      masterBars: [{ duration: 960 }],
+      tracks: [
+        {
+          name: "Piano",
+          staves: [
+            {
+              bars: [
+                {
+                  keySignature: -3,
+                  voices: [
+                    {
+                      beats: [
+                        {
+                          displayStart: 0,
+                          displayDuration: 960,
+                          notes: [
+                            { realValue: 63, accidentalMode: 0 },
+                            { realValue: 70, accidentalMode: 5 },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(input.measures[0]).toMatchObject({ key: "fifths:-3" });
+    expect(input.tracks[0]?.staves[0]?.notes).toMatchObject([
+      { spelling: { step: "E", alter: -1 } },
+      { spelling: { step: "B", alter: -1 } },
+    ]);
+  });
 });

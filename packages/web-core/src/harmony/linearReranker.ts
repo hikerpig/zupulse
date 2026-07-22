@@ -14,7 +14,7 @@ const CHORD_KINDS = [
 ] as const;
 const EXTENSIONS = [undefined, 6, 7, 9, 11, 13] as const;
 const DEGREE_OPERATIONS = ["add", "alter", "subtract"] as const;
-export const LINEAR_HARMONY_FEATURE_LENGTH = 37 + CHORD_KINDS.length + EXTENSIONS.length + DEGREE_OPERATIONS.length + 3;
+export const LINEAR_HARMONY_FEATURE_LENGTH = 37 + CHORD_KINDS.length + EXTENSIONS.length + DEGREE_OPERATIONS.length + 4;
 
 const twoDecimalWeightSchema = z
   .number()
@@ -24,7 +24,7 @@ const twoDecimalWeightSchema = z
 export const linearHarmonyRerankerModelSchema = z
   .object({
     version: z.literal(1),
-    featureVersion: z.literal("candidate-linear-v1"),
+    featureVersion: z.literal("candidate-linear-v2"),
     algorithmVersion: z.literal("listwise-sgd-v1"),
     trainingSourcesSha256: z.array(z.string().regex(/^[a-f0-9]{64}$/)).min(1),
     trainingGroupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
@@ -43,6 +43,7 @@ export type LinearHarmonyCandidateInput = {
 export function createLinearHarmonyFeatures(
   candidates: readonly LinearHarmonyCandidateInput[],
   index: number,
+  rulePrimaryIndex = -1,
 ): number[] {
   const candidate = candidates[index];
   if (!candidate || candidate.features.length !== 37) throw new Error(`invalid linear candidate index: ${index}`);
@@ -57,18 +58,20 @@ export function createLinearHarmonyFeatures(
     candidate.ruleLocalScore / maxLocal,
     candidate.ruleSequenceScore / maxSequence,
     candidates.length === 1 ? 1 : 1 - index / (candidates.length - 1),
+    Number(index === rulePrimaryIndex),
   ];
 }
 
 export function rankHarmonyCandidatesLinear(
   modelInput: LinearHarmonyRerankerModel,
   candidates: readonly LinearHarmonyCandidateInput[],
+  rulePrimaryIndex = -1,
 ): Array<{ index: number; logit: number }> {
   const model = linearHarmonyRerankerModelSchema.parse(modelInput);
   return candidates
     .map((_, index) => ({
       index,
-      logit: createLinearHarmonyFeatures(candidates, index).reduce(
+      logit: createLinearHarmonyFeatures(candidates, index, rulePrimaryIndex).reduce(
         (sum, value, featureIndex) => sum + value * model.weights[featureIndex]!,
         0,
       ),

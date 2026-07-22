@@ -9,7 +9,7 @@ const chord = { root: { step: "C", alter: 0 }, kind: "major", degrees: [] };
 
 function report(split: "train" | "tune") {
   return {
-    schemaVersion: "1.0.0",
+    schemaVersion: "1.1.0",
     command: "ranking-records",
     split,
     featureVersion: "relative-pc-presence-v1",
@@ -52,6 +52,10 @@ describe("linear harmony reranker command", () => {
     expect(await runLinearHarmonyRerankerCommand(["evaluate", modelPath, tunePath])).toMatchObject({
       command: "evaluate-linear-reranker",
       aggregate: { baselineTop1: 0, modelTop1: 1 },
+    });
+    expect(await runLinearHarmonyRerankerCommand(["evaluate-train", modelPath, trainPath])).toMatchObject({
+      command: "evaluate-linear-reranker-training-fit",
+      aggregate: { modelTop1: 1 },
     });
   });
 });

@@ -35,7 +35,7 @@ export function trainLinearHarmonyReranker(
 
   return linearHarmonyRerankerModelSchema.parse({
     version: 1,
-    featureVersion: "candidate-linear-v1",
+    featureVersion: "candidate-linear-v2",
     algorithmVersion: "listwise-sgd-v1",
     trainingSourcesSha256: sourceHashes(reports),
     trainingGroupsSha256: hashLines(reports.map((report) => report.groupsSha256).sort()),
@@ -47,10 +47,26 @@ export function evaluateLinearHarmonyReranker(
   modelInput: LinearHarmonyRerankerModel,
   reportInputs: readonly HarmonyRankingRecordsReport[],
 ): LinearHarmonyEvaluation {
+  return evaluateReports(modelInput, reportInputs, "tune", "evaluation requires tune reports");
+}
+
+export function evaluateLinearHarmonyRerankerTrainingFit(
+  modelInput: LinearHarmonyRerankerModel,
+  reportInputs: readonly HarmonyRankingRecordsReport[],
+): LinearHarmonyEvaluation {
+  return evaluateReports(modelInput, reportInputs, "train", "training-fit evaluation requires train reports");
+}
+
+function evaluateReports(
+  modelInput: LinearHarmonyRerankerModel,
+  reportInputs: readonly HarmonyRankingRecordsReport[],
+  split: "train" | "tune",
+  splitError: string,
+): LinearHarmonyEvaluation {
   const model = linearHarmonyRerankerModelSchema.parse(modelInput);
   const reports = reportInputs.map((report) => harmonyRankingRecordsReportSchema.parse(report));
   if (reports.length === 0) throw new Error("linear reranker evaluation reports are empty");
-  if (reports.some((report) => report.split !== "tune")) throw new Error("evaluation requires tune reports");
+  if (reports.some((report) => report.split !== split)) throw new Error(splitError);
   const records = reports.flatMap((report) => report.records).filter(isOracleHit);
   const corpusNames = [...new Set(records.map((record) => record.corpus))].sort();
   return {
@@ -92,7 +108,9 @@ function balancedExamples(records: readonly RankingRecord[]): WeightedExample[] 
 
 function updateListwise(weights: number[], example: WeightedExample, learningRate: number): void {
   const candidates = example.record.candidates;
-  const features = candidates.map((_, index) => createLinearHarmonyFeatures(candidates, index));
+  const features = candidates.map((_, index) =>
+    createLinearHarmonyFeatures(candidates, index, example.record.primaryIndex),
+  );
   const logits = features.map((candidate) => dot(weights, candidate));
   const maxLogit = Math.max(...logits);
   const exponentials = logits.map((logit) => Math.exp(logit - maxLogit));
@@ -114,7 +132,7 @@ function top1Metrics(model: LinearHarmonyRerankerModel, records: readonly Rankin
   for (const record of records) {
     totalWeight += record.weight;
     if (record.primaryIndex === record.targetIndex) baselineWeight += record.weight;
-    if (rankHarmonyCandidatesLinear(model, record.candidates)[0]?.index === record.targetIndex)
+    if (rankHarmonyCandidatesLinear(model, record.candidates, record.primaryIndex)[0]?.index === record.targetIndex)
       modelWeight += record.weight;
   }
   const baselineTop1 = totalWeight === 0 ? 0 : baselineWeight / totalWeight;

@@ -30,8 +30,8 @@
 
 - [x] Task 11：预登记未污染的 v3 作品级 holdout；旧 eval 降级为 regression。
 - [x] Task 12：导出 train-only、固定生产 range 的 Top-8 ranking records。
-- [ ] Task 13：先训练并验证无新运行依赖的线性 reranker。
-- [ ] Checkpoint D：依据线性基线和错误切片决定是否需要 PyTorch。
-- [ ] Task 14（条件触发）：离线训练小型 MLP，导出 JSON，不引入 Torch runtime。
+- [x] Task 13：线性 v2 跨语料一致改善，但 tune `+0.0228` 未达到 `+0.05` 发布门槛。
+- [x] Checkpoint D：train/tune 均稳定欠拟合，已触发离线小型 MLP；final holdout 未运行。
+- [ ] Task 14（已触发）：离线训练小型 MLP，导出 JSON，不引入 Torch runtime。
 - [ ] Task 15：在冻结 boundary 上接入 primary reranker，并保持分数语义分离。
 - [ ] Task 16：多语料 calibration、tune threshold 与一次 v3 frozen eval。

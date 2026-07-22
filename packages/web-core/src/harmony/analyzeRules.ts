@@ -1,5 +1,5 @@
 import type { HarmonyAnalysisInput } from "./analysisInput";
-import { buildLegalBoundaryLattice } from "./boundaries";
+import { buildLegalBoundaryLattice, type HarmonyBoundaryPolicy } from "./boundaries";
 import { buildHarmonyFeatureCache } from "./features";
 import { generateHarmonyCandidates } from "./candidates";
 import { applyHarmonyConfidence, mergeHarmonySegments, suppressShortNonChordSegments } from "./postprocess";
@@ -19,6 +19,7 @@ export function analyzeHarmonyRules(
     topK?: number;
     decisionThreshold?: number;
     maxOptionalBoundariesPerMeasure?: number;
+    boundaryPolicy?: HarmonyBoundaryPolicy;
     rankerModel?: HarmonyRankerModel;
     rankerWeight?: number;
     primaryRerankerModel?: MlpHarmonyRerankerModel | false;
@@ -54,6 +55,7 @@ export function analyzeHarmonyRules(
     ...(options.maxOptionalBoundariesPerMeasure === undefined
       ? {}
       : { maxOptionalPerMeasure: options.maxOptionalBoundariesPerMeasure }),
+    ...(options.boundaryPolicy === undefined ? {} : { policy: options.boundaryPolicy }),
   }).moments;
   const decoded = decodeHarmonySequence({
     boundaries,

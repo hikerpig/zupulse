@@ -244,4 +244,56 @@ describe("analyzeHarmonyRules", () => {
     });
     expect(annotationBoundariesOnly).toHaveLength(1);
   });
+
+  it("does not create an off-beat segment from note events under metric policy", () => {
+    const input = createHarmonyAnalysisInput({
+      ticksPerQuarter: 480,
+      measures: [{ index: 0, durationTicks: 960, timeSignature: { numerator: 2, denominator: 4 } }],
+      tracks: [
+        {
+          id: "piano",
+          name: "Piano",
+          isPercussion: false,
+          staves: [
+            {
+              index: 0,
+              notes: [
+                ...[0, 4, 7].map((soundingPitchClass, index) => ({
+                  id: `first-${index}`,
+                  moment: { measureIndex: 0, offsetTicks: 0 },
+                  durationTicks: 240,
+                  soundingPitchClass,
+                  voice: 1,
+                })),
+                ...[7, 11, 2].map((soundingPitchClass, index) => ({
+                  id: `second-${index}`,
+                  moment: { measureIndex: 0, offsetTicks: 240 },
+                  durationTicks: 720,
+                  soundingPitchClass,
+                  voice: 1,
+                })),
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    const dense = analyzeHarmonyRules(input, {
+      includedTrackIds: ["piano"],
+      topK: 3,
+      decisionThreshold: 0,
+      primaryRerankerModel: false,
+    });
+    const metric = analyzeHarmonyRules(input, {
+      includedTrackIds: ["piano"],
+      topK: 3,
+      decisionThreshold: 0,
+      primaryRerankerModel: false,
+      boundaryPolicy: "metric-beats",
+    });
+
+    expect(dense.some((segment) => segment.range.start.offsetTicks === 240)).toBe(true);
+    expect(metric.some((segment) => segment.range.start.offsetTicks === 240)).toBe(false);
+  });
 });

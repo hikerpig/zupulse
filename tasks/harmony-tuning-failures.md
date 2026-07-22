@@ -27,3 +27,22 @@ K331 was not run.
 - Decision: fully reverted. Keep the rule-only primary path for this algorithm version and rebuild confidence independently.
 
 K331 was not run.
+
+## Linear primary reranker without rule-primary feature
+
+- Target: fixed-boundary Top-8 primary selection on v3 train/tune records.
+- Change: 58 candidate features with listwise SGD, but no indicator for the existing rule primary.
+- Result: rejected as an invalid baseline. Train-fit Top-1 fell from `0.6254` to `0.5485`; tune fell from `0.5982` to `0.5794`.
+- Cause: alternatives rank is not the rule primary. Without an explicit primary feature, the model cannot represent the safe identity policy of preserving the existing selection.
+- Decision: upgraded the feature contract to v2 with a rule-primary indicator before making the linear-versus-MLP decision.
+
+No final holdout was run.
+
+## Linear primary reranker v2
+
+- Target: aggregate tune Top-1 improvement of at least `0.05`, with no corpus regression beyond `0.005`.
+- Change: 59 features, including rule-primary, trained with corpus/group-balanced listwise SGD.
+- Result: improved train-fit by `0.0251` and tune by `0.0228`. Every tune corpus improved, but the aggregate promotion threshold was not met.
+- Decision: do not publish or integrate the linear asset. The similar train/tune gains and consistent per-corpus direction satisfy Checkpoint D's condition to compare one offline small MLP on the same records.
+
+Full hashes and per-corpus metrics are recorded in [`harmony-linear-reranker-checkpoint.md`](harmony-linear-reranker-checkpoint.md). No final holdout was run.

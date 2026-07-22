@@ -148,11 +148,11 @@ const twoDecimalScoreSchema = z
   .finite()
   .refine((value) => Number(value.toFixed(2)) === value, "scores must have at most two decimals");
 
-export const harmonyRankingRecordsReportSchema = z
+const harmonyRankingRecordsReportV11Schema = z
   .object({
-    schemaVersion: z.literal("1.0.0"),
+    schemaVersion: z.literal("1.1.0"),
     command: z.literal("ranking-records"),
-    split: z.enum(["train", "tune"]).default("train"),
+    split: z.enum(["train", "tune"]),
     featureVersion: z.literal("relative-pc-presence-v1"),
     groupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
     sources: z.array(
@@ -193,6 +193,14 @@ export const harmonyRankingRecordsReportSchema = z
     ),
   })
   .strict();
+
+export const harmonyRankingRecordsReportSchema = z.preprocess((input) => {
+  if (typeof input !== "object" || input === null) return input;
+  const legacy = input as Record<string, unknown>;
+  if (legacy.schemaVersion !== "1.0.0" || typeof legacy.trainingGroupsSha256 !== "string") return input;
+  const { trainingGroupsSha256, ...report } = legacy;
+  return { ...report, schemaVersion: "1.1.0", split: "train", groupsSha256: trainingGroupsSha256 };
+}, harmonyRankingRecordsReportV11Schema);
 
 export type HarmonyRankingRecordsReport = z.infer<typeof harmonyRankingRecordsReportSchema>;
 

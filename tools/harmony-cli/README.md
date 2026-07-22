@@ -105,6 +105,8 @@ pnpm -s harmony:reranker evaluate /tmp/harmony-linear.json \
 
 模型是带来源 hash 的两位小数 JSON 权重；PyTorch 不参与这一基线，也不进入产品运行时。
 
+ranking report `1.1.0` 显式记录 `split` 和 `groupsSha256`。训练器可只读迁移早期 train-only `1.0.0` report 的 `trainingGroupsSha256`，但所有新导出都写 `1.1.0`。
+
 冻结基线比较会锁定 split/gold 数量；mapping、Top-1/Top-8、precision、coverage、boundary F1 只允许在容差内下降，ECE 只允许在容差内上升：
 
 ```bash

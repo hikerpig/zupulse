@@ -39,7 +39,7 @@ export async function exportHarmonyRankingRecords(options: {
       : await loadPop909Records(datasetPath, item, policy, split, options.maxTrainGroups);
   const records = loaded.records.sort((a, b) => a.id.localeCompare(b.id));
   return harmonyRankingRecordsReportSchema.parse({
-    schemaVersion: "1.0.0",
+    schemaVersion: "1.1.0",
     command: "ranking-records",
     split,
     featureVersion: "relative-pc-presence-v1",

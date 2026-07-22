@@ -3,14 +3,18 @@ import {
   harmonyRankingRecordsReportSchema,
   type HarmonyRankingRecordsReport,
 } from "../../tools/harmony-cli/src/schemas";
-import { evaluateLinearHarmonyReranker, trainLinearHarmonyReranker } from "../harmonyLinearRerankerTraining";
+import {
+  evaluateLinearHarmonyReranker,
+  evaluateLinearHarmonyRerankerTrainingFit,
+  trainLinearHarmonyReranker,
+} from "../harmonyLinearRerankerTraining";
 
 const cMajor = { root: { step: "C" as const, alter: 0 as const }, kind: "major" as const, degrees: [] };
 const gMajor = { root: { step: "G" as const, alter: 0 as const }, kind: "major" as const, degrees: [] };
 
 function report(split: "train" | "tune", targetIndex = 1): HarmonyRankingRecordsReport {
   return harmonyRankingRecordsReportSchema.parse({
-    schemaVersion: "1.0.0",
+    schemaVersion: "1.1.0",
     command: "ranking-records",
     split,
     featureVersion: "relative-pc-presence-v1",
@@ -41,6 +45,7 @@ describe("linear harmony reranker training", () => {
     const second = trainLinearHarmonyReranker([report("train")]);
 
     expect(first).toEqual(second);
+    expect(first.featureVersion).toBe("candidate-linear-v2");
     expect(first.weights[0]).toBeGreaterThan(0);
     expect(first.weights.every((weight) => Number(weight.toFixed(2)) === weight)).toBe(true);
   });
@@ -56,5 +61,9 @@ describe("linear harmony reranker training", () => {
     expect(result.aggregate).toEqual({ records: 1, weight: 480, baselineTop1: 0, modelTop1: 1, delta: 1 });
     expect(result.corpora.fixture).toEqual(result.aggregate);
     expect(() => evaluateLinearHarmonyReranker(model, [report("train")])).toThrow("evaluation requires tune reports");
+    expect(evaluateLinearHarmonyRerankerTrainingFit(model, [report("train")]).aggregate.modelTop1).toBe(1);
+    expect(() => evaluateLinearHarmonyRerankerTrainingFit(model, [report("tune")])).toThrow(
+      "training-fit evaluation requires train reports",
+    );
   });
 });

@@ -107,7 +107,7 @@ describe("harmony ranking records", () => {
   it("rejects scores with more than two decimals at the report boundary", () => {
     expect(() =>
       harmonyRankingRecordsReportSchema.parse({
-        schemaVersion: "1.0.0",
+        schemaVersion: "1.1.0",
         command: "ranking-records",
         featureVersion: "relative-pc-presence-v1",
         groupsSha256: "a".repeat(64),
@@ -127,5 +127,19 @@ describe("harmony ranking records", () => {
         ],
       }),
     ).toThrow("scores must have at most two decimals");
+  });
+
+  it("migrates train-only 1.0 reports to the split-aware schema", () => {
+    const migrated = harmonyRankingRecordsReportSchema.parse({
+      schemaVersion: "1.0.0",
+      command: "ranking-records",
+      featureVersion: "relative-pc-presence-v1",
+      trainingGroupsSha256: "a".repeat(64),
+      sources: [{ caseId: "fixture", revision: "v1", groupsSha256: "b".repeat(64) }],
+      records: [],
+    });
+
+    expect(migrated).toMatchObject({ schemaVersion: "1.1.0", split: "train", groupsSha256: "a".repeat(64) });
+    expect(migrated).not.toHaveProperty("trainingGroupsSha256");
   });
 });

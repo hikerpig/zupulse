@@ -17,12 +17,14 @@ describe("linear harmony reranker", () => {
   it("builds fixed-length deterministic candidate features", () => {
     expect(createLinearHarmonyFeatures(candidates, 0)).toHaveLength(LINEAR_HARMONY_FEATURE_LENGTH);
     expect(createLinearHarmonyFeatures(candidates, 0)).toEqual(createLinearHarmonyFeatures(candidates, 0));
+    expect(createLinearHarmonyFeatures(candidates, 1, 1).at(-1)).toBe(1);
+    expect(createLinearHarmonyFeatures(candidates, 0, 1).at(-1)).toBe(0);
   });
 
   it("ranks by linear logits and keeps stable ties", () => {
     const model = linearHarmonyRerankerModelSchema.parse({
       version: 1,
-      featureVersion: "candidate-linear-v1",
+      featureVersion: "candidate-linear-v2",
       algorithmVersion: "listwise-sgd-v1",
       trainingSourcesSha256: ["a".repeat(64)],
       trainingGroupsSha256: "b".repeat(64),
@@ -39,21 +41,34 @@ describe("linear harmony reranker", () => {
   it("exposes logits with at most two decimals", () => {
     const model = linearHarmonyRerankerModelSchema.parse({
       version: 1,
-      featureVersion: "candidate-linear-v1",
+      featureVersion: "candidate-linear-v2",
       algorithmVersion: "listwise-sgd-v1",
       trainingSourcesSha256: ["a".repeat(64)],
       trainingGroupsSha256: "b".repeat(64),
-      weights: [...Array(LINEAR_HARMONY_FEATURE_LENGTH - 2).fill(0), 0.33, 0],
+      weights: [...Array(LINEAR_HARMONY_FEATURE_LENGTH - 3).fill(0), 0.33, 0, 0],
     });
 
     expect(rankHarmonyCandidatesLinear(model, candidates)[1]!.logit).toBe(0.29);
+  });
+
+  it("can preserve the rule primary as an explicit baseline feature", () => {
+    const model = linearHarmonyRerankerModelSchema.parse({
+      version: 1,
+      featureVersion: "candidate-linear-v2",
+      algorithmVersion: "listwise-sgd-v1",
+      trainingSourcesSha256: ["a".repeat(64)],
+      trainingGroupsSha256: "b".repeat(64),
+      weights: [...Array(LINEAR_HARMONY_FEATURE_LENGTH - 1).fill(0), 1],
+    });
+
+    expect(rankHarmonyCandidatesLinear(model, candidates, 1)[0]!.index).toBe(1);
   });
 
   it("rejects model weights with more than two decimals", () => {
     expect(() =>
       linearHarmonyRerankerModelSchema.parse({
         version: 1,
-        featureVersion: "candidate-linear-v1",
+        featureVersion: "candidate-linear-v2",
         algorithmVersion: "listwise-sgd-v1",
         trainingSourcesSha256: ["a".repeat(64)],
         trainingGroupsSha256: "b".repeat(64),

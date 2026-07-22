@@ -20,6 +20,7 @@ export async function compareBaselineFiles(
   const cases = Object.entries(baseline.cases).map(([id, expected]) => {
     const actual = accuracyCases.get(id);
     if (!actual) throw new Error(`report is missing baseline case: ${id}`);
+    if (actual.reportSplit !== "eval") throw new Error(`baseline comparison requires eval report: ${id}`);
     const compared = compareAccuracyBaseline(
       { splits: actual.splits, ...actual.metrics },
       expected,

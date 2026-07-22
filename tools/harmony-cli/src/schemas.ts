@@ -225,7 +225,7 @@ export const harmonyAccuracyMetricsSchema = z
 
 export const harmonyDatasetEvalReportSchema = z
   .object({
-    schemaVersion: z.literal("2.2.0"),
+    schemaVersion: z.literal("2.3.0"),
     command: z.literal("eval"),
     manifest: z.string().min(1),
     summary: z.object({ passed: z.number().int().nonnegative(), failed: z.number().int().nonnegative() }).strict(),
@@ -237,6 +237,7 @@ export const harmonyDatasetEvalReportSchema = z
             kind: z.literal("accuracy-corpus"),
             adapter: z.enum(["dcml", "pop909"]),
             status: z.enum(["passed", "failed"]),
+            reportSplit: z.enum(["train", "tune", "eval"]),
             splits: z.record(z.enum(["train", "tune", "eval"]), z.number().int().nonnegative()),
             metrics: harmonyAccuracyMetricsSchema,
             errors: z.array(

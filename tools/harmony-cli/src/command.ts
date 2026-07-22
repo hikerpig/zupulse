@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { compareBaselineFiles } from "./compareBaselineFiles";
 import { evaluateHarmonyManifest } from "./evaluateManifest";
 import { inspectHarmonyScore, type InspectView } from "./inspectScore";
+import type { DatasetSplit } from "./evaluationProtocol";
 import {
   harmonyInspectReportSchema,
   type HarmonyDatasetEvalReport,
@@ -28,9 +29,14 @@ export async function runHarmonyCommand(
     const dataRoot = dataRootIndex < 0 ? undefined : normalized[dataRootIndex + 1];
     const caseIndex = normalized.indexOf("--case");
     const caseId = caseIndex < 0 ? undefined : normalized[caseIndex + 1];
+    const splitIndex = normalized.indexOf("--split");
+    const reportSplit = splitIndex < 0 ? undefined : normalized[splitIndex + 1];
+    if (splitIndex >= 0 && (reportSplit === undefined || !["train", "tune", "eval"].includes(reportSplit)))
+      throw new Error("--split must be train, tune, or eval");
     return evaluateHarmonyManifest(resolve(cwd, path), {
       ...(dataRoot === undefined ? {} : { dataRoot: resolve(cwd, dataRoot) }),
       ...(caseId === undefined ? {} : { caseId }),
+      ...(reportSplit === undefined ? {} : { reportSplit: reportSplit as DatasetSplit }),
     });
   }
   const positional = normalized[0] === "inspect" ? normalized.slice(1) : normalized;

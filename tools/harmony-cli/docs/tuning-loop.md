@@ -30,6 +30,9 @@ POP909 adapter 从 MIDI 音符、`beat_midi.txt` 建立内部时间网格，再�
 pnpm -s harmony:cli eval test-fixtures/harmony/datasets/manifest.json \
   --data-root /path/to/harmony-data --case pop909-piano-v1 > artifacts/pop909-candidate.json
 
+pnpm -s harmony:cli eval test-fixtures/harmony/datasets/manifest.json \
+  --data-root /path/to/harmony-data --case dcml-mozart-v2.3 --split tune > artifacts/mozart-tune-candidate.json
+
 pnpm -s harmony:cli compare \
   test-fixtures/harmony/baselines/pop909-piano-v1.json \
   artifacts/pop909-candidate.json > artifacts/pop909-diff.json

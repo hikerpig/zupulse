@@ -130,7 +130,7 @@ describe("StudioPage", () => {
     );
     expect(screen.getByText(/修正尚未保存/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "撤销修正" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "播放预览" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "片段试听" })).toBeTruthy();
   });
 
   it("keeps the previous document visible during reanalysis", () => {
@@ -257,8 +257,8 @@ describe("StudioPage", () => {
       </MemoryRouter>,
     );
     const user = userEvent.setup();
-    expect(within(view.container).getByText("分析设置").closest("details")?.hasAttribute("open")).toBe(false);
-    expect(within(view.container).getByRole("option", { name: "track-2" })).toBeTruthy();
+    await user.click(within(view.container).getByRole("button", { name: "分析设置" }));
+    expect(screen.getByRole("option", { name: "track-2" })).toBeTruthy();
     const segments = within(view.container).getByRole("list", { name: "分析片段" });
     await user.click(within(segments).getByRole("button", { name: "片段 1" }));
     await user.keyboard("{ArrowDown}");
@@ -382,10 +382,11 @@ describe("StudioPage", () => {
       </MemoryRouter>,
     );
     const user = userEvent.setup();
-    await user.click(within(view.container).getByRole("button", { name: "暂停预览" }));
-    await user.click(within(view.container).getByRole("button", { name: "循环选中片段" }));
-    expect(within(view.container).getByText("预览播放中")).toBeTruthy();
-    expect(within(view.container).getByText("音频加载中")).toBeTruthy();
+    await user.click(within(view.container).getByRole("button", { name: "片段试听" }));
+    await user.click(screen.getByRole("button", { name: "暂停预览" }));
+    await user.click(screen.getByRole("button", { name: "循环选中片段" }));
+    expect(screen.getByText("预览播放中")).toBeTruthy();
+    expect(screen.getByText("音频加载中")).toBeTruthy();
     expect(toggleStudioPreview).toHaveBeenCalledWith("score-1");
     expect(setStudioPreviewLoop).toHaveBeenCalledWith("score-1", expect.anything());
     expect(playViewer).not.toHaveBeenCalled();
@@ -557,7 +558,7 @@ describe("StudioPage", () => {
     await user.tab();
     expect(document.activeElement?.getAttribute("role")).toBe("separator");
     await user.tab();
-    expect(document.activeElement?.textContent).toBe("撤销修正");
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("撤销修正");
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "s", ctrlKey: true }));
     expect(flushStudio).toHaveBeenCalledWith("score-1");
   });

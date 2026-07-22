@@ -48,8 +48,28 @@
   }
 
   .analysisRegion {
+    display: flex;
+    flex-direction: column;
     min-width: 0;
+    min-height: 0;
+    height: 100%;
     padding: 20px 24px;
+    overflow: hidden;
+  }
+
+  .analysisRegion > section {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .analysisHeading,
+  .commandBar,
+  .exportStatus,
+  .alert,
+  .emptyState {
+    flex-shrink: 0;
   }
 
   .analysisHeading,
@@ -59,6 +79,11 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
+  }
+
+  .editorButtons {
+    display: flex;
+    gap: 8px;
   }
 
   .analysisHeading {
@@ -397,6 +422,26 @@
     color: var(--status-ready-text);
     font-size: 12px;
     text-align: right;
+  }
+
+  .popupSection {
+    margin-top: 12px;
+    padding: 8px 0;
+    border: 0;
+    border-top: 1px solid var(--border-default);
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .popupSection > summary {
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 650;
+    color: var(--text-secondary);
+  }
+
+  .popupSection[open] > summary {
+    margin-bottom: 8px;
   }
 
   .alert,

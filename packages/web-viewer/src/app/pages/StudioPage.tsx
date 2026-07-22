@@ -1,10 +1,12 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore, useRef } from "react";
 import { useParams } from "react-router";
+import { Undo2, Redo2, Settings, Volume2, Download } from "lucide-react";
 import { createHarmonyRangeViewItems } from "../../features/harmony-studio/harmony-range-view-model";
 import { HarmonyRangeWorkspace } from "../../features/harmony-studio/harmony-range-workspace";
 import { HarmonyStudioEditor } from "../../features/harmony-studio/HarmonyStudioEditor";
 import { ScoreViewer } from "../../components/ScoreViewer";
 import { StudioSplitWorkspace } from "../../components/studio-split-workspace";
+import { ContextPopup } from "../../components/ContextPopup";
 import type { ViewerApplication, ViewerApplicationSnapshot } from "../ViewerApplication";
 import { loadStudioPreferences, saveStudioPreferences } from "../studio-preferences";
 import styles from "./StudioPage.module.css";
@@ -90,6 +92,10 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
       saveStudioPreferences(browserStorage(), updated);
       return updated;
     });
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
+  const previewButtonRef = useRef<HTMLButtonElement>(null);
   const preview = studio?.transport ?? {
     status: "paused",
     positionTicks: 0,
@@ -191,11 +197,21 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                   </div>
                   <div className={styles.commandGroups}>
                     <div className={styles.buttonGroup} role="group" aria-label="修正历史">
-                      <button type="button" onClick={() => application.undoStudio(libraryScoreId!)}>
-                        撤销修正
+                      <button
+                        type="button"
+                        onClick={() => application.undoStudio(libraryScoreId!)}
+                        aria-label="撤销修正"
+                        title="撤销修正"
+                      >
+                        <Undo2 size={16} />
                       </button>
-                      <button type="button" onClick={() => application.redoStudio(libraryScoreId!)}>
-                        重做修正
+                      <button
+                        type="button"
+                        onClick={() => application.redoStudio(libraryScoreId!)}
+                        aria-label="重做修正"
+                        title="重做修正"
+                      >
+                        <Redo2 size={16} />
                       </button>
                     </div>
                     <div className={styles.buttonGroup} role="group" aria-label="分析控制">
@@ -213,7 +229,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                         type="button"
                         onClick={() => void application.flushStudio(libraryScoreId!)}
                       >
-                        立即保存
+                        保存
                       </button>
                       <button
                         type="button"
@@ -225,8 +241,36 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                               setExportStatus(error instanceof Error ? error.message : "导出失败"),
                             )
                         }
+                        aria-label="导出标注曲谱"
+                        title="导出标注曲谱"
                       >
-                        导出标注曲谱
+                        <Download size={16} />
+                      </button>
+                    </div>
+                    <div className={styles.buttonGroup} role="group" aria-label="设置与预览">
+                      <button
+                        ref={settingsButtonRef}
+                        type="button"
+                        onClick={() => {
+                          setSettingsOpen(!settingsOpen);
+                          setPreviewOpen(false);
+                        }}
+                        aria-label="分析设置"
+                        title="分析设置"
+                      >
+                        <Settings size={16} />
+                      </button>
+                      <button
+                        ref={previewButtonRef}
+                        type="button"
+                        onClick={() => {
+                          setPreviewOpen(!previewOpen);
+                          setSettingsOpen(false);
+                        }}
+                        aria-label="片段试听"
+                        title="片段试听"
+                      >
+                        <Volume2 size={16} />
                       </button>
                     </div>
                   </div>
@@ -267,15 +311,13 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                   </p>
                 ) : null}
 
-                <div className={styles.utilityGrid}>
-                  <details className={styles.utilityPanel}>
-                    <summary className={styles.panelHeading}>
-                      <span>SETTINGS</span>
-                      <h3 id="analysis-settings-title">分析设置</h3>
-                    </summary>
-                    <div className={styles.fieldGrid}>
+                <ContextPopup anchor={settingsButtonRef.current} open={settingsOpen} onOpenChange={setSettingsOpen}>
+                  <div>
+                    <p className={styles.sectionKicker}>SETTINGS</p>
+                    <h3>分析设置</h3>
+                    <details className={styles.popupSection} open={false}>
+                      <summary>分析范围</summary>
                       <label className={styles.field}>
-                        <span>分析范围</span>
                         <select
                           multiple
                           aria-label="分析范围"
@@ -294,8 +336,10 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                           ))}
                         </select>
                       </label>
+                    </details>
+                    <details className={styles.popupSection} open>
+                      <summary>标注目标</summary>
                       <label className={styles.field}>
-                        <span>标注目标</span>
                         <select
                           aria-label="标注目标"
                           value={studioDocument.annotationTarget.trackId}
@@ -313,22 +357,22 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                           ))}
                         </select>
                       </label>
-                    </div>
-                  </details>
+                    </details>
+                  </div>
+                </ContextPopup>
 
-                  <section className={styles.utilityPanel} aria-label="Studio 预览">
-                    <div className={styles.panelHeading}>
-                      <span>PREVIEW</span>
-                      <h3>片段试听</h3>
-                      <p role="status">{previewStatusLabel}</p>
-                      {audioStatusLabel ? <p role="status">{audioStatusLabel}</p> : null}
-                      <button
-                        type="button"
-                        onClick={() => updatePreferences({ previewEnabled: !preferences.previewEnabled })}
-                      >
-                        {preferences.previewEnabled ? "隐藏和弦预览" : "显示和弦预览"}
-                      </button>
-                    </div>
+                <ContextPopup anchor={previewButtonRef.current} open={previewOpen} onOpenChange={setPreviewOpen}>
+                  <div>
+                    <p className={styles.sectionKicker}>PREVIEW</p>
+                    <h3>片段试听</h3>
+                    <p role="status">{previewStatusLabel}</p>
+                    {audioStatusLabel ? <p role="status">{audioStatusLabel}</p> : null}
+                    <button
+                      type="button"
+                      onClick={() => updatePreferences({ previewEnabled: !preferences.previewEnabled })}
+                    >
+                      {preferences.previewEnabled ? "隐藏和弦预览" : "显示和弦预览"}
+                    </button>
                     <div className={styles.previewControls}>
                       <button
                         className="primary-button"
@@ -383,8 +427,8 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                         {preview.loop ? "取消选中片段循环" : "循环选中片段"}
                       </button>
                     </div>
-                  </section>
-                </div>
+                  </div>
+                </ContextPopup>
 
                 <HarmonyRangeWorkspace
                   ranges={ranges}

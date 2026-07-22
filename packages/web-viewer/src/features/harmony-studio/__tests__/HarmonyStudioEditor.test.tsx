@@ -70,7 +70,7 @@ describe("HarmonyStudioEditor", () => {
     );
     const editor = within(view.container);
 
-    expect(editor.getByText("当前片段没有高置信度候选，可在下方手动构建。")).toBeTruthy();
+    expect(editor.getByText("当前片段没有高置信度候选，可手动构建。")).toBeTruthy();
     expect(editor.queryByRole("list", { name: "结构化和弦候选" })).toBeNull();
   });
 
@@ -82,15 +82,17 @@ describe("HarmonyStudioEditor", () => {
     );
     const editor = within(view.container);
 
-    await user.selectOptions(editor.getByRole("combobox", { name: "根音" }), "D");
-    await user.selectOptions(editor.getByRole("combobox", { name: "和弦类型" }), "dominant");
-    await user.selectOptions(editor.getByRole("combobox", { name: "扩展音" }), "9");
-    await user.selectOptions(editor.getByRole("combobox", { name: "度数操作" }), "alter");
-    await user.selectOptions(editor.getByRole("combobox", { name: "度数" }), "5");
-    await user.selectOptions(editor.getByRole("combobox", { name: "度数变化" }), "1");
-    await user.click(editor.getByRole("button", { name: "添加度数" }));
-    await user.selectOptions(editor.getByRole("combobox", { name: "低音" }), "F");
-    await user.click(editor.getByRole("button", { name: "应用结构化和弦" }));
+    await user.click(editor.getByRole("button", { name: "手动构建" }));
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "根音" }), "D");
+    await user.selectOptions(screen.getByRole("combobox", { name: "和弦类型" }), "dominant");
+    await user.selectOptions(screen.getByRole("combobox", { name: "扩展音" }), "9");
+    await user.selectOptions(screen.getByRole("combobox", { name: "度数操作" }), "alter");
+    await user.selectOptions(screen.getByRole("combobox", { name: "度数" }), "5");
+    await user.selectOptions(screen.getByRole("combobox", { name: "度数变化" }), "1");
+    await user.click(screen.getByRole("button", { name: "添加度数" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: "低音" }), "F");
+    await user.click(screen.getByRole("button", { name: "应用结构化和弦" }));
 
     expect(onApply).toHaveBeenCalledWith({
       root: { step: "D", alter: 0 },

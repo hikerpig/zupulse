@@ -41,13 +41,14 @@ describe("alphaTab playback cursor styles", () => {
     expect(studioCss).toMatch(/\.utilityGrid\s*>\s*details\s*{[^}]*align-self:\s*start;[^}]*height:\s*fit-content;/s);
   });
 
-  it("gives the Studio range rail room for vertically stacked segment metadata", async () => {
+  it("gives the Studio range rail room for segment metadata with visual coding", async () => {
     const css = await source("../features/harmony-studio/harmony-range-workspace.module.css");
 
-    expect(css).toMatch(/\.workspace\s*{[^}]*grid-template-columns:\s*250px\s+minmax\(0,\s*1fr\);/s);
+    expect(css).toMatch(/\.workspace\s*{[^}]*grid-template-columns:\s*350px\s+minmax\(0,\s*1fr\);/s);
     expect(css).toMatch(
-      /\.list button\s*{[^}]*align-items:\s*flex-start;[^}]*flex-direction:\s*column;[^}]*gap:\s*4px;/s,
+      /\.list button\s*{[^}]*align-items:\s*center;[^}]*justify-content:\s*space-between;[^}]*gap:\s*10px;/s,
     );
+    expect(css).toMatch(/\.chordName\s*{[^}]*font-size:\s*15px;[^}]*font-weight:\s*700;/s);
     expect(css).toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.workspace\s*{[^}]*grid-template-columns:\s*1fr;/s);
   });
 

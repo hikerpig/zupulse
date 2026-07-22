@@ -29,6 +29,10 @@ export function HarmonyRangeWorkspace({
   const listRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
 
+  const unresolvedCount = ranges.filter((item) => item.effective.type === "unresolved").length;
+  const correctedCount = ranges.filter((item) => item.origin === "correction").length;
+  const analysisCount = ranges.filter((item) => item.origin === "analysis").length;
+
   return (
     <section className={styles.workspace} aria-labelledby="segments-title">
       <aside className={styles.rail}>
@@ -44,6 +48,36 @@ export function HarmonyRangeWorkspace({
             </button>
           ))}
         </div>
+        <div className={styles.stats} role="status" aria-label="分析进度统计">
+          <button type="button" aria-pressed={filter === "all"} onClick={() => setFilter("all")}>
+            全部 {ranges.length}
+          </button>
+          <span className={styles.statsDivider}>|</span>
+          <button
+            type="button"
+            aria-pressed={filter === "unresolved"}
+            onClick={() => setFilter("unresolved")}
+            className={styles.statItem}
+          >
+            <span className={styles.statDot} data-origin="analysis"></span>
+            未解决 {unresolvedCount}
+          </button>
+          <span className={styles.statsDivider}>|</span>
+          <button
+            type="button"
+            aria-pressed={filter === "corrected"}
+            onClick={() => setFilter("corrected")}
+            className={styles.statItem}
+          >
+            <span className={styles.statDot} data-origin="correction"></span>
+            用户修正 {correctedCount}
+          </button>
+          <span className={styles.statsDivider}>|</span>
+          <button type="button" className={styles.statItem}>
+            <span className={styles.statDot} data-origin="analysis"></span>
+            算法 {analysisCount}
+          </button>
+        </div>
         {selectedIsTemporarilyVisible ? (
           <p className={styles.filterNotice} role="status" aria-label="筛选选择说明">
             当前选择不符合筛选条件，已临时显示。
@@ -57,6 +91,9 @@ export function HarmonyRangeWorkspace({
               aria-label={`片段 ${index + 1}`}
               aria-pressed={selectedKey === item.key}
               data-range-key={item.key}
+              data-origin={item.origin}
+              data-confidence={item.confidence}
+              data-type={item.effective.type}
               onClick={() => onSelect(item)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
@@ -90,20 +127,24 @@ export function HarmonyRangeWorkspace({
                 event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("button")[boundedIndex]?.focus();
               }}
             >
-              <span>
+              <span className={styles.chordName}>
                 {item.effective.type === "chord"
                   ? formatChordSymbol(item.effective.chord)
                   : item.effective.type === "no-chord"
                     ? "N.C."
                     : "未解决"}
               </span>
-              <small>
-                第 {item.effective.range.start.measureIndex + 1} 小节 ·
-                {{ correction: "用户修正", source: "来源谱", analysis: "算法" }[item.origin]}
-                {item.confidence
-                  ? ` · ${item.confidence === "high" ? "高" : item.confidence === "medium" ? "中" : "低"}置信度`
-                  : ""}
-              </small>
+              <span className={styles.metadata}>
+                <span className={styles.measure}>第 {item.effective.range.start.measureIndex + 1} 小节</span>
+                {item.confidence ? (
+                  <span
+                    className={styles.confidence}
+                    aria-label={`${item.confidence === "high" ? "高" : item.confidence === "medium" ? "中" : "低"}置信度`}
+                  >
+                    <span className={styles.confidenceDot}></span>
+                  </span>
+                ) : null}
+              </span>
             </button>
           ))}
         </div>

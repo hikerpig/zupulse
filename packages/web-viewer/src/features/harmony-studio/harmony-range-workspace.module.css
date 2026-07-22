@@ -1,8 +1,10 @@
 @layer components {
   .workspace {
+    flex: 1;
     display: grid;
-    grid-template-columns: 250px minmax(0, 1fr);
-    min-height: 400px;
+    grid-template-columns: 350px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    min-height: 0;
     margin-top: 12px;
     overflow: hidden;
     border: 1px solid var(--border-default);
@@ -12,10 +14,14 @@
   }
 
   .rail {
+    display: flex;
+    flex-direction: column;
     min-width: 0;
+    min-height: 0;
     padding: 18px;
     border-right: 1px solid var(--border-default);
     background: var(--bg-panel-muted);
+    overflow: hidden;
   }
 
   .heading > span {
@@ -55,27 +61,172 @@
     font-size: 11px;
   }
 
+  .stats {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-default);
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .stats button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .stats button[aria-pressed="true"] {
+    color: var(--accent-primary);
+    font-weight: 700;
+  }
+
+  .statItem {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .statDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+  }
+
+  .statDot[data-origin="correction"] {
+    background: var(--accent-primary);
+  }
+
+  .statDot[data-origin="source"] {
+    background: var(--accent-secondary);
+  }
+
+  .statDot[data-origin="analysis"] {
+    background: var(--border-strong);
+  }
+
+  .statsDivider {
+    color: var(--border-default);
+  }
+
   .list {
+    flex: 1;
     display: grid;
     gap: 6px;
-    max-height: 560px;
+    min-height: 0;
     margin-top: 16px;
-    overflow: auto;
+    overflow: scroll;
   }
 
   .list button {
+    position: relative;
     display: flex;
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 4px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
     width: 100%;
+    padding: 8px 12px;
     text-align: left;
+    border-radius: var(--radius-sm);
   }
 
-  .list small {
+  .list button::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    transition: width 140ms ease;
+  }
+
+  .list button[data-origin="correction"]::before {
+    background: var(--accent-primary);
+  }
+
+  .list button[data-origin="source"]::before {
+    background: var(--accent-secondary);
+  }
+
+  .list button[data-origin="analysis"]::before {
+    background: var(--border-strong);
+  }
+
+  .list button[data-type="unresolved"] {
+    background: var(--status-warning-bg);
+  }
+
+  .list button[data-type="unresolved"] .chordName {
+    color: var(--status-warning-text);
+  }
+
+  .list button[aria-pressed="true"] {
+    color: var(--text-primary);
+    border-color: var(--accent-primary);
+    background: var(--accent-soft);
+  }
+
+  .list button[aria-pressed="true"]::before {
+    width: 3px;
+  }
+
+  .list button[aria-pressed="true"]::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--accent-primary);
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  }
+
+  .chordName {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .metadata {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .measure {
     color: var(--text-tertiary);
-    font-size: 10px;
-    line-height: 1.35;
+    font-size: 12px;
+  }
+
+  .confidence {
+    display: flex;
+    align-items: center;
+  }
+
+  .confidenceDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+  }
+
+  .list button[data-confidence="high"] .confidenceDot {
+    background: var(--status-ready-text);
+  }
+
+  .list button[data-confidence="medium"] .confidenceDot {
+    background: var(--status-warning-text);
+  }
+
+  .list button[data-confidence="low"] .confidenceDot {
+    background: var(--status-error-text);
   }
 
   .editor {

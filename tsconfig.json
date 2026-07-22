@@ -9,6 +9,7 @@
     { "path": "./packages/web-viewer/tsconfig.test.json" },
     { "path": "./apps/web-demo" },
     { "path": "./apps/web-demo/tsconfig.test.json" },
+    { "path": "./apps/ipad-shell" },
     { "path": "./apps/desktop-shell" },
     { "path": "./apps/desktop-shell/tsconfig.test.json" },
     { "path": "./tools/harmony-cli" },

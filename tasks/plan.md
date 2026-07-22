@@ -67,7 +67,7 @@ flowchart TD
 
 ### Phase 1: Build, Bridge and Resource-Origin Foundation
 
-- [ ] Task 1: 建立 iPad Web workspace
+- [x] Task 1: 建立 iPad Web workspace
 - [ ] Task 2: 生成并验证 iPad Web 资源 manifest
 - [ ] Task 3: 建立最小 SwiftUI/Xcode App Shell
 - [ ] Task 4: 从 Zod 生成 transport-neutral Bridge contract

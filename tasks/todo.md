@@ -1,6 +1,10 @@
 # iPad Practice Player Task List
 
+> Progress: Task 1 completed and verified on 2026-07-22.
+
 ## Task 1: 建立 iPad Web workspace
+
+**Status:** Completed (2026-07-22)
 
 **Description:** 新增 `apps/ipad-shell` 的 pnpm workspace 与最小 iPad Web entry，使其能独立复用
 `@zupulse/web-viewer`、输出静态 HTML/JS，并保持 Browser/Desktop 入口不变。本任务不创建 Xcode
@@ -8,14 +12,14 @@
 
 **Acceptance criteria:**
 
-- [ ] `@zupulse/ipad-shell` 可以构建最小静态入口，且不从 `apps/web-demo/src` 深导入。
-- [ ] alphaTab 继续作为外部 ESM 资产复制，不被错误打进主 bundle。
-- [ ] 生成目录被忽略且不提交，开发/生产构建配置可区分。
+- [x] `@zupulse/ipad-shell` 可以构建最小静态入口，且不从 `apps/web-demo/src` 深导入。
+- [x] alphaTab 继续作为外部 ESM 资产复制，不被错误打进主 bundle。
+- [x] 生成目录被忽略且不提交，开发/生产构建配置可区分。
 
 **Verification:**
 
-- [ ] `pnpm --filter @zupulse/ipad-shell web:build`
-- [ ] `pnpm typecheck`
+- [x] `pnpm --filter @zupulse/ipad-shell web:build`
+- [x] `pnpm typecheck`
 
 **Dependencies:** None
 

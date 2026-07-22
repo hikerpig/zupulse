@@ -88,6 +88,15 @@ importers:
         specifier: 43.1.0
         version: 43.1.0
 
+  apps/ipad-shell:
+    dependencies:
+      '@zupulse/web-core':
+        specifier: workspace:*
+        version: link:../../packages/web-core
+      '@zupulse/web-viewer':
+        specifier: workspace:*
+        version: link:../../packages/web-viewer
+
   apps/web-demo:
     dependencies:
       '@zupulse/app-i18n':

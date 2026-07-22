@@ -476,8 +476,9 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 ## Checkpoint D：决定是否需要 PyTorch
 
 - [ ] 若线性模型达到成功标准，优先发布线性方案，不增加 PyTorch。
-- [ ] 若线性模型未达标，但 train/tune loss 和错误切片显示明显非线性剩余信号，才执行 Task 14。
+- [ ] 若线性模型未达标，先保存逐 corpus 的 train/tune loss、oracle-hit/miss、chord-family 和 feature residual 切片；只有 train 与各 corpus tune 都呈现稳定欠拟合或特征交互残差，才执行 Task 14。
 - [ ] 若 candidate miss 或 boundary error 才是剩余主因，停止 reranker 路线并重新立项，不用更大模型掩盖输入问题。
+- [ ] Checkpoint 结论必须记录为“发布线性 / 触发离线 MLP / 停止 reranker”三者之一，不允许边看 final holdout 边继续选择。
 
 ## Task 14：可选的离线 PyTorch 小型 MLP
 

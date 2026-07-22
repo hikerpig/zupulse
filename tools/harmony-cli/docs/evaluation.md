@@ -103,6 +103,14 @@ report `2.5.0` 为 accuracy case 增加 `decisionThreshold`。CLI 的 `--decisio
 
 这些数字是回归起点，不是发布达标声明。尤其 POP909 boundary F1 很低，说明当前 beat-grid 上的序列边界仍是主要错误簇；不能通过改用 gold intervals 建 model 来“修复”该指标。
 
+### 当前可接受程度与提升空间
+
+当前算法适合作为可解释、确定性的规则基线和人工辅助结果，但还不能视为高准确率自动和声标注器。跨语料 Top-1 约为 `14.90%–38.81%`，与长期 `95%` precision 目标仍有明显距离；Mozart tune 的 Top-1 `0.3727` 与 Top-8 `0.7975` 之间相差约 42 个百分点，说明正确候选经常已经生成，primary 排序仍有较大提升空间。另一方面，Beethoven Top-8 `0.3876` 和 POP909 boundary F1 `0.0496` 表明排序模型不能解决所有问题，候选召回与边界仍需按语料分别诊断。
+
+`unresolved` 数量本身不是准确率。降低 decision threshold 可以减少拒识，但若 confidence 未校准，只会把低质量 primary 变成已解析错误。是否可接受应同时看 resolved precision、coverage、ECE、Top-8 和 interval/boundary 指标，并保持逐 corpus 门禁，不能用合并均值掩盖某一风格的回退。
+
+当前没有引入 PyTorch 产品运行时的必要。下一步先用相同 train-only ranking records 建立 TypeScript 可推理的线性 reranker；只有线性模型未达门槛、且 train/tune 误差证明剩余信号确实具有非线性时，才使用 PyTorch 离线训练最多两层的小型 MLP。即使触发，产品仍只加载量化到两位小数的 JSON 权重并执行确定性 TypeScript 推理。
+
 baseline 文件：
 
 - [`dcml-mozart-v2.3.json`](../../../test-fixtures/harmony/baselines/dcml-mozart-v2.3.json)

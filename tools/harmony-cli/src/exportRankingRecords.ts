@@ -5,7 +5,7 @@ import { dcmlGroupId } from "./adapters/dcmlEvaluation";
 import { parseDcmlPiece } from "./adapters/dcml";
 import { parsePop909Piece } from "./adapters/pop909";
 import { assignV3DatasetRole, assertV3CorpusGroups, hashDatasetGroups, type V3DatasetRole } from "./evaluationProtocol";
-import { createHarmonyRankingRecords } from "./rankingRecords";
+import { createHarmonyRankingEvaluationRecords, createHarmonyRankingRecords } from "./rankingRecords";
 import {
   harmonyDatasetManifestSchema,
   harmonyEvaluationProtocolV3Schema,
@@ -19,6 +19,7 @@ export async function exportHarmonyRankingRecords(options: {
   dataRoot: string;
   caseId: string;
   maxTrainGroups?: number;
+  split?: "train" | "tune";
 }): Promise<HarmonyRankingRecordsReport> {
   const manifest = harmonyDatasetManifestSchema.parse(JSON.parse(await readFile(options.manifestPath, "utf8")));
   const protocol = harmonyEvaluationProtocolV3Schema.parse(JSON.parse(await readFile(options.protocolPath, "utf8")));
@@ -31,16 +32,18 @@ export async function exportHarmonyRankingRecords(options: {
   const archiveSha256 = createHash("sha256").update(archive).digest("hex");
   if (archiveSha256 !== item.source.sha256) throw new Error(`${item.id} archive checksum mismatch: ${archiveSha256}`);
   const datasetPath = resolveInside(options.dataRoot, item.datasetPath);
+  const split = options.split ?? "train";
   const loaded =
     item.adapter === "dcml"
-      ? await loadDcmlRecords(datasetPath, item, policy, options.maxTrainGroups)
-      : await loadPop909Records(datasetPath, item, policy, options.maxTrainGroups);
+      ? await loadDcmlRecords(datasetPath, item, policy, split, options.maxTrainGroups)
+      : await loadPop909Records(datasetPath, item, policy, split, options.maxTrainGroups);
   const records = loaded.records.sort((a, b) => a.id.localeCompare(b.id));
   return harmonyRankingRecordsReportSchema.parse({
     schemaVersion: "1.0.0",
     command: "ranking-records",
+    split,
     featureVersion: "relative-pc-presence-v1",
-    trainingGroupsSha256: hashDatasetGroups(loaded.trainingGroups.map((group) => `${item.id}:${group}`)),
+    groupsSha256: hashDatasetGroups(loaded.trainingGroups.map((group) => `${item.id}:${group}`)),
     sources: [{ caseId: item.id, revision: item.source.revision, groupsSha256: policy.groupsSha256 }],
     records,
   });
@@ -66,7 +69,13 @@ type AccuracyCase = Extract<
 >;
 type ProtocolCorpus = ReturnType<typeof harmonyEvaluationProtocolV3Schema.parse>["corpora"][number];
 
-async function loadDcmlRecords(root: string, item: AccuracyCase, policy: ProtocolCorpus, maxTrainGroups?: number) {
+async function loadDcmlRecords(
+  root: string,
+  item: AccuracyCase,
+  policy: ProtocolCorpus,
+  split: "train" | "tune",
+  maxGroups?: number,
+) {
   const pieceIds = (await readdir(resolve(root, "harmonies")))
     .filter((name) => name.endsWith(".harmonies.tsv"))
     .map((name) => name.slice(0, -".harmonies.tsv".length))
@@ -77,7 +86,7 @@ async function loadDcmlRecords(root: string, item: AccuracyCase, policy: Protoco
   const groupMode = item.groupBy ?? "prefix-before-hyphen";
   const allGroups = [...new Set(allPieceIds.map((id) => dcmlGroupId(id, groupMode, item.id)))];
   assertV3CorpusGroups(policy, allGroups);
-  const selectedGroups = selectTrainingGroups(allGroups, policy, maxTrainGroups);
+  const selectedGroups = selectGroups(allGroups, policy, split, maxGroups);
   const records = [];
   const trainingGroups = new Set<string>();
   for (const pieceId of pieceIds) {
@@ -93,7 +102,7 @@ async function loadDcmlRecords(root: string, item: AccuracyCase, policy: Protoco
       harmonies: await readFile(resolve(root, `harmonies/${pieceId}.harmonies.tsv`), "utf8"),
     });
     records.push(
-      ...createHarmonyRankingRecords({
+      ...(split === "train" ? createHarmonyRankingRecords : createHarmonyRankingEvaluationRecords)({
         corpus: item.id,
         groupId,
         role,
@@ -106,19 +115,24 @@ async function loadDcmlRecords(root: string, item: AccuracyCase, policy: Protoco
   return { records, trainingGroups: [...trainingGroups].sort() };
 }
 
-async function loadPop909Records(root: string, item: AccuracyCase, policy: ProtocolCorpus, maxTrainGroups?: number) {
+async function loadPop909Records(
+  root: string,
+  item: AccuracyCase,
+  policy: ProtocolCorpus,
+  split: "train" | "tune",
+  maxGroups?: number,
+) {
   const allGroups = (await readdir(root, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory() && /^\d{3}$/.test(entry.name))
     .map((entry) => entry.name)
     .sort();
   assertV3CorpusGroups(policy, allGroups);
-  const selectedGroups = selectTrainingGroups(allGroups, policy, maxTrainGroups);
+  const selectedGroups = selectGroups(allGroups, policy, split, maxGroups);
   const groups = allGroups.filter((group) => selectedGroups.has(group));
   const records = [];
   const trainingGroups: string[] = [];
   for (const groupId of groups) {
     const role: V3DatasetRole = assignV3DatasetRole(groupId, policy);
-    if (role !== "train") continue;
     trainingGroups.push(groupId);
     const directory = resolve(root, groupId);
     const piece = parsePop909Piece({
@@ -129,7 +143,7 @@ async function loadPop909Records(root: string, item: AccuracyCase, policy: Proto
       chords: await readFile(resolve(directory, "chord_midi.txt"), "utf8"),
     });
     records.push(
-      ...createHarmonyRankingRecords({
+      ...(split === "train" ? createHarmonyRankingRecords : createHarmonyRankingEvaluationRecords)({
         corpus: item.id,
         groupId,
         role,
@@ -142,13 +156,14 @@ async function loadPop909Records(root: string, item: AccuracyCase, policy: Proto
   return { records, trainingGroups };
 }
 
-function selectTrainingGroups(
+function selectGroups(
   allGroups: readonly string[],
   policy: ProtocolCorpus,
-  maxTrainGroups?: number,
+  split: "train" | "tune",
+  maxGroups?: number,
 ): Set<string> {
-  const train = allGroups.filter((group) => assignV3DatasetRole(group, policy) === "train").sort();
-  return new Set(maxTrainGroups === undefined ? train : train.slice(0, maxTrainGroups));
+  const selected = allGroups.filter((group) => assignV3DatasetRole(group, policy) === split).sort();
+  return new Set(maxGroups === undefined ? selected : selected.slice(0, maxGroups));
 }
 
 function resolveInside(root: string, path: string): string {

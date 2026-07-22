@@ -33,17 +33,20 @@ export async function runHarmonyCommand(
     const caseIndex = normalized.indexOf("--case");
     const outputIndex = normalized.indexOf("--output");
     const maxGroupsIndex = normalized.indexOf("--max-train-groups");
+    const splitIndex = normalized.indexOf("--split");
     const protocol = protocolIndex < 0 ? undefined : normalized[protocolIndex + 1];
     const dataRoot = dataRootIndex < 0 ? undefined : normalized[dataRootIndex + 1];
     const caseId = caseIndex < 0 ? undefined : normalized[caseIndex + 1];
     const output = outputIndex < 0 ? undefined : normalized[outputIndex + 1];
     const maxTrainGroups = maxGroupsIndex < 0 ? undefined : Number(normalized[maxGroupsIndex + 1]);
+    const split = splitIndex < 0 ? "train" : normalized[splitIndex + 1];
     if (!manifest || !protocol || !dataRoot || !caseId || !output)
       throw new Error(
         "usage: harmony:cli ranking-records <manifest.json> --protocol <protocol.json> --data-root <directory> --case <id> --output <records.json> [--max-train-groups <n>]",
       );
     if (maxGroupsIndex >= 0 && (!Number.isInteger(maxTrainGroups) || maxTrainGroups! < 1))
       throw new Error("--max-train-groups must be a positive integer");
+    if (split !== "train" && split !== "tune") throw new Error("ranking records --split must be train or tune");
     return exportHarmonyRankingRecordsFile({
       manifestPath: resolve(cwd, manifest),
       protocolPath: resolve(cwd, protocol),
@@ -51,6 +54,7 @@ export async function runHarmonyCommand(
       caseId,
       outputPath: resolve(cwd, output),
       ...(maxTrainGroups === undefined ? {} : { maxTrainGroups }),
+      split,
     });
   }
   if (normalized[0] === "calibrate") {

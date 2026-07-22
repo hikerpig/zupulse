@@ -27,16 +27,28 @@ export type HarmonyRankingRecord = {
   }>;
 };
 
-export function createHarmonyRankingRecords(request: {
+type RankingRecordRequest = {
   corpus: string;
   groupId: string;
   role: V3DatasetRole;
   input: HarmonyAnalysisInput;
   includedTrackIds: readonly string[];
   gold: readonly RankingGold[];
-}): HarmonyRankingRecord[] {
+};
+
+export function createHarmonyRankingRecords(request: RankingRecordRequest): HarmonyRankingRecord[] {
   if (request.role !== "train")
     throw new Error(`ranking records require train role: ${request.groupId} is ${request.role}`);
+  return createRecords(request);
+}
+
+export function createHarmonyRankingEvaluationRecords(request: RankingRecordRequest): HarmonyRankingRecord[] {
+  if (request.role !== "tune")
+    throw new Error(`ranking evaluation records require tune role: ${request.groupId} is ${request.role}`);
+  return createRecords(request);
+}
+
+function createRecords(request: RankingRecordRequest): HarmonyRankingRecord[] {
   const included = new Set(request.includedTrackIds);
   const cache = buildHarmonyFeatureCache({
     ticksPerQuarter: request.input.ticksPerQuarter,

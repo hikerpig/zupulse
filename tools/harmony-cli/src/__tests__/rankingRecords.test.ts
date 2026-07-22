@@ -1,6 +1,6 @@
 import { createHarmonyAnalysisInput } from "@zupulse/web-core";
 import { describe, expect, it } from "vitest";
-import { createHarmonyRankingRecords } from "../rankingRecords";
+import { createHarmonyRankingEvaluationRecords, createHarmonyRankingRecords } from "../rankingRecords";
 import { harmonyRankingRecordsReportSchema } from "../schemas";
 
 const chord = { root: { step: "C" as const, alter: 0 as const }, kind: "major" as const, degrees: [] };
@@ -75,13 +75,42 @@ describe("harmony ranking records", () => {
       ).toThrow(`ranking records require train role: work-1 is ${role}`);
   });
 
+  it("allows tune records only through the evaluation-only entry point", () => {
+    expect(
+      createHarmonyRankingEvaluationRecords({
+        corpus: "fixture",
+        groupId: "work-1",
+        role: "tune",
+        input,
+        includedTrackIds: ["piano"],
+        gold: [
+          {
+            range: { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 1920 } },
+            weight: 1920,
+            chord,
+          },
+        ],
+      }),
+    ).toHaveLength(1);
+    expect(() =>
+      createHarmonyRankingEvaluationRecords({
+        corpus: "fixture",
+        groupId: "work-1",
+        role: "final-holdout",
+        input,
+        includedTrackIds: ["piano"],
+        gold: [],
+      }),
+    ).toThrow("ranking evaluation records require tune role");
+  });
+
   it("rejects scores with more than two decimals at the report boundary", () => {
     expect(() =>
       harmonyRankingRecordsReportSchema.parse({
         schemaVersion: "1.0.0",
         command: "ranking-records",
         featureVersion: "relative-pc-presence-v1",
-        trainingGroupsSha256: "a".repeat(64),
+        groupsSha256: "a".repeat(64),
         sources: [{ caseId: "fixture", revision: "v1", groupsSha256: "b".repeat(64) }],
         records: [
           {

@@ -152,8 +152,9 @@ export const harmonyRankingRecordsReportSchema = z
   .object({
     schemaVersion: z.literal("1.0.0"),
     command: z.literal("ranking-records"),
+    split: z.enum(["train", "tune"]).default("train"),
     featureVersion: z.literal("relative-pc-presence-v1"),
-    trainingGroupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    groupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
     sources: z.array(
       z
         .object({

@@ -54,7 +54,15 @@ function createRecords(request: RankingRecordRequest): HarmonyRankingRecord[] {
     ticksPerQuarter: request.input.ticksPerQuarter,
     notes: request.input.tracks
       .filter((track) => included.has(track.id) && !track.isPercussion)
-      .flatMap((track) => track.staves.flatMap((staff) => staff.notes)),
+      .flatMap((track) => track.staves.flatMap((staff) => staff.notes))
+      .map((note) => ({
+        moment: note.moment,
+        durationTicks: note.durationTicks,
+        voice: note.voice,
+        ...(note.soundingPitchClass === undefined ? {} : { soundingPitchClass: note.soundingPitchClass }),
+        ...(note.soundingMidi === undefined ? {} : { soundingMidi: note.soundingMidi }),
+        ...(note.spelling === undefined ? {} : { spelling: note.spelling }),
+      })),
   });
   const segments = analyzeHarmonyRules(request.input, {
     includedTrackIds: request.includedTrackIds,

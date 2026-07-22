@@ -43,6 +43,17 @@ export function createMlpHarmonyReranker(modelInput: MlpHarmonyRerankerModel) {
     rankParsed(model, candidates, rulePrimaryIndex);
 }
 
+export function createMlpHarmonyPrimarySelector(modelInput: MlpHarmonyRerankerModel) {
+  const model = mlpHarmonyRerankerModelSchema.parse(modelInput);
+  return (candidates: readonly LinearHarmonyCandidateInput[], rulePrimaryIndex = -1) => {
+    const ranked = rankParsedRaw(model, candidates, rulePrimaryIndex);
+    const selected = ranked[0];
+    if (!selected) return undefined;
+    const denominator = ranked.reduce((sum, candidate) => sum + Math.exp(candidate.logit - selected.logit), 0);
+    return { index: selected.index, rawConfidence: 1 / denominator };
+  };
+}
+
 export function rankHarmonyCandidatesMlp(
   modelInput: MlpHarmonyRerankerModel,
   candidates: readonly LinearHarmonyCandidateInput[],
@@ -56,13 +67,23 @@ function rankParsed(
   candidates: readonly LinearHarmonyCandidateInput[],
   rulePrimaryIndex: number,
 ): Array<{ index: number; logit: number }> {
+  return rankParsedRaw(model, candidates, rulePrimaryIndex).map(({ index, logit }) => ({
+    index,
+    logit: Number(logit.toFixed(2)),
+  }));
+}
+
+function rankParsedRaw(
+  model: MlpHarmonyRerankerModel,
+  candidates: readonly LinearHarmonyCandidateInput[],
+  rulePrimaryIndex: number,
+): Array<{ index: number; logit: number }> {
   return candidates
     .map((_, index) => ({
       index,
       logit: scoreMlp(model, createLinearHarmonyFeatures(candidates, index, rulePrimaryIndex)),
     }))
-    .sort((a, b) => b.logit - a.logit || a.index - b.index)
-    .map(({ index, logit }) => ({ index, logit: Number(logit.toFixed(2)) }));
+    .sort((a, b) => b.logit - a.logit || a.index - b.index);
 }
 
 function scoreMlp(model: MlpHarmonyRerankerModel, features: readonly number[]): number {

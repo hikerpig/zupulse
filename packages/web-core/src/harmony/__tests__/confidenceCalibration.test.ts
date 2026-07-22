@@ -1,5 +1,11 @@
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { applyHarmonyCalibration } from "../confidenceCalibration";
+import {
+  BUNDLED_HARMONY_DECISION_THRESHOLD,
+  bundledHarmonyPrimaryCalibration,
+} from "../bundledHarmonyPrimaryCalibration";
 
 describe("harmony confidence calibration", () => {
   it("uses a monotonic step model and clamps scores", () => {
@@ -28,5 +34,15 @@ describe("harmony confidence calibration", () => {
         ],
       }),
     ).toThrow("calibration probabilities must be monotonic");
+  });
+
+  it("binds the bundled calibration to the exact quantized MLP", async () => {
+    const model = JSON.parse(
+      await readFile(new URL("../harmony-primary-mlp-model.json", import.meta.url), "utf8"),
+    ) as unknown;
+    const modelSha256 = createHash("sha256").update(JSON.stringify(model)).digest("hex");
+
+    expect(bundledHarmonyPrimaryCalibration.modelSha256).toBe(modelSha256);
+    expect(BUNDLED_HARMONY_DECISION_THRESHOLD).toBe(0.46);
   });
 });

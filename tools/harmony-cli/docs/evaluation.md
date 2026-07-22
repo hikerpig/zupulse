@@ -87,6 +87,8 @@ report `2.5.0` 为 accuracy case 增加 `decisionThreshold`。CLI 的 `--decisio
 
 [`protocol-v3.json`](../../../test-fixtures/harmony/datasets/protocol-v3.json) 在下一轮 primary reranker 训练前冻结新的作品级 final holdout：Beethoven `01`、Chopin `BI105` 和 POP909 `225`。这些 group 不得进入 ranking records、训练、tune 或 threshold 选择。现有 K331 与已经查看过指标的跨语料 cases 只保留为 regression，不能再作为新的泛化声明。
 
+Task 16 冻结后的生产 confidence 是 MLP Top-1 softmax probability 经多语料 train-only weighted PAVA 得到的校准概率，默认 threshold 为 `0.46`。该阈值只用 tune 按 aggregate precision `>= 0.70` 后最大化 coverage 选出。`eval-v3-final` 会在一次命令中对预登记 final groups 同时生成 candidate 与历史 rule-only（threshold `0.60`）报告；最终结果只能用于接受或拒绝，不得再次调参。
+
 未显式登记的 group 继续使用确定性 hash 分配；原本落入 `eval` bucket 的 group 在 v3 中也只作为 regression。协议记录完整 corpus group-set SHA-256 和 revision，运行时重新枚举 group 后必须匹配，防止 corpus 漂移或遗漏作品。
 
 ## 当前冻结基线

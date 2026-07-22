@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { compareBaselineFiles } from "./compareBaselineFiles";
 import { buildHarmonyCalibrationAssetFile, type HarmonyCalibrationAsset } from "./confidenceCalibration";
 import { evaluateHarmonyManifest } from "./evaluateManifest";
+import { evaluateHarmonyV3FinalHoldoutFile } from "./evaluateV3FinalHoldout";
 import { exportHarmonyRankingRecordsFile } from "./exportRankingRecords";
 import { inspectHarmonyScore, type InspectView } from "./inspectScore";
 import type { DatasetSplit } from "./evaluationProtocol";
@@ -23,9 +24,29 @@ export async function runHarmonyCommand(
   | HarmonyBaselineComparisonReport
   | HarmonyCalibrationAsset
   | Awaited<ReturnType<typeof exportHarmonyRankingRecordsFile>>
+  | Awaited<ReturnType<typeof evaluateHarmonyV3FinalHoldoutFile>>
 > {
   const normalized = args[0] === "--" ? args.slice(1) : args;
   const cwd = context.cwd ?? process.env.INIT_CWD ?? process.cwd();
+  if (normalized[0] === "eval-v3-final") {
+    const manifest = normalized[1];
+    const protocolIndex = normalized.indexOf("--protocol");
+    const dataRootIndex = normalized.indexOf("--data-root");
+    const outputIndex = normalized.indexOf("--output");
+    const protocol = protocolIndex < 0 ? undefined : normalized[protocolIndex + 1];
+    const dataRoot = dataRootIndex < 0 ? undefined : normalized[dataRootIndex + 1];
+    const output = outputIndex < 0 ? undefined : normalized[outputIndex + 1];
+    if (!manifest || !protocol || !dataRoot || !output)
+      throw new Error(
+        "usage: harmony:cli eval-v3-final <manifest.json> --protocol <protocol.json> --data-root <directory> --output <report.json>",
+      );
+    return evaluateHarmonyV3FinalHoldoutFile(
+      resolve(cwd, manifest),
+      resolve(cwd, protocol),
+      resolve(cwd, dataRoot),
+      resolve(cwd, output),
+    );
+  }
   if (normalized[0] === "ranking-records") {
     const manifest = normalized[1];
     const protocolIndex = normalized.indexOf("--protocol");

@@ -1,4 +1,9 @@
-import { harmonyAnalysisInputSchema, harmonySegmentSchema } from "@zupulse/web-core";
+import {
+  chordSymbolSchema,
+  harmonyAnalysisInputSchema,
+  harmonySegmentSchema,
+  scoreWrittenRangeSchema,
+} from "@zupulse/web-core";
 import { z } from "zod";
 
 export const harmonyInspectReportSchema = z
@@ -111,8 +116,9 @@ const evaluationProtocolCorpusV3Schema = z
     caseId: z.string().min(1),
     sourceRevision: z.string().min(1),
     groupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
-    finalHoldoutGroups: z.array(z.string().min(1)).min(1),
+    finalHoldoutGroups: z.array(z.string().min(1)),
     regressionGroups: z.array(z.string().min(1)),
+    developmentOnly: z.boolean().optional(),
   })
   .strict()
   .superRefine((corpus, context) => {
@@ -122,6 +128,8 @@ const evaluationProtocolCorpusV3Schema = z
         code: "custom",
         message: `group cannot be both final holdout and regression: ${overlap}`,
       });
+    if (corpus.finalHoldoutGroups.length === 0 && corpus.developmentOnly !== true)
+      context.addIssue({ code: "custom", message: "corpus without final holdout must be development-only" });
   });
 
 export const harmonyEvaluationProtocolV3Schema = z
@@ -134,6 +142,58 @@ export const harmonyEvaluationProtocolV3Schema = z
   .strict();
 
 export type HarmonyEvaluationProtocolV3 = z.infer<typeof harmonyEvaluationProtocolV3Schema>;
+
+const twoDecimalScoreSchema = z
+  .number()
+  .finite()
+  .refine((value) => Number(value.toFixed(2)) === value, "scores must have at most two decimals");
+
+export const harmonyRankingRecordsReportSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    command: z.literal("ranking-records"),
+    featureVersion: z.literal("relative-pc-presence-v1"),
+    trainingGroupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    sources: z.array(
+      z
+        .object({
+          caseId: z.string().min(1),
+          revision: z.string().min(1),
+          groupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
+        })
+        .strict(),
+    ),
+    records: z.array(
+      z
+        .object({
+          id: z.string().min(1),
+          corpus: z.string().min(1),
+          groupId: z.string().min(1),
+          range: scoreWrittenRangeSchema,
+          weight: z.number().int().positive(),
+          outcome: z.enum(["oracle-hit", "oracle-miss"]),
+          primaryIndex: z.number().int().min(-1).max(7),
+          targetIndex: z.number().int().min(0).max(7).optional(),
+          candidates: z
+            .array(
+              z
+                .object({
+                  chord: chordSymbolSchema,
+                  features: z.array(twoDecimalScoreSchema).length(37),
+                  ruleLocalScore: twoDecimalScoreSchema,
+                  ruleSequenceScore: twoDecimalScoreSchema,
+                })
+                .strict(),
+            )
+            .min(1)
+            .max(8),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+export type HarmonyRankingRecordsReport = z.infer<typeof harmonyRankingRecordsReportSchema>;
 
 const fractionSchema = z.number().min(0).max(1);
 const accuracySliceSchema = z

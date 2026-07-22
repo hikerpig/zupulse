@@ -71,6 +71,19 @@ pnpm -s harmony:cli eval test-fixtures/harmony/datasets/manifest.json \
 
 dataset manifest 当前为 `2.0.0`，生成的 eval report 为 `2.5.0`。accuracy case 的 `reportSplit` 明确本次指标来自 train、tune 还是 eval；省略 `--split` 时固定为 eval，baseline compare 会拒绝非 eval report。`--decision-threshold 0..1` 可生成校准所需的未拒识报告，默认仍为 `0.6`，实际值记录在 accuracy case。report 的 `diagnostics` 提供全量错误簇、family outcome、confidence bins、post-decision precision/coverage curve，以及按联合区间计算的 duration overlap 与容差 boundary 指标；`resolved-wrong-oracle-hit` 和 `resolved-wrong-oracle-miss` 分别表示主路径选择错误与候选缺失。`errors` 只保存每类有限的定位样本，不用于统计簇大小。
 
+Primary reranker 的训练 records 使用预登记 v3 协议导出：
+
+```bash
+pnpm -s harmony:cli ranking-records test-fixtures/harmony/datasets/manifest.json \
+  --protocol test-fixtures/harmony/datasets/protocol-v3.json \
+  --data-root /path/to/harmony-data \
+  --case dcml-mozart-v2.3 \
+  --output /tmp/mozart-ranking-records.json \
+  --max-train-groups 3
+```
+
+导出器先校验 archive、corpus revision 和完整 group-set hash，再只处理 v3 `train` group；tune、regression 和 final holdout 不会生成 records。`--max-train-groups` 按排序后的 group ID 做确定性上限采样，不改变完整语料校验。每条记录来自生产 analyzer 的实际 range 和 Top-8，标记 `oracle-hit`/`oracle-miss`，特征及 score 最多两位小数。
+
 冻结基线比较会锁定 split/gold 数量；mapping、Top-1/Top-8、precision、coverage、boundary F1 只允许在容差内下降，ECE 只允许在容差内上升：
 
 ```bash

@@ -137,6 +137,7 @@ describe("harmony dataset evaluation protocol", () => {
       ),
     );
     expect(protocol.corpora.map((corpus) => [corpus.caseId, corpus.finalHoldoutGroups])).toEqual([
+      ["dcml-mozart-v2.3", []],
       ["dcml-beethoven-sonatas-v2.5", ["01"]],
       ["dcml-chopin-mazurkas-v3.2", ["BI105"]],
       ["pop909-piano-v1", ["225"]],

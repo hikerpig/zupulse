@@ -69,4 +69,29 @@ describe("harmony feature cache", () => {
         .spellingByPitchClass[10],
     ).toEqual({ step: "B", alter: -1 });
   });
+
+  it("counts onsets by complete written moment across measures", () => {
+    const cache = buildHarmonyFeatureCache({
+      ticksPerQuarter: 480,
+      notes: [
+        {
+          moment: { measureIndex: 0, offsetTicks: 0 },
+          durationTicks: 480,
+          soundingPitchClass: 0,
+          voice: 1,
+        },
+        {
+          moment: { measureIndex: 1, offsetTicks: 0 },
+          durationTicks: 480,
+          soundingPitchClass: 4,
+          voice: 1,
+        },
+      ],
+    });
+
+    expect(
+      cache.forRange({ start: { measureIndex: 0, offsetTicks: 240 }, end: { measureIndex: 1, offsetTicks: 480 } })
+        .onsetCountByPitchClass,
+    ).toEqual([0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]);
+  });
 });

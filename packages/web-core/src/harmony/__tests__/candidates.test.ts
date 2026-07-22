@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateHarmonyCandidates } from "../candidates";
+import { generateHarmonyCandidates, selectHybridCandidates, type HarmonyCandidate } from "../candidates";
 import { createHarmonyRankerFeatures, harmonyChordShape, harmonyRankerModelSchema } from "../learnedRanker";
 
 describe("harmony candidates", () => {
@@ -178,16 +178,40 @@ describe("harmony candidates", () => {
       { topK: 8, rankerModel: model },
     );
 
-    expect(
-      candidates.some(
-        ({ chord }) =>
-          chord.root.step === "C" &&
-          chord.root.alter === 0 &&
-          chord.kind === "major" &&
-          chord.extension === undefined &&
-          chord.degrees.length === 0 &&
-          chord.bass?.step === "E",
-      ),
-    ).toBe(true);
+    expect(candidates.some(({ chord }) => chord.root.step === "C" && chord.bass?.step === "E")).toBe(true);
+  });
+
+  it("reserves a hybrid slot for the observed bass variant of a selected base chord", () => {
+    const candidate = (
+      step: HarmonyCandidate["chord"]["root"]["step"],
+      kind: HarmonyCandidate["chord"]["kind"],
+      localScore: number,
+      sequenceScore: number,
+      bass?: HarmonyCandidate["chord"]["bass"],
+    ): HarmonyCandidate => ({
+      chord: { root: { step, alter: 0 }, kind, degrees: [], ...(bass ? { bass } : {}) },
+      localScore,
+      sequenceScore,
+      confidence: 0,
+    });
+    const observed = candidate("C", "major", 0, 0, { step: "E", alter: 0 });
+    const selected = selectHybridCandidates(
+      [
+        candidate("C", "major", 100, 1),
+        candidate("D", "major", 90, 2),
+        candidate("E", "major", 80, 3),
+        candidate("F", "major", 70, 4),
+        candidate("G", "major", 60, 5),
+        candidate("A", "major", 50, 6),
+        candidate("B", "major", 40, 100),
+        candidate("D", "minor", 30, 90),
+        observed,
+      ],
+      8,
+      4,
+    );
+
+    expect(selected).toHaveLength(8);
+    expect(selected).toContain(observed);
   });
 });

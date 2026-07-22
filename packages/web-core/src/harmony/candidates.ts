@@ -161,7 +161,10 @@ export function generateHarmonyCandidates(
       a.chord.kind.localeCompare(b.chord.kind) ||
       (a.chord.extension ?? 0) - (b.chord.extension ?? 0),
   );
-  const selected = options.rankerModel === undefined ? sorted.slice(0, topK) : selectHybridCandidates(sorted, topK);
+  const selected =
+    options.rankerModel === undefined
+      ? sorted.slice(0, topK)
+      : selectHybridCandidates(sorted, topK, features.bassPitchClass);
   return selected.map((candidate, index, all) => ({
     ...candidate,
     sequenceScore: candidate.sequenceScore,
@@ -187,11 +190,15 @@ function learnedRoots(features: HarmonyFeatureVector): number[] {
   );
 }
 
-function selectHybridCandidates(candidates: readonly HarmonyCandidate[], topK: number): HarmonyCandidate[] {
+export function selectHybridCandidates(
+  candidates: readonly HarmonyCandidate[],
+  topK: number,
+  observedBassPitchClass: number | undefined,
+): HarmonyCandidate[] {
   const selected: HarmonyCandidate[] = [];
   const counts = new Map<string, number>();
   const learnedSlots = Math.max(1, topK - 2);
-  for (const candidate of candidates) {
+  for (const candidate of prioritizeObservedBass(candidates, observedBassPitchClass)) {
     const key = baseChordKey(candidate);
     if ((counts.get(key) ?? 0) >= 2) continue;
     counts.set(key, (counts.get(key) ?? 0) + 1);
@@ -204,6 +211,36 @@ function selectHybridCandidates(candidates: readonly HarmonyCandidate[], topK: n
     if (selected.length === topK) break;
   }
   return selected.sort((a, b) => b.localScore - a.localScore);
+}
+
+function prioritizeObservedBass(
+  candidates: readonly HarmonyCandidate[],
+  observedBassPitchClass: number | undefined,
+): HarmonyCandidate[] {
+  if (observedBassPitchClass === undefined) return [...candidates];
+  const preferredByBase = new Map<string, HarmonyCandidate>();
+  for (const candidate of candidates)
+    if (candidateBassPitchClass(candidate) === observedBassPitchClass && !preferredByBase.has(baseChordKey(candidate)))
+      preferredByBase.set(baseChordKey(candidate), candidate);
+  const seenBases = new Set<string>();
+  const replacements = new Map<HarmonyCandidate, HarmonyCandidate>();
+  return candidates.map((candidate) => {
+    const replacement = replacements.get(candidate);
+    if (replacement) return replacement;
+    const key = baseChordKey(candidate);
+    if (seenBases.has(key)) return candidate;
+    seenBases.add(key);
+    const preferred = preferredByBase.get(key);
+    if (!preferred || preferred === candidate) return candidate;
+    replacements.set(preferred, candidate);
+    return preferred;
+  });
+}
+
+function candidateBassPitchClass(candidate: HarmonyCandidate): number {
+  const pitch = candidate.chord.bass ?? candidate.chord.root;
+  const natural = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 } as const;
+  return (natural[pitch.step] + pitch.alter + 12) % 12;
 }
 
 function baseChordKey(candidate: HarmonyCandidate): string {

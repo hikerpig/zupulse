@@ -75,7 +75,7 @@ export function buildHarmonyFeatureCache(input: {
           const previous = weights.get(key);
           weights.set(key, { pitch: note.spelling, weight: (previous?.weight ?? 0) + end - start });
         }
-        if (note.moment.offsetTicks >= range.start.offsetTicks && note.moment.offsetTicks < range.end.offsetTicks)
+        if (compareMoments(note.moment, range.start) >= 0 && compareMoments(note.moment, range.end) < 0)
           onsetCountByPitchClass[pitchClass] = Math.min(onsetCountByPitchClass[pitchClass]! + 1, 8);
         if (
           !bass ||

@@ -7,7 +7,9 @@ import type { HarmonySegment } from "./schemas";
 import { decodeHarmonySequence } from "./decode";
 import { scoreHarmonyTransition } from "./transitions";
 import { bundledHarmonyRankerModel } from "./bundledHarmonyRanker";
-import type { HarmonyRankerModel } from "./learnedRanker";
+import { createHarmonyRankerFeatures, type HarmonyRankerModel } from "./learnedRanker";
+import { createMlpHarmonyReranker, type MlpHarmonyRerankerModel } from "./mlpReranker";
+import { bundledHarmonyPrimaryMlp } from "./bundledHarmonyPrimaryMlp";
 
 export function analyzeHarmonyRules(
   input: HarmonyAnalysisInput,
@@ -18,6 +20,7 @@ export function analyzeHarmonyRules(
     maxOptionalBoundariesPerMeasure?: number;
     rankerModel?: HarmonyRankerModel;
     rankerWeight?: number;
+    primaryRerankerModel?: MlpHarmonyRerankerModel | false;
   },
 ): HarmonySegment[] {
   const included = new Set(options.includedTrackIds);
@@ -36,6 +39,10 @@ export function analyzeHarmonyRules(
       ),
     );
   const cache = buildHarmonyFeatureCache({ ticksPerQuarter: input.ticksPerQuarter, notes });
+  const rerankPrimary =
+    options.primaryRerankerModel === false
+      ? undefined
+      : createMlpHarmonyReranker(options.primaryRerankerModel ?? bundledHarmonyPrimaryMlp);
   const boundaries = buildLegalBoundaryLattice({
     ticksPerQuarter: input.ticksPerQuarter,
     measures: input.measures,
@@ -56,7 +63,8 @@ export function analyzeHarmonyRules(
     maxSpan: 16,
   });
   const segments: HarmonySegment[] = decoded.map((selected) => {
-    const alternatives = generateHarmonyCandidates(selected.range, cache.forRange(selected.range), {
+    const rangeFeatures = cache.forRange(selected.range);
+    const alternatives = generateHarmonyCandidates(selected.range, rangeFeatures, {
       ...(options.topK === undefined ? {} : { topK: options.topK }),
       rankerModel: options.rankerModel ?? bundledHarmonyRankerModel,
       ...(options.rankerWeight === undefined ? {} : { rankerWeight: options.rankerWeight }),
@@ -70,5 +78,24 @@ export function analyzeHarmonyRules(
     };
   });
   const corrected = suppressShortNonChordSegments(segments, input.ticksPerQuarter / 4);
-  return mergeHarmonySegments(applyHarmonyConfidence(corrected, options.decisionThreshold ?? 0.6));
+  // Abstention remains based on the independent rule confidence until Task 16 calibrates the frozen MLP primary.
+  const finalized = mergeHarmonySegments(applyHarmonyConfidence(corrected, options.decisionThreshold ?? 0.6));
+  if (rerankPrimary === undefined) return finalized;
+  return finalized.map((segment) => {
+    if (segment.status !== "resolved" || segment.alternatives.length === 0) return segment;
+    const rangeFeatures = cache.forRange(segment.range);
+    const rulePrimaryIndex = segment.alternatives.findIndex(
+      (candidate) => JSON.stringify(candidate.chord) === JSON.stringify(segment.chord),
+    );
+    const selected = rerankPrimary(
+      segment.alternatives.map((candidate) => ({
+        ...candidate,
+        features: createHarmonyRankerFeatures(rangeFeatures, candidate.chord),
+        ruleLocalScore: candidate.localScore,
+        ruleSequenceScore: candidate.sequenceScore,
+      })),
+      rulePrimaryIndex,
+    )[0];
+    return selected === undefined ? segment : { ...segment, chord: segment.alternatives[selected.index]!.chord };
+  });
 }

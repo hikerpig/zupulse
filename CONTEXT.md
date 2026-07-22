@@ -62,7 +62,8 @@ Zupulse 是本地优先的乐谱查看与练习应用。当前交付面是共享
 - **Harmony Correction**：用户对和弦标签或 Score Written Range 施加的结构化修改，包括替换、重拼写、N.C.、分割、合并和移动边界；它锚定书面区间而非算法 segment ID，重置会删除对应 Correction。
 - **Harmony Selection**：Studio 中当前用于导航、高亮和指定编辑目标的临时 Score Written Range；它本身不属于 User Corrections，也不随 Harmony Analysis Document 持久化。
 - **Harmony Analysis Compatibility**：首版只分析十二平均律音高；含微分音的区间降级为不支持或低置信度，不把微分音量化到最近半音。
-- **Learned Harmony Ranker**：随应用发布、离线且确定性运行的和弦候选排序与拒识能力；它只处理结构化特征和候选，不直接生成任意和弦文本，训练集与最终评估集严格隔离。
+- **Learned Harmony Ranker**：随应用发布、离线且确定性运行的和弦候选排序能力；frequency ranker 构造 Top-8，Primary Harmony Reranker 在冻结的 Score Written Range 上从 Top-8 选择 Chord Symbol。它们只处理结构化特征和候选，不直接生成任意和弦文本，训练集与最终评估集严格隔离。
+- **Primary Harmony Reranker**：在规则 boundary、短片段抑制和合并完成后，从最终 Top-8 中选择 primary Chord Symbol 的量化小型 MLP；它不改变 range，不把 model logit 当作 confidence，产品只运行 TypeScript 推理。
 - **Annotated Score Export**：把 Effective Harmony Projection 增量写入来源格式与结构后生成的新文件副本；它保持来源容器，不修改 Managed Score Copy 或当前 Library Score。
 - **Bridge API**：共享 React 应用与受信任平台宿主之间经版本化 schema 校验的 RPC/事件边界；
   Electron 与 iPad 使用不同传输适配器，但不得创造不同的领域语义。

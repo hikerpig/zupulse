@@ -1,6 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { analyzeHarmonyRules } from "../analyzeRules";
 import { createHarmonyAnalysisInput } from "../analysisInput";
+import { LINEAR_HARMONY_FEATURE_LENGTH } from "../linearReranker";
+
+const rejectRulePrimaryModel = {
+  version: 1 as const,
+  featureVersion: "candidate-linear-v2" as const,
+  algorithmVersion: "mlp-relu-v1" as const,
+  trainingSourcesSha256: ["a".repeat(64)],
+  trainingGroupsSha256: "b".repeat(64),
+  hiddenSize: 1,
+  hiddenWeights: [...Array(LINEAR_HARMONY_FEATURE_LENGTH - 1).fill(0), 1],
+  hiddenBias: [0],
+  outputWeights: [-1],
+  outputBias: 0,
+};
 
 describe("analyzeHarmonyRules", () => {
   it("produces a structured top-k result for each scoped measure", () => {
@@ -49,6 +63,54 @@ describe("analyzeHarmonyRules", () => {
     expect(segments).toHaveLength(1);
     expect(segments[0]).toMatchObject({ status: "resolved", chord: { root: { step: "C" }, kind: "major" } });
     expect(segments[0]?.alternatives).toHaveLength(3);
+  });
+
+  it("reranks only the primary chord while preserving range and rule confidence", () => {
+    const input = createHarmonyAnalysisInput({
+      ticksPerQuarter: 480,
+      measures: [{ index: 0, durationTicks: 1920, timeSignature: { numerator: 4, denominator: 4 } }],
+      tracks: [
+        {
+          id: "piano",
+          name: "Piano",
+          isPercussion: false,
+          staves: [
+            {
+              index: 0,
+              notes: [0, 4, 7].map((soundingPitchClass, index) => ({
+                id: `note-${index}`,
+                moment: { measureIndex: 0, offsetTicks: 0 },
+                durationTicks: 1920,
+                soundingPitchClass,
+                voice: 1,
+              })),
+            },
+          ],
+        },
+      ],
+    });
+    const baseline = analyzeHarmonyRules(input, {
+      includedTrackIds: ["piano"],
+      topK: 3,
+      decisionThreshold: 0,
+      primaryRerankerModel: false,
+    });
+    const reranked = analyzeHarmonyRules(input, {
+      includedTrackIds: ["piano"],
+      topK: 3,
+      decisionThreshold: 0,
+      primaryRerankerModel: rejectRulePrimaryModel,
+    });
+
+    expect(reranked[0]?.status).toBe("resolved");
+    expect(reranked[0]).toMatchObject({
+      range: baseline[0]?.range,
+      confidence: baseline[0]?.status === "resolved" ? baseline[0].confidence : undefined,
+      alternatives: baseline[0]?.alternatives,
+    });
+    expect(reranked[0]?.status === "resolved" ? reranked[0].chord : undefined).not.toEqual(
+      baseline[0]?.status === "resolved" ? baseline[0].chord : undefined,
+    );
   });
 
   it("uses cross-measure evidence when decoding a sequence", () => {
@@ -115,7 +177,12 @@ describe("analyzeHarmonyRules", () => {
         },
       ],
     });
-    const segments = analyzeHarmonyRules(input, { includedTrackIds: ["piano"], topK: 3, decisionThreshold: 0 });
+    const segments = analyzeHarmonyRules(input, {
+      includedTrackIds: ["piano"],
+      topK: 3,
+      decisionThreshold: 0,
+      primaryRerankerModel: false,
+    });
     expect(segments).toHaveLength(1);
     expect(segments[0]?.range.end).toEqual({ measureIndex: 1, offsetTicks: 480 });
   });
@@ -161,6 +228,13 @@ describe("analyzeHarmonyRules", () => {
       "C",
       "G",
     ]);
+    const reranked = analyzeHarmonyRules(input, {
+      includedTrackIds: ["piano"],
+      topK: 3,
+      decisionThreshold: 0,
+      primaryRerankerModel: rejectRulePrimaryModel,
+    });
+    expect(reranked.map((segment) => segment.range)).toEqual(segments.map((segment) => segment.range));
 
     const annotationBoundariesOnly = analyzeHarmonyRules(input, {
       includedTrackIds: ["piano"],

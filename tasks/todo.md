@@ -33,5 +33,5 @@
 - [x] Task 13：线性 v2 跨语料一致改善，但 tune `+0.0228` 未达到 `+0.05` 发布门槛。
 - [x] Checkpoint D：train/tune 均稳定欠拟合，已触发离线小型 MLP；final holdout 未运行。
 - [x] Task 14：16-unit 离线 MLP 相对线性 tune `+0.0961`，量化 JSON/TypeScript 等价且无 Torch runtime。
-- [ ] Task 15：在冻结 boundary 上接入 primary reranker，并保持分数语义分离。
+- [x] Task 15：MLP 在冻结 postprocess range 上默认启用，P95 `0.9966x`，logit/rule/confidence 语义分离。
 - [ ] Task 16：多语料 calibration、tune threshold 与一次 v3 frozen eval。

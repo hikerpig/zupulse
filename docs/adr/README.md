@@ -26,6 +26,11 @@ ADR 文件保留历史编号；本表决定哪些决策可作为当前实现依�
 - `0058`–`0063`：iPad 薄 SwiftUI/WKWebView 壳、单一版本化 Bridge、token 二进制数据面、受控网络、
   Zod contract 事实源与构建时 Web 资产。
 - `0064`：在单一 alphaTab 纵向布局上协调连续跟随、屏幕翻页、谱面点击与播放进度。
+- `0065`：在冻结规则边界后，以量化小型 MLP 从 Top-8 选择 primary 和弦。
+
+## Proposed
+
+- 当前没有。
 
 ## Superseded
 

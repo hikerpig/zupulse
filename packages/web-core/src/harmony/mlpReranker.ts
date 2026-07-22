@@ -37,12 +37,25 @@ export const mlpHarmonyRerankerModelSchema = z
 
 export type MlpHarmonyRerankerModel = z.infer<typeof mlpHarmonyRerankerModelSchema>;
 
+export function createMlpHarmonyReranker(modelInput: MlpHarmonyRerankerModel) {
+  const model = mlpHarmonyRerankerModelSchema.parse(modelInput);
+  return (candidates: readonly LinearHarmonyCandidateInput[], rulePrimaryIndex = -1) =>
+    rankParsed(model, candidates, rulePrimaryIndex);
+}
+
 export function rankHarmonyCandidatesMlp(
   modelInput: MlpHarmonyRerankerModel,
   candidates: readonly LinearHarmonyCandidateInput[],
   rulePrimaryIndex = -1,
 ): Array<{ index: number; logit: number }> {
-  const model = mlpHarmonyRerankerModelSchema.parse(modelInput);
+  return createMlpHarmonyReranker(modelInput)(candidates, rulePrimaryIndex);
+}
+
+function rankParsed(
+  model: MlpHarmonyRerankerModel,
+  candidates: readonly LinearHarmonyCandidateInput[],
+  rulePrimaryIndex: number,
+): Array<{ index: number; logit: number }> {
   return candidates
     .map((_, index) => ({
       index,

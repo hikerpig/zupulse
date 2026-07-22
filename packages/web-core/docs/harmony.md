@@ -15,30 +15,33 @@
   → decode + transitions：用有界 beam search 选择整段和弦序列
   → learnedRanker：仅扩充和排序每段的 Top-8 alternatives
   → postprocess：抑制短暂非和弦、合并相邻段、应用 confidence 拒识
+  → Primary Harmony Reranker：在冻结 range 上从 Top-8 选择 primary
   → HarmonySegment[]
 ```
 
-生产入口是 [`analyzeRules.ts`](../src/harmony/analyzeRules.ts)。当前实现刻意让规则候选负责主序列、primary chord、boundary 和 confidence；bundled ranker 只改善 alternatives。学习分不进入序列累计，因为两种分数尺度混合会损害 resolved precision 和边界稳定性。
+生产入口是 [`analyzeRules.ts`](../src/harmony/analyzeRules.ts)。规则候选负责主序列、boundary、后处理和暂时的拒识 confidence；frequency ranker 构造 alternatives，量化 MLP 只在最终冻结 range 上选择 primary chord。两种学习分都不进入序列累计，model logit 也不充当 confidence。
 
 `alternatives` 是独立排序的候选列表，不承诺第一项等于或一定包含 primary chord。相邻同和弦 segment 合并时，候选按原顺序稳定去重并始终限制为最多 8 个；评测不得把合并前多个列表拼接成大于 Top-8 的 oracle。
 
 ## 核心文件
 
-| 文件                                                                    | 职责                                                                                  |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| [`schemas.ts`](../src/harmony/schemas.ts)                               | Chord Symbol、Segment、Correction、Revision 和 Analysis Document 的 Zod 事实边界。    |
-| [`writtenTime.ts`](../src/harmony/writtenTime.ts)                       | 小节内书写时间、区间比较和位置语义。                                                  |
-| [`analysisInput.ts`](../src/harmony/analysisInput.ts)                   | 将轨道、staff、音符和小节整理成确定性的分析输入。                                     |
-| [`analyzeRules.ts`](../src/harmony/analyzeRules.ts)                     | 编排候选边界、规则解码、学习 alternatives 和后处理。                                  |
-| [`boundaries.ts`](../src/harmony/boundaries.ts)                         | 从小节与音符事件生成去重、合法且有预算上限的边界 lattice。                            |
-| [`features.ts`](../src/harmony/features.ts)                             | 缓存区间内 pitch-class duration、onset count 和 bass 等特征。                         |
-| [`candidates.ts`](../src/harmony/candidates.ts)                         | 生成 major/minor、6/7/9/11/13、add、alteration、slash bass 等结构化候选并计算规则分。 |
-| [`decode.ts`](../src/harmony/decode.ts)                                 | 有界 beam search 序列解码，限制 beam、跨度和 segment 数量。                           |
-| [`transitions.ts`](../src/harmony/transitions.ts)                       | 相邻和弦的转换成本，用于减少不自然切换和伪边界。                                      |
-| [`postprocess.ts`](../src/harmony/postprocess.ts)                       | 短片段抑制、相邻段合并、confidence threshold 与 unresolved。                          |
-| [`learnedRanker.ts`](../src/harmony/learnedRanker.ts)                   | 37 维移调归一化特征和 `frequency-ranker-v2` 原型评分。                                |
-| [`bundledHarmonyRanker.ts`](../src/harmony/bundledHarmonyRanker.ts)     | 加载并校验随应用发布的静态模型 JSON。                                                 |
-| [`harmony-ranker-model.json`](../src/harmony/harmony-ranker-model.json) | 版本化只读模型资产；包含 corpus、训练 group 和算法摘要。                              |
+| 文件                                                                              | 职责                                                                                  |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [`schemas.ts`](../src/harmony/schemas.ts)                                         | Chord Symbol、Segment、Correction、Revision 和 Analysis Document 的 Zod 事实边界。    |
+| [`writtenTime.ts`](../src/harmony/writtenTime.ts)                                 | 小节内书写时间、区间比较和位置语义。                                                  |
+| [`analysisInput.ts`](../src/harmony/analysisInput.ts)                             | 将轨道、staff、音符和小节整理成确定性的分析输入。                                     |
+| [`analyzeRules.ts`](../src/harmony/analyzeRules.ts)                               | 编排候选边界、规则解码、学习 alternatives 和后处理。                                  |
+| [`boundaries.ts`](../src/harmony/boundaries.ts)                                   | 从小节与音符事件生成去重、合法且有预算上限的边界 lattice。                            |
+| [`features.ts`](../src/harmony/features.ts)                                       | 缓存区间内 pitch-class duration、onset count 和 bass 等特征。                         |
+| [`candidates.ts`](../src/harmony/candidates.ts)                                   | 生成 major/minor、6/7/9/11/13、add、alteration、slash bass 等结构化候选并计算规则分。 |
+| [`decode.ts`](../src/harmony/decode.ts)                                           | 有界 beam search 序列解码，限制 beam、跨度和 segment 数量。                           |
+| [`transitions.ts`](../src/harmony/transitions.ts)                                 | 相邻和弦的转换成本，用于减少不自然切换和伪边界。                                      |
+| [`postprocess.ts`](../src/harmony/postprocess.ts)                                 | 短片段抑制、相邻段合并、confidence threshold 与 unresolved。                          |
+| [`learnedRanker.ts`](../src/harmony/learnedRanker.ts)                             | 37 维移调归一化特征和 `frequency-ranker-v2` 原型评分。                                |
+| [`bundledHarmonyRanker.ts`](../src/harmony/bundledHarmonyRanker.ts)               | 加载并校验随应用发布的静态模型 JSON。                                                 |
+| [`harmony-ranker-model.json`](../src/harmony/harmony-ranker-model.json)           | 版本化只读模型资产；包含 corpus、训练 group 和算法摘要。                              |
+| [`mlpReranker.ts`](../src/harmony/mlpReranker.ts)                                 | 校验两位小数 MLP 资产，并在固定 Top-8 上执行确定性 TypeScript 推理。                  |
+| [`harmony-primary-mlp-model.json`](../src/harmony/harmony-primary-mlp-model.json) | 59→16→1 的量化 primary 模型与训练来源 hash。                                          |
 
 ## 分析方法
 
@@ -66,9 +69,11 @@ ranker 是静态 JSON + TypeScript 实现，不使用 Torch、Python runtime 或
 - 相对候选根音的 12 维 onset presence；
 - 12 个相对 bass 音程加“无 bass”的 13 维 one-hot。
 
-模型按 chord kind、extension、degrees 和 slash-bass interval 保存频次原型，以原型频次和特征距离评分。当前 Top-8 通常保留六个学习候选和两个规则候选，但 primary chord 始终来自规则序列解码。
+模型按 chord kind、extension、degrees 和 slash-bass interval 保存频次原型，以原型频次和特征距离评分。当前 Top-8 通常保留六个学习候选和两个规则候选。
 
-这个边界是有意的：早期实验把学习分混入序列累计时，分数尺度差异会降低 resolved precision 和 boundary 稳定性。后续模型若要影响 primary path，必须先在冻结 train/tune/eval 协议下证明目标切片改善，并通过已有域的 no-regression 门禁。
+量化 Primary Harmony Reranker 使用同一 37 维候选证据，加 chord shape、归一化规则分、alternative rank 和 rule-primary indicator，共 59 维输入，经 16 个 ReLU hidden units 输出独立 logit。它只重排 postprocess 后的最终 Top-8，不重新运行 range search 或 merge；PyTorch 只用于离线训练。
+
+这个边界是有意的：早期实验把学习分混入序列累计时，分数尺度差异会降低 resolved precision 和 boundary 稳定性。固定 boundary 的 MLP 已通过 v3 tune 和 `1.25x` 性能门禁，但新的 primary confidence 仍需在多语料 train/tune 上独立校准。
 
 ## 来源、修正与有效结果
 

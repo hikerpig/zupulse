@@ -3,11 +3,13 @@ import type { ScoreWrittenMoment } from "./writtenTime";
 import { compareMoments } from "./schemas";
 
 export type LegalBoundaryLattice = { moments: ScoreWrittenMoment[]; mandatory: Set<string> };
+export type HarmonyBoundaryPolicy = "dense-note-events" | "metric-beats";
 
 export function buildLegalBoundaryLattice(
   input: Pick<HarmonyAnalysisInput, "ticksPerQuarter" | "measures" | "tracks"> & {
     mandatory?: readonly ScoreWrittenMoment[];
     maxOptionalPerMeasure?: number;
+    policy?: HarmonyBoundaryPolicy;
   },
 ): LegalBoundaryLattice {
   const canonical = (moment: ScoreWrittenMoment): ScoreWrittenMoment => {
@@ -25,18 +27,27 @@ export function buildLegalBoundaryLattice(
       { measureIndex: measure.index, offsetTicks: 0 },
       { measureIndex: measure.index, offsetTicks: measure.durationTicks },
     ];
-    const noteMoments = input.tracks
-      .flatMap((track) =>
-        track.staves.flatMap((staff) =>
-          staff.notes.flatMap((note) => [
-            note.moment,
-            { measureIndex: note.moment.measureIndex, offsetTicks: note.moment.offsetTicks + note.durationTicks },
-          ]),
-        ),
-      )
-      .filter((moment) => moment.measureIndex === measure.index);
-    const beat = (input.ticksPerQuarter * 4) / measure.timeSignature.denominator;
-    const metric = Array.from({ length: measure.timeSignature.numerator }, (_, index) => ({
+    const noteMoments =
+      input.policy === "metric-beats"
+        ? []
+        : input.tracks
+            .flatMap((track) =>
+              track.staves.flatMap((staff) =>
+                staff.notes.flatMap((note) => [
+                  note.moment,
+                  { measureIndex: note.moment.measureIndex, offsetTicks: note.moment.offsetTicks + note.durationTicks },
+                ]),
+              ),
+            )
+            .filter((moment) => moment.measureIndex === measure.index);
+    const denominatorBeat = (input.ticksPerQuarter * 4) / measure.timeSignature.denominator;
+    const beat =
+      input.policy === "metric-beats" &&
+      measure.timeSignature.numerator > 3 &&
+      measure.timeSignature.numerator % 3 === 0
+        ? denominatorBeat * 3
+        : denominatorBeat;
+    const metric = Array.from({ length: Math.ceil(measure.durationTicks / beat) }, (_, index) => ({
       measureIndex: measure.index,
       offsetTicks: index * beat,
     })).filter((moment) => moment.offsetTicks < measure.durationTicks);

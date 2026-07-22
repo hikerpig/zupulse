@@ -602,14 +602,14 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 
 **Acceptance criteria:**
 
-- [ ] 默认 policy 在本任务提交中保持不变，确保增量可回滚。
-- [ ] `metric-beats` 在 2/4、3/4、4/4、复合拍号与弱起小节上生成确定性边界。
-- [ ] mandatory boundary 无论 policy 均保留；barline 仍只表示一次。
+- [x] 默认 policy 在本任务提交中保持 `dense-note-events`，确保增量可回滚。
+- [x] `metric-beats` 在简单拍号、复合拍号与弱起小节上生成确定性边界。
+- [x] mandatory boundary 无论 policy 均保留；barline 仍只表示一次。
 
 **Verification:**
 
-- [ ] 先写失败测试，再实现 policy；`packages/web-core/src/harmony/__tests__/boundaries.test.ts` 通过。
-- [ ] analyzer 测试证明同一拍内音符起止不会在 metric policy 下制造片段。
+- [x] 先写失败测试，再实现 policy；`packages/web-core/src/harmony/__tests__/boundaries.test.ts` 通过。
+- [x] analyzer 测试证明同一拍内音符起止不会在 metric policy 下制造片段。
 
 **Dependencies:** Task 17
 

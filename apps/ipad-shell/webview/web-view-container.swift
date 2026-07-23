@@ -43,6 +43,7 @@ struct WebViewContainer: UIViewRepresentable {
         private var runtime: WebViewRuntime
         private var pendingRuntimes: [ObjectIdentifier: WebViewRuntime] = [:]
         private var lastSuspendGeneration = 0
+        private let navigationPolicy = NavigationPolicy()
 
         var webView: WKWebView { runtime.webView }
         var resourceHandler: AppResourceSchemeHandler { runtime.resourceHandler }
@@ -112,6 +113,27 @@ struct WebViewContainer: UIViewRepresentable {
                 UITestImportStage.shared.value = "WEB_CONTENT_RECOVERED"
             }
             #endif
+        }
+
+        func webView(
+            _ webView: WKWebView,
+            decidePolicyFor navigationAction: WKNavigationAction,
+            decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+        ) {
+            let decision = navigationPolicy.decide(
+                url: navigationAction.request.url,
+                isMainFrame: navigationAction.targetFrame?.isMainFrame == true,
+                isUserInitiated: navigationAction.zupulseIsUserInitiated
+            )
+            switch decision {
+            case .allow:
+                decisionHandler(.allow)
+            case .cancel:
+                decisionHandler(.cancel)
+            case let .openExternally(url):
+                decisionHandler(.cancel)
+                UIApplication.shared.open(url)
+            }
         }
     }
 }

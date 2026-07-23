@@ -730,15 +730,15 @@ created/existing/failed 结果会保留，未开始项计入 cancelled。Library
 
 **Acceptance criteria:**
 
-- [ ] allowlist HTTPS data 请求可用；非 allowlist、unknown scheme、file、popup、redirect 被拒绝。
-- [ ] user-initiated 普通 HTTPS 外链由系统打开，脚本触发外链不静默放行。
-- [ ] Archive/Release 自动检查 dev-server host、remote script、unsafe CSP 和调试开关不存在。
+- [x] allowlist HTTPS data 请求可用；非 allowlist、unknown scheme、file、popup、redirect 被拒绝。
+- [x] user-initiated 普通 HTTPS 外链由系统打开，脚本触发外链不静默放行。
+- [x] Archive/Release 自动检查 dev-server host、remote script、unsafe CSP 和调试开关不存在。
 
 **Verification:**
 
-- [ ] `pnpm ipad:test -- --only-testing ZupulseTests/NavigationPolicyTests`
-- [ ] `pnpm ipad:web:build`
-- [ ] `node apps/ipad-shell/scripts/verify-release.mjs`
+- [x] `pnpm ipad:test -- --only-testing ZupulseTests/NavigationPolicyTests`
+- [x] `pnpm ipad:web:build`
+- [x] `node apps/ipad-shell/scripts/verify-release.mjs`
 
 **Dependencies:** Task 7/8 selected origin, Task 18
 
@@ -751,6 +751,14 @@ created/existing/failed 结果会保留，未开始项计入 cancelled。Library
 - `apps/ipad-shell/scripts/verify-release.mjs`
 
 **Estimated scope:** M (5 files)
+
+**Completed 2026-07-24:** WKNavigationDelegate 只允许应用自有 `zupulse://app` origin 留在 WebView；
+用户明确点击的顶层 HTTPS 链接交给系统打开，脚本跳转、popup、redirect、file、HTTP 与未知 scheme
+统一拒绝。Info.plist 的 HTTPS host 清单与 CSP 由 Release 校验保持一致，CSP 禁止 frame、object、
+form、base 和远程 executable code。Xcode Release 构建阶段会自动检查 dev-server endpoint、
+unsafe CSP、remote script 与未受 `#if DEBUG` 保护的 UI 测试开关。最终门禁：
+`pnpm verify:fast`（118 个测试文件、451 项测试）、`pnpm ipad:verify`（45 项 Swift、5 项 UI）与
+无签名 Release Simulator build 均通过。
 
 ## Task 25: 实现本地最小诊断与主动导出
 

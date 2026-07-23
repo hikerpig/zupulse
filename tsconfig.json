@@ -5,6 +5,7 @@
     { "path": "./packages/app-i18n/tsconfig.test.json" },
     { "path": "./packages/web-core" },
     { "path": "./packages/web-core/tsconfig.test.json" },
+    { "path": "./packages/web-storage" },
     { "path": "./packages/web-viewer" },
     { "path": "./packages/web-viewer/tsconfig.test.json" },
     { "path": "./apps/web-demo" },

@@ -1,7 +1,7 @@
 # iPad Practice Player Task List
 
-> Progress: Tasks 1–7 completed and verified through 2026-07-24. Task 8 was not required because
-> the Task 7 custom-scheme gate passed.
+> Progress: Tasks 1–7 and 9 completed and verified through 2026-07-24. Task 8 was not required
+> because the Task 7 custom-scheme gate passed.
 
 ## Task 1: 建立 iPad Web workspace
 
@@ -249,20 +249,22 @@ AudioWorklet 可发现性、IndexedDB 重启持久性、动态 import、字体�
 
 ## Task 9: 提取共享 IndexedDB Library Repository package
 
+**Status:** Completed (2026-07-24)
+
 **Description:** 将 Browser 的 IndexedDB Repository 提取到新的公开 workspace package，使
 Browser Demo 与 iPad entry 可以复用而不违反 app 深导入或
 `web-viewer` 平台边界。
 
 **Acceptance criteria:**
 
-- [ ] 新 package 只依赖 `web-core` 和 Web 平台类型，不依赖 React、Electron 或 app 源码。
-- [ ] Repository 保留 schema v2、原子去重、Managed Copy、sidecar/resume/harmony 联动删除语义。
-- [ ] 现有 Repository 测试在新 package 下通过，公共入口只导出宿主需要的 adapter。
+- [x] 新 package 只依赖 `web-core` 和 Web 平台类型，不依赖 React、Electron 或 app 源码。
+- [x] Repository 保留 schema v2、原子去重、Managed Copy、sidecar/resume/harmony 联动删除语义。
+- [x] 现有 Repository 测试在新 package 下通过，公共入口只导出宿主需要的 adapter。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-storage`
-- [ ] `pnpm exec tsc -p packages/web-storage/tsconfig.json --noEmit`
+- [x] `pnpm vitest run packages/web-storage`
+- [x] `pnpm exec tsc -p packages/web-storage/tsconfig.json --noEmit`
 
 **Dependencies:** Checkpoint A
 

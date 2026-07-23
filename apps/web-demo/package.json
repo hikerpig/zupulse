@@ -11,6 +11,7 @@
   "dependencies": {
     "@zupulse/app-i18n": "workspace:*",
     "@zupulse/web-core": "workspace:*",
+    "@zupulse/web-storage": "workspace:*",
     "@zupulse/web-viewer": "workspace:*"
   },
   "devDependencies": {

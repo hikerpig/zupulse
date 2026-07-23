@@ -86,7 +86,7 @@ flowchart TD
 
 ### Phase 2: First Import-to-Viewer Vertical Slice
 
-- [ ] Task 9: 提取共享 IndexedDB Library Repository package
+- [x] Task 9: 提取共享 IndexedDB Library Repository package
 - [ ] Task 10: 让 Browser Demo 消费共享 IndexedDB Repository
 - [ ] Task 11: 实现 Swift 一次性文件 token 与二进制 scheme
 - [ ] Task 12: 打通 Document Picker 与 iPad ScoreFileGateway

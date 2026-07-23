@@ -73,16 +73,16 @@ flowchart TD
 - [x] Task 4: 从 Zod 生成 transport-neutral Bridge contract
 - [x] Task 5: 建立 Swift 严格 Bridge 解码与双端 fixtures
 - [x] Task 6: 打通 Web/Swift handshake 与启动错误
-- [ ] Task 7: 探测只读自定义 scheme 资源 origin
-- [ ] Task 8: 条件探测 `loadFileURL` 资源 origin
+- [x] Task 7: 探测只读自定义 scheme 资源 origin
+- [x] Task 8: 条件探测 `loadFileURL` 资源 origin（Task 7 通过，条件未触发）
 
 ### Checkpoint A: Shell Foundation
 
-- [ ] `pnpm verify:fast` 通过。
-- [ ] `pnpm ipad:web:build` 产生完整且通过 hash 校验的资源目录。
-- [ ] `pnpm ipad:test` 在 Simulator 完成 App 启动、handshake 成功与不兼容失败测试。
-- [ ] 记录当前 provisional resource origin 与未能在 Simulator 证明的真机能力。
-- [ ] 未选择或引入 loopback server 依赖；若前两种候选都失败，回到人类评审。
+- [x] `pnpm verify:fast` 通过。
+- [x] `pnpm ipad:web:build` 产生完整且通过 hash 校验的资源目录。
+- [x] `pnpm ipad:test` 在 Simulator 完成 App 启动、handshake 成功与不兼容失败测试。
+- [x] 记录当前 provisional resource origin 与未能在 Simulator 证明的真机能力。
+- [x] 未选择或引入 loopback server 依赖；若前两种候选都失败，回到人类评审。
 
 ### Phase 2: First Import-to-Viewer Vertical Slice
 

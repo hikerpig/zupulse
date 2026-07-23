@@ -18,6 +18,7 @@
 		A1000000000000000000000A /* bridge-router-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000C /* bridge-router-tests.swift */; };
 		A1000000000000000000000B /* bridge-router.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000D /* bridge-router.swift */; };
 		A1000000000000000000000C /* app-resource-scheme-handler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000E /* app-resource-scheme-handler.swift */; };
+		A1000000000000000000000D /* app-resource-scheme-handler-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000F /* app-resource-scheme-handler-tests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,6 +46,7 @@
 		A2000000000000000000000C /* bridge-router-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "bridge-router-tests.swift"; sourceTree = "<group>"; };
 		A2000000000000000000000D /* bridge-router.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "bridge-router.swift"; sourceTree = "<group>"; };
 		A2000000000000000000000E /* app-resource-scheme-handler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "app-resource-scheme-handler.swift"; sourceTree = "<group>"; };
+		A2000000000000000000000F /* app-resource-scheme-handler-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "app-resource-scheme-handler-tests.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,7 +68,7 @@
 		};
 		A70000000000000000000002 /* app */ = {isa = PBXGroup; children = (A20000000000000000000001, A20000000000000000000002); path = app; sourceTree = "<group>"; };
 		A70000000000000000000003 /* webview */ = {isa = PBXGroup; children = (A20000000000000000000003, A2000000000000000000000E); path = webview; sourceTree = "<group>"; };
-		A70000000000000000000004 /* tests */ = {isa = PBXGroup; children = (A20000000000000000000004, A20000000000000000000007, A2000000000000000000000C, A20000000000000000000008); path = tests; sourceTree = "<group>"; };
+		A70000000000000000000004 /* tests */ = {isa = PBXGroup; children = (A20000000000000000000004, A20000000000000000000007, A2000000000000000000000C, A2000000000000000000000F, A20000000000000000000008); path = tests; sourceTree = "<group>"; };
 		A70000000000000000000005 /* Products */ = {isa = PBXGroup; children = (A20000000000000000000005, A20000000000000000000006); name = Products; sourceTree = "<group>"; };
 		A70000000000000000000006 /* bridge */ = {isa = PBXGroup; children = (A20000000000000000000009, A2000000000000000000000A, A2000000000000000000000B, A2000000000000000000000D); path = bridge; sourceTree = "<group>"; };
 /* End PBXGroup section */
@@ -134,7 +136,7 @@
 
 /* Begin PBXSourcesBuildPhase section */
 		A90000000000000000000001 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000001, A10000000000000000000002, A10000000000000000000003, A10000000000000000000007, A10000000000000000000008, A10000000000000000000009, A1000000000000000000000B, A1000000000000000000000C); runOnlyForDeploymentPostprocessing = 0; };
-		A90000000000000000000003 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000004, A10000000000000000000005, A1000000000000000000000A); runOnlyForDeploymentPostprocessing = 0; };
+		A90000000000000000000003 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000004, A10000000000000000000005, A1000000000000000000000A, A1000000000000000000000D); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */

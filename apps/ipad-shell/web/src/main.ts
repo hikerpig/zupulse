@@ -1,9 +1,16 @@
 import "@zupulse/web-viewer/styles.css";
 import { mountViewerApp, type ViewerHost } from "@zupulse/web-viewer";
 import { bootstrapIpadApplication, loadIpadBuildMetadata, type NativeMessageHandler } from "./ipad-bridge-transport";
+import { createDefaultResourceOriginChecks, runResourceOriginProbe } from "./resource-origin-probe";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("IPAD_VIEWER_ROOT_MISSING");
+
+(
+  window as typeof window & {
+    __zupulseResourceOriginProbe?: ReturnType<typeof runResourceOriginProbe>;
+  }
+).__zupulseResourceOriginProbe = runResourceOriginProbe(createDefaultResourceOriginChecks());
 
 const host: ViewerHost = {
   async openScore() {

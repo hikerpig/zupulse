@@ -1,6 +1,7 @@
 # iPad Practice Player Task List
 
-> Progress: Tasks 1–6 completed and verified through 2026-07-24.
+> Progress: Tasks 1–7 completed and verified through 2026-07-24. Task 8 was not required because
+> the Task 7 custom-scheme gate passed.
 
 ## Task 1: 建立 iPad Web workspace
 
@@ -188,20 +189,22 @@ Task 4 的同一 fixture 集。此任务只解析和拒绝，不路由真实能�
 
 ## Task 7: 探测只读自定义 scheme 资源 origin
 
+**Status:** Completed (2026-07-24)
+
 **Description:** 在 Simulator 建立自定义 scheme 资源加载器和能力探针，验证 Web Crypto、Worker、
 AudioWorklet 可发现性、IndexedDB 重启持久性、动态 import、字体、SoundFont 和路径隔离。此任务只
 产生候选证据，不提前接受 ADR。
 
 **Acceptance criteria:**
 
-- [ ] loader 校验 host、解码、`..`、query/fragment、MIME 和 bundle root，不允许路径逃逸。
-- [ ] 探针结果结构化记录 success/failure/unsupported，不以空白页面或控制台观察代替。
-- [ ] IndexedDB 在两次 Simulator 启动间保持同一 origin；Worker/AudioWorklet 加载请求可追踪。
+- [x] loader 校验 host、解码、`..`、query/fragment、MIME 和 bundle root，不允许路径逃逸。
+- [x] 探针结果结构化记录 success/failure/unsupported，不以空白页面或控制台观察代替。
+- [x] IndexedDB 在两次 Simulator 启动间保持同一 origin；Worker/AudioWorklet 加载请求可追踪。
 
 **Verification:**
 
-- [ ] `pnpm ipad:test -- --only-testing ZupulseTests/ResourceSchemeTests`
-- [ ] Manual: 审阅 `docs/validation/ipad-resource-origin.md` 的 Simulator 证据
+- [x] `pnpm ipad:test -- --only-testing ZupulseTests/ResourceSchemeTests`
+- [x] Manual: 审阅 `docs/validation/ipad-resource-origin.md` 的 Simulator 证据
 
 **Dependencies:** Task 6
 
@@ -216,6 +219,8 @@ AudioWorklet 可发现性、IndexedDB 重启持久性、动态 import、字体�
 **Estimated scope:** M (5 files)
 
 ## Task 8: 条件探测 loadFileURL 资源 origin
+
+**Status:** Not required (2026-07-24) — Task 7 的所有硬门槛均通过，条件未触发。
 
 **Description:** 仅当 Task 7 任一硬门槛失败时，使用 `loadFileURL` 与最小 bundle 目录读取范围重复同一
 能力矩阵。若两种候选都失败，不实现 loopback server，停止并请求架构/依赖选择。

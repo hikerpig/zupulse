@@ -16,11 +16,13 @@ struct WebViewContainer: UIViewRepresentable {
 
     final class Coordinator {
         let webView: WKWebView
+        let resourceHandler: AppResourceSchemeHandler
+        private(set) var requestedResourcePaths: [String] = []
 
         init(entryURL: URL) {
             let configuration = WKWebViewConfiguration()
             configuration.defaultWebpagePreferences.allowsContentJavaScript = true
-            let resourceHandler = AppResourceSchemeHandler(
+            resourceHandler = AppResourceSchemeHandler(
                 rootURL: entryURL.deletingLastPathComponent()
             )
             configuration.setURLSchemeHandler(
@@ -35,6 +37,9 @@ struct WebViewContainer: UIViewRepresentable {
             )
 
             webView = WKWebView(frame: .zero, configuration: configuration)
+            resourceHandler.onRequest = { [weak self] path in
+                self?.requestedResourcePaths.append(path)
+            }
             webView.load(URLRequest(url: AppResourceSchemeHandler.entryURL))
         }
     }

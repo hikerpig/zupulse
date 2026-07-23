@@ -1,3 +1,4 @@
+import { CopyRspackPlugin } from "@rspack/core";
 import { alphaTabDist, createWebRspackConfig } from "../../tools/builder/rspack.mjs";
 import { fileURLToPath } from "node:url";
 
@@ -17,6 +18,11 @@ const createConfig = (_env, argv) => {
         path: fileURLToPath(new URL("./dist/web/", import.meta.url)),
       },
       htmlOptions: { template: "./web/index.html", scriptLoading: "module" },
+      plugins: [
+        new CopyRspackPlugin({
+          patterns: [{ from: "web/probes", to: "probes/" }],
+        }),
+      ],
     }),
     experiments: { outputModule: true },
     watchOptions: {

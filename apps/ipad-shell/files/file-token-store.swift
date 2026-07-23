@@ -56,6 +56,10 @@ actor FileTokenStore {
         return stored.value
     }
 
+    func discard(_ token: String) {
+        entries.removeValue(forKey: token)
+    }
+
     func clear() {
         entries.removeAll()
     }

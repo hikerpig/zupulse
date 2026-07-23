@@ -229,7 +229,7 @@ describe("ViewerApplication", () => {
       {
         repository,
         gateway: {
-          selectForImport: async () => [{ fileName: "imported.musicxml", readBytes: async () => bytes }],
+          selectForImport: async () => [],
           saveExport: async () => "cancelled",
         },
         adapters: [adapter],
@@ -251,7 +251,7 @@ describe("ViewerApplication", () => {
     const navigate = vi.fn();
     const unsubscribe = application.subscribeNavigation(navigate);
 
-    await application.importScores(false);
+    await application.importScoreSources([{ fileName: "imported.musicxml", readBytes: async () => bytes }], false);
 
     expect(navigate).toHaveBeenCalledWith(expect.stringMatching(/^[0-9a-f-]{36}$/));
     expect(application.getSnapshot().currentLibraryScoreId).toBeUndefined();

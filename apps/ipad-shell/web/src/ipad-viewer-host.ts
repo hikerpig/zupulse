@@ -5,6 +5,7 @@ import { attachIpadLifecycle } from "./ipad-lifecycle";
 import { attachIpadRoutePersistence, restoreIpadRoute } from "./ipad-recovery-state";
 import { IpadScoreFileGateway, type IpadFileSelectionClient } from "./ipad-score-file-gateway";
 import { IpadLibraryPlaybackPersistence } from "./ipad-library-playback-persistence";
+import { attachExternalOpen } from "./external-open";
 
 type CompositionDependencies = {
   createRepository(): IndexedDbSheetLibraryRepository;
@@ -51,10 +52,23 @@ export async function mountIpadViewerApplication(
   if (!lifecycleTarget) return application;
   const detachLifecycle = attachIpadLifecycle(lifecycleTarget, application, bridge);
   const detachRoutePersistence = attachIpadRoutePersistence(lifecycleTarget);
+  const readyHandler = (
+    lifecycleTarget as typeof lifecycleTarget & {
+      webkit?: {
+        messageHandlers?: { zupulseExternalOpenReady?: { postMessage(value: Record<string, never>): unknown } };
+      };
+    }
+  ).webkit?.messageHandlers?.zupulseExternalOpenReady;
+  const detachExternalOpen = attachExternalOpen({
+    target: lifecycleTarget,
+    application,
+    ...(readyHandler === undefined ? {} : { readyHandler }),
+  });
   const destroy = application.destroy.bind(application);
   application.destroy = async () => {
     detachLifecycle();
     detachRoutePersistence();
+    detachExternalOpen();
     await destroy();
   };
   return application;

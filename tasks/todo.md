@@ -656,14 +656,25 @@ alphaTab ID。A/B 仍从 controller 当前播放位置取值，并沿用 off/bea
 
 **Acceptance criteria:**
 
-- [ ] cold/warm start、重复系统事件和多个 URL 的顺序/去重都有测试。
-- [ ] 队列在 handshake + Repository initialize 后只投递一次，Shell 销毁会清理未消费 token。
-- [ ] 单文件 created/existing 都进入持久 Viewer URL；失败不留下半记录。
+- [x] cold/warm start、重复系统事件和多个 URL 的顺序/去重都有测试。
+- [x] 队列在 handshake + Repository initialize 后只投递一次，Shell 销毁会清理未消费 token。
+- [x] 单文件 created/existing 都进入持久 Viewer URL；失败不留下半记录。
 
 **Verification:**
 
-- [ ] `pnpm ipad:test -- --only-testing ZupulseTests/ExternalOpenQueueTests`
-- [ ] `pnpm vitest run apps/ipad-shell/web/src/__tests__/external-open.test.ts`
+- [x] `pnpm ipad:test -- --only-testing ZupulseTests/ExternalOpenQueueTests`
+- [x] `pnpm vitest run apps/ipad-shell/web/src/__tests__/external-open.test.ts`
+
+**Completion note (2026-07-24):** iPad 壳已注册 GP、MusicXML 与 MXL 文档类型，并通过
+SwiftUI `onOpenURL` 将 Files、AirDrop 或邮件交付的文件先放入有序去重队列。队列只在 Bridge
+handshake 完成、IndexedDB Repository 初始化且 Web 监听器挂载后签发一次性 token；WebContent
+替换会用新 token store 重试尚未交付项，Shell 销毁会清空队列和未消费 token。Web 端按序调用
+现有原子 Library import，created/existing 单文件沿用持久 `#/viewer/:libraryScoreId` 导航，
+失败沿用结构化导入错误且不临时打开文件。Swift 覆盖 cold/warm、重复、多 URL、替换与销毁，
+TS 覆盖 listener-before-ready、顺序、去重、token 读取和直接 Library 导入；Simulator 手势
+回归改为临时 Web data store，避免 resume/缩放状态污染，同时保留精确点拍的 TS 集成验证。
+最终 `pnpm verify:fast`（116 files / 448 tests）和 `pnpm ipad:verify`
+（4 UI tests / 41 Swift tests）通过。
 
 **Dependencies:** Task 17, Task 18
 

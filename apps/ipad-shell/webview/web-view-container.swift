@@ -6,14 +6,20 @@ import WebKit
 struct WebViewContainer: UIViewRepresentable {
     let entryURL: URL
     let suspendGeneration: Int
+    let externalOpenQueue: ExternalOpenQueue
 
-    init(entryURL: URL, suspendGeneration: Int = 0) {
+    init(
+        entryURL: URL,
+        suspendGeneration: Int = 0,
+        externalOpenQueue: ExternalOpenQueue = ExternalOpenQueue()
+    ) {
         self.entryURL = entryURL
         self.suspendGeneration = suspendGeneration
+        self.externalOpenQueue = externalOpenQueue
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(entryURL: entryURL)
+        Coordinator(entryURL: entryURL, externalOpenQueue: externalOpenQueue)
     }
 
     func makeUIView(context: Context) -> WebViewHostView {
@@ -26,12 +32,14 @@ struct WebViewContainer: UIViewRepresentable {
 
     static func dismantleUIView(_ hostView: WebViewHostView, coordinator: Coordinator) {
         coordinator.lifecycleCoordinator.request(.prepareClose)
+        Task { await coordinator.externalOpenQueue.destroy() }
     }
 
     @MainActor
     final class Coordinator: NSObject, WKNavigationDelegate {
         let hostView = WebViewHostView()
         private let entryURL: URL
+        let externalOpenQueue: ExternalOpenQueue
         private var runtime: WebViewRuntime
         private var pendingRuntimes: [ObjectIdentifier: WebViewRuntime] = [:]
         private var lastSuspendGeneration = 0
@@ -46,7 +54,10 @@ struct WebViewContainer: UIViewRepresentable {
             initialContent: runtime.webView,
             makeReplacement: { [weak self] in
                 guard let self else { return WKWebView() }
-                let replacement = WebViewRuntime(entryURL: self.entryURL)
+                let replacement = WebViewRuntime(
+                    entryURL: self.entryURL,
+                    externalOpenQueue: self.externalOpenQueue
+                )
                 replacement.webView.navigationDelegate = self
                 self.pendingRuntimes[ObjectIdentifier(replacement.webView)] = replacement
                 return replacement.webView
@@ -63,9 +74,10 @@ struct WebViewContainer: UIViewRepresentable {
             }
         )
 
-        init(entryURL: URL) {
+        init(entryURL: URL, externalOpenQueue: ExternalOpenQueue = ExternalOpenQueue()) {
             self.entryURL = entryURL
-            runtime = WebViewRuntime(entryURL: entryURL)
+            self.externalOpenQueue = externalOpenQueue
+            runtime = WebViewRuntime(entryURL: entryURL, externalOpenQueue: externalOpenQueue)
             super.init()
             runtime.webView.navigationDelegate = self
             hostView.install(runtime.webView)
@@ -130,11 +142,14 @@ private final class WebViewRuntime {
     let lifecycleCoordinator: LifecycleCoordinator
     let requestedPaths = RequestedPathStore()
 
-    init(entryURL: URL) {
+    init(entryURL: URL, externalOpenQueue: ExternalOpenQueue) {
         let configuration = WKWebViewConfiguration()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
         #if DEBUG
         let environment = ProcessInfo.processInfo.environment
+        if environment["ZUPULSE_UI_TEST_EPHEMERAL_STORAGE"] == "1" {
+            configuration.websiteDataStore = .nonPersistent()
+        }
         if environment["ZUPULSE_UI_TEST_START_LIBRARY"] == "1" {
             configuration.userContentController.addUserScript(
                 WKUserScript(
@@ -143,6 +158,17 @@ private final class WebViewRuntime {
                       "zupulse-ipad-route",
                       JSON.stringify({ route: "library" })
                     );
+                    """,
+                    injectionTime: .atDocumentStart,
+                    forMainFrameOnly: true
+                )
+            )
+        }
+        if environment["ZUPULSE_UI_TEST_RESET_SCORE_ZOOM"] == "1" {
+            configuration.userContentController.addUserScript(
+                WKUserScript(
+                    source: """
+                    localStorage.setItem("zupulse-score-zoom", "1");
                     """,
                     injectionTime: .atDocumentStart,
                     forMainFrameOnly: true
@@ -255,6 +281,14 @@ private final class WebViewRuntime {
             contentWorld: .page,
             name: BridgeMessageHandler.name
         )
+        configuration.userContentController.add(
+            ExternalOpenReadyMessageHandler(
+                queue: externalOpenQueue,
+                store: fileTokens,
+                webView: webViewBox
+            ),
+            name: ExternalOpenReadyMessageHandler.name
+        )
 
         webView = WKWebView(frame: .zero, configuration: configuration)
         webViewBox.value = webView
@@ -269,6 +303,63 @@ private final class WebViewRuntime {
         let tokens = fileTokens
         Task { await tokens.clear() }
     }
+}
+
+@MainActor
+private final class ExternalOpenReadyMessageHandler: NSObject, WKScriptMessageHandler {
+    static let name = "zupulseExternalOpenReady"
+
+    private let queue: ExternalOpenQueue
+    private let store: FileTokenStore
+    private let webView: WeakWebViewBox
+
+    init(queue: ExternalOpenQueue, store: FileTokenStore, webView: WeakWebViewBox) {
+        self.queue = queue
+        self.store = store
+        self.webView = webView
+    }
+
+    func userContentController(
+        _ userContentController: WKUserContentController,
+        didReceive message: WKScriptMessage
+    ) {
+        let webView = webView
+        Task {
+            await queue.attach(store: store) { event in
+                try await emitExternalOpen(event, to: webView)
+            }
+        }
+    }
+}
+
+@MainActor
+private func emitExternalOpen(
+    _ event: ExternalOpenEvent,
+    to webView: WeakWebViewBox
+) async throws {
+    guard let current = webView.value else {
+        throw ExternalOpenDeliveryError.webViewUnavailable
+    }
+    _ = try await current.callAsyncJavaScript(
+        """
+        window.dispatchEvent(
+          new CustomEvent("zupulse:external-open", { detail: event })
+        );
+        """,
+        arguments: [
+            "event": [
+                "eventId": event.eventId,
+                "fileToken": event.fileToken,
+                "fileName": event.fileName,
+                "sizeBytes": event.sizeBytes,
+            ]
+        ],
+        contentWorld: .page
+    )
+}
+
+private enum ExternalOpenDeliveryError: Error {
+    case webViewUnavailable
 }
 
 @MainActor

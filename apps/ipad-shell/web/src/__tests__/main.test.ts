@@ -8,6 +8,18 @@ import { mountIpadViewerApplication } from "../ipad-viewer-host";
 describe("iPad viewer composition", () => {
   it("initializes the shared IndexedDB repository before mounting the viewer", async () => {
     const calls: string[] = [];
+    Object.defineProperty(window, "webkit", {
+      configurable: true,
+      value: {
+        messageHandlers: {
+          zupulseExternalOpenReady: {
+            postMessage() {
+              calls.push("external-open-ready");
+            },
+          },
+        },
+      },
+    });
     const repository = {
       async initialize() {
         calls.push("initialize");
@@ -32,7 +44,8 @@ describe("iPad viewer composition", () => {
       mount,
     });
 
-    expect(calls).toEqual(["initialize", "mount"]);
+    expect(calls).toEqual(["initialize", "mount", "external-open-ready"]);
+    Reflect.deleteProperty(window, "webkit");
   });
 
   it("propagates repository startup errors without mounting or clearing storage", async () => {

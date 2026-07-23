@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct ZupulseApp: App {
     private let audioSessionController: AudioSessionController
+    private let externalOpenQueue: ExternalOpenQueue
 
     init() {
         let notificationCenter = NotificationCenter.default
@@ -15,11 +16,12 @@ struct ZupulseApp: App {
         }
         try? controller.configureForPlayback()
         audioSessionController = controller
+        externalOpenQueue = ExternalOpenQueue()
     }
 
     var body: some Scene {
         WindowGroup {
-            AppShellView()
+            AppShellView(externalOpenQueue: externalOpenQueue)
         }
     }
 }

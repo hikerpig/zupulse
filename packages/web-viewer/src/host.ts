@@ -18,5 +18,8 @@ export type ViewerSessionHandle = {
   pauseAndFlush(): Promise<void>;
   destroy(): Promise<void>;
 };
-export type ViewerAppHandle = ViewerSessionHandle & { openScore(): Promise<void> };
-import type { PlaybackCommand, PlaybackState, PlaybackTimelineMap } from "@zupulse/web-core";
+export type ViewerAppHandle = ViewerSessionHandle & {
+  openScore(): Promise<void>;
+  importScoreSources?(sources: readonly ScoreImportSource[], multiple: boolean): Promise<void>;
+};
+import type { PlaybackCommand, PlaybackState, PlaybackTimelineMap, ScoreImportSource } from "@zupulse/web-core";

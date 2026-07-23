@@ -11,6 +11,7 @@ final class UITestImportStage: ObservableObject {
 struct AppShellView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var suspendGeneration = 0
+    let externalOpenQueue: ExternalOpenQueue
 
     private let webEntryURL = Bundle.main.url(
         forResource: "index",
@@ -23,7 +24,8 @@ struct AppShellView: View {
             if let webEntryURL {
                 WebViewContainer(
                     entryURL: webEntryURL,
-                    suspendGeneration: suspendGeneration
+                    suspendGeneration: suspendGeneration,
+                    externalOpenQueue: externalOpenQueue
                 )
                     .ignoresSafeArea()
             } else {
@@ -49,6 +51,9 @@ struct AppShellView: View {
             NotificationCenter.default.publisher(for: .zupulseAudioPauseIntent)
         ) { _ in
             suspendGeneration += 1
+        }
+        .onOpenURL { url in
+            Task { await externalOpenQueue.enqueue(url) }
         }
     }
 }

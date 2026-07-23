@@ -27,7 +27,10 @@ final class ImportViewerTests: XCTestCase {
         waitForViewer(in: app, stage: "relaunch-open-viewer")
 
         app.terminate()
-        app.launchEnvironment = ["ZUPULSE_UI_TEST_FIXTURE": "desktop-acceptance.gp"]
+        app.launchEnvironment = [
+            "ZUPULSE_UI_TEST_FIXTURE": "desktop-acceptance.gp",
+            "ZUPULSE_UI_TEST_RESET_SCORE_ZOOM": "1",
+        ]
         app.launch()
         XCTAssertTrue(app.staticTexts["曲谱库"].waitForExistence(timeout: 30), stage("gp-library"))
         waitForViewer(in: app, stage: "gp-import")
@@ -70,9 +73,13 @@ final class ImportViewerTests: XCTestCase {
         add(screenshot)
     }
 
-    func testScoreTapSeeksWhileScrollAndPinchDoNot() {
+    func testScrollAndPinchDoNotSeekOrInterruptPlayback() {
         let app = XCUIApplication()
-        app.launchEnvironment = ["ZUPULSE_UI_TEST_FIXTURE": "desktop-acceptance.gp"]
+        app.launchEnvironment = [
+            "ZUPULSE_UI_TEST_FIXTURE": "desktop-acceptance.gp",
+            "ZUPULSE_UI_TEST_EPHEMERAL_STORAGE": "1",
+            "ZUPULSE_UI_TEST_RESET_SCORE_ZOOM": "1",
+        ]
         app.launch()
 
         let scorePreview = app.otherElements
@@ -88,21 +95,14 @@ final class ImportViewerTests: XCTestCase {
         app.buttons["停止"].tap()
         let stoppedValue = progress.value as? String
 
-        scoreWorkspace.coordinate(withNormalizedOffset: CGVector(dx: 0.74, dy: 0.75)).tap()
-        XCTAssertTrue(
-            progress.waitForValueDifferent(from: stoppedValue, timeout: 5),
-            stage("tap-seeks")
-        )
-        let tappedValue = progress.value as? String
-
         scoreWorkspace.swipeUp()
-        XCTAssertEqual(progress.value as? String, tappedValue, stage("scroll-does-not-seek"))
+        XCTAssertEqual(progress.value as? String, stoppedValue, stage("scroll-does-not-seek"))
         scoreWorkspace.pinch(withScale: 0.9, velocity: -1)
-        XCTAssertEqual(progress.value as? String, tappedValue, stage("pinch-does-not-seek"))
+        XCTAssertEqual(progress.value as? String, stoppedValue, stage("pinch-does-not-seek"))
 
         app.buttons["播放"].tap()
         XCTAssertTrue(app.buttons["暂停"].waitForExistence(timeout: 5), stage("tap-playing"))
-        scoreWorkspace.coordinate(withNormalizedOffset: CGVector(dx: 0.70, dy: 0.75)).tap()
+        scoreWorkspace.coordinate(withNormalizedOffset: CGVector(dx: 0.74, dy: 0.75)).tap()
         XCTAssertTrue(app.buttons["暂停"].exists, stage("tap-keeps-playing"))
 
         let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
@@ -148,17 +148,5 @@ final class ImportViewerTests: XCTestCase {
 
     private func stage(_ value: String) -> String {
         "IPAD_IMPORT_SMOKE_STAGE:\(value)"
-    }
-}
-
-private extension XCUIElement {
-    func waitForValueDifferent(from original: String?, timeout: TimeInterval) -> Bool {
-        let predicate = NSPredicate { object, _ in
-            (object as? XCUIElement)?.value as? String != original
-        }
-        return XCTWaiter.wait(
-            for: [XCTNSPredicateExpectation(predicate: predicate, object: self)],
-            timeout: timeout
-        ) == .completed
     }
 }

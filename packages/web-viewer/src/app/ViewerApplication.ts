@@ -565,6 +565,11 @@ export class ViewerApplication implements ViewerAppHandle {
       return;
     }
     if (!sources.length) return;
+    await this.importScoreSources(sources, multiple);
+  }
+
+  async importScoreSources(sources: readonly ScoreImportSource[], multiple: boolean): Promise<void> {
+    if (!this.library || !sources.length) return;
     this.setSnapshot({
       ...this.snapshot,
       library: { scores: this.snapshot.library?.scores ?? [], loading: false, importing: true },

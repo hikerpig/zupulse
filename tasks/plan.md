@@ -89,7 +89,7 @@ flowchart TD
 - [x] Task 9: 提取共享 IndexedDB Library Repository package
 - [x] Task 10: 让 Browser Demo 消费共享 IndexedDB Repository
 - [x] Task 11: 实现 Swift 一次性文件 token 与二进制 scheme
-- [ ] Task 12: 打通 Document Picker 与 iPad ScoreFileGateway
+- [x] Task 12: 打通 Document Picker 与 iPad ScoreFileGateway
 - [ ] Task 13: 组合 iPad IndexedDB Library、Gateway 与 Viewer session
 - [ ] Task 14: 建立 Simulator 单文件导入到 Viewer 的 smoke test
 

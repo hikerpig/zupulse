@@ -6,13 +6,26 @@ final class BridgeRouter {
     private let appVersion: String
     private let rendererBuildHash: String
     private let validator = BridgeContractValidator()
+    private let fileSelector: DocumentPicking?
+    private let fileTokens: FileTokenStore
 
-    init(appVersion: String, rendererBuildHash: String) {
+    init(
+        appVersion: String,
+        rendererBuildHash: String,
+        fileSelector: DocumentPicking? = nil,
+        fileTokens: FileTokenStore = FileTokenStore()
+    ) {
         self.appVersion = appVersion
         self.rendererBuildHash = rendererBuildHash
+        self.fileSelector = fileSelector
+        self.fileTokens = fileTokens
     }
 
-    static func load(bundle: Bundle = .main) throws -> BridgeRouter {
+    static func load(
+        bundle: Bundle = .main,
+        fileSelector: DocumentPicking? = nil,
+        fileTokens: FileTokenStore = FileTokenStore()
+    ) throws -> BridgeRouter {
         guard
             let appVersion = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
             let manifestURL = bundle.url(
@@ -39,7 +52,107 @@ final class BridgeRouter {
                 message: "Native and Web build metadata do not match"
             )
         }
-        return BridgeRouter(appVersion: appVersion, rendererBuildHash: buildHash)
+        return BridgeRouter(
+            appVersion: appVersion,
+            rendererBuildHash: buildHash,
+            fileSelector: fileSelector,
+            fileTokens: fileTokens
+        )
+    }
+
+    func handleFileRequest(_ value: Any) async -> Result<[String: Any], BridgeValidationError> {
+        let data: Data
+        do {
+            data = try JSONSerialization.data(withJSONObject: value)
+        } catch {
+            return .failure(
+                BridgeValidationError(
+                    code: "INVALID_JSON",
+                    message: "Bridge request is not valid JSON"
+                )
+            )
+        }
+        let envelope: BridgeEnvelope
+        switch validator.validate(data) {
+        case let .failure(error):
+            return .failure(error)
+        case let .success(validated):
+            envelope = validated
+        }
+        guard let fileSelector else {
+            return .failure(
+                BridgeValidationError(
+                    code: "FILE_PICKER_UNAVAILABLE",
+                    message: "File picker is unavailable",
+                    recoverable: true
+                )
+            )
+        }
+
+        do {
+            let multiple: Bool
+            switch envelope.payload {
+            case .fileOpen:
+                multiple = false
+            case let .fileSelect(payload):
+                multiple = payload.multiple
+            default:
+                return .failure(
+                    BridgeValidationError(
+                        code: "BRIDGE_HANDLER_UNAVAILABLE",
+                        message: "Bridge request handler is unavailable"
+                    )
+                )
+            }
+            guard let selectedURLs = try await fileSelector.select(multiple: multiple), !selectedURLs.isEmpty else {
+                return .success(responseEnvelope(envelope, payload: ["status": "cancelled"]))
+            }
+            guard multiple || selectedURLs.count == 1 else {
+                throw documentRouteError("FILE_SELECTION_INVALID")
+            }
+            let metadata = try selectedURLs.map(validateSelectedFile)
+            var files: [[String: Any]] = []
+            for file in metadata {
+                let token = try await fileTokens.issue(
+                    url: file.url,
+                    fileName: file.fileName,
+                    sizeBytes: file.sizeBytes
+                )
+                files.append([
+                    "fileToken": token,
+                    "fileName": file.fileName,
+                    "sizeBytes": file.sizeBytes,
+                ])
+            }
+            if case .fileOpen = envelope.payload, let file = files.first {
+                return .success(
+                    responseEnvelope(
+                        envelope,
+                        payload: [
+                            "status": "opened",
+                            "fileToken": file["fileToken"]!,
+                            "fileName": file["fileName"]!,
+                            "sizeBytes": file["sizeBytes"]!,
+                        ]
+                    )
+                )
+            }
+            return .success(
+                responseEnvelope(
+                    envelope,
+                    payload: ["status": "selected", "files": files]
+                )
+            )
+        } catch {
+            let code = documentRouteErrorCode(error)
+            return .failure(
+                BridgeValidationError(
+                    code: code,
+                    message: "The selected file cannot be imported",
+                    recoverable: true
+                )
+            )
+        }
     }
 
     func handle(_ value: Any) -> Result<[String: Any], BridgeValidationError> {
@@ -116,6 +229,18 @@ final class BridgeRouter {
             "nativeBridge": false,
         ],
     ]
+
+    private func responseEnvelope(
+        _ envelope: BridgeEnvelope,
+        payload: [String: Any]
+    ) -> [String: Any] {
+        [
+            "bridgeVersion": Self.bridgeVersion,
+            "correlationId": envelope.correlationId,
+            "type": envelope.type,
+            "payload": payload,
+        ]
+    }
 }
 
 final class BridgeMessageHandler: NSObject, WKScriptMessageHandlerWithReply {
@@ -136,6 +261,21 @@ final class BridgeMessageHandler: NSObject, WKScriptMessageHandlerWithReply {
             replyHandler(nil, "BRIDGE_CONFIGURATION_MISSING")
             return
         }
+        if
+            let body = message.body as? [String: Any],
+            let type = body["type"] as? String,
+            ["file.open", "file.select"].contains(type)
+        {
+            Task {
+                switch await router.handleFileRequest(body) {
+                case let .success(response):
+                    replyHandler(response, nil)
+                case let .failure(error):
+                    replyHandler(nil, error.code)
+                }
+            }
+            return
+        }
         switch router.handle(message.body) {
         case let .success(response):
             replyHandler(response, nil)
@@ -143,4 +283,25 @@ final class BridgeMessageHandler: NSObject, WKScriptMessageHandlerWithReply {
             replyHandler(nil, error.code)
         }
     }
+}
+
+private func documentRouteError(_ code: String) -> NSError {
+    NSError(
+        domain: "com.hikerpig.zupulse.document-route",
+        code: 1,
+        userInfo: [NSLocalizedDescriptionKey: code]
+    )
+}
+
+private func documentRouteErrorCode(_ error: Error) -> String {
+    let error = error as NSError
+    let trustedDomains = [
+        "com.hikerpig.zupulse.document-picker",
+        "com.hikerpig.zupulse.document-route",
+        "com.hikerpig.zupulse.file-token",
+    ]
+    guard trustedDomains.contains(error.domain) else {
+        return "FILE_SELECTION_INVALID"
+    }
+    return error.localizedDescription
 }

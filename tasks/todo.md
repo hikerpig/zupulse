@@ -1,6 +1,6 @@
 # iPad Practice Player Task List
 
-> Progress: Tasks 1–7 and 9–11 completed and verified through 2026-07-24. Task 8 was not required
+> Progress: Tasks 1–7 and 9–12 completed and verified through 2026-07-24. Task 8 was not required
 > because the Task 7 custom-scheme gate passed.
 
 ## Task 1: 建立 iPad Web workspace
@@ -340,19 +340,21 @@ re-export 或删除；用户行为和 E2E 不变。
 
 ## Task 12: 打通 Document Picker 与 iPad ScoreFileGateway
 
+**Status:** Completed 2026-07-24
+
 **Description:** 在 Swift 路由 `file.select`，返回 metadata/token；Web 侧实现 iPad
 `ScoreFileGateway`，通过受限数据 URL 读取 `Uint8Array`。首轮只要求单文件，API 保留 multiple。
 
 **Acceptance criteria:**
 
-- [ ] cancel 返回空选择且不改变 route；非法类型/非普通文件/超限返回结构化可恢复错误。
-- [ ] Web Gateway 只接收 fileName/size/token，不获得原生 URL。
-- [ ] readBytes 成功消费 token；网络/读取失败不会创建 Library Score。
+- [x] cancel 返回空选择且不改变 route；非法类型/非普通文件/超限返回结构化可恢复错误。
+- [x] Web Gateway 只接收 fileName/size/token，不获得原生 URL。
+- [x] readBytes 成功消费 token；网络/读取失败不会创建 Library Score。
 
 **Verification:**
 
-- [ ] `pnpm vitest run apps/ipad-shell/web/src/__tests__/ipad-score-file-gateway.test.ts`
-- [ ] `pnpm ipad:test -- --only-testing ZupulseTests/DocumentPickerRouteTests`
+- [x] `pnpm vitest run apps/ipad-shell/web/src/__tests__/ipad-score-file-gateway.test.ts`
+- [x] `pnpm ipad:test -- --only-testing ZupulseTests/DocumentPickerRouteTests`
 
 **Dependencies:** Task 6, Task 11
 

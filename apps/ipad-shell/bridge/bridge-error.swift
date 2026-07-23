@@ -5,9 +5,9 @@ struct BridgeValidationError: Codable, Error, Equatable {
     let message: String
     let recoverable: Bool
 
-    init(code: String, message: String) {
+    init(code: String, message: String, recoverable: Bool = false) {
         self.code = code
         self.message = message
-        recoverable = false
+        self.recoverable = recoverable
     }
 }

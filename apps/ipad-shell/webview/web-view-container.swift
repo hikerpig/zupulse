@@ -14,6 +14,7 @@ struct WebViewContainer: UIViewRepresentable {
 
     func updateUIView(_ webView: WKWebView, context: Context) {}
 
+    @MainActor
     final class Coordinator {
         let webView: WKWebView
         let resourceHandler: AppResourceSchemeHandler
@@ -35,14 +36,27 @@ struct WebViewContainer: UIViewRepresentable {
                 BinaryDataSchemeHandler(service: BinaryDataService(store: fileTokens)),
                 forURLScheme: BinaryDataSchemeHandler.scheme
             )
-            let messageHandler = BridgeMessageHandler(router: try? BridgeRouter.load())
+            webView = WKWebView(frame: .zero, configuration: configuration)
+            weak var weakWebView = webView
+            let fileSelector = DocumentPickerCoordinator {
+                var presenter = weakWebView?.window?.rootViewController
+                while let presented = presenter?.presentedViewController {
+                    presenter = presented
+                }
+                return presenter
+            }
+            let messageHandler = BridgeMessageHandler(
+                router: try? BridgeRouter.load(
+                    fileSelector: fileSelector,
+                    fileTokens: fileTokens
+                )
+            )
             configuration.userContentController.addScriptMessageHandler(
                 messageHandler,
                 contentWorld: .page,
                 name: BridgeMessageHandler.name
             )
 
-            webView = WKWebView(frame: .zero, configuration: configuration)
             resourceHandler.onRequest = { [weak self] path in
                 self?.requestedResourcePaths.append(path)
             }

@@ -5,11 +5,11 @@ import type {
   ScoreIdentity,
   SidecarPayload,
 } from "@zupulse/web-core";
-import type { BrowserSheetLibraryRepository } from "./BrowserSheetLibraryRepository";
+import type { IndexedDbSheetLibraryRepository } from "@zupulse/web-storage";
 
 export class BrowserLibraryPlaybackPersistence implements PlaybackPersistence {
   constructor(
-    private readonly repository: BrowserSheetLibraryRepository,
+    private readonly repository: IndexedDbSheetLibraryRepository,
     private readonly libraryScoreId?: LibraryScoreId,
   ) {}
   forLibraryScore(id: LibraryScoreId): BrowserLibraryPlaybackPersistence {

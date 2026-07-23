@@ -1,6 +1,6 @@
 # iPad Practice Player Task List
 
-> Progress: Tasks 1–7 and 9 completed and verified through 2026-07-24. Task 8 was not required
+> Progress: Tasks 1–7 and 9–10 completed and verified through 2026-07-24. Task 8 was not required
 > because the Task 7 custom-scheme gate passed.
 
 ## Task 1: 建立 iPad Web workspace
@@ -280,20 +280,22 @@ Browser Demo 与 iPad entry 可以复用而不违反 app 深导入或
 
 ## Task 10: 让 Browser Demo 消费共享 IndexedDB Repository
 
+**Status:** Completed (2026-07-24)
+
 **Description:** 将 Browser Demo 切换到 Task 9 的公开 package，并把原 app 内实现改为短期兼容
 re-export 或删除；用户行为和 E2E 不变。
 
 **Acceptance criteria:**
 
-- [ ] `apps/web-demo` 不再拥有第二份 Repository 实现。
-- [ ] Browser Library 数据库名/version/数据语义不变，现有测试与 E2E 无回归。
-- [ ] workspace/tsconfig 只通过 package 公开入口连接。
+- [x] `apps/web-demo` 不再拥有第二份 Repository 实现。
+- [x] Browser Library 数据库名/version/数据语义不变，现有测试与 E2E 无回归。
+- [x] workspace/tsconfig 只通过 package 公开入口连接。
 
 **Verification:**
 
-- [ ] `pnpm vitest run apps/web-demo`
-- [ ] `pnpm demo:build`
-- [ ] `pnpm demo:test:e2e`
+- [x] `pnpm vitest run apps/web-demo`
+- [x] `pnpm demo:build`
+- [x] `pnpm demo:test:e2e`
 
 **Dependencies:** Task 9
 

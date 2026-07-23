@@ -1,7 +1,7 @@
 import "@zupulse/web-viewer/styles.css";
+import { IndexedDbSheetLibraryRepository } from "@zupulse/web-storage";
 import { mountViewerApp } from "@zupulse/web-viewer";
 import { createBrowserHost, createBrowserLocaleHost } from "./browserHost";
-import { BrowserSheetLibraryRepository } from "./library/BrowserSheetLibraryRepository";
 import { BrowserScoreFileGateway } from "./library/BrowserScoreFileGateway";
 import { BrowserLibraryPlaybackPersistence } from "./library/BrowserLibraryPlaybackPersistence";
 
@@ -12,7 +12,7 @@ if (typeof document !== "undefined") {
   if (!root) throw new Error("Viewer root is missing");
   const host = createBrowserHost(document);
   const localeHost = createBrowserLocaleHost(document);
-  const repository = new BrowserSheetLibraryRepository();
+  const repository = new IndexedDbSheetLibraryRepository();
   void navigator.storage?.persist?.().catch(() => false);
   mountViewerApp(root, {
     host,

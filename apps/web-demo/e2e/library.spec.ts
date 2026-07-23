@@ -88,6 +88,7 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await page.getByRole("link", { name: "和弦分析" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "和弦分析" })).toBeVisible();
   await expect(page.getByRole("button", { name: "分析设置" })).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   const splitter = page.getByRole("separator", { name: "调整乐谱与分析面板宽度" });
   await splitter.focus();
   await page.keyboard.press("ArrowRight");
@@ -111,6 +112,7 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
     await expect(audioUnavailable).toBeVisible();
   }
   await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "导出标注曲谱" }).click();
   expect((await download).suggestedFilename()).toBe("single-voice-chords.musicxml");

@@ -8,23 +8,27 @@ final class BridgeRouter {
     private let validator = BridgeContractValidator()
     private let fileSelector: DocumentPicking?
     private let fileTokens: FileTokenStore
+    private let lifecycleCoordinator: LifecycleCoordinator?
 
     init(
         appVersion: String,
         rendererBuildHash: String,
         fileSelector: DocumentPicking? = nil,
-        fileTokens: FileTokenStore = FileTokenStore()
+        fileTokens: FileTokenStore = FileTokenStore(),
+        lifecycleCoordinator: LifecycleCoordinator? = nil
     ) {
         self.appVersion = appVersion
         self.rendererBuildHash = rendererBuildHash
         self.fileSelector = fileSelector
         self.fileTokens = fileTokens
+        self.lifecycleCoordinator = lifecycleCoordinator
     }
 
     static func load(
         bundle: Bundle = .main,
         fileSelector: DocumentPicking? = nil,
-        fileTokens: FileTokenStore = FileTokenStore()
+        fileTokens: FileTokenStore = FileTokenStore(),
+        lifecycleCoordinator: LifecycleCoordinator? = nil
     ) throws -> BridgeRouter {
         guard
             let appVersion = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
@@ -56,7 +60,8 @@ final class BridgeRouter {
             appVersion: appVersion,
             rendererBuildHash: buildHash,
             fileSelector: fileSelector,
-            fileTokens: fileTokens
+            fileTokens: fileTokens,
+            lifecycleCoordinator: lifecycleCoordinator
         )
     }
 
@@ -182,6 +187,18 @@ final class BridgeRouter {
     }
 
     private func route(_ envelope: BridgeEnvelope) -> Result<[String: Any], BridgeValidationError> {
+        if case let .lifecycleAck(payload) = envelope.payload {
+            guard let state = LifecycleState(rawValue: payload.state) else {
+                return .failure(
+                    BridgeValidationError(
+                        code: "INVALID_PAYLOAD",
+                        message: "Bridge lifecycle state is not supported"
+                    )
+                )
+            }
+            _ = lifecycleCoordinator?.acknowledge(state)
+            return .success(responseEnvelope(envelope, payload: [:]))
+        }
         guard case let .handshake(payload) = envelope.payload else {
             return .failure(
                 BridgeValidationError(

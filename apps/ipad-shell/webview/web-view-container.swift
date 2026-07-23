@@ -1,8 +1,15 @@
+import OSLog
 import SwiftUI
 import WebKit
 
 struct WebViewContainer: UIViewRepresentable {
     let entryURL: URL
+    let suspendGeneration: Int
+
+    init(entryURL: URL, suspendGeneration: Int = 0) {
+        self.entryURL = entryURL
+        self.suspendGeneration = suspendGeneration
+    }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(entryURL: entryURL)
@@ -12,14 +19,22 @@ struct WebViewContainer: UIViewRepresentable {
         context.coordinator.webView
     }
 
-    func updateUIView(_ webView: WKWebView, context: Context) {}
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        context.coordinator.requestSuspend(generation: suspendGeneration)
+    }
+
+    static func dismantleUIView(_ webView: WKWebView, coordinator: Coordinator) {
+        coordinator.lifecycleCoordinator.request(.prepareClose)
+    }
 
     @MainActor
     final class Coordinator {
         let webView: WKWebView
         let resourceHandler: AppResourceSchemeHandler
         let fileTokens: FileTokenStore
+        let lifecycleCoordinator: LifecycleCoordinator
         private(set) var requestedResourcePaths: [String] = []
+        private var lastSuspendGeneration = 0
 
         init(entryURL: URL) {
             let configuration = WKWebViewConfiguration()
@@ -84,6 +99,28 @@ struct WebViewContainer: UIViewRepresentable {
             )
             webView = WKWebView(frame: .zero, configuration: configuration)
             weak var weakWebView = webView
+            let logger = Logger(
+                subsystem: "com.hikerpig.zupulse",
+                category: "lifecycle"
+            )
+            lifecycleCoordinator = LifecycleCoordinator(
+                emit: { event in
+                    Task { @MainActor in
+                        try? await weakWebView?.callAsyncJavaScript(
+                            """
+                            window.dispatchEvent(
+                              new CustomEvent("zupulse:bridge-event", { detail: event })
+                            );
+                            """,
+                            arguments: ["event": event.dictionary],
+                            contentWorld: .page
+                        )
+                    }
+                },
+                diagnose: { code in
+                    logger.error("\(code, privacy: .public)")
+                }
+            )
             let systemFileSelector = DocumentPickerCoordinator {
                 var viewController = weakWebView?.window?.rootViewController
                 while let presented = viewController?.presentedViewController {
@@ -100,7 +137,8 @@ struct WebViewContainer: UIViewRepresentable {
             let messageHandler = BridgeMessageHandler(
                 router: try? BridgeRouter.load(
                     fileSelector: fileSelector,
-                    fileTokens: fileTokens
+                    fileTokens: fileTokens,
+                    lifecycleCoordinator: lifecycleCoordinator
                 )
             )
             configuration.userContentController.addScriptMessageHandler(
@@ -113,6 +151,12 @@ struct WebViewContainer: UIViewRepresentable {
                 self?.requestedResourcePaths.append(path)
             }
             webView.load(URLRequest(url: AppResourceSchemeHandler.entryURL))
+        }
+
+        func requestSuspend(generation: Int) {
+            guard generation > lastSuspendGeneration else { return }
+            lastSuspendGeneration = generation
+            lifecycleCoordinator.request(.suspend)
         }
 
         deinit {

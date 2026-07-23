@@ -9,6 +9,9 @@ final class UITestImportStage: ObservableObject {
 #endif
 
 struct AppShellView: View {
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var suspendGeneration = 0
+
     private let webEntryURL = Bundle.main.url(
         forResource: "index",
         withExtension: "html",
@@ -18,7 +21,10 @@ struct AppShellView: View {
     var body: some View {
         ZStack {
             if let webEntryURL {
-                WebViewContainer(entryURL: webEntryURL)
+                WebViewContainer(
+                    entryURL: webEntryURL,
+                    suspendGeneration: suspendGeneration
+                )
                     .ignoresSafeArea()
             } else {
                 ContentUnavailableView(
@@ -32,6 +38,15 @@ struct AppShellView: View {
                 UITestImportStageView()
             }
             #endif
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .inactive || phase == .background else { return }
+            suspendGeneration += 1
+        }
+        .onReceive(
+            NotificationCenter.default.publisher(for: .zupulseAudioPauseIntent)
+        ) { _ in
+            suspendGeneration += 1
         }
     }
 }

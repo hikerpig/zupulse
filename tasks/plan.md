@@ -103,7 +103,7 @@ flowchart TD
 ### Phase 3: Playback Lifecycle and Recovery
 
 - [x] Task 15: 配置前台可混音的 Audio Session
-- [ ] Task 16: 将 iPad 生命周期映射为 pause-and-flush
+- [x] Task 16: 将 iPad 生命周期映射为 pause-and-flush
 - [ ] Task 17: 恢复上次 Viewer 并处理 WebContent 进程终止
 
 ### Checkpoint C: Lifecycle

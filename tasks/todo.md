@@ -459,14 +459,14 @@ Bridge lifecycle event；Web 调用 `ViewerAppHandle.pauseAndFlush()` 并确认�
 
 **Acceptance criteria:**
 
-- [ ] 同一 lifecycle state 只有一个 pending ack；超时产生稳定诊断码但不自动播放。
-- [ ] Web 收到 suspend 先 pause/flush，再回复 ack；重复/迟到事件幂等。
-- [ ] foreground 只恢复 UI，不发送 play 命令。
+- [x] 同一 lifecycle state 只有一个 pending ack；超时产生稳定诊断码但不自动播放。
+- [x] Web 收到 suspend 先 pause/flush，再回复 ack；重复/迟到事件幂等。
+- [x] foreground 只恢复 UI，不发送 play 命令。
 
 **Verification:**
 
-- [ ] `pnpm vitest run apps/ipad-shell/web/src/__tests__/ipad-lifecycle.test.ts`
-- [ ] `pnpm ipad:test -- --only-testing ZupulseTests/LifecycleCoordinatorTests`
+- [x] `pnpm vitest run apps/ipad-shell/web/src/__tests__/ipad-lifecycle.test.ts`
+- [x] `pnpm ipad:test -- --only-testing ZupulseTests/LifecycleCoordinatorTests`
 
 **Dependencies:** Task 6, Task 15
 

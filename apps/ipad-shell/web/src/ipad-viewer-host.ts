@@ -1,6 +1,7 @@
 import { IndexedDbSheetLibraryRepository } from "@zupulse/web-storage";
 import { createDefaultOpenSession, mountViewerApp, type ViewerAppHandle, type ViewerHost } from "@zupulse/web-viewer";
 import type { IpadBridgeTransport } from "./ipad-bridge-transport";
+import { attachIpadLifecycle } from "./ipad-lifecycle";
 import { IpadScoreFileGateway, type IpadFileSelectionClient } from "./ipad-score-file-gateway";
 import { IpadLibraryPlaybackPersistence } from "./ipad-library-playback-persistence";
 
@@ -25,7 +26,7 @@ export async function mountIpadViewerApplication(
   await repository.initialize();
 
   const persistence = new IpadLibraryPlaybackPersistence(repository);
-  return mount(root, {
+  const application = mount(root, {
     host: createIpadViewerHost(),
     openSession: createDefaultOpenSession(root.ownerDocument, persistence),
     library: {
@@ -43,6 +44,15 @@ export async function mountIpadViewerApplication(
       ],
     },
   });
+  const lifecycleTarget = root.ownerDocument.defaultView;
+  if (!lifecycleTarget) return application;
+  const detachLifecycle = attachIpadLifecycle(lifecycleTarget, application, bridge);
+  const destroy = application.destroy.bind(application);
+  application.destroy = async () => {
+    detachLifecycle();
+    await destroy();
+  };
+  return application;
 }
 
 function createIpadViewerHost(): ViewerHost {

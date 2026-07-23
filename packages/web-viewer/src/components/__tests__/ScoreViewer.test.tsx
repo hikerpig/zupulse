@@ -64,6 +64,22 @@ describe("ScoreViewer", () => {
     expect(viewer.style.transform).toBe("");
     document.removeEventListener("zupulse:score-zoom-commit", commits);
   });
+
+  it("leaves one-finger score scrolling to the scroll host without creating a zoom commit", () => {
+    const commits = vi.fn();
+    document.addEventListener("zupulse:score-zoom-commit", commits);
+    const view = renderScoreViewer(<ScoreViewer />);
+    const stage = screen.getByRole("region", { name: "乐谱工作区" });
+    const viewer = view.container.querySelector("#alpha-tab") as HTMLElement;
+
+    fireEvent.touchStart(stage, { touches: [touch(0, 100)] });
+    fireEvent.touchMove(stage, { touches: [touch(0, 40)] });
+    fireEvent.touchEnd(stage, { touches: [] });
+
+    expect(viewer.style.transform).toBe("");
+    expect(commits).not.toHaveBeenCalled();
+    document.removeEventListener("zupulse:score-zoom-commit", commits);
+  });
 });
 
 function renderScoreViewer(viewer: ReactElement) {

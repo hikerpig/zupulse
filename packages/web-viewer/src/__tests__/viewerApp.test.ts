@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   attachScoreZoomCommit,
   createDefaultOpenSession,
+  playbackPositionForWrittenSelection,
   renderViewerState,
   type DefaultOpenSessionDependencies,
 } from "../viewerApp";
@@ -337,6 +338,115 @@ describe("mountViewerApp", () => {
 });
 
 describe("createDefaultOpenSession cleanup", () => {
+  it("maps a score beat selection to the existing written playback position without toggling playback", async () => {
+    renderSessionFixture(document);
+    let beatHandler: ((beat: { displayStart: number; voice: { bar: { index: number } } }) => void) | undefined;
+    let detached = false;
+    const dispatch = vi.fn(async () => undefined);
+    const api = {
+      beatMouseDown: {
+        on(handler: typeof beatHandler) {
+          beatHandler = handler;
+          return () => {
+            detached = true;
+          };
+        },
+      },
+    };
+    const openSession = createDefaultOpenSession(document, {} as never, {
+      createApi: () => api,
+      createAdapter: () => ({ destroy: vi.fn() }) as never,
+      presentFile: async () => ({
+        status: "ready",
+        message: "已加载 Song",
+        identity: { contentHash: "a".repeat(64), format: "gp" },
+        summary: { title: "Song", trackCount: 1, masterBarCount: 2 },
+      }),
+      waitForScore: async () => ({}) as never,
+      extractModel: () => ({
+        baseTempo: 120,
+        tracks: [{ id: "track-0", sourceIndex: 0, name: "Lead" }],
+        timeline: {
+          durationTicks: 3840,
+          durationMs: 4000,
+          measures: [
+            { id: "measure-0", index: 0, startTick: 0, durationTicks: 1920, beatTicks: [0, 480, 960, 1440] },
+            {
+              id: "measure-1",
+              index: 1,
+              startTick: 1920,
+              durationTicks: 1920,
+              beatTicks: [1920, 2400, 2880, 3360],
+            },
+          ],
+        },
+      }),
+      createController: () =>
+        ({
+          initialize: async () => undefined,
+          getState: () => ({
+            sessionId: "session",
+            transport: "playing",
+            position: { measureId: "measure-0", measureIndex: 0, beatIndex: 0, tick: 0, cachedTimeMs: 0 },
+          }),
+          subscribe: () => () => undefined,
+          dispatch,
+          flush: async () => undefined,
+          destroy: async () => undefined,
+        }) as never,
+    });
+    const session = await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
+
+    beatHandler?.({ displayStart: 480, voice: { bar: { index: 1 } } });
+    await vi.waitFor(() =>
+      expect(dispatch).toHaveBeenCalledWith({
+        type: "seek",
+        position: {
+          measureId: "measure-1",
+          measureIndex: 1,
+          beatIndex: 1,
+          tick: 2400,
+          cachedTimeMs: 2500,
+        },
+      }),
+    );
+    expect(dispatch).not.toHaveBeenCalledWith({ type: "toggle-playback" });
+
+    await session.destroy();
+    expect(detached).toBe(true);
+  });
+
+  it("keeps the current playback occurrence while mapping a repeated written beat", () => {
+    const timeline = {
+      durationTicks: 7680,
+      durationMs: 8000,
+      measures: [
+        { id: "measure-0", index: 0, startTick: 0, durationTicks: 1920, beatTicks: [0, 480, 960, 1440] },
+        {
+          id: "measure-1",
+          index: 1,
+          startTick: 1920,
+          durationTicks: 1920,
+          beatTicks: [1920, 2400, 2880, 3360],
+        },
+      ],
+    };
+
+    expect(
+      playbackPositionForWrittenSelection(
+        { measureIndex: 0, offsetTicks: 480 },
+        { measureId: "measure-1", measureIndex: 1, beatIndex: 1, tick: 6240, cachedTimeMs: 6500 },
+        timeline,
+      ),
+    ).toEqual({
+      measureId: "measure-0",
+      measureIndex: 0,
+      beatIndex: 1,
+      tick: 4800,
+      cachedTimeMs: 5000,
+    });
+  });
+
   it("commits alphaTab scale once and restores the written scroll anchor after layout", () => {
     const scrollElement = document.createElement("div");
     Object.defineProperties(scrollElement, {

@@ -618,15 +618,24 @@ Simulator 的真实 pinch UI 用例通过并保留截图；最终 `pnpm verify:f
 
 **Acceptance criteria:**
 
-- [ ] 暂停轻点只定位；播放轻点定位后继续；滚动/pinch 不误 seek。
-- [ ] repeat/jump 使用现有 Written Position / Playback Occurrence，不持久化 alphaTab ID。
-- [ ] A/B 继续取当前播放位置并沿用 off/beat/measure 吸附。
+- [x] 暂停轻点只定位；播放轻点定位后继续；滚动/pinch 不误 seek。
+- [x] repeat/jump 使用现有 Written Position / Playback Occurrence，不持久化 alphaTab ID。
+- [x] A/B 继续取当前播放位置并沿用 off/beat/measure 吸附。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-core/src/gp/__tests__/alphaTabBrowser.test.ts`
-- [ ] `pnpm vitest run packages/web-viewer/src/components/__tests__/ScoreViewer.test.tsx`
-- [ ] Manual: Simulator 轻点、滚动、pinch 冲突场景
+- [x] `pnpm vitest run packages/web-core/src/gp/__tests__/alphaTabBrowser.test.ts`
+- [x] `pnpm vitest run packages/web-viewer/src/components/__tests__/ScoreViewer.test.tsx`
+- [x] Manual: Simulator 轻点、滚动、pinch 冲突场景
+
+**Completion note (2026-07-24):** alphaTab beat/note 事件现在经触控仲裁后映射为既有
+`PlaybackController` seek：单指轻点在 touch end 提交，移动超过 8px 或出现多点触控即取消，
+并在手势后 500ms 抑制合成 mouse 事件。暂停状态仅定位，播放状态定位后继续；repeat/jump
+通过当前 Playback Occurrence 的 measure 内偏移映射到稳定 Written Position，不保存
+alphaTab ID。A/B 仍从 controller 当前播放位置取值，并沿用 off/beat/measure 吸附。iPad Pro
+11-inch (M5) Simulator 已用真实 GP 谱验证轻点、滚动、pinch 和播放中轻点，并保留 UI
+测试截图；最终 `pnpm verify:fast`（115 files / 446 tests）和 `pnpm ipad:verify`
+（4 UI tests / 37 Swift tests）通过。
 
 **Dependencies:** Task 20
 

@@ -1,12 +1,16 @@
 import {
   AlphaTabPlaybackAdapter,
   PlaybackController,
+  attachAlphaTabGestureSelection,
   createAlphaTabApi,
   createDefaultSidecar,
   extractAlphaTabPlaybackModel,
   waitForAlphaTabScore,
   type AlphaTabApiLike,
+  type AlphaTabWrittenSelection,
+  type MusicalPosition,
   type PlaybackPersistence,
+  type PlaybackTimelineMap,
 } from "@zupulse/web-core";
 import { createAppI18n, resolveLocale } from "@zupulse/app-i18n";
 import type { ViewerFile, ViewerSessionHandle } from "./host";
@@ -53,6 +57,7 @@ export function createDefaultOpenSession(
     );
     const adapter = dependencies.createAdapter(api);
     const detachScoreZoom = attachScoreZoomCommit(ownerDocument, api, scoreScrollElement);
+    let detachScoreSelection = () => {};
     let controller: PlaybackController | undefined;
     try {
       const state = await dependencies.presentFile({
@@ -85,6 +90,18 @@ export function createDefaultOpenSession(
       });
       controller = sessionController;
       await sessionController.initialize();
+      detachScoreSelection = attachAlphaTabGestureSelection(api, alphaTabHost, (selection) => {
+        const position = playbackPositionForWrittenSelection(
+          selection,
+          sessionController.getState().position,
+          model.timeline,
+        );
+        if (!position) return;
+        void sessionController.dispatch({
+          type: "seek",
+          position,
+        });
+      });
       let playbackSnapshot = sessionController.getState();
       const playbackListeners = new Set<(state: typeof playbackSnapshot) => void>();
       const unsubscribePlayback = sessionController.subscribe((state) => {
@@ -111,6 +128,7 @@ export function createDefaultOpenSession(
           await sessionController.flush();
         },
         async destroy() {
+          detachScoreSelection();
           detachScoreZoom();
           unsubscribePlayback();
           playbackListeners.clear();
@@ -120,6 +138,7 @@ export function createDefaultOpenSession(
     } catch (error) {
       let cleanupError: unknown;
       try {
+        detachScoreSelection();
         detachScoreZoom();
         if (controller) await controller.destroy();
         else adapter.destroy();
@@ -238,4 +257,30 @@ export function attachScoreZoomCommit(
   };
   ownerDocument.addEventListener(SCORE_ZOOM_COMMIT_EVENT, commit);
   return () => ownerDocument.removeEventListener(SCORE_ZOOM_COMMIT_EVENT, commit);
+}
+
+export function playbackPositionForWrittenSelection(
+  selection: AlphaTabWrittenSelection,
+  current: MusicalPosition,
+  timeline: PlaybackTimelineMap,
+): MusicalPosition | undefined {
+  const measure = timeline.measures.find((candidate) => candidate.index === selection.measureIndex);
+  const currentMeasure = timeline.measures.find((candidate) => candidate.index === current.measureIndex);
+  if (!measure || !currentMeasure || selection.offsetTicks < 0 || selection.offsetTicks >= measure.durationTicks) {
+    return undefined;
+  }
+  const writtenTick = measure.startTick + selection.offsetTicks;
+  const occurrenceOffset = Math.max(0, current.tick - currentMeasure.startTick);
+  const occurrenceTick = writtenTick + occurrenceOffset;
+  const tick = occurrenceTick < timeline.durationTicks ? occurrenceTick : writtenTick;
+  const reversedIndex = [...measure.beatTicks].reverse().findIndex((beatTick) => beatTick <= writtenTick);
+  const beatIndex = reversedIndex < 0 ? 0 : measure.beatTicks.length - 1 - reversedIndex;
+  const cachedTimeMs = timeline.durationTicks > 0 ? (timeline.durationMs * tick) / timeline.durationTicks : 0;
+  return {
+    measureId: measure.id,
+    measureIndex: measure.index,
+    beatIndex,
+    tick,
+    cachedTimeMs,
+  };
 }

@@ -118,14 +118,14 @@ flowchart TD
 - [x] Task 18: 添加 iPad capability 路由与 Studio 占位页
 - [x] Task 19: 实现横屏、竖屏和 Split View 布局
 - [x] Task 20: 实现谱面专属缩放
-- [ ] Task 21: 实现点拍定位与触控手势仲裁
+- [x] Task 21: 实现点拍定位与触控手势仲裁
 
 ### Checkpoint D: Viewer Interaction
 
-- [ ] 三档容器宽度下主要 Transport、循环状态和返回 Library 路径始终可用。
-- [ ] resize、缩放和点拍定位不重建 Session、不跳回开头、不破坏播放/循环状态。
-- [ ] Studio URL 显示占位状态且不创建 Studio runtime；Library 不展示 Studio 入口。
-- [ ] `pnpm verify:fast && pnpm ipad:verify` 通过。
+- [x] 三档容器宽度下主要 Transport、循环状态和返回 Library 路径始终可用。
+- [x] resize、缩放和点拍定位不重建 Session、不跳回开头、不破坏播放/循环状态。
+- [x] Studio URL 显示占位状态且不创建 Studio runtime；Library 不展示 Studio 入口。
+- [x] `pnpm verify:fast && pnpm ipad:verify` 通过。
 
 ### Phase 5: Complete MVP Host Surfaces
 

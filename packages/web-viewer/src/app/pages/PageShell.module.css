@@ -117,6 +117,80 @@
     background: currentColor;
     opacity: 0.9;
   }
+  .unavailableShell {
+    min-height: 100%;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: var(--bg-primary);
+  }
+  .unavailableWorkspace {
+    width: min(100%, 680px);
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 18px 16px;
+    padding: 24px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-shell);
+  }
+  .unavailableIcon {
+    color: var(--text-secondary);
+  }
+  .unavailableContent {
+    min-width: 0;
+  }
+  .unavailableTitle {
+    margin: 4px 0 0;
+    font-size: 24px;
+    line-height: 1.2;
+  }
+  .unavailableScore {
+    margin: 18px 0 0;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .unavailableCopy {
+    max-width: 52ch;
+    margin: 6px 0 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .unavailableActions {
+    grid-column: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .unavailablePrimaryAction,
+  .unavailableSecondaryAction {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .unavailablePrimaryAction {
+    border-color: var(--accent-primary);
+    background: var(--accent-primary);
+    color: var(--text-on-accent);
+  }
+  .unavailableSecondaryAction {
+    background: var(--bg-elevated);
+  }
+  .unavailablePrimaryAction:focus-visible,
+  .unavailableSecondaryAction:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
   @media (max-width: 960px) {
     .appShell {
       height: auto;
@@ -130,6 +204,12 @@
     .contextActions {
       align-items: stretch;
       flex-direction: column;
+    }
+    .unavailableWorkspace {
+      grid-template-columns: 1fr;
+    }
+    .unavailableActions {
+      grid-column: 1;
     }
   }
 }

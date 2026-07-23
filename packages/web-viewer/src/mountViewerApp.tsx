@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import type { LocaleHost, ViewerAppHandle, ViewerFile, ViewerHost, ViewerSessionHandle } from "./host";
-import { App } from "./app/App";
+import { App, type ViewerProductCapabilities } from "./app/App";
 import { ViewerApplication } from "./app/ViewerApplication";
 import { createStudioScoreRuntime, type StudioScoreRuntime } from "./studio-score-runtime";
 import type { ScoreFileGateway, ScoreFormatAdapter, SheetLibraryRepository } from "@zupulse/web-core";
@@ -13,6 +13,7 @@ export type ViewerAppDependencies = {
   localeHost?: LocaleHost;
   openSession(file: ViewerFile, libraryScoreId?: string): Promise<ViewerSessionHandle>;
   openStudioRuntime?(file: ViewerFile): Promise<StudioScoreRuntime>;
+  capabilities?: ViewerProductCapabilities;
   library?: { repository: SheetLibraryRepository; gateway: ScoreFileGateway; adapters: readonly ScoreFormatAdapter[] };
 };
 
@@ -34,7 +35,12 @@ export function mountViewerApp(rootElement: HTMLElement, dependencies: ViewerApp
   flushSync(() =>
     root.render(
       <StrictMode>
-        <App application={application} localeHost={localeHost} i18n={i18n} />
+        <App
+          application={application}
+          localeHost={localeHost}
+          i18n={i18n}
+          {...(dependencies.capabilities === undefined ? {} : { capabilities: dependencies.capabilities })}
+        />
       </StrictMode>,
     ),
   );

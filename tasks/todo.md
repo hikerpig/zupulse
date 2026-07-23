@@ -515,14 +515,14 @@ handshake、Repository initialize 和 Session 重建；播放状态始终 paused
 
 **Acceptance criteria:**
 
-- [ ] iPad `harmonyAnalysis: false` 时 Library 无 Studio 入口，Studio URL 不创建 runtime/repository read。
-- [ ] 占位页显示曲谱名称、返回 Viewer 和返回 Library；无空白或误导性 loading。
-- [ ] Browser/Desktop route 与现有 Studio 测试无回归。
+- [x] iPad `harmonyAnalysis: false` 时 Library 无 Studio 入口，Studio URL 不创建 runtime/repository read。
+- [x] 占位页显示曲谱名称、返回 Viewer 和返回 Library；无空白或误导性 loading。
+- [x] Browser/Desktop route 与现有 Studio 测试无回归。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-viewer/src/app/__tests__/App.test.tsx`
-- [ ] `pnpm vitest run packages/web-viewer/src/app/pages/__tests__/StudioPage.test.tsx`
+- [x] `pnpm vitest run packages/web-viewer/src/app/__tests__/App.test.tsx`
+- [x] `pnpm vitest run packages/web-viewer/src/app/pages/__tests__/StudioPage.test.tsx`
 
 **Dependencies:** Checkpoint B
 

@@ -10,6 +10,7 @@ import { AppStoreProvider, createAppStore, useApplyTheme, useAppStore } from "./
 import { LibraryPage } from "./pages/LibraryPage";
 import { ViewerPage } from "./pages/ViewerPage";
 import { StudioPage } from "./pages/StudioPage";
+import { StudioUnavailablePage } from "./pages/StudioUnavailablePage";
 import { AppHeader } from "./AppHeader";
 import styles from "./App.module.css";
 
@@ -23,14 +24,24 @@ const fallbackLocaleHost: LocaleHost = {
   },
 };
 
+export type ViewerProductCapabilities = {
+  harmonyAnalysis: boolean;
+};
+
+export const defaultViewerProductCapabilities: ViewerProductCapabilities = {
+  harmonyAnalysis: true,
+};
+
 export function App({
   application,
   localeHost = fallbackLocaleHost,
   i18n: injectedI18n,
+  capabilities = defaultViewerProductCapabilities,
 }: {
   application: ViewerApplication;
   localeHost?: LocaleHost;
   i18n?: i18n;
+  capabilities?: ViewerProductCapabilities;
 }) {
   const i18n = useMemo(
     () => injectedI18n ?? createAppI18n(localeHost.initialState.effectiveLocale),
@@ -41,16 +52,28 @@ export function App({
     () =>
       createHashRouter([
         {
-          element: <ApplicationNavigation application={application} localeHost={localeHost} />,
+          element: (
+            <ApplicationNavigation application={application} localeHost={localeHost} capabilities={capabilities} />
+          ),
           children: [
             { path: "/", element: <LibraryPage application={application} /> },
-            { path: "/viewer/:libraryScoreId", element: <ViewerPage application={application} /> },
-            { path: "/studio/:libraryScoreId", element: <StudioPage application={application} /> },
+            {
+              path: "/viewer/:libraryScoreId",
+              element: <ViewerPage application={application} capabilities={capabilities} />,
+            },
+            {
+              path: "/studio/:libraryScoreId",
+              element: capabilities.harmonyAnalysis ? (
+                <StudioPage application={application} />
+              ) : (
+                <StudioUnavailablePage application={application} />
+              ),
+            },
             { path: "*", element: <ViewerPage application={application} notFound /> },
           ],
         },
       ]),
-    [application, localeHost],
+    [application, capabilities, localeHost],
   );
   return (
     <I18nextProvider i18n={i18n}>
@@ -68,9 +91,11 @@ export function App({
 function ApplicationNavigation({
   application,
   localeHost,
+  capabilities,
 }: {
   application: ViewerApplication;
   localeHost: LocaleHost;
+  capabilities: ViewerProductCapabilities;
 }) {
   const navigate = useNavigate();
   useEffect(
@@ -79,7 +104,7 @@ function ApplicationNavigation({
   );
   return (
     <div className={styles.appFrame}>
-      <AppHeader localeHost={localeHost} />
+      <AppHeader localeHost={localeHost} capabilities={capabilities} />
       <div className={styles.routeViewport}>
         <Outlet />
       </div>

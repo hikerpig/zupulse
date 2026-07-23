@@ -18,6 +18,7 @@ describe("iPad viewer composition", () => {
       expect(dependencies.library?.repository).toBe(repository);
       expect(dependencies.library?.gateway).toBeDefined();
       expect(dependencies.library?.adapters.map((adapter) => adapter.format)).toEqual(["gp", "musicxml"]);
+      expect(dependencies.capabilities).toEqual({ harmonyAnalysis: false });
       return {
         async openScore() {},
         async togglePlayback() {},

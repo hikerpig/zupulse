@@ -30,6 +30,7 @@ export async function mountIpadViewerApplication(
   const lifecycleTarget = root.ownerDocument.defaultView;
   if (lifecycleTarget) restoreIpadRoute(lifecycleTarget);
   const application = mount(root, {
+    capabilities: { harmonyAnalysis: false },
     host: createIpadViewerHost(),
     openSession: createDefaultOpenSession(root.ownerDocument, persistence),
     library: {

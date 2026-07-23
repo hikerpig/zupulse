@@ -846,9 +846,9 @@ drift、生产 Web 资源与 hash、Release 泄漏，再执行 48 项 Swift 和 
 
 **Verification:**
 
-- [ ] `pnpm ipad:verify`
+- [x] `pnpm ipad:verify`
 - [ ] Manual: 执行 `docs/validation/ipad-device-acceptance.md` 全部步骤
-- [ ] `pnpm verify && pnpm verify:e2e`
+- [x] `pnpm verify && pnpm verify:e2e`
 
 **Dependencies:** Task 26, Personal Team available
 
@@ -858,6 +858,11 @@ drift、生产 Web 资源与 hash、Release 泄漏，再执行 48 项 Swift 和 
 - `docs/validation/ipad-resource-origin.md`
 
 **Estimated scope:** S (2 files plus manual device evidence)
+
+**Prepared 2026-07-24:** Simulator/contract/Release 自动化、`pnpm verify` 与 Browser/Desktop
+`pnpm verify:e2e` 已实跑通过；真机验收表已包含 origin、音频、触控、生命周期、两轮 20 份曲谱
+内存采样、20/50 次性能样本与诊断/网络边界证据字段。当前仍为 `not-run-on-device`，Personal Team
+可用前不勾选真机条件，也不接受 ADR 0054–0059。
 
 ## Task 28: 接受 Shell、Bridge 与数据面 ADR
 

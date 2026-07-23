@@ -104,14 +104,14 @@ flowchart TD
 
 - [x] Task 15: 配置前台可混音的 Audio Session
 - [x] Task 16: 将 iPad 生命周期映射为 pause-and-flush
-- [ ] Task 17: 恢复上次 Viewer 并处理 WebContent 进程终止
+- [x] Task 17: 恢复上次 Viewer 并处理 WebContent 进程终止
 
 ### Checkpoint C: Lifecycle
 
-- [ ] 后台、音频中断和耳机断开都暂停并 flush，返回前台绝不自动播放。
-- [ ] 冷启动与 WebContent 重建恢复同一 Library Score 和位置，损坏/删除时回到 Library。
-- [ ] 生命周期重复事件、迟到 ack 和超时不创建第二个 Viewer Session。
-- [ ] `pnpm verify:fast && pnpm ipad:verify` 通过。
+- [x] 后台、音频中断和耳机断开都暂停并 flush，返回前台绝不自动播放。
+- [x] 冷启动与 WebContent 重建恢复同一 Library Score 和位置，损坏/删除时回到 Library。
+- [x] 生命周期重复事件、迟到 ack 和超时不创建第二个 Viewer Session。
+- [x] `pnpm verify:fast && pnpm ipad:verify` 通过。
 
 ### Phase 4: iPad Viewer Interaction
 

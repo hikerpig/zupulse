@@ -486,15 +486,15 @@ handshake、Repository initialize 和 Session 重建；播放状态始终 paused
 
 **Acceptance criteria:**
 
-- [ ] 恢复使用 `libraryScoreId`，不保存 Session ID、token、popover 或 seek 手势。
-- [ ] score 缺失/损坏时回到 Library 并显示可恢复错误，不循环 reload。
-- [ ] WebContent termination 只创建一个替代 WebView/Session，恢复后不自动发声。
+- [x] 恢复使用 `libraryScoreId`，不保存 Session ID、token、popover 或 seek 手势。
+- [x] score 缺失/损坏时回到 Library 并显示可恢复错误，不循环 reload。
+- [x] WebContent termination 只创建一个替代 WebView/Session，恢复后不自动发声。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`
-- [ ] `pnpm ipad:test -- --only-testing ZupulseTests/WebContentRecoveryTests`
-- [ ] `pnpm ipad:test -- --only-testing ZupulseUITests/ViewerRecoveryTests`
+- [x] `pnpm vitest run packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`
+- [x] `pnpm ipad:test -- --only-testing ZupulseTests/WebContentRecoveryTests`
+- [x] `pnpm ipad:test -- --only-testing ZupulseUITests/ViewerRecoveryTests`
 
 **Dependencies:** Task 16
 

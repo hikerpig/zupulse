@@ -143,6 +143,41 @@ describe("ViewerApplication", () => {
     await application.destroy();
   });
 
+  it("reports a recoverable Library error when a persisted score cannot be restored", async () => {
+    const scoreId = "00000000-0000-4000-8000-000000000001";
+    const repository = {
+      initialize: async () => undefined,
+      list: async () => [],
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async () => {
+        throw new Error("SCORE_BYTES_MISSING");
+      },
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+    } satisfies SheetLibraryRepository;
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      async () => {
+        throw new Error("unused");
+      },
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+    );
+
+    await expect(application.openLibraryScore(scoreId)).rejects.toThrow("SCORE_BYTES_MISSING");
+
+    expect(application.getSnapshot().currentLibraryScoreId).toBeUndefined();
+    expect(application.getSnapshot().library?.error).toBe("OPEN_SCORE_SCORE_BYTES_MISSING");
+    await application.destroy();
+  });
+
   it("emits an explicit navigation target after a single score import", async () => {
     const bytes = new TextEncoder().encode("<score-partwise><part/><measure/></score-partwise>");
     const adapter: ScoreFormatAdapter = {

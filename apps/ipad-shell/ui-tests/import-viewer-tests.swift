@@ -49,9 +49,9 @@ final class ImportViewerTests: XCTestCase {
 
     private func relaunchLibrary(in app: XCUIApplication) {
         app.terminate()
-        app.launchEnvironment = [:]
+        app.launchEnvironment = ["ZUPULSE_UI_TEST_START_LIBRARY": "1"]
         app.launch()
-        XCTAssertTrue(app.staticTexts["曲谱库"].waitForExistence(timeout: 30), stage("relaunch-library"))
+        XCTAssertTrue(app.buttons["批量导入"].waitForExistence(timeout: 30), stage("relaunch-library"))
     }
 
     private func assertSingleImportedScore(in app: XCUIApplication, stage: String) {

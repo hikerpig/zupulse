@@ -598,7 +598,19 @@ export class ViewerApplication implements ViewerAppHandle {
   openLibraryScore(id: string): Promise<void> {
     if (!this.library) return Promise.resolve();
     if (this.destroying) return Promise.reject(new Error("Viewer app is being destroyed"));
-    const operation = this.chain.then(() => (this.hasSession(id) ? undefined : this.openLibraryScoreOnce(id)));
+    const operation = this.chain
+      .then(() => (this.hasSession(id) ? undefined : this.openLibraryScoreOnce(id)))
+      .catch((error: unknown) => {
+        this.setSnapshot({
+          ...this.snapshot,
+          library: {
+            scores: this.snapshot.library?.scores ?? [],
+            loading: false,
+            error: `OPEN_SCORE_${error instanceof Error ? error.message : "FAILED"}`,
+          },
+        });
+        throw error;
+      });
     this.chain = operation.then(
       () => undefined,
       () => undefined,

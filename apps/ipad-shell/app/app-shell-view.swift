@@ -34,7 +34,9 @@ struct AppShellView: View {
                 )
             }
             #if DEBUG
-            if ProcessInfo.processInfo.environment["ZUPULSE_UI_TEST_FIXTURE"] != nil {
+            if ProcessInfo.processInfo.environment["ZUPULSE_UI_TEST_FIXTURE"] != nil ||
+                ProcessInfo.processInfo.environment["ZUPULSE_UI_TEST_RECOVER_WEB_CONTENT"] == "1"
+            {
                 UITestImportStageView()
             }
             #endif

@@ -1,6 +1,6 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { Music } from "lucide-react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import type { ViewerApplication } from "../ViewerApplication";
 import { PlaybackWorkspace } from "../../features/PlaybackWorkspace";
@@ -11,12 +11,13 @@ export function ViewerPage({ application, notFound = false }: { application: Vie
   const { t } = useTranslation("viewer");
   const snapshot = useSyncExternalStore(application.subscribe, application.getSnapshot);
   const { libraryScoreId } = useParams();
+  const navigate = useNavigate();
   const invalidSession = Boolean(libraryScoreId && !application.hasSession(libraryScoreId));
 
   useEffect(() => {
     if (application.hasLibrary() && libraryScoreId && !application.hasSession(libraryScoreId))
-      void application.openLibraryScore(libraryScoreId).catch(() => undefined);
-  }, [application, libraryScoreId, snapshot.currentLibraryScoreId]);
+      void application.openLibraryScore(libraryScoreId).catch(() => navigate("/", { replace: true }));
+  }, [application, libraryScoreId, navigate, snapshot.currentLibraryScoreId]);
 
   return (
     <main className={styles.appShell}>

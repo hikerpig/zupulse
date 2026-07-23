@@ -71,7 +71,7 @@ flowchart TD
 - [x] Task 2: 生成并验证 iPad Web 资源 manifest
 - [x] Task 3: 建立最小 SwiftUI/Xcode App Shell
 - [x] Task 4: 从 Zod 生成 transport-neutral Bridge contract
-- [ ] Task 5: 建立 Swift 严格 Bridge 解码与双端 fixtures
+- [x] Task 5: 建立 Swift 严格 Bridge 解码与双端 fixtures
 - [ ] Task 6: 打通 Web/Swift handshake 与启动错误
 - [ ] Task 7: 探测只读自定义 scheme 资源 origin
 - [ ] Task 8: 条件探测 `loadFileURL` 资源 origin

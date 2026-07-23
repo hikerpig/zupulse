@@ -10,6 +10,11 @@
 		A10000000000000000000002 /* app-shell-view.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* app-shell-view.swift */; };
 		A10000000000000000000003 /* web-view-container.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* web-view-container.swift */; };
 		A10000000000000000000004 /* app-shell-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* app-shell-tests.swift */; };
+		A10000000000000000000005 /* bridge-contract-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* bridge-contract-tests.swift */; };
+		A10000000000000000000006 /* ipad-bridge.json in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* ipad-bridge.json */; };
+		A10000000000000000000007 /* bridge-envelope.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* bridge-envelope.swift */; };
+		A10000000000000000000008 /* bridge-error.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* bridge-error.swift */; };
+		A10000000000000000000009 /* bridge-contract-validator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* bridge-contract-validator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -29,6 +34,11 @@
 		A20000000000000000000004 /* app-shell-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "app-shell-tests.swift"; sourceTree = "<group>"; };
 		A20000000000000000000005 /* Zupulse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zupulse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A20000000000000000000006 /* ZupulseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZupulseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000000000000000000007 /* bridge-contract-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "bridge-contract-tests.swift"; sourceTree = "<group>"; };
+		A20000000000000000000008 /* ipad-bridge.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "ipad-bridge.json"; path = "../../packages/web-core/src/bridge/__tests__/fixtures/ipad-bridge.json"; sourceTree = SOURCE_ROOT; };
+		A20000000000000000000009 /* bridge-envelope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "bridge-envelope.swift"; sourceTree = "<group>"; };
+		A2000000000000000000000A /* bridge-error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "bridge-error.swift"; sourceTree = "<group>"; };
+		A2000000000000000000000B /* bridge-contract-validator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "bridge-contract-validator.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -41,6 +51,7 @@
 			isa = PBXGroup;
 			children = (
 				A70000000000000000000002 /* app */,
+				A70000000000000000000006 /* bridge */,
 				A70000000000000000000003 /* webview */,
 				A70000000000000000000004 /* tests */,
 				A70000000000000000000005 /* Products */,
@@ -49,8 +60,9 @@
 		};
 		A70000000000000000000002 /* app */ = {isa = PBXGroup; children = (A20000000000000000000001, A20000000000000000000002); path = app; sourceTree = "<group>"; };
 		A70000000000000000000003 /* webview */ = {isa = PBXGroup; children = (A20000000000000000000003); path = webview; sourceTree = "<group>"; };
-		A70000000000000000000004 /* tests */ = {isa = PBXGroup; children = (A20000000000000000000004); path = tests; sourceTree = "<group>"; };
+		A70000000000000000000004 /* tests */ = {isa = PBXGroup; children = (A20000000000000000000004, A20000000000000000000007, A20000000000000000000008); path = tests; sourceTree = "<group>"; };
 		A70000000000000000000005 /* Products */ = {isa = PBXGroup; children = (A20000000000000000000005, A20000000000000000000006); name = Products; sourceTree = "<group>"; };
+		A70000000000000000000006 /* bridge */ = {isa = PBXGroup; children = (A20000000000000000000009, A2000000000000000000000A, A2000000000000000000000B); path = bridge; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -68,7 +80,7 @@
 		A50000000000000000000002 /* ZupulseTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A80000000000000000000003;
-			buildPhases = (A90000000000000000000003, A60000000000000000000002);
+			buildPhases = (A90000000000000000000003, A90000000000000000000004, A60000000000000000000002);
 			buildRules = ();
 			dependencies = (A30000000000000000000002);
 			name = ZupulseTests;
@@ -110,9 +122,13 @@
 		};
 /* End PBXShellScriptBuildPhase section */
 
+/* Begin PBXResourcesBuildPhase section */
+		A90000000000000000000004 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000006); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
-		A90000000000000000000001 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000001, A10000000000000000000002, A10000000000000000000003); runOnlyForDeploymentPostprocessing = 0; };
-		A90000000000000000000003 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000004); runOnlyForDeploymentPostprocessing = 0; };
+		A90000000000000000000001 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000001, A10000000000000000000002, A10000000000000000000003, A10000000000000000000007, A10000000000000000000008, A10000000000000000000009); runOnlyForDeploymentPostprocessing = 0; };
+		A90000000000000000000003 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000004, A10000000000000000000005); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */

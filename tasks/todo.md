@@ -1,6 +1,6 @@
 # iPad Practice Player Task List
 
-> Progress: Tasks 1–4 completed and verified through 2026-07-23.
+> Progress: Tasks 1–5 completed and verified through 2026-07-23.
 
 ## Task 1: 建立 iPad Web workspace
 
@@ -128,18 +128,20 @@ contract。
 
 ## Task 5: 建立 Swift 严格 Bridge 解码与双端 fixtures
 
+**Status:** Completed (2026-07-23)
+
 **Description:** 用 Swift 手写 envelope/handshake DTO 与严格字段校验，并让 Swift Test target 消费
 Task 4 的同一 fixture 集。此任务只解析和拒绝，不路由真实能力。
 
 **Acceptance criteria:**
 
-- [ ] Swift 与 Zod 对 fixtures 的 accept/reject 结果完全一致。
-- [ ] Swift 拒绝未知 key、未知版本、未知 type、重复/空 correlation ID 和越界 payload。
-- [ ] 解码错误转换为不含原始 payload 的结构化 Bridge error。
+- [x] Swift 与 Zod 对 fixtures 的 accept/reject 结果完全一致。
+- [x] Swift 拒绝未知 key、未知版本、未知 type、重复/空 correlation ID 和越界 payload。
+- [x] 解码错误转换为不含原始 payload 的结构化 Bridge error。
 
 **Verification:**
 
-- [ ] `pnpm ipad:test -- --only-testing ZupulseTests/BridgeContractTests`
+- [x] `pnpm ipad:test -- --only-testing ZupulseTests/BridgeContractTests`
 
 **Dependencies:** Task 3, Task 4
 

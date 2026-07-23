@@ -78,9 +78,10 @@ final class BridgeContractValidator {
             }
             return .lifecycleAck(LifecycleAckPayload(state: state))
         case "diagnostics.write":
-            try requireExactKeys(
+            try requireKeys(
                 payload,
                 allowed: ["code", "durationMs", "contentHashPrefix"],
+                required: ["code"],
                 context: type
             )
             let durationMs = try optionalNonnegativeNumber(payload["durationMs"], field: "durationMs")
@@ -91,9 +92,9 @@ final class BridgeContractValidator {
             )
             return .diagnosticsWrite(
                 DiagnosticsWritePayload(
-                    code: try requireIdentifier(payload["code"], field: "code"),
+                    code: try requireDiagnosticCode(payload["code"]),
                     durationMs: durationMs,
-                    contentHashPrefix: contentHashPrefix
+                    contentHashPrefix: try requireHashPrefix(contentHashPrefix)
                 )
             )
         default:
@@ -106,6 +107,44 @@ final class BridgeContractValidator {
         defer { correlationLock.unlock() }
         return correlationIds.insert(correlationId).inserted
     }
+}
+
+private func requireKeys(
+    _ object: [String: Any],
+    allowed: Set<String>,
+    required: Set<String>,
+    context: String
+) throws {
+    let keys = Set(object.keys)
+    guard keys.isSubset(of: allowed), required.isSubset(of: keys) else {
+        throw validationError("UNKNOWN_OR_MISSING_FIELD", "Bridge \(context) fields do not match the contract")
+    }
+}
+
+private func requireDiagnosticCode(_ value: Any?) throws -> String {
+    let code = try requireString(value, field: "code")
+    guard
+        code.range(
+            of: #"^[A-Z][A-Z0-9_]{0,63}$"#,
+            options: .regularExpression
+        ) != nil
+    else {
+        throw validationError("INVALID_FIELD", "Bridge diagnostic code is invalid")
+    }
+    return code
+}
+
+private func requireHashPrefix(_ value: String?) throws -> String? {
+    guard let value else { return nil }
+    guard
+        value.range(
+            of: #"^[a-f0-9]{8,16}$"#,
+            options: .regularExpression
+        ) != nil
+    else {
+        throw validationError("INVALID_FIELD", "Bridge contentHashPrefix is invalid")
+    }
+    return value
 }
 
 private func requireExactKeys(

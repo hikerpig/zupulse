@@ -767,14 +767,14 @@ code/duration/hash prefix，不上传自定义遥测。
 
 **Acceptance criteria:**
 
-- [ ] schema/Swift 双端拒绝 path、token、fileName、metadata、完整 hash、payload 和任意文本字段。
-- [ ] 日志有大小/数量上限，导出由用户手势触发，取消无副作用。
-- [ ] 首版无远程 endpoint、后台上传任务或遥测 entitlement。
+- [x] schema/Swift 双端拒绝 path、token、fileName、metadata、完整 hash、payload 和任意文本字段。
+- [x] 日志有大小/数量上限，导出由用户手势触发，取消无副作用。
+- [x] 首版无远程 endpoint、后台上传任务或遥测 entitlement。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-core/src/bridge/__tests__/schemas.test.ts`
-- [ ] `pnpm ipad:test -- --only-testing ZupulseTests/DiagnosticsTests`
+- [x] `pnpm vitest run packages/web-core/src/bridge/__tests__/schemas.test.ts`
+- [x] `pnpm ipad:test -- --only-testing ZupulseTests/DiagnosticsTests`
 
 **Dependencies:** Task 24
 
@@ -787,6 +787,13 @@ code/duration/hash prefix，不上传自定义遥测。
 - `packages/web-core/src/bridge/__tests__/schemas.test.ts`
 
 **Estimated scope:** M (5 files)
+
+**Completed 2026-07-24:** Zod 与 Swift validator 只接受稳定大写 code、非负 durationMs 和 8–16 位
+小写十六进制 hash prefix，并严格拒绝 path、token、fileName、metadata、payload、message、完整 hash
+及其他字段。Swift logger 以 JSONL 本地落盘，默认 64 KiB × 3 文件轮转；Bridge 与生命周期诊断共用
+同一 logger。原生“导出诊断”按钮仅在用户点击后创建只读导出文档，取消不修改日志。代码与 plist
+不存在远程 endpoint、后台上传任务或遥测 entitlement。最终门禁：`pnpm verify:fast`（118 个测试文件、
+452 项测试）与 `pnpm ipad:verify`（48 项 Swift、5 项 UI）均通过。
 
 ## Task 26: 完成统一 iPad 验证命令与 Simulator 验收记录
 

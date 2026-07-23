@@ -101,9 +101,12 @@ export const capabilitiesSchema = z
 
 export const diagnosticEventSchema = z
   .object({
-    code: idSchema,
+    code: z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/),
     durationMs: z.number().nonnegative().optional(),
-    contentHashPrefix: z.string().max(16).optional(),
+    contentHashPrefix: z
+      .string()
+      .regex(/^[a-f0-9]{8,16}$/)
+      .optional(),
   })
   .strict();
 

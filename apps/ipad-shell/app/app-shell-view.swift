@@ -11,7 +11,10 @@ final class UITestImportStage: ObservableObject {
 struct AppShellView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var suspendGeneration = 0
+    @State private var exportDocument: DiagnosticExportDocument?
+    @State private var isExportingDiagnostics = false
     let externalOpenQueue: ExternalOpenQueue
+    let diagnosticLogger: DiagnosticLogger
 
     private let webEntryURL = Bundle.main.url(
         forResource: "index",
@@ -25,7 +28,8 @@ struct AppShellView: View {
                 WebViewContainer(
                     entryURL: webEntryURL,
                     suspendGeneration: suspendGeneration,
-                    externalOpenQueue: externalOpenQueue
+                    externalOpenQueue: externalOpenQueue,
+                    diagnosticLogger: diagnosticLogger
                 )
                     .ignoresSafeArea()
             } else {
@@ -42,6 +46,20 @@ struct AppShellView: View {
                 UITestImportStageView()
             }
             #endif
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Button("导出诊断") {
+                        exportDocument = DiagnosticExportDocument(
+                            data: diagnosticLogger.exportData()
+                        )
+                        isExportingDiagnostics = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .padding()
+                }
+            }
         }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .inactive || phase == .background else { return }
@@ -54,6 +72,14 @@ struct AppShellView: View {
         }
         .onOpenURL { url in
             Task { await externalOpenQueue.enqueue(url) }
+        }
+        .fileExporter(
+            isPresented: $isExportingDiagnostics,
+            document: exportDocument,
+            contentType: .json,
+            defaultFilename: "zupulse-diagnostics"
+        ) { _ in
+            exportDocument = nil
         }
     }
 }

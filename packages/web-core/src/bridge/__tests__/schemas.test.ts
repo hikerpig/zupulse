@@ -42,6 +42,34 @@ describe("bridge schemas", () => {
     ).toThrow();
   });
 
+  it("allows only structured diagnostic fields without sensitive payloads", () => {
+    const valid = {
+      bridgeVersion: BRIDGE_SCHEMA_VERSION,
+      correlationId: "diagnostic-1",
+      type: "diagnostics.write",
+      payload: {
+        code: "IMPORT_COMPLETE",
+        durationMs: 12,
+        contentHashPrefix: "abcdef12",
+      },
+    };
+    expect(bridgeRequestSchema.parse(valid)).toEqual(valid);
+    for (const field of ["path", "token", "fileName", "metadata", "payload", "message"]) {
+      expect(() =>
+        bridgeRequestSchema.parse({
+          ...valid,
+          payload: { ...valid.payload, [field]: "secret" },
+        }),
+      ).toThrow();
+    }
+    expect(() =>
+      bridgeRequestSchema.parse({
+        ...valid,
+        payload: { ...valid.payload, contentHashPrefix: hash },
+      }),
+    ).toThrow();
+  });
+
   it("models temporary file access without platform mechanisms", () => {
     expect(
       capabilitiesSchema.parse({

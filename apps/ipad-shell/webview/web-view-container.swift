@@ -7,19 +7,29 @@ struct WebViewContainer: UIViewRepresentable {
     let entryURL: URL
     let suspendGeneration: Int
     let externalOpenQueue: ExternalOpenQueue
+    let diagnosticLogger: DiagnosticLogger
 
     init(
         entryURL: URL,
         suspendGeneration: Int = 0,
-        externalOpenQueue: ExternalOpenQueue = ExternalOpenQueue()
+        externalOpenQueue: ExternalOpenQueue = ExternalOpenQueue(),
+        diagnosticLogger: DiagnosticLogger = DiagnosticLogger(
+            directory: FileManager.default.temporaryDirectory
+                .appendingPathComponent("ZupulseDiagnostics", isDirectory: true)
+        )
     ) {
         self.entryURL = entryURL
         self.suspendGeneration = suspendGeneration
         self.externalOpenQueue = externalOpenQueue
+        self.diagnosticLogger = diagnosticLogger
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(entryURL: entryURL, externalOpenQueue: externalOpenQueue)
+        Coordinator(
+            entryURL: entryURL,
+            externalOpenQueue: externalOpenQueue,
+            diagnosticLogger: diagnosticLogger
+        )
     }
 
     func makeUIView(context: Context) -> WebViewHostView {
@@ -39,6 +49,7 @@ struct WebViewContainer: UIViewRepresentable {
     final class Coordinator: NSObject, WKNavigationDelegate {
         let hostView = WebViewHostView()
         private let entryURL: URL
+        private let diagnosticLogger: DiagnosticLogger
         let externalOpenQueue: ExternalOpenQueue
         private var runtime: WebViewRuntime
         private var pendingRuntimes: [ObjectIdentifier: WebViewRuntime] = [:]
@@ -57,7 +68,8 @@ struct WebViewContainer: UIViewRepresentable {
                 guard let self else { return WKWebView() }
                 let replacement = WebViewRuntime(
                     entryURL: self.entryURL,
-                    externalOpenQueue: self.externalOpenQueue
+                    externalOpenQueue: self.externalOpenQueue,
+                    diagnosticLogger: self.diagnosticLogger
                 )
                 replacement.webView.navigationDelegate = self
                 self.pendingRuntimes[ObjectIdentifier(replacement.webView)] = replacement
@@ -75,10 +87,22 @@ struct WebViewContainer: UIViewRepresentable {
             }
         )
 
-        init(entryURL: URL, externalOpenQueue: ExternalOpenQueue = ExternalOpenQueue()) {
+        init(
+            entryURL: URL,
+            externalOpenQueue: ExternalOpenQueue = ExternalOpenQueue(),
+            diagnosticLogger: DiagnosticLogger = DiagnosticLogger(
+                directory: FileManager.default.temporaryDirectory
+                    .appendingPathComponent("ZupulseDiagnostics", isDirectory: true)
+            )
+        ) {
             self.entryURL = entryURL
             self.externalOpenQueue = externalOpenQueue
-            runtime = WebViewRuntime(entryURL: entryURL, externalOpenQueue: externalOpenQueue)
+            self.diagnosticLogger = diagnosticLogger
+            runtime = WebViewRuntime(
+                entryURL: entryURL,
+                externalOpenQueue: externalOpenQueue,
+                diagnosticLogger: diagnosticLogger
+            )
             super.init()
             runtime.webView.navigationDelegate = self
             hostView.install(runtime.webView)
@@ -164,7 +188,11 @@ private final class WebViewRuntime {
     let lifecycleCoordinator: LifecycleCoordinator
     let requestedPaths = RequestedPathStore()
 
-    init(entryURL: URL, externalOpenQueue: ExternalOpenQueue) {
+    init(
+        entryURL: URL,
+        externalOpenQueue: ExternalOpenQueue,
+        diagnosticLogger: DiagnosticLogger
+    ) {
         let configuration = WKWebViewConfiguration()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
         #if DEBUG
@@ -281,6 +309,7 @@ private final class WebViewRuntime {
             },
             diagnose: { code in
                 logger.error("\(code, privacy: .public)")
+                diagnosticLogger.record(code: code)
             }
         )
         let systemFileSelector = DocumentPickerCoordinator {
@@ -300,7 +329,8 @@ private final class WebViewRuntime {
             router: try? BridgeRouter.load(
                 fileSelector: fileSelector,
                 fileTokens: fileTokens,
-                lifecycleCoordinator: lifecycleCoordinator
+                lifecycleCoordinator: lifecycleCoordinator,
+                diagnosticLogger: diagnosticLogger
             )
         )
         configuration.userContentController.addScriptMessageHandler(

@@ -71,9 +71,9 @@
         "payload": {
           "type": "object",
           "properties": {
-            "code": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,63}$" },
             "durationMs": { "type": "number", "minimum": 0 },
-            "contentHashPrefix": { "type": "string", "maxLength": 16 }
+            "contentHashPrefix": { "type": "string", "pattern": "^[a-f0-9]{8,16}$" }
           },
           "required": ["code"],
           "additionalProperties": false

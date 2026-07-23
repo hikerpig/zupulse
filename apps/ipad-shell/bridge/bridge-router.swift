@@ -9,26 +9,30 @@ final class BridgeRouter {
     private let fileSelector: DocumentPicking?
     private let fileTokens: FileTokenStore
     private let lifecycleCoordinator: LifecycleCoordinator?
+    private let diagnosticLogger: DiagnosticLogger?
 
     init(
         appVersion: String,
         rendererBuildHash: String,
         fileSelector: DocumentPicking? = nil,
         fileTokens: FileTokenStore = FileTokenStore(),
-        lifecycleCoordinator: LifecycleCoordinator? = nil
+        lifecycleCoordinator: LifecycleCoordinator? = nil,
+        diagnosticLogger: DiagnosticLogger? = nil
     ) {
         self.appVersion = appVersion
         self.rendererBuildHash = rendererBuildHash
         self.fileSelector = fileSelector
         self.fileTokens = fileTokens
         self.lifecycleCoordinator = lifecycleCoordinator
+        self.diagnosticLogger = diagnosticLogger
     }
 
     static func load(
         bundle: Bundle = .main,
         fileSelector: DocumentPicking? = nil,
         fileTokens: FileTokenStore = FileTokenStore(),
-        lifecycleCoordinator: LifecycleCoordinator? = nil
+        lifecycleCoordinator: LifecycleCoordinator? = nil,
+        diagnosticLogger: DiagnosticLogger? = nil
     ) throws -> BridgeRouter {
         guard
             let appVersion = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
@@ -61,7 +65,8 @@ final class BridgeRouter {
             rendererBuildHash: buildHash,
             fileSelector: fileSelector,
             fileTokens: fileTokens,
-            lifecycleCoordinator: lifecycleCoordinator
+            lifecycleCoordinator: lifecycleCoordinator,
+            diagnosticLogger: diagnosticLogger
         )
     }
 
@@ -187,6 +192,14 @@ final class BridgeRouter {
     }
 
     private func route(_ envelope: BridgeEnvelope) -> Result<[String: Any], BridgeValidationError> {
+        if case let .diagnosticsWrite(payload) = envelope.payload {
+            diagnosticLogger?.record(
+                code: payload.code,
+                durationMs: payload.durationMs,
+                contentHashPrefix: payload.contentHashPrefix
+            )
+            return .success(responseEnvelope(envelope, payload: [:]))
+        }
         if case let .lifecycleAck(payload) = envelope.payload {
             guard let state = LifecycleState(rawValue: payload.state) else {
                 return .failure(

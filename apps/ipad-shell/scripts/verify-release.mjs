@@ -75,7 +75,7 @@ function assertReleaseBuildSettings(project) {
 }
 
 async function assertDebugFlagsAreGuarded(root) {
-  const sourceDirectories = ["app", "audio", "bridge", "files", "webview"];
+  const sourceDirectories = ["app", "audio", "bridge", "diagnostics", "files", "webview"];
   const paths = (await Promise.all(sourceDirectories.map((directory) => listSwiftFiles(join(root, directory))))).flat();
   for (const path of paths) {
     const lines = (await readFile(path, "utf8")).split(/\r?\n/);

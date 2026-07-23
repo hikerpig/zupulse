@@ -434,13 +434,13 @@ iPad Gateway 和 GP/MusicXML adapters，并挂载同一个 `mountViewerApp`。
 
 **Acceptance criteria:**
 
-- [ ] audio session 只在需要播放时激活，允许其他音频继续且不 duck。
-- [ ] interruption begin、耳机断开和不可用 route 都产生 pause intent。
-- [ ] interruption end/foreground 不产生 play intent；未添加 background audio entitlement。
+- [x] audio session 只在需要播放时激活，允许其他音频继续且不 duck。
+- [x] interruption begin、耳机断开和不可用 route 都产生 pause intent。
+- [x] interruption end/foreground 不产生 play intent；未添加 background audio entitlement。
 
 **Verification:**
 
-- [ ] `pnpm ipad:test -- --only-testing ZupulseTests/AudioSessionTests`
+- [x] `pnpm ipad:test -- --only-testing ZupulseTests/AudioSessionTests`
 
 **Dependencies:** Checkpoint B
 

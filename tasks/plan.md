@@ -130,7 +130,7 @@ flowchart TD
 ### Phase 5: Complete MVP Host Surfaces
 
 - [x] Task 22: 接入系统“用 Zupulse 打开”待处理队列
-- [ ] Task 23: 完成多选与部分成功导入汇总
+- [x] Task 23: 完成多选与部分成功导入汇总
 - [ ] Task 24: 落实网络 allowlist、顶层导航与 Release 代码边界
 - [ ] Task 25: 实现本地最小诊断与主动导出
 

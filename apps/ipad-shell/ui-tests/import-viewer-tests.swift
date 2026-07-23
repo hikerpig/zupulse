@@ -150,3 +150,34 @@ final class ImportViewerTests: XCTestCase {
         "IPAD_IMPORT_SMOKE_STAGE:\(value)"
     }
 }
+
+final class BatchImportTests: XCTestCase {
+    override func setUp() {
+        continueAfterFailure = false
+    }
+
+    func testReportsCreatedExistingAndFailedItemsWhileStayingInLibrary() {
+        let app = XCUIApplication()
+        app.launchEnvironment = [
+            "ZUPULSE_UI_TEST_FIXTURES":
+                "single-voice.musicxml,single-voice.musicxml,broken.mxl",
+            "ZUPULSE_UI_TEST_EPHEMERAL_STORAGE": "1",
+            "ZUPULSE_UI_TEST_START_LIBRARY": "1",
+        ]
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["导入完成"].waitForExistence(timeout: 60))
+        let summary = app.otherElements
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "导入汇总："))
+            .firstMatch
+        XCTAssertTrue(summary.exists)
+        XCTAssertTrue(summary.label.contains("新增 1，已存在 1，失败 1，未开始 0"))
+        XCTAssertTrue(staticText(containing: "broken.mxl", in: app).exists)
+        XCTAssertTrue(staticText(containing: "failed · INVALID_SCORE", in: app).exists)
+        XCTAssertTrue(app.buttons["批量导入"].exists)
+    }
+
+    private func staticText(containing value: String, in app: XCUIApplication) -> XCUIElement {
+        app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", value)).firstMatch
+    }
+}

@@ -695,15 +695,15 @@ TS 覆盖 listener-before-ready、顺序、去重、token 读取和直接 Librar
 
 **Acceptance criteria:**
 
-- [ ] 一份损坏不回滚其他成功项；未开始项可取消，已成功项保留。
-- [ ] 汇总精确区分 created/existing/failed，并给出结构化、可展开原因。
-- [ ] 批量不同时保留多个 alphaTab Score/大字节副本，不产生明显并发内存峰值。
+- [x] 一份损坏不回滚其他成功项；未开始项可取消，已成功项保留。
+- [x] 汇总精确区分 created/existing/failed，并给出结构化、可展开原因。
+- [x] 批量不同时保留多个 alphaTab Score/大字节副本，不产生明显并发内存峰值。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-core/src/library/__tests__/importLibraryScores.test.ts`
-- [ ] `pnpm vitest run packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`
-- [ ] `pnpm ipad:test -- --only-testing ZupulseUITests/BatchImportTests`
+- [x] `pnpm vitest run packages/web-core/src/library/__tests__/importLibraryScores.test.ts`
+- [x] `pnpm vitest run packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`
+- [x] `pnpm ipad:test -- --only-testing ZupulseUITests/BatchImportTests`
 
 **Dependencies:** Task 22
 
@@ -716,6 +716,12 @@ TS 覆盖 listener-before-ready、顺序、去重、token 读取和直接 Librar
 - `packages/web-viewer/src/features/SheetLibrary.module.css`
 
 **Estimated scope:** M (5 files)
+
+**Completed 2026-07-24:** 馆藏导入改为严格顺序执行，在每份文件开始前检查取消信号，已经完成的
+created/existing/failed 结果会保留，未开始项计入 cancelled。Library 会渐进展示精确汇总，并以可展开
+列表呈现文件名、结果和稳定错误码；批量导入始终留在 Library，单文件成功仍自动进入 Viewer。Simulator
+使用隔离存储和 created/existing/failed 三种确定性 fixture 覆盖端到端路径。最终门禁：
+`pnpm verify:fast`（117 个测试文件、450 项测试）与 `pnpm ipad:verify`（42 项 Swift、5 项 UI）均通过。
 
 ## Task 24: 落实网络 allowlist、顶层导航与 Release 代码边界
 

@@ -175,7 +175,12 @@ private final class WebViewRuntime {
                 )
             )
         }
-        if environment["ZUPULSE_UI_TEST_FIXTURE"] != nil {
+        if environment["ZUPULSE_UI_TEST_FIXTURE"] != nil ||
+            environment["ZUPULSE_UI_TEST_FIXTURES"] != nil
+        {
+            let importButtonTitle = environment["ZUPULSE_UI_TEST_FIXTURES"] == nil
+                ? "导入曲谱"
+                : "批量导入"
             configuration.userContentController.addUserScript(
                 WKUserScript(
                     source: """
@@ -185,7 +190,7 @@ private final class WebViewRuntime {
                         const button = buttons.find(
                           (candidate) =>
                             !candidate.disabled &&
-                            ["导入第一份曲谱", "导入曲谱"].includes(candidate.textContent?.trim() ?? "")
+                            candidate.textContent?.trim() === "\(importButtonTitle)"
                         );
                         if (!button) return;
                         clearInterval(timer);

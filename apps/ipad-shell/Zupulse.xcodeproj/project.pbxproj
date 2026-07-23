@@ -29,6 +29,7 @@
 		C10000000000000000000002 /* desktop-acceptance.gp in Resources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000003 /* desktop-acceptance.gp */; };
 		C10000000000000000000003 /* single-voice.musicxml in Resources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000004 /* single-voice.musicxml */; };
 		C10000000000000000000004 /* viewer-recovery-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000005 /* viewer-recovery-tests.swift */; };
+		C10000000000000000000005 /* broken.mxl in Resources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000006 /* broken.mxl */; };
 		D10000000000000000000002 /* audio-session-controller-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000002 /* audio-session-controller-tests.swift */; };
 		D10000000000000000000001 /* audio-session-controller.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000001 /* audio-session-controller.swift */; };
 		D10000000000000000000004 /* lifecycle-coordinator-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000004 /* lifecycle-coordinator-tests.swift */; };
@@ -83,6 +84,7 @@
 		C20000000000000000000003 /* desktop-acceptance.gp */ = {isa = PBXFileReference; lastKnownFileType = file; name = "desktop-acceptance.gp"; path = "../../test-fixtures/gp/generated/desktop-acceptance.gp"; sourceTree = SOURCE_ROOT; };
 		C20000000000000000000004 /* single-voice.musicxml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = "single-voice.musicxml"; path = "../../test-fixtures/musicxml/generated/single-voice.musicxml"; sourceTree = SOURCE_ROOT; };
 		C20000000000000000000005 /* viewer-recovery-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "viewer-recovery-tests.swift"; sourceTree = "<group>"; };
+		C20000000000000000000006 /* broken.mxl */ = {isa = PBXFileReference; lastKnownFileType = file; name = "broken.mxl"; path = "../../test-fixtures/musicxml/generated/broken.mxl"; sourceTree = SOURCE_ROOT; };
 		D20000000000000000000002 /* audio-session-controller-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "audio-session-controller-tests.swift"; sourceTree = "<group>"; };
 		D20000000000000000000001 /* audio-session-controller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "audio-session-controller.swift"; sourceTree = "<group>"; };
 		D20000000000000000000004 /* lifecycle-coordinator-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "lifecycle-coordinator-tests.swift"; sourceTree = "<group>"; };
@@ -121,7 +123,7 @@
 		A70000000000000000000005 /* Products */ = {isa = PBXGroup; children = (A20000000000000000000005, A20000000000000000000006, C20000000000000000000002); name = Products; sourceTree = "<group>"; };
 		A70000000000000000000006 /* bridge */ = {isa = PBXGroup; children = (A20000000000000000000009, A2000000000000000000000A, A2000000000000000000000B, A2000000000000000000000D); path = bridge; sourceTree = "<group>"; };
 		A70000000000000000000007 /* files */ = {isa = PBXGroup; children = (A20000000000000000000010, A20000000000000000000011, A20000000000000000000014, E20000000000000000000001); path = files; sourceTree = "<group>"; };
-		C70000000000000000000001 /* ui-tests */ = {isa = PBXGroup; children = (C20000000000000000000001, C20000000000000000000005, C20000000000000000000003, C20000000000000000000004); path = "ui-tests"; sourceTree = "<group>"; };
+		C70000000000000000000001 /* ui-tests */ = {isa = PBXGroup; children = (C20000000000000000000001, C20000000000000000000005, C20000000000000000000003, C20000000000000000000004, C20000000000000000000006); path = "ui-tests"; sourceTree = "<group>"; };
 		D70000000000000000000001 /* audio */ = {isa = PBXGroup; children = (D20000000000000000000001); path = audio; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
@@ -194,7 +196,7 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXResourcesBuildPhase section */
-		C90000000000000000000003 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (C10000000000000000000002, C10000000000000000000003); runOnlyForDeploymentPostprocessing = 0; };
+		C90000000000000000000003 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (C10000000000000000000002, C10000000000000000000003, C10000000000000000000005); runOnlyForDeploymentPostprocessing = 0; };
 		A90000000000000000000004 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000006); runOnlyForDeploymentPostprocessing = 0; };
 		C90000000000000000000002 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */

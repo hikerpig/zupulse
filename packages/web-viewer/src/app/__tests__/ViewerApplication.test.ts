@@ -255,6 +255,22 @@ describe("ViewerApplication", () => {
 
     expect(navigate).toHaveBeenCalledWith(expect.stringMatching(/^[0-9a-f-]{36}$/));
     expect(application.getSnapshot().currentLibraryScoreId).toBeUndefined();
+
+    await application.importScoreSources(
+      [
+        { fileName: "batch.musicxml", readBytes: async () => bytes },
+        { fileName: "broken.txt", readBytes: async () => bytes },
+      ],
+      true,
+    );
+
+    expect(application.getSnapshot().library?.importSummary).toMatchObject({
+      total: 2,
+      cancelled: 0,
+      running: false,
+      results: [{ status: "created" }, { status: "failed", fileName: "broken.txt" }],
+    });
+    expect(navigate).toHaveBeenCalledTimes(1);
     unsubscribe();
     await application.destroy();
   });

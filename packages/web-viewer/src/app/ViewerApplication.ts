@@ -22,6 +22,7 @@ import type {
   ScoreFormatAdapter,
   SheetLibraryRepository,
   LibraryScoreSummary,
+  ImportItemResult,
   PreviewTransportState,
   ScoreImportSource,
 } from "@zupulse/web-core";
@@ -47,6 +48,12 @@ export type ViewerApplicationSnapshot = {
     loading: boolean;
     error?: ApplicationIssue;
     importing?: boolean;
+    importSummary?: {
+      total: number;
+      results: readonly ImportItemResult[];
+      cancelled: number;
+      running: boolean;
+    };
   };
   studio?: {
     libraryScoreId: string;
@@ -83,6 +90,7 @@ export class ViewerApplication implements ViewerAppHandle {
   private readonly studioAvailableTrackIds = new Map<string, string[]>();
   private readonly studioSources = new Map<string, { rootXml: string; partIds: readonly string[] }>();
   private destroying = false;
+  private importAbortController: AbortController | undefined;
   private snapshot: ViewerApplicationSnapshot = {};
   private readonly listeners = new Set<() => void>();
   private readonly navigationListeners = new Set<(libraryScoreId: string) => void>();
@@ -569,20 +577,37 @@ export class ViewerApplication implements ViewerAppHandle {
   }
 
   async importScoreSources(sources: readonly ScoreImportSource[], multiple: boolean): Promise<void> {
-    if (!this.library || !sources.length) return;
+    if (!this.library || !sources.length || this.importAbortController) return;
+    const controller = new AbortController();
+    this.importAbortController = controller;
     this.setSnapshot({
       ...this.snapshot,
-      library: { scores: this.snapshot.library?.scores ?? [], loading: false, importing: true },
+      library: {
+        scores: this.snapshot.library?.scores ?? [],
+        loading: false,
+        importing: true,
+        importSummary: { total: sources.length, results: [], cancelled: 0, running: true },
+      },
     });
+    const completed: ImportItemResult[] = [];
     const results = await importLibraryScores({
       sources,
       repository: this.library.repository,
       adapters: this.library.adapters,
+      signal: controller.signal,
+      onResult: (result) => {
+        completed.push(result);
+        this.setImportSummary(sources.length, completed, false, true);
+      },
+    }).finally(() => {
+      if (this.importAbortController === controller) this.importAbortController = undefined;
     });
     await this.refreshLibrary();
+    this.setImportSummary(sources.length, results, controller.signal.aborted, false);
     const successful = results.some((item) => item.status === "created" || item.status === "existing");
     if (!successful) {
       const failure = results.find((item) => item.status === "failed");
+      if (multiple || controller.signal.aborted) return;
       this.setSnapshot({
         ...this.snapshot,
         library: {
@@ -598,6 +623,39 @@ export class ViewerApplication implements ViewerAppHandle {
       if (result && result.status !== "failed")
         for (const listener of this.navigationListeners) listener(result.score.id);
     }
+  }
+
+  cancelImport(): void {
+    this.importAbortController?.abort();
+  }
+
+  dismissImportSummary(): void {
+    const library = this.snapshot.library;
+    if (!library?.importSummary || library.importSummary.running) return;
+    const { importSummary: _importSummary, ...nextLibrary } = library;
+    this.setSnapshot({ ...this.snapshot, library: nextLibrary });
+  }
+
+  private setImportSummary(
+    total: number,
+    results: readonly ImportItemResult[],
+    cancelled: boolean,
+    running: boolean,
+  ): void {
+    this.setSnapshot({
+      ...this.snapshot,
+      library: {
+        scores: this.snapshot.library?.scores ?? [],
+        loading: false,
+        importing: running,
+        importSummary: {
+          total,
+          results: [...results],
+          cancelled: cancelled ? Math.max(0, total - results.length) : 0,
+          running,
+        },
+      },
+    });
   }
 
   openLibraryScore(id: string): Promise<void> {
@@ -694,6 +752,7 @@ export class ViewerApplication implements ViewerAppHandle {
 
   destroy(): Promise<void> {
     this.destroying = true;
+    this.importAbortController?.abort();
     this.destroyPromise ??= this.destroyOnce();
     return this.destroyPromise;
   }

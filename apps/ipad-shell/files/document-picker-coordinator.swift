@@ -10,21 +10,25 @@ protocol DocumentPicking: Sendable {
 #if DEBUG
 struct BundledFixtureDocumentPicker: DocumentPicking {
     let bundle: Bundle
-    let resourceName: String
+    let resourceNames: [String]
 
     @MainActor
     func select(multiple: Bool) async throws -> [URL]? {
         UITestImportStage.shared.value = "SELECTED"
-        guard
-            let separator = resourceName.lastIndex(of: "."),
-            let url = bundle.url(
-                forResource: String(resourceName[..<separator]),
-                withExtension: String(resourceName[resourceName.index(after: separator)...])
-            )
-        else {
-            throw documentPickerError("UI_TEST_FIXTURE_UNAVAILABLE")
+        var urls: [URL] = []
+        for resourceName in resourceNames {
+            guard
+                let separator = resourceName.lastIndex(of: "."),
+                let url = bundle.url(
+                    forResource: String(resourceName[..<separator]),
+                    withExtension: String(resourceName[resourceName.index(after: separator)...])
+                )
+            else {
+                throw documentPickerError("UI_TEST_FIXTURE_UNAVAILABLE")
+            }
+            urls.append(url)
         }
-        return [url]
+        return multiple ? urls : Array(urls.prefix(1))
     }
 }
 
@@ -32,13 +36,21 @@ func bundledFixtureDocumentPicker(
     bundle: Bundle = .main,
     environment: [String: String] = ProcessInfo.processInfo.environment
 ) -> (any DocumentPicking)? {
-    guard let resourceName = environment["ZUPULSE_UI_TEST_FIXTURE"] else {
+    let resourceNames: [String]
+    if let resources = environment["ZUPULSE_UI_TEST_FIXTURES"] {
+        resourceNames = resources.split(separator: ",").map(String.init)
+    } else if let resource = environment["ZUPULSE_UI_TEST_FIXTURE"] {
+        resourceNames = [resource]
+    } else {
         return nil
     }
-    guard !resourceName.contains("/"), !resourceName.contains("\\") else {
+    guard
+        !resourceNames.isEmpty,
+        resourceNames.allSatisfy({ !$0.contains("/") && !$0.contains("\\") })
+    else {
         return nil
     }
-    return BundledFixtureDocumentPicker(bundle: bundle, resourceName: resourceName)
+    return BundledFixtureDocumentPicker(bundle: bundle, resourceNames: resourceNames)
 }
 #endif
 

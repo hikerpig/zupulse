@@ -17,6 +17,25 @@ final class DocumentPickerRouteTests: XCTestCase {
         XCTAssertEqual(urls?.first?.lastPathComponent, "desktop-acceptance.gp")
     }
 
+    @MainActor
+    func testBundledFixturePickerSupportsExplicitMultipleResources() async throws {
+        let picker = try XCTUnwrap(
+            bundledFixtureDocumentPicker(
+                bundle: .main,
+                environment: [
+                    "ZUPULSE_UI_TEST_FIXTURES": "single-voice.musicxml,desktop-acceptance.gp"
+                ]
+            )
+        )
+
+        let urls = try await picker.select(multiple: true)
+
+        XCTAssertEqual(
+            urls?.map(\.lastPathComponent),
+            ["single-voice.musicxml", "desktop-acceptance.gp"]
+        )
+    }
+
     func testCancellationReturnsNoFilesAndIssuesNoToken() async throws {
         let tokens = FileTokenStore()
         let router = BridgeRouter(

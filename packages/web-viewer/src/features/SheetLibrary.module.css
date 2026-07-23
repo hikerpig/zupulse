@@ -116,6 +116,74 @@
     color: var(--text-secondary);
   }
 
+  .importSummary {
+    width: min(1180px, calc(100% - 48px));
+    margin: 16px auto 0;
+    padding: 14px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--bg-panel);
+    box-shadow: var(--shadow-soft);
+  }
+  .importSummaryHeader,
+  .importSummaryHeader > div,
+  .importSummaryCounts {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .importSummaryHeader {
+    justify-content: space-between;
+  }
+  .importSummaryHeader > div {
+    align-items: baseline;
+  }
+  .importSummaryHeader span,
+  .importSummaryCounts {
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+  .importSummaryHeader button {
+    min-height: 36px;
+  }
+  .importSummaryCounts {
+    flex-wrap: wrap;
+    margin-top: 10px;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .importSummaryCounts span {
+    padding: 3px 7px;
+    border: 1px solid var(--border-default);
+    border-radius: 999px;
+    background: var(--bg-control);
+  }
+  .importSummaryDetails {
+    margin-top: 12px;
+    border-top: 1px solid var(--border-default);
+    padding-top: 10px;
+  }
+  .importSummaryDetails summary {
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+  .importSummaryDetails ul {
+    display: grid;
+    gap: 6px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .importSummaryDetails li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+  }
+  .importSummaryDetails code {
+    color: var(--text-secondary);
+  }
+
   /* ── Score Grid ───────────────────────────────────────── */
   .libraryList {
     width: min(1180px, calc(100% - 48px));

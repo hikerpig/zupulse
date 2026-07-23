@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Download, PenLine, Star, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { LibraryScoreSummary } from "@zupulse/web-core";
+import type { ImportItemResult, LibraryScoreSummary } from "@zupulse/web-core";
 import type { ViewerApplication } from "../app/ViewerApplication";
 import pageStyles from "../app/pages/PageShell.module.css";
 import styles from "./SheetLibrary.module.css";
@@ -31,6 +31,8 @@ export function SheetLibrary({
   scores,
   loading,
   error,
+  importing,
+  importSummary,
   onImport,
   onOpen,
 }: {
@@ -38,6 +40,13 @@ export function SheetLibrary({
   scores: readonly LibraryScoreSummary[];
   loading: boolean;
   error?: string;
+  importing?: boolean;
+  importSummary?: {
+    total: number;
+    results: readonly ImportItemResult[];
+    cancelled: number;
+    running: boolean;
+  };
   onImport(multiple: boolean): Promise<void>;
   onOpen(id: string): void;
 }) {
@@ -95,10 +104,10 @@ export function SheetLibrary({
           <p className={pageStyles.contextSubtitle}>{t("subtitle")}</p>
         </div>
         <div className={pageStyles.contextActions}>
-          <button className="primary-button" disabled={loading} onClick={() => void onImport(false)}>
+          <button className="primary-button" disabled={loading || importing} onClick={() => void onImport(false)}>
             {t("import")}
           </button>
-          <button className="secondary-button" disabled={loading} onClick={() => void onImport(true)}>
+          <button className="secondary-button" disabled={loading || importing} onClick={() => void onImport(true)}>
             {t("importMany")}
           </button>
         </div>
@@ -130,6 +139,13 @@ export function SheetLibrary({
           </select>
         </div>
       </section>
+      {importSummary ? (
+        <ImportSummary
+          summary={importSummary}
+          onCancel={() => application.cancelImport()}
+          onDismiss={() => application.dismissImportSummary()}
+        />
+      ) : null}
       {loading ? (
         <p role="status" style={{ padding: "24px 24px", color: "var(--text-secondary)" }}>
           {t("loading")}
@@ -307,4 +323,71 @@ export function SheetLibrary({
       )}
     </main>
   );
+}
+
+function ImportSummary({
+  summary,
+  onCancel,
+  onDismiss,
+}: {
+  summary: {
+    total: number;
+    results: readonly ImportItemResult[];
+    cancelled: number;
+    running: boolean;
+  };
+  onCancel(): void;
+  onDismiss(): void;
+}) {
+  const created = summary.results.filter((item) => item.status === "created");
+  const existing = summary.results.filter((item) => item.status === "existing");
+  const failed = summary.results.filter((item) => item.status === "failed");
+  return (
+    <section
+      className={styles.importSummary}
+      aria-label={`导入汇总：新增 ${created.length}，已存在 ${existing.length}，失败 ${failed.length}，未开始 ${summary.cancelled}`}
+      aria-live="polite"
+    >
+      <div className={styles.importSummaryHeader}>
+        <div>
+          <strong>{summary.running ? "正在导入曲谱" : "导入完成"}</strong>
+          <span>
+            已处理 {summary.results.length} / {summary.total}
+          </span>
+        </div>
+        <button type="button" onClick={summary.running ? onCancel : onDismiss}>
+          {summary.running ? "取消未开始项" : "关闭"}
+        </button>
+      </div>
+      <div className={styles.importSummaryCounts}>
+        <span>新增 {created.length}</span>
+        <span>已存在 {existing.length}</span>
+        <span>失败 {failed.length}</span>
+        {summary.cancelled > 0 ? <span>未开始 {summary.cancelled}</span> : null}
+      </div>
+      {summary.results.length ? (
+        <details className={styles.importSummaryDetails} open={failed.length > 0}>
+          <summary>查看逐项结果</summary>
+          <ul>
+            {summary.results.map((item, index) => (
+              <li key={`${importResultFileName(item)}-${index}`}>
+                <span>{importResultFileName(item)}</span>
+                <code>{importResultLabel(item)}</code>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+    </section>
+  );
+}
+
+function importResultFileName(result: ImportItemResult): string {
+  return result.status === "failed" ? result.fileName : result.score.fileName;
+}
+
+function importResultLabel(result: ImportItemResult): string {
+  if (result.status === "failed") return `failed · ${result.error.code}`;
+  if (result.status === "created") return "created";
+  return "existing";
 }

@@ -1,6 +1,6 @@
 # iPad Practice Player Task List
 
-> Progress: Tasks 1–7 and 9–10 completed and verified through 2026-07-24. Task 8 was not required
+> Progress: Tasks 1–7 and 9–11 completed and verified through 2026-07-24. Task 8 was not required
 > because the Task 7 custom-scheme gate passed.
 
 ## Task 1: 建立 iPad Web workspace
@@ -311,19 +311,21 @@ re-export 或删除；用户行为和 E2E 不变。
 
 ## Task 11: 实现 Swift 一次性文件 token 与二进制 scheme
 
+**Status:** Completed (2026-07-24)
+
 **Description:** 实现与 RPC 控制面分离的 token store 和受限数据 handler。token 只映射原生选择的
 单个普通文件，成功读取即消费；不把路径写入 Web、URL、日志或错误。
 
 **Acceptance criteria:**
 
-- [ ] 64 MiB 上限、TTL、单次消费、clear-on-shell-destroy 和并发竞态均有测试。
-- [ ] handler 只接受正确 host/path/token，拒绝枚举、路径片段、query 注入和重复读取。
-- [ ] response 使用正确 MIME/length，取消读取会释放 security-scoped access。
+- [x] 64 MiB 上限、TTL、单次消费、clear-on-shell-destroy 和并发竞态均有测试。
+- [x] handler 只接受正确 host/path/token，拒绝枚举、路径片段、query 注入和重复读取。
+- [x] response 使用正确 MIME/length，取消读取会释放 security-scoped access。
 
 **Verification:**
 
-- [ ] `pnpm ipad:test -- --only-testing ZupulseTests/FileTokenTests`
-- [ ] `pnpm ipad:test -- --only-testing ZupulseTests/BinarySchemeTests`
+- [x] `pnpm ipad:test -- --only-testing ZupulseTests/FileTokenTests`
+- [x] `pnpm ipad:test -- --only-testing ZupulseTests/BinarySchemeTests`
 
 **Dependencies:** Task 5, provisional origin from Task 7/8
 

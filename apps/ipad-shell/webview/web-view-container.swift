@@ -17,6 +17,7 @@ struct WebViewContainer: UIViewRepresentable {
     final class Coordinator {
         let webView: WKWebView
         let resourceHandler: AppResourceSchemeHandler
+        let fileTokens: FileTokenStore
         private(set) var requestedResourcePaths: [String] = []
 
         init(entryURL: URL) {
@@ -25,9 +26,14 @@ struct WebViewContainer: UIViewRepresentable {
             resourceHandler = AppResourceSchemeHandler(
                 rootURL: entryURL.deletingLastPathComponent()
             )
+            fileTokens = FileTokenStore()
             configuration.setURLSchemeHandler(
                 resourceHandler,
                 forURLScheme: AppResourceSchemeHandler.scheme
+            )
+            configuration.setURLSchemeHandler(
+                BinaryDataSchemeHandler(service: BinaryDataService(store: fileTokens)),
+                forURLScheme: BinaryDataSchemeHandler.scheme
             )
             let messageHandler = BridgeMessageHandler(router: try? BridgeRouter.load())
             configuration.userContentController.addScriptMessageHandler(
@@ -41,6 +47,11 @@ struct WebViewContainer: UIViewRepresentable {
                 self?.requestedResourcePaths.append(path)
             }
             webView.load(URLRequest(url: AppResourceSchemeHandler.entryURL))
+        }
+
+        deinit {
+            let tokens = fileTokens
+            Task { await tokens.clear() }
         }
     }
 }

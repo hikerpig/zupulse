@@ -79,7 +79,7 @@ pnpm -s harmony:cli eval test-fixtures/harmony/datasets/manifest.json \
 
 `data-root` 下必须同时存在 manifest 声明的 archive 和解压目录。CLI 先校验 archive SHA-256，再运行 adapter。DCML 报告包含作品级 split、mapping/unsupported、Top-1/Top-8、resolved precision/coverage、boundary F1、ECE、facets、chord-family slices 和最多 50 条错误定位。当前固定 Mozart 数据为 v2.3；K331 整首奏鸣曲强制属于 eval。可用 `--case <id>` 只运行一个 corpus。
 
-dataset manifest 当前为 `2.0.0`，生成的 eval report 为 `2.6.0`。accuracy case 的 `reportSplit` 明确本次指标来自 train、tune 还是 eval；省略 `--split` 时固定为 eval，baseline compare 会拒绝非 eval report。`--decision-threshold 0..1` 可生成校准所需的未拒识报告，默认仍为 `0.6`，实际值记录在 accuracy case。report 的 `diagnostics` 提供全量错误簇、family outcome、confidence bins、post-decision precision/coverage curve，以及按联合区间计算的 duration overlap 与容差 boundary 指标；`top1Accuracy` 表示 alternatives 第一名，`predictedPrimaryAccuracy` 表示 threshold 前的最终 primary，`segmentDensity` 表示输出切分密度。`errors` 只保存每类有限的定位样本，不用于统计簇大小。
+dataset manifest 当前为 `2.0.0`，生成的 eval report 为 `2.7.0`。accuracy case 的 `reportSplit` 明确本次指标来自 train、tune 还是 eval；省略 `--split` 时固定为 eval，baseline compare 会拒绝非 eval report。`--decision-threshold 0..1` 可生成校准所需的未拒识报告，默认仍为 `0.6`，实际值记录在 accuracy case。report 的 `diagnostics` 提供全量错误簇、family outcome、confidence bins、post-decision precision/coverage curve，以及按联合区间计算的 duration overlap 与容差 boundary 指标；`top1Accuracy` 表示 alternatives 第一名，`predictedPrimaryAccuracy` 表示 threshold 前的最终 primary，`segmentDensity` 表示输出切分密度。`errors` 只保存每类有限的定位样本，不用于统计簇大小。
 
 Primary reranker 的训练 records 使用预登记 v3 协议导出：
 
@@ -116,6 +116,24 @@ pnpm -s harmony:reranker evaluate /tmp/harmony-linear.json \
 模型是带来源 hash 的两位小数 JSON 权重；PyTorch 不参与这一基线，也不进入产品运行时。
 
 ranking report `1.1.0` 显式记录 `split` 和 `groupsSha256`。训练器可只读迁移早期 train-only `1.0.0` report 的 `trainingGroupsSha256`，但所有新导出都写 `1.1.0`。
+
+Boundary evidence 使用独立 records 和线性训练器。特征只读取 meter 与 notes；gold 只生成 train/tune 标签。`learned-evidence` 是显式 opt-in，必须同时提供模型文件：
+
+```bash
+pnpm -s harmony:cli boundary-records test-fixtures/harmony/datasets/manifest.json \
+  --protocol test-fixtures/harmony/datasets/protocol-v3.json \
+  --data-root /path/to/harmony-data --case dcml-mozart-v2.3 \
+  --split train --output /tmp/mozart-boundary-train.json
+
+pnpm -s harmony:boundary train /tmp/boundary-raw.json /tmp/mozart-boundary-train.json
+pnpm -s harmony:boundary tune /tmp/boundary.json /tmp/boundary-raw.json /tmp/mozart-boundary-tune.json
+
+pnpm -s harmony:cli eval test-fixtures/harmony/datasets/manifest.json \
+  --data-root /path/to/harmony-data --case dcml-mozart-v2.3 --split tune \
+  --boundary-policy learned-evidence --boundary-model /tmp/boundary.json
+```
+
+线性资产只有 5 个两位小数权重与一个阈值，产品推理是确定性 TypeScript，不依赖 Python 或 PyTorch。小节线与 musical beats 固定保留，模型只筛选其余 note-event 边界。
 
 仅当 Checkpoint D 触发时，可用本地 PyTorch 离线训练最多两层的 MLP；`--tune-report` 会用量化后的权重重新评测：
 

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { HarmonyBoundaryPolicy } from "@zupulse/web-core";
+import type { HarmonyBoundaryClassifierModel, HarmonyBoundaryPolicy } from "@zupulse/web-core";
 import { readFile } from "node:fs/promises";
 import { resolve, sep } from "node:path";
 import { evaluateDcmlCorpus } from "./adapters/dcmlEvaluation";
@@ -15,6 +15,7 @@ export async function evaluateHarmonyDatasetManifest(
   reportSplit: DatasetSplit = "eval",
   decisionThreshold = 0.6,
   boundaryPolicy: HarmonyBoundaryPolicy = "dense-note-events",
+  boundaryClassifierModel?: HarmonyBoundaryClassifierModel,
 ): Promise<HarmonyDatasetEvalReport> {
   const manifest = harmonyDatasetManifestSchema.parse(JSON.parse(await readFile(path, "utf8")));
   const selected = caseId === undefined ? manifest.cases : manifest.cases.filter((item) => item.id === caseId);
@@ -36,6 +37,7 @@ export async function evaluateHarmonyDatasetManifest(
           reportSplit,
           decisionThreshold,
           boundaryPolicy,
+          ...(boundaryClassifierModel === undefined ? {} : { boundaryClassifierModel }),
         }),
       );
       continue;
@@ -50,6 +52,7 @@ export async function evaluateHarmonyDatasetManifest(
           reportSplit,
           decisionThreshold,
           boundaryPolicy,
+          ...(boundaryClassifierModel === undefined ? {} : { boundaryClassifierModel }),
         }),
       );
       continue;
@@ -66,7 +69,7 @@ export async function evaluateHarmonyDatasetManifest(
     throw new Error(`dataset adapter not implemented: ${item.adapter}`);
   }
   return harmonyDatasetEvalReportSchema.parse({
-    schemaVersion: "2.6.0",
+    schemaVersion: "2.7.0",
     command: "eval",
     manifest: manifest.id,
     summary: {

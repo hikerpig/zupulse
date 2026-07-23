@@ -1,6 +1,6 @@
 import {
   buildLegalBoundaryLattice,
-  createBoundaryEvidenceFeatures,
+  createBoundaryEvidenceCache,
   type ChordSymbolInput,
   type HarmonyAnalysisInput,
   type ScoreWrittenMoment,
@@ -47,6 +47,7 @@ function createRecords(request: BoundaryRecordRequest): HarmonyBoundaryRecord[] 
   };
   const dense = buildLegalBoundaryLattice({ ...input, policy: "dense-note-events" }).moments;
   const fixed = new Set(buildLegalBoundaryLattice({ ...input, policy: "metric-beats" }).moments.map(momentKey));
+  const evidence = createBoundaryEvidenceCache(input);
   const goldChanges = new Set(
     request.gold.flatMap((item, index) => {
       const previous = request.gold[index - 1];
@@ -63,7 +64,7 @@ function createRecords(request: BoundaryRecordRequest): HarmonyBoundaryRecord[] 
       groupId: request.groupId,
       moment,
       target: goldChanges.has(momentKey(moment)) ? (1 as const) : (0 as const),
-      features: createBoundaryEvidenceFeatures(input, moment),
+      features: evidence.forMoment(moment),
     }));
 }
 

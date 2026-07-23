@@ -67,6 +67,25 @@ describe("evaluateDcmlCorpus", () => {
     });
     expect(metric.boundaryPolicy).toBe("metric-beats");
 
+    const learned = await evaluateDcmlCorpus(root, {
+      id: "mozart-pilot",
+      sourceRevision: "fixture",
+      include: ["K331-3"],
+      forcedEvalGroups: ["K331"],
+      boundaryPolicy: "learned-evidence",
+      boundaryClassifierModel: {
+        schemaVersion: "1.0.0",
+        featureVersion: "boundary-evidence-v1",
+        weights: [0, 0, 0, 0, 0],
+        bias: 0,
+        threshold: 0.5,
+      },
+    });
+    expect(learned).toMatchObject({
+      boundaryPolicy: "learned-evidence",
+      boundaryModel: { featureVersion: "boundary-evidence-v1", threshold: 0.5 },
+    });
+
     const tune = await evaluateDcmlCorpus(root, {
       id: "mozart-pilot",
       include: ["K331-3"],
@@ -127,11 +146,11 @@ describe("evaluateDcmlCorpus", () => {
 
     const report = await evaluateHarmonyManifest(manifestPath, { dataRoot, caseId: "mozart-pilot" });
     expect(report).toMatchObject({
-      schemaVersion: "2.6.0",
+      schemaVersion: "2.7.0",
       command: "eval",
       summary: { passed: 1, failed: 0 },
     });
-    if (report.schemaVersion !== "2.6.0" || report.cases[0]?.kind !== "accuracy-corpus") {
+    if (report.schemaVersion !== "2.7.0" || report.cases[0]?.kind !== "accuracy-corpus") {
       throw new Error("expected accuracy report");
     }
     const reportPath = resolve(dataRoot, "report.json");
@@ -182,7 +201,7 @@ describe("evaluateDcmlCorpus", () => {
     );
     await expect(evaluateHarmonyV3FinalHoldout(manifestPath, protocolPath, dataRoot)).resolves.toMatchObject({
       candidate: {
-        schemaVersion: "2.6.0",
+        schemaVersion: "2.7.0",
         command: "eval",
         manifest: "dataset-fixture:protocol-fixture:final-holdout:candidate",
         summary: { passed: 1, failed: 0 },

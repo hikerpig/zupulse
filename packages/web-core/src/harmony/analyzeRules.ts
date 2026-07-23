@@ -11,6 +11,7 @@ import { createHarmonyRankerFeatures, type HarmonyRankerModel } from "./learnedR
 import { createMlpHarmonyPrimarySelector, type MlpHarmonyRerankerModel } from "./mlpReranker";
 import { bundledHarmonyPrimaryMlp } from "./bundledHarmonyPrimaryMlp";
 import { applyHarmonyCalibration, type MlpHarmonyCalibrationAsset } from "./confidenceCalibration";
+import type { HarmonyBoundaryClassifierModel } from "./boundaryClassifier";
 
 export function analyzeHarmonyRules(
   input: HarmonyAnalysisInput,
@@ -20,6 +21,7 @@ export function analyzeHarmonyRules(
     decisionThreshold?: number;
     maxOptionalBoundariesPerMeasure?: number;
     boundaryPolicy?: HarmonyBoundaryPolicy;
+    boundaryClassifierModel?: HarmonyBoundaryClassifierModel;
     rankerModel?: HarmonyRankerModel;
     rankerWeight?: number;
     primaryRerankerModel?: MlpHarmonyRerankerModel | false;
@@ -56,6 +58,9 @@ export function analyzeHarmonyRules(
       ? {}
       : { maxOptionalPerMeasure: options.maxOptionalBoundariesPerMeasure }),
     ...(options.boundaryPolicy === undefined ? {} : { policy: options.boundaryPolicy }),
+    ...(options.boundaryClassifierModel === undefined
+      ? {}
+      : { boundaryClassifierModel: options.boundaryClassifierModel }),
   }).moments;
   const decoded = decodeHarmonySequence({
     boundaries,

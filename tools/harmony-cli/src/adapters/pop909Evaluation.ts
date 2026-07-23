@@ -3,6 +3,7 @@ import {
   buildLegalBoundaryLattice,
   compareMoments,
   type HarmonyBoundaryPolicy,
+  type HarmonyBoundaryClassifierModel,
 } from "@zupulse/web-core";
 import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
@@ -34,6 +35,7 @@ export async function evaluatePop909Corpus(
     decisionThreshold?: number;
     primaryRerankerModel?: false;
     boundaryPolicy?: HarmonyBoundaryPolicy;
+    boundaryClassifierModel?: HarmonyBoundaryClassifierModel;
   },
 ) {
   const reportSplit = options.reportSplit ?? "eval";
@@ -82,6 +84,9 @@ export async function evaluatePop909Corpus(
       decisionThreshold,
       ...(options.primaryRerankerModel === false ? { primaryRerankerModel: false } : {}),
       boundaryPolicy,
+      ...(options.boundaryClassifierModel === undefined
+        ? {}
+        : { boundaryClassifierModel: options.boundaryClassifierModel }),
     });
     predictedSegments += segments.length;
     const primarySegments =
@@ -93,6 +98,9 @@ export async function evaluatePop909Corpus(
             decisionThreshold: 0,
             ...(options.primaryRerankerModel === false ? { primaryRerankerModel: false } : {}),
             boundaryPolicy,
+            ...(options.boundaryClassifierModel === undefined
+              ? {}
+              : { boundaryClassifierModel: options.boundaryClassifierModel }),
           });
     intervalDiagnostics.push(
       calculateIntervalOverlapDiagnostics({
@@ -157,6 +165,14 @@ export async function evaluatePop909Corpus(
     reportGroupsSha256: hashGroups(reportGroups),
     decisionThreshold,
     boundaryPolicy,
+    ...(options.boundaryClassifierModel === undefined
+      ? {}
+      : {
+          boundaryModel: {
+            featureVersion: options.boundaryClassifierModel.featureVersion,
+            threshold: options.boundaryClassifierModel.threshold,
+          },
+        }),
     splits,
     metrics: calculateAccuracyMetrics(observations, mergeIntervalOverlapDiagnostics(intervalDiagnostics), {
       predictedSegments,

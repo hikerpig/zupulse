@@ -737,14 +737,14 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 
 **Acceptance criteria:**
 
-- [ ] bundler/runtime 不依赖训练工具、gold 或 Python/PyTorch。
-- [ ] 模型缺失或显式关闭时行为确定且不会静默切换 production 默认。
-- [ ] analyzer、CLI report 与 schema 能明确记录 learned policy/model version。
+- [x] bundler/runtime 不依赖训练工具、gold 或 Python/PyTorch。
+- [x] 模型缺失或显式关闭时行为确定且不会静默切换 production 默认。
+- [x] analyzer、CLI report 与 schema 能明确记录 learned policy/model version。
 
 **Verification:**
 
-- [ ] web-core 单测覆盖小节线、拍点、模型接受/拒绝与稳定 tie。
-- [ ] harmony-cli adapter/command/schema 测试通过。
+- [x] web-core 单测覆盖小节线、拍点、模型接受/拒绝与稳定 tie。
+- [x] harmony-cli adapter/command/schema 测试通过。
 
 **Dependencies:** Task 24
 
@@ -756,14 +756,14 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 
 **Acceptance criteria:**
 
-- [ ] 首个失败 corpus 立即停止，不按 corpus 特判、不读取 final holdout 调参。
-- [ ] 发布要求 segment density 至少下降 10%，interval/predicted-primary 回退不超过 `0.005`，boundary recall 回退不超过 `0.01`。
-- [ ] 未通过时保留 opt-in 资产与复现实验，production 默认、algorithmVersion 和 baseline 均不移动。
+- [x] 首个失败 corpus 立即停止，不按 corpus 特判、不读取 final holdout 调参。
+- [x] 发布要求 segment density 至少下降 10%，interval/predicted-primary 回退不超过 `0.005`，boundary recall 回退不超过 `0.01`。
+- [x] 未通过时保留 opt-in 资产与复现实验，production 默认、algorithmVersion 和 baseline 均不移动。
 
 **Verification:**
 
-- [ ] checkpoint 保存 records hash、模型、阈值、逐 corpus 指标和决定。
-- [ ] `pnpm --filter @zupulse/harmony-cli test`、`pnpm verify:fast`、`pnpm harmony:benchmark`。
+- [x] checkpoint 保存 records hash、模型、阈值、逐 corpus 指标和决定。
+- [x] `pnpm --filter @zupulse/harmony-cli test`、`pnpm verify:fast`、`pnpm harmony:benchmark`。
 
 **Dependencies:** Task 25
 

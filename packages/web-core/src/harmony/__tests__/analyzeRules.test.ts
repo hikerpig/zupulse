@@ -296,4 +296,56 @@ describe("analyzeHarmonyRules", () => {
     expect(dense.some((segment) => segment.range.start.offsetTicks === 240)).toBe(true);
     expect(metric.some((segment) => segment.range.start.offsetTicks === 240)).toBe(false);
   });
+
+  it("supports an explicit learned boundary classifier without changing the default", () => {
+    const model = createHarmonyAnalysisInput({
+      ticksPerQuarter: 480,
+      measures: [{ index: 0, durationTicks: 960, timeSignature: { numerator: 2, denominator: 4 } }],
+      tracks: [
+        {
+          id: "piano",
+          name: "Piano",
+          isPercussion: false,
+          staves: [
+            {
+              index: 0,
+              notes: [
+                ...[48, 64].map((soundingMidi, index) => ({
+                  id: `a-${index}`,
+                  moment: { measureIndex: 0, offsetTicks: 0 },
+                  durationTicks: 360,
+                  soundingPitchClass: soundingMidi % 12,
+                  soundingMidi,
+                  voice: index + 1,
+                })),
+                ...[50, 65].map((soundingMidi, index) => ({
+                  id: `b-${index}`,
+                  moment: { measureIndex: 0, offsetTicks: 360 },
+                  durationTicks: 600,
+                  soundingPitchClass: soundingMidi % 12,
+                  soundingMidi,
+                  voice: index + 1,
+                })),
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    const learned = analyzeHarmonyRules(model, {
+      includedTrackIds: ["piano"],
+      decisionThreshold: 0,
+      primaryRerankerModel: false,
+      boundaryPolicy: "learned-evidence",
+      boundaryClassifierModel: {
+        schemaVersion: "1.0.0",
+        featureVersion: "boundary-evidence-v1",
+        weights: [0, 10, 0, 0, 0],
+        bias: -5,
+        threshold: 0.5,
+      },
+    });
+
+    expect(learned.some((segment) => segment.range.start.offsetTicks === 360)).toBe(true);
+  });
 });

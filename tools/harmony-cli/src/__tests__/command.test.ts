@@ -55,7 +55,13 @@ describe("harmony CLI inspect command", () => {
 
   it("rejects an invalid boundary policy before reading the manifest", async () => {
     await expect(runHarmonyCommand(["eval", "missing.json", "--boundary-policy", "notes"])).rejects.toThrow(
-      "--boundary-policy must be dense-note-events, metric-beats, metric-half-beats, or metric-strong-onsets",
+      "--boundary-policy must be dense-note-events, metric-beats, metric-half-beats, metric-strong-onsets, or learned-evidence",
+    );
+  });
+
+  it("requires an explicit model for learned boundary evaluation", async () => {
+    await expect(runHarmonyCommand(["eval", "missing.json", "--boundary-policy", "learned-evidence"])).rejects.toThrow(
+      "--boundary-model is required for learned-evidence policy",
     );
   });
 

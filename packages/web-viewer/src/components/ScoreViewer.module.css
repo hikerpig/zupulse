@@ -8,6 +8,43 @@
     overflow: scroll;
   }
 
+  .zoomControls {
+    position: sticky;
+    z-index: var(--z-index-transport);
+    top: 8px;
+    left: 100%;
+    width: max-content;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin: 8px 8px -52px auto;
+    padding: 3px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--bg-shell) 94%, transparent);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(12px);
+  }
+
+  .zoomControls button {
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+
+  .zoomControls button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .zoomControls output {
+    min-width: 50px;
+    color: var(--text-secondary);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    text-align: center;
+  }
+
   .frame {
     min-height: 0;
     overflow: auto;
@@ -25,6 +62,7 @@
     min-width: 0;
     min-height: 100%;
     overflow: visible;
+    transform-origin: top left;
     background: var(--bg-score);
   }
 

@@ -37,6 +37,9 @@ export type AlphaTabApiLike = {
   score?: AlphaTabBrowserScoreLike | null;
   scoreLoaded?: AlphaTabEvent<AlphaTabBrowserScoreLike>;
   settings?: {
+    display?: {
+      scale?: number;
+    };
     importer?: {
       encoding?: string;
     };

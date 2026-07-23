@@ -33,6 +33,49 @@ final class ImportViewerTests: XCTestCase {
         waitForViewer(in: app, stage: "gp-import")
     }
 
+    func testScoreZoomButtonsAndPinchCommit() {
+        let app = XCUIApplication()
+        app.launchEnvironment = ["ZUPULSE_UI_TEST_FIXTURE": "single-voice.musicxml"]
+        app.launch()
+
+        let zoomOut = app.buttons["缩小谱面"]
+        XCTAssertTrue(app.buttons["放大谱面"].waitForExistence(timeout: 60), stage("zoom-controls"))
+        for _ in 0..<20 where zoomOut.isEnabled {
+            zoomOut.tap()
+        }
+        XCTAssertTrue(zoomStatus(in: app, percent: 75).exists, stage("zoom-minimum"))
+        app.buttons["放大谱面"].tap()
+        XCTAssertTrue(
+            zoomStatus(in: app, percent: 85).waitForExistence(timeout: 5),
+            stage("zoom-button-commit")
+        )
+
+        let scoreWorkspace = app.otherElements
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "乐谱工作区"))
+            .firstMatch
+        XCTAssertTrue(scoreWorkspace.waitForExistence(timeout: 10), stage("zoom-score-workspace"))
+        scoreWorkspace.pinch(withScale: 1.2, velocity: 1)
+
+        let committedZoomStatus = app.otherElements
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "谱面缩放 "))
+            .firstMatch
+        XCTAssertTrue(committedZoomStatus.waitForExistence(timeout: 5), stage("zoom-pinch-status"))
+        XCTAssertNotEqual(committedZoomStatus.label, "谱面缩放 85%", stage("zoom-pinch-commit"))
+        XCTAssertTrue(app.buttons["播放"].exists, stage("zoom-keeps-transport"))
+        XCTAssertTrue(app.links["曲谱库"].exists, stage("zoom-keeps-library-route"))
+
+        let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        screenshot.name = "score-zoom-pinch-commit"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+    }
+
+    private func zoomStatus(in app: XCUIApplication, percent: Int) -> XCUIElement {
+        app.otherElements
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "谱面缩放 \(percent)%"))
+            .firstMatch
+    }
+
     private func waitForViewer(in app: XCUIApplication, stage: String) {
         guard app.links["查看器"].waitForExistence(timeout: 60) else {
             let importError = app.staticTexts

@@ -13,6 +13,7 @@ import type { ViewerFile, ViewerSessionHandle } from "./host";
 import { ALPHATAB_ASSETS } from "./playbackAssets";
 import { type DemoState } from "./gpDemoPresenter";
 import { presentScoreFile } from "./importPresenter";
+import { SCORE_ZOOM_COMMIT_EVENT, type ScoreZoomCommitDetail } from "./scoreZoom";
 
 export type DefaultOpenSessionDependencies = {
   createApi: typeof createAlphaTabApi;
@@ -45,8 +46,13 @@ export function createDefaultOpenSession(
     const summary = required<HTMLElement>(ownerDocument, "summary");
     renderViewerState(status, summary, { status: "loading" });
     alphaTabHost.replaceChildren();
-    const api = dependencies.createApi(alphaTabHost, createViewerAlphaTabSettings(scoreScrollElement));
+    const initialScoreZoom = Number(alphaTabHost.dataset.scoreZoom) || 1;
+    const api = dependencies.createApi(
+      alphaTabHost,
+      createViewerAlphaTabSettings(scoreScrollElement, initialScoreZoom),
+    );
     const adapter = dependencies.createAdapter(api);
+    const detachScoreZoom = attachScoreZoomCommit(ownerDocument, api, scoreScrollElement);
     let controller: PlaybackController | undefined;
     try {
       const state = await dependencies.presentFile({
@@ -59,6 +65,7 @@ export function createDefaultOpenSession(
         api,
       });
       if (state.status !== "ready" || !state.identity) {
+        detachScoreZoom();
         adapter.destroy();
         renderViewerState(status, summary, state);
         return emptySession();
@@ -104,6 +111,7 @@ export function createDefaultOpenSession(
           await sessionController.flush();
         },
         async destroy() {
+          detachScoreZoom();
           unsubscribePlayback();
           playbackListeners.clear();
           await sessionController.destroy();
@@ -112,6 +120,7 @@ export function createDefaultOpenSession(
     } catch (error) {
       let cleanupError: unknown;
       try {
+        detachScoreZoom();
         if (controller) await controller.destroy();
         else adapter.destroy();
       } catch (caughtCleanupError) {
@@ -168,7 +177,7 @@ function required<T extends HTMLElement>(ownerDocument: Document, id: string): T
   return element as T;
 }
 
-export function createViewerAlphaTabSettings(scrollElement: HTMLElement): unknown {
+export function createViewerAlphaTabSettings(scrollElement: HTMLElement, scoreZoom = 1): unknown {
   const chineseSerifFonts = "Georgia, 'Songti SC', 'STSong', SimSun, 'Noto Serif SC', serif";
   const chineseSansFonts = "Arial, 'PingFang SC', 'Microsoft YaHei', 'Heiti SC', 'Noto Sans SC', sans-serif";
   return {
@@ -188,7 +197,7 @@ export function createViewerAlphaTabSettings(scrollElement: HTMLElement): unknow
       soundFont: ALPHATAB_ASSETS.soundFont,
     },
     display: {
-      scale: 1,
+      scale: scoreZoom,
       resources: {
         secondaryGlyphColor: "#000000",
         titleFont: `32px ${chineseSerifFonts}`,
@@ -207,4 +216,26 @@ export function createViewerAlphaTabSettings(scrollElement: HTMLElement): unknow
       },
     },
   };
+}
+
+export function attachScoreZoomCommit(
+  ownerDocument: Document,
+  api: AlphaTabApiLike,
+  scrollElement: HTMLElement,
+  schedule: (callback: () => void) => void = (callback) => requestAnimationFrame(callback),
+): () => void {
+  const commit = (event: Event) => {
+    const zoom = (event as CustomEvent<ScoreZoomCommitDetail>).detail?.zoom;
+    if (!Number.isFinite(zoom) || !api.settings?.display) return;
+    const scrollRange = Math.max(0, scrollElement.scrollHeight - scrollElement.clientHeight);
+    const scrollRatio = scrollRange === 0 ? 0 : scrollElement.scrollTop / scrollRange;
+    api.settings.display.scale = zoom;
+    api.updateSettings?.();
+    schedule(() => {
+      const nextRange = Math.max(0, scrollElement.scrollHeight - scrollElement.clientHeight);
+      scrollElement.scrollTop = scrollRatio * nextRange;
+    });
+  };
+  ownerDocument.addEventListener(SCORE_ZOOM_COMMIT_EVENT, commit);
+  return () => ownerDocument.removeEventListener(SCORE_ZOOM_COMMIT_EVENT, commit);
 }

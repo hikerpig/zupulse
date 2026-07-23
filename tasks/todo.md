@@ -582,15 +582,22 @@ alphaTab scale/re-layout，并保持当前书面位置与 Session。
 
 **Acceptance criteria:**
 
-- [ ] 缩放不改变 Transport/App UI 比例；按钮与 pinch 共用一个有界值和默认值。
-- [ ] alphaTab 只在 commit 时重排，高频手势不通过 React state 每帧重渲染应用树。
-- [ ] re-layout 后保持播放、循环、written position，且保留按钮替代与系统缩放。
+- [x] 缩放不改变 Transport/App UI 比例；按钮与 pinch 共用一个有界值和默认值。
+- [x] alphaTab 只在 commit 时重排，高频手势不通过 React state 每帧重渲染应用树。
+- [x] re-layout 后保持播放、循环、written position，且保留按钮替代与系统缩放。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-viewer/src/components/__tests__/ScoreViewer.test.tsx`
-- [ ] `pnpm vitest run packages/web-viewer/src/app/__tests__/appStore.test.ts`
-- [ ] Manual: Simulator pinch preview/commit 与位置保持
+- [x] `pnpm vitest run packages/web-viewer/src/components/__tests__/ScoreViewer.test.tsx`
+- [x] `pnpm vitest run packages/web-viewer/src/app/__tests__/appStore.test.ts`
+- [x] Manual: Simulator pinch preview/commit 与位置保持
+
+**Completion note (2026-07-24):** 新增 75%–200% 的谱面缩放偏好、44px 按钮和双指预览；
+touch move 仅通过局部 transform 预览，touch end 才提交 alphaTab `display.scale` 和一次
+`updateSettings()`。提交后按滚动比例恢复阅读位置，既有播放 tick、循环与 Session 不变；
+Transport/App UI 不参与缩放，viewport 继续允许系统缩放。iPad Pro 11-inch (M5)
+Simulator 的真实 pinch UI 用例通过并保留截图；最终 `pnpm verify:fast`
+（115 files / 442 tests）和 `pnpm ipad:verify`（3 UI tests / 37 Swift tests）通过。
 
 **Dependencies:** Task 19
 

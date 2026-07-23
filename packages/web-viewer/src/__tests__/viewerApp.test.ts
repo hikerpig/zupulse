@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
-import { createDefaultOpenSession, renderViewerState, type DefaultOpenSessionDependencies } from "../viewerApp";
+import {
+  attachScoreZoomCommit,
+  createDefaultOpenSession,
+  renderViewerState,
+  type DefaultOpenSessionDependencies,
+} from "../viewerApp";
+import { SCORE_ZOOM_COMMIT_EVENT } from "../scoreZoom";
 import { mountViewerApp } from "../mountViewerApp";
 
 function renderSessionFixture(ownerDocument: Document): void {
@@ -331,6 +337,41 @@ describe("mountViewerApp", () => {
 });
 
 describe("createDefaultOpenSession cleanup", () => {
+  it("commits alphaTab scale once and restores the written scroll anchor after layout", () => {
+    const scrollElement = document.createElement("div");
+    Object.defineProperties(scrollElement, {
+      clientHeight: { configurable: true, value: 400 },
+      scrollHeight: { configurable: true, value: 1000 },
+    });
+    scrollElement.scrollTop = 300;
+    const updateSettings = vi.fn();
+    const api = {
+      settings: { display: { scale: 1 } },
+      updateSettings,
+      tickPosition: 1920,
+      isLooping: true,
+    };
+    let restore: (() => void) | undefined;
+    const detach = attachScoreZoomCommit(document, api, scrollElement, (callback) => {
+      restore = callback;
+    });
+
+    document.dispatchEvent(new CustomEvent(SCORE_ZOOM_COMMIT_EVENT, { detail: { zoom: 1.4 } }));
+
+    expect(api.settings.display.scale).toBe(1.4);
+    expect(updateSettings).toHaveBeenCalledOnce();
+    expect(api.tickPosition).toBe(1920);
+    expect(api.isLooping).toBe(true);
+    expect(scrollElement.scrollTop).toBe(300);
+    Object.defineProperty(scrollElement, "scrollHeight", { configurable: true, value: 1400 });
+    restore?.();
+    expect(scrollElement.scrollTop).toBe(500);
+
+    detach();
+    document.dispatchEvent(new CustomEvent(SCORE_ZOOM_COMMIT_EVENT, { detail: { zoom: 1.5 } }));
+    expect(updateSettings).toHaveBeenCalledOnce();
+  });
+
   it("clears the empty state before alphaTab establishes its cursor coordinate system", async () => {
     renderSessionFixture(document);
     const createApi = vi.fn((element: HTMLElement) => {
@@ -358,6 +399,8 @@ describe("createDefaultOpenSession cleanup", () => {
 
   it("enables alphaTab playback cursors and element highlighting", async () => {
     renderSessionFixture(document);
+    const scoreHost = document.getElementById("alpha-tab");
+    if (scoreHost) scoreHost.dataset.scoreZoom = "1.25";
     const createApi = vi.fn((_element: HTMLElement, _settings: unknown) => ({ load: () => false }));
     const openSession = createDefaultOpenSession(document, {} as never, {
       createApi,
@@ -379,7 +422,7 @@ describe("createDefaultOpenSession cleanup", () => {
       {
         core: { includeNoteBounds: boolean };
         player: { scrollElement: HTMLElement };
-        display: { resources: { secondaryGlyphColor: string } };
+        display: { scale: number; resources: { secondaryGlyphColor: string } };
       },
     ];
     expect(settings.player).toEqual(
@@ -393,6 +436,7 @@ describe("createDefaultOpenSession cleanup", () => {
     );
     expect(settings.core.includeNoteBounds).toBe(true);
     expect(settings.player.scrollElement).toBe(alphaTabHost.parentElement);
+    expect(settings.display.scale).toBe(1.25);
     expect(settings.display.resources.secondaryGlyphColor).toBe("#000000");
   });
 

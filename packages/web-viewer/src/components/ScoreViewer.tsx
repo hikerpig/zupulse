@@ -1,11 +1,19 @@
-import { useEffect, useState } from "react";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { useEffect, useRef, useState, type TouchEvent } from "react";
+import { Maximize2, Minimize2, Minus, Plus } from "lucide-react";
+import { clampScoreZoom, MAX_SCORE_ZOOM, MIN_SCORE_ZOOM, persistScoreZoom, useAppStore } from "../app/appStore";
+import { SCORE_ZOOM_COMMIT_EVENT } from "../scoreZoom";
 import { useTranslation } from "react-i18next";
 import styles from "./ScoreViewer.module.css";
+
+const SCORE_ZOOM_STEP = 0.1;
 
 export function ScoreViewer({ compact = false, expandable = false }: { compact?: boolean; expandable?: boolean }) {
   const { t } = useTranslation("viewer");
   const [expanded, setExpanded] = useState(false);
+  const scoreZoom = useAppStore((state) => state.scoreZoom);
+  const setScoreZoom = useAppStore((state) => state.setScoreZoom);
+  const viewerRef = useRef<HTMLElement>(null);
+  const pinchRef = useRef<{ distance: number; zoom: number; preview: number } | undefined>(undefined);
 
   useEffect(() => {
     if (!expanded) return;
@@ -16,11 +24,68 @@ export function ScoreViewer({ compact = false, expandable = false }: { compact?:
     return () => window.removeEventListener("keydown", collapse);
   }, [expanded]);
 
+  const commitZoom = (zoom: number) => {
+    const committed = clampScoreZoom(zoom);
+    setScoreZoom(committed);
+    persistScoreZoom(committed);
+    viewerRef.current?.setAttribute("data-score-zoom", String(committed));
+    document.dispatchEvent(new CustomEvent(SCORE_ZOOM_COMMIT_EVENT, { detail: { zoom: committed } }));
+  };
+  const startPinch = (event: TouchEvent<HTMLElement>) => {
+    if (event.touches.length !== 2) return;
+    pinchRef.current = {
+      distance: touchDistance(event),
+      zoom: scoreZoom,
+      preview: scoreZoom,
+    };
+  };
+  const previewPinch = (event: TouchEvent<HTMLElement>) => {
+    const pinch = pinchRef.current;
+    if (!pinch || event.touches.length !== 2 || pinch.distance === 0) return;
+    event.preventDefault();
+    pinch.preview = clampScoreZoom(pinch.zoom * (touchDistance(event) / pinch.distance));
+    if (viewerRef.current) viewerRef.current.style.transform = `scale(${pinch.preview / pinch.zoom})`;
+  };
+  const finishPinch = () => {
+    const pinch = pinchRef.current;
+    if (!pinch) return;
+    pinchRef.current = undefined;
+    if (viewerRef.current) viewerRef.current.style.transform = "";
+    commitZoom(pinch.preview);
+  };
+
   return (
     <section
       className={`scrollable ${styles.stage} ${compact ? styles.compact : ""} ${expanded ? styles.expanded : ""}`}
       aria-label={t("score.workspace")}
+      onTouchStart={startPinch}
+      onTouchMove={previewPinch}
+      onTouchEnd={finishPinch}
+      onTouchCancel={finishPinch}
     >
+      {!compact ? (
+        <div className={styles.zoomControls} aria-label="谱面缩放">
+          <button
+            type="button"
+            aria-label="缩小谱面"
+            disabled={scoreZoom <= MIN_SCORE_ZOOM}
+            onClick={() => commitZoom(scoreZoom - SCORE_ZOOM_STEP)}
+          >
+            <Minus aria-hidden="true" />
+          </button>
+          <output aria-label={`谱面缩放 ${Math.round(scoreZoom * 100)}%`} aria-live="polite">
+            {Math.round(scoreZoom * 100)}%
+          </output>
+          <button
+            type="button"
+            aria-label="放大谱面"
+            disabled={scoreZoom >= MAX_SCORE_ZOOM}
+            onClick={() => commitZoom(scoreZoom + SCORE_ZOOM_STEP)}
+          >
+            <Plus aria-hidden="true" />
+          </button>
+        </div>
+      ) : null}
       {expandable ? (
         <div className={styles.previewBar}>
           <div>
@@ -40,7 +105,13 @@ export function ScoreViewer({ compact = false, expandable = false }: { compact?:
         </div>
       ) : null}
       <div className={styles.frame}>
-        <section id="alpha-tab" className={`${styles.viewer} score-viewer`} aria-label={t("score.preview")}>
+        <section
+          ref={viewerRef}
+          id="alpha-tab"
+          className={`${styles.viewer} score-viewer`}
+          aria-label={t("score.preview")}
+          data-score-zoom={scoreZoom}
+        >
           <div className="score-empty-state">
             <p className="empty-title">{t("score.emptyTitle")}</p>
             <p className="empty-copy">{t("score.emptyCopy")}</p>
@@ -49,4 +120,11 @@ export function ScoreViewer({ compact = false, expandable = false }: { compact?:
       </div>
     </section>
   );
+}
+
+function touchDistance(event: TouchEvent<HTMLElement>): number {
+  const first = event.touches[0];
+  const second = event.touches[1];
+  if (!first || !second) return 0;
+  return Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY);
 }

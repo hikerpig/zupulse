@@ -1,12 +1,18 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import type { ReactElement } from "react";
+import { cleanup, render as testingRender, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
+import { AppStoreProvider } from "../../appStore";
 import { StudioPage } from "../StudioPage";
 
 afterEach(() => cleanup());
+
+function render(element: ReactElement) {
+  return testingRender(<AppStoreProvider>{element}</AppStoreProvider>);
+}
 
 describe("StudioPage", () => {
   it("renders a persistent library score route without exposing a session id", () => {
@@ -560,6 +566,10 @@ describe("StudioPage", () => {
       </MemoryRouter>,
     );
     const user = userEvent.setup();
+    await user.tab();
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("缩小谱面");
+    await user.tab();
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("放大谱面");
     await user.tab();
     expect(document.activeElement?.getAttribute("aria-label")).toBe("放大乐谱预览");
     await user.tab();

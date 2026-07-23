@@ -1,6 +1,6 @@
 import "@zupulse/web-viewer/styles.css";
-import { mountViewerApp, type ViewerHost } from "@zupulse/web-viewer";
 import { bootstrapIpadApplication, loadIpadBuildMetadata, type NativeMessageHandler } from "./ipad-bridge-transport";
+import { mountIpadViewerApplication } from "./ipad-viewer-host";
 import { createDefaultResourceOriginChecks, runResourceOriginProbe } from "./resource-origin-probe";
 
 const root = document.getElementById("root");
@@ -11,15 +11,6 @@ if (!root) throw new Error("IPAD_VIEWER_ROOT_MISSING");
     __zupulseResourceOriginProbe?: ReturnType<typeof runResourceOriginProbe>;
   }
 ).__zupulseResourceOriginProbe = runResourceOriginProbe(createDefaultResourceOriginChecks());
-
-const host: ViewerHost = {
-  async openScore() {
-    return undefined;
-  },
-  subscribe() {
-    return () => undefined;
-  },
-};
 
 const handler = (
   window as typeof window & {
@@ -46,13 +37,8 @@ void (async () => {
     root,
     metadata,
     handler,
-    mount() {
-      mountViewerApp(root, {
-        host,
-        async openSession() {
-          throw new Error("IPAD_VIEWER_SESSION_UNAVAILABLE");
-        },
-      });
+    async mount(transport) {
+      await mountIpadViewerApplication(root, transport);
     },
   });
 })().catch((error: unknown) => {

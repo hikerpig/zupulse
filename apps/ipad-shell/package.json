@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@zupulse/web-core": "workspace:*",
+    "@zupulse/web-storage": "workspace:*",
     "@zupulse/web-viewer": "workspace:*"
   }
 }

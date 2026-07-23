@@ -93,6 +93,9 @@ importers:
       '@zupulse/web-core':
         specifier: workspace:*
         version: link:../../packages/web-core
+      '@zupulse/web-storage':
+        specifier: workspace:*
+        version: link:../../packages/web-storage
       '@zupulse/web-viewer':
         specifier: workspace:*
         version: link:../../packages/web-viewer

@@ -1,6 +1,6 @@
 # iPad Practice Player Task List
 
-> Progress: Tasks 1–7 and 9–12 completed and verified through 2026-07-24. Task 8 was not required
+> Progress: Tasks 1–7 and 9–13 completed and verified through 2026-07-24. Task 8 was not required
 > because the Task 7 custom-scheme gate passed.
 
 ## Task 1: 建立 iPad Web workspace
@@ -370,20 +370,22 @@ re-export 或删除；用户行为和 E2E 不变。
 
 ## Task 13: 组合 iPad IndexedDB Library、Gateway 与 Viewer session
 
+**Status:** Completed 2026-07-24
+
 **Description:** iPad entry 在 handshake 后创建共享 IndexedDB Repository、playback persistence、
 iPad Gateway 和 GP/MusicXML adapters，并挂载同一个 `mountViewerApp`。
 
 **Acceptance criteria:**
 
-- [ ] iPad Library 使用独立且稳定的 IndexedDB origin，不与 Browser Demo 共享数据。
-- [ ] GP/MusicXML/MXL 导入继续走 `importLibraryScores` 和 Score Identity 去重。
-- [ ] iPad playback persistence 只适配共享 Repository 的 sidecar/resume 方法，不复制 IndexedDB 实现。
-- [ ] 启动/Repository 错误显示阻塞状态，不降级为内存库或自动清库。
+- [x] iPad Library 使用独立且稳定的 IndexedDB origin，不与 Browser Demo 共享数据。
+- [x] GP/MusicXML/MXL 导入继续走 `importLibraryScores` 和 Score Identity 去重。
+- [x] iPad playback persistence 只适配共享 Repository 的 sidecar/resume 方法，不复制 IndexedDB 实现。
+- [x] 启动/Repository 错误显示阻塞状态，不降级为内存库或自动清库。
 
 **Verification:**
 
-- [ ] `pnpm vitest run apps/ipad-shell/web/src/__tests__/main.test.ts`
-- [ ] `pnpm ipad:web:build`
+- [x] `pnpm vitest run apps/ipad-shell/web/src/__tests__/main.test.ts`
+- [x] `pnpm ipad:web:build`
 
 **Dependencies:** Task 9, Task 12
 

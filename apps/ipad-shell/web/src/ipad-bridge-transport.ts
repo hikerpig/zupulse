@@ -97,7 +97,7 @@ export async function bootstrapIpadApplication(options: {
   root: HTMLElement;
   metadata: IpadBuildMetadata;
   handler: NativeMessageHandler;
-  mount: () => void;
+  mount: (transport: IpadBridgeTransport) => void | Promise<void>;
   timeoutMs?: number;
 }): Promise<boolean> {
   const transport = new IpadBridgeTransport(options.handler, {
@@ -121,7 +121,7 @@ export async function bootstrapIpadApplication(options: {
     ) {
       throw new Error("BRIDGE_BUILD_MISMATCH");
     }
-    options.mount();
+    await options.mount(transport);
     return true;
   } catch (error) {
     transport.destroy();

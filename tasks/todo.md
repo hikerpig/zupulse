@@ -802,17 +802,17 @@ Swift unit、Simulator UI 和 iPad Web build，并生成不伪装真机结果的
 
 **Acceptance criteria:**
 
-- [ ] 五个规格命令均存在、可重复、失败码正确，Xcode Build Phase 复用相同底层脚本。
-- [ ] `ipad:verify` 覆盖 Bridge manifest、资源 hash、Release 泄漏、Swift tests 与 Simulator smoke。
-- [ ] 验收记录明确区分 passed/failed/not-run-on-device。
+- [x] 五个规格命令均存在、可重复、失败码正确，Xcode Build Phase 复用相同底层脚本。
+- [x] `ipad:verify` 覆盖 Bridge manifest、资源 hash、Release 泄漏、Swift tests 与 Simulator smoke。
+- [x] 验收记录明确区分 passed/failed/not-run-on-device。
 
 **Verification:**
 
-- [ ] `pnpm ipad:web:dev --help`
-- [ ] `pnpm ipad:web:build`
-- [ ] `pnpm ipad:build`
-- [ ] `pnpm ipad:test`
-- [ ] `pnpm ipad:verify`
+- [x] `pnpm ipad:web:dev --help`
+- [x] `pnpm ipad:web:build`
+- [x] `pnpm ipad:build`
+- [x] `pnpm ipad:test`
+- [x] `pnpm ipad:verify`
 
 **Dependencies:** Tasks 14–25
 
@@ -825,6 +825,13 @@ Swift unit、Simulator UI 和 iPad Web build，并生成不伪装真机结果的
 - `docs/validation/ipad-simulator-acceptance.md`
 
 **Estimated scope:** M (5 files)
+
+**Completed 2026-07-24:** 根脚本现统一提供 `ipad:web:dev`、`ipad:web:build`、Release
+Simulator `ipad:build`、串行 `ipad:test` 与总入口 `ipad:verify`。总入口依次检查 Bridge manifest
+drift、生产 Web 资源与 hash、Release 泄漏，再执行 48 项 Swift 和 5 项 Simulator UI 测试；成功后
+生成 JSON 摘要，明确 Simulator passed、11 英寸 M5/iPadOS 26.5.2 真机
+`not-run-on-device`（Personal Team 尚未配置）。五个命令、`pnpm verify` 与 `pnpm ipad:verify`
+均实跑通过，Browser 与 Desktop 构建无回归。
 
 ## Task 27: 在 M5 真机完成风险门禁
 

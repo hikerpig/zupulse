@@ -136,14 +136,14 @@ flowchart TD
 
 ### Checkpoint E: Complete Simulator MVP
 
-- [ ] 应用内选择、系统外部打开、单文件自动进 Viewer 与批量留在 Library 语义一致。
-- [ ] 非 allowlist 请求、未知 scheme、远程顶层导航和 Release dev-server 配置被拒绝。
-- [ ] 诊断包不包含路径、token、曲谱字节、文件名、元数据、完整哈希或 Bridge payload。
-- [ ] `pnpm verify && pnpm ipad:verify` 通过；现有 Browser 与 Desktop 构建无回归。
+- [x] 应用内选择、系统外部打开、单文件自动进 Viewer 与批量留在 Library 语义一致。
+- [x] 非 allowlist 请求、未知 scheme、远程顶层导航和 Release dev-server 配置被拒绝。
+- [x] 诊断包不包含路径、token、曲谱字节、文件名、元数据、完整哈希或 Bridge payload。
+- [x] `pnpm verify && pnpm ipad:verify` 通过；现有 Browser 与 Desktop 构建无回归。
 
 ### Phase 6: Verification and Decision Closure
 
-- [ ] Task 26: 完成统一 iPad 验证命令与 Simulator 验收记录
+- [x] Task 26: 完成统一 iPad 验证命令与 Simulator 验收记录
 - [ ] Task 27: 在 M5 真机完成风险门禁
 - [ ] Task 28: 接受 Shell、Bridge 与数据面 ADR
 - [ ] Task 29: 接受网络、契约与构建 ADR

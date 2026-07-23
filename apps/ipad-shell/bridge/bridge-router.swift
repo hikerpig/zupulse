@@ -124,6 +124,11 @@ final class BridgeRouter {
                     "sizeBytes": file.sizeBytes,
                 ])
             }
+            #if DEBUG
+            await MainActor.run {
+                UITestImportStage.shared.value = "TOKEN_ISSUED"
+            }
+            #endif
             if case .fileOpen = envelope.payload, let file = files.first {
                 return .success(
                     responseEnvelope(
@@ -266,7 +271,10 @@ final class BridgeMessageHandler: NSObject, WKScriptMessageHandlerWithReply {
             let type = body["type"] as? String,
             ["file.open", "file.select"].contains(type)
         {
-            Task {
+            #if DEBUG
+            UITestImportStage.shared.value = "REQUEST_RECEIVED"
+            #endif
+            Task { @MainActor in
                 switch await router.handleFileRequest(body) {
                 case let .success(response):
                     replyHandler(response, nil)

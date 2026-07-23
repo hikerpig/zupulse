@@ -21,7 +21,7 @@ describe("IpadScoreFileGateway", () => {
     expect(source).toMatchObject({ fileName: "song.musicxml" });
     expect(source).not.toHaveProperty("path");
     await expect(source.readBytes()).resolves.toEqual(Uint8Array.of(1, 2, 3));
-    expect(fetchBytes).toHaveBeenCalledWith("zupulse-data://file/token-1");
+    expect(fetchBytes).toHaveBeenCalledWith("/__data/token-1");
   });
 
   it("returns no sources when native selection is cancelled", async () => {

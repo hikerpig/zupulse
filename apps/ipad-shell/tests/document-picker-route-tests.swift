@@ -3,6 +3,20 @@ import XCTest
 @testable import Zupulse
 
 final class DocumentPickerRouteTests: XCTestCase {
+    @MainActor
+    func testBundledFixturePickerUsesOnlyAnExplicitResourceName() async throws {
+        let picker = try XCTUnwrap(
+            bundledFixtureDocumentPicker(
+                bundle: .main,
+                environment: ["ZUPULSE_UI_TEST_FIXTURE": "desktop-acceptance.gp"]
+            )
+        )
+
+        let urls = try await picker.select(multiple: false)
+
+        XCTAssertEqual(urls?.first?.lastPathComponent, "desktop-acceptance.gp")
+    }
+
     func testCancellationReturnsNoFilesAndIssuesNoToken() async throws {
         let tokens = FileTokenStore()
         let router = BridgeRouter(

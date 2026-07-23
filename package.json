@@ -37,7 +37,8 @@
     "desktop:package": "pnpm --filter @zupulse/desktop-shell package",
     "ipad:web:build": "node apps/ipad-shell/scripts/build-web-assets.mjs",
     "ipad:build": "xcodebuild -project apps/ipad-shell/Zupulse.xcodeproj -scheme Zupulse -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath apps/ipad-shell/dist/DerivedData build CODE_SIGNING_ALLOWED=NO",
-    "ipad:test": "node apps/ipad-shell/scripts/run-tests.mjs"
+    "ipad:test": "node apps/ipad-shell/scripts/run-tests.mjs",
+    "ipad:verify": "pnpm ipad:web:build && pnpm ipad:test"
   },
   "workspaces": [
     "packages/*",

@@ -23,6 +23,7 @@ import type {
   SheetLibraryRepository,
   LibraryScoreSummary,
   PreviewTransportState,
+  ScoreImportSource,
 } from "@zupulse/web-core";
 import { insertCorrection } from "@zupulse/web-core";
 import { HarmonyStudioSession } from "../harmonyStudioSession";
@@ -549,7 +550,20 @@ export class ViewerApplication implements ViewerAppHandle {
 
   async importScores(multiple: boolean): Promise<void> {
     if (!this.library) return this.scheduleOpen(false);
-    const sources = await this.library.gateway.selectForImport({ multiple });
+    let sources: readonly ScoreImportSource[];
+    try {
+      sources = await this.library.gateway.selectForImport({ multiple });
+    } catch (error) {
+      this.setSnapshot({
+        ...this.snapshot,
+        library: {
+          scores: this.snapshot.library?.scores ?? [],
+          loading: false,
+          error: `IMPORT_${error instanceof Error ? error.message : "FILE_SELECTION_FAILED"}`,
+        },
+      });
+      return;
+    }
     if (!sources.length) return;
     this.setSnapshot({
       ...this.snapshot,
@@ -561,6 +575,19 @@ export class ViewerApplication implements ViewerAppHandle {
       adapters: this.library.adapters,
     });
     await this.refreshLibrary();
+    const successful = results.some((item) => item.status === "created" || item.status === "existing");
+    if (!successful) {
+      const failure = results.find((item) => item.status === "failed");
+      this.setSnapshot({
+        ...this.snapshot,
+        library: {
+          scores: this.snapshot.library?.scores ?? [],
+          loading: false,
+          error: `IMPORT_${failure?.error.code ?? "UNKNOWN"}`,
+        },
+      });
+      return;
+    }
     if (!multiple) {
       const result = results.find((item) => item.status === "created" || item.status === "existing");
       if (result && result.status !== "failed")

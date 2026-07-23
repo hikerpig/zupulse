@@ -91,14 +91,14 @@ flowchart TD
 - [x] Task 11: 实现 Swift 一次性文件 token 与二进制 scheme
 - [x] Task 12: 打通 Document Picker 与 iPad ScoreFileGateway
 - [x] Task 13: 组合 iPad IndexedDB Library、Gateway 与 Viewer session
-- [ ] Task 14: 建立 Simulator 单文件导入到 Viewer 的 smoke test
+- [x] Task 14: 建立 Simulator 单文件导入到 Viewer 的 smoke test
 
 ### Checkpoint B: Core Vertical Slice
 
-- [ ] GP 与 MusicXML 各至少一份 fixture 能从系统选择语义进入 IndexedDB 并打开共享 Viewer。
-- [ ] JavaScript、route、日志和诊断均看不到绝对路径或 security-scoped URL。
-- [ ] token 成功、取消、过期、重复消费与 Shell 销毁行为都有自动化证据。
-- [ ] `pnpm verify:fast && pnpm ipad:verify` 通过。
+- [x] GP 与 MusicXML 各至少一份 fixture 能从系统选择语义进入 IndexedDB 并打开共享 Viewer。
+- [x] JavaScript、route、日志和诊断均看不到绝对路径或 security-scoped URL。
+- [x] token 成功、取消、过期、重复消费与 Shell 销毁行为都有自动化证据。
+- [x] `pnpm verify:fast && pnpm ipad:verify` 通过。
 
 ### Phase 3: Playback Lifecycle and Recovery
 

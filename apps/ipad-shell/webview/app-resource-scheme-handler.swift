@@ -7,13 +7,53 @@ final class AppResourceSchemeHandler: NSObject, WKURLSchemeHandler {
     static let entryURL = URL(string: "\(scheme)://\(host)/index.html")!
 
     private let resolver: AppResourceResolver
+    private let binaryService: BinaryDataService?
     var onRequest: ((String) -> Void)?
 
-    init(rootURL: URL) {
+    init(rootURL: URL, binaryService: BinaryDataService? = nil) {
         resolver = AppResourceResolver(rootURL: rootURL)
+        self.binaryService = binaryService
     }
 
     func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
+        if
+            let url = urlSchemeTask.request.url,
+            let token = restrictedDataToken(from: url),
+            let binaryService
+        {
+            #if DEBUG
+            UITestImportStage.shared.value = "DATA_REQUESTED"
+            #endif
+            Task { @MainActor in
+                do {
+                    let value = try await binaryService.readToken(token)
+                    guard let response = HTTPURLResponse(
+                        url: url,
+                        statusCode: 200,
+                        httpVersion: "HTTP/1.1",
+                        headerFields: [
+                            "Content-Length": String(value.expectedContentLength),
+                            "Content-Type": value.mimeType,
+                            "Cache-Control": "no-store",
+                        ]
+                    ) else {
+                        throw resourceError("RESOURCE_RESPONSE_INVALID")
+                    }
+                    urlSchemeTask.didReceive(response)
+                    urlSchemeTask.didReceive(value.data)
+                    urlSchemeTask.didFinish()
+                    #if DEBUG
+                    UITestImportStage.shared.value = "BYTES_SERVED"
+                    #endif
+                } catch {
+                    #if DEBUG
+                    UITestImportStage.shared.value = "DATA_FAILED"
+                    #endif
+                    urlSchemeTask.didFailWithError(error)
+                }
+            }
+            return
+        }
         do {
             let fileURL = try resolver.resolve(urlSchemeTask.request.url)
             onRequest?(try requireURL(urlSchemeTask.request.url).path)
@@ -33,6 +73,26 @@ final class AppResourceSchemeHandler: NSObject, WKURLSchemeHandler {
     }
 
     func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {}
+
+    private func restrictedDataToken(from url: URL) -> String? {
+        guard
+            url.scheme == Self.scheme,
+            url.host == Self.host,
+            url.query == nil,
+            url.fragment == nil
+        else {
+            return nil
+        }
+        let components = url.path.split(separator: "/", omittingEmptySubsequences: true)
+        guard components.count == 2, components[0] == "__data" else {
+            return nil
+        }
+        let token = String(components[1])
+        guard UUID(uuidString: token) != nil, token == token.lowercased() else {
+            return nil
+        }
+        return token
+    }
 }
 
 struct AppResourceResolver {

@@ -407,14 +407,14 @@ iPad Gateway 和 GP/MusicXML adapters，并挂载同一个 `mountViewerApp`。
 
 **Acceptance criteria:**
 
-- [ ] GP 与 MusicXML fixtures 都显示谱面；刷新/重建 WebView 后可从 IndexedDB 再打开。
-- [ ] 重复导入同一内容打开已有 Library Score，不新增记录。
-- [ ] 测试失败保留结构化阶段信息，不记录路径或曲谱内容。
+- [x] GP 与 MusicXML fixtures 都显示谱面；刷新/重建 WebView 后可从 IndexedDB 再打开。
+- [x] 重复导入同一内容打开已有 Library Score，不新增记录。
+- [x] 测试失败保留结构化阶段信息，不记录路径或曲谱内容。
 
 **Verification:**
 
-- [ ] `pnpm ipad:test -- --only-testing ZupulseUITests/ImportViewerTests`
-- [ ] `pnpm ipad:verify`
+- [x] `pnpm ipad:test -- --only-testing ZupulseUITests/ImportViewerTests`
+- [x] `pnpm ipad:verify`
 
 **Dependencies:** Task 10, Task 13
 

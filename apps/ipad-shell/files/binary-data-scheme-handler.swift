@@ -69,7 +69,17 @@ struct BinaryDataService: Sendable {
     }
 
     func read(_ url: URL) async throws -> BinaryDataResponse {
-        let entry = try await store.consume(resolver.token(from: url))
+        try await readToken(resolver.token(from: url))
+    }
+
+    func readToken(_ token: String) async throws -> BinaryDataResponse {
+        guard
+            UUID(uuidString: token) != nil,
+            token == token.lowercased()
+        else {
+            throw binaryDataError("BINARY_TOKEN_INVALID")
+        }
+        let entry = try await store.consume(token)
         let stopAccessing = securityScope.startAccessing(entry.url)
         defer { stopAccessing() }
         try Task.checkCancellation()
@@ -98,19 +108,26 @@ final class BinaryDataSchemeHandler: NSObject, WKURLSchemeHandler {
 
     func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
         let identifier = ObjectIdentifier(urlSchemeTask)
-        let task = Task { [weak self] in
+        let task = Task { @MainActor [weak self] in
             do {
                 guard let url = urlSchemeTask.request.url else {
                     throw binaryDataError("BINARY_URL_INVALID")
                 }
                 let value = try await service.read(url)
                 try Task.checkCancellation()
-                let response = URLResponse(
+                guard let response = HTTPURLResponse(
                     url: url,
-                    mimeType: value.mimeType,
-                    expectedContentLength: value.expectedContentLength,
-                    textEncodingName: nil
-                )
+                    statusCode: 200,
+                    httpVersion: "HTTP/1.1",
+                    headerFields: [
+                        "Access-Control-Allow-Origin": "zupulse://app",
+                        "Content-Length": String(value.expectedContentLength),
+                        "Content-Type": value.mimeType,
+                        "Cache-Control": "no-store",
+                    ]
+                ) else {
+                    throw binaryDataError("BINARY_RESPONSE_INVALID")
+                }
                 urlSchemeTask.didReceive(response)
                 urlSchemeTask.didReceive(value.data)
                 urlSchemeTask.didFinish()

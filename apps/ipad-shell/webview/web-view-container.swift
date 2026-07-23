@@ -24,27 +24,79 @@ struct WebViewContainer: UIViewRepresentable {
         init(entryURL: URL) {
             let configuration = WKWebViewConfiguration()
             configuration.defaultWebpagePreferences.allowsContentJavaScript = true
-            resourceHandler = AppResourceSchemeHandler(
-                rootURL: entryURL.deletingLastPathComponent()
-            )
+            #if DEBUG
+            let environment = ProcessInfo.processInfo.environment
+            if environment["ZUPULSE_UI_TEST_FIXTURE"] != nil {
+                configuration.userContentController.addUserScript(
+                    WKUserScript(
+                        source: """
+                        (() => {
+                          const timer = setInterval(() => {
+                            const buttons = [...document.querySelectorAll("button")];
+                            const button = buttons.find(
+                              (candidate) =>
+                                !candidate.disabled &&
+                                ["导入第一份曲谱", "导入曲谱"].includes(candidate.textContent?.trim() ?? "")
+                            );
+                            if (!button) return;
+                            clearInterval(timer);
+                            button.click();
+                          }, 100);
+                        })();
+                        """,
+                        injectionTime: .atDocumentEnd,
+                        forMainFrameOnly: true
+                    )
+                )
+            }
+            if environment["ZUPULSE_UI_TEST_OPEN_FIRST"] == "1" {
+                configuration.userContentController.addUserScript(
+                    WKUserScript(
+                        source: """
+                        (() => {
+                          const timer = setInterval(() => {
+                            const score = document.querySelector('li[role="button"]');
+                            if (!score) return;
+                            clearInterval(timer);
+                            score.click();
+                          }, 100);
+                        })();
+                        """,
+                        injectionTime: .atDocumentEnd,
+                        forMainFrameOnly: true
+                    )
+                )
+            }
+            #endif
             fileTokens = FileTokenStore()
+            let binaryService = BinaryDataService(store: fileTokens)
+            resourceHandler = AppResourceSchemeHandler(
+                rootURL: entryURL.deletingLastPathComponent(),
+                binaryService: binaryService
+            )
             configuration.setURLSchemeHandler(
                 resourceHandler,
                 forURLScheme: AppResourceSchemeHandler.scheme
             )
             configuration.setURLSchemeHandler(
-                BinaryDataSchemeHandler(service: BinaryDataService(store: fileTokens)),
+                BinaryDataSchemeHandler(service: binaryService),
                 forURLScheme: BinaryDataSchemeHandler.scheme
             )
             webView = WKWebView(frame: .zero, configuration: configuration)
             weak var weakWebView = webView
-            let fileSelector = DocumentPickerCoordinator {
-                var presenter = weakWebView?.window?.rootViewController
-                while let presented = presenter?.presentedViewController {
-                    presenter = presented
+            let systemFileSelector = DocumentPickerCoordinator {
+                var viewController = weakWebView?.window?.rootViewController
+                while let presented = viewController?.presentedViewController {
+                    viewController = presented
                 }
-                return presenter
+                return viewController
             }
+            #if DEBUG
+            let fileSelector: any DocumentPicking =
+                bundledFixtureDocumentPicker() ?? systemFileSelector
+            #else
+            let fileSelector: any DocumentPicking = systemFileSelector
+            #endif
             let messageHandler = BridgeMessageHandler(
                 router: try? BridgeRouter.load(
                     fileSelector: fileSelector,

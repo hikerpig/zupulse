@@ -14,7 +14,7 @@ export type IpadFileSelectionClient = {
 export class IpadScoreFileGateway implements ScoreFileGateway {
   constructor(
     private readonly client: IpadFileSelectionClient,
-    private readonly fetchBytes: typeof fetch = fetch,
+    private readonly fetchBytes?: typeof fetch,
   ) {}
 
   async selectForImport(options: { multiple: boolean }): Promise<readonly ScoreImportSource[]> {
@@ -23,9 +23,8 @@ export class IpadScoreFileGateway implements ScoreFileGateway {
     return result.files.map((file) => ({
       fileName: file.fileName,
       readBytes: async () => {
-        const response = await this.fetchBytes(`zupulse-data://file/${file.fileToken}`);
-        if (!response.ok && response.status !== 0) throw new Error("IPAD_FILE_READ_FAILED");
-        const bytes = new Uint8Array(await response.arrayBuffer());
+        const url = `/__data/${file.fileToken}`;
+        const bytes = this.fetchBytes ? await readWithFetch(this.fetchBytes, url) : await readWithXmlHttpRequest(url);
         if (bytes.byteLength !== file.sizeBytes) throw new Error("IPAD_FILE_SIZE_MISMATCH");
         return bytes;
       },
@@ -35,4 +34,27 @@ export class IpadScoreFileGateway implements ScoreFileGateway {
   async saveExport(_file: StoredScoreFile): Promise<"cancelled"> {
     return "cancelled";
   }
+}
+
+async function readWithFetch(fetchBytes: typeof fetch, url: string): Promise<Uint8Array> {
+  const response = await fetchBytes(url);
+  if (!response.ok && response.status !== 0) throw new Error("IPAD_FILE_READ_FAILED");
+  return new Uint8Array(await response.arrayBuffer());
+}
+
+function readWithXmlHttpRequest(url: string): Promise<Uint8Array> {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("GET", url);
+    request.responseType = "arraybuffer";
+    request.onload = () => {
+      if (request.status !== 0 && (request.status < 200 || request.status >= 300)) {
+        reject(new Error("IPAD_FILE_READ_FAILED"));
+        return;
+      }
+      resolve(new Uint8Array(request.response as ArrayBuffer));
+    };
+    request.onerror = () => reject(new Error("IPAD_FILE_READ_FAILED"));
+    request.send();
+  });
 }

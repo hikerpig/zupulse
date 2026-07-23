@@ -7,6 +7,41 @@ protocol DocumentPicking: Sendable {
     func select(multiple: Bool) async throws -> [URL]?
 }
 
+#if DEBUG
+struct BundledFixtureDocumentPicker: DocumentPicking {
+    let bundle: Bundle
+    let resourceName: String
+
+    @MainActor
+    func select(multiple: Bool) async throws -> [URL]? {
+        UITestImportStage.shared.value = "SELECTED"
+        guard
+            let separator = resourceName.lastIndex(of: "."),
+            let url = bundle.url(
+                forResource: String(resourceName[..<separator]),
+                withExtension: String(resourceName[resourceName.index(after: separator)...])
+            )
+        else {
+            throw documentPickerError("UI_TEST_FIXTURE_UNAVAILABLE")
+        }
+        return [url]
+    }
+}
+
+func bundledFixtureDocumentPicker(
+    bundle: Bundle = .main,
+    environment: [String: String] = ProcessInfo.processInfo.environment
+) -> (any DocumentPicking)? {
+    guard let resourceName = environment["ZUPULSE_UI_TEST_FIXTURE"] else {
+        return nil
+    }
+    guard !resourceName.contains("/"), !resourceName.contains("\\") else {
+        return nil
+    }
+    return BundledFixtureDocumentPicker(bundle: bundle, resourceName: resourceName)
+}
+#endif
+
 @MainActor
 final class DocumentPickerCoordinator: NSObject, DocumentPicking, UIDocumentPickerDelegate {
     private let presenter: @MainActor () -> UIViewController?

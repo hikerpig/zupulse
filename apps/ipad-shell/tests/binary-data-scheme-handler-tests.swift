@@ -1,8 +1,76 @@
 import Foundation
+import UIKit
+import WebKit
 import XCTest
 @testable import Zupulse
 
 final class BinarySchemeTests: XCTestCase {
+    @MainActor
+    func testWebViewFetchConsumesTokenAcrossCustomSchemeOrigins() async throws {
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(UUID().uuidString).musicxml")
+        try Data([1, 2, 3]).write(to: fileURL)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+        let store = FileTokenStore()
+        let token = try await store.issue(
+            url: fileURL,
+            fileName: fileURL.lastPathComponent,
+            sizeBytes: 3
+        )
+        let configuration = WKWebViewConfiguration()
+        let rootURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: rootURL, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: rootURL) }
+        try Data(
+            """
+            <!doctype html>
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src 'self' zupulse:">
+            <title>fixture</title>
+            """.utf8
+        ).write(
+            to: rootURL.appendingPathComponent("index.html")
+        )
+        configuration.setURLSchemeHandler(
+            AppResourceSchemeHandler(
+                rootURL: rootURL,
+                binaryService: BinaryDataService(store: store)
+            ),
+            forURLScheme: AppResourceSchemeHandler.scheme
+        )
+        let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 320, height: 480), configuration: configuration)
+        let viewController = UIViewController()
+        viewController.view.addSubview(webView)
+        let window = UIWindow(frame: webView.frame)
+        window.rootViewController = viewController
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true }
+        let navigation = NavigationSpy()
+        let loaded = expectation(description: "custom-scheme page loaded")
+        navigation.onFinish = { loaded.fulfill() }
+        webView.navigationDelegate = navigation
+        webView.load(URLRequest(url: AppResourceSchemeHandler.entryURL))
+        await fulfillment(of: [loaded], timeout: 15)
+        let result: Any?
+        do {
+            result = try await webView.callAsyncJavaScript(
+                """
+                const response = await fetch("/__data/\(token)");
+                return Array.from(new Uint8Array(await response.arrayBuffer()));
+                """,
+                arguments: [:],
+                in: nil,
+                contentWorld: .page
+            )
+        } catch {
+            let tokenCount = await store.outstandingCount
+            XCTFail("WKWEBVIEW_FETCH_FAILED:tokens=\(tokenCount)")
+            return
+        }
+
+        XCTAssertEqual(result as? [Int], [1, 2, 3])
+    }
+
     func testAcceptsOnlyAnExactSingleTokenURL() throws {
         let resolver = BinaryDataRequestResolver()
         let token = UUID().uuidString.lowercased()
@@ -92,6 +160,15 @@ final class BinarySchemeTests: XCTestCase {
         } catch is CancellationError {
             XCTAssertEqual(access.stopCount, 1)
         }
+    }
+}
+
+@MainActor
+private final class NavigationSpy: NSObject, WKNavigationDelegate {
+    var onFinish: (() -> Void)?
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        onFinish?()
     }
 }
 

@@ -35,7 +35,9 @@
     "desktop:start": "pnpm --filter @zupulse/desktop-shell start",
     "desktop:test:e2e": "pnpm --filter @zupulse/desktop-shell test:e2e",
     "desktop:package": "pnpm --filter @zupulse/desktop-shell package",
-    "ipad:web:build": "node apps/ipad-shell/scripts/build-web-assets.mjs"
+    "ipad:web:build": "node apps/ipad-shell/scripts/build-web-assets.mjs",
+    "ipad:build": "xcodebuild -project apps/ipad-shell/Zupulse.xcodeproj -scheme Zupulse -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath apps/ipad-shell/dist/DerivedData build CODE_SIGNING_ALLOWED=NO",
+    "ipad:test": "xcodebuild -project apps/ipad-shell/Zupulse.xcodeproj -scheme Zupulse -configuration Debug -destination 'platform=iOS Simulator,name=iPad Pro 11-inch (M5),OS=26.2' -derivedDataPath apps/ipad-shell/dist/DerivedData test CODE_SIGNING_ALLOWED=NO"
   },
   "workspaces": [
     "packages/*",

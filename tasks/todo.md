@@ -1,6 +1,6 @@
 # iPad Practice Player Task List
 
-> Progress: Tasks 1–2 completed and verified on 2026-07-22.
+> Progress: Tasks 1–3 completed and verified through 2026-07-23.
 
 ## Task 1: 建立 iPad Web workspace
 
@@ -65,20 +65,23 @@
 
 ## Task 3: 建立最小 SwiftUI/Xcode App Shell
 
+**Status:** Completed (2026-07-23)
+
 **Description:** 创建 iPadOS 17 App target、Unit Test target 和单个持久 WKWebView 容器。Build Phase
 调用 Task 2 的统一脚本；首版只显示 bundle 页面或明确启动错误，不实现业务 UI。
 
 **Acceptance criteria:**
 
-- [ ] Generic iOS Simulator 构建成功，App 生命周期只持有一个 WKWebView 实例。
-- [ ] Build Phase 在 Web 资源缺失时失败，不使用陈旧 dist。
-- [ ] Bundle ID、deployment target、Release/Debug 配置明确；Release 不含本地 dev-server 开关。
-- [ ] 根 `ipad:build` 与 `ipad:test` 命令封装确定性的 `xcodebuild` destination 和 DerivedData 位置。
+- [x] Generic iOS Simulator 构建成功，App 生命周期只持有一个 WKWebView 实例。
+- [x] Build Phase 在 Web 资源缺失时失败，不使用陈旧 dist。
+- [x] Bundle ID、deployment target、Release/Debug 配置明确；Release 不含本地 dev-server 开关。
+- [x] 根 `ipad:build` 与 `ipad:test` 命令封装确定性的 `xcodebuild` destination 和 DerivedData 位置。
 
 **Verification:**
 
-- [ ] `pnpm ipad:build`
-- [ ] `xcodebuild -project apps/ipad-shell/Zupulse.xcodeproj -scheme Zupulse -showBuildSettings`
+- [x] `pnpm ipad:build`
+- [x] `xcodebuild -project apps/ipad-shell/Zupulse.xcodeproj -scheme Zupulse -showBuildSettings`
+- [x] `pnpm ipad:test`（iPad Pro 11-inch (M5), iOS 26.2）
 
 **Dependencies:** Task 2
 

@@ -1,0 +1,318 @@
+{
+  "schemaVersion": 1,
+  "bridgeVersion": "3.0.0",
+  "requestTypes": ["app.handshake", "app.lifecycleAck", "diagnostics.write", "file.open", "file.select"],
+  "eventTypes": ["app.command", "app.lifecycle"],
+  "envelope": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "bridgeVersion": { "type": "string", "const": "3.0.0" },
+      "correlationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+      "type": {
+        "type": "string",
+        "enum": [
+          "app.handshake",
+          "app.lifecycleAck",
+          "diagnostics.write",
+          "file.open",
+          "file.select",
+          "app.command",
+          "app.lifecycle"
+        ]
+      },
+      "payload": {}
+    },
+    "required": ["bridgeVersion", "correlationId", "type", "payload"],
+    "additionalProperties": false
+  },
+  "requests": {
+    "app.handshake": {
+      "type": "object",
+      "properties": {
+        "bridgeVersion": { "type": "string", "const": "3.0.0" },
+        "correlationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "type": { "type": "string", "const": "app.handshake" },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "appVersion": { "type": "string" },
+            "rendererBuildHash": { "type": "string", "minLength": 1, "maxLength": 128 }
+          },
+          "required": ["appVersion", "rendererBuildHash"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["bridgeVersion", "correlationId", "type", "payload"],
+      "additionalProperties": false
+    },
+    "app.lifecycleAck": {
+      "type": "object",
+      "properties": {
+        "bridgeVersion": { "type": "string", "const": "3.0.0" },
+        "correlationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "type": { "type": "string", "const": "app.lifecycleAck" },
+        "payload": {
+          "type": "object",
+          "properties": { "state": { "type": "string", "enum": ["suspend", "prepare-close"] } },
+          "required": ["state"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["bridgeVersion", "correlationId", "type", "payload"],
+      "additionalProperties": false
+    },
+    "diagnostics.write": {
+      "type": "object",
+      "properties": {
+        "bridgeVersion": { "type": "string", "const": "3.0.0" },
+        "correlationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "type": { "type": "string", "const": "diagnostics.write" },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "code": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "durationMs": { "type": "number", "minimum": 0 },
+            "contentHashPrefix": { "type": "string", "maxLength": 16 }
+          },
+          "required": ["code"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["bridgeVersion", "correlationId", "type", "payload"],
+      "additionalProperties": false
+    },
+    "file.open": {
+      "type": "object",
+      "properties": {
+        "bridgeVersion": { "type": "string", "const": "3.0.0" },
+        "correlationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "type": { "type": "string", "const": "file.open" },
+        "payload": { "type": "object", "properties": {}, "additionalProperties": false }
+      },
+      "required": ["bridgeVersion", "correlationId", "type", "payload"],
+      "additionalProperties": false
+    },
+    "file.select": {
+      "type": "object",
+      "properties": {
+        "bridgeVersion": { "type": "string", "const": "3.0.0" },
+        "correlationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "type": { "type": "string", "const": "file.select" },
+        "payload": {
+          "type": "object",
+          "properties": { "multiple": { "type": "boolean" } },
+          "required": ["multiple"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["bridgeVersion", "correlationId", "type", "payload"],
+      "additionalProperties": false
+    }
+  },
+  "responses": {
+    "app.handshake": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "appVersion": { "type": "string" },
+        "bridgeVersion": { "type": "string", "const": "3.0.0" },
+        "rendererBuildHash": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "fileAccess": {
+              "type": "object",
+              "properties": {
+                "openExternalFile": { "type": "boolean" },
+                "persistentFileReferences": { "type": "boolean" },
+                "localLibraryImport": { "type": "boolean" }
+              },
+              "required": ["openExternalFile", "persistentFileReferences", "localLibraryImport"],
+              "additionalProperties": false
+            },
+            "harmonyAnalysis": { "type": "boolean" },
+            "storage": {
+              "type": "object",
+              "properties": { "sqliteIndex": { "type": "boolean" }, "sidecarPayload": { "type": "boolean" } },
+              "required": ["sqliteIndex", "sidecarPayload"],
+              "additionalProperties": false
+            },
+            "sync": {
+              "type": "object",
+              "properties": {
+                "available": { "type": "boolean" },
+                "provider": { "type": "string", "enum": ["none", "custom"] }
+              },
+              "required": ["available", "provider"],
+              "additionalProperties": false
+            },
+            "audio": {
+              "type": "object",
+              "properties": { "webAudio": { "type": "boolean" }, "nativeBridge": { "type": "boolean" } },
+              "required": ["webAudio", "nativeBridge"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["fileAccess", "storage", "sync", "audio"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["appVersion", "bridgeVersion", "rendererBuildHash", "capabilities"],
+      "additionalProperties": false
+    },
+    "app.lifecycleAck": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "diagnostics.write": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "file.open": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": { "status": { "type": "string", "const": "cancelled" } },
+          "required": ["status"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": { "type": "string", "const": "opened" },
+            "fileToken": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "fileName": { "type": "string", "minLength": 1 },
+            "sizeBytes": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+          },
+          "required": ["status", "fileToken", "fileName", "sizeBytes"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "file.select": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": { "status": { "type": "string", "const": "cancelled" } },
+          "required": ["status"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": { "type": "string", "const": "selected" },
+            "files": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "fileToken": { "type": "string", "minLength": 1, "maxLength": 128 },
+                  "fileName": { "type": "string", "minLength": 1 },
+                  "sizeBytes": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                },
+                "required": ["fileToken", "fileName", "sizeBytes"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["status", "files"],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "events": {
+    "app.command": {
+      "type": "object",
+      "properties": {
+        "bridgeVersion": { "type": "string", "const": "3.0.0" },
+        "correlationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "type": { "type": "string", "const": "app.command" },
+        "payload": {
+          "type": "object",
+          "properties": { "command": { "type": "string", "enum": ["open-score", "toggle-playback"] } },
+          "required": ["command"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["bridgeVersion", "correlationId", "type", "payload"],
+      "additionalProperties": false
+    },
+    "app.lifecycle": {
+      "type": "object",
+      "properties": {
+        "bridgeVersion": { "type": "string", "const": "3.0.0" },
+        "correlationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "type": { "type": "string", "const": "app.lifecycle" },
+        "payload": {
+          "type": "object",
+          "properties": { "state": { "type": "string", "enum": ["suspend", "prepare-close"] } },
+          "required": ["state"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["bridgeVersion", "correlationId", "type", "payload"],
+      "additionalProperties": false
+    }
+  },
+  "capabilities": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "fileAccess": {
+        "type": "object",
+        "properties": {
+          "openExternalFile": { "type": "boolean" },
+          "persistentFileReferences": { "type": "boolean" },
+          "localLibraryImport": { "type": "boolean" }
+        },
+        "required": ["openExternalFile", "persistentFileReferences", "localLibraryImport"],
+        "additionalProperties": false
+      },
+      "harmonyAnalysis": { "type": "boolean" },
+      "storage": {
+        "type": "object",
+        "properties": { "sqliteIndex": { "type": "boolean" }, "sidecarPayload": { "type": "boolean" } },
+        "required": ["sqliteIndex", "sidecarPayload"],
+        "additionalProperties": false
+      },
+      "sync": {
+        "type": "object",
+        "properties": {
+          "available": { "type": "boolean" },
+          "provider": { "type": "string", "enum": ["none", "custom"] }
+        },
+        "required": ["available", "provider"],
+        "additionalProperties": false
+      },
+      "audio": {
+        "type": "object",
+        "properties": { "webAudio": { "type": "boolean" }, "nativeBridge": { "type": "boolean" } },
+        "required": ["webAudio", "nativeBridge"],
+        "additionalProperties": false
+      }
+    },
+    "required": ["fileAccess", "storage", "sync", "audio"],
+    "additionalProperties": false
+  },
+  "error": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "code": { "type": "string", "minLength": 1 },
+      "message": { "type": "string" },
+      "recoverable": { "type": "boolean" },
+      "details": {}
+    },
+    "required": ["code", "message", "recoverable"],
+    "additionalProperties": false
+  }
+}

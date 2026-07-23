@@ -209,6 +209,35 @@ export const bridgeEventSchema = z.discriminatedUnion("type", [
   ),
 ]);
 
+export const IPAD_BRIDGE_REQUEST_TYPES = [
+  "app.handshake",
+  "app.lifecycleAck",
+  "diagnostics.write",
+  "file.open",
+  "file.select",
+] as const satisfies readonly BridgeRequest["type"][];
+export const IPAD_BRIDGE_EVENT_TYPES = [
+  "app.command",
+  "app.lifecycle",
+] as const satisfies readonly BridgeEvent["type"][];
+
+export const ipadBridgeRequestSchema = bridgeRequestSchema.refine(
+  (request) => (IPAD_BRIDGE_REQUEST_TYPES as readonly string[]).includes(request.type),
+  { message: "Unsupported iPad Bridge request type" },
+);
+export const ipadBridgeEventSchema = bridgeEventSchema.refine(
+  (event) => (IPAD_BRIDGE_EVENT_TYPES as readonly string[]).includes(event.type),
+  { message: "Unsupported iPad Bridge event type" },
+);
+export const ipadBridgeEnvelopeSchema = z
+  .object({
+    bridgeVersion: z.literal(BRIDGE_SCHEMA_VERSION),
+    correlationId: idSchema,
+    type: z.enum([...IPAD_BRIDGE_REQUEST_TYPES, ...IPAD_BRIDGE_EVENT_TYPES]),
+    payload: z.unknown(),
+  })
+  .strict();
+
 export const bridgeResponseSchemas = {
   "app.handshake": z
     .object({

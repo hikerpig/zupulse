@@ -1,0 +1,92 @@
+{
+  "requests": [
+    {
+      "name": "valid handshake",
+      "accepted": true,
+      "value": {
+        "bridgeVersion": "3.0.0",
+        "correlationId": "fixture-handshake",
+        "type": "app.handshake",
+        "payload": {
+          "appVersion": "0.1.0",
+          "rendererBuildHash": "fixture-build"
+        }
+      }
+    },
+    {
+      "name": "unknown envelope field",
+      "accepted": false,
+      "value": {
+        "bridgeVersion": "3.0.0",
+        "correlationId": "fixture-extra",
+        "type": "app.handshake",
+        "payload": {
+          "appVersion": "0.1.0",
+          "rendererBuildHash": "fixture-build"
+        },
+        "unexpected": true
+      }
+    },
+    {
+      "name": "unknown bridge version",
+      "accepted": false,
+      "value": {
+        "bridgeVersion": "999.0.0",
+        "correlationId": "fixture-version",
+        "type": "app.handshake",
+        "payload": {
+          "appVersion": "0.1.0",
+          "rendererBuildHash": "fixture-build"
+        }
+      }
+    },
+    {
+      "name": "unknown method",
+      "accepted": false,
+      "value": {
+        "bridgeVersion": "3.0.0",
+        "correlationId": "fixture-method",
+        "type": "unknown.method",
+        "payload": {}
+      }
+    },
+    {
+      "name": "missing payload field",
+      "accepted": false,
+      "value": {
+        "bridgeVersion": "3.0.0",
+        "correlationId": "fixture-missing",
+        "type": "app.handshake",
+        "payload": {
+          "appVersion": "0.1.0"
+        }
+      }
+    },
+    {
+      "name": "empty correlation id",
+      "accepted": false,
+      "value": {
+        "bridgeVersion": "3.0.0",
+        "correlationId": "",
+        "type": "app.handshake",
+        "payload": {
+          "appVersion": "0.1.0",
+          "rendererBuildHash": "fixture-build"
+        }
+      }
+    },
+    {
+      "name": "overlong correlation id",
+      "accepted": false,
+      "value": {
+        "bridgeVersion": "3.0.0",
+        "correlationId": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "type": "app.handshake",
+        "payload": {
+          "appVersion": "0.1.0",
+          "rendererBuildHash": "fixture-build"
+        }
+      }
+    }
+  ]
+}

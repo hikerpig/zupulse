@@ -1,6 +1,6 @@
 # iPad Practice Player Task List
 
-> Progress: Tasks 1–3 completed and verified through 2026-07-23.
+> Progress: Tasks 1–4 completed and verified through 2026-07-23.
 
 ## Task 1: 建立 iPad Web workspace
 
@@ -97,20 +97,22 @@
 
 ## Task 4: 从 Zod 生成 transport-neutral Bridge contract
 
+**Status:** Completed (2026-07-23)
+
 **Description:** 将现有 Bridge schema 中 iPad 控制面可传输的 JSON 子集导出为确定性 manifest，并
 建立 valid/invalid fixtures。二进制 `Uint8Array` 继续留在宿主内类型，不能出现在 iPad JSON
 contract。
 
 **Acceptance criteria:**
 
-- [ ] manifest 包含 version、method/event discriminators、严格字段、限制和 capability。
-- [ ] fixtures 覆盖未知字段/版本/方法、缺失字段、越界字符串与 iPad 支持的 handshake。
-- [ ] 生成两次字节一致，schema 改动未重生成时测试失败。
+- [x] manifest 包含 version、method/event discriminators、严格字段、限制和 capability。
+- [x] fixtures 覆盖未知字段/版本/方法、缺失字段、越界字符串与 iPad 支持的 handshake。
+- [x] 生成两次字节一致，schema 改动未重生成时测试失败。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-core/src/bridge`
-- [ ] `pnpm check:arch`
+- [x] `pnpm vitest run packages/web-core/src/bridge`
+- [x] `pnpm check:arch`
 
 **Dependencies:** Task 1
 

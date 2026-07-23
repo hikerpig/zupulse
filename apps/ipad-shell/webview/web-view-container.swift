@@ -20,12 +20,22 @@ struct WebViewContainer: UIViewRepresentable {
         init(entryURL: URL) {
             let configuration = WKWebViewConfiguration()
             configuration.defaultWebpagePreferences.allowsContentJavaScript = true
+            let resourceHandler = AppResourceSchemeHandler(
+                rootURL: entryURL.deletingLastPathComponent()
+            )
+            configuration.setURLSchemeHandler(
+                resourceHandler,
+                forURLScheme: AppResourceSchemeHandler.scheme
+            )
+            let messageHandler = BridgeMessageHandler(router: try? BridgeRouter.load())
+            configuration.userContentController.addScriptMessageHandler(
+                messageHandler,
+                contentWorld: .page,
+                name: BridgeMessageHandler.name
+            )
 
             webView = WKWebView(frame: .zero, configuration: configuration)
-            webView.loadFileURL(
-                entryURL,
-                allowingReadAccessTo: entryURL.deletingLastPathComponent()
-            )
+            webView.load(URLRequest(url: AppResourceSchemeHandler.entryURL))
         }
     }
 }

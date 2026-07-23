@@ -1,6 +1,6 @@
 # iPad Practice Player Task List
 
-> Progress: Tasks 1–5 completed and verified through 2026-07-23.
+> Progress: Tasks 1–6 completed and verified through 2026-07-24.
 
 ## Task 1: 建立 iPad Web workspace
 
@@ -157,20 +157,22 @@ Task 4 的同一 fixture 集。此任务只解析和拒绝，不路由真实能�
 
 ## Task 6: 打通 Web/Swift handshake 与启动错误
 
+**Status:** Completed (2026-07-24)
+
 **Description:** 实现单一 WKWebView RPC transport 的最小请求/响应链，让 Web entry 在挂载 React 前
 验证 App version、Web build hash 与 Bridge version；不兼容时显示可测试的启动错误。
 
 **Acceptance criteria:**
 
-- [ ] handshake 成功后才挂载应用；unknown/mismatch/timeout 都不进入业务 UI。
-- [ ] correlation ID 精确配对，迟到响应在 transport 销毁后被忽略。
-- [ ] transport 只有一个注册 handler，不为 handshake 单独创建全局通道。
+- [x] handshake 成功后才挂载应用；unknown/mismatch/timeout 都不进入业务 UI。
+- [x] correlation ID 精确配对，迟到响应在 transport 销毁后被忽略。
+- [x] transport 只有一个注册 handler，不为 handshake 单独创建全局通道。
 
 **Verification:**
 
-- [ ] `pnpm vitest run apps/ipad-shell/web/src/__tests__/ipad-bridge-transport.test.ts`
-- [ ] `pnpm ipad:test -- --only-testing ZupulseTests/BridgeRouterTests`
-- [ ] `pnpm ipad:build`
+- [x] `pnpm vitest run apps/ipad-shell/web/src/__tests__/ipad-bridge-transport.test.ts`
+- [x] `pnpm ipad:test -- --only-testing ZupulseTests/BridgeRouterTests`
+- [x] `pnpm ipad:build`
 
 **Dependencies:** Task 5
 

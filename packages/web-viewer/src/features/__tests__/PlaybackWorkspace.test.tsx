@@ -68,6 +68,34 @@ describe("PlaybackWorkspace transport bar", () => {
     expect(dispatch).toHaveBeenCalledWith({ type: "set-loop-enabled", enabled: true });
   });
 
+  it("keeps the viewer session and playback facts intact across container resizes", () => {
+    const dispatch = vi.fn(async () => undefined);
+    const destroy = vi.fn(async () => undefined);
+    const playbackState = state("playing");
+    playbackState.activeLoopId = "loop-1";
+    playbackState.loops = [loopRegion()];
+    playbackState.looping = true;
+    render(
+      <PlaybackWorkspace session={session(playbackState, dispatch, destroy)}>
+        <a href="#/library">返回曲谱库</a>
+      </PlaybackWorkspace>,
+    );
+
+    const playButton = screen.getByRole("button", { name: "暂停" });
+    const loopButton = screen.getByRole("button", { name: "关闭循环" });
+    for (const width of [1194, 834, 597]) {
+      Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
+      fireEvent(window, new Event("resize"));
+    }
+
+    expect(screen.getByRole("button", { name: "暂停" })).toBe(playButton);
+    expect(screen.getByRole("button", { name: "关闭循环" })).toBe(loopButton);
+    expect(loopButton.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("link", { name: "返回曲谱库" }).getAttribute("href")).toBe("#/library");
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(destroy).not.toHaveBeenCalled();
+  });
+
   it("opens practice settings when loop has no saved region", async () => {
     render(<PlaybackWorkspace session={session(state("paused"))}>乐谱</PlaybackWorkspace>);
 
@@ -114,7 +142,11 @@ describe("PlaybackWorkspace transport bar", () => {
   });
 });
 
-function session(playbackState: PlaybackState, dispatch = vi.fn(async () => undefined)): ViewerSessionHandle {
+function session(
+  playbackState: PlaybackState,
+  dispatch = vi.fn(async () => undefined),
+  destroy = vi.fn(async () => undefined),
+): ViewerSessionHandle {
   return {
     playback: {
       getState: () => playbackState,
@@ -124,7 +156,7 @@ function session(playbackState: PlaybackState, dispatch = vi.fn(async () => unde
     },
     togglePlayback: async () => undefined,
     pauseAndFlush: async () => undefined,
-    destroy: async () => undefined,
+    destroy,
   };
 }
 

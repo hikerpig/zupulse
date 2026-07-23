@@ -52,11 +52,25 @@ final class BridgeRouterTests: XCTestCase {
             Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "Web")
         )
         let coordinator = WebViewContainer.Coordinator(entryURL: entryURL)
+        coordinator.webView.frame = CGRect(x: 0, y: 0, width: 834, height: 1194)
         try await Task.sleep(for: .seconds(3))
 
         let bodyText = try await coordinator.webView.evaluateJavaScript("document.body.innerText") as? String
+        let diagnostics = try await coordinator.webView.evaluateJavaScript(
+            """
+            JSON.stringify({
+              readyState: document.readyState,
+              location: location.href,
+              bodyHtml: document.body.innerHTML.slice(0, 500),
+              rootChildren: document.getElementById("root")?.childElementCount ?? -1
+            })
+            """
+        ) as? String
 
-        XCTAssertFalse(try XCTUnwrap(bodyText).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        XCTAssertFalse(
+            try XCTUnwrap(bodyText).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            diagnostics ?? "missing diagnostics"
+        )
         XCTAssertFalse(try XCTUnwrap(bodyText).contains("无法启动逐拍"), bodyText ?? "missing body text")
     }
 

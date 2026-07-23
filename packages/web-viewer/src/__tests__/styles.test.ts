@@ -97,27 +97,40 @@ describe("alphaTab playback cursor styles", () => {
     expect(css).toMatch(/\.at-selection div\s*{[^}]*background:/s);
   });
 
-  it("contains score scrolling within the desktop viewport and restores mobile document flow", async () => {
-    const [frameCss, appCss, scoreCss, workspaceCss] = await Promise.all([
+  it("uses container-width layouts while keeping one score scroll host and bottom transport", async () => {
+    const [frameCss, appCss, scoreCss, workspaceCss, libraryCss] = await Promise.all([
       source("../app/App.module.css"),
       source("../app/pages/PageShell.module.css"),
       source("../components/ScoreViewer.module.css"),
       source("../features/PlaybackWorkspace.module.css"),
+      source("../features/SheetLibrary.module.css"),
     ]);
 
+    expect(frameCss).toMatch(/\.routeViewport\s*{[^}]*container-type:\s*inline-size;[^}]*container-name:\s*route;/s);
     expect(frameCss).toMatch(/\.appFrame\s*{[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden;/s);
-    expect(appCss).toMatch(/\.appShell\s*{[^}]*height:\s*100%;[^}]*overflow:\s*hidden;/s);
+    expect(frameCss).not.toMatch(/@media \(max-width:/);
+    expect(appCss).toMatch(
+      /\.appShell\s*{[^}]*height:\s*100%;[^}]*overflow:\s*hidden;[^}]*grid-template-rows:\s*auto minmax\(0,\s*1fr\) auto;/s,
+    );
+    expect(appCss).toMatch(/@container route \(max-width:\s*900px\)/);
+    expect(appCss).toMatch(/@container route \(max-width:\s*620px\)/);
+    expect(appCss).not.toMatch(/@media \(max-width:/);
     expect(workspaceCss).toMatch(/\.workspace\s*{[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/s);
+    expect(workspaceCss).toMatch(/\.workspace\s*{[^}]*grid-row:\s*2;/s);
+    expect(workspaceCss).toMatch(/\.transportBar\s*{[^}]*grid-row:\s*3;/s);
+    expect(workspaceCss).toMatch(/@container route \(max-width:\s*900px\)/);
+    expect(workspaceCss).toMatch(/@container route \(max-width:\s*620px\)/);
+    expect(workspaceCss).not.toMatch(/@media \(max-width:/);
     expect(scoreCss).toMatch(/\.stage\s*{[^}]*height:\s*100%;[^}]*overflow:\s*scroll;/s);
     expect(scoreCss).toMatch(/\.frame\s*{[^}]*min-height:\s*0;[^}]*overflow:\s*auto;/s);
     expect(scoreCss).toMatch(/\.viewer\s*{[^}]*height:\s*auto;[^}]*min-height:\s*100%;[^}]*overflow:\s*visible;/s);
     expect(workspaceCss).toMatch(/\.practicePanel\s*{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;/s);
-    expect(appCss).toMatch(
-      /@media \(max-width:\s*960px\)[\s\S]*?\.appShell\s*{[^}]*height:\s*auto;[^}]*overflow:\s*visible;/s,
-    );
-    expect(scoreCss).toMatch(
-      /@media \(max-width:\s*960px\)[\s\S]*?\.stage:not\(\.compact\) \.frame\s*{[^}]*height:\s*auto;[^}]*overflow:\s*visible;/s,
-    );
+    expect(scoreCss).toMatch(/@container route \(max-width:\s*620px\)/);
+    expect(scoreCss).not.toMatch(/@media \(max-width:/);
+    expect(libraryCss).toMatch(/@container route \(max-width:\s*900px\)/);
+    expect(libraryCss).toMatch(/@container route \(max-width:\s*620px\)/);
+    expect(libraryCss).not.toMatch(/@media \(max-width:/);
+    expect(`${appCss}\n${workspaceCss}\n${libraryCss}`).toContain("env(safe-area-inset-bottom)");
   });
 
   it("keeps the public stylesheet limited to common and vendor styles", async () => {
@@ -171,7 +184,9 @@ describe("alphaTab playback cursor styles", () => {
     ]);
 
     expect(workspaceCss).toMatch(/\.workspace\s*{[^}]*display:\s*block;[^}]*padding:\s*12px;/s);
-    expect(workspaceCss).toMatch(/\.transportBar\s*{[^}]*border-bottom:\s*1px solid[^}]*padding:\s*8px 12px;/s);
+    expect(workspaceCss).toMatch(
+      /\.transportBar\s*{[^}]*border-bottom:\s*1px solid[^}]*padding:[^}]*env\(safe-area-inset-bottom\)/s,
+    );
     expect(workspaceCss).toMatch(/\.transportDivider\s*{[^}]*width:\s*1px;[^}]*align-self:\s*stretch;/s);
     expect(workspaceCss).toMatch(/\.practicePanel\s*{[^}]*top:\s*8px;[^}]*right:\s*8px;[^}]*bottom:\s*8px;/s);
     expect(scoreCss).toMatch(/\.viewer\s*{[^}]*background:\s*var\(--bg-score\);/s);

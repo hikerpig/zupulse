@@ -4,14 +4,14 @@
     min-height: 0;
     overflow: hidden;
     display: grid;
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
   }
   .contextBar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 18px 20px;
+    padding: 18px max(20px, env(safe-area-inset-right)) 18px max(20px, env(safe-area-inset-left));
     background: var(--bg-shell);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-default);
@@ -191,19 +191,24 @@
     outline: none;
     box-shadow: var(--focus-ring);
   }
-  @media (max-width: 960px) {
-    .appShell {
-      height: auto;
-      min-height: 100dvh;
-      overflow: visible;
+  @container route (max-width: 900px) {
+    .contextBar {
+      padding-block: 14px;
     }
   }
 
-  @media (max-width: 720px) {
+  @container route (max-width: 620px) {
     .contextBar,
     .contextActions {
       align-items: stretch;
       flex-direction: column;
+    }
+    .contextBar {
+      gap: 10px;
+      padding: 10px max(12px, env(safe-area-inset-right)) 10px max(12px, env(safe-area-inset-left));
+    }
+    .contextTitle {
+      font-size: 20px;
     }
     .unavailableWorkspace {
       grid-template-columns: 1fr;

@@ -103,23 +103,17 @@
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
 
-  @media (max-width: 960px) {
-    .stage:not(.compact) {
-      height: auto;
-    }
-
-    .stage:not(.compact) .frame {
-      height: auto;
-      min-height: 72vh;
-      overflow: visible;
-    }
-
-    .stage:not(.compact) .viewer {
-      min-height: calc(72vh - 36px);
+  @container route (max-width: 900px) {
+    .frame {
+      padding: 6px;
     }
   }
 
-  @media (max-width: 560px) {
+  @container route (max-width: 620px) {
+    .frame {
+      padding: 4px;
+    }
+
     .compact {
       height: 280px;
       min-height: 200px;

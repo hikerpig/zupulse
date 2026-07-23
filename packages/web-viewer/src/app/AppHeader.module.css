@@ -7,7 +7,7 @@
     min-height: 58px;
     align-items: center;
     gap: 20px;
-    padding: 0 20px;
+    padding: env(safe-area-inset-top) max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left));
     border-bottom: 1px solid var(--border-default);
     background: color-mix(in srgb, var(--bg-shell) 94%, transparent);
     backdrop-filter: blur(18px) saturate(1.25);
@@ -157,7 +157,7 @@
     .header {
       grid-template-columns: auto 1fr auto;
       gap: 8px;
-      padding: 0 12px;
+      padding: env(safe-area-inset-top) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
     }
 
     .wordmark span,

@@ -14,6 +14,8 @@ const xcodeArguments = [
   "platform=iOS Simulator,name=iPad Pro 11-inch (M5),OS=26.2",
   "-derivedDataPath",
   "apps/ipad-shell/dist/DerivedData",
+  "-parallel-testing-enabled",
+  "NO",
   "test",
   "CODE_SIGNING_ALLOWED=NO",
 ];

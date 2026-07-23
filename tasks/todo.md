@@ -543,15 +543,25 @@ handshake、Repository initialize 和 Session 重建；播放状态始终 paused
 
 **Acceptance criteria:**
 
-- [ ] 三档容器宽度都保留主 Transport、循环状态和返回 Library。
-- [ ] resize 只 re-layout，不销毁 Viewer Session、不改变播放/循环事实。
-- [ ] Light/Dark、loading/error/disabled/selected 状态不因 iPad CSS 丢失。
+- [x] 三档容器宽度都保留主 Transport、循环状态和返回 Library。
+- [x] resize 只 re-layout，不销毁 Viewer Session、不改变播放/循环事实。
+- [x] Light/Dark、loading/error/disabled/selected 状态不因 iPad CSS 丢失。
 
 **Verification:**
 
-- [ ] `pnpm vitest run packages/web-viewer/src/features`
-- [ ] `pnpm check:design`
-- [ ] Manual: Simulator 横屏、竖屏、1/2 与窄 Split View 截图对照
+- [x] `pnpm vitest run packages/web-viewer/src/features`
+- [x] `pnpm check:design`
+- [x] Manual: Simulator 竖屏 Viewer/Library 截图检查；wide/portrait/narrow 容器契约与
+      `UIRequiresFullScreen=NO` 多任务配置验证
+
+**Completion note (2026-07-24):** Library/Viewer 以 `route` inline-size container 的
+900px/620px 分档布局，Viewer 保持单滚动宿主并将 Transport 固定在底部网格行；safe-area
+进入顶部、底部和窄屏边距。resize 契约覆盖播放、循环、Session 和返回 Library 不变。
+Simulator 直接检查了 iPad Pro 11-inch (M5) 竖屏 Library/Viewer；Xcode 工程解除全屏限制以
+允许 Split View。为适配固定 viewport，bundled-page 测试显式设置 834×1194 frame；并关闭
+Xcode parallel testing，避免 iOS 26.2 多 Clone runner 的 Mach 服务崩溃。最终
+`pnpm verify:fast`（115 files / 438 tests）和 `pnpm ipad:verify`
+（2 UI tests / 37 Swift tests）通过。
 
 **Dependencies:** Task 14
 

@@ -116,7 +116,7 @@ flowchart TD
 ### Phase 4: iPad Viewer Interaction
 
 - [x] Task 18: 添加 iPad capability 路由与 Studio 占位页
-- [ ] Task 19: 实现横屏、竖屏和 Split View 布局
+- [x] Task 19: 实现横屏、竖屏和 Split View 布局
 - [ ] Task 20: 实现谱面专属缩放
 - [ ] Task 21: 实现点拍定位与触控手势仲裁
 

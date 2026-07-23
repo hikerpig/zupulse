@@ -11,17 +11,7 @@
   .routeViewport {
     min-height: 0;
     overflow: hidden;
-  }
-
-  @media (max-width: 960px) {
-    .appFrame {
-      height: auto;
-      min-height: 100dvh;
-      overflow: visible;
-    }
-
-    .routeViewport {
-      overflow: visible;
-    }
+    container-type: inline-size;
+    container-name: route;
   }
 }

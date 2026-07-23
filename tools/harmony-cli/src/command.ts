@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
-import type { HarmonyBoundaryPolicy } from "@zupulse/web-core";
+import { readFile } from "node:fs/promises";
+import { harmonyBoundaryClassifierModelSchema, type HarmonyBoundaryPolicy } from "@zupulse/web-core";
 import { compareBaselineFiles } from "./compareBaselineFiles";
 import { buildHarmonyCalibrationAssetFile, type HarmonyCalibrationAsset } from "./confidenceCalibration";
 import { evaluateHarmonyManifest } from "./evaluateManifest";
@@ -140,6 +141,8 @@ export async function runHarmonyCommand(
     const decisionThreshold = rawDecisionThreshold === undefined ? undefined : Number(rawDecisionThreshold);
     const boundaryPolicyIndex = normalized.indexOf("--boundary-policy");
     const boundaryPolicy = boundaryPolicyIndex < 0 ? undefined : normalized[boundaryPolicyIndex + 1];
+    const boundaryModelIndex = normalized.indexOf("--boundary-model");
+    const boundaryModelPath = boundaryModelIndex < 0 ? undefined : normalized[boundaryModelIndex + 1];
     if (splitIndex >= 0 && (reportSplit === undefined || !["train", "tune", "eval"].includes(reportSplit)))
       throw new Error("--split must be train, tune, or eval");
     if (
@@ -155,17 +158,29 @@ export async function runHarmonyCommand(
       boundaryPolicy !== "dense-note-events" &&
       boundaryPolicy !== "metric-beats" &&
       boundaryPolicy !== "metric-half-beats" &&
-      boundaryPolicy !== "metric-strong-onsets"
+      boundaryPolicy !== "metric-strong-onsets" &&
+      boundaryPolicy !== "learned-evidence"
     )
       throw new Error(
-        "--boundary-policy must be dense-note-events, metric-beats, metric-half-beats, or metric-strong-onsets",
+        "--boundary-policy must be dense-note-events, metric-beats, metric-half-beats, metric-strong-onsets, or learned-evidence",
       );
+    if (boundaryPolicy === "learned-evidence" && boundaryModelPath === undefined)
+      throw new Error("--boundary-model is required for learned-evidence policy");
+    if (boundaryModelPath !== undefined && boundaryPolicy !== "learned-evidence")
+      throw new Error("--boundary-model requires learned-evidence policy");
+    const boundaryClassifierModel =
+      boundaryModelPath === undefined
+        ? undefined
+        : harmonyBoundaryClassifierModelSchema.parse(
+            JSON.parse(await readFile(resolve(cwd, boundaryModelPath), "utf8")),
+          );
     return evaluateHarmonyManifest(resolve(cwd, path), {
       ...(dataRoot === undefined ? {} : { dataRoot: resolve(cwd, dataRoot) }),
       ...(caseId === undefined ? {} : { caseId }),
       ...(reportSplit === undefined ? {} : { reportSplit: reportSplit as DatasetSplit }),
       ...(decisionThreshold === undefined ? {} : { decisionThreshold }),
       ...(boundaryPolicy === undefined ? {} : { boundaryPolicy: boundaryPolicy as HarmonyBoundaryPolicy }),
+      ...(boundaryClassifierModel === undefined ? {} : { boundaryClassifierModel }),
     });
   }
   const positional = normalized[0] === "inspect" ? normalized.slice(1) : normalized;

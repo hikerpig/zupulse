@@ -55,6 +55,7 @@ pnpm -s harmony:cli compare \
 11. **候选 Top-1 不等于生产 primary。** 当前 `top1Accuracy` 使用 `alternatives[0]`，不会反映 MLP reranker 改选的 chord。Task 16 final 暴露了这一评测盲点；下一轮必须增加 threshold 前 predicted-primary accuracy，并把候选排序与最终决策指标分开命名。
 12. **统一稀疏网格不是 harmonic-rhythm 模型。** Mozart tune 上 metric beats、half-beats 和“至少两个 pitch class 同步起音”都显著降低 segment density 并改善 predicted primary，但 interval accuracy 分别回退 `0.0353`、`0.0101`、`0.0086`，全部拒绝。下一步必须在 train split 学习 boundary evidence；不能因 K331 regression 单独改善就发布。
 13. **模型选择要有停止条件。** 线性 reranker 达标就停止增加复杂度；若线性失败而主要错误是 oracle miss 或 boundary misalignment，也应停止 reranker 路线。只有 oracle-hit 子集上 train 与 tune 都显示稳定、跨语料的非线性剩余误差，才触发离线 MLP。
+14. **Boundary gold 只能生成标签。** `boundary-evidence-v1` 的 metric strength、bass change、held-note continuity、onset pitch-class mass 和 pitch-set change 全部可由 score notes 独立计算；产品端只加载 5 权重 JSON。训练导出仍需 archive checksum 与完整 group hash，不能因为解压目录存在就绕过前置校验。
 
 完整失败记录见仓库根目录的 [`tasks/harmony-tuning-failures.md`](../../../tasks/harmony-tuning-failures.md)。
 

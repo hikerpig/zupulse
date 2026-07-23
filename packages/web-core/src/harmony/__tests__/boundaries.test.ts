@@ -194,4 +194,66 @@ describe("harmony legal boundaries", () => {
 
     expect(result.moments.map((moment) => moment.offsetTicks)).toEqual([0, 360, 480, 960]);
   });
+
+  it("keeps metric boundaries and only model-accepted note events in learned policy", () => {
+    const result = buildLegalBoundaryLattice({
+      ticksPerQuarter: 480,
+      measures: [{ index: 0, durationTicks: 960, timeSignature: { numerator: 2, denominator: 4 } }],
+      tracks: [
+        {
+          id: "piano",
+          isPercussion: false,
+          staves: [
+            {
+              index: 0,
+              notes: [
+                {
+                  id: "old",
+                  moment: { measureIndex: 0, offsetTicks: 0 },
+                  durationTicks: 360,
+                  soundingPitchClass: 0,
+                  soundingMidi: 48,
+                  voice: 1,
+                },
+                {
+                  id: "passing",
+                  moment: { measureIndex: 0, offsetTicks: 120 },
+                  durationTicks: 120,
+                  soundingPitchClass: 7,
+                  soundingMidi: 67,
+                  voice: 2,
+                },
+                {
+                  id: "new",
+                  moment: { measureIndex: 0, offsetTicks: 360 },
+                  durationTicks: 360,
+                  soundingPitchClass: 2,
+                  soundingMidi: 50,
+                  voice: 1,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      policy: "learned-evidence",
+      boundaryClassifierModel: {
+        schemaVersion: "1.0.0",
+        featureVersion: "boundary-evidence-v1",
+        weights: [0, 10, 0, 0, 0],
+        bias: -5,
+        threshold: 0.5,
+      },
+    });
+
+    expect(result.moments.map((moment) => moment.offsetTicks)).toEqual([0, 360, 480, 960]);
+    expect(() =>
+      buildLegalBoundaryLattice({
+        ticksPerQuarter: 480,
+        measures: [{ index: 0, durationTicks: 960, timeSignature: { numerator: 2, denominator: 4 } }],
+        tracks: [],
+        policy: "learned-evidence",
+      }),
+    ).toThrow("learned boundary policy requires a classifier model");
+  });
 });

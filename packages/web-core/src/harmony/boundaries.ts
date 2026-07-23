@@ -1,17 +1,23 @@
 import type { HarmonyAnalysisInput } from "./analysisInput";
 import type { ScoreWrittenMoment } from "./writtenTime";
 import { compareMoments } from "./schemas";
+import { acceptsHarmonyBoundary, type HarmonyBoundaryClassifierModel } from "./boundaryClassifier";
+import { createBoundaryEvidenceCache } from "./boundaryEvidence";
 
 export type LegalBoundaryLattice = { moments: ScoreWrittenMoment[]; mandatory: Set<string> };
-export type HarmonyBoundaryPolicy = "dense-note-events" | "metric-beats" | "metric-half-beats" | "metric-strong-onsets";
+export type HarmonyBoundaryPolicy =
+  "dense-note-events" | "metric-beats" | "metric-half-beats" | "metric-strong-onsets" | "learned-evidence";
 
 export function buildLegalBoundaryLattice(
   input: Pick<HarmonyAnalysisInput, "ticksPerQuarter" | "measures" | "tracks"> & {
     mandatory?: readonly ScoreWrittenMoment[];
     maxOptionalPerMeasure?: number;
     policy?: HarmonyBoundaryPolicy;
+    boundaryClassifierModel?: HarmonyBoundaryClassifierModel;
   },
 ): LegalBoundaryLattice {
+  if (input.policy === "learned-evidence" && input.boundaryClassifierModel === undefined)
+    throw new Error("learned boundary policy requires a classifier model");
   const canonical = (moment: ScoreWrittenMoment): ScoreWrittenMoment => {
     const measureIndex = input.measures.findIndex((measure) => measure.index === moment.measureIndex);
     const measure = input.measures[measureIndex];
@@ -22,6 +28,7 @@ export function buildLegalBoundaryLattice(
   };
   const requestedMandatory = (input.mandatory ?? []).map(canonical);
   const mandatory = new Set(requestedMandatory.map(key));
+  const boundaryEvidence = input.policy === "learned-evidence" ? createBoundaryEvidenceCache(input) : undefined;
   const candidates = input.measures.flatMap((measure) => {
     const starts = [
       { measureIndex: measure.index, offsetTicks: 0 },
@@ -31,21 +38,34 @@ export function buildLegalBoundaryLattice(
       .flatMap((track) => track.staves.flatMap((staff) => staff.notes))
       .filter((note) => note.moment.measureIndex === measure.index);
     const noteMoments =
-      input.policy === "metric-strong-onsets"
-        ? [...new Set(notes.map((note) => note.moment.offsetTicks))].flatMap((offsetTicks) => {
-            const pitchClasses = new Set(
+      input.policy === "learned-evidence"
+        ? [
+            ...new Map(
               notes
-                .filter((note) => note.moment.offsetTicks === offsetTicks)
-                .flatMap((note) => (note.soundingPitchClass === undefined ? [] : [note.soundingPitchClass])),
-            );
-            return pitchClasses.size >= 2 ? [{ measureIndex: measure.index, offsetTicks }] : [];
-          })
-        : input.policy !== undefined && input.policy !== "dense-note-events"
-          ? []
-          : notes.flatMap((note) => [
-              note.moment,
-              { measureIndex: note.moment.measureIndex, offsetTicks: note.moment.offsetTicks + note.durationTicks },
-            ]);
+                .flatMap((note) => [
+                  note.moment,
+                  { measureIndex: note.moment.measureIndex, offsetTicks: note.moment.offsetTicks + note.durationTicks },
+                ])
+                .map((moment) => [key(moment), moment]),
+            ).values(),
+          ].filter((moment) =>
+            acceptsHarmonyBoundary(input.boundaryClassifierModel!, boundaryEvidence!.forMoment(moment)),
+          )
+        : input.policy === "metric-strong-onsets"
+          ? [...new Set(notes.map((note) => note.moment.offsetTicks))].flatMap((offsetTicks) => {
+              const pitchClasses = new Set(
+                notes
+                  .filter((note) => note.moment.offsetTicks === offsetTicks)
+                  .flatMap((note) => (note.soundingPitchClass === undefined ? [] : [note.soundingPitchClass])),
+              );
+              return pitchClasses.size >= 2 ? [{ measureIndex: measure.index, offsetTicks }] : [];
+            })
+          : input.policy !== undefined && input.policy !== "dense-note-events"
+            ? []
+            : notes.flatMap((note) => [
+                note.moment,
+                { measureIndex: note.moment.measureIndex, offsetTicks: note.moment.offsetTicks + note.durationTicks },
+              ]);
     const denominatorBeat = (input.ticksPerQuarter * 4) / measure.timeSignature.denominator;
     const musicalBeat =
       input.policy !== undefined &&

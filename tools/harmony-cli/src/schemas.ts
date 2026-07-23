@@ -380,7 +380,7 @@ export const harmonyAccuracyMetricsSchema = z
 
 export const harmonyDatasetEvalReportSchema = z
   .object({
-    schemaVersion: z.literal("2.6.0"),
+    schemaVersion: z.literal("2.7.0"),
     command: z.literal("eval"),
     manifest: z.string().min(1),
     summary: z.object({ passed: z.number().int().nonnegative(), failed: z.number().int().nonnegative() }).strict(),
@@ -394,7 +394,17 @@ export const harmonyDatasetEvalReportSchema = z
             status: z.enum(["passed", "failed"]),
             reportSplit: z.enum(["train", "tune", "eval"]),
             decisionThreshold: fractionSchema,
-            boundaryPolicy: z.enum(["dense-note-events", "metric-beats", "metric-half-beats", "metric-strong-onsets"]),
+            boundaryPolicy: z.enum([
+              "dense-note-events",
+              "metric-beats",
+              "metric-half-beats",
+              "metric-strong-onsets",
+              "learned-evidence",
+            ]),
+            boundaryModel: z
+              .object({ featureVersion: z.literal("boundary-evidence-v1"), threshold: fractionSchema })
+              .strict()
+              .optional(),
             sourceRevision: z.string().min(1),
             reportGroupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
             splits: z.record(z.enum(["train", "tune", "eval"]), z.number().int().nonnegative()),
@@ -480,7 +490,7 @@ const accuracyBaselineCaseSchema = z
       .strict()
       .optional(),
     boundaryPolicy: z
-      .enum(["dense-note-events", "metric-beats", "metric-half-beats", "metric-strong-onsets"])
+      .enum(["dense-note-events", "metric-beats", "metric-half-beats", "metric-strong-onsets", "learned-evidence"])
       .optional(),
   })
   .strict();

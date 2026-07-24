@@ -562,12 +562,13 @@ export class ViewerApplication implements ViewerAppHandle {
     try {
       sources = await this.library.gateway.selectForImport({ multiple });
     } catch (error) {
+      this.reportDiagnostic(error, "library.import.select");
       this.setSnapshot({
         ...this.snapshot,
         library: {
           scores: this.snapshot.library?.scores ?? [],
           loading: false,
-          error: `IMPORT_${error instanceof Error ? error.message : "FILE_SELECTION_FAILED"}`,
+          error: applicationIssue("library-unavailable"),
         },
       });
       return;
@@ -608,12 +609,13 @@ export class ViewerApplication implements ViewerAppHandle {
     if (!successful) {
       const failure = results.find((item) => item.status === "failed");
       if (multiple || controller.signal.aborted) return;
+      this.reportDiagnostic(failure?.error, "library.import");
       this.setSnapshot({
         ...this.snapshot,
         library: {
           scores: this.snapshot.library?.scores ?? [],
           loading: false,
-          error: `IMPORT_${failure?.error.code ?? "UNKNOWN"}`,
+          error: applicationIssue("library-unavailable"),
         },
       });
       return;
@@ -664,12 +666,13 @@ export class ViewerApplication implements ViewerAppHandle {
     const operation = this.chain
       .then(() => (this.hasSession(id) ? undefined : this.openLibraryScoreOnce(id)))
       .catch((error: unknown) => {
+        this.reportDiagnostic(error, "library.open");
         this.setSnapshot({
           ...this.snapshot,
           library: {
             scores: this.snapshot.library?.scores ?? [],
             loading: false,
-            error: `OPEN_SCORE_${error instanceof Error ? error.message : "FAILED"}`,
+            error: applicationIssue("library-unavailable"),
           },
         });
         throw error;

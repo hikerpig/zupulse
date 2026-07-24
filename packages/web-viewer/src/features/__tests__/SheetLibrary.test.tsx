@@ -45,7 +45,7 @@ describe("SheetLibrary import summary", () => {
     expect(screen.getByText("新增 1")).toBeTruthy();
     expect(screen.getByText("已存在 1")).toBeTruthy();
     expect(screen.getByText("失败 1")).toBeTruthy();
-    expect(screen.getByText("failed · INVALID_SCORE")).toBeTruthy();
+    expect(screen.getByText("失败 · INVALID_SCORE")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "取消未开始项" }));
     expect(cancelImport).toHaveBeenCalledOnce();
 

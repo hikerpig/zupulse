@@ -96,7 +96,9 @@ describe("iPad viewer composition", () => {
                 storage: { sqliteIndex: false, sidecarPayload: false },
                 sync: { available: false, provider: "none" },
                 audio: { webAudio: true, nativeBridge: false },
+                localization: { changeLocale: false },
               },
+              locale: { preference: "system", effectiveLocale: "zh-CN" },
             },
           };
         },

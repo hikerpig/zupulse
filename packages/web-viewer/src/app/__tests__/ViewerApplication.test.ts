@@ -215,7 +215,10 @@ describe("ViewerApplication", () => {
     await expect(application.openLibraryScore(scoreId)).rejects.toThrow("SCORE_BYTES_MISSING");
 
     expect(application.getSnapshot().currentLibraryScoreId).toBeUndefined();
-    expect(application.getSnapshot().library?.error).toBe("OPEN_SCORE_SCORE_BYTES_MISSING");
+    expect(application.getSnapshot().library?.error).toEqual({
+      code: "library-unavailable",
+      recoverable: true,
+    });
     await application.destroy();
   });
 

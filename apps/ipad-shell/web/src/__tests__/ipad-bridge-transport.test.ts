@@ -33,6 +33,7 @@ describe("IpadBridgeTransport", () => {
             bridgeVersion: metadata.bridgeVersion,
             rendererBuildHash: metadata.buildHash,
             capabilities: capabilities(),
+            locale: { preference: "system", effectiveLocale: "zh-CN" },
           },
         };
       },
@@ -134,6 +135,7 @@ function successResponse(request: any) {
       bridgeVersion: metadata.bridgeVersion,
       rendererBuildHash: metadata.buildHash,
       capabilities: capabilities(),
+      locale: { preference: "system", effectiveLocale: "zh-CN" },
     },
   };
 }
@@ -148,5 +150,6 @@ function capabilities() {
     storage: { sqliteIndex: false, sidecarPayload: false },
     sync: { available: false, provider: "none" },
     audio: { webAudio: true, nativeBridge: false },
+    localization: { changeLocale: false },
   };
 }

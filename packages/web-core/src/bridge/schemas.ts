@@ -4,7 +4,7 @@ import { localPlaybackResumeSchema, sidecarPayloadSchema } from "../storage/sche
 import { libraryMetadataSchema, libraryScoreIdSchema, libraryScoreIdentitySchema } from "../library/schemas";
 import { harmonyAnalysisDocumentSchema } from "../harmony/schemas";
 
-export const BRIDGE_SCHEMA_VERSION = "4.0.0" as const;
+export const BRIDGE_SCHEMA_VERSION = "3.0.0" as const;
 const idSchema = z.string().min(1).max(128);
 export const localePreferenceSchema = z.enum(["system", "zh-CN", "en-US"]);
 export const localeStateSchema = z

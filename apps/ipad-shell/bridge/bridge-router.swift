@@ -241,6 +241,10 @@ final class BridgeRouter {
                 "bridgeVersion": Self.bridgeVersion,
                 "rendererBuildHash": rendererBuildHash,
                 "capabilities": Self.capabilities,
+                "locale": [
+                    "preference": "system",
+                    "effectiveLocale": "zh-CN",
+                ],
             ],
         ])
     }
@@ -262,6 +266,9 @@ final class BridgeRouter {
         "audio": [
             "webAudio": true,
             "nativeBridge": false,
+        ],
+        "localization": [
+            "changeLocale": false,
         ],
     ]
 

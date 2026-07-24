@@ -152,13 +152,28 @@
               "properties": { "webAudio": { "type": "boolean" }, "nativeBridge": { "type": "boolean" } },
               "required": ["webAudio", "nativeBridge"],
               "additionalProperties": false
+            },
+            "localization": {
+              "type": "object",
+              "properties": { "changeLocale": { "type": "boolean" } },
+              "required": ["changeLocale"],
+              "additionalProperties": false
             }
           },
-          "required": ["fileAccess", "storage", "sync", "audio"],
+          "required": ["fileAccess", "storage", "sync", "audio", "localization"],
+          "additionalProperties": false
+        },
+        "locale": {
+          "type": "object",
+          "properties": {
+            "preference": { "type": "string", "enum": ["system", "zh-CN", "en-US"] },
+            "effectiveLocale": { "type": "string", "enum": ["zh-CN", "en-US"] }
+          },
+          "required": ["preference", "effectiveLocale"],
           "additionalProperties": false
         }
       },
-      "required": ["appVersion", "bridgeVersion", "rendererBuildHash", "capabilities"],
+      "required": ["appVersion", "bridgeVersion", "rendererBuildHash", "capabilities", "locale"],
       "additionalProperties": false
     },
     "app.lifecycleAck": {
@@ -298,9 +313,15 @@
         "properties": { "webAudio": { "type": "boolean" }, "nativeBridge": { "type": "boolean" } },
         "required": ["webAudio", "nativeBridge"],
         "additionalProperties": false
+      },
+      "localization": {
+        "type": "object",
+        "properties": { "changeLocale": { "type": "boolean" } },
+        "required": ["changeLocale"],
+        "additionalProperties": false
       }
     },
-    "required": ["fileAccess", "storage", "sync", "audio"],
+    "required": ["fileAccess", "storage", "sync", "audio", "localization"],
     "additionalProperties": false
   },
   "error": {

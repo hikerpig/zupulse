@@ -64,21 +64,21 @@ export function ScoreViewer({ compact = false, expandable = false }: { compact?:
       onTouchCancel={finishPinch}
     >
       {!compact ? (
-        <div className={styles.zoomControls} aria-label="谱面缩放">
+        <div className={styles.zoomControls} aria-label={t("score.zoomControls")}>
           <button
             type="button"
-            aria-label="缩小谱面"
+            aria-label={t("score.zoomOut")}
             disabled={scoreZoom <= MIN_SCORE_ZOOM}
             onClick={() => commitZoom(scoreZoom - SCORE_ZOOM_STEP)}
           >
             <Minus aria-hidden="true" />
           </button>
-          <output aria-label={`谱面缩放 ${Math.round(scoreZoom * 100)}%`} aria-live="polite">
+          <output aria-label={t("score.zoomLevel", { percent: Math.round(scoreZoom * 100) })} aria-live="polite">
             {Math.round(scoreZoom * 100)}%
           </output>
           <button
             type="button"
-            aria-label="放大谱面"
+            aria-label={t("score.zoomIn")}
             disabled={scoreZoom >= MAX_SCORE_ZOOM}
             onClick={() => commitZoom(scoreZoom + SCORE_ZOOM_STEP)}
           >

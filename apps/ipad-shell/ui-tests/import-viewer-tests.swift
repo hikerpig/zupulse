@@ -173,7 +173,7 @@ final class BatchImportTests: XCTestCase {
         XCTAssertTrue(summary.exists)
         XCTAssertTrue(summary.label.contains("新增 1，已存在 1，失败 1，未开始 0"))
         XCTAssertTrue(staticText(containing: "broken.mxl", in: app).exists)
-        XCTAssertTrue(staticText(containing: "failed · INVALID_SCORE", in: app).exists)
+        XCTAssertTrue(staticText(containing: "失败 · INVALID_SCORE", in: app).exists)
         XCTAssertTrue(app.buttons["批量导入"].exists)
     }
 

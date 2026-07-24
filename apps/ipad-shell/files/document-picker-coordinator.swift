@@ -106,12 +106,20 @@ struct SelectedFileMetadata {
     let sizeBytes: Int
 }
 
-func validateSelectedFile(_ url: URL) throws -> SelectedFileMetadata {
+func validateSelectedFile(
+    _ url: URL,
+    securityScope: SecurityScopedAccessing = SystemSecurityScopedAccess(),
+    attributesOfItem: (String) throws -> [FileAttributeKey: Any] = {
+        try FileManager.default.attributesOfItem(atPath: $0)
+    }
+) throws -> SelectedFileMetadata {
     let fileName = url.lastPathComponent
     let allowedExtensions = ["gp3", "gp4", "gp5", "gpx", "gp", "musicxml", "mxl"]
     let attributes: [FileAttributeKey: Any]
+    let stopAccessing = securityScope.startAccessing(url)
+    defer { stopAccessing() }
     do {
-        attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+        attributes = try attributesOfItem(url.path)
     } catch {
         throw documentPickerError("FILE_SELECTION_INVALID")
     }

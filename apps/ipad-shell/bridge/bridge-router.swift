@@ -120,7 +120,7 @@ final class BridgeRouter {
             guard multiple || selectedURLs.count == 1 else {
                 throw documentRouteError("FILE_SELECTION_INVALID")
             }
-            let metadata = try selectedURLs.map(validateSelectedFile)
+            let metadata = try selectedURLs.map { try validateSelectedFile($0) }
             var files: [[String: Any]] = []
             for file in metadata {
                 let token = try await fileTokens.issue(

@@ -120,6 +120,25 @@ final class DocumentPickerRouteTests: XCTestCase {
         }
     }
 
+    func testValidationReadsMetadataWithinSecurityScopedAccess() throws {
+        let scope = SecurityScopeRecorder()
+        let url = URL(fileURLWithPath: "/private/var/mobile/Library/Mobile Documents/score.musicxml")
+
+        let metadata = try validateSelectedFile(
+            url,
+            securityScope: scope,
+            attributesOfItem: { _ in
+                XCTAssertTrue(scope.isAccessing)
+                return [.type: FileAttributeType.typeRegular, .size: NSNumber(value: 3)]
+            }
+        )
+
+        XCTAssertEqual(metadata.fileName, "score.musicxml")
+        XCTAssertEqual(metadata.sizeBytes, 3)
+        XCTAssertEqual(scope.startCount, 1)
+        XCTAssertEqual(scope.stopCount, 1)
+    }
+
     private func selectRequest(_ correlationId: String) -> [String: Any] {
         [
             "bridgeVersion": "3.0.0",
@@ -136,5 +155,20 @@ private struct PickerStub: DocumentPicking {
     @MainActor
     func select(multiple: Bool) async throws -> [URL]? {
         result
+    }
+}
+
+private final class SecurityScopeRecorder: SecurityScopedAccessing, @unchecked Sendable {
+    private(set) var startCount = 0
+    private(set) var stopCount = 0
+    private(set) var isAccessing = false
+
+    func startAccessing(_ url: URL) -> @Sendable () -> Void {
+        startCount += 1
+        isAccessing = true
+        return { [self] in
+            stopCount += 1
+            isAccessing = false
+        }
     }
 }

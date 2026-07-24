@@ -143,6 +143,47 @@ describe("ViewerApplication", () => {
     await application.destroy();
   });
 
+  it("reopens a library score after its Viewer route releases the previous session", async () => {
+    const scoreId = "00000000-0000-4000-8000-000000000001";
+    const readScore = vi.fn(async () => ({ fileName: "score.gp", bytes: new Uint8Array([1]) }));
+    const destroy = vi.fn(async () => undefined);
+    const openSession = vi.fn(async () => ({
+      togglePlayback: async () => undefined,
+      pauseAndFlush: async () => undefined,
+      destroy,
+    }));
+    const repository: SheetLibraryRepository = {
+      initialize: async () => undefined,
+      list: async () => [],
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore,
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+    };
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      openSession,
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+    );
+
+    await application.openLibraryScore(scoreId);
+    await application.releaseLibraryScore(scoreId);
+    await application.openLibraryScore(scoreId);
+
+    expect(readScore).toHaveBeenCalledTimes(2);
+    expect(openSession).toHaveBeenCalledTimes(2);
+    expect(destroy).toHaveBeenCalledOnce();
+    await application.destroy();
+  });
+
   it("reports a recoverable Library error when a persisted score cannot be restored", async () => {
     const scoreId = "00000000-0000-4000-8000-000000000001";
     const repository = {

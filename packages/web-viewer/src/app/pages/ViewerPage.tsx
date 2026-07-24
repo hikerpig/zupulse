@@ -28,6 +28,13 @@ export function ViewerPage({
       void application.openLibraryScore(libraryScoreId).catch(() => navigate("/", { replace: true }));
   }, [application, libraryScoreId, navigate, snapshot.currentLibraryScoreId]);
 
+  useEffect(() => {
+    if (!libraryScoreId) return;
+    return () => {
+      void application.releaseLibraryScore(libraryScoreId).catch(() => undefined);
+    };
+  }, [application, libraryScoreId]);
+
   return (
     <main className={styles.appShell}>
       <div className={styles.contextBar}>

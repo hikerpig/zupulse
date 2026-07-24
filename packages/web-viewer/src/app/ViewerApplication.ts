@@ -681,6 +681,28 @@ export class ViewerApplication implements ViewerAppHandle {
     return operation;
   }
 
+  releaseLibraryScore(id: string): Promise<void> {
+    const operation = this.chain.then(async () => {
+      if (this.activeLibraryScoreId !== id) return;
+      const session = this.active;
+      this.active = undefined;
+      this.activeLibraryScoreId = undefined;
+      const {
+        currentSessionId: _currentSessionId,
+        currentLibraryScoreId: _currentLibraryScoreId,
+        ...snapshot
+      } = this.snapshot;
+      this.setSnapshot(snapshot);
+      await session?.pauseAndFlush();
+      await session?.destroy();
+    });
+    this.chain = operation.then(
+      () => undefined,
+      () => undefined,
+    );
+    return operation;
+  }
+
   private async openLibraryScoreOnce(id: string): Promise<void> {
     const library = this.library;
     if (!library) return;

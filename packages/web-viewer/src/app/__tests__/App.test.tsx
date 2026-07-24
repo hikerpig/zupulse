@@ -353,4 +353,59 @@ describe("App", () => {
     expect(openSession).toHaveBeenCalledTimes(2);
     await application.destroy();
   });
+
+  it("reopens the same score after returning to the library through the logo", async () => {
+    const id = "00000000-0000-4000-8000-000000000001";
+    window.history.replaceState(null, "", `#/viewer/${id}`);
+    vi.spyOn(window.navigator, "userAgent", "get").mockReturnValue("browser");
+    const repository: SheetLibraryRepository = {
+      initialize: async () => undefined,
+      list: async () => [
+        {
+          id,
+          title: "Score A",
+          fileName: "score-a.gp",
+          scoreIdentity: "a".repeat(64),
+          format: "gp",
+          importedAt: "2026-07-13T00:00:00.000Z",
+          isFavorite: false,
+          practice: { hasLoop: false },
+        },
+      ],
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async () => ({ fileName: "score-a.gp", bytes: new Uint8Array([1]) }),
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+    };
+    const destroy = vi.fn(async () => undefined);
+    const openSession = vi.fn(async () => ({
+      togglePlayback: async () => undefined,
+      pauseAndFlush: async () => undefined,
+      destroy,
+    }));
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      openSession,
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+    );
+    const user = userEvent.setup();
+    render(<App application={application} />);
+
+    await waitFor(() => expect(application.hasSession(id)).toBe(true));
+    await user.click(screen.getByRole("link", { name: "逐拍首页" }));
+    await user.click((await screen.findByText("Score A")).closest("[role='button']")!);
+
+    await waitFor(() => expect(application.hasSession(id)).toBe(true));
+    expect(openSession).toHaveBeenCalledTimes(2);
+    expect(destroy).toHaveBeenCalledOnce();
+    await application.destroy();
+  });
 });

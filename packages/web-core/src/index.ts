@@ -53,6 +53,7 @@ export * from "./playback/playbackPersistence";
 export * from "./playback/alphaTabPlaybackAdapter";
 export * from "./playback/playbackController";
 export * from "./playback/previewTransport";
+export * from "./playback/writtenSelection";
 export * from "./library/types";
 export * from "./library/schemas";
 export * from "./library/ports";

@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import {
   attachScoreZoomCommit,
   createDefaultOpenSession,
-  playbackPositionForWrittenSelection,
   renderViewerState,
   type DefaultOpenSessionDependencies,
 } from "../viewerApp";
@@ -414,37 +413,6 @@ describe("createDefaultOpenSession cleanup", () => {
 
     await session.destroy();
     expect(detached).toBe(true);
-  });
-
-  it("keeps the current playback occurrence while mapping a repeated written beat", () => {
-    const timeline = {
-      durationTicks: 7680,
-      durationMs: 8000,
-      measures: [
-        { id: "measure-0", index: 0, startTick: 0, durationTicks: 1920, beatTicks: [0, 480, 960, 1440] },
-        {
-          id: "measure-1",
-          index: 1,
-          startTick: 1920,
-          durationTicks: 1920,
-          beatTicks: [1920, 2400, 2880, 3360],
-        },
-      ],
-    };
-
-    expect(
-      playbackPositionForWrittenSelection(
-        { measureIndex: 0, offsetTicks: 480 },
-        { measureId: "measure-1", measureIndex: 1, beatIndex: 1, tick: 6240, cachedTimeMs: 6500 },
-        timeline,
-      ),
-    ).toEqual({
-      measureId: "measure-0",
-      measureIndex: 0,
-      beatIndex: 1,
-      tick: 4800,
-      cachedTimeMs: 5000,
-    });
   });
 
   it("commits alphaTab scale once and restores the written scroll anchor after layout", () => {

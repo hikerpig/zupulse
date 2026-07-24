@@ -79,6 +79,28 @@ final class FileTokenTests: XCTestCase {
         XCTAssertEqual(successes, 1)
     }
 
+    func testBatchTokensStayValidForTheirSerialProcessingWindow() async throws {
+        let clock = TestClock()
+        let store = FileTokenStore(ttl: 1, now: { clock.now })
+        let tokens = try await store.issueBatch([
+            FileTokenEntry(
+                url: URL(fileURLWithPath: "/private/first.musicxml"),
+                fileName: "first.musicxml",
+                sizeBytes: 1
+            ),
+            FileTokenEntry(
+                url: URL(fileURLWithPath: "/private/second.musicxml"),
+                fileName: "second.musicxml",
+                sizeBytes: 1
+            ),
+        ])
+
+        clock.now = clock.now.addingTimeInterval(1.5)
+
+        let second = try await store.consume(tokens[1])
+        XCTAssertEqual(second.fileName, "second.musicxml")
+    }
+
     @MainActor
     func testShellDestroyClearsOutstandingTokens() async throws {
         let entryURL = try XCTUnwrap(

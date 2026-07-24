@@ -121,18 +121,17 @@ final class BridgeRouter {
                 throw documentRouteError("FILE_SELECTION_INVALID")
             }
             let metadata = try selectedURLs.map { try validateSelectedFile($0) }
-            var files: [[String: Any]] = []
-            for file in metadata {
-                let token = try await fileTokens.issue(
-                    url: file.url,
-                    fileName: file.fileName,
-                    sizeBytes: file.sizeBytes
-                )
-                files.append([
+            let tokens = try await fileTokens.issueBatch(
+                metadata.map {
+                    FileTokenEntry(url: $0.url, fileName: $0.fileName, sizeBytes: $0.sizeBytes)
+                }
+            )
+            let files: [[String: Any]] = zip(metadata, tokens).map { file, token in
+                [
                     "fileToken": token,
                     "fileName": file.fileName,
                     "sizeBytes": file.sizeBytes,
-                ])
+                ]
             }
             #if DEBUG
             await MainActor.run {

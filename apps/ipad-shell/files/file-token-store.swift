@@ -32,18 +32,26 @@ actor FileTokenStore {
     var outstandingCount: Int { entries.count }
 
     func issue(url: URL, fileName: String, sizeBytes: Int) throws -> String {
-        guard sizeBytes >= 0, sizeBytes <= maxBytes else {
-            throw fileTokenError("FILE_TOO_LARGE")
+        try issueBatch([
+            FileTokenEntry(url: url, fileName: fileName, sizeBytes: sizeBytes)
+        ])[0]
+    }
+
+    func issueBatch(_ values: [FileTokenEntry]) throws -> [String] {
+        for value in values {
+            guard value.sizeBytes >= 0, value.sizeBytes <= maxBytes else {
+                throw fileTokenError("FILE_TOO_LARGE")
+            }
+            guard value.url.isFileURL, !value.fileName.isEmpty else {
+                throw fileTokenError("FILE_SELECTION_INVALID")
+            }
         }
-        guard url.isFileURL, !fileName.isEmpty else {
-            throw fileTokenError("FILE_SELECTION_INVALID")
+        let expiresAt = now().addingTimeInterval(ttl * Double(max(1, values.count)))
+        return values.map { value in
+            let token = UUID().uuidString.lowercased()
+            entries[token] = StoredEntry(value: value, expiresAt: expiresAt)
+            return token
         }
-        let token = UUID().uuidString.lowercased()
-        entries[token] = StoredEntry(
-            value: FileTokenEntry(url: url, fileName: fileName, sizeBytes: sizeBytes),
-            expiresAt: now().addingTimeInterval(ttl)
-        )
-        return token
     }
 
     func consume(_ token: String) throws -> FileTokenEntry {

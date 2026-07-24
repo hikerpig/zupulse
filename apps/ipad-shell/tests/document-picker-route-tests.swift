@@ -82,6 +82,36 @@ final class DocumentPickerRouteTests: XCTestCase {
         XCTAssertEqual(tokenCount, 1)
     }
 
+    func testMultipleSelectionIssuesTokensWithABatchProcessingWindow() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let urls = ["first.musicxml", "second.musicxml"].map { root.appendingPathComponent($0) }
+        for url in urls { try Data([1]).write(to: url) }
+        let clock = RouteTestClock()
+        let tokens = FileTokenStore(ttl: 1, now: { clock.now })
+        let router = BridgeRouter(
+            appVersion: "0.1.0",
+            rendererBuildHash: "fixture",
+            fileSelector: PickerStub(result: urls),
+            fileTokens: tokens
+        )
+
+        guard case let .success(response) = await router.handleFileRequest(
+            selectRequest("batch", multiple: true)
+        ) else {
+            return XCTFail("Expected selected response")
+        }
+        let payload = try XCTUnwrap(response["payload"] as? [String: Any])
+        let files = try XCTUnwrap(payload["files"] as? [[String: Any]])
+        let secondToken = try XCTUnwrap(files[1]["fileToken"] as? String)
+        clock.now = clock.now.addingTimeInterval(1.5)
+
+        let second = try await tokens.consume(secondToken)
+        XCTAssertEqual(second.fileName, "second.musicxml")
+    }
+
     func testRejectsUnsupportedNonRegularAndOversizedSelections() async throws {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -139,14 +169,18 @@ final class DocumentPickerRouteTests: XCTestCase {
         XCTAssertEqual(scope.stopCount, 1)
     }
 
-    private func selectRequest(_ correlationId: String) -> [String: Any] {
+    private func selectRequest(_ correlationId: String, multiple: Bool = false) -> [String: Any] {
         [
             "bridgeVersion": "3.0.0",
             "correlationId": correlationId,
             "type": "file.select",
-            "payload": ["multiple": false],
+            "payload": ["multiple": multiple],
         ]
     }
+}
+
+private final class RouteTestClock: @unchecked Sendable {
+    var now = Date(timeIntervalSince1970: 100)
 }
 
 private struct PickerStub: DocumentPicking {

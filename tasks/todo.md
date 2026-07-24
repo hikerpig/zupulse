@@ -67,9 +67,9 @@
 
 ### Phase 5: Enforcement and completion
 
-- [ ] Task 16：添加 hardcoded UI copy gate。
-- [ ] Task 17：文档、E2E 与最终验收。
-- [ ] Checkpoint E：`pnpm verify:fast`、`pnpm verify`、`pnpm verify:e2e`、手工双语验收与最终提交。
+- [x] Task 16：添加 hardcoded UI copy gate。
+- [x] Task 17：文档、E2E 与最终验收。
+- [x] Checkpoint E：`pnpm verify:fast`、`pnpm verify`、`pnpm verify:e2e`、手工双语验收与最终提交。
 
 ## Resolved decisions
 
@@ -118,3 +118,12 @@
 - Browser 静态 metadata/no-JS fallback 改为英文，运行时继续由 Effective Locale 更新全部受管 metadata。
 - 验证：19 个测试文件、59 个测试、`pnpm typecheck`、双端 build，以及 Desktop locale 重启/Menu E2E
   全部通过。
+
+### 2026-07-24 — Checkpoint E
+
+- 新增 TypeScript AST hardcoded-copy 门禁，覆盖 JSX text 与用户可见静态属性，并接入 `verify:fast`。
+- 新增当前 i18n 架构文档，记录 locale ownership、catalog/领域边界、Bridge、测试和扩展流程。
+- Browser E2E 覆盖英文 Library→Viewer→Studio 持久化，以及播放中切换、Practice 状态保留、
+  768/1024/1440 px 和 Light 主题可达性；Desktop E2E 覆盖重启后 Renderer/Menu 一致。
+- 验证：`pnpm verify:fast`（112 个测试文件、428 个测试）、`pnpm verify`、`pnpm verify:e2e`
+  （Browser 7 个、Desktop 6 个）与 `git diff --check` 全部通过。

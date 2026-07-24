@@ -32,6 +32,7 @@ flowchart LR
 - 产品语言：`../../CONTEXT.md`、`glossary.md`
 - 产品设计契约：`../../DESIGN.md`
 - React 应用系统：`react-application-system.md`
+- 应用国际化：`application-i18n.md`
 - Viewer 键盘与播放控制：`viewer-keyboard-and-transport-controls.md`
 - Browser alphaTab DOM 边界：`browser-demo-alphatab-dom-rendering.md`
 - MusicXML 导入：`musicxml-import-design.md`、`musicxml-import-acceptance.md`

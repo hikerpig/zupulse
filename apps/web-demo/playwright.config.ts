@@ -7,6 +7,7 @@ export default defineConfig({
   retries: 0,
   use: {
     baseURL: "http://127.0.0.1:5173",
+    locale: "zh-CN",
     trace: "retain-on-failure",
   },
   webServer: {

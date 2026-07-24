@@ -18,11 +18,12 @@ export function LibraryPage({ application }: { application: ViewerApplication })
 
   if (!application.hasLibrary()) return <ViewerPage application={application} />;
   const library = snapshot.library ?? { scores: [], loading: true };
+  const { error, ...libraryProps } = library;
   return (
     <SheetLibrary
       application={application}
-      {...library}
-      {...(library.error === undefined ? {} : { error: t("unavailableMessage") })}
+      {...libraryProps}
+      {...(error === undefined ? {} : { error: t("unavailableMessage") })}
       onImport={(multiple) => application.importScores(multiple)}
       onOpen={(id) => void navigate(`/viewer/${id}`)}
     />

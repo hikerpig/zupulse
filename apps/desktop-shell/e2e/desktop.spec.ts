@@ -12,7 +12,7 @@ const mxlFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/genera
 const reviewedFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/K331-3_reviewed.mxl", import.meta.url));
 
 async function launch(userData: string): Promise<ElectronApplication> {
-  return electron.launch({ args: [".", `--user-data-dir=${userData}`] });
+  return electron.launch({ args: [".", `--user-data-dir=${userData}`, "--lang=zh-CN"] });
 }
 
 async function chooseFixture(app: ElectronApplication, filePath = fixture): Promise<void> {
@@ -167,7 +167,7 @@ test("opens a saved MusicXML Studio document", async () => {
     await expect(window.getByRole("link", { name: "和弦分析" })).toBeVisible();
     await window.getByRole("link", { name: "和弦分析" }).click();
     await expect(window.getByRole("heading", { level: 1, name: "和弦分析" })).toBeVisible();
-    await expect(window.locator("details").filter({ hasText: "分析设置" })).not.toHaveAttribute("open", "");
+    await expect(window.getByRole("button", { name: "分析设置" })).toBeVisible();
     const splitter = window.getByRole("separator", { name: "调整乐谱与分析面板宽度" });
     await splitter.focus();
     await window.keyboard.press("ArrowRight");
@@ -176,12 +176,14 @@ test("opens a saved MusicXML Studio document", async () => {
     await expect(window.getByRole("heading", { name: "和弦候选" })).toBeVisible();
     await window.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
     await expect(window.getByRole("status", { name: "分析文档状态" })).toContainText("1 个修正 · 已保存");
+    await window.getByRole("button", { name: "片段试听" }).click();
     await window.getByRole("button", { name: "播放预览" }).click();
     await expect(window.getByText("预览播放中")).toBeVisible();
     await window.getByRole("button", { name: "暂停预览" }).click();
     await window.getByRole("combobox", { name: "预览速度" }).selectOption("1.5");
     await window.getByRole("slider", { name: "预览位置" }).fill("5000");
     await window.getByRole("button", { name: "循环选中片段" }).click();
+    await window.keyboard.press("Escape");
     await app.evaluate(({ dialog }, path) => {
       dialog.showSaveDialog = async () => ({ canceled: false, filePath: path });
     }, exportPath);

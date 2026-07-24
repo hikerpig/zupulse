@@ -43,18 +43,18 @@ export function AppHeader({ localeHost }: { localeHost: LocaleHost }) {
 
   return (
     <header className={styles.header}>
-      <NavLink className={styles.brand ?? ""} to="/" aria-label={t(($) => $.brand.home)}>
+      <NavLink className={styles.brand ?? ""} to="/" aria-label={t("brand.home")}>
         <LogoMark size={32} />
         <span className={styles.wordmark}>
-          <strong>{t(($) => $.brand.name)}</strong>
+          <strong>{t("brand.name")}</strong>
           <span>ZUPULSE</span>
         </span>
       </NavLink>
 
-      <nav className={styles.navigation} aria-label={t(($) => $.navigation.primary)}>
+      <nav className={styles.navigation} aria-label={t("navigation.primary")}>
         <NavLink className={({ isActive }) => (isActive ? styles.activeLink : styles.navLink)} to="/" end>
           <LibraryBig aria-hidden="true" size={16} />
-          {t(($) => $.navigation.library)}
+          {t("navigation.library")}
         </NavLink>
         {libraryScoreId ? (
           <>
@@ -62,13 +62,13 @@ export function AppHeader({ localeHost }: { localeHost: LocaleHost }) {
               className={({ isActive }) => (isActive ? styles.activeLink : styles.navLink)}
               to={`/viewer/${libraryScoreId}`}
             >
-              {t(($) => $.navigation.viewer)}
+              {t("navigation.viewer")}
             </NavLink>
             <NavLink
               className={({ isActive }) => (isActive ? styles.activeLink : styles.navLink)}
               to={`/studio/${libraryScoreId}`}
             >
-              {t(($) => $.navigation.studio)}
+              {t("navigation.studio")}
             </NavLink>
           </>
         ) : null}
@@ -79,21 +79,21 @@ export function AppHeader({ localeHost }: { localeHost: LocaleHost }) {
           ref={localeButtonRef}
           className={styles.localeButton}
           type="button"
-          aria-label={t(($) => $.locale.trigger)}
+          aria-label={t("locale.trigger")}
           aria-haspopup="dialog"
           aria-expanded={localeOpen}
           onClick={() => setLocaleOpen((open) => !open)}
         >
           <Languages aria-hidden="true" size={17} />
-          <span>{t(($) => $.locale.trigger)}</span>
+          <span>{t("locale.trigger")}</span>
         </button>
         <ContextPopup anchor={localeButtonRef.current} open={localeOpen} onOpenChange={setLocaleOpen}>
-          <div className={styles.localePopup} aria-label={t(($) => $.locale.dialogLabel)}>
+          <div className={styles.localePopup} aria-label={t("locale.dialogLabel")}>
             {(
               [
-                ["system", t(($) => $.locale.system)],
-                ["zh-CN", t(($) => $.locale.zhCN)],
-                ["en-US", t(($) => $.locale.enUS)],
+                ["system", t("locale.system")],
+                ["zh-CN", t("locale.zhCN")],
+                ["en-US", t("locale.enUS")],
               ] as const
             ).map(([preference, label]) => (
               <button
@@ -107,18 +107,18 @@ export function AppHeader({ localeHost }: { localeHost: LocaleHost }) {
                 {label}
               </button>
             ))}
-            {localeChange === "saving" ? <p role="status">{t(($) => $.locale.saving)}</p> : null}
-            {localeChange === "error" ? <p role="alert">{tErrors(($) => $.localePreferenceWriteFailed)}</p> : null}
+            {localeChange === "saving" ? <p role="status">{t("locale.saving")}</p> : null}
+            {localeChange === "error" ? <p role="alert">{tErrors("localePreferenceWriteFailed")}</p> : null}
           </div>
         </ContextPopup>
         <button
           className={styles.themeButton}
           type="button"
-          aria-label={nextTheme === "light" ? t(($) => $.theme.switchToLight) : t(($) => $.theme.switchToDark)}
+          aria-label={nextTheme === "light" ? t("theme.switchToLight") : t("theme.switchToDark")}
           onClick={() => flushSync(() => setTheme(nextTheme))}
         >
           {theme === "dark" ? <Sun aria-hidden="true" size={17} /> : <Moon aria-hidden="true" size={17} />}
-          <span>{theme === "dark" ? t(($) => $.theme.light) : t(($) => $.theme.dark)}</span>
+          <span>{theme === "dark" ? t("theme.light") : t("theme.dark")}</span>
         </button>
       </div>
     </header>

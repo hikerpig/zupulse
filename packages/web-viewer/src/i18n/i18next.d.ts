@@ -7,6 +7,5 @@ declare module "i18next" {
     resources: (typeof resources)["zh-CN"];
     returnNull: false;
     strictKeyChecks: true;
-    enableSelector: true;
   }
 }

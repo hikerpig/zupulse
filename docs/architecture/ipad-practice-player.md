@@ -5,7 +5,7 @@
 `apps/ipad-shell` 是已交付的个人原型 iPad App：薄 SwiftUI/WKWebView 宿主运行共享 React Library
 与 Viewer。它支持本地馆藏、Files 导入、前台播放与恢复；Studio 在 iPad 上保留不可用占位页。
 
-该架构由 ADR 0054–0059 定义。个人原型复用 IndexedDB，不承诺未来切换原生存储时无损迁移；云同步、
+该架构由 ADR 0058–0063 定义。个人原型复用 IndexedDB，不承诺未来切换原生存储时无损迁移；云同步、
 后台/锁屏播放与 Studio 分析不在当前范围。
 
 ## Ownership and boundaries

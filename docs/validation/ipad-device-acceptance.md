@@ -2,7 +2,7 @@
 
 ## Gate status
 
-- Status: not-run-on-device
+- Status: in-progress — partial device evidence recorded
 - Target device: 11-inch iPad Pro (M5)
 - Target OS: iPadOS 26.5.2
 - Signing prerequisite: Personal Team
@@ -11,31 +11,47 @@
 
 Record the Xcode version, app commit, build configuration and physical device OS before starting:
 
-| Field               | Evidence |
-| ------------------- | -------- |
-| Date                | pending  |
-| Git commit          | pending  |
-| Xcode               | pending  |
-| Device model        | pending  |
-| iPadOS              | pending  |
-| Build configuration | pending  |
+| Field               | Evidence                                      |
+| ------------------- | --------------------------------------------- |
+| Date                | 2026-07-24                                    |
+| Git commit          | `1d0f06c`                                     |
+| Xcode               | 26.3 (17C529)                                 |
+| Device model        | 11-inch iPad Pro (M5)                         |
+| iPadOS              | 26.5.2                                        |
+| Build configuration | Debug Development，Personal Team `PS5VXB9FWN` |
 
 ## 1. Installation and resource origin
 
-- [ ] Install a Development build signed by the Personal Team without changing the bundle ID or
+- [x] Install a Development build signed by the Personal Team without changing the bundle ID or
       enabling a dev-server URL.
 - [ ] Cold launch succeeds offline and the visible Library loads from `zupulse://app`.
-- [ ] `isSecureContext` is `true`.
-- [ ] Web Crypto SHA-256 completes.
-- [ ] Dynamic module import completes.
-- [ ] Module Worker loads and replies.
-- [ ] AudioWorklet registers.
-- [ ] Bravura font and bundled SoundFont load from the app package.
+- [x] `isSecureContext` is `true`.
+- [x] Web Crypto SHA-256 completes.
+- [x] Dynamic module import completes.
+- [x] Module Worker loads and replies.
+- [x] AudioWorklet registers.
+- [x] Bravura font and bundled SoundFont load from the app package.
 - [ ] IndexedDB data survives process termination and device restart.
 - [ ] Reinstall behavior is recorded separately; it must not be described as an in-place upgrade.
 
 Attach the structured capability result and Xcode device log. Update
 [ipad-resource-origin.md](./ipad-resource-origin.md) only after these checks pass.
+
+Device command (passed):
+
+```sh
+xcodebuild -project apps/ipad-shell/Zupulse.xcodeproj -scheme Zupulse -configuration Debug \
+  -destination 'id=00008142-001E15441E6B401C' \
+  -derivedDataPath apps/ipad-shell/dist/DerivedData-DeviceTests \
+  -allowProvisioningUpdates -parallel-testing-enabled NO test \
+  -only-testing:ZupulseTests/ResourceSchemeTests
+```
+
+Manual confirmation on the same device: the Library appeared on launch; one selected score
+imported and played; after app-process relaunch the score remained available and played; returning
+to Library via the logo and reopening that same score also displayed and played correctly. The
+selected score's format and offline condition were not recorded, and this is app-process relaunch
+evidence only—not a device reboot result.
 
 ## 2. Import, persistence and external open
 

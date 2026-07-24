@@ -93,6 +93,33 @@ describe("harmony CLI inspect command", () => {
     ).rejects.toThrow("boundary records --split must be train or tune");
   });
 
+  it("validates structured oracle inputs before reading the manifest", async () => {
+    await expect(runHarmonyCommand(["structured-oracle", "manifest.json"])).rejects.toThrow(
+      "usage: harmony:cli structured-oracle",
+    );
+    const required = [
+      "structured-oracle",
+      "manifest.json",
+      "--protocol",
+      "protocol.json",
+      "--data-root",
+      "data",
+      "--case",
+      "mozart",
+      "--output",
+      "oracle.json",
+    ];
+    await expect(runHarmonyCommand([...required, "--split", "eval"])).rejects.toThrow(
+      "structured oracle --split must be train or tune",
+    );
+    await expect(runHarmonyCommand([...required, "--max-span", "0"])).rejects.toThrow(
+      "--max-span must be a positive integer",
+    );
+    await expect(runHarmonyCommand([...required, "--top-k", "9"])).rejects.toThrow(
+      "--top-k must be an integer from 1 to 8",
+    );
+  });
+
   it("rejects invalid ranking-record splits before reading files", async () => {
     await expect(
       runHarmonyCommand([

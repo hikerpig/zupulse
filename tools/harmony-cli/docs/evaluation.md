@@ -87,6 +87,25 @@ report `2.6.0` 将候选排序与最终 primary 分开：`top1Accuracy` 仍表�
 
 report `2.7.0` 增加 opt-in `learned-evidence` boundary policy 与 `boundaryModel` 元数据。该 policy 固定保留小节线和 musical beats，只对其余 dense note-event 时刻运行 5 维线性分类器；模型特征不能读取 gold。CLI 必须显式传入模型文件，不会静默替换 production 默认。
 
+## Structured path oracle
+
+Phase 8 在训练 Semi-CRF 前先运行独立的 `structured-oracle`。它使用与 production 相同的 dense lattice、规则 Top-8 和显式 `maxSpan`，分别报告 boundary、span、candidate 与完整 segment path 的可表达率。Unsupported gold 不进入这些分母。
+
+```bash
+pnpm -s harmony:cli structured-oracle test-fixtures/harmony/datasets/manifest.json \
+  --protocol test-fixtures/harmony/datasets/protocol-v3.json \
+  --data-root /path/to/harmony-data \
+  --case dcml-mozart-v2.3 \
+  --split train \
+  --max-span 16 \
+  --top-k 8 \
+  --output /tmp/mozart-structured-oracle-train.json
+```
+
+Train 和 tune 使用不同入口，regression/final-holdout 无法由此命令导出。`search.candidates` 是 `ranges × topK` 的容量上界，并由 `candidateCountMode: "top-k-upper-bound"` 明示；oracle 只对 gold ranges 真实生成 candidates，避免为了规模计数物化数百万无用对象。
+
+Task 27 的 Mozart train/tune boundary 与 candidate 门禁通过，但 span representability 分别只有 `0.9853` 和 `0.9836`，低于预登记的 `0.99`，因此 Checkpoint E 已停止，未进入 exact decoder 或 structured training。完整结果见 [`tasks/harmony-structured-oracle-checkpoint.md`](../../../tasks/harmony-structured-oracle-checkpoint.md)。
+
 ## v3 预登记协议
 
 [`protocol-v3.json`](../../../test-fixtures/harmony/datasets/protocol-v3.json) 在下一轮 primary reranker 训练前冻结新的作品级 final holdout：Beethoven `01`、Chopin `BI105` 和 POP909 `225`。这些 group 不得进入 ranking records、训练、tune 或 threshold 选择。现有 K331 与已经查看过指标的跨语料 cases 只保留为 regression，不能再作为新的泛化声明。

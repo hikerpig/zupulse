@@ -203,7 +203,7 @@
 			outputPaths = ();
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -eu\nREPOSITORY_ROOT=\"$SRCROOT/../..\"\ncd \"$REPOSITORY_ROOT\"\npnpm ipad:web:build\nnode apps/ipad-shell/scripts/verify-web-assets.mjs\nif [ \"$CONFIGURATION\" = \"Release\" ]; then\n  node apps/ipad-shell/scripts/verify-release.mjs\nfi\nWEB_DESTINATION=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Web\"\nrm -rf \"$WEB_DESTINATION\"\nmkdir -p \"$WEB_DESTINATION\"\nditto apps/ipad-shell/dist/web \"$WEB_DESTINATION\"\n";
+			shellScript = "set -eu\nREPOSITORY_ROOT=\"$SRCROOT/../..\"\ncd \"$REPOSITORY_ROOT\"\nRUN_TOOL=\"$REPOSITORY_ROOT/apps/ipad-shell/scripts/run-tool-from-xcode.sh\"\n/bin/sh \"$RUN_TOOL\" pnpm ipad:web:build\n/bin/sh \"$RUN_TOOL\" node apps/ipad-shell/scripts/verify-web-assets.mjs\nif [ \"$CONFIGURATION\" = \"Release\" ]; then\n  /bin/sh \"$RUN_TOOL\" node apps/ipad-shell/scripts/verify-release.mjs\nfi\nWEB_DESTINATION=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Web\"\nrm -rf \"$WEB_DESTINATION\"\nmkdir -p \"$WEB_DESTINATION\"\nditto apps/ipad-shell/dist/web \"$WEB_DESTINATION\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

@@ -29,6 +29,7 @@ import { HarmonyStudioSession } from "../harmonyStudioSession";
 import type { HarmonyStudioSessionState } from "../harmonyStudioSession";
 import { exportHarmonyStudioDocument } from "../harmonyStudioExport";
 import type { StudioScoreRuntime, StudioScoreRuntimeSnapshot } from "../studio-score-runtime";
+import { ApplicationFailure, applicationIssue, type ApplicationIssue } from "./applicationIssue";
 import {
   createHarmonyRangeViewItems,
   restoreHarmonySelection,
@@ -40,7 +41,12 @@ import {
 export type ViewerApplicationSnapshot = {
   currentSessionId?: string;
   currentLibraryScoreId?: string;
-  library?: { scores: readonly LibraryScoreSummary[]; loading: boolean; error?: string; importing?: boolean };
+  library?: {
+    scores: readonly LibraryScoreSummary[];
+    loading: boolean;
+    error?: ApplicationIssue;
+    importing?: boolean;
+  };
   studio?: {
     libraryScoreId: string;
     status: "loading" | "analyzing" | "ready" | "unsaved" | "saving" | "error" | "conflict";
@@ -48,12 +54,12 @@ export type ViewerApplicationSnapshot = {
     document?: HarmonyAnalysisDocument;
     ranges?: readonly HarmonyRangeViewItem[];
     selection?: HarmonySelection;
-    selectionNotice?: string;
+    selectionNotice?: "no-effective-range";
     transport?: PreviewTransportState;
     audioStatus?: StudioScoreRuntimeSnapshot["audio"];
-    previewError?: string;
-    audioError?: string;
-    error?: string;
+    previewError?: ApplicationIssue;
+    audioError?: ApplicationIssue;
+    error?: ApplicationIssue;
   };
 };
 
@@ -252,7 +258,7 @@ export class ViewerApplication implements ViewerAppHandle {
     }
     this.setStudio(id, {
       ...studio,
-      selectionNotice: "该位置没有有效和弦区间，已保留当前选择。",
+      selectionNotice: "no-effective-range",
     });
   }
 
@@ -366,12 +372,17 @@ export class ViewerApplication implements ViewerAppHandle {
     const library = this.library;
     const repository = this.getHarmonyAnalysisRepository();
     const intent = ++this.studioIntent;
-    if (!library || !repository) return this.setStudio(id, { status: "error", error: "和声分析存储不可用" });
+    if (!library || !repository)
+      return this.setStudio(id, {
+        status: "error",
+        error: applicationIssue("studio-storage-unavailable", false),
+      });
     this.setStudio(id, { status: "loading" });
     try {
       const score = await library.repository.get(id as LibraryScore["id"]);
-      if (!score) throw new Error("曲谱不存在");
-      if (score.format !== "musicxml") throw new Error("仅支持 MusicXML/MXL 曲谱");
+      if (!score) throw new ApplicationFailure(applicationIssue("score-not-found", false));
+      if (score.format !== "musicxml")
+        throw new ApplicationFailure(applicationIssue("studio-format-unsupported", false));
       const source = await library.repository.readScore(id as LibraryScore["id"]);
       this.studioSources.set(id, {
         rootXml: readMusicXmlRootXml(source.bytes),
@@ -399,15 +410,17 @@ export class ViewerApplication implements ViewerAppHandle {
       this.setSnapshot(snapshot);
       await previousViewer?.destroy();
       await previousStudio?.destroy();
-      if (!this.openStudioRuntime) throw new Error("Studio runtime is not configured");
+      if (!this.openStudioRuntime) throw new ApplicationFailure(applicationIssue("studio-runtime-unavailable", false));
       this.studioRuntime = await this.openStudioRuntime(source);
       this.studioRuntimeLibraryScoreId = id;
       this.studioSelectionDetach = this.studioRuntime.subscribeSelection((moment) =>
         this.selectStudioMoment(id, moment),
       );
       this.studioErrorDetach = this.studioRuntime.subscribeErrors((error) => {
+        this.reportDiagnostic(error, "studio.preview");
         const studio = this.snapshot.studio;
-        if (studio?.libraryScoreId === id) this.setStudio(id, { ...studio, previewError: error.message });
+        if (studio?.libraryScoreId === id)
+          this.setStudio(id, { ...studio, previewError: applicationIssue("studio-preview-failed") });
       });
       this.studioTransportDetach = this.studioRuntime.subscribeTransport(() => this.syncStudioTransport(id));
       this.studioAudioDetach = this.studioRuntime.subscribeAudio?.(() => this.syncStudioTransport(id));
@@ -419,8 +432,13 @@ export class ViewerApplication implements ViewerAppHandle {
       const state = await session.load(() => this.createStudioDocument(id));
       if (intent === this.studioIntent) this.setStudioState(id, state);
     } catch (error) {
-      if (intent === this.studioIntent)
-        this.setStudio(id, { status: "error", error: error instanceof Error ? error.message : "分析失败" });
+      this.reportDiagnostic(error, "studio.open");
+      if (intent === this.studioIntent) {
+        this.setStudio(id, {
+          status: "error",
+          error: error instanceof ApplicationFailure ? error.issue : applicationIssue("studio-analysis-failed"),
+        });
+      }
     }
   }
 
@@ -473,17 +491,18 @@ export class ViewerApplication implements ViewerAppHandle {
 
   private async createStudioDocument(id: string, requestedScope?: readonly string[]): Promise<HarmonyAnalysisDocument> {
     const library = this.library;
-    if (!library) throw new Error("曲谱库不可用");
+    if (!library) throw new ApplicationFailure(applicationIssue("studio-storage-unavailable", false));
     const score = await library.repository.get(id as LibraryScore["id"]);
-    if (!score) throw new Error("曲谱不存在");
-    if (score.format !== "musicxml") throw new Error("仅支持 MusicXML/MXL 曲谱");
+    if (!score) throw new ApplicationFailure(applicationIssue("score-not-found", false));
+    if (score.format !== "musicxml") throw new ApplicationFailure(applicationIssue("studio-format-unsupported", false));
     const file = await library.repository.readScore(id as LibraryScore["id"]);
     const adapter = library.adapters.find((candidate) => candidate.format === "musicxml");
-    if (!adapter) throw new Error("MusicXML 分析器不可用");
+    if (!adapter) throw new ApplicationFailure(applicationIssue("studio-analyzer-unavailable", false));
     const parsed = await adapter.parse({ fileName: file.fileName, bytes: file.bytes });
     const allTrackIds = parsed.document.tracks.map((track) => track.id);
     const includedTrackIds = requestedScope === undefined ? allTrackIds : [...requestedScope];
-    if (includedTrackIds.length === 0) throw new Error("曲谱没有可分析的音高轨道");
+    if (includedTrackIds.length === 0)
+      throw new ApplicationFailure(applicationIssue("studio-no-analyzable-tracks", false));
     if (includedTrackIds.some((trackId) => !allTrackIds.includes(trackId)))
       throw new Error("STUDIO_SCOPE_TRACK_NOT_FOUND");
     const now = new Date().toISOString();
@@ -520,9 +539,10 @@ export class ViewerApplication implements ViewerAppHandle {
       const scores = await this.library.repository.list();
       this.setSnapshot({ ...this.snapshot, library: { scores, loading: false } });
     } catch (error) {
+      this.reportDiagnostic(error, "library.refresh");
       this.setSnapshot({
         ...this.snapshot,
-        library: { scores: [], loading: false, error: error instanceof Error ? error.message : "曲谱库不可用" },
+        library: { scores: [], loading: false, error: applicationIssue("library-unavailable") },
       });
     }
   }
@@ -671,6 +691,10 @@ export class ViewerApplication implements ViewerAppHandle {
     if (event.type === "prepare-close") void this.destroy().catch(() => undefined);
   }
 
+  private reportDiagnostic(error: unknown, operation: string): void {
+    this.host.reportDiagnostic?.(error, operation);
+  }
+
   private setSnapshot(snapshot: ViewerApplicationSnapshot): void {
     this.snapshot = snapshot;
     for (const listener of this.listeners) listener();
@@ -710,20 +734,31 @@ export class ViewerApplication implements ViewerAppHandle {
             audioStatus: this.studioRuntime.getSnapshot().audio,
           }
         : {}),
-      ...(state.error === undefined ? {} : { error: state.error }),
+      ...(state.error === undefined
+        ? {}
+        : {
+            error:
+              state.status === "conflict"
+                ? applicationIssue("studio-version-conflict")
+                : applicationIssue("studio-save-failed"),
+          }),
       ...(previewError === undefined ? {} : { previewError }),
     });
   }
 
-  private applyStudioPreview(libraryScoreId: string, ranges: readonly HarmonyRangeViewItem[]): string | undefined {
+  private applyStudioPreview(
+    libraryScoreId: string,
+    ranges: readonly HarmonyRangeViewItem[],
+  ): ApplicationIssue | undefined {
     if (this.studioRuntimeLibraryScoreId !== libraryScoreId) return undefined;
     try {
       const result = this.studioRuntime?.applyPreview(
         this.studioPreviewEnabled ? ranges.map((item) => item.effective) : [],
       );
-      return result?.status === "applied" ? undefined : "无法在当前乐谱上显示和弦预览";
+      return result?.status === "applied" ? undefined : applicationIssue("studio-preview-unavailable");
     } catch (error) {
-      return error instanceof Error ? error.message : "和弦预览失败";
+      this.reportDiagnostic(error, "studio.preview");
+      return applicationIssue("studio-preview-failed");
     }
   }
 
@@ -743,7 +778,10 @@ export class ViewerApplication implements ViewerAppHandle {
     const studio = this.snapshot.studio;
     if (studio?.libraryScoreId !== libraryScoreId) return;
     if (status === "unavailable" || status === "unrepresentable") {
-      this.setStudio(libraryScoreId, { ...studio, audioError: "当前环境无法播放预览" });
+      this.setStudio(libraryScoreId, {
+        ...studio,
+        audioError: applicationIssue("studio-audio-unavailable"),
+      });
       return;
     }
     if (studio.audioError !== undefined) {

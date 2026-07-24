@@ -37,6 +37,17 @@ export const enUS = {
   errors: {
     generic: "Something went wrong. Try again.",
     localePreferenceWriteFailed: "Could not save the language preference. The current language was kept.",
+    import: {
+      generic: "The score could not be imported.",
+      unsupportedFormat: "This score format is not supported.",
+      malformedScore: "The score file is damaged or has an invalid structure.",
+      resourceLimitExceeded: "The score exceeds the safe resource limits.",
+      mxlContainerMissing: "The MXL container is missing its descriptor.",
+      mxlRootfileMissing: "The score referenced by the MXL container is missing.",
+      emptyScore: "The score has no displayable musical structure.",
+      noPlayableTimeline: "The score can be viewed, but it cannot be played.",
+      coreStructureMismatch: "The imported musical structure does not match the source file.",
+    },
   },
   desktop: {},
   meta: {

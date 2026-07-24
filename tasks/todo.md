@@ -44,10 +44,10 @@
 
 ### Phase 2: Locale-neutral domain boundary
 
-- [ ] Task 5：导入诊断改为 code/context。
-- [ ] Task 6：Loop sidecar 与 Playback state 去本地化。
-- [ ] Task 7：ViewerApplication 与 presenter 改为 semantic issue/view model。
-- [ ] Checkpoint B：领域边界、focused tests、typecheck 与阶段提交。
+- [x] Task 5：导入诊断改为 code/context。
+- [x] Task 6：Loop sidecar 与 Playback state 去本地化。
+- [x] Task 7：ViewerApplication 与 presenter 改为 semantic issue/view model。
+- [x] Checkpoint B：领域边界、focused tests、typecheck 与阶段提交。
 
 ### Phase 3: Shared UI vertical slices
 
@@ -93,3 +93,11 @@
 - 完成 Browser preference adapter、document metadata controller、per-app Provider/store 与 Header 语言入口。
 - 验证：27 个 focused tests、`pnpm typecheck`、`pnpm demo:build`、`pnpm desktop:build`、`git diff --check`
   全部通过。
+
+### 2026-07-24 — Checkpoint B
+
+- 导入诊断、应用错误与 Demo 状态改为稳定 code/context；原始错误只进入诊断上报，不进入 UI snapshot。
+- Loop 与 Playback state 移除生成式中文标签；轨道名保留为可选用户/曲谱数据，默认标签交由 UI 本地化。
+- Playback presenter 输出 semantic state，旧 sidecar 位置迁移不产生额外持久化写入。
+- 验证：68 个测试文件、301 个测试、`pnpm typecheck`、`pnpm demo:build`、`pnpm desktop:build` 与
+  `web-core` 非测试源码中文扫描全部通过。

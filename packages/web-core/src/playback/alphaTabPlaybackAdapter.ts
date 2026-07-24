@@ -32,11 +32,14 @@ export function extractAlphaTabPlaybackModel(api: AlphaTabApiLike): {
 
   return {
     baseTempo: score.tempo && score.tempo > 0 ? score.tempo : 120,
-    tracks: score.tracks.map((track) => ({
-      id: trackId(track.index),
-      sourceIndex: track.index,
-      name: track.name?.trim() || `轨道 ${track.index + 1}`,
-    })),
+    tracks: score.tracks.map((track) => {
+      const name = track.name?.trim();
+      return {
+        id: trackId(track.index),
+        sourceIndex: track.index,
+        ...(name ? { name } : {}),
+      };
+    }),
     timeline: {
       durationTicks: api.endTick && api.endTick > 0 ? api.endTick : scoreDurationTicks,
       durationMs: api.endTime ?? 0,

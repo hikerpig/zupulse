@@ -8,7 +8,7 @@ describe("presentPlayback", () => {
     const view = presentPlayback(state());
 
     expect(view).toMatchObject({
-      playLabel: "暂停",
+      isPlaying: true,
       playDisabled: false,
       currentTime: "1:05",
       duration: "2:05",
@@ -18,19 +18,25 @@ describe("presentPlayback", () => {
       loopDraftStart: 0.08,
       loopDraftEnd: 0.4,
       loopSnapMode: "beat",
-      soundFontRetryVisible: false,
+      soundFont: "ready",
+      persistence: "clean",
+      trackCount: 2,
+      primaryTrackName: "Lead Guitar",
     });
     expect(view.loops).toEqual([
       {
         id: "loop-1",
         label: "Solo",
-        rangeLabel: "小节 1–2",
+        labelSource: "user",
+        startMeasureIndex: 0,
+        endMeasureIndex: 1,
         speedPercent: 55,
         selected: true,
       },
     ]);
     expect(view.tracks[0]).toEqual({
       id: "track-0",
+      sourceIndex: 0,
       name: "Lead Guitar",
       primary: true,
       additional: false,
@@ -40,42 +46,16 @@ describe("presentPlayback", () => {
     });
   });
 
-  it("disables playback until SoundFont is ready and exposes retry after failure", () => {
+  it("exposes semantic soundfont state without presentation copy", () => {
     const loading = state();
     loading.soundFont = "loading";
     expect(presentPlayback(loading).playDisabled).toBe(true);
 
     loading.soundFont = "error";
-    expect(presentPlayback(loading).soundFontRetryVisible).toBe(true);
+    expect(presentPlayback(loading).soundFont).toBe("error");
   });
 
-  it("derives audio chrome and session facts for the compact workbench", () => {
-    const view = presentPlayback(state());
-
-    expect(view.audioStatusLabel).toBe("音频已就绪");
-    expect(view.audioStatusTone).toBe("ready");
-    expect(view.sessionSummary).toContain("Lead Guitar");
-    expect(view.sessionFacts).toEqual([
-      { label: "Tracks", value: "2" },
-      { label: "Tempo", value: "80%" },
-      { label: "Loop", value: "Solo" },
-      { label: "Primary", value: "Lead Guitar" },
-    ]);
-  });
-
-  it("falls back to quiet audio copy and no active loop", () => {
-    const input = state();
-    input.soundFont = "loading";
-    delete input.activeLoopId;
-
-    expect(presentPlayback(input)).toMatchObject({
-      audioStatusLabel: "音频准备中",
-      audioStatusTone: "subtle",
-      sessionFacts: expect.arrayContaining([{ label: "Loop", value: "未启用" }]),
-    });
-  });
-
-  it("never renders NaN and reports unsaved practice settings", () => {
+  it("never renders NaN and exposes persistence state", () => {
     const input = state();
     input.position.cachedTimeMs = Number.NaN;
     input.durationMs = 0;
@@ -85,7 +65,7 @@ describe("presentPlayback", () => {
       currentTime: "0:00",
       duration: "0:00",
       progress: 0,
-      persistenceMessage: "练习设置尚未保存",
+      persistence: "error",
     });
   });
 });

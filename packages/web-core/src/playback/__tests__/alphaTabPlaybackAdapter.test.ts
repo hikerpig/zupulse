@@ -14,7 +14,7 @@ describe("extractAlphaTabPlaybackModel", () => {
       baseTempo: 120,
       tracks: [
         { id: "track-0", sourceIndex: 0, name: "Lead" },
-        { id: "track-1", sourceIndex: 1, name: "轨道 2" },
+        { id: "track-1", sourceIndex: 1 },
       ],
       timeline: {
         durationTicks: 3840,

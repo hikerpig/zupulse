@@ -49,16 +49,22 @@ export function createLoopRegion(input: {
     throw new Error("Loop start must be before loop end");
   }
 
-  const region: LoopRegion = {
+  const normalizedLabel = input.label?.trim();
+  if (normalizedLabel !== undefined && normalizedLabel.length === 0) {
+    throw new Error("Loop label cannot be empty");
+  }
+  const common = {
     id: input.id,
-    label: input.label ?? `小节 ${input.start.measureIndex + 1}–${input.end.measureIndex + 1}`,
-    labelSource: input.label === undefined ? "generated" : "user",
     start: input.start,
     end: input.end,
     snapMode: input.snapMode ?? "beat",
     createdAt: input.now,
     updatedAt: input.now,
   };
+  const region: LoopRegion =
+    normalizedLabel === undefined
+      ? { ...common, labelSource: "generated" }
+      : { ...common, label: normalizedLabel, labelSource: "user" };
 
   if (input.speedOverride !== undefined) {
     region.speedOverride = normalizePlaybackSpeed(input.speedOverride);

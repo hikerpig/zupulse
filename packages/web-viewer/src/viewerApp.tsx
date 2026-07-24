@@ -42,7 +42,7 @@ export function createDefaultOpenSession(
     if (!scoreScrollElement) throw new Error("Viewer DOM is missing the score scroll container");
     const status = required<HTMLElement>(ownerDocument, "status");
     const summary = required<HTMLElement>(ownerDocument, "summary");
-    renderViewerState(status, summary, { status: "loading", message: "正在加载文件" });
+    renderViewerState(status, summary, { status: "loading" });
     alphaTabHost.replaceChildren();
     const api = dependencies.createApi(alphaTabHost, createViewerAlphaTabSettings(scoreScrollElement));
     const adapter = dependencies.createAdapter(api);
@@ -121,7 +121,7 @@ export function createDefaultOpenSession(
       }
       renderViewerState(status, summary, {
         status: "error",
-        message: error instanceof Error ? error.message : "加载失败",
+        issueCode: "viewer-load-failed",
       });
       return emptySession();
     }
@@ -129,12 +129,23 @@ export function createDefaultOpenSession(
 }
 
 export function renderViewerState(status: HTMLElement, summary: HTMLElement, state: DemoState): void {
-  status.textContent = state.message;
+  status.textContent =
+    state.status === "loading"
+      ? "正在加载文件"
+      : state.status === "ready" && state.summary
+        ? `已加载 ${state.summary.title}`
+        : demoIssueMessage(state.issueCode);
   if (state.status !== "ready" || !state.summary) {
     summary.textContent = "未打开乐谱";
     return;
   }
   summary.textContent = state.summary.title;
+}
+
+function demoIssueMessage(issueCode: DemoState["issueCode"]): string {
+  if (issueCode === "gp-file-required") return "请选择 Guitar Pro 文件";
+  if (issueCode === "alpha-tab-load-failed") return "alphaTab 无法加载该文件";
+  return "无法加载乐谱";
 }
 
 function emptySession(): ViewerSessionHandle {

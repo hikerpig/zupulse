@@ -34,6 +34,17 @@ export const zhCN = {
   errors: {
     generic: "操作失败，请重试",
     localePreferenceWriteFailed: "无法保存语言设置，已保留当前语言",
+    import: {
+      generic: "无法导入乐谱",
+      unsupportedFormat: "不支持这种乐谱格式。",
+      malformedScore: "乐谱文件已损坏或结构无效。",
+      resourceLimitExceeded: "乐谱超出安全资源限制。",
+      mxlContainerMissing: "MXL 容器缺少必要的描述文件。",
+      mxlRootfileMissing: "MXL 容器引用的乐谱不存在。",
+      emptyScore: "乐谱没有可显示的音乐结构。",
+      noPlayableTimeline: "乐谱可以查看，但当前无法播放。",
+      coreStructureMismatch: "导入后的核心音乐结构与源文件不一致。",
+    },
   },
   desktop: {},
   meta: {

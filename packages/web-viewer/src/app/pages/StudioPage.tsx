@@ -8,6 +8,7 @@ import { ScoreViewer } from "../../components/ScoreViewer";
 import { StudioSplitWorkspace } from "../../components/studio-split-workspace";
 import { ContextPopup } from "../../components/ContextPopup";
 import type { ViewerApplication, ViewerApplicationSnapshot } from "../ViewerApplication";
+import type { ApplicationIssue } from "../applicationIssue";
 import { loadStudioPreferences, saveStudioPreferences } from "../studio-preferences";
 import styles from "./StudioPage.module.css";
 
@@ -181,7 +182,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
               </p>
             ) : studio?.status === "error" && !studioDocument ? (
               <p className={styles.alert} role="alert">
-                {studio.error}
+                {studioIssueMessage(studio.error)}
               </p>
             ) : studioDocument ? (
               <>
@@ -282,12 +283,12 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                 ) : null}
                 {studio.status === "conflict" || studio.status === "error" ? (
                   <p className={styles.alert} role="alert">
-                    {studio.error}
+                    {studioIssueMessage(studio.error)}
                   </p>
                 ) : null}
                 {studio.previewError ? (
                   <p className={styles.alert} role="alert">
-                    预览不可用：{studio.previewError}
+                    预览不可用：{studioIssueMessage(studio.previewError)}
                     <button
                       type="button"
                       onClick={() =>
@@ -302,12 +303,12 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                 ) : null}
                 {studio.audioError ? (
                   <p className={styles.alert} role="alert">
-                    试听不可用：{studio.audioError}
+                    试听不可用：{studioIssueMessage(studio.audioError)}
                   </p>
                 ) : null}
                 {studio.selectionNotice ? (
                   <p className={styles.emptyState} role="status" aria-label="谱面选择说明">
-                    {studio.selectionNotice}
+                    该位置没有有效和弦区间，已保留当前选择。
                   </p>
                 ) : null}
 
@@ -517,4 +518,33 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
       />
     </main>
   );
+}
+
+function studioIssueMessage(issue: ApplicationIssue | undefined): string {
+  switch (issue?.code) {
+    case "studio-storage-unavailable":
+      return "和声分析存储不可用";
+    case "score-not-found":
+      return "曲谱不存在";
+    case "studio-format-unsupported":
+      return "仅支持 MusicXML/MXL 曲谱";
+    case "studio-runtime-unavailable":
+      return "和弦工作室不可用";
+    case "studio-analyzer-unavailable":
+      return "MusicXML 分析器不可用";
+    case "studio-no-analyzable-tracks":
+      return "曲谱没有可分析的音高轨道";
+    case "studio-version-conflict":
+      return "版本冲突";
+    case "studio-save-failed":
+      return "保存失败";
+    case "studio-preview-unavailable":
+      return "无法在当前乐谱上显示和弦预览";
+    case "studio-preview-failed":
+      return "预览渲染失败";
+    case "studio-audio-unavailable":
+      return "当前环境无法播放预览";
+    default:
+      return "分析失败";
+  }
 }

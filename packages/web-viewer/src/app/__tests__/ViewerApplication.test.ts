@@ -34,6 +34,54 @@ function studioRuntime({
 }
 
 describe("ViewerApplication", () => {
+  it("keeps raw repository failures out of the application snapshot", async () => {
+    const failure = new Error("failed at /Users/example/private-score.gp");
+    const reportDiagnostic = vi.fn();
+    const repository: SheetLibraryRepository = {
+      initialize: async () => {
+        throw failure;
+      },
+      list: async () => [],
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async () => {
+        throw new Error("unused");
+      },
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+    };
+    const application = new ViewerApplication(
+      {
+        openScore: async () => undefined,
+        subscribe: () => () => undefined,
+        reportDiagnostic,
+      },
+      async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() }),
+      {
+        repository,
+        gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
+        adapters: [],
+      },
+    );
+
+    await application.refreshLibrary();
+
+    expect(application.getSnapshot().library?.error).toEqual({
+      code: "library-unavailable",
+      recoverable: true,
+    });
+    expect(JSON.stringify(application.getSnapshot())).not.toContain("/Users/example");
+    expect(reportDiagnostic).toHaveBeenCalledWith(failure, "library.refresh");
+    await application.destroy();
+  });
+
   it("keeps cancellation on the current session and replaces a selected file", async () => {
     const destroy = vi.fn(async () => undefined);
     const files = [
@@ -267,7 +315,7 @@ describe("ViewerApplication", () => {
     expect(application.getSnapshot().studio).toMatchObject({
       libraryScoreId: scoreId,
       status: "ready",
-      previewError: "预览渲染失败",
+      previewError: { code: "studio-preview-failed", recoverable: true },
     });
     await application.setStudioAnnotationTarget(scoreId, { trackId: "track-1", staffIndex: 1 });
     expect(application.getSnapshot().studio?.document?.annotationTarget).toEqual({ trackId: "track-1", staffIndex: 1 });
@@ -487,7 +535,10 @@ describe("ViewerApplication", () => {
       { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
     );
     await application.openStudio(scoreId);
-    expect(application.getSnapshot().studio).toMatchObject({ status: "error", error: "仅支持 MusicXML/MXL 曲谱" });
+    expect(application.getSnapshot().studio).toMatchObject({
+      status: "error",
+      error: { code: "studio-format-unsupported", recoverable: false },
+    });
     await application.destroy();
   });
 });

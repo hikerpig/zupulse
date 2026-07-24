@@ -12,7 +12,7 @@ describe("presentGpFile", () => {
 
     expect(state).toEqual({
       status: "error",
-      message: "请选择 Guitar Pro 文件",
+      issueCode: "gp-file-required",
     });
   });
 
@@ -39,7 +39,6 @@ describe("presentGpFile", () => {
     });
 
     expect(state.status).toBe("ready");
-    expect(state.message).toBe("已加载 Song");
     expect(state.summary).toEqual({
       title: "Song",
       artist: "Artist",
@@ -66,7 +65,7 @@ describe("presentGpFile", () => {
 
     expect(state).toEqual({
       status: "error",
-      message: "alphaTab 无法加载该文件",
+      issueCode: "alpha-tab-load-failed",
     });
   });
 });

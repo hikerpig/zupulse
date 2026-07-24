@@ -28,7 +28,6 @@ describe("createStudioScoreRuntime", () => {
       createApi: vi.fn(() => api),
       presentFile: vi.fn(async () => ({
         status: "ready",
-        message: "已加载",
         identity: {} as never,
         summary: {} as never,
       })),
@@ -73,7 +72,7 @@ describe("createStudioScoreRuntime", () => {
       { fileName: "score.musicxml", bytes: new Uint8Array([1]) },
       {
         createApi: () => api,
-        presentFile: async () => ({ status: "ready", message: "已加载", identity: {} as never, summary: {} as never }),
+        presentFile: async () => ({ status: "ready", identity: {} as never, summary: {} as never }),
         waitForScore: async () => undefined,
       },
     );

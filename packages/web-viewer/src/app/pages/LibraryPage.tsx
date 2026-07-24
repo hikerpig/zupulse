@@ -20,6 +20,7 @@ export function LibraryPage({ application }: { application: ViewerApplication })
     <SheetLibrary
       application={application}
       {...library}
+      {...(library.error === undefined ? {} : { error: "曲谱库不可用" })}
       onImport={(multiple) => application.importScores(multiple)}
       onOpen={(id) => void navigate(`/viewer/${id}`)}
     />

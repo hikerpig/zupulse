@@ -32,7 +32,7 @@ export type LoopDraft = {
 export type PlaybackTrack = {
   id: string;
   sourceIndex: number;
-  name: string;
+  name?: string;
 };
 
 export type TrackMixState = {

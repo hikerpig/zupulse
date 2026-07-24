@@ -11,13 +11,15 @@ import {
   type GpScoreSummary,
   type AlphaTabScoreLike,
   type ScoreIdentity,
+  type ImportDiagnosticCode,
 } from "@zupulse/web-core";
 
 export type DemoStatus = "idle" | "loading" | "ready" | "error";
+export type DemoIssueCode = ImportDiagnosticCode | "gp-file-required" | "alpha-tab-load-failed" | "viewer-load-failed";
 
 export type DemoState = {
   status: DemoStatus;
-  message: string;
+  issueCode?: DemoIssueCode;
   identity?: ScoreIdentity;
   summary?: GpScoreSummary;
   bytes?: Uint8Array;
@@ -37,7 +39,7 @@ export async function presentGpFile(input: {
   if (detectScoreFormat(input.file.name) !== "gp") {
     return {
       status: "error",
-      message: "请选择 Guitar Pro 文件",
+      issueCode: "gp-file-required",
     };
   }
 
@@ -50,7 +52,7 @@ export async function presentGpFile(input: {
   if (!loaded) {
     return {
       status: "error",
-      message: "alphaTab 无法加载该文件",
+      issueCode: "alpha-tab-load-failed",
     };
   }
 
@@ -75,7 +77,6 @@ export async function presentGpFile(input: {
 
   return {
     status: "ready",
-    message: `已加载 ${summary.title}`,
     identity,
     summary,
     bytes,

@@ -4,7 +4,7 @@ import { Popover } from "@base-ui/react/popover";
 import { Pause, Play, Repeat2, Square } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { ViewerSessionHandle } from "../host";
-import { presentPlayback } from "../playbackPresenter";
+import { presentPlayback, type PlaybackViewModel } from "../playbackPresenter";
 import { Slider } from "../components/Slider";
 import styles from "./PlaybackWorkspace.module.css";
 
@@ -47,6 +47,8 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
   const view = presentPlayback(state);
   const dispatch = (command: PlaybackCommand) => void playback.dispatch(command);
   const hasActiveLoop = view.loops.some((loop) => loop.selected);
+  const playLabel = view.isPlaying ? "暂停" : "播放";
+  const activeLoop = view.loops.find((loop) => loop.selected);
   const position = (ratio: number) =>
     musicalPositionFromTick(
       Math.round(playback.timeline.durationTicks * ratio),
@@ -61,12 +63,12 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
           <button
             className={`primary-button ${styles.transportPlayButton}`}
             type="button"
-            aria-label={view.playLabel}
-            title={`${view.playLabel}（Space）`}
+            aria-label={playLabel}
+            title={`${playLabel}（Space）`}
             disabled={view.playDisabled}
             onClick={() => dispatch({ type: "toggle-playback" })}
           >
-            {view.playLabel === "暂停" ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
+            {view.isPlaying ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
           </button>
           <button
             className={styles.transportIconButton}
@@ -112,9 +114,9 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
             onCommit={(tempo) => dispatch({ type: "set-score-speed", speed: tempo / view.baseTempo })}
           />
           {state.soundFont !== "ready" && (
-            <p className={`${styles.statusChip} ${styles[view.audioStatusTone]}`}>{view.audioStatusLabel}</p>
+            <p className={`${styles.statusChip} ${styles[view.audioStatusTone]}`}>{audioStatusLabel(view.soundFont)}</p>
           )}
-          {view.soundFontRetryVisible && (
+          {view.soundFont === "error" && (
             <button type="button" onClick={() => dispatch({ type: "retry-soundfont" })}>
               重试音频
             </button>
@@ -130,7 +132,9 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
               <div>
                 <p className={styles.drawerKicker}>Practice</p>
                 <h2 className={styles.drawerTitle}>练习设置</h2>
-                <p className={styles.drawerSummary}>{view.sessionSummary}</p>
+                <p className={styles.drawerSummary}>
+                  {view.primaryTrackName ?? "未选择"} · {view.trackCount} 个轨道 · {view.speedPercent}% 速度
+                </p>
               </div>
               <button
                 className={styles.drawerClose}
@@ -238,7 +242,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                         </button>
                         <input
                           aria-label="循环名称"
-                          value={loop.label}
+                          value={loopDisplayLabel(loop)}
                           onChange={(event) =>
                             dispatch({
                               type: "rename-loop",
@@ -247,7 +251,9 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                             })
                           }
                         />
-                        <span>{loop.rangeLabel}</span>
+                        <span>
+                          小节 {loop.startMeasureIndex + 1}–{loop.endMeasureIndex + 1}
+                        </span>
                         <input
                           type="number"
                           min="25"
@@ -273,7 +279,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                 <div className={`${styles.panelContent} ${styles.itemList}`}>
                   {view.tracks.map((track) => (
                     <div className={styles.trackRow} key={track.id}>
-                      <strong>{track.name}</strong>
+                      <strong>{trackDisplayName(track)}</strong>
                       <Check
                         label="主"
                         type="radio"
@@ -308,7 +314,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                         min="0"
                         max="100"
                         value={track.volumePercent}
-                        aria-label={`${track.name} 音量`}
+                        aria-label={`${trackDisplayName(track)} 音量`}
                         onChange={(event) =>
                           dispatch({
                             type: "set-track-volume",
@@ -326,7 +332,12 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                   <p className={styles.panelTitle}>Session</p>
                 </div>
                 <div className="panel-content session-facts">
-                  {view.sessionFacts.map((fact) => (
+                  {[
+                    { label: "Tracks", value: String(view.trackCount) },
+                    { label: "Tempo", value: `${view.speedPercent}%` },
+                    { label: "Loop", value: activeLoop ? loopDisplayLabel(activeLoop) : "未启用" },
+                    { label: "Primary", value: view.primaryTrackName ?? "未选择" },
+                  ].map((fact) => (
                     <div className={styles.sessionFact} key={fact.label}>
                       <span className={styles.sessionFactLabel}>{fact.label}</span>
                       <strong className={styles.sessionFactValue}>{fact.value}</strong>
@@ -336,7 +347,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
               </section>
             </div>
             <p className={styles.persistenceStatus} aria-live="polite">
-              {view.persistenceMessage}
+              {persistenceMessage(view.persistence)}
             </p>
           </aside>
         )}
@@ -548,4 +559,26 @@ function loopSpeedCommand(loopId: string, value: string): PlaybackCommand {
 function loopValue(tick: number | undefined, durationTicks: number): number {
   if (tick === undefined || durationTicks <= 0) return 0;
   return Math.round(Math.min(1, Math.max(0, tick / durationTicks)) * 1000);
+}
+
+function loopDisplayLabel(loop: PlaybackViewModel["loops"][number]): string {
+  return loop.labelSource === "user" && loop.label
+    ? loop.label
+    : `小节 ${loop.startMeasureIndex + 1}–${loop.endMeasureIndex + 1}`;
+}
+
+function trackDisplayName(track: PlaybackViewModel["tracks"][number]): string {
+  return track.name ?? `轨道 ${track.sourceIndex + 1}`;
+}
+
+function persistenceMessage(state: PlaybackViewModel["persistence"]): string {
+  if (state === "saving") return "正在保存练习设置";
+  if (state === "unsaved" || state === "error") return "练习设置尚未保存";
+  return "";
+}
+
+function audioStatusLabel(soundFont: PlaybackViewModel["soundFont"]): string {
+  if (soundFont === "ready") return "音频已就绪";
+  if (soundFont === "error") return "音频初始化失败";
+  return "音频准备中";
 }

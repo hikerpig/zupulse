@@ -75,6 +75,8 @@ Zupulse 是面向长期练习、乐谱查看与和声分析的桌面级数字音
 
 - Space Grotesk 用于界面主体；IBM Plex Mono 只用于参数、时间、速度和技术读数。
 - 文案短、直接、功能导向；中文优先，不使用 emoji 或营销式修饰。
+- `zh-CN` 界面的操作、区域和状态名称使用中文，不保留 Library、Practice、Tracks、Session、
+  SETTINGS 等英文装饰标题；只保留品牌、文件格式、BPM、N.C.、和弦符号及用户内容等标准或原始文本。
 - eyebrow 只用于确有索引价值的少量区域，不作为每个 section 的默认装饰。
 - 数字变化频繁或需要纵向比较时使用 tabular numerals。
 

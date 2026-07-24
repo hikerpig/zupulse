@@ -3,10 +3,12 @@
 ## 事实源
 
 按以下顺序取信：运行时代码、Zod schema 与数据库约束 > 可重复的测试/构建/E2E >
-Current ADR 与架构文档 > 当前规格。冲突必须指出；历史文档和过程计划仅作证据。
+Current ADR、架构文档与 `status: current` 的 Feature Contract > 当前规格。冲突必须指出；
+历史文档和过程计划仅作证据。
 
 导航从 `docs/architecture/README.md` 开始；术语见 `CONTEXT.md` 和
-`docs/architecture/glossary.md`；UI 契约见 `DESIGN.md`。
+`docs/architecture/glossary.md`；UI 契约见 `DESIGN.md`。涉及现存或进行中的 Feature，先查
+`docs/features/README.md` 和对应 Contract；其中“进行中的目标差异”不得作为当前行为。
 
 ## 修改前按范围继续读取
 
@@ -36,6 +38,8 @@ Current ADR 与架构文档 > 当前规格。冲突必须指出；历史文档�
   不返回译文或翻译 key，原始异常不得进入 DOM。
 - Locale 由宿主持久化：Browser 使用本地存储，Desktop 由 Main + Bridge 管理；切换时先持久化，
   再同步 Renderer、菜单和原生对话框。用户内容、曲谱元数据与和弦符号不翻译。
+- 用户可观察行为、领域不变量、平台能力或已知差距发生变化并通过验证后，同步更新对应 Feature
+  Contract。
 - 添加依赖前先检查平台和现有依赖；优先最小实现。失败时定位根因，只改相关文件。
 - 一次性计划和任务记录完成后删除；稳定约束沉淀到 Current 架构、ADR 或本文件。
 

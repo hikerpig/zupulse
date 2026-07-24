@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Maximize2, Minimize2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import styles from "./ScoreViewer.module.css";
 
 export function ScoreViewer({ compact = false, expandable = false }: { compact?: boolean; expandable?: boolean }) {
+  const { t } = useTranslation("viewer");
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
@@ -17,18 +19,18 @@ export function ScoreViewer({ compact = false, expandable = false }: { compact?:
   return (
     <section
       className={`scrollable ${styles.stage} ${compact ? styles.compact : ""} ${expanded ? styles.expanded : ""}`}
-      aria-label="乐谱工作区"
+      aria-label={t("score.workspace")}
     >
       {expandable ? (
         <div className={styles.previewBar}>
           <div>
-            <strong>乐谱预览</strong>
-            <span>用于核对当前和弦片段</span>
+            <strong>{t("score.preview")}</strong>
+            <span>{t("score.previewHint")}</span>
           </div>
           <button
             className={styles.expandButton}
             type="button"
-            aria-label={expanded ? "收起乐谱预览" : "放大乐谱预览"}
+            aria-label={expanded ? t("score.collapse") : t("score.expand")}
             aria-expanded={expanded}
             aria-keyshortcuts="Escape"
             onClick={() => setExpanded((value) => !value)}
@@ -38,10 +40,10 @@ export function ScoreViewer({ compact = false, expandable = false }: { compact?:
         </div>
       ) : null}
       <div className={styles.frame}>
-        <section id="alpha-tab" className={`${styles.viewer} score-viewer`} aria-label="乐谱预览">
+        <section id="alpha-tab" className={`${styles.viewer} score-viewer`} aria-label={t("score.preview")}>
           <div className="score-empty-state">
-            <p className="empty-title">打开一份乐谱开始练习</p>
-            <p className="empty-copy">支持 Guitar Pro、.musicxml 与 .mxl，本地读取，不上传文件。</p>
+            <p className="empty-title">{t("score.emptyTitle")}</p>
+            <p className="empty-copy">{t("score.emptyCopy")}</p>
           </div>
         </section>
       </div>

@@ -8,6 +8,7 @@ import {
   type AlphaTabApiLike,
   type PlaybackPersistence,
 } from "@zupulse/web-core";
+import { createAppI18n, resolveLocale } from "@zupulse/app-i18n";
 import type { ViewerFile, ViewerSessionHandle } from "./host";
 import { ALPHATAB_ASSETS } from "./playbackAssets";
 import { type DemoState } from "./gpDemoPresenter";
@@ -129,23 +130,28 @@ export function createDefaultOpenSession(
 }
 
 export function renderViewerState(status: HTMLElement, summary: HTMLElement, state: DemoState): void {
+  const locale = resolveLocale("system", [status.ownerDocument.documentElement.lang]);
+  const t = createAppI18n(locale).getFixedT(locale, "viewer");
   status.textContent =
     state.status === "loading"
-      ? "正在加载文件"
+      ? t("page.loading")
       : state.status === "ready" && state.summary
-        ? `已加载 ${state.summary.title}`
-        : demoIssueMessage(state.issueCode);
+        ? t("page.loaded", { title: state.summary.title })
+        : demoIssueMessage(state.issueCode, t);
   if (state.status !== "ready" || !state.summary) {
-    summary.textContent = "未打开乐谱";
+    summary.textContent = t("page.title");
     return;
   }
   summary.textContent = state.summary.title;
 }
 
-function demoIssueMessage(issueCode: DemoState["issueCode"]): string {
-  if (issueCode === "gp-file-required") return "请选择 Guitar Pro 文件";
-  if (issueCode === "alpha-tab-load-failed") return "alphaTab 无法加载该文件";
-  return "无法加载乐谱";
+function demoIssueMessage(
+  issueCode: DemoState["issueCode"],
+  t: ReturnType<ReturnType<typeof createAppI18n>["getFixedT"]>,
+): string {
+  if (issueCode === "gp-file-required") return t("page.gpRequired");
+  if (issueCode === "alpha-tab-load-failed") return t("page.alphaTabFailed");
+  return t("page.loadFailed");
 }
 
 function emptySession(): ViewerSessionHandle {

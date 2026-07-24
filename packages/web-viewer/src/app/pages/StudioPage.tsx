@@ -1,6 +1,8 @@
 import { useEffect, useState, useSyncExternalStore, useRef } from "react";
 import { useParams } from "react-router";
 import { Undo2, Redo2, Settings, Volume2, Download } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { createHarmonyRangeViewItems } from "../../features/harmony-studio/harmony-range-view-model";
 import { HarmonyRangeWorkspace } from "../../features/harmony-studio/harmony-range-workspace";
 import { HarmonyStudioEditor } from "../../features/harmony-studio/HarmonyStudioEditor";
@@ -36,17 +38,20 @@ function documentStatusLabel(
   status: NonNullable<ViewerApplicationSnapshot["studio"]>["status"],
   segmentCount: number,
   correctionCount: number,
+  t: TFunction<"studio">,
 ): string {
-  const counts = `${segmentCount} 个片段 · ${correctionCount} 个修正`;
-  if (status === "saving") return `正在保存 · ${counts}`;
-  if (status === "analyzing") return `正在重新分析 · ${counts}`;
-  if (status === "unsaved") return `${counts} · 修正尚未保存`;
-  if (status === "conflict") return `保存冲突 · ${counts} · 修正尚未保存`;
-  if (status === "error") return `处理失败 · ${counts} · 修正尚未保存`;
-  return `${counts} · 已保存`;
+  const counts = t("counts", { segments: segmentCount, corrections: correctionCount });
+  if (status === "saving") return t("statusSaving", { counts });
+  if (status === "analyzing") return t("statusAnalyzing", { counts });
+  if (status === "unsaved") return t("statusUnsaved", { counts });
+  if (status === "conflict") return t("statusConflict", { counts });
+  if (status === "error") return t("statusError", { counts });
+  return t("statusSaved", { counts });
 }
 
 export function StudioPage({ application }: { application: ViewerApplication }) {
+  const { t } = useTranslation("studio");
+  const { t: tErrors } = useTranslation("errors");
   const { libraryScoreId } = useParams();
   const snapshot = useSyncExternalStore(application.subscribe, application.getSnapshot);
   const active =
@@ -103,16 +108,20 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
     speed: 1,
   };
   const previewStatusLabel =
-    preview.status === "playing" ? "预览播放中" : preview.status === "stopped" ? "预览已停止" : "预览已暂停";
+    preview.status === "playing"
+      ? t("previewPlaying")
+      : preview.status === "stopped"
+        ? t("previewStopped")
+        : t("previewPaused");
   const audioStatusLabel =
     studio?.audioStatus === "loading"
-      ? "音频加载中"
+      ? t("audioLoading")
       : studio?.audioStatus === "ready"
-        ? "音频已就绪"
+        ? t("audioReady")
         : studio?.audioStatus === "error"
-          ? "音频加载失败"
+          ? t("audioFailed")
           : studio?.audioStatus === "unavailable"
-            ? "音频不可用"
+            ? t("audioDisabled")
             : undefined;
   useEffect(() => {
     if (libraryScoreId && storageAvailable) void application.openStudio(libraryScoreId);
@@ -147,7 +156,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
     };
   }, [application, libraryScoreId, storageAvailable, studio?.status]);
   return (
-    <main className={styles.studioShell} aria-label="和弦分析工作室">
+    <main className={styles.studioShell} aria-label={t("workspaceLabel")}>
       <StudioSplitWorkspace
         split={preferences.split}
         onSplitChange={(split) => updatePreferences({ split })}
@@ -157,72 +166,73 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
           <>
             {!active ? (
               <h2 id="summary" className="sr-only">
-                未打开乐谱
+                {t("noScore")}
               </h2>
             ) : null}
             <ScoreViewer expandable />
           </>
         }
         analysis={
-          <section aria-label="分析状态">
+          <section aria-label={t("analysisRegion")}>
             <div className={styles.analysisHeading}>
               <div>
-                <p className={styles.sectionKicker}>Chord workspace</p>
-                <h1>和弦分析</h1>
-                <p>选择片段并确认候选，或使用结构化字段精确修正。</p>
+                <p className={styles.sectionKicker}>{t("kicker")}</p>
+                <h1>{t("title")}</h1>
+                <p>{t("subtitle")}</p>
               </div>
             </div>
             {!storageAvailable ? (
               <p className={styles.alert} role="alert">
-                和声分析存储不可用
+                {t("storageUnavailable")}
               </p>
             ) : studio?.status === "loading" && !studioDocument ? (
               <p className={styles.emptyState} role="status">
-                正在初始化和声分析…
+                {t("initializing")}
               </p>
             ) : studio?.status === "error" && !studioDocument ? (
               <p className={styles.alert} role="alert">
-                {studioIssueMessage(studio.error)}
+                {studioIssueMessage(studio.error, tErrors)}
               </p>
             ) : studioDocument ? (
               <>
                 <div className={styles.commandBar}>
                   <div className={styles.documentStatus}>
-                    <p role="status" aria-label="分析文档状态">
+                    <p role="status" aria-label={t("documentStatus")}>
                       {documentStatusLabel(
                         studio.status,
                         studioDocument.activeRevision.segments.length,
                         studioDocument.corrections.length,
+                        t,
                       )}
                     </p>
                   </div>
                   <div className={styles.commandGroups}>
-                    <div className={styles.buttonGroup} role="group" aria-label="修正历史">
+                    <div className={styles.buttonGroup} role="group" aria-label={t("history")}>
                       <button
                         type="button"
                         onClick={() => application.undoStudio(libraryScoreId!)}
-                        aria-label="撤销修正"
-                        title="撤销修正"
+                        aria-label={t("undo")}
+                        title={t("undo")}
                       >
                         <Undo2 size={16} />
                       </button>
                       <button
                         type="button"
                         onClick={() => application.redoStudio(libraryScoreId!)}
-                        aria-label="重做修正"
-                        title="重做修正"
+                        aria-label={t("redo")}
+                        title={t("redo")}
                       >
                         <Redo2 size={16} />
                       </button>
                     </div>
-                    <div className={styles.buttonGroup} role="group" aria-label="分析控制">
+                    <div className={styles.buttonGroup} role="group" aria-label={t("analysisControls")}>
                       {studio.status === "analyzing" ? (
                         <button type="button" onClick={() => application.cancelStudioReanalysis(libraryScoreId!)}>
-                          取消分析
+                          {t("cancelAnalysis")}
                         </button>
                       ) : (
                         <button type="button" onClick={() => void application.reanalyzeStudio(libraryScoreId!)}>
-                          重新分析
+                          {t("reanalyze")}
                         </button>
                       )}
                       <button
@@ -230,25 +240,25 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                         type="button"
                         onClick={() => void application.flushStudio(libraryScoreId!)}
                       >
-                        保存
+                        {t("save")}
                       </button>
                       <button
                         type="button"
                         onClick={() =>
                           void application
                             .exportStudio(libraryScoreId!)
-                            .then((result) => setExportStatus(result === "saved" ? "已导出标注曲谱" : "已取消导出"))
-                            .catch((error: unknown) =>
-                              setExportStatus(error instanceof Error ? error.message : "导出失败"),
+                            .then((result) =>
+                              setExportStatus(result === "saved" ? t("exportSaved") : t("exportCancelled")),
                             )
+                            .catch(() => setExportStatus(t("exportFailed")))
                         }
-                        aria-label="导出标注曲谱"
-                        title="导出标注曲谱"
+                        aria-label={t("export")}
+                        title={t("export")}
                       >
                         <Download size={16} />
                       </button>
                     </div>
-                    <div className={styles.buttonGroup} role="group" aria-label="设置与预览">
+                    <div className={styles.buttonGroup} role="group" aria-label={t("settingsAndPreview")}>
                       <button
                         ref={settingsButtonRef}
                         type="button"
@@ -256,8 +266,8 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                           setSettingsOpen(!settingsOpen);
                           setPreviewOpen(false);
                         }}
-                        aria-label="分析设置"
-                        title="分析设置"
+                        aria-label={t("settings")}
+                        title={t("settings")}
                       >
                         <Settings size={16} />
                       </button>
@@ -268,8 +278,8 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                           setPreviewOpen(!previewOpen);
                           setSettingsOpen(false);
                         }}
-                        aria-label="片段试听"
-                        title="片段试听"
+                        aria-label={t("preview")}
+                        title={t("preview")}
                       >
                         <Volume2 size={16} />
                       </button>
@@ -283,12 +293,12 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                 ) : null}
                 {studio.status === "conflict" || studio.status === "error" ? (
                   <p className={styles.alert} role="alert">
-                    {studioIssueMessage(studio.error)}
+                    {studioIssueMessage(studio.error, tErrors)}
                   </p>
                 ) : null}
                 {studio.previewError ? (
                   <p className={styles.alert} role="alert">
-                    预览不可用：{studioIssueMessage(studio.previewError)}
+                    {t("previewUnavailable", { message: studioIssueMessage(studio.previewError, tErrors) })}
                     <button
                       type="button"
                       onClick={() =>
@@ -297,31 +307,31 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                         )
                       }
                     >
-                      重试预览
+                      {t("retryPreview")}
                     </button>
                   </p>
                 ) : null}
                 {studio.audioError ? (
                   <p className={styles.alert} role="alert">
-                    试听不可用：{studioIssueMessage(studio.audioError)}
+                    {t("audioUnavailable", { message: studioIssueMessage(studio.audioError, tErrors) })}
                   </p>
                 ) : null}
                 {studio.selectionNotice ? (
-                  <p className={styles.emptyState} role="status" aria-label="谱面选择说明">
-                    该位置没有有效和弦区间，已保留当前选择。
+                  <p className={styles.emptyState} role="status" aria-label={t("selectionNoticeLabel")}>
+                    {t("selectionNotice")}
                   </p>
                 ) : null}
 
                 <ContextPopup anchor={settingsButtonRef.current} open={settingsOpen} onOpenChange={setSettingsOpen}>
                   <div>
-                    <p className={styles.sectionKicker}>SETTINGS</p>
-                    <h3>分析设置</h3>
+                    <p className={styles.sectionKicker}>{t("settingsKicker")}</p>
+                    <h3>{t("settings")}</h3>
                     <details className={styles.popupSection} open={false}>
-                      <summary>分析范围</summary>
+                      <summary>{t("analysisScope")}</summary>
                       <label className={styles.field}>
                         <select
                           multiple
-                          aria-label="分析范围"
+                          aria-label={t("analysisScope")}
                           value={studioDocument.activeRevision.parameters.scope.includedTrackIds}
                           onChange={(event) =>
                             void application.setStudioScope(
@@ -339,10 +349,10 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                       </label>
                     </details>
                     <details className={styles.popupSection} open>
-                      <summary>标注目标</summary>
+                      <summary>{t("annotationTarget")}</summary>
                       <label className={styles.field}>
                         <select
-                          aria-label="标注目标"
+                          aria-label={t("annotationTarget")}
                           value={studioDocument.annotationTarget.trackId}
                           onChange={(event) =>
                             void application.setStudioAnnotationTarget(libraryScoreId!, {
@@ -364,15 +374,15 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
 
                 <ContextPopup anchor={previewButtonRef.current} open={previewOpen} onOpenChange={setPreviewOpen}>
                   <div>
-                    <p className={styles.sectionKicker}>PREVIEW</p>
-                    <h3>片段试听</h3>
+                    <p className={styles.sectionKicker}>{t("previewKicker")}</p>
+                    <h3>{t("preview")}</h3>
                     <p role="status">{previewStatusLabel}</p>
                     {audioStatusLabel ? <p role="status">{audioStatusLabel}</p> : null}
                     <button
                       type="button"
                       onClick={() => updatePreferences({ previewEnabled: !preferences.previewEnabled })}
                     >
-                      {preferences.previewEnabled ? "隐藏和弦预览" : "显示和弦预览"}
+                      {preferences.previewEnabled ? t("hideChordPreview") : t("showChordPreview")}
                     </button>
                     <div className={styles.previewControls}>
                       <button
@@ -382,13 +392,13 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                           application.toggleStudioPreview(libraryScoreId!);
                         }}
                       >
-                        {preview.status === "playing" ? "暂停预览" : "播放预览"}
+                        {preview.status === "playing" ? t("pausePreview") : t("playPreview")}
                       </button>
                       <label className={`${styles.field} ${styles.positionField}`}>
-                        <span>预览位置</span>
+                        <span>{t("previewPosition")}</span>
                         <input
                           type="range"
-                          aria-label="预览位置"
+                          aria-label={t("previewPosition")}
                           min="0"
                           max="10000"
                           value={preview.positionTicks}
@@ -399,9 +409,9 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                         />
                       </label>
                       <label className={styles.field}>
-                        <span>速度</span>
+                        <span>{t("speed")}</span>
                         <select
-                          aria-label="预览速度"
+                          aria-label={t("previewSpeed")}
                           value={preview.speed}
                           onChange={(event) => {
                             const speed = Number(event.currentTarget.value);
@@ -425,7 +435,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                           );
                         }}
                       >
-                        {preview.loop ? "取消选中片段循环" : "循环选中片段"}
+                        {preview.loop ? t("disableSelectedLoop") : t("loopSelected")}
                       </button>
                     </div>
                   </div>
@@ -461,14 +471,14 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                             })
                           }
                         />
-                        <div className={styles.segmentActions} aria-label="片段修正操作">
+                        <div className={styles.segmentActions} aria-label={t("segmentActions")}>
                           <button
                             type="button"
                             onClick={() =>
                               void application.resetStudioCorrection(libraryScoreId!, selectedRange.effective.range)
                             }
                           >
-                            重置选中片段
+                            {t("resetSegment")}
                           </button>
                           <button
                             type="button"
@@ -476,7 +486,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                               void application.splitStudioCorrection(libraryScoreId!, selectedRange.effective.range)
                             }
                           >
-                            拆分选中修正
+                            {t("splitCorrection")}
                           </button>
                           <button
                             type="button"
@@ -484,7 +494,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                               void application.mergeStudioCorrections(libraryScoreId!, selectedRange.effective.range)
                             }
                           >
-                            合并相邻修正
+                            {t("mergeCorrections")}
                           </button>
                           <button
                             type="button"
@@ -492,7 +502,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                               void application.moveStudioCorrection(libraryScoreId!, selectedRange.effective.range, -1)
                             }
                           >
-                            修正左移
+                            {t("moveLeft")}
                           </button>
                           <button
                             type="button"
@@ -500,18 +510,18 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                               void application.moveStudioCorrection(libraryScoreId!, selectedRange.effective.range, 1)
                             }
                           >
-                            修正右移
+                            {t("moveRight")}
                           </button>
                         </div>
                       </>
                     ) : (
-                      <p className={styles.emptyState}>当前分析没有可编辑片段。</p>
+                      <p className={styles.emptyState}>{t("noEditableSegment")}</p>
                     )
                   }
                 />
               </>
             ) : (
-              <p className={styles.emptyState}>首次分析、修正与导出将在此工作区完成。</p>
+              <p className={styles.emptyState}>{t("empty")}</p>
             )}
           </section>
         }
@@ -520,31 +530,31 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   );
 }
 
-function studioIssueMessage(issue: ApplicationIssue | undefined): string {
+function studioIssueMessage(issue: ApplicationIssue | undefined, t: TFunction<"errors">): string {
   switch (issue?.code) {
     case "studio-storage-unavailable":
-      return "和声分析存储不可用";
+      return t("application.studioStorageUnavailable");
     case "score-not-found":
-      return "曲谱不存在";
+      return t("application.scoreNotFound");
     case "studio-format-unsupported":
-      return "仅支持 MusicXML/MXL 曲谱";
+      return t("application.studioFormatUnsupported");
     case "studio-runtime-unavailable":
-      return "和弦工作室不可用";
+      return t("application.studioRuntimeUnavailable");
     case "studio-analyzer-unavailable":
-      return "MusicXML 分析器不可用";
+      return t("application.studioAnalyzerUnavailable");
     case "studio-no-analyzable-tracks":
-      return "曲谱没有可分析的音高轨道";
+      return t("application.studioNoAnalyzableTracks");
     case "studio-version-conflict":
-      return "版本冲突";
+      return t("application.studioVersionConflict");
     case "studio-save-failed":
-      return "保存失败";
+      return t("application.studioSaveFailed");
     case "studio-preview-unavailable":
-      return "无法在当前乐谱上显示和弦预览";
+      return t("application.studioPreviewUnavailable");
     case "studio-preview-failed":
-      return "预览渲染失败";
+      return t("application.studioPreviewFailed");
     case "studio-audio-unavailable":
-      return "当前环境无法播放预览";
+      return t("application.studioAudioUnavailable");
     default:
-      return "分析失败";
+      return t("application.studioGeneric");
   }
 }

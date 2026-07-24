@@ -734,7 +734,7 @@ export class ViewerApplication implements ViewerAppHandle {
             audioStatus: this.studioRuntime.getSnapshot().audio,
           }
         : {}),
-      ...(state.error === undefined
+      ...(state.errorCode === undefined
         ? {}
         : {
             error:

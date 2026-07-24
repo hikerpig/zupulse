@@ -52,10 +52,10 @@
 ### Phase 3: Shared UI vertical slices
 
 - [x] Task 8：迁移 Sheet Library。
-- [ ] Task 9：迁移 Viewer 与 Playback controls。
-- [ ] Task 10：迁移 Studio 页面与状态文案。
-- [ ] Task 11：迁移 Harmony editor 与 range workspace。
-- [ ] Checkpoint C：双语 shared UI、build 与阶段提交。
+- [x] Task 9：迁移 Viewer 与 Playback controls。
+- [x] Task 10：迁移 Studio 页面与状态文案。
+- [x] Task 11：迁移 Harmony editor 与 range workspace。
+- [x] Checkpoint C：双语 shared UI、build 与阶段提交。
 
 ### Phase 4: Desktop and Browser hosts
 
@@ -101,3 +101,11 @@
 - Playback presenter 输出 semantic state，旧 sidecar 位置迁移不产生额外持久化写入。
 - 验证：68 个测试文件、301 个测试、`pnpm typecheck`、`pnpm demo:build`、`pnpm desktop:build` 与
   `web-core` 非测试源码中文扫描全部通过。
+
+### 2026-07-24 — Checkpoint C
+
+- Sheet Library、Viewer/Playback、Studio 与 Harmony 编辑工作区的可见文案、状态和动态 ARIA 迁入 catalog。
+- 相对时间和标题排序跟随 Effective Locale；生成 Loop、默认轨道名随语言切换，曲谱与用户内容保持原样。
+- 测试环境使用真实默认 i18n instance，覆盖中文既有旅程和应用内英文切换。
+- 验证：27 个测试文件、132 个测试、`pnpm typecheck`、`pnpm demo:build`、`pnpm desktop:build` 与
+  `git diff --check` 全部通过。

@@ -1,4 +1,5 @@
 import { useRef, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { formatChordSymbol } from "@zupulse/web-core";
 import {
   filterHarmonyRangeViewItems,
@@ -18,6 +19,7 @@ export function HarmonyRangeWorkspace({
   onSelect(item: HarmonyRangeViewItem): void;
   editor: ReactNode;
 }) {
+  const { t } = useTranslation("studio");
   const [filter, setFilter] = useState<HarmonyRangeFilter>("all");
   const displayedRanges = filterHarmonyRangeViewItems(ranges, filter, selectedKey);
   const selectedRange = ranges.find((item) => item.key === selectedKey);
@@ -37,20 +39,26 @@ export function HarmonyRangeWorkspace({
     <section className={styles.workspace} aria-labelledby="segments-title">
       <aside className={styles.rail}>
         <div className={styles.heading}>
-          <span>SEGMENTS</span>
-          <h3 id="segments-title">分析片段</h3>
-          <p>选择片段进行和弦校对。</p>
+          <span>{t("range.kicker")}</span>
+          <h3 id="segments-title">{t("range.title")}</h3>
+          <p>{t("range.subtitle")}</p>
         </div>
-        <div className={styles.filters} role="group" aria-label="和弦区间筛选">
+        <div className={styles.filters} role="group" aria-label={t("range.filters")}>
           {(["all", "unresolved", "corrected"] as const).map((value) => (
             <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>
-              {{ all: "全部", unresolved: "待确认", corrected: "已修正" }[value]}
+              {t(
+                value === "all"
+                  ? "range.all"
+                  : value === "unresolved"
+                    ? "range.unresolvedFilter"
+                    : "range.correctedFilter",
+              )}
             </button>
           ))}
         </div>
-        <div className={styles.stats} role="status" aria-label="分析进度统计">
+        <div className={styles.stats} role="status" aria-label={t("range.stats")}>
           <button type="button" aria-pressed={filter === "all"} onClick={() => setFilter("all")}>
-            全部 {ranges.length}
+            {t("range.allCount", { count: ranges.length })}
           </button>
           <span className={styles.statsDivider}>|</span>
           <button
@@ -60,7 +68,7 @@ export function HarmonyRangeWorkspace({
             className={styles.statItem}
           >
             <span className={styles.statDot} data-origin="analysis"></span>
-            未解决 {unresolvedCount}
+            {t("range.unresolvedCount", { count: unresolvedCount })}
           </button>
           <span className={styles.statsDivider}>|</span>
           <button
@@ -70,25 +78,25 @@ export function HarmonyRangeWorkspace({
             className={styles.statItem}
           >
             <span className={styles.statDot} data-origin="correction"></span>
-            用户修正 {correctedCount}
+            {t("range.correctedCount", { count: correctedCount })}
           </button>
           <span className={styles.statsDivider}>|</span>
           <button type="button" className={styles.statItem}>
             <span className={styles.statDot} data-origin="analysis"></span>
-            算法 {analysisCount}
+            {t("range.analysisCount", { count: analysisCount })}
           </button>
         </div>
         {selectedIsTemporarilyVisible ? (
-          <p className={styles.filterNotice} role="status" aria-label="筛选选择说明">
-            当前选择不符合筛选条件，已临时显示。
+          <p className={styles.filterNotice} role="status" aria-label={t("range.temporarySelectionLabel")}>
+            {t("range.temporarySelection")}
           </p>
         ) : null}
-        <div ref={listRef} className={`${styles.list} scrollable`} role="list" aria-label="分析片段">
+        <div ref={listRef} className={`${styles.list} scrollable`} role="list" aria-label={t("range.list")}>
           {displayedRanges.map((item, index) => (
             <button
               key={item.key}
               type="button"
-              aria-label={`片段 ${index + 1}`}
+              aria-label={t("range.segment", { number: index + 1 })}
               aria-pressed={selectedKey === item.key}
               data-range-key={item.key}
               data-origin={item.origin}
@@ -132,14 +140,22 @@ export function HarmonyRangeWorkspace({
                   ? formatChordSymbol(item.effective.chord)
                   : item.effective.type === "no-chord"
                     ? "N.C."
-                    : "未解决"}
+                    : t("range.unresolved")}
               </span>
               <span className={styles.metadata}>
-                <span className={styles.measure}>第 {item.effective.range.start.measureIndex + 1} 小节</span>
+                <span className={styles.measure}>
+                  {t("range.measure", { number: item.effective.range.start.measureIndex + 1 })}
+                </span>
                 {item.confidence ? (
                   <span
                     className={styles.confidence}
-                    aria-label={`${item.confidence === "high" ? "高" : item.confidence === "medium" ? "中" : "低"}置信度`}
+                    aria-label={t(
+                      item.confidence === "high"
+                        ? "range.confidenceHigh"
+                        : item.confidence === "medium"
+                          ? "range.confidenceMedium"
+                          : "range.confidenceLow",
+                    )}
                   >
                     <span className={styles.confidenceDot}></span>
                   </span>
@@ -153,7 +169,7 @@ export function HarmonyRangeWorkspace({
         ref={editorRef}
         className={styles.editor}
         role="region"
-        aria-label="和弦编辑器"
+        aria-label={t("range.editor")}
         tabIndex={-1}
         onKeyDown={(event) => {
           if (event.key !== "Escape" || !selectedKey) return;

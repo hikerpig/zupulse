@@ -38,6 +38,9 @@ describe("App", () => {
     await user.click(screen.getByRole("menuitemradio", { name: "English" }));
 
     expect(screen.getByRole("navigation", { name: "Primary navigation" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "No score open" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Playback controls" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Open score" })).toBeTruthy();
     expect(localeHost.setPreference).toHaveBeenLastCalledWith("en-US");
     expect(document.documentElement.lang).toBe("en-US");
     await application.destroy();
@@ -79,9 +82,7 @@ describe("App", () => {
     expect(screen.getByRole("navigation", { name: "主要页面" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "逐拍首页" })).toBeTruthy();
     expect(screen.getByRole("region", { name: "乐谱工作区" })).toBeTruthy();
-    expect(
-      screen.getByText("Studio-style practice workspace for score reading, playback, and loop training."),
-    ).toBeTruthy();
+    expect(screen.getByText("用于乐谱阅读、播放和循环训练的练习工作区。")).toBeTruthy();
     expect(screen.getByRole("button", { name: "打开乐谱" })).toBeTruthy();
 
     await application.destroy();

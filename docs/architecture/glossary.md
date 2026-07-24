@@ -22,8 +22,8 @@ Studio 中用于播放、定位、临时速度和区间试听的临时播放状�
 
 ## iPad Practice Player
 
-规划中的原生 iPad 交付面，以本地 Sheet Library 和 Viewer 前台练习为首版核心。它不是 Desktop
-Shell 的全量移植；Studio、后台播放和跨设备同步只有经过独立产品决策后才进入范围。
+原生 iPad 交付面，以本地 Sheet Library 和 Viewer 前台练习为首版核心。它不是 Desktop Shell 的全量
+移植；Studio、后台播放和跨设备同步只有经过独立产品决策后才进入范围。
 
 ## Basic Piano Score
 

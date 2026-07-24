@@ -43,6 +43,7 @@ flowchart LR
 - MusicXML 导入：`musicxml-import-design.md`、`musicxml-import-acceptance.md`
 - Sheet Library 当前规格：`../superpowers/specs/2026-07-12-sheet-library-design.md`
 - Harmony Analysis 当前实现：`harmony-analysis-system.md`
+- iPad Practice Player：`ipad-practice-player.md`
 - Harmony engine 核心：`../../packages/web-core/docs/harmony.md`
 - Harmony CLI 与调优：`../../tools/harmony-cli/README.md`、`../../tools/harmony-cli/docs/evaluation.md`
 - Harmony Analysis 历史设计规格：`../superpowers/specs/2026-07-15-harmony-analysis-studio-design.md`

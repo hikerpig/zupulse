@@ -29,15 +29,15 @@ await writeFile(
       physicalDevice: {
         device: "11-inch iPad Pro (M5)",
         runtime: "iPadOS 26.5.2",
-        status: "not-run-on-device",
-        reason: "Personal Team is not configured yet",
+        status: "partial-device-evidence",
+        reason: "Resource origin and initial import/playback verified; full manual quality gate deferred for prototype",
       },
     },
     null,
     2,
   )}\n`,
 );
-console.log("iPad verification passed; physical-device gate remains not-run-on-device");
+console.log("iPad verification passed; full physical-device quality gate remains deferred for prototype");
 
 function run(command, arguments_) {
   execFileSync(command, arguments_, { cwd: repositoryRoot, stdio: "inherit" });

@@ -1,0 +1,12 @@
+import "i18next";
+import type { resources } from "@zupulse/app-i18n";
+
+declare module "i18next" {
+  interface CustomTypeOptions {
+    defaultNS: "common";
+    resources: (typeof resources)["zh-CN"];
+    returnNull: false;
+    strictKeyChecks: true;
+    enableSelector: true;
+  }
+}

@@ -1,9 +1,43 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
 import type { ViewerHostEvent } from "@zupulse/web-viewer";
-import { createBrowserHost } from "../browserHost";
+import { createBrowserHost, createBrowserLocaleHost } from "../browserHost";
 
 describe("createBrowserHost", () => {
+  it("resolves and persists locale preferences transactionally", async () => {
+    window.localStorage.clear();
+    const host = createBrowserLocaleHost(document, ["en-US"]);
+
+    expect(host.initialState).toEqual({ preference: "system", effectiveLocale: "en-US" });
+    await expect(host.setPreference("zh-CN")).resolves.toEqual({
+      preference: "zh-CN",
+      effectiveLocale: "zh-CN",
+    });
+    expect(window.localStorage.getItem("zupulse-locale")).toBe("zh-CN");
+  });
+
+  it("falls back to system and removes an invalid stored preference", () => {
+    window.localStorage.setItem("zupulse-locale", "fr-FR");
+
+    const host = createBrowserLocaleHost(document, ["zh-Hant"]);
+
+    expect(host.initialState).toEqual({ preference: "system", effectiveLocale: "zh-CN" });
+    expect(window.localStorage.getItem("zupulse-locale")).toBeNull();
+  });
+
+  it("rejects writes without changing its current locale state", async () => {
+    window.localStorage.clear();
+    const host = createBrowserLocaleHost(document, ["zh-CN"]);
+    const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("blocked");
+    });
+
+    await expect(host.setPreference("en-US")).rejects.toThrow();
+    expect(host.initialState).toEqual({ preference: "system", effectiveLocale: "zh-CN" });
+
+    setItem.mockRestore();
+  });
+
   it("opens supported GP files through the browser file picker", async () => {
     const click = vi.spyOn(HTMLInputElement.prototype, "click").mockImplementation(function (this: HTMLInputElement) {
       Object.defineProperty(this, "files", {

@@ -32,43 +32,44 @@
 
 ## Task list
 
-### Phase 1: Foundation
+详细验收、依赖与文件范围见 [tasks/plan.md](plan.md)。
 
-- [ ] Task 1：建立共享 catalog、locale resolver 与类型安全 i18next instance。
-- [ ] Task 2：建立宿主 locale preference port、注入 Renderer Provider 并增加语言入口。
-- [ ] Task 3：清理领域诊断、应用 issue 与 generated Loop 名称。
+### Phase 1: Shared foundation
 
-### Checkpoint: Foundation
+- [x] Task 1：创建 `@zupulse/app-i18n` workspace package。
+- [x] Task 2：实现 locale resolver、catalog contract 与 instance factory。
+- [x] Task 3：建立 Browser locale host 与 document controller。
+- [x] Task 4：注入 per-app i18n 与 AppHeader 语言入口。
+- [x] Checkpoint A：基础切换、focused tests、typecheck 与阶段提交。
 
-- [ ] `web-core` 不再生成面向用户的本地化句子。
-- [ ] 语言切换不销毁 Session 或触发领域 command。
-- [ ] Catalog parity、focused tests、`pnpm typecheck` 通过。
+### Phase 2: Locale-neutral domain boundary
 
-### Phase 2: Shared UI
+- [ ] Task 5：导入诊断改为 code/context。
+- [ ] Task 6：Loop sidecar 与 Playback state 去本地化。
+- [ ] Task 7：ViewerApplication 与 presenter 改为 semantic issue/view model。
+- [ ] Checkpoint B：领域边界、focused tests、typecheck 与阶段提交。
 
-- [ ] Task 4：迁移 Sheet Library。
-- [ ] Task 5：迁移 Viewer、Playback 与练习控制。
-- [ ] Task 6：迁移 Studio、Harmony editor 与 range workspace。
+### Phase 3: Shared UI vertical slices
 
-### Checkpoint: Shared UI
+- [ ] Task 8：迁移 Sheet Library。
+- [ ] Task 9：迁移 Viewer 与 Playback controls。
+- [ ] Task 10：迁移 Studio 页面与状态文案。
+- [ ] Task 11：迁移 Harmony editor 与 range workspace。
+- [ ] Checkpoint C：双语 shared UI、build 与阶段提交。
 
-- [ ] `zh-CN`、`en-US` 下 Library/Viewer/Studio 的可见文案与 ARIA 完整。
-- [ ] generated Loop 名称随 locale 变化，用户标签不变。
-- [ ] Browser 与 Desktop build 通过。
+### Phase 4: Desktop and Browser hosts
 
-### Phase 3: Hosts and enforcement
+- [ ] Task 12：扩展 Bridge locale contract。
+- [ ] Task 13：实现 Desktop preference store。
+- [ ] Task 14：同步 Main、Renderer、菜单和文件 Dialog。
+- [ ] Task 15：完成 Browser 静态 fallback 与 runtime metadata。
+- [ ] Checkpoint D：宿主同步、build/E2E 与阶段提交。
 
-- [ ] Task 7：同步 Electron Main、原生菜单、文件 Dialog 与 Browser metadata。
-- [ ] Task 8：建立硬编码门禁、全量 E2E 与架构文档。
+### Phase 5: Enforcement and completion
 
-### Checkpoint: Complete
-
-- [ ] `pnpm verify:fast`
-- [ ] `pnpm verify`
-- [ ] `pnpm verify:e2e`
-- [ ] Light/Dark 与 768/1024/1440 px 双语言人工验收。
-- [ ] Desktop menu/dialog 和 Renderer locale 同步。
-- [ ] 无 missing-key、插值、ARIA 或未处理 Promise 错误。
+- [ ] Task 16：添加 hardcoded UI copy gate。
+- [ ] Task 17：文档、E2E 与最终验收。
+- [ ] Checkpoint E：`pnpm verify:fast`、`pnpm verify`、`pnpm verify:e2e`、手工双语验收与最终提交。
 
 ## Resolved decisions
 
@@ -83,3 +84,12 @@
   检查和双语用户旅程。
 - Plural catalog 在两种语言中统一声明 `_one`、`_other`，组件只传 semantic base key 与 `count`；
   English 验证单复数分支，Chinese 允许两个变体同文。
+
+## Progress
+
+### 2026-07-24 — Checkpoint A
+
+- 完成共享 `@zupulse/app-i18n`、同步 bundled catalog、locale resolver、missing-key 与 plural contract。
+- 完成 Browser preference adapter、document metadata controller、per-app Provider/store 与 Header 语言入口。
+- 验证：27 个 focused tests、`pnpm typecheck`、`pnpm demo:build`、`pnpm desktop:build`、`git diff --check`
+  全部通过。

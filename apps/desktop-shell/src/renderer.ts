@@ -1,3 +1,4 @@
+import { resolveLocale, type LocalePreference } from "@zupulse/app-i18n";
 import {
   BridgePlaybackPersistence,
   bridgeEventSchema,
@@ -51,6 +52,7 @@ async function start(): Promise<void> {
   if (!root) throw new Error("VIEWER_ROOT_MISSING");
   appHandle = mountViewerApp(root, {
     host,
+    localeHost: createTemporaryDesktopLocaleHost(),
     openSession: createDefaultOpenSession(document, persistence),
     library: {
       repository: new DesktopLibraryRepository(bridge),
@@ -58,6 +60,22 @@ async function start(): Promise<void> {
       adapters: [createGpFormatAdapter(), createMusicXmlAdapter()],
     },
   });
+}
+
+function createTemporaryDesktopLocaleHost() {
+  const initialState = {
+    preference: "system" as const,
+    effectiveLocale: resolveLocale("system", navigator.languages),
+  };
+  return {
+    initialState,
+    async setPreference(preference: LocalePreference) {
+      return {
+        preference,
+        effectiveLocale: resolveLocale(preference, navigator.languages),
+      };
+    },
+  };
 }
 
 class DesktopLibraryRepository implements SheetLibraryRepository, HarmonyAnalysisRepository {

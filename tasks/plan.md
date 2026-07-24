@@ -768,3 +768,337 @@ K331 和本轮已经查看过指标的 Schumann、Chopin、Beethoven、POP909 ca
 **Dependencies:** Task 25
 
 **Estimated scope:** M
+
+---
+
+# 下一轮计划：可学习的 Semi-CRF 联合分段与和弦解码
+
+## 目标与范围
+
+本轮复用现有 dense legal boundary lattice、规则 Top-8 candidate generator 和 semi-Markov decoder 骨架，把当前手写 `sequenceScore + transition penalty` 升级为 train-only 学习的 segment score 与 transition score。模型在同一次路径搜索中联合决定 segment 长度和 chord label，解决“独立边界分类无法判断装饰音是否值得切段”和“事后 primary reranker 无法反向影响分段”的断层。
+
+第一候选只使用确定性的线性模型，不引入 PyTorch 产品运行时。生产默认、rule confidence、threshold `0.60`、现有 MLP primary 和 algorithmVersion 在 tune 门禁通过前全部冻结。K331、既有跨语料 eval 与已查看的报告只作为 historical regression，不参与特征、权重或阈值选择。
+
+## 架构决策
+
+- **不先删边界。** 第一版固定使用 `dense-note-events`，由长 segment 跨过旋律 onset/offset；避免重演 metric grid 和独立 boundary classifier 删除真实拍内变化的问题。
+- **先验证可表达性。** 训练前测量 gold boundary、gold segment 和 gold chord 是否能由当前 lattice、`maxSpan=16` 与 Top-8 表达。oracle 不通过时先修 candidate/search contract，不训练模型掩盖结构缺失。
+- **学习分与规则分分尺度。** 路径分明确拆为 rule segment prior、learned segment logit、rule transition prior、learned transition logit；confidence 不复用这些值。
+- **联合路径拥有最终标签。** Semi-CRF opt-in 路径不再由事后 primary MLP 改写 chord；alternatives 仍可生成，但 primary 必须与参与路径打分的 label 一致。
+- **训练与运行隔离。** Gold 只用于 train records 和 tune evaluation；产品只加载量化到两位小数的 JSON 权重，由 TypeScript 推理。
+- **先线性、后条件 MLP。** 只有线性模型在 train/tune 都显示稳定欠拟合且 residual 呈跨语料非线性交互时，才允许离线训练单隐层小型 MLP。
+- **踏板暂缓。** 当前 HarmonyAnalysisInput 和 DCML/POP909 adapter 没有一致的 pedal/controller 语义，本轮不伪造踏板特征；另立输入契约任务后再加入。
+
+## 依赖图
+
+```text
+Task 27 lattice oracle
+        │
+        ├──失败──> 停止：修 candidate / maxSpan / lattice
+        │
+        ▼
+Task 28 exact-search option + range cache
+        │
+        ▼
+Task 29 segment / transition feature contract
+        │
+        ▼
+Task 30 train-only structured records
+        │
+        ▼
+Task 31 linear structured trainer
+        │
+        ▼
+Task 32 opt-in analyzer integration
+        │
+        ▼
+Task 33 sequential tune gate
+        │
+        ├──线性达标──> Task 35 frozen decision
+        └──稳定非线性欠拟合──> Task 34 conditional MLP ──> Task 35
+```
+
+## Task 27：建立 lattice 与 candidate path oracle
+
+**Description:** 新增只用于 evaluator 的 oracle，按生产 dense lattice、`maxSpan=16` 和规则 Top-8 检查每条 mapped gold path 是否拥有合法起止边界、可接受 segment 长度及正确 chord candidate。报告同时记录 ranges/candidates 数量与估算内存，先判断 semi-CRF 是否有可学习的正确路径。
+
+**Acceptance criteria:**
+
+- [ ] 分开报告 boundary representability、span representability、segment Top-8 oracle 和完整 gold-path representability，不把 unsupported label 算作模型错误。
+- [ ] oracle 只接受 train/tune role；eval/final-holdout 入口拒绝，gold 不进入 analyzer。
+- [ ] 继续训练的预登记条件为 boundary/span representability `>= 0.99`，segment Top-8 oracle 不低于现有同批 Top-8 `-0.005`；任一失败即停止并记录最大缺口。
+
+**Verification:**
+
+- [ ] 单测覆盖缺失边界、超过 maxSpan、candidate miss 和完整可表达路径。
+- [ ] 在 Mozart train/tune 保存 oracle report、group hash、range 数量和峰值内存估算。
+
+**Dependencies:** Task 26
+
+**Files likely touched:**
+
+- `tools/harmony-cli/src/structuredOracle.ts`
+- `tools/harmony-cli/src/schemas.ts`
+- `tools/harmony-cli/src/__tests__/structuredOracle.test.ts`
+- `tools/harmony-cli/docs/evaluation.md`
+
+**Estimated scope:** M
+
+## Task 28：增加精确路径模式与 range cache
+
+**Description:** 在不改变 production 默认 beam 行为的前提下，为 decoder 增加 opt-in exact semi-Markov Viterbi：每个 end moment 按 canonical chord state 只保留最佳前驱。Analyzer 同时缓存 `(startIndex,endIndex)` 的 range features 与 Top-8，避免训练式 scorer 重复扫描全曲音符和重复生成候选。
+
+**Acceptance criteria:**
+
+- [ ] exact mode 在小型穷举 fixture 上返回真实全局最优；zero learned score 时与现有 beam 基线逐段比较。
+- [ ] 每个 legal range 的 feature/candidate builder 最多执行一次，cache key 不依赖 gold。
+- [ ] Mozart tune exact 搜索的 P95/runtime 与峰值内存被记录；若超过 dense beam `1.5x` 或内存预算，停止并先优化搜索。
+
+**Verification:**
+
+- [ ] `decode.test.ts` 覆盖 beam 丢失全局最优而 exact 找回的案例，以及 stable tie。
+- [ ] analyzer cache 测试统计 range builder 调用次数；`pnpm harmony:benchmark` 通过。
+
+**Dependencies:** Task 27
+
+**Files likely touched:**
+
+- `packages/web-core/src/harmony/decode.ts`
+- `packages/web-core/src/harmony/__tests__/decode.test.ts`
+- `packages/web-core/src/harmony/analyzeRules.ts`
+- `packages/web-core/src/harmony/__tests__/analyzeRules.test.ts`
+
+**Estimated scope:** M
+
+## Checkpoint E：结构可行性
+
+- [ ] Task 27 oracle 的全部继续条件通过。
+- [ ] Task 28 exact mode 正确，且 runtime/memory 未超过预登记预算。
+- [ ] production 默认输出、algorithmVersion 和 baseline 均未改变。
+- [ ] `pnpm verify:fast` 与 `pnpm harmony:benchmark` 通过。
+
+## Task 29：冻结 segment 与 transition 特征契约
+
+**Description:** 定义 `semi-crf-linear-v1` 的纯输入特征。Segment 特征在现有 candidate features 上加入归一化 segment 长度、起止 metric strength、onset/held 分离、non-chord duration、bass change、staff/voice 同步、key-signature/spelling compatibility；transition 特征描述 chord pair、root/bass motion、common-tone、complexity 与 segment duration change。
+
+**Acceptance criteria:**
+
+- [ ] 特征长度、顺序、归一化、缺失值与两位小数序列化由严格 schema 固定；不读取 gold、局部人工 key 或 pedal。
+- [ ] duration/attack chroma、held/onset、左右 staff 与 voice synchronization 各自独立，不能在进入 scorer 前再次扁平化。
+- [ ] 特征 cache 按 measure/range 复用，跨小节延音和 pickup fixture 得到确定结果。
+
+**Verification:**
+
+- [ ] 单测覆盖分解和弦、经过音、延留音、slash bass、双 staff 和多 voice。
+- [ ] 相同 score 重复导出字节一致，所有持久化数字最多两位小数。
+
+**Dependencies:** Task 28
+
+**Files likely touched:**
+
+- `packages/web-core/src/harmony/structuredFeatures.ts`
+- `packages/web-core/src/harmony/__tests__/structuredFeatures.test.ts`
+- `packages/web-core/src/harmony/analysisInput.ts`
+- `packages/web-core/src/index.ts`
+
+**Estimated scope:** M
+
+## Task 30：导出 train-only structured path records
+
+**Description:** 基于与 production 完全相同的 lattice、range cache、maxSpan 和 Top-8，导出按完整作品分组的 semi-CRF records。每个 piece 保存可选 ranges/candidates、segment/transition features、rule priors 和 mapped gold path；负 range 由 lattice 自然产生，不用 gold 反向生成候选边界。
+
+**Acceptance criteria:**
+
+- [ ] train exporter 只接受 train role，tune 仅走 evaluation-only entry point，regression/final-holdout 一律拒绝。
+- [ ] report 固定 source revision、archive/group SHA、feature version、search contract 和 record counts；损坏或不完整的 gold path 明确标记而非猜测。
+- [ ] records 使用紧凑索引引用 boundary/chord/features，Mozart 全量资产大小和生成时间不超过 Task 27 预算的 `1.25x`。
+
+**Verification:**
+
+- [ ] schema/role 隔离/确定性测试通过；同一输入两次导出的 SHA-256 相同。
+- [ ] Mozart train 与 tune records 分别生成并通过 schema round-trip。
+
+**Dependencies:** Task 29
+
+**Files likely touched:**
+
+- `tools/harmony-cli/src/structuredRecords.ts`
+- `tools/harmony-cli/src/exportStructuredRecords.ts`
+- `tools/harmony-cli/src/schemas.ts`
+- `tools/harmony-cli/src/command.ts`
+- `tools/harmony-cli/src/__tests__/structuredRecords.test.ts`
+
+**Estimated scope:** M
+
+## Checkpoint F：训练资产
+
+- [ ] Feature schema、records schema 和搜索契约版本完全匹配。
+- [ ] Train/tune/eval 隔离测试通过，没有 gold-derived product input。
+- [ ] Mozart records 可重复、体积和导出 runtime 在预算内。
+- [ ] `pnpm --filter @zupulse/harmony-cli test` 通过。
+
+## Task 31：训练线性 structured segment/transition scorer
+
+**Description:** 使用 corpus/group-balanced structured perceptron 或等价的全路径线性目标，在每个 train piece 上解码 predicted path，并以 gold-path feature sum 与 predicted-path feature sum 的差更新 segment/transition 权重。导出两个显式权重向量、rule/model scale 和 provenance。
+
+**Acceptance criteria:**
+
+- [ ] trainer 只读取 train reports，相同输入与 seed 生成字节一致的两位小数 JSON；无完整 gold path 的 piece 只进入 oracle 统计，不参与梯度。
+- [ ] loss/update 使用完整路径而非独立 boundary 或独立 candidate 标签，并按 corpus、完整作品等权。
+- [ ] 分别报告 train path loss、interval accuracy、boundary F1、segment density 和 predicted-primary；不能只报告局部 Top-1。
+
+**Verification:**
+
+- [ ] 合成 fixture 证明一次结构化更新会提高 gold path 相对错误路径的总分。
+- [ ] CLI train/evaluate round-trip 与损坏模型 schema 测试通过。
+
+**Dependencies:** Task 30
+
+**Files likely touched:**
+
+- `scripts/harmonyStructuredTraining.ts`
+- `scripts/harmonyStructuredCommand.ts`
+- `scripts/__tests__/harmonyStructuredTraining.test.ts`
+- `packages/web-core/src/harmony/structuredModel.ts`
+- `packages/web-core/src/harmony/__tests__/structuredModel.test.ts`
+
+**Estimated scope:** M
+
+## Task 32：以 opt-in Semi-CRF scorer 接入 analyzer
+
+**Description:** 将线性 segment/transition logits 注入 exact decoder，并保持 rule priors、learned logits、confidence 三种尺度分离。新增显式 opt-in analyzer/CLI model 参数和 report metadata；未传模型时保持当前 production 路径。
+
+**Acceptance criteria:**
+
+- [ ] zero-weight model 在相同 search mode 下逐段复现 rule path；损坏或版本不匹配模型 fail closed。
+- [ ] Semi-CRF 模式的最终 chord 与参与路径打分的 candidate 一致，不再由事后 primary MLP 改写；alternatives 仍最多 8。
+- [ ] report 记录 feature/model/search version、rule/model scale、runtime 和 segment density，production 默认与 baseline 不移动。
+
+**Verification:**
+
+- [ ] analyzer 测试覆盖 learned segment 翻转分段、learned transition 翻转全局路径和 MLP 不二次改写。
+- [ ] CLI/schema/adapter 测试通过；`pnpm harmony:benchmark` 记录相对 dense runtime。
+
+**Dependencies:** Task 31
+
+**Files likely touched:**
+
+- `packages/web-core/src/harmony/analyzeRules.ts`
+- `packages/web-core/src/harmony/decode.ts`
+- `tools/harmony-cli/src/evaluateDatasetManifest.ts`
+- `tools/harmony-cli/src/schemas.ts`
+- `tools/harmony-cli/src/__tests__/dcmlEvaluation.test.ts`
+
+**Estimated scope:** M
+
+## Checkpoint G：端到端候选
+
+- [ ] Structured trainer 与 TypeScript runtime 对同一量化模型给出相同 path。
+- [ ] Zero model 回归、模型损坏、MLP 二次改写防护均有测试。
+- [ ] production 默认和既有 dense reports 未改变。
+- [ ] `pnpm verify:fast` 与 `pnpm harmony:benchmark` 通过。
+
+## Task 33：执行线性 Semi-CRF 序贯 tune 门禁
+
+**Description:** 先在 Mozart tune 同批比较 dense production、exact rule-only 和 linear semi-CRF。只有首个 corpus 通过预登记门禁，才依次运行 Beethoven、Chopin、POP909 tune；首个失败立即停止，不按 corpus 调 scale。
+
+**Acceptance criteria:**
+
+- [ ] 首轮发布候选要求：相对 dense interval accuracy 至少 `+0.01`、segment density 至少 `-10%`，predicted-primary 与 boundary F1 均不得回退超过 `0.005`。
+- [ ] runtime P95 不超过 dense `1.5x`；每个 corpus 独立通过，不使用 aggregate 掩盖回退。
+- [ ] rule/model scale、epoch、regularization 与 search contract 在读取 tune 指标前冻结；K331 不参与选择。
+
+**Verification:**
+
+- [ ] checkpoint 保存 train/tune records hash、模型 hash、逐 corpus 指标、runtime 和接受/拒绝决定。
+- [ ] 失败即保留 opt-in 实验并停止；通过才进入 Task 35 或满足条件后进入 Task 34。
+
+**Dependencies:** Task 32
+
+**Files likely touched:**
+
+- `tasks/harmony-structured-linear-checkpoint.md`
+- `tools/harmony-cli/docs/evaluation.md`
+- `tools/harmony-cli/docs/tuning-loop.md`
+
+**Estimated scope:** S
+
+## Task 34：仅在稳定非线性 residual 下比较小型 MLP
+
+**Description:** 只有线性模型在 train 和各已运行 tune corpus 都稳定优于 rule-only、但未达到 Task 33 门槛，且错误切片显示 segment/transition 特征交互而非 candidate miss 或 lattice miss 时，才离线训练一个最多 16 hidden units 的单隐层 scorer。否则本任务以“未触发”完成。
+
+**Acceptance criteria:**
+
+- [ ] MLP 使用完全相同的 records、path objective 和 split；PyTorch 仅离线训练，不进入产品依赖。
+- [ ] 相对线性候选必须使 interval accuracy 再提升至少 `0.01`，每 corpus 的 predicted-primary/boundary F1 回退不超过 `0.005`，runtime 不超过 dense `1.5x`。
+- [ ] 量化 JSON 后验证离线 trainer 与 TypeScript path 完全一致；不一致即拒绝。
+
+**Verification:**
+
+- [ ] 触发条件、residual slices 和是否训练写入 checkpoint。
+- [ ] 若触发，MLP schema、量化等价和端到端 tune tests 通过；若未触发，不新增 PyTorch 产品依赖。
+
+**Dependencies:** Task 33
+
+**Files likely touched:**
+
+- `scripts/train-harmony-structured-mlp.py`
+- `packages/web-core/src/harmony/structuredMlpModel.ts`
+- `packages/web-core/src/harmony/__tests__/structuredMlpModel.test.ts`
+- `tasks/harmony-structured-mlp-checkpoint.md`
+
+**Estimated scope:** M（条件执行）
+
+## Task 35：冻结模型并作一次性发布决策
+
+**Description:** 只有线性或条件 MLP 候选通过全部 tune corpus 后，才冻结代码、模型、scale、confidence 行为与 algorithmVersion，运行预登记 final holdout、historical regression、K331 诊断、ASAP ingestion 和 benchmark。查看 final 后只接受或拒绝，不再调参。
+
+**Acceptance criteria:**
+
+- [ ] 每个 frozen corpus 的 interval/predicted-primary/boundary F1 回退不超过 `0.005`，并保持 tune 阶段声明的 density 与 runtime 收益。
+- [ ] K331 只报告前 8 小节实际 chord/segment 与历史 dense 对照，不作为发布选择依据。
+- [ ] 全部门禁通过才切 production 默认、更新 algorithmVersion/baseline；任一失败则整体回滚默认并保留 opt-in 工具。
+
+**Verification:**
+
+- [ ] `pnpm --filter @zupulse/harmony-cli test`
+- [ ] `pnpm verify:fast`
+- [ ] `pnpm harmony:benchmark`
+
+**Dependencies:** Task 33；若 Task 34 触发则依赖 Task 34
+
+**Files likely touched:**
+
+- `tools/harmony-cli/src/evaluateV3FinalHoldout.ts`
+- `test-fixtures/harmony/baselines/*.json`（仅全部通过后）
+- `tools/harmony-cli/docs/evaluation.md`
+- `tasks/harmony-structured-final-checkpoint.md`
+
+**Estimated scope:** M
+
+## Checkpoint H：完成
+
+- [ ] 所有实际执行的任务验收项与门禁有可复现证据。
+- [ ] 没有把 tune/eval gold、PyTorch 或训练工具带入产品 runtime。
+- [ ] 发布或拒绝决定、失败原因和下一方向写入文档。
+- [ ] 工作区 clean，所有增量已独立提交。
+
+## 风险与缓解
+
+| Risk                                                | Impact                          | Mitigation                                                              |
+| --------------------------------------------------- | ------------------------------- | ----------------------------------------------------------------------- |
+| Dense lattice × maxSpan × Top-8 使 records/训练爆炸 | 无法完成真实 corpus 训练        | Task 27 先测规模；Task 28 cache；records 用索引压缩，不用 gold 删 range |
+| Gold path 不在 lattice 或 Top-8                     | 模型永远学不到正确答案          | Oracle 先行；失败则回 candidate/maxSpan，不训练更大模型                 |
+| Exact Viterbi 状态过多                              | runtime/memory 超预算           | 按 canonical chord 合并同 end state；保留 beam fallback，预算失败即停   |
+| Learned score 尺度压倒规则 prior                    | tune 表面改善但跨语料崩溃       | 四种 score 分字段；scale 预冻结；逐 corpus 门禁                         |
+| 事后 MLP 改写联合路径 label                         | segment 与 chord 打分语义不一致 | Semi-CRF 模式禁用二次 primary 改写，由测试锁定                          |
+| Staff/voice 在不同来源不一致                        | 特征跨语料失效                  | 特征支持缺失 mask；逐 corpus residual；不按 corpus 特判                 |
+| Key signature 被误当局部调性                        | 重属/转调判断错误               | v1 只作弱 compatibility feature，不从 gold 推导 local key               |
+| 派生模型许可不清晰                                  | 模型无法发布                    | 训练前记录 source/license/provenance；发布前单独审查                    |
+
+## 开放问题
+
+- Exact mode 在 Mozart dense lattice 上能否满足 `1.5x` runtime/memory 预算，由 Task 28 实测决定。
+- `maxSpan=16` 是否覆盖足够多的真实长和弦，由 Task 27 oracle 决定，不先猜测扩大。
+- DCML staff/voice 信息的稳定性是否足以用于跨语料模型，由 Task 29 fixture 与 Task 33 residual 决定。
+- Confidence 如何基于 structured path margin 校准不属于本轮首个候选；只有路径准确率通过后另立任务，避免同时改变 segmentation、label 与 abstention。

@@ -51,3 +51,19 @@
 - [x] Task 24：训练并 tune 轻量线性 boundary classifier。
 - [x] Task 25：以 opt-in learned boundary policy 接入 TypeScript analyzer。
 - [x] Task 26：执行序贯 tune 门禁并决定是否发布；首个 corpus 失败，未发布。
+
+## Phase 8: 可学习的 Semi-CRF 联合解码
+
+- [ ] Task 27：建立 lattice、maxSpan 与 Top-8 的完整 gold-path oracle。
+- [ ] Task 28：增加 opt-in exact Viterbi 和 range/candidate cache。
+- [ ] Checkpoint E：结构可表达、搜索性能在预算内，否则停止。
+- [ ] Task 29：冻结 segment/transition feature contract。
+- [ ] Task 30：导出严格 split 隔离的 structured path records。
+- [ ] Checkpoint F：records 可重复、紧凑且没有 gold 泄漏。
+- [ ] Task 31：训练 corpus/group-balanced 线性 structured scorer。
+- [ ] Task 32：以 opt-in Semi-CRF scorer 接入 analyzer。
+- [ ] Checkpoint G：trainer/runtime path 等价，production 默认未改变。
+- [ ] Task 33：执行 Mozart→跨语料的序贯 linear tune 门禁。
+- [ ] Task 34：仅在稳定非线性 residual 下比较单隐层 MLP。
+- [ ] Task 35：冻结候选并执行一次性 final/regression 发布决策。
+- [ ] Checkpoint H：文档、验证、提交和工作区状态全部完成。

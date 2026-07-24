@@ -44,6 +44,7 @@
 		F10000000000000000000003 /* diagnostic-logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000003 /* diagnostic-logger.swift */; };
 		F10000000000000000000004 /* diagnostic-exporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000004 /* diagnostic-exporter.swift */; };
 		F10000000000000000000005 /* diagnostic-logger-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000005 /* diagnostic-logger-tests.swift */; };
+		B10000000000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000001 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -105,6 +106,7 @@
 		F20000000000000000000003 /* diagnostic-logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "diagnostic-logger.swift"; sourceTree = "<group>"; };
 		F20000000000000000000004 /* diagnostic-exporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "diagnostic-exporter.swift"; sourceTree = "<group>"; };
 		F20000000000000000000005 /* diagnostic-logger-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "diagnostic-logger-tests.swift"; sourceTree = "<group>"; };
+		B20000000000000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -154,6 +156,7 @@
 				A20000000000000000000002 /* app-shell-view.swift */,
 				D20000000000000000000003 /* lifecycle-coordinator.swift */,
 				E20000000000000000000003 /* Info.plist */,
+				B20000000000000000000001 /* Assets.xcassets */,
 			);
 			path = app;
 			sourceTree = "<group>";
@@ -371,6 +374,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B10000000000000000000001 /* Assets.xcassets in Resources */,
 				C10000000000000000000002 /* desktop-acceptance.gp in Resources */,
 				C10000000000000000000003 /* single-voice.musicxml in Resources */,
 				C10000000000000000000005 /* broken.mxl in Resources */,
@@ -498,6 +502,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Apple Development";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = PS5VXB9FWN;
@@ -523,6 +528,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Apple Development";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = PS5VXB9FWN;

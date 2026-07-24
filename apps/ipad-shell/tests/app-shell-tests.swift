@@ -12,4 +12,11 @@ final class AppShellTests: XCTestCase {
             true
         )
     }
+
+    func testAppBundleDeclaresAnAppIcon() {
+        let icons = Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any]
+        let primaryIcon = icons?["CFBundlePrimaryIcon"] as? [String: Any]
+
+        XCTAssertEqual(primaryIcon?["CFBundleIconName"] as? String, "AppIcon")
+    }
 }

@@ -22,7 +22,8 @@ type StructuredOracleRequest = {
   input: HarmonyAnalysisInput;
   includedTrackIds: readonly string[];
   gold: readonly StructuredGold[];
-  maxSpan: number;
+  maxSpan?: number;
+  maxQuarterNotes?: number;
   topK: number;
 };
 
@@ -39,11 +40,17 @@ export function evaluateStructuredTuneOracle(request: StructuredOracleRequest): 
 }
 
 function evaluateOracle(request: StructuredOracleRequest): HarmonyStructuredOracleResult {
+  if (request.maxSpan !== undefined && request.maxQuarterNotes !== undefined)
+    throw new Error("structured oracle accepts only one span limit");
+  const maxSpan = request.maxSpan ?? (request.maxQuarterNotes === undefined ? 16 : undefined);
+  const maxDurationTicks =
+    request.maxQuarterNotes === undefined ? undefined : request.maxQuarterNotes * request.input.ticksPerQuarter;
   const included = new Set(request.includedTrackIds);
   const tracks = request.input.tracks.filter((track) => included.has(track.id) && !track.isPercussion);
   const analysisInput = { ...request.input, tracks };
   const boundaries = buildLegalBoundaryLattice(analysisInput).moments;
   const boundaryIndices = new Map(boundaries.map((moment, index) => [momentKey(moment), index]));
+  const absoluteTick = createAbsoluteTick(request.input);
   const features = buildHarmonyFeatureCache({
     ticksPerQuarter: request.input.ticksPerQuarter,
     notes: tracks.flatMap((track) =>
@@ -67,8 +74,11 @@ function evaluateOracle(request: StructuredOracleRequest): HarmonyStructuredOrac
   let rangeCount = 0;
   let candidateCount = 0;
   for (let endIndex = 1; endIndex < boundaries.length; endIndex += 1) {
-    for (let startIndex = Math.max(0, endIndex - request.maxSpan); startIndex < endIndex; startIndex += 1) {
+    for (let startIndex = endIndex - 1; startIndex >= 0; startIndex -= 1) {
       const range = { start: boundaries[startIndex]!, end: boundaries[endIndex]! };
+      const durationTicks = absoluteTick(range.end) - absoluteTick(range.start);
+      if (maxDurationTicks !== undefined && durationTicks > maxDurationTicks) break;
+      if (maxSpan !== undefined && endIndex - startIndex > maxSpan) break;
       const key = rangeKey(range);
       if (goldRangeKeys.has(key))
         candidateCache.set(key, generateHarmonyCandidates(range, features.forRange(range), { topK: request.topK }));
@@ -86,29 +96,50 @@ function evaluateOracle(request: StructuredOracleRequest): HarmonyStructuredOrac
   let excessiveSpanSegments = 0;
   let candidateMissSegments = 0;
   let maxObservedSpan = 0;
+  let maxObservedQuarterNotes = 0;
+  const durationCounts = new Map<number, number>();
   const samples: Array<{
     range: ScoreWrittenRange;
     reason: "missing-boundary" | "excessive-span" | "candidate-miss";
     span?: number;
+    durationQuarterNotes: number;
     chord: ChordSymbolInput;
   }> = [];
   for (const gold of mapped) {
+    const durationQuarterNotes =
+      (absoluteTick(gold.range.end) - absoluteTick(gold.range.start)) / request.input.ticksPerQuarter;
+    const roundedDuration = Number(durationQuarterNotes.toFixed(2));
+    durationCounts.set(roundedDuration, (durationCounts.get(roundedDuration) ?? 0) + 1);
+    maxObservedQuarterNotes = Math.max(maxObservedQuarterNotes, durationQuarterNotes);
     const startIndex = boundaryIndices.get(momentKey(gold.range.start));
     const endIndex = boundaryIndices.get(momentKey(gold.range.end));
     if (startIndex !== undefined) representableBoundaries += 1;
     if (endIndex !== undefined) representableBoundaries += 1;
     if (startIndex === undefined || endIndex === undefined || endIndex <= startIndex) {
       missingBoundarySegments += 1;
-      addSample(samples, { range: gold.range, reason: "missing-boundary", chord: gold.chord });
+      addSample(samples, {
+        range: gold.range,
+        reason: "missing-boundary",
+        durationQuarterNotes,
+        chord: gold.chord,
+      });
       continue;
     }
     const span = endIndex - startIndex;
     maxObservedSpan = Math.max(maxObservedSpan, span);
+    const durationTicks = absoluteTick(gold.range.end) - absoluteTick(gold.range.start);
     const spanRepresentable =
-      startIndex !== undefined && endIndex !== undefined && endIndex > startIndex && span <= request.maxSpan;
+      (maxSpan === undefined || span <= maxSpan) &&
+      (maxDurationTicks === undefined || durationTicks <= maxDurationTicks);
     if (!spanRepresentable) {
       excessiveSpanSegments += 1;
-      addSample(samples, { range: gold.range, reason: "excessive-span", span, chord: gold.chord });
+      addSample(samples, {
+        range: gold.range,
+        reason: "excessive-span",
+        span,
+        durationQuarterNotes,
+        chord: gold.chord,
+      });
       continue;
     }
     representableSpans += 1;
@@ -116,7 +147,13 @@ function evaluateOracle(request: StructuredOracleRequest): HarmonyStructuredOrac
     const hit = candidateCache.get(rangeKey(gold.range))?.some((candidate) => sameChord(candidate.chord, gold.chord));
     if (!hit) {
       candidateMissSegments += 1;
-      addSample(samples, { range: gold.range, reason: "candidate-miss", span, chord: gold.chord });
+      addSample(samples, {
+        range: gold.range,
+        reason: "candidate-miss",
+        span,
+        durationQuarterNotes,
+        chord: gold.chord,
+      });
       continue;
     }
     oracleHits += 1;
@@ -148,11 +185,15 @@ function evaluateOracle(request: StructuredOracleRequest): HarmonyStructuredOrac
       ratio: ratio(representableSegments, mappedSegments),
       complete: representableSegments === mappedSegments,
     },
+    durationHistogram: [...durationCounts.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([quarterNotes, count]) => ({ quarterNotes, count })),
     failures: {
       missingBoundarySegments,
       excessiveSpanSegments,
       candidateMissSegments,
       maxObservedSpan,
+      maxObservedQuarterNotes,
       samples,
     },
     search: {
@@ -163,6 +204,16 @@ function evaluateOracle(request: StructuredOracleRequest): HarmonyStructuredOrac
       estimatedBytes: boundaries.length * 16 + rangeCount * 32 + candidateCount * 256,
     },
   });
+}
+
+function createAbsoluteTick(input: Pick<HarmonyAnalysisInput, "measures">) {
+  const starts = new Map<number, number>();
+  let start = 0;
+  for (const measure of input.measures) {
+    starts.set(measure.index, start);
+    start += measure.durationTicks;
+  }
+  return (moment: ScoreWrittenMoment): number => (starts.get(moment.measureIndex) ?? start) + moment.offsetTicks;
 }
 
 function addSample<T>(samples: T[], sample: T): void {

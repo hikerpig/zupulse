@@ -67,11 +67,13 @@ describe("structured harmony oracle", () => {
       spans: { required: 2, representable: 2, ratio: 1 },
       candidates: { evaluable: 2, oracleHits: 2, recall: 1 },
       path: { representableSegments: 2, ratio: 1, complete: true },
+      durationHistogram: [{ quarterNotes: 1, count: 2 }],
       failures: {
         missingBoundarySegments: 0,
         excessiveSpanSegments: 0,
         candidateMissSegments: 0,
         maxObservedSpan: 1,
+        maxObservedQuarterNotes: 1,
         samples: [],
       },
       search: {
@@ -128,7 +130,7 @@ describe("structured harmony oracle", () => {
       spans: { required: 1, representable: 0, ratio: 0 },
       candidates: { evaluable: 0, oracleHits: 0, recall: 1 },
       path: { complete: false },
-      failures: { excessiveSpanSegments: 1, maxObservedSpan: 2 },
+      failures: { excessiveSpanSegments: 1, maxObservedSpan: 2, maxObservedQuarterNotes: 2 },
     });
     expect(candidateMiss).toMatchObject({
       boundaries: { ratio: 1 },
@@ -136,6 +138,26 @@ describe("structured harmony oracle", () => {
       candidates: { evaluable: 1, oracleHits: 0, recall: 0 },
       path: { representableSegments: 0, complete: false },
       failures: { candidateMissSegments: 1 },
+    });
+  });
+
+  it("supports a quarter-note duration contract independent of dense event count", () => {
+    const result = evaluateStructuredTrainingOracle({
+      corpus: "fixture",
+      groupId: "work",
+      role: "train",
+      input,
+      includedTrackIds: ["piano"],
+      gold: [{ range: range(0, 960), chord: cMajor }],
+      maxQuarterNotes: 2,
+      topK: 8,
+    });
+
+    expect(result).toMatchObject({
+      boundaries: { ratio: 1 },
+      spans: { representable: 1, ratio: 1 },
+      failures: { maxObservedSpan: 2, maxObservedQuarterNotes: 2 },
+      search: { ranges: 3 },
     });
   });
 

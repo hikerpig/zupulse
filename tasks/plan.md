@@ -820,13 +820,13 @@ Task 33 sequential tune gate
 
 ## Task 27：建立 lattice 与 candidate path oracle
 
-**Description:** 新增只用于 evaluator 的 oracle，按生产 dense lattice、`maxSpan=16` 和规则 Top-8 检查每条 mapped gold path 是否拥有合法起止边界、可接受 segment 长度及正确 chord candidate。报告同时记录 ranges/candidates 数量与估算内存，先判断 semi-CRF 是否有可学习的正确路径。
+**Description:** 新增只用于 evaluator 的 oracle，按生产 dense lattice、显式 span contract 和规则 Top-8 检查每条 mapped gold path 是否拥有合法起止边界、可接受 segment 长度及正确 chord candidate。报告同时记录 ranges/candidates 数量与估算内存，先判断 semi-CRF 是否有可学习的正确路径。旧 `maxSpan=16` 失败后，只按 train 分布冻结 `maxQuarterNotes=8`。
 
 **Acceptance criteria:**
 
 - [x] 分开报告 boundary representability、span representability、segment Top-8 oracle 和完整 gold-path representability，不把 unsupported label 算作模型错误。
 - [x] oracle 只接受 train/tune role；eval/final-holdout 入口拒绝，gold 不进入 analyzer。
-- [x] 继续训练的预登记条件为 boundary/span representability `>= 0.99`，segment Top-8 oracle 不低于现有同批 Top-8 `-0.005`；span 门禁失败，已停止并记录最大缺口。
+- [x] 继续训练的预登记条件为 boundary/span representability `>= 0.99`，segment Top-8 oracle 不低于现有同批 Top-8 `-0.005`；时值合同 train/tune 均通过。
 
 **Verification:**
 
@@ -872,8 +872,8 @@ Task 33 sequential tune gate
 
 ## Checkpoint E：结构可行性
 
-- [x] Task 27 oracle 已执行；span representability 未达到 `0.99`，checkpoint 失败并停止。
-- [ ] Task 28 未开始：必须先重新设计不依赖 dense event 数量的 span/search contract。
+- [x] Task 27 oracle 已执行；`maxQuarterNotes=8` 的 train/tune span representability 为 `0.9984/0.9931`，checkpoint 通过。
+- [x] 已重新设计不依赖 dense event 数量的 span/search contract；Task 28 可开始。
 - [x] production 默认输出、algorithmVersion 和 baseline 均未改变。
 - [x] `pnpm --filter @zupulse/harmony-cli test`、`pnpm verify:fast` 与 `pnpm harmony:benchmark` 通过。
 

@@ -115,6 +115,12 @@ describe("harmony CLI inspect command", () => {
     await expect(runHarmonyCommand([...required, "--max-span", "0"])).rejects.toThrow(
       "--max-span must be a positive integer",
     );
+    await expect(runHarmonyCommand([...required, "--max-span", "16", "--max-quarter-notes", "8"])).rejects.toThrow(
+      "--max-span and --max-quarter-notes are mutually exclusive",
+    );
+    await expect(runHarmonyCommand([...required, "--max-quarter-notes", "0"])).rejects.toThrow(
+      "--max-quarter-notes must be positive",
+    );
     await expect(runHarmonyCommand([...required, "--top-k", "9"])).rejects.toThrow(
       "--top-k must be an integer from 1 to 8",
     );

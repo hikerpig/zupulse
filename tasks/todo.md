@@ -55,8 +55,8 @@
 ## Phase 8: 可学习的 Semi-CRF 联合解码
 
 - [x] Task 27：建立 lattice、maxSpan 与 Top-8 的完整 gold-path oracle。
-- [ ] Task 28：未开始；先重新设计 span/search contract。
-- [x] Checkpoint E：span representability 门禁失败，已停止 structured training。
+- [ ] Task 28：实现 `maxQuarterNotes=8` 的 exact search 与惰性 range cache。
+- [x] Checkpoint E：基于 train 冻结时值合同；train/tune span 与 candidate oracle 门禁通过。
 - [ ] Task 29：冻结 segment/transition feature contract。
 - [ ] Task 30：导出严格 split 隔离的 structured path records。
 - [ ] Checkpoint F：records 可重复、紧凑且没有 gold 泄漏。

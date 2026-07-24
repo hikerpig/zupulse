@@ -313,8 +313,31 @@ export const enUS = {
       studioAudioUnavailable: "Preview audio is unavailable in this environment",
       studioGeneric: "Analysis failed",
     },
+    desktop: {
+      openFailed: "The file could not be opened",
+      lifecycleFailed: "The application state could not be saved",
+      storageCorrupt: "Local practice data was damaged, isolated, and replaced with default settings",
+      startupFailed: "The desktop application could not start",
+    },
   },
-  desktop: {},
+  desktop: {
+    menu: {
+      file: "File",
+      openScore: "Open Score…",
+      diagnostics: "Open Diagnostics Folder",
+      playback: "Playback",
+      togglePlayback: "Play/Pause",
+      development: "Development",
+    },
+    dialog: {
+      openTitle: "Open Score",
+      openButton: "Open",
+      saveTitle: "Export Score",
+      saveButton: "Save",
+      scoreFiles: "Scores",
+      allFiles: "All Files",
+    },
+  },
   meta: {
     title: "Zupulse | Score Practice and Harmony Analysis",
     description: "A local-first workbench for score reading, playback practice, and harmony analysis.",

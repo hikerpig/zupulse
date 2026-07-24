@@ -59,11 +59,11 @@
 
 ### Phase 4: Desktop and Browser hosts
 
-- [ ] Task 12：扩展 Bridge locale contract。
-- [ ] Task 13：实现 Desktop preference store。
-- [ ] Task 14：同步 Main、Renderer、菜单和文件 Dialog。
-- [ ] Task 15：完成 Browser 静态 fallback 与 runtime metadata。
-- [ ] Checkpoint D：宿主同步、build/E2E 与阶段提交。
+- [x] Task 12：扩展 Bridge locale contract。
+- [x] Task 13：实现 Desktop preference store。
+- [x] Task 14：同步 Main、Renderer、菜单和文件 Dialog。
+- [x] Task 15：完成 Browser 静态 fallback 与 runtime metadata。
+- [x] Checkpoint D：宿主同步、build/E2E 与阶段提交。
 
 ### Phase 5: Enforcement and completion
 
@@ -109,3 +109,12 @@
 - 测试环境使用真实默认 i18n instance，覆盖中文既有旅程和应用内英文切换。
 - 验证：27 个测试文件、132 个测试、`pnpm typecheck`、`pnpm demo:build`、`pnpm desktop:build` 与
   `git diff --check` 全部通过。
+
+### 2026-07-24 — Checkpoint D
+
+- Bridge 升级为 4.0.0，handshake、capability 与 `app.locale.setPreference` 使用严格 locale schema。
+- Desktop preference 使用独立版本化 JSON、`0o600` 临时文件与原子 rename；损坏文档隔离后回退 system。
+- Main 在窗口前恢复 locale，保存成功后同步内存、菜单与后续文件 Dialog；Renderer 仅使用 handshake。
+- Browser 静态 metadata/no-JS fallback 改为英文，运行时继续由 Effective Locale 更新全部受管 metadata。
+- 验证：19 个测试文件、59 个测试、`pnpm typecheck`、双端 build，以及 Desktop locale 重启/Menu E2E
+  全部通过。

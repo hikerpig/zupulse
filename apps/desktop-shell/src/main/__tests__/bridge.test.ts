@@ -7,6 +7,7 @@ const validHandshake = createBridgeRequest("app.handshake", "handshake-1", {
   appVersion: "0.1.0",
   rendererBuildHash,
 });
+const locale = { preference: "system" as const, effectiveLocale: "en-US" as const };
 
 describe("dispatchBridgeRequest", () => {
   it("rejects requests from a non-app sender", async () => {
@@ -16,7 +17,7 @@ describe("dispatchBridgeRequest", () => {
           senderUrl: "https://evil.example/",
           value: validHandshake,
         },
-        { appVersion: "0.1.0", rendererBuildHash },
+        { appVersion: "0.1.0", rendererBuildHash, locale },
       ),
     ).rejects.toMatchObject({
       code: "INVALID_BRIDGE_SENDER",
@@ -30,7 +31,7 @@ describe("dispatchBridgeRequest", () => {
           senderUrl: "zupulse://app/index.html",
           value: { type: "fs.read", payload: {} },
         },
-        { appVersion: "0.1.0", rendererBuildHash },
+        { appVersion: "0.1.0", rendererBuildHash, locale },
       ),
     ).rejects.toMatchObject({
       code: "INVALID_BRIDGE_MESSAGE",
@@ -44,12 +45,13 @@ describe("dispatchBridgeRequest", () => {
           senderUrl: "zupulse://app/index.html",
           value: validHandshake,
         },
-        { appVersion: "0.1.0", rendererBuildHash },
+        { appVersion: "0.1.0", rendererBuildHash, locale },
       ),
     ).resolves.toMatchObject({
       appVersion: "0.1.0",
       bridgeVersion: BRIDGE_SCHEMA_VERSION,
       rendererBuildHash,
+      locale,
     });
   });
 
@@ -60,7 +62,7 @@ describe("dispatchBridgeRequest", () => {
           senderUrl: "zupulse://app/index.html",
           value: validHandshake,
         },
-        { appVersion: "0.2.0", rendererBuildHash },
+        { appVersion: "0.2.0", rendererBuildHash, locale },
       ),
     ).rejects.toMatchObject({
       code: "BRIDGE_VERSION_MISMATCH",

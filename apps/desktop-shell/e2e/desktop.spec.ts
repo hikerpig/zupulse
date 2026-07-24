@@ -74,6 +74,29 @@ test("starts offline with an isolated renderer", async () => {
   }
 });
 
+test("persists locale and keeps renderer and application menu synchronized", async () => {
+  const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-locale-"));
+  let app = await launch(userData);
+  try {
+    let window = await app.firstWindow();
+    await window.getByRole("button", { name: /^(语言|Language)$/ }).click();
+    await window.getByRole("menuitemradio", { name: "English" }).click();
+    await expect(window.getByRole("heading", { name: "Score Library" })).toBeVisible();
+    await expect
+      .poll(() => app.evaluate(({ Menu }) => Menu.getApplicationMenu()?.items.map((item) => item.label) ?? []))
+      .toContain("File");
+    await app.close();
+
+    app = await launch(userData);
+    window = await app.firstWindow();
+    await expect(window.getByRole("heading", { name: "Score Library" })).toBeVisible();
+    await expect(window.getByRole("button", { name: "Language" })).toBeVisible();
+  } finally {
+    await app.close().catch(() => undefined);
+    await rm(userData, { recursive: true, force: true });
+  }
+});
+
 test("opens a GP file and restores persisted practice state", async () => {
   const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-persistence-"));
   let app = await launch(userData);

@@ -1,5 +1,6 @@
 import path from "node:path";
 import { createBridgeEvent, localPlaybackResumeSchema, sidecarPayloadSchema } from "@zupulse/web-core";
+import { createAppI18n, resolveLocale, type LocaleState, type SupportedLocale } from "@zupulse/app-i18n";
 import { randomUUID } from "node:crypto";
 import {
   app,
@@ -12,7 +13,7 @@ import {
   shell,
   type MenuItemConstructorOptions,
 } from "electron";
-import { dispatchBridgeRequest } from "./bridge";
+import { BridgeDispatchError, dispatchBridgeRequest } from "./bridge";
 import { DiagnosticLogger } from "./diagnostics";
 import { FileTokenStore } from "./fileTokens";
 import { openScoreFile, readScoreFileBytes, saveScoreFile, selectScoreFiles } from "./files";
@@ -21,6 +22,7 @@ import { JsonStore } from "./storage";
 import { DesktopLifecycleCoordinator } from "./lifecycle";
 import { DesktopLibraryStore } from "./library/DesktopLibraryStore";
 import { verifySqliteAvailable } from "./library/sqlite";
+import { LocalePreferenceStore } from "./locale-preference-store";
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -76,6 +78,12 @@ if (!hasSingleInstanceLock) {
 async function startDesktopApp(): Promise<void> {
   const rendererRoot = path.join(__dirname, "../renderer");
   const userData = app.getPath("userData");
+  const localePreferenceStore = new LocalePreferenceStore(userData);
+  const initialPreference = await localePreferenceStore.load();
+  let currentLocaleState: LocaleState = {
+    preference: initialPreference,
+    effectiveLocale: resolveLocale(initialPreference, app.getPreferredSystemLanguages()),
+  };
   const logDirectory = path.join(userData, "logs");
   verifySqliteAvailable();
   const library = new DesktopLibraryStore(path.join(userData, "library.sqlite"), path.join(userData, "library"));
@@ -99,6 +107,10 @@ async function startDesktopApp(): Promise<void> {
   session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
     callback(false);
   });
+  const sendEvent = (event: ReturnType<typeof createBridgeEvent>) => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    mainWindow.webContents.send("zupulse:event", event);
+  };
   ipcMain.handle("zupulse:request", (event, value: unknown) =>
     dispatchBridgeRequest(
       {
@@ -108,11 +120,30 @@ async function startDesktopApp(): Promise<void> {
       {
         appVersion: __APP_VERSION__,
         rendererBuildHash: __RENDERER_BUILD_HASH__,
+        locale: currentLocaleState,
         handlers: {
-          "file.open": () => openScoreFile(fileTokens),
-          "file.select": (request) => selectScoreFiles(fileTokens, request.payload.multiple),
+          "app.locale.setPreference": async (request) => {
+            try {
+              await localePreferenceStore.save(request.payload.preference);
+            } catch {
+              throw new BridgeDispatchError(
+                "LOCALE_PREFERENCE_WRITE_FAILED",
+                "Locale preference could not be persisted",
+                true,
+              );
+            }
+            currentLocaleState = {
+              preference: request.payload.preference,
+              effectiveLocale: resolveLocale(request.payload.preference, app.getPreferredSystemLanguages()),
+            };
+            installMenu(sendEvent, openDiagnosticsDirectory, currentLocaleState.effectiveLocale);
+            return currentLocaleState;
+          },
+          "file.open": () => openScoreFile(fileTokens, undefined, currentLocaleState.effectiveLocale),
+          "file.select": (request) =>
+            selectScoreFiles(fileTokens, request.payload.multiple, currentLocaleState.effectiveLocale),
           "file.readBytes": (request) => readScoreFileBytes(fileTokens, request.payload.fileToken),
-          "file.save": (request) => saveScoreFile(request.payload),
+          "file.save": (request) => saveScoreFile(request.payload, currentLocaleState.effectiveLocale),
           "library.list": async () => ({ scores: await library.list() }),
           "library.get": async (request) => ({ score: await library.get(request.payload.id) }),
           "library.find": async (request) => ({ score: await library.findByIdentity(request.payload.scoreIdentity) }),
@@ -182,10 +213,6 @@ async function startDesktopApp(): Promise<void> {
     ),
   );
   mainWindow = createMainWindow();
-  const sendEvent = (event: ReturnType<typeof createBridgeEvent>) => {
-    if (!mainWindow || mainWindow.isDestroyed()) return;
-    mainWindow.webContents.send("zupulse:event", event);
-  };
   lifecycle = new DesktopLifecycleCoordinator(sendEvent, {
     timeoutMs: 5000,
     onTimeout: (code) => {
@@ -193,7 +220,7 @@ async function startDesktopApp(): Promise<void> {
     },
   });
   installLifecycle(mainWindow, lifecycle);
-  installMenu(sendEvent, openDiagnosticsDirectory);
+  installMenu(sendEvent, openDiagnosticsDirectory, currentLocaleState.effectiveLocale);
 }
 
 function installLifecycle(window: BrowserWindow, coordinator: DesktopLifecycleCoordinator): void {
@@ -222,17 +249,19 @@ function installLifecycle(window: BrowserWindow, coordinator: DesktopLifecycleCo
 function installMenu(
   sendEvent: (event: ReturnType<typeof createBridgeEvent>) => void,
   openDiagnosticsDirectory: () => Promise<void>,
+  locale: SupportedLocale,
 ): void {
+  const t = createAppI18n(locale).getFixedT(locale, "desktop");
   const command = (value: "open-score" | "toggle-playback") => () => {
     sendEvent(createBridgeEvent("app.command", randomUUID(), { command: value }));
   };
   const template: MenuItemConstructorOptions[] = [
     {
-      label: "文件",
+      label: t("menu.file"),
       submenu: [
-        { label: "导入曲谱…", accelerator: "CmdOrCtrl+O", click: command("open-score") },
+        { label: t("menu.openScore"), accelerator: "CmdOrCtrl+O", click: command("open-score") },
         {
-          label: "打开日志目录",
+          label: t("menu.diagnostics"),
           click: () => {
             void openDiagnosticsDirectory().catch(() => undefined);
           },
@@ -242,10 +271,10 @@ function installMenu(
       ],
     },
     {
-      label: "播放",
-      submenu: [{ label: "播放/暂停", accelerator: "Space", click: command("toggle-playback") }],
+      label: t("menu.playback"),
+      submenu: [{ label: t("menu.togglePlayback"), accelerator: "Space", click: command("toggle-playback") }],
     },
-    ...(app.isPackaged ? [] : [{ label: "开发", submenu: [{ role: "toggleDevTools" as const }] }]),
+    ...(app.isPackaged ? [] : [{ label: t("menu.development"), submenu: [{ role: "toggleDevTools" as const }] }]),
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }

@@ -310,8 +310,31 @@ export const zhCN = {
       studioAudioUnavailable: "当前环境无法播放预览",
       studioGeneric: "分析失败",
     },
+    desktop: {
+      openFailed: "无法打开文件",
+      lifecycleFailed: "无法保存应用状态",
+      storageCorrupt: "本地练习数据损坏，已隔离并使用默认设置",
+      startupFailed: "桌面应用启动失败",
+    },
   },
-  desktop: {},
+  desktop: {
+    menu: {
+      file: "文件",
+      openScore: "打开乐谱…",
+      diagnostics: "打开诊断目录",
+      playback: "播放",
+      togglePlayback: "播放/暂停",
+      development: "开发",
+    },
+    dialog: {
+      openTitle: "打开乐谱",
+      openButton: "打开",
+      saveTitle: "导出乐谱",
+      saveButton: "保存",
+      scoreFiles: "乐谱",
+      allFiles: "所有文件",
+    },
+  },
   meta: {
     title: "逐拍｜乐谱练习与和声分析",
     description: "用于乐谱阅读、播放练习与和声分析的本地优先工作台。",

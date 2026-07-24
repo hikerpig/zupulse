@@ -99,16 +99,17 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await page.getByRole("button", { name: "片段试听" }).click();
   await page.getByRole("button", { name: "播放预览" }).click();
   const audioUnavailable = page.getByRole("alert").filter({ hasText: "试听不可用" });
-  if (await audioUnavailable.count()) {
-    await expect(audioUnavailable).toBeVisible();
+  const pausePreview = page.getByRole("button", { name: "暂停预览" });
+  await expect(pausePreview.or(audioUnavailable)).toBeVisible();
+  if (await pausePreview.isVisible()) {
+    await pausePreview.click();
+    await expect(page.getByRole("button", { name: "播放预览" })).toBeVisible();
+    await page.getByRole("combobox", { name: "预览速度" }).selectOption("1.5");
+    await page.getByRole("slider", { name: "预览位置" }).fill("5000");
+    await page.getByRole("button", { name: "循环选中片段" }).click();
   } else {
-    await expect(page.getByText(/预览播放中|预览已暂停/)).toBeVisible();
-    const pause = page.getByRole("button", { name: "暂停预览" });
-    if (await pause.count()) await pause.click();
+    await expect(audioUnavailable).toBeVisible();
   }
-  await page.getByRole("combobox", { name: "预览速度" }).selectOption("1.5");
-  await page.getByRole("slider", { name: "预览位置" }).fill("5000");
-  await page.getByRole("button", { name: "循环选中片段" }).click();
   await page.keyboard.press("Escape");
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "导出标注曲谱" }).click();

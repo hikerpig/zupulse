@@ -1,14 +1,16 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
-import type { ViewerAppHandle, ViewerFile, ViewerHost, ViewerSessionHandle } from "./host";
+import type { LocaleHost, ViewerAppHandle, ViewerFile, ViewerHost, ViewerSessionHandle } from "./host";
 import { App } from "./app/App";
 import { ViewerApplication } from "./app/ViewerApplication";
 import { createStudioScoreRuntime, type StudioScoreRuntime } from "./studio-score-runtime";
 import type { ScoreFileGateway, ScoreFormatAdapter, SheetLibraryRepository } from "@zupulse/web-core";
+import { createAppI18n } from "@zupulse/app-i18n";
 
 export type ViewerAppDependencies = {
   host: ViewerHost;
+  localeHost?: LocaleHost;
   openSession(file: ViewerFile, libraryScoreId?: string): Promise<ViewerSessionHandle>;
   openStudioRuntime?(file: ViewerFile): Promise<StudioScoreRuntime>;
   library?: { repository: SheetLibraryRepository; gateway: ScoreFileGateway; adapters: readonly ScoreFormatAdapter[] };
@@ -22,10 +24,17 @@ export function mountViewerApp(rootElement: HTMLElement, dependencies: ViewerApp
     dependencies.library,
     dependencies.openStudioRuntime ?? ((file) => createStudioScoreRuntime(rootElement.ownerDocument, file)),
   );
+  const localeHost: LocaleHost = dependencies.localeHost ?? {
+    initialState: { preference: "zh-CN", effectiveLocale: "zh-CN" },
+    async setPreference(preference) {
+      return { preference, effectiveLocale: preference === "system" ? "zh-CN" : preference };
+    },
+  };
+  const i18n = createAppI18n(localeHost.initialState.effectiveLocale);
   flushSync(() =>
     root.render(
       <StrictMode>
-        <App application={application} />
+        <App application={application} localeHost={localeHost} i18n={i18n} />
       </StrictMode>,
     ),
   );

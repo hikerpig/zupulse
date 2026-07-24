@@ -53,6 +53,7 @@ describe("bridge schemas", () => {
         storage: { sqliteIndex: false, sidecarPayload: true },
         sync: { available: false, provider: "none" },
         audio: { webAudio: true, nativeBridge: false },
+        localization: { changeLocale: true },
       }).fileAccess.persistentFileReferences,
     ).toBe(false);
   });
@@ -93,7 +94,9 @@ describe("bridge schemas", () => {
           storage: { sqliteIndex: false, sidecarPayload: true },
           sync: { available: false, provider: "none" },
           audio: { webAudio: true, nativeBridge: false },
+          localization: { changeLocale: true },
         },
+        locale: { preference: "system", effectiveLocale: "en-US" },
       }).rendererBuildHash,
     ).toBe(hash);
     expect(
@@ -102,6 +105,12 @@ describe("bridge schemas", () => {
         bytes: new Uint8Array([1]),
       }).bytes,
     ).toBeInstanceOf(Uint8Array);
+    expect(
+      bridgeResponseSchemas["app.locale.setPreference"].parse({
+        preference: "zh-CN",
+        effectiveLocale: "zh-CN",
+      }),
+    ).toEqual({ preference: "zh-CN", effectiveLocale: "zh-CN" });
   });
 
   it("round-trips MusicXML identities through sidecar requests", () => {

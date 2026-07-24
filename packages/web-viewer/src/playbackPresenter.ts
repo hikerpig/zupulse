@@ -2,7 +2,7 @@
 import type { PlaybackState } from "@zupulse/web-core";
 
 export type PlaybackViewModel = {
-  playLabel: "播放" | "暂停";
+  isPlaying: boolean;
   playDisabled: boolean;
   stopDisabled: boolean;
   currentTime: string;
@@ -15,22 +15,24 @@ export type PlaybackViewModel = {
   loopDraftStart: number;
   loopDraftEnd: number;
   loopSnapMode: "off" | "beat" | "measure";
-  soundFontRetryVisible: boolean;
-  audioStatusLabel: string;
+  soundFont: PlaybackState["soundFont"];
   audioStatusTone: "subtle" | "ready" | "error";
-  persistenceMessage: string;
-  sessionSummary: string;
-  sessionFacts: Array<{ label: string; value: string }>;
+  persistence: PlaybackState["persistence"];
+  trackCount: number;
+  primaryTrackName?: string;
   loops: Array<{
     id: string;
-    label: string;
-    rangeLabel: string;
+    labelSource: "generated" | "user";
+    label?: string;
+    startMeasureIndex: number;
+    endMeasureIndex: number;
     speedPercent?: number;
     selected: boolean;
   }>;
   tracks: Array<{
     id: string;
-    name: string;
+    sourceIndex: number;
+    name?: string;
     primary: boolean;
     additional: boolean;
     muted: boolean;
@@ -47,22 +49,21 @@ export function presentPlayback(state: PlaybackState): PlaybackViewModel {
     .map((loop) => {
       const item: PlaybackViewModel["loops"][number] = {
         id: loop.id,
-        label: loop.label,
-        rangeLabel: `小节 ${loop.start.measureIndex + 1}–${loop.end.measureIndex + 1}`,
+        labelSource: loop.labelSource,
+        startMeasureIndex: loop.start.measureIndex,
+        endMeasureIndex: loop.end.measureIndex,
         selected: state.activeLoopId === loop.id,
       };
+      if (loop.label !== undefined) item.label = loop.label;
       if (loop.speedOverride !== undefined) {
         item.speedPercent = Math.round(loop.speedOverride * 100);
       }
       return item;
     });
-  const primaryTrack =
-    state.tracks.find((track) => state.trackState.primaryVisibleTrackId === track.id)?.name ?? "未选择";
-  const activeLoop =
-    state.loops.find((loop) => loop.deletedAt === undefined && loop.id === state.activeLoopId)?.label ?? "未启用";
+  const primaryTrack = state.tracks.find((track) => state.trackState.primaryVisibleTrackId === track.id)?.name;
 
   return {
-    playLabel: state.transport === "playing" ? "暂停" : "播放",
+    isPlaying: state.transport === "playing",
     playDisabled: state.soundFont !== "ready",
     stopDisabled: state.transport === "idle" || state.transport === "loading",
     currentTime: formatTime(currentMs),
@@ -75,23 +76,18 @@ export function presentPlayback(state: PlaybackState): PlaybackViewModel {
     loopDraftStart: ratio(state.loopDraft.start?.cachedTimeMs ?? 0, durationMs),
     loopDraftEnd: ratio(state.loopDraft.end?.cachedTimeMs ?? 0, durationMs),
     loopSnapMode: state.loopDraft.snapMode,
-    soundFontRetryVisible: state.soundFont === "error",
-    audioStatusLabel: audioStatusLabel(state.soundFont),
+    soundFont: state.soundFont,
     audioStatusTone: audioStatusTone(state.soundFont),
-    persistenceMessage: persistenceMessage(state.persistence),
-    sessionSummary: `${primaryTrack} · ${state.tracks.length} 个轨道 · ${Math.round(state.scoreSpeed * 100)}% 速度`,
-    sessionFacts: [
-      { label: "Tracks", value: String(state.tracks.length) },
-      { label: "Tempo", value: `${Math.round(state.scoreSpeed * 100)}%` },
-      { label: "Loop", value: activeLoop },
-      { label: "Primary", value: primaryTrack },
-    ],
+    persistence: state.persistence,
+    trackCount: state.tracks.length,
+    ...(primaryTrack === undefined ? {} : { primaryTrackName: primaryTrack }),
     loops,
     tracks: state.tracks.map((track) => {
       const mix = state.trackState.settings[track.id];
       return {
         id: track.id,
-        name: track.name,
+        sourceIndex: track.sourceIndex,
+        ...(track.name === undefined ? {} : { name: track.name }),
         primary: state.trackState.primaryVisibleTrackId === track.id,
         additional: state.trackState.additionalVisibleTrackIds.includes(track.id),
         muted: mix?.muted ?? false,
@@ -116,18 +112,6 @@ function formatTime(valueMs: number): string {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = String(totalSeconds % 60).padStart(2, "0");
   return `${minutes}:${seconds}`;
-}
-
-function persistenceMessage(state: PlaybackState["persistence"]): string {
-  if (state === "saving") return "正在保存练习设置";
-  if (state === "unsaved" || state === "error") return "练习设置尚未保存";
-  return "";
-}
-
-function audioStatusLabel(soundFont: PlaybackState["soundFont"]): string {
-  if (soundFont === "ready") return "音频已就绪";
-  if (soundFont === "error") return "音频初始化失败";
-  return "音频准备中";
 }
 
 function audioStatusTone(soundFont: PlaybackState["soundFont"]): "subtle" | "ready" | "error" {

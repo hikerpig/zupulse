@@ -71,7 +71,7 @@ export async function createStudioScoreRuntime(
       file: { name: file.fileName, arrayBuffer: async () => file.bytes.slice().buffer },
       api,
     });
-    if (result.status !== "ready") throw new Error(result.message);
+    if (result.status !== "ready") throw new Error(result.issueCode ?? "viewer-load-failed");
     await dependencies.waitForScore(api);
   } catch (error) {
     try {

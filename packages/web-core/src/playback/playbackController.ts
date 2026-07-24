@@ -231,7 +231,11 @@ export class PlaybackController {
       scoreSpeed: normalizeScorePlaybackSpeed(playback.scoreSpeed.value),
       looping: false,
       loopDraft: { snapMode: "beat" },
-      loops: structuredClone(playback.loops),
+      loops: playback.loops.map((loop) => ({
+        ...structuredClone(loop),
+        start: rehydrateLegacyPosition(loop.start, this.options.timeline),
+        end: rehydrateLegacyPosition(loop.end, this.options.timeline),
+      })),
       tracks: structuredClone(this.options.tracks),
       trackState: {
         primaryVisibleTrackId: primary,
@@ -596,6 +600,12 @@ export class PlaybackController {
     const snapshot = this.getState();
     for (const listener of this.listeners) listener(snapshot);
   }
+}
+
+function rehydrateLegacyPosition(position: LoopRegion["start"], timeline: PlaybackTimelineMap): LoopRegion["start"] {
+  return position.measureIndex < 0
+    ? musicalPositionFromTick(position.tick, position.cachedTimeMs, timeline)
+    : structuredClone(position);
 }
 
 function loopTicks(loop: LoopRegion) {

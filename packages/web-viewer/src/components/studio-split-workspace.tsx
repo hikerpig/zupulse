@@ -1,4 +1,5 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./studio-split-workspace.module.css";
 
 const MIN_SPLIT = 40;
@@ -24,6 +25,7 @@ export function StudioSplitWorkspace({
   scoreClassName?: string | undefined;
   analysisClassName?: string | undefined;
 }) {
+  const { t } = useTranslation("studio");
   const rootRef = useRef<HTMLDivElement>(null);
   const previousUserSelect = useRef("");
   const dragging = useRef(false);
@@ -44,7 +46,7 @@ export function StudioSplitWorkspace({
       <div
         className={styles.splitter}
         role="separator"
-        aria-label="调整乐谱与分析面板宽度"
+        aria-label={t("splitter")}
         aria-orientation="vertical"
         aria-valuemin={MIN_SPLIT}
         aria-valuemax={MAX_SPLIT}

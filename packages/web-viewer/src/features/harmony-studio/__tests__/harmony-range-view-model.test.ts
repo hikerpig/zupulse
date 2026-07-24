@@ -68,7 +68,12 @@ describe("createHarmonyRangeViewItems", () => {
     const items = createHarmonyRangeViewItems(effective, []);
     const measures = [{ durationTicks: 16, timeSignature: { numerator: 4, denominator: 4 } }];
 
-    expect(formatHarmonyRange(range(2, 6), measures)).toBe("第 1 小节 · 第 1.5–2.5 拍");
+    expect(
+      formatHarmonyRange(range(2, 6), measures, {
+        moment: (measure, beat) => `第 ${measure} 小节 · 第 ${beat} 拍`,
+        withinMeasure: (measure, startBeat, endBeat) => `第 ${measure} 小节 · 第 ${startBeat}–${endBeat} 拍`,
+      }),
+    ).toBe("第 1 小节 · 第 1.5–2.5 拍");
     expect(filterHarmonyRangeViewItems(items, "corrected")).toEqual([items[0]]);
     expect(filterHarmonyRangeViewItems(items, "corrected", items[1]!.key)).toEqual([items[0], items[1]]);
     expect(filterHarmonyRangeViewItems(items, "unresolved")).toEqual([items[1]]);

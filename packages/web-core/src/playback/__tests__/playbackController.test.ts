@@ -134,7 +134,7 @@ describe("PlaybackController", () => {
     expect(controller.getState().soundFont).toBe("loading");
   });
 
-  it("creates snapped named loops and applies speed overrides", async () => {
+  it("creates snapped locale-neutral loops and applies speed overrides", async () => {
     const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" });
     const controller = createController(engine, new FakePersistence());
     await controller.initialize();
@@ -148,10 +148,11 @@ describe("PlaybackController", () => {
     const loop = controller.getState().loops[0];
     expect(loop).toMatchObject({
       id: "loop-1",
-      label: "小节 1–2",
+      labelSource: "generated",
       start: { tick: 960 },
       end: { tick: 2880 },
     });
+    expect(loop).not.toHaveProperty("label");
     expect(engine.calls).toContainEqual(["loop", { range: { startTick: 960, endTick: 2880 }, enabled: true }]);
     expect(engine.calls).toContainEqual(["seek", 960]);
 
@@ -162,6 +163,45 @@ describe("PlaybackController", () => {
       ["loop", { range: null, enabled: false }],
       ["speed", 0.81],
     ]);
+  });
+
+  it("rehydrates legacy loop positions without dirtying the sidecar", async () => {
+    const sidecar = createDefaultSidecar(identity, "2026-07-10T00:00:00Z");
+    sidecar.practice.playback.loops = [
+      {
+        id: "legacy-loop",
+        label: "循环 legacy-loop",
+        labelSource: "generated",
+        start: {
+          measureId: "legacy",
+          measureIndex: -1,
+          beatIndex: -1,
+          tick: 120,
+          cachedTimeMs: 250,
+        },
+        end: {
+          measureId: "legacy",
+          measureIndex: -1,
+          beatIndex: -1,
+          tick: 2400,
+          cachedTimeMs: 5000,
+        },
+        snapMode: "off",
+        createdAt: "1970-01-01T00:00:00.000Z",
+        updatedAt: "1970-01-01T00:00:00.000Z",
+      },
+    ];
+    const persistence = new FakePersistence(sidecar);
+    const controller = createController(new FakeEngine({ soundFont: "ready", transport: "stopped" }), persistence);
+
+    await controller.initialize();
+
+    expect(controller.getState().loops[0]).toMatchObject({
+      start: { measureId: "measure-0", measureIndex: 0, tick: 120 },
+      end: { measureId: "measure-1", measureIndex: 1, tick: 2400 },
+    });
+    await controller.flush();
+    expect(persistence.sidecarWrites).toHaveLength(0);
   });
 
   it("keeps display and mixer independent and never persists solo", async () => {

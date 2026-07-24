@@ -63,7 +63,6 @@ function migrateLegacySidecar(legacy: LegacySidecarPayload): SidecarPayload {
   const playback = createDefaultPlaybackSidecar(LEGACY_TIMESTAMP);
   playback.loops = legacy.practice.loops.map((loop) => ({
     id: loop.id,
-    label: `循环 ${loop.id}`,
     labelSource: "generated",
     start: legacyPosition(loop.startTick),
     end: legacyPosition(loop.endTick),

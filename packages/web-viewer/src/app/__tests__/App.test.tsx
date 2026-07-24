@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
 import { ViewerApplication } from "../ViewerApplication";
 import type { SheetLibraryRepository } from "@zupulse/web-core";
+import { createAppI18n } from "@zupulse/app-i18n";
+import type { LocaleHost } from "../../i18n/locale-controller";
 
 afterEach(() => {
   cleanup();
@@ -17,6 +19,56 @@ beforeEach(() => {
 });
 
 describe("App", () => {
+  it("switches locale without rebuilding the application", async () => {
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() }),
+    );
+    const localeHost: LocaleHost = {
+      initialState: { preference: "zh-CN", effectiveLocale: "zh-CN" },
+      setPreference: vi.fn(async (preference) => ({
+        preference,
+        effectiveLocale: preference === "system" ? "zh-CN" : preference,
+      })),
+    };
+    const user = userEvent.setup();
+
+    render(<App application={application} localeHost={localeHost} i18n={createAppI18n("zh-CN")} />);
+    await user.click(screen.getByRole("button", { name: "语言" }));
+    await user.click(screen.getByRole("menuitemradio", { name: "English" }));
+
+    expect(screen.getByRole("navigation", { name: "Primary navigation" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "No score open" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Playback controls" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Open score" })).toBeTruthy();
+    expect(localeHost.setPreference).toHaveBeenLastCalledWith("en-US");
+    expect(document.documentElement.lang).toBe("en-US");
+    await application.destroy();
+  });
+
+  it("keeps the previous locale when persistence fails", async () => {
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() }),
+    );
+    const localeHost: LocaleHost = {
+      initialState: { preference: "zh-CN", effectiveLocale: "zh-CN" },
+      setPreference: vi.fn(async () => {
+        throw new Error("storage unavailable");
+      }),
+    };
+    const user = userEvent.setup();
+
+    render(<App application={application} localeHost={localeHost} i18n={createAppI18n("zh-CN")} />);
+    await user.click(screen.getByRole("button", { name: "语言" }));
+    await user.click(screen.getByRole("menuitemradio", { name: "English" }));
+
+    expect((await screen.findByRole("alert")).textContent).toContain("无法保存语言设置");
+    expect(screen.getByRole("navigation", { name: "主要页面" })).toBeTruthy();
+    expect(document.documentElement.lang).toBe("zh-CN");
+    await application.destroy();
+  });
+
   it("renders a compact workbench shell instead of detached cards", async () => {
     const application = new ViewerApplication(
       { openScore: async () => undefined, subscribe: () => () => undefined },
@@ -30,9 +82,7 @@ describe("App", () => {
     expect(screen.getByRole("navigation", { name: "主要页面" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "逐拍首页" })).toBeTruthy();
     expect(screen.getByRole("region", { name: "乐谱工作区" })).toBeTruthy();
-    expect(
-      screen.getByText("Studio-style practice workspace for score reading, playback, and loop training."),
-    ).toBeTruthy();
+    expect(screen.getByText("用于乐谱阅读、播放和循环训练的练习工作区。")).toBeTruthy();
     expect(screen.getByRole("button", { name: "打开乐谱" })).toBeTruthy();
 
     await application.destroy();

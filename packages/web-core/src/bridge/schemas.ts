@@ -4,8 +4,15 @@ import { localPlaybackResumeSchema, sidecarPayloadSchema } from "../storage/sche
 import { libraryMetadataSchema, libraryScoreIdSchema, libraryScoreIdentitySchema } from "../library/schemas";
 import { harmonyAnalysisDocumentSchema } from "../harmony/schemas";
 
-export const BRIDGE_SCHEMA_VERSION = "3.0.0" as const;
+export const BRIDGE_SCHEMA_VERSION = "4.0.0" as const;
 const idSchema = z.string().min(1).max(128);
+export const localePreferenceSchema = z.enum(["system", "zh-CN", "en-US"]);
+export const localeStateSchema = z
+  .object({
+    preference: localePreferenceSchema,
+    effectiveLocale: z.enum(["zh-CN", "en-US"]),
+  })
+  .strict();
 const envelope = <T extends string, S extends z.ZodType>(type: T, payload: S) =>
   z
     .object({
@@ -84,6 +91,11 @@ export const capabilitiesSchema = z
         nativeBridge: z.boolean(),
       })
       .strict(),
+    localization: z
+      .object({
+        changeLocale: z.boolean(),
+      })
+      .strict(),
   })
   .strict();
 
@@ -106,6 +118,7 @@ export const bridgeRequestSchema = z.discriminatedUnion("type", [
       .strict(),
   ),
   envelope("file.open", z.object({}).strict()),
+  envelope("app.locale.setPreference", z.object({ preference: localePreferenceSchema }).strict()),
   envelope("file.select", z.object({ multiple: z.boolean() }).strict()),
   envelope("file.readBytes", z.object({ fileToken: idSchema }).strict()),
   envelope("file.save", z.object({ fileName: z.string().min(1).max(255), bytes: z.instanceof(Uint8Array) }).strict()),
@@ -203,8 +216,10 @@ export const bridgeResponseSchemas = {
       bridgeVersion: z.literal(BRIDGE_SCHEMA_VERSION),
       rendererBuildHash: idSchema,
       capabilities: capabilitiesSchema,
+      locale: localeStateSchema,
     })
     .strict(),
+  "app.locale.setPreference": localeStateSchema,
   "file.open": z.discriminatedUnion("status", [
     z.object({ status: z.literal("cancelled") }).strict(),
     z

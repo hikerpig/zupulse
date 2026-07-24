@@ -34,6 +34,9 @@ const DEFAULT_CAPABILITIES: Capabilities = capabilitiesSchema.parse({
     webAudio: true,
     nativeBridge: false,
   },
+  localization: {
+    changeLocale: true,
+  },
 });
 
 export class MockNativeBridge {
@@ -80,6 +83,12 @@ export class MockNativeBridge {
           bridgeVersion: BRIDGE_SCHEMA_VERSION,
           rendererBuildHash: request.payload.rendererBuildHash,
           capabilities: this.capabilities,
+          locale: { preference: "system", effectiveLocale: "en-US" },
+        });
+      case "app.locale.setPreference":
+        return parseBridgeResponse(request.type, {
+          preference: request.payload.preference,
+          effectiveLocale: request.payload.preference === "system" ? "en-US" : request.payload.preference,
         });
       case "file.open":
         return parseBridgeResponse(request.type, this.pendingFiles.shift() ?? { status: "cancelled" });

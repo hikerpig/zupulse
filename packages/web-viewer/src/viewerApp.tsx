@@ -8,6 +8,7 @@ import {
   type AlphaTabApiLike,
   type PlaybackPersistence,
 } from "@zupulse/web-core";
+import { createAppI18n, resolveLocale } from "@zupulse/app-i18n";
 import type { ViewerFile, ViewerSessionHandle } from "./host";
 import { ALPHATAB_ASSETS } from "./playbackAssets";
 import { type DemoState } from "./gpDemoPresenter";
@@ -42,7 +43,7 @@ export function createDefaultOpenSession(
     if (!scoreScrollElement) throw new Error("Viewer DOM is missing the score scroll container");
     const status = required<HTMLElement>(ownerDocument, "status");
     const summary = required<HTMLElement>(ownerDocument, "summary");
-    renderViewerState(status, summary, { status: "loading", message: "正在加载文件" });
+    renderViewerState(status, summary, { status: "loading" });
     alphaTabHost.replaceChildren();
     const api = dependencies.createApi(alphaTabHost, createViewerAlphaTabSettings(scoreScrollElement));
     const adapter = dependencies.createAdapter(api);
@@ -121,7 +122,7 @@ export function createDefaultOpenSession(
       }
       renderViewerState(status, summary, {
         status: "error",
-        message: error instanceof Error ? error.message : "加载失败",
+        issueCode: "viewer-load-failed",
       });
       return emptySession();
     }
@@ -129,12 +130,28 @@ export function createDefaultOpenSession(
 }
 
 export function renderViewerState(status: HTMLElement, summary: HTMLElement, state: DemoState): void {
-  status.textContent = state.message;
+  const locale = resolveLocale("system", [status.ownerDocument.documentElement.lang]);
+  const t = createAppI18n(locale).getFixedT(locale, "viewer");
+  status.textContent =
+    state.status === "loading"
+      ? t("page.loading")
+      : state.status === "ready" && state.summary
+        ? t("page.loaded", { title: state.summary.title })
+        : demoIssueMessage(state.issueCode, t);
   if (state.status !== "ready" || !state.summary) {
-    summary.textContent = "未打开乐谱";
+    summary.textContent = t("page.title");
     return;
   }
   summary.textContent = state.summary.title;
+}
+
+function demoIssueMessage(
+  issueCode: DemoState["issueCode"],
+  t: ReturnType<ReturnType<typeof createAppI18n>["getFixedT"]>,
+): string {
+  if (issueCode === "gp-file-required") return t("page.gpRequired");
+  if (issueCode === "alpha-tab-load-failed") return t("page.alphaTabFailed");
+  return t("page.loadFailed");
 }
 
 function emptySession(): ViewerSessionHandle {

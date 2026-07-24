@@ -46,7 +46,14 @@ describe("StudioPage", () => {
       studio: {
         libraryScoreId: "score-1",
         status,
-        ...(status === "conflict" || status === "error" ? { error: "保存失败" } : {}),
+        ...(status === "conflict" || status === "error"
+          ? {
+              error: {
+                code: status === "conflict" ? ("studio-version-conflict" as const) : ("studio-save-failed" as const),
+                recoverable: true,
+              },
+            }
+          : {}),
         document: {
           activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
           corrections: [],
@@ -288,7 +295,7 @@ describe("StudioPage", () => {
         libraryScoreId: "score-1",
         status: "ready",
         selection: { focus: selectedRange.start, range: selectedRange },
-        selectionNotice: "该位置没有有效和弦区间，已保留当前选择。",
+        selectionNotice: "no-effective-range",
         document: {
           activeRevision: {
             parameters: { scope: { includedTrackIds: ["track-1"] } },
@@ -415,7 +422,7 @@ describe("StudioPage", () => {
       studio: {
         libraryScoreId: "score-1",
         status: "error" as const,
-        error: "分析失败",
+        error: { code: "studio-analysis-failed", recoverable: true },
       },
     };
     const application = {
@@ -439,7 +446,7 @@ describe("StudioPage", () => {
       studio: {
         libraryScoreId: "score-1",
         status: "conflict",
-        error: "版本冲突",
+        error: { code: "studio-version-conflict", recoverable: true },
         document: {
           activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
           corrections: [],
@@ -494,7 +501,7 @@ describe("StudioPage", () => {
       studio: {
         libraryScoreId: "score-1",
         status: "error" as const,
-        error: "保存失败",
+        error: { code: "studio-save-failed", recoverable: true },
         document: {
           activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
           corrections: [],

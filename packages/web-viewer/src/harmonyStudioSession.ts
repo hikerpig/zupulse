@@ -8,7 +8,7 @@ import type {
 export type HarmonyStudioSessionState = {
   status: "ready" | "unsaved" | "analyzing" | "saving" | "error" | "conflict";
   document: HarmonyAnalysisDocument | null;
-  error?: string;
+  errorCode?: "version-conflict" | "analysis-failed" | "save-failed";
 };
 
 export class HarmonyStudioSession {
@@ -33,10 +33,11 @@ export class HarmonyStudioSession {
       if (existing) return this.set({ status: "ready", document: existing });
       const generated = await analyze();
       const saved = await this.repository.save({ document: generated, expectedDocumentVersion: null });
-      if (saved.status === "conflict") return this.set({ status: "error", document: null, error: "分析文档版本冲突" });
+      if (saved.status === "conflict")
+        return this.set({ status: "error", document: null, errorCode: "version-conflict" });
       return this.set({ status: "ready", document: saved.document });
     } catch (error) {
-      return this.set({ status: "error", document: null, error: error instanceof Error ? error.message : "分析失败" });
+      return this.set({ status: "error", document: null, errorCode: "analysis-failed" });
     }
   }
   async save(document: HarmonyAnalysisDocument): Promise<HarmonyStudioSessionState> {
@@ -116,14 +117,14 @@ export class HarmonyStudioSession {
       const saved = await this.repository.save({ document: next, expectedDocumentVersion: currentVersion });
       if (intent !== this.intent) return this.state;
       if (saved.status === "conflict")
-        return this.set({ status: "conflict", document: this.state.document, error: "分析文档版本冲突" });
+        return this.set({ status: "conflict", document: this.state.document, errorCode: "version-conflict" });
       return this.set({ status: "ready", document: saved.document });
     } catch (error) {
       if (intent !== this.intent) return this.state;
       return this.set({
         status: "error",
         document: this.state.document,
-        error: error instanceof Error ? error.message : "分析失败",
+        errorCode: "analysis-failed",
       });
     }
   }
@@ -159,10 +160,11 @@ export class HarmonyStudioSession {
       this.set({ status: "saving", document });
       try {
         const saved = await this.repository.save({ document, expectedDocumentVersion: document.documentVersion });
-        if (saved.status === "conflict") return this.set({ status: "conflict", document, error: "分析文档版本冲突" });
+        if (saved.status === "conflict")
+          return this.set({ status: "conflict", document, errorCode: "version-conflict" });
         return this.set({ status: "ready", document: saved.document });
       } catch (error) {
-        return this.set({ status: "error", document, error: error instanceof Error ? error.message : "保存失败" });
+        return this.set({ status: "error", document, errorCode: "save-failed" });
       }
     };
     const next = this.saveQueue.then(run, run);

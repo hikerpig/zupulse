@@ -4,7 +4,9 @@ export type ViewerHostEvent =
 export interface ViewerHost {
   openScore(): Promise<ViewerFile | undefined>;
   subscribe(listener: (event: ViewerHostEvent) => void): () => void;
+  reportDiagnostic?(error: unknown, operation: string): void;
 }
+export type { LocaleHost } from "./i18n/locale-controller";
 export type ViewerSessionHandle = {
   playback?: {
     getState(): PlaybackState;

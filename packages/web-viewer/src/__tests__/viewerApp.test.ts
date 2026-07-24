@@ -341,7 +341,7 @@ describe("createDefaultOpenSession cleanup", () => {
     const openSession = createDefaultOpenSession(document, {} as never, {
       createApi,
       createAdapter: () => ({ destroy: vi.fn() }) as never,
-      presentFile: async () => ({ status: "error", message: "stop after host check" }),
+      presentFile: async () => ({ status: "error", issueCode: "viewer-load-failed" }),
       waitForScore: async () => ({}) as never,
       extractModel: () => ({
         baseTempo: 120,
@@ -362,7 +362,7 @@ describe("createDefaultOpenSession cleanup", () => {
     const openSession = createDefaultOpenSession(document, {} as never, {
       createApi,
       createAdapter: () => ({ destroy: vi.fn() }) as never,
-      presentFile: async () => ({ status: "error", message: "stop after settings" }),
+      presentFile: async () => ({ status: "error", issueCode: "viewer-load-failed" }),
       waitForScore: async () => ({}) as never,
       extractModel: () => ({
         baseTempo: 120,
@@ -405,7 +405,6 @@ describe("createDefaultOpenSession cleanup", () => {
       createAdapter: () => ({ destroy: vi.fn() }) as never,
       presentFile: async () => ({
         status: "ready",
-        message: "已加载 Song",
         identity: { contentHash: "a".repeat(64), format: "gp" },
         summary: { title: "Song", trackCount: 1, masterBarCount: 1 },
       }),
@@ -445,7 +444,6 @@ describe("createDefaultOpenSession cleanup", () => {
       createAdapter: () => ({ destroy: adapterDestroy }) as never,
       presentFile: async () => ({
         status: "ready",
-        message: "已加载 Song",
         identity: { contentHash: "a".repeat(64), format: "gp" },
         summary: { title: "Song", trackCount: 1, masterBarCount: 1 },
       }),
@@ -476,7 +474,8 @@ describe("createDefaultOpenSession cleanup", () => {
 
     expect(controllerDestroy).toHaveBeenCalledOnce();
     expect(adapterDestroy).not.toHaveBeenCalled();
-    expect(document.querySelector("#status")?.textContent).toBe(failure.message);
+    expect(document.querySelector("#status")?.textContent).toBe("无法加载乐谱");
+    expect(document.body.textContent).not.toContain(failure.message);
   });
 
   it("preserves initialization and controller cleanup failures", async () => {
@@ -488,7 +487,6 @@ describe("createDefaultOpenSession cleanup", () => {
       createAdapter: () => ({ destroy: vi.fn() }) as never,
       presentFile: async () => ({
         status: "ready",
-        message: "已加载 Song",
         identity: { contentHash: "a".repeat(64), format: "gp" },
         summary: { title: "Song", trackCount: 1, masterBarCount: 1 },
       }),
@@ -530,7 +528,6 @@ describe("renderViewerState", () => {
 
     renderViewerState(status, summary, {
       status: "ready",
-      message: "已加载 Song",
       summary: {
         title: "<img src=x onerror=alert(1)>",
         artist: "Artist",
@@ -540,7 +537,7 @@ describe("renderViewerState", () => {
       },
     });
 
-    expect(status.textContent).toBe("已加载 Song");
+    expect(status.textContent).toBe("已加载 <img src=x onerror=alert(1)>");
     expect(summary.textContent).toBe("<img src=x onerror=alert(1)>");
     expect(summary.querySelector("img")).toBeNull();
   });
@@ -551,7 +548,7 @@ describe("renderViewerState", () => {
     const summary = document.querySelector("#summary") as HTMLElement;
     summary.textContent = "old summary";
 
-    renderViewerState(status, summary, { status: "error", message: "请选择 Guitar Pro 文件" });
+    renderViewerState(status, summary, { status: "error", issueCode: "gp-file-required" });
 
     expect(status.textContent).toBe("请选择 Guitar Pro 文件");
     expect(summary.textContent).toBe("未打开乐谱");

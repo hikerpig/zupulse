@@ -1,4 +1,5 @@
 import type { OpenFileResponse } from "@zupulse/web-core";
+import { createAppI18n, type SupportedLocale } from "@zupulse/app-i18n";
 import { dialog } from "electron";
 import { readFile, stat, writeFile } from "node:fs/promises";
 import { basename } from "node:path";
@@ -24,29 +25,36 @@ type FileDependencies = {
   stat(path: string): Promise<{ size: number; isFile(): boolean }>;
 };
 
-const defaultDependencies: FileDependencies = {
-  showOpenDialog: () =>
-    dialog.showOpenDialog({
-      properties: ["openFile"],
-      filters: [
-        { name: "乐谱", extensions: ["gp3", "gp4", "gp5", "gpx", "gp", "musicxml", "mxl"] },
-        { name: "Guitar Pro", extensions: ["gp3", "gp4", "gp5", "gpx", "gp"] },
-        { name: "MusicXML", extensions: ["musicxml", "mxl"] },
-        { name: "所有文件", extensions: ["*"] },
-      ],
-    }),
-  stat,
-};
+function defaultDependencies(locale: SupportedLocale): FileDependencies {
+  const t = createAppI18n(locale).getFixedT(locale, "desktop");
+  return {
+    showOpenDialog: () =>
+      dialog.showOpenDialog({
+        title: t("dialog.openTitle"),
+        buttonLabel: t("dialog.openButton"),
+        properties: ["openFile"],
+        filters: [
+          { name: t("dialog.scoreFiles"), extensions: ["gp3", "gp4", "gp5", "gpx", "gp", "musicxml", "mxl"] },
+          { name: "Guitar Pro", extensions: ["gp3", "gp4", "gp5", "gpx", "gp"] },
+          { name: "MusicXML", extensions: ["musicxml", "mxl"] },
+          { name: t("dialog.allFiles"), extensions: ["*"] },
+        ],
+      }),
+    stat,
+  };
+}
 
 export async function openScoreFile(
   tokens: FileTokenStore,
-  dependencies: FileDependencies = defaultDependencies,
+  dependencies?: FileDependencies,
+  locale: SupportedLocale = "en-US",
 ): Promise<OpenFileResponse> {
-  const selection = await dependencies.showOpenDialog();
+  const resolvedDependencies = dependencies ?? defaultDependencies(locale);
+  const selection = await resolvedDependencies.showOpenDialog();
   const path = selection.filePaths[0];
   if (selection.canceled || !path) return { status: "cancelled" };
 
-  const info = await dependencies.stat(path);
+  const info = await resolvedDependencies.stat(path);
   const fileName = basename(path);
   assertReadableScore({ fileName, sizeBytes: info.size, isFile: info.isFile() });
   return {
@@ -60,12 +68,16 @@ export async function openScoreFile(
 export async function selectScoreFiles(
   tokens: FileTokenStore,
   multiple: boolean,
+  locale: SupportedLocale = "en-US",
 ): Promise<
   { status: "cancelled" } | { status: "selected"; files: { fileToken: string; fileName: string; sizeBytes: number }[] }
 > {
+  const t = createAppI18n(locale).getFixedT(locale, "desktop");
   const selection = await dialog.showOpenDialog({
+    title: t("dialog.openTitle"),
+    buttonLabel: t("dialog.openButton"),
     properties: multiple ? ["openFile", "multiSelections"] : ["openFile"],
-    filters: [{ name: "乐谱", extensions: ["gp3", "gp4", "gp5", "gpx", "gp", "musicxml", "mxl"] }],
+    filters: [{ name: t("dialog.scoreFiles"), extensions: ["gp3", "gp4", "gp5", "gpx", "gp", "musicxml", "mxl"] }],
   });
   if (selection.canceled || selection.filePaths.length === 0) return { status: "cancelled" };
   const files = await Promise.all(
@@ -90,11 +102,19 @@ export async function readScoreFileBytes(
   return { fileName: entry.fileName, bytes };
 }
 
-export async function saveScoreFile(file: {
-  fileName: string;
-  bytes: Uint8Array;
-}): Promise<{ status: "saved" | "cancelled" }> {
-  const selection = await dialog.showSaveDialog({ defaultPath: file.fileName });
+export async function saveScoreFile(
+  file: {
+    fileName: string;
+    bytes: Uint8Array;
+  },
+  locale: SupportedLocale = "en-US",
+): Promise<{ status: "saved" | "cancelled" }> {
+  const t = createAppI18n(locale).getFixedT(locale, "desktop");
+  const selection = await dialog.showSaveDialog({
+    title: t("dialog.saveTitle"),
+    buttonLabel: t("dialog.saveButton"),
+    defaultPath: file.fileName,
+  });
   if (selection.canceled || !selection.filePath) return { status: "cancelled" };
   await writeFile(selection.filePath, file.bytes, { mode: 0o600 });
   return { status: "saved" };

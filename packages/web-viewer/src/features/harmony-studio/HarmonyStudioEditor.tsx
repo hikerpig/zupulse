@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import type { HarmonyCandidate } from "@zupulse/web-core";
 import { formatChordSymbol } from "@zupulse/web-core";
 import styles from "../../app/pages/StudioPage.module.css";
@@ -36,6 +37,7 @@ export function HarmonyStudioEditor({
   onApply,
   onNoChord,
 }: HarmonyStudioEditorProps) {
+  const { t } = useTranslation("studio");
   const [root, setRoot] = useState<(typeof steps)[number]>("C");
   const [kind, setKind] = useState<(typeof kinds)[number]>("major");
   const [extension, setExtension] = useState("none");
@@ -62,16 +64,16 @@ export function HarmonyStudioEditor({
     <section className={styles.harmonyEditor} aria-labelledby="harmony-editor-title">
       <div className={styles.editorHeading}>
         <div>
-          <p className={styles.sectionKicker}>Chord inspector</p>
-          <h2 id="harmony-editor-title">和弦候选</h2>
-          <p>候选按置信度排序，也可以手动构建。</p>
+          <p className={styles.sectionKicker}>{t("editor.kicker")}</p>
+          <h2 id="harmony-editor-title">{t("editor.title")}</h2>
+          <p>{t("editor.subtitle")}</p>
         </div>
         <div className={styles.editorButtons}>
           <button ref={builderButtonRef} type="button" onClick={() => setBuilderOpen(true)}>
-            手动构建
+            {t("editor.build")}
           </button>
           <button type="button" onClick={onNoChord}>
-            标记为 N.C.
+            {t("editor.noChord")}
           </button>
         </div>
       </div>
@@ -81,10 +83,15 @@ export function HarmonyStudioEditor({
         </p>
       ) : null}
       {candidates.length > 0 ? (
-        <div className={styles.candidateList} role="list" aria-label="结构化和弦候选">
+        <div className={styles.candidateList} role="list" aria-label={t("editor.candidateList")}>
           {candidates.map((candidate, index) => {
             const priority = index === 0 ? "preferred" : candidate.confidence === 0 ? "low" : "standard";
-            const priorityLabel = priority === "preferred" ? "首选" : priority === "low" ? "低置信度" : "候选";
+            const priorityLabel =
+              priority === "preferred"
+                ? t("editor.preferred")
+                : priority === "low"
+                  ? t("editor.lowConfidence")
+                  : t("editor.candidate");
             return (
               <button
                 key={`${candidate.chord.root.step}-${candidate.chord.kind}-${index}`}
@@ -100,16 +107,20 @@ export function HarmonyStudioEditor({
           })}
         </div>
       ) : (
-        <p className={styles.candidateEmpty}>当前片段没有高置信度候选，可手动构建。</p>
+        <p className={styles.candidateEmpty}>{t("editor.empty")}</p>
       )}
       <ContextPopup anchor={builderButtonRef.current} open={builderOpen} onOpenChange={setBuilderOpen}>
         <div>
-          <p className={styles.sectionKicker}>CHORD BUILDER</p>
-          <h3>手动构建和弦</h3>
+          <p className={styles.sectionKicker}>{t("editor.builderKicker")}</p>
+          <h3>{t("editor.builderTitle")}</h3>
           <div className={styles.chordFields}>
             <label className={styles.field}>
-              根音
-              <select aria-label="根音" value={root} onChange={(event) => setRoot(event.target.value as typeof root)}>
+              {t("editor.root")}
+              <select
+                aria-label={t("editor.root")}
+                value={root}
+                onChange={(event) => setRoot(event.target.value as typeof root)}
+              >
                 {steps.map((step) => (
                   <option key={step} value={step}>
                     {step}
@@ -118,9 +129,9 @@ export function HarmonyStudioEditor({
               </select>
             </label>
             <label className={styles.field}>
-              和弦类型
+              {t("editor.kind")}
               <select
-                aria-label="和弦类型"
+                aria-label={t("editor.kind")}
                 value={kind}
                 onChange={(event) => setKind(event.target.value as typeof kind)}
               >
@@ -132,9 +143,13 @@ export function HarmonyStudioEditor({
               </select>
             </label>
             <label className={styles.field}>
-              扩展音
-              <select aria-label="扩展音" value={extension} onChange={(event) => setExtension(event.target.value)}>
-                <option value="none">无</option>
+              {t("editor.extension")}
+              <select
+                aria-label={t("editor.extension")}
+                value={extension}
+                onChange={(event) => setExtension(event.target.value)}
+              >
+                <option value="none">{t("editor.none")}</option>
                 {[6, 7, 9, 11, 13].map((value) => (
                   <option key={value} value={value}>
                     {value}
@@ -143,9 +158,9 @@ export function HarmonyStudioEditor({
               </select>
             </label>
             <label className={styles.field}>
-              低音
-              <select aria-label="低音" value={bass} onChange={(event) => setBass(event.target.value)}>
-                <option value="none">无</option>
+              {t("editor.bass")}
+              <select aria-label={t("editor.bass")} value={bass} onChange={(event) => setBass(event.target.value)}>
+                <option value="none">{t("editor.none")}</option>
                 {steps.map((step) => (
                   <option key={step} value={step}>
                     {step}
@@ -155,12 +170,12 @@ export function HarmonyStudioEditor({
             </label>
           </div>
           <fieldset className={styles.degreeEditor}>
-            <legend>度数</legend>
+            <legend>{t("editor.degrees")}</legend>
             <div className={styles.degreeControls}>
               <label className={styles.field}>
-                操作
+                {t("editor.operation")}
                 <select
-                  aria-label="度数操作"
+                  aria-label={t("editor.degreeOperation")}
                   value={degreeOperation}
                   onChange={(event) => {
                     const operation = event.target.value as typeof degreeOperation;
@@ -176,9 +191,9 @@ export function HarmonyStudioEditor({
                 </select>
               </label>
               <label className={styles.field}>
-                度数
+                {t("editor.degree")}
                 <select
-                  aria-label="度数"
+                  aria-label={t("editor.degree")}
                   value={degreeValue}
                   onChange={(event) => setDegreeValue(Number(event.target.value) as typeof degreeValue)}
                 >
@@ -192,9 +207,9 @@ export function HarmonyStudioEditor({
                 </select>
               </label>
               <label className={styles.field}>
-                变化
+                {t("editor.alteration")}
                 <select
-                  aria-label="度数变化"
+                  aria-label={t("editor.degreeAlteration")}
                   value={degreeAlter}
                   onChange={(event) => setDegreeAlter(Number(event.target.value) as typeof degreeAlter)}
                 >
@@ -214,10 +229,10 @@ export function HarmonyStudioEditor({
                   ])
                 }
               >
-                添加度数
+                {t("editor.addDegree")}
               </button>
             </div>
-            <ul className={styles.degreeList} aria-label="已选度数">
+            <ul className={styles.degreeList} aria-label={t("editor.selectedDegrees")}>
               {degrees.map((degree) => (
                 <li key={degree.value}>
                   {degree.operation} {degree.alter} {degree.value}
@@ -225,7 +240,7 @@ export function HarmonyStudioEditor({
                     type="button"
                     onClick={() => setDegrees((current) => current.filter((item) => item !== degree))}
                   >
-                    移除度数 {degree.value}
+                    {t("editor.removeDegree", { degree: degree.value })}
                   </button>
                 </li>
               ))}
@@ -245,7 +260,7 @@ export function HarmonyStudioEditor({
               setBuilderOpen(false);
             }}
           >
-            应用结构化和弦
+            {t("editor.apply")}
           </button>
         </div>
       </ContextPopup>

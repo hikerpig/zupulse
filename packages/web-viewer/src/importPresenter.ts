@@ -13,13 +13,13 @@ import type { DemoFileLike, DemoState } from "./gpDemoPresenter";
 export async function presentScoreFile(input: { file: DemoFileLike; api: AlphaTabApiLike }): Promise<DemoState> {
   const bytes = new Uint8Array(await input.file.arrayBuffer());
   const probe = await probeScoreFormat(input.file.name, bytes);
-  if (probe.status !== "confirmed") return { status: "error", message: probe.diagnostic.summary };
+  if (probe.status !== "confirmed") return { status: "error", issueCode: probe.diagnostic.code };
   if (input.api.settings?.importer) {
     input.api.settings.importer.encoding = probe.format === "gp" ? detectGpEncoding(bytes) : "utf-8";
     (input.api.settings.importer as { mergePartGroupsInMusicXml?: boolean }).mergePartGroupsInMusicXml = false;
     input.api.updateSettings?.();
   }
-  if (!loadAlphaTabBytes(input.api, bytes)) return { status: "error", message: "alphaTab 无法加载该文件" };
+  if (!loadAlphaTabBytes(input.api, bytes)) return { status: "error", issueCode: "alpha-tab-load-failed" };
   const score = loadGpScore(bytes) as AlphaTabScoreLike;
   const summary = summarizeGpScore(score);
   const identity = await createScoreIdentity({
@@ -30,5 +30,5 @@ export async function presentScoreFile(input: { file: DemoFileLike; api: AlphaTa
     trackNames: (score.tracks ?? []).map((track) => track.name ?? "").filter(Boolean),
     ...(summary.artist ? { artist: summary.artist } : {}),
   });
-  return { status: "ready", message: `已加载 ${summary.title}`, identity, summary, bytes, score };
+  return { status: "ready", identity, summary, bytes, score };
 }

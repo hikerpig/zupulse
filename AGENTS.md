@@ -1,63 +1,46 @@
 # Zupulse（逐拍）agent context
 
-## 事实源与冲突处理
+## 事实源
 
-实现决策按以下顺序取信，后者与前者冲突时必须显式指出，不得静默猜测：
+按以下顺序取信：运行时代码、Zod schema 与数据库约束 > 可重复的测试/构建/E2E >
+Current ADR 与架构文档 > 当前规格。冲突必须指出；历史文档和过程计划仅作证据。
 
-1. 运行时代码、Zod schema 与数据库约束。
-2. 自动化测试和可重复的构建/E2E 结果。
-3. `docs/adr/README.md` 标记为 Current 的 ADR 与 `docs/architecture/README.md`。
-4. 当前任务规格与验收标准。
-5. Historical / Superseded 文档、已完成计划和讨论稿，仅作历史证据。
+导航从 `docs/architecture/README.md` 开始；术语见 `CONTEXT.md` 和
+`docs/architecture/glossary.md`；UI 契约见 `DESIGN.md`。
 
-项目导航从 `docs/architecture/README.md` 开始；产品术语以 `CONTEXT.md` 和
-`docs/architecture/glossary.md` 为准。涉及 UI、主题、布局或交互设计时，以根
-`DESIGN.md` 作为当前设计契约入口。
+## 修改前按范围继续读取
 
-## 项目结构
+- 领域、schema、导入、播放：`packages/web-core/AGENTS.md`
+- React 路由、状态、UI：`packages/web-viewer/AGENTS.md`
+- Browser/IndexedDB：`apps/web-demo/AGENTS.md`
+- Electron/Bridge/SQLite：`apps/desktop-shell/AGENTS.md`
+- Electron Main/托管文件：`apps/desktop-shell/src/main/AGENTS.md`
+- 架构或 UI 决策：相关 Current ADR、架构文档或 `DESIGN.md`
 
-- `packages/web-core`：领域类型、Zod 边界、导入用例、Bridge 契约与播放逻辑；不得依赖 React、Browser 或 Electron。
-- `packages/web-viewer`：共享 React 路由与 UI；只通过端口访问持久化和文件选择能力。
-- `apps/web-demo`：Browser 适配器，使用 IndexedDB；不得泄漏文件路径。
-- `apps/desktop-shell`：Electron Main、Preload、Renderer、SQLite 和托管文件；Renderer 只能通过受 Zod 校验的 Bridge 访问本地能力。
+## 不可破坏的边界
 
-## 全局领域边界
+- `web-core` 不依赖 React、Browser 或 Electron；`web-viewer` 只通过端口访问宿主能力。
+- Browser 与 Desktop 馆藏独立。Renderer 不得获得绝对路径；外部文件使用一次性 token，并由 Main 复验。
+- Library Score ID 是 UUID，去重键是小写 SHA-256；Viewer/Studio URL 只使用 `libraryScoreId`。
+- `SheetLibraryRepository` 管馆藏事实，`ScoreFileGateway` 管文件选择/导出。
+- 删除须同时清理托管字节、馆藏、练习数据和 Harmony Analysis Document，不得重建孤儿数据。
 
-- Library Score ID 是 UUID；馆藏去重键是小写 SHA-256 内容哈希。
-- `SheetLibraryRepository` 管理馆藏事实；`ScoreFileGateway` 只管理选择/导出文件。
-- Viewer URL 使用 `#/viewer/:libraryScoreId`，Studio URL 使用 `#/studio/:libraryScoreId`；两者都不得把临时 Session ID 放进 URL。
-- 删除必须同时清理托管字节、馆藏记录、练习数据与 Harmony Analysis Document；不得在删除后重建孤儿 sidecar/resume/analysis。
-- Browser 与 Desktop 曲谱库相互独立；当前范围不包含云同步、OPFS、分页或额外状态库。
-- Desktop Renderer 不得获得绝对路径；外部文件使用一次性 token，并由 Main 再次校验输入。
+## 实现规则
 
-## 代码约定
+- 遵循 `docs/conventions/file-naming.md`；使用 named export、Prettier 双引号和
+  `__tests__/*.test.ts(x)`；禁止 workspace 深导入。
+- `exactOptionalPropertyTypes` 下省略不存在的可选字段，不显式传 `undefined`。
+- 跨进程和持久化输入必须经 Zod 校验；新增 Bridge API 同步添加 request、response、
+  capability 和测试。
+- 用户可见系统文案统一进入 `@zupulse/app-i18n`；`web-core` 只返回语义 code/context，
+  不返回译文或翻译 key，原始异常不得进入 DOM。
+- Locale 由宿主持久化：Browser 使用本地存储，Desktop 由 Main + Bridge 管理；切换时先持久化，
+  再同步 Renderer、菜单和原生对话框。用户内容、曲谱元数据与和弦符号不翻译。
+- 添加依赖前先检查平台和现有依赖；优先最小实现。失败时定位根因，只改相关文件。
+- 一次性计划和任务记录完成后删除；稳定约束沉淀到 Current 架构、ADR 或本文件。
 
-- 文件和目录命名遵循 `docs/conventions/file-naming.md`。
-- TypeScript 开启 `exactOptionalPropertyTypes`：可选字段不存在时省略属性，禁止显式赋值 `undefined`。
-- 所有跨进程与持久化输入使用现有 Zod schema；新增 Bridge API 同时添加 request、response、capability 和测试。
-- 使用 named export、Prettier 双引号和 `__tests__/*.test.ts(x)`；仅 `__tests__` 与 `e2e` 可引用测试框架。
-- 跨 workspace 包只能使用包公开入口，不得通过 `@zupulse/*/src/...` 深导入。
-- 不添加依赖前先检查标准库、平台能力和已安装包；优先最小实现。
-- 错误或测试失败时先定位根因，只加载相关失败输出，不批量改写无关文件。
+## 验证
 
-## 上下文路由
-
-| 修改范围                 | 继续读取                                         |
-| ------------------------ | ------------------------------------------------ |
-| 领域、schema、导入、播放 | `packages/web-core/AGENTS.md`                    |
-| React 路由、状态和 UI    | `packages/web-viewer/AGENTS.md`                  |
-| IndexedDB、Browser host  | `apps/web-demo/AGENTS.md`                        |
-| Electron、Bridge、SQLite | `apps/desktop-shell/AGENTS.md`                   |
-| Electron Main 或托管文件 | `apps/desktop-shell/src/main/AGENTS.md`          |
-| 架构决策                 | `docs/architecture/README.md` 与相关 Current ADR |
-| UI、主题、布局和交互设计 | `DESIGN.md` 与 `packages/web-viewer/AGENTS.md`   |
-
-## 验证阶梯
-
-- 快速门禁：`pnpm verify:fast`
-- 全量类型、单测与构建：`pnpm verify`
-- Browser 与 Desktop E2E：`pnpm verify:e2e`
-- 单独排错：`pnpm check:context`、`pnpm check:arch`、`pnpm check:design`、`pnpm check`
-- 格式：`pnpm format:check`；历史格式债务只报告未触及文件，不批量重写。
-
-每次实现以最小相关测试开始，完成前执行与风险相称的上层门禁，并在交付时报告实际运行结果。
+先运行最小相关测试，再按风险升级：`pnpm verify:fast`、`pnpm verify`、涉及 Browser/Desktop
+流程时运行 `pnpm verify:e2e`。i18n 改动必须通过 `pnpm check:i18n`。提交前运行
+`pnpm format:check` 和 `git diff --check`，并报告实际结果。

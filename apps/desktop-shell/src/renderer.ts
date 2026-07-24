@@ -1,3 +1,4 @@
+import { createAppI18n, resolveLocale, type LocaleState } from "@zupulse/app-i18n";
 import {
   BridgePlaybackPersistence,
   bridgeEventSchema,
@@ -51,6 +52,7 @@ async function start(): Promise<void> {
   if (!root) throw new Error("VIEWER_ROOT_MISSING");
   appHandle = mountViewerApp(root, {
     host,
+    localeHost: createDesktopLocaleHost(bridge, response.locale),
     openSession: createDefaultOpenSession(document, persistence),
     library: {
       repository: new DesktopLibraryRepository(bridge),
@@ -58,6 +60,16 @@ async function start(): Promise<void> {
       adapters: [createGpFormatAdapter(), createMusicXmlAdapter()],
     },
   });
+}
+
+function createDesktopLocaleHost(bridge: NonNullable<Window["zupulseBridge"]>, initialState: LocaleState) {
+  return {
+    initialState,
+    async setPreference(preference: "system" | "zh-CN" | "en-US") {
+      const request = createBridgeRequest("app.locale.setPreference", crypto.randomUUID(), { preference });
+      return parseBridgeResponse(request.type, await bridge.request(request));
+    },
+  };
 }
 
 class DesktopLibraryRepository implements SheetLibraryRepository, HarmonyAnalysisRepository {
@@ -154,9 +166,7 @@ function createElectronHost(
         return { fileName: file.fileName, bytes: file.bytes };
       } catch (error) {
         const status = document.querySelector<HTMLElement>("#status");
-        if (status) {
-          status.textContent = error instanceof Error ? `无法打开文件：${error.message}` : "无法打开文件";
-        }
+        if (status) status.textContent = desktopErrorMessage("openFailed");
         throw error;
       }
     },
@@ -165,29 +175,33 @@ function createElectronHost(
         const event = bridgeEventSchema.parse(value);
         if (event.type === "app.command") listener({ type: event.payload.command });
         if (event.type === "app.lifecycle") {
-          void acknowledgeLifecycle(event.payload.state).catch((error) => {
+          void acknowledgeLifecycle(event.payload.state).catch(() => {
             const status = document.querySelector<HTMLElement>("#status");
-            if (status)
-              status.textContent = error instanceof Error ? `生命周期保存失败：${error.message}` : "生命周期保存失败";
+            if (status) status.textContent = desktopErrorMessage("lifecycleFailed");
           });
         }
         if (event.type === "storage.warning" && !storageWarningShown) {
           storageWarningShown = true;
           const status = document.querySelector<HTMLElement>("#status");
-          if (status) status.textContent = "本地练习数据损坏，已隔离并使用默认设置";
+          if (status) status.textContent = desktopErrorMessage("storageCorrupt");
         }
       });
     },
   };
 }
 
-function renderStartupError(error: unknown): void {
+function renderStartupError(_error: unknown): void {
   document.body.replaceChildren();
   const message = document.createElement("p");
   message.id = "startup-error";
   message.setAttribute("role", "alert");
-  message.textContent = error instanceof Error ? error.message : "桌面应用启动失败";
+  message.textContent = desktopErrorMessage("startupFailed");
   document.body.append(message);
+}
+
+function desktopErrorMessage(key: "openFailed" | "lifecycleFailed" | "storageCorrupt" | "startupFailed"): string {
+  const locale = resolveLocale("system", [document.documentElement.lang]);
+  return createAppI18n(locale).t(`errors:desktop.${key}`);
 }
 
 void start().catch(renderStartupError);

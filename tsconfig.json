@@ -1,6 +1,8 @@
 {
   "files": [],
   "references": [
+    { "path": "./packages/app-i18n" },
+    { "path": "./packages/app-i18n/tsconfig.test.json" },
     { "path": "./packages/web-core" },
     { "path": "./packages/web-core/tsconfig.test.json" },
     { "path": "./packages/web-viewer" },

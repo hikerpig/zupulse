@@ -3,8 +3,10 @@ import type { PlaybackCommand } from "@zupulse/web-core";
 import { Popover } from "@base-ui/react/popover";
 import { Pause, Play, Repeat2, Square } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import type { ViewerSessionHandle } from "../host";
-import { presentPlayback } from "../playbackPresenter";
+import { presentPlayback, type PlaybackViewModel } from "../playbackPresenter";
 import { Slider } from "../components/Slider";
 import styles from "./PlaybackWorkspace.module.css";
 
@@ -19,6 +21,7 @@ export function PlaybackWorkspace({
 }
 
 function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle["playback"]; children: ReactNode }) {
+  const { t } = useTranslation("viewer");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const state = useSyncExternalStore(
     (listener) => playback?.subscribe(() => listener()) ?? (() => undefined),
@@ -43,10 +46,12 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
     window.addEventListener("keydown", togglePlayback);
     return () => window.removeEventListener("keydown", togglePlayback);
   }, [playback, state?.soundFont]);
-  if (!playback || !state) return disabledPlaybackWorkspace(children, drawerOpen, setDrawerOpen);
+  if (!playback || !state) return disabledPlaybackWorkspace(children, drawerOpen, setDrawerOpen, t);
   const view = presentPlayback(state);
   const dispatch = (command: PlaybackCommand) => void playback.dispatch(command);
   const hasActiveLoop = view.loops.some((loop) => loop.selected);
+  const playLabel = view.isPlaying ? t("playback.pause") : t("playback.play");
+  const activeLoop = view.loops.find((loop) => loop.selected);
   const position = (ratio: number) =>
     musicalPositionFromTick(
       Math.round(playback.timeline.durationTicks * ratio),
@@ -56,23 +61,23 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
 
   return (
     <>
-      <section className={styles.transportBar} aria-label="播放控制">
+      <section className={styles.transportBar} aria-label={t("playback.controls")}>
         <div className={styles.transportActions}>
           <button
             className={`primary-button ${styles.transportPlayButton}`}
             type="button"
-            aria-label={view.playLabel}
-            title={`${view.playLabel}（Space）`}
+            aria-label={playLabel}
+            title={t("playback.shortcutTitle", { action: playLabel })}
             disabled={view.playDisabled}
             onClick={() => dispatch({ type: "toggle-playback" })}
           >
-            {view.playLabel === "暂停" ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
+            {view.isPlaying ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
           </button>
           <button
             className={styles.transportIconButton}
             type="button"
-            aria-label="停止"
-            title="停止并返回起点"
+            aria-label={t("playback.stop")}
+            title={t("playback.stopTitle")}
             disabled={view.stopDisabled}
             onClick={() => dispatch({ type: "stop" })}
           >
@@ -81,8 +86,20 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
           <button
             className={styles.transportIconButton}
             type="button"
-            aria-label={hasActiveLoop ? (view.looping ? "关闭循环" : "启用循环") : "设置循环区间"}
-            title={hasActiveLoop ? (view.looping ? "关闭循环" : "启用循环") : "设置循环区间"}
+            aria-label={
+              hasActiveLoop
+                ? view.looping
+                  ? t("playback.disableLoop")
+                  : t("playback.enableLoop")
+                : t("playback.setLoop")
+            }
+            title={
+              hasActiveLoop
+                ? view.looping
+                  ? t("playback.disableLoop")
+                  : t("playback.enableLoop")
+                : t("playback.setLoop")
+            }
             aria-pressed={view.looping}
             onClick={() =>
               hasActiveLoop ? dispatch({ type: "set-loop-enabled", enabled: !view.looping }) : setDrawerOpen(true)
@@ -97,7 +114,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
         <div className={styles.transportDivider} aria-hidden="true" />
         <div className={styles.transportProgress}>
           <Slider
-            label="播放进度"
+            label={t("playback.progress")}
             variant="progress"
             max={1000}
             value={Math.round(view.progress * 1000)}
@@ -112,11 +129,13 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
             onCommit={(tempo) => dispatch({ type: "set-score-speed", speed: tempo / view.baseTempo })}
           />
           {state.soundFont !== "ready" && (
-            <p className={`${styles.statusChip} ${styles[view.audioStatusTone]}`}>{view.audioStatusLabel}</p>
+            <p className={`${styles.statusChip} ${styles[view.audioStatusTone]}`}>
+              {audioStatusLabel(view.soundFont, t)}
+            </p>
           )}
-          {view.soundFontRetryVisible && (
+          {view.soundFont === "error" && (
             <button type="button" onClick={() => dispatch({ type: "retry-soundfont" })}>
-              重试音频
+              {t("playback.retryAudio")}
             </button>
           )}
           <DrawerToggle open={drawerOpen} onClick={() => setDrawerOpen((open) => !open)} />
@@ -125,17 +144,23 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
       <section className={styles.workspace}>
         {children}
         {drawerOpen && (
-          <aside id="practice-drawer" className={styles.practicePanel} aria-label="练习设置">
+          <aside id="practice-drawer" className={styles.practicePanel} aria-label={t("playback.practice")}>
             <div className={styles.drawerHeader}>
               <div>
-                <p className={styles.drawerKicker}>Practice</p>
-                <h2 className={styles.drawerTitle}>练习设置</h2>
-                <p className={styles.drawerSummary}>{view.sessionSummary}</p>
+                <p className={styles.drawerKicker}>{t("playback.practiceKicker")}</p>
+                <h2 className={styles.drawerTitle}>{t("playback.practice")}</h2>
+                <p className={styles.drawerSummary}>
+                  {t("playback.summary", {
+                    track: view.primaryTrackName ?? t("playback.noSelection"),
+                    count: view.trackCount,
+                    speed: view.speedPercent,
+                  })}
+                </p>
               </div>
               <button
                 className={styles.drawerClose}
                 type="button"
-                aria-label="关闭练习设置"
+                aria-label={t("playback.closePractice")}
                 onClick={() => setDrawerOpen(false)}
               >
                 ×
@@ -144,14 +169,14 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
             <div className={styles.panelShell}>
               <section className={styles.panelSection}>
                 <div className={styles.panelHeader}>
-                  <p className={styles.panelTitle}>Loop</p>
+                  <p className={styles.panelTitle}>{t("playback.loop")}</p>
                   <label className={styles.toggleRow}>
                     <input
                       type="checkbox"
                       checked={view.looping}
                       onChange={(event) => dispatch({ type: "set-loop-enabled", enabled: event.currentTarget.checked })}
                     />
-                    <span>启用循环</span>
+                    <span>{t("playback.enableLoop")}</span>
                   </label>
                 </div>
                 <div className={styles.panelContent}>
@@ -166,7 +191,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                         })
                       }
                     >
-                      设为 A
+                      {t("playback.setA")}
                     </button>
                     <button
                       type="button"
@@ -178,14 +203,14 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                         })
                       }
                     >
-                      设为 B
+                      {t("playback.setB")}
                     </button>
                     <button type="button" onClick={() => dispatch({ type: "save-loop" })}>
-                      保存区间
+                      {t("playback.saveLoop")}
                     </button>
                   </div>
                   <label>
-                    <span>边界吸附</span>
+                    <span>{t("playback.snap")}</span>
                     <select
                       value={view.loopSnapMode}
                       onChange={(event) =>
@@ -195,15 +220,15 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                         })
                       }
                     >
-                      <option value="off">关闭</option>
-                      <option value="beat">按拍</option>
-                      <option value="measure">按小节</option>
+                      <option value="off">{t("playback.snapOff")}</option>
+                      <option value="beat">{t("playback.snapBeat")}</option>
+                      <option value="measure">{t("playback.snapMeasure")}</option>
                     </select>
                   </label>
                   <label>
-                    <span>A 点</span>
+                    <span>{t("playback.pointA")}</span>
                     <Slider
-                      label="循环 A 点"
+                      label={t("playback.loopPointA")}
                       max={1000}
                       value={loopValue(state.loopDraft.start?.tick, playback.timeline.durationTicks)}
                       onValueChange={(value) =>
@@ -216,9 +241,9 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                     />
                   </label>
                   <label>
-                    <span>B 点</span>
+                    <span>{t("playback.pointB")}</span>
                     <Slider
-                      label="循环 B 点"
+                      label={t("playback.loopPointB")}
                       max={1000}
                       value={loopValue(state.loopDraft.end?.tick, playback.timeline.durationTicks)}
                       onValueChange={(value) =>
@@ -234,11 +259,11 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                     {view.loops.map((loop) => (
                       <div className={styles.loopRow} key={loop.id}>
                         <button type="button" onClick={() => dispatch({ type: "select-loop", loopId: loop.id })}>
-                          {loop.selected ? "当前" : "选择"}
+                          {loop.selected ? t("playback.current") : t("playback.select")}
                         </button>
                         <input
-                          aria-label="循环名称"
-                          value={loop.label}
+                          aria-label={t("playback.loopName")}
+                          value={loopDisplayLabel(loop, t)}
                           onChange={(event) =>
                             dispatch({
                               type: "rename-loop",
@@ -247,19 +272,24 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                             })
                           }
                         />
-                        <span>{loop.rangeLabel}</span>
+                        <span>
+                          {t("playback.measureRange", {
+                            start: loop.startMeasureIndex + 1,
+                            end: loop.endMeasureIndex + 1,
+                          })}
+                        </span>
                         <input
                           type="number"
                           min="25"
                           max="200"
                           step="5"
                           value={loop.speedPercent ?? ""}
-                          placeholder="默认"
-                          aria-label="循环速度百分比"
+                          placeholder={t("playback.defaultSpeed")}
+                          aria-label={t("playback.loopSpeed")}
                           onChange={(event) => dispatch(loopSpeedCommand(loop.id, event.currentTarget.value))}
                         />
                         <button type="button" onClick={() => dispatch({ type: "delete-loop", loopId: loop.id })}>
-                          删除
+                          {t("playback.delete")}
                         </button>
                       </div>
                     ))}
@@ -268,21 +298,21 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
               </section>
               <section className={styles.panelSection}>
                 <div className={styles.panelHeader}>
-                  <p className={styles.panelTitle}>Tracks</p>
+                  <p className={styles.panelTitle}>{t("playback.tracks")}</p>
                 </div>
                 <div className={`${styles.panelContent} ${styles.itemList}`}>
                   {view.tracks.map((track) => (
                     <div className={styles.trackRow} key={track.id}>
-                      <strong>{track.name}</strong>
+                      <strong>{trackDisplayName(track, t)}</strong>
                       <Check
-                        label="主"
+                        label={t("playback.primary")}
                         type="radio"
                         name="primary-track"
                         checked={track.primary}
                         onChange={() => dispatch({ type: "set-primary-track", trackId: track.id })}
                       />
                       <Check
-                        label="显示"
+                        label={t("playback.visible")}
                         checked={track.additional}
                         onChange={(checked) =>
                           dispatch({
@@ -294,12 +324,12 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                         }
                       />
                       <Check
-                        label="静音"
+                        label={t("playback.mute")}
                         checked={track.muted}
                         onChange={(muted) => dispatch({ type: "set-track-mute", trackId: track.id, muted })}
                       />
                       <Check
-                        label="独奏"
+                        label={t("playback.solo")}
                         checked={track.solo}
                         onChange={(solo) => dispatch({ type: "set-track-solo", trackId: track.id, solo })}
                       />
@@ -308,7 +338,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
                         min="0"
                         max="100"
                         value={track.volumePercent}
-                        aria-label={`${track.name} 音量`}
+                        aria-label={t("playback.volume", { track: trackDisplayName(track, t) })}
                         onChange={(event) =>
                           dispatch({
                             type: "set-track-volume",
@@ -323,10 +353,21 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
               </section>
               <section className={styles.panelSection}>
                 <div className={styles.panelHeader}>
-                  <p className={styles.panelTitle}>Session</p>
+                  <p className={styles.panelTitle}>{t("playback.session")}</p>
                 </div>
                 <div className="panel-content session-facts">
-                  {view.sessionFacts.map((fact) => (
+                  {[
+                    { label: t("playback.factTracks"), value: String(view.trackCount) },
+                    { label: t("playback.factTempo"), value: `${view.speedPercent}%` },
+                    {
+                      label: t("playback.factLoop"),
+                      value: activeLoop ? loopDisplayLabel(activeLoop, t) : t("playback.loopDisabled"),
+                    },
+                    {
+                      label: t("playback.factPrimary"),
+                      value: view.primaryTrackName ?? t("playback.noSelection"),
+                    },
+                  ].map((fact) => (
                     <div className={styles.sessionFact} key={fact.label}>
                       <span className={styles.sessionFactLabel}>{fact.label}</span>
                       <strong className={styles.sessionFactValue}>{fact.value}</strong>
@@ -336,7 +377,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
               </section>
             </div>
             <p className={styles.persistenceStatus} aria-live="polite">
-              {view.persistenceMessage}
+              {persistenceMessage(view.persistence, t)}
             </p>
           </aside>
         )}
@@ -377,16 +418,21 @@ function Check({
   );
 }
 
-function disabledPlaybackWorkspace(children: ReactNode, drawerOpen: boolean, setDrawerOpen: (open: boolean) => void) {
+function disabledPlaybackWorkspace(
+  children: ReactNode,
+  drawerOpen: boolean,
+  setDrawerOpen: (open: boolean) => void,
+  t: TFunction<"viewer">,
+) {
   return (
     <>
-      <section className={styles.transportBar} aria-label="播放控制">
+      <section className={styles.transportBar} aria-label={t("playback.controls")}>
         <div className={styles.transportActions}>
           <button
             className="primary-button transport-play-button"
             type="button"
-            aria-label="播放"
-            title="播放（Space）"
+            aria-label={t("playback.play")}
+            title={t("playback.shortcutTitle", { action: t("playback.play") })}
             disabled
           >
             <Play aria-hidden="true" />
@@ -394,47 +440,47 @@ function disabledPlaybackWorkspace(children: ReactNode, drawerOpen: boolean, set
           <button
             className={styles.transportIconButton}
             type="button"
-            aria-label="停止"
-            title="停止并返回起点"
+            aria-label={t("playback.stop")}
+            title={t("playback.stopTitle")}
             disabled
           >
             <Square aria-hidden="true" />
           </button>
-          <button className={styles.transportIconButton} type="button" aria-label="设置循环区间" disabled>
+          <button className={styles.transportIconButton} type="button" aria-label={t("playback.setLoop")} disabled>
             <Repeat2 aria-hidden="true" />
           </button>
           <span className={styles.timeReadout}>0:00 / 0:00</span>
         </div>
         <div className={styles.transportDivider} aria-hidden="true" />
         <div className={styles.transportProgress}>
-          <Slider label="播放进度" variant="progress" max={1000} value={0} disabled />
+          <Slider label={t("playback.progress")} variant="progress" max={1000} value={0} disabled />
         </div>
         <div className={styles.transportTools}>
           <BpmControl baseTempo={120} currentTempo={120} speedPercent={100} disabled />
-          <p className="status-chip subtle">音频准备中</p>
+          <p className="status-chip subtle">{t("playback.audio.loading")}</p>
           <DrawerToggle open={drawerOpen} onClick={() => setDrawerOpen(!drawerOpen)} />
         </div>
       </section>
       <section className={styles.workspace}>
         {children}
         {drawerOpen && (
-          <aside id="practice-drawer" className={styles.practicePanel} aria-label="练习设置">
+          <aside id="practice-drawer" className={styles.practicePanel} aria-label={t("playback.practice")}>
             <div className={styles.drawerHeader}>
               <div>
-                <p className={styles.drawerKicker}>Practice</p>
-                <h2 className={styles.drawerTitle}>练习设置</h2>
+                <p className={styles.drawerKicker}>{t("playback.practiceKicker")}</p>
+                <h2 className={styles.drawerTitle}>{t("playback.practice")}</h2>
               </div>
               <button
                 className={styles.drawerClose}
                 type="button"
-                aria-label="关闭练习设置"
+                aria-label={t("playback.closePractice")}
                 onClick={() => setDrawerOpen(false)}
               >
                 ×
               </button>
             </div>
             <div className={styles.panelShell}>
-              {["Loop", "Tracks", "Session"].map((title) => (
+              {[t("playback.loop"), t("playback.tracks"), t("playback.session")].map((title) => (
                 <section className={styles.panelSection} key={title}>
                   <div className={styles.panelHeader}>
                     <p className={styles.panelTitle}>{title}</p>
@@ -442,7 +488,7 @@ function disabledPlaybackWorkspace(children: ReactNode, drawerOpen: boolean, set
                 </section>
               ))}
             </div>
-            <p className={styles.persistenceStatus}>打开乐谱后可调整循环和轨道</p>
+            <p className={styles.persistenceStatus}>{t("playback.disabledHint")}</p>
           </aside>
         )}
       </section>
@@ -463,12 +509,13 @@ function BpmControl({
   disabled?: boolean;
   onCommit?(tempo: number): void;
 }) {
+  const { t } = useTranslation("viewer");
   const presets = [1, 0.75, 0.5, 0.25];
   return (
     <Popover.Root>
       <Popover.Trigger
         className={styles.speedTrigger}
-        aria-label={`速度 ${currentTempo} BPM，${speedPercent}%`}
+        aria-label={t("playback.speedLabel", { tempo: currentTempo, percent: speedPercent })}
         disabled={disabled}
       >
         <strong>{currentTempo}</strong>
@@ -477,13 +524,13 @@ function BpmControl({
       <Popover.Portal>
         <Popover.Positioner side="top" align="center" sideOffset={10} className={styles.speedPopoverPositioner}>
           <Popover.Popup className={styles.speedPopover} data-shortcuts-disabled>
-            <Popover.Title className="sr-only">播放速度</Popover.Title>
+            <Popover.Title className="sr-only">{t("playback.speedTitle")}</Popover.Title>
             <label className={styles.speedInput}>
-              <span className="sr-only">速度 BPM</span>
+              <span className="sr-only">{t("playback.speedBpm")}</span>
               <input
                 key={currentTempo}
                 type="number"
-                aria-label="速度 BPM"
+                aria-label={t("playback.speedBpm")}
                 min={Math.round(baseTempo * 0.25)}
                 max={Math.round(baseTempo * 2)}
                 step="1"
@@ -526,6 +573,7 @@ function BpmControl({
 }
 
 function DrawerToggle({ open, onClick }: { open: boolean; onClick(): void }) {
+  const { t } = useTranslation("viewer");
   return (
     <button
       className={styles.drawerToggle}
@@ -534,7 +582,7 @@ function DrawerToggle({ open, onClick }: { open: boolean; onClick(): void }) {
       aria-expanded={open}
       onClick={onClick}
     >
-      {open ? "收起设置" : "练习设置"}
+      {open ? t("playback.collapsePractice") : t("playback.practice")}
     </button>
   );
 }
@@ -548,4 +596,29 @@ function loopSpeedCommand(loopId: string, value: string): PlaybackCommand {
 function loopValue(tick: number | undefined, durationTicks: number): number {
   if (tick === undefined || durationTicks <= 0) return 0;
   return Math.round(Math.min(1, Math.max(0, tick / durationTicks)) * 1000);
+}
+
+function loopDisplayLabel(loop: PlaybackViewModel["loops"][number], t: TFunction<"viewer">): string {
+  return loop.labelSource === "user" && loop.label
+    ? loop.label
+    : t("playback.measureRange", {
+        start: loop.startMeasureIndex + 1,
+        end: loop.endMeasureIndex + 1,
+      });
+}
+
+function trackDisplayName(track: PlaybackViewModel["tracks"][number], t: TFunction<"viewer">): string {
+  return track.name ?? t("playback.trackFallback", { number: track.sourceIndex + 1 });
+}
+
+function persistenceMessage(state: PlaybackViewModel["persistence"], t: TFunction<"viewer">): string {
+  if (state === "saving") return t("playback.persistenceSaving");
+  if (state === "unsaved" || state === "error") return t("playback.persistenceUnsaved");
+  return "";
+}
+
+function audioStatusLabel(soundFont: PlaybackViewModel["soundFont"], t: TFunction<"viewer">): string {
+  if (soundFont === "ready") return t("playback.audio.ready");
+  if (soundFont === "error") return t("playback.audio.error");
+  return t("playback.audio.loading");
 }

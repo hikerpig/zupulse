@@ -25,6 +25,11 @@ export type HarmonyRangeMeasure = {
   timeSignature: { numerator: number; denominator: number };
 };
 
+export type HarmonyRangeFormatter = {
+  moment(measure: number, beat: string): string;
+  withinMeasure(measure: number, startBeat: string, endBeat: string): string;
+};
+
 export function createHarmonyRangeViewItems(
   effective: readonly EffectiveHarmonyEntry[],
   revision: readonly HarmonySegment[],
@@ -54,11 +59,19 @@ export function filterHarmonyRangeViewItems(
   );
 }
 
-export function formatHarmonyRange(range: ScoreWrittenRange, measures: readonly HarmonyRangeMeasure[]): string {
-  const start = formatMoment(range.start, measures);
-  const end = formatMoment(range.end, measures);
+export function formatHarmonyRange(
+  range: ScoreWrittenRange,
+  measures: readonly HarmonyRangeMeasure[],
+  formatter: HarmonyRangeFormatter,
+): string {
+  const start = formatMoment(range.start, measures, formatter);
+  const end = formatMoment(range.end, measures, formatter);
   if (range.start.measureIndex !== range.end.measureIndex) return `${start} → ${end}`;
-  return `第 ${range.start.measureIndex + 1} 小节 · 第 ${formatBeat(range.start, measures)}–${formatBeat(range.end, measures)} 拍`;
+  return formatter.withinMeasure(
+    range.start.measureIndex + 1,
+    formatBeat(range.start, measures),
+    formatBeat(range.end, measures),
+  );
 }
 
 export function selectContainingHarmonyRange(
@@ -88,8 +101,12 @@ function contains(range: ScoreWrittenRange, moment: ScoreWrittenMoment): boolean
   return compareMoments(range.start, moment) <= 0 && compareMoments(moment, range.end) < 0;
 }
 
-function formatMoment(moment: ScoreWrittenMoment, measures: readonly HarmonyRangeMeasure[]): string {
-  return `第 ${moment.measureIndex + 1} 小节 · 第 ${formatBeat(moment, measures)} 拍`;
+function formatMoment(
+  moment: ScoreWrittenMoment,
+  measures: readonly HarmonyRangeMeasure[],
+  formatter: HarmonyRangeFormatter,
+): string {
+  return formatter.moment(moment.measureIndex + 1, formatBeat(moment, measures));
 }
 
 function formatBeat(moment: ScoreWrittenMoment, measures: readonly HarmonyRangeMeasure[]): string {

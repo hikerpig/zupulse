@@ -21,7 +21,9 @@ describe("MockNativeBridge", () => {
       storage: { sqliteIndex: false, sidecarPayload: true },
       sync: { available: false, provider: "none" },
       audio: { webAudio: true, nativeBridge: false },
+      localization: { changeLocale: true },
     });
+    expect(response.locale).toEqual({ preference: "system", effectiveLocale: "en-US" });
   });
 
   it("consumes an explicitly queued file selection", async () => {

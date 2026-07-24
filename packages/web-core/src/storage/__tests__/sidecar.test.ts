@@ -74,5 +74,6 @@ describe("sidecar codec", () => {
       end: { measureId: "legacy", tick: 960 },
       snapMode: "off",
     });
+    expect(decoded.practice.playback.loops[0]).not.toHaveProperty("label");
   });
 });

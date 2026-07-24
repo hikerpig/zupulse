@@ -7,6 +7,7 @@ import {
   type BridgeRequestType,
   type Capabilities,
 } from "@zupulse/web-core";
+import type { LocaleState } from "@zupulse/app-i18n";
 
 type RequestFor<T extends BridgeRequestType> = Extract<BridgeRequest, { type: T }>;
 
@@ -17,6 +18,7 @@ export type BridgeHandlers = Partial<{
 export type BridgeDispatcherOptions = {
   appVersion: string;
   rendererBuildHash: string;
+  locale: LocaleState;
   capabilities?: Capabilities;
   handlers?: BridgeHandlers;
 };
@@ -43,6 +45,7 @@ const DEFAULT_CAPABILITIES = capabilitiesSchema.parse({
   harmonyAnalysis: true,
   sync: { available: false, provider: "none" },
   audio: { webAudio: true, nativeBridge: false },
+  localization: { changeLocale: true },
 });
 
 export async function dispatchBridgeRequest(
@@ -74,6 +77,7 @@ export async function dispatchBridgeRequest(
       bridgeVersion: BRIDGE_SCHEMA_VERSION,
       rendererBuildHash: options.rendererBuildHash,
       capabilities: options.capabilities ?? DEFAULT_CAPABILITIES,
+      locale: options.locale,
     });
   }
 

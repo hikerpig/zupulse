@@ -12,11 +12,9 @@ export const musicalPositionSchema = z
   })
   .strict();
 
-export const loopRegionSchema = z
+const loopRegionBaseSchema = z
   .object({
     id: z.string(),
-    label: z.string(),
-    labelSource: z.enum(["generated", "user"]),
     start: musicalPositionSchema,
     end: musicalPositionSchema,
     snapMode: z.enum(["off", "beat", "measure"]),
@@ -25,7 +23,19 @@ export const loopRegionSchema = z
     updatedAt: timestampSchema,
     deletedAt: timestampSchema.optional(),
   })
-  .strict()
+  .strict();
+
+export const loopRegionSchema = z
+  .discriminatedUnion("labelSource", [
+    loopRegionBaseSchema.extend({
+      labelSource: z.literal("generated"),
+      label: z.string().optional(),
+    }),
+    loopRegionBaseSchema.extend({
+      labelSource: z.literal("user"),
+      label: z.string().trim().min(1),
+    }),
+  ])
   .refine((value) => value.start.tick < value.end.tick, {
     message: "Loop start must precede end",
   });

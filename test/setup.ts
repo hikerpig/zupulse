@@ -1,3 +1,20 @@
+import i18next from "i18next";
+import { initReactI18next } from "react-i18next";
+import { namespaces, resources, supportedLocales } from "../packages/app-i18n/src";
+
+void i18next.use(initReactI18next).init({
+  resources,
+  lng: "zh-CN",
+  fallbackLng: "en-US",
+  supportedLngs: supportedLocales,
+  load: "currentOnly",
+  ns: namespaces,
+  defaultNS: "common",
+  initAsync: false,
+  returnNull: false,
+  interpolation: { escapeValue: false },
+});
+
 const NativeRequest = globalThis.Request;
 
 if (NativeRequest) {

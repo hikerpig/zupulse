@@ -64,7 +64,7 @@ describe("musical positions", () => {
 });
 
 describe("createLoopRegion", () => {
-  it("rejects reversed boundaries and generates a one-based label", () => {
+  it("rejects reversed boundaries and keeps generated loops locale-neutral", () => {
     const start = {
       measureId: "measure-0",
       measureIndex: 0,
@@ -83,7 +83,7 @@ describe("createLoopRegion", () => {
     expect(() => createLoopRegion({ id: "bad", start: end, end: start, now: "2026-07-10T00:00:00Z" })).toThrow(
       "Loop start must be before loop end",
     );
-    expect(createLoopRegion({ id: "loop-1", start, end, now: "2026-07-10T00:00:00Z" }).label).toBe("小节 1–2");
+    expect(createLoopRegion({ id: "loop-1", start, end, now: "2026-07-10T00:00:00Z" })).not.toHaveProperty("label");
   });
 
   it("uses a loop speed override before the score speed", () => {

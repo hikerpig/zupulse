@@ -272,12 +272,21 @@ export const harmonyStructuredOracleResultSchema = z
         complete: z.boolean(),
       })
       .strict(),
+    durationHistogram: z.array(
+      z
+        .object({
+          quarterNotes: twoDecimalScoreSchema.nonnegative(),
+          count: z.number().int().positive(),
+        })
+        .strict(),
+    ),
     failures: z
       .object({
         missingBoundarySegments: z.number().int().nonnegative(),
         excessiveSpanSegments: z.number().int().nonnegative(),
         candidateMissSegments: z.number().int().nonnegative(),
         maxObservedSpan: z.number().int().nonnegative(),
+        maxObservedQuarterNotes: z.number().nonnegative(),
         samples: z
           .array(
             z
@@ -285,6 +294,7 @@ export const harmonyStructuredOracleResultSchema = z
                 range: scoreWrittenRangeSchema,
                 reason: z.enum(["missing-boundary", "excessive-span", "candidate-miss"]),
                 span: z.number().int().nonnegative().optional(),
+                durationQuarterNotes: z.number().nonnegative(),
                 chord: chordSymbolSchema,
               })
               .strict(),
@@ -308,17 +318,28 @@ export type HarmonyStructuredOracleResult = z.infer<typeof harmonyStructuredOrac
 
 export const harmonyStructuredOracleReportSchema = z
   .object({
-    schemaVersion: z.literal("1.0.0"),
+    schemaVersion: z.literal("1.1.0"),
     command: z.literal("structured-oracle"),
     split: z.enum(["train", "tune"]),
     groupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
-    searchContract: z
-      .object({
-        boundaryPolicy: z.literal("dense-note-events"),
-        maxSpan: z.number().int().positive(),
-        topK: z.number().int().min(1).max(8),
-      })
-      .strict(),
+    searchContract: z.discriminatedUnion("spanMode", [
+      z
+        .object({
+          boundaryPolicy: z.literal("dense-note-events"),
+          spanMode: z.literal("boundary-count"),
+          maxSpan: z.number().int().positive(),
+          topK: z.number().int().min(1).max(8),
+        })
+        .strict(),
+      z
+        .object({
+          boundaryPolicy: z.literal("dense-note-events"),
+          spanMode: z.literal("quarter-notes"),
+          maxQuarterNotes: z.number().positive(),
+          topK: z.number().int().min(1).max(8),
+        })
+        .strict(),
+    ]),
     sources: z.array(
       z
         .object({
@@ -338,6 +359,10 @@ export const harmonyStructuredOracleReportSchema = z
         spanRatio: z.number().min(0).max(1),
         candidateRecall: z.number().min(0).max(1),
         pathRatio: z.number().min(0).max(1),
+        durationP95: z.number().nonnegative(),
+        durationP99: z.number().nonnegative(),
+        durationP995: z.number().nonnegative(),
+        durationMax: z.number().nonnegative(),
         legalBoundaries: z.number().int().nonnegative(),
         ranges: z.number().int().nonnegative(),
         candidates: z.number().int().nonnegative(),

@@ -92,20 +92,32 @@ export async function runHarmonyCommand(
     const outputIndex = normalized.indexOf("--output");
     const splitIndex = normalized.indexOf("--split");
     const maxSpanIndex = normalized.indexOf("--max-span");
+    const maxQuarterNotesIndex = normalized.indexOf("--max-quarter-notes");
     const topKIndex = normalized.indexOf("--top-k");
     const protocol = protocolIndex < 0 ? undefined : normalized[protocolIndex + 1];
     const dataRoot = dataRootIndex < 0 ? undefined : normalized[dataRootIndex + 1];
     const caseId = caseIndex < 0 ? undefined : normalized[caseIndex + 1];
     const output = outputIndex < 0 ? undefined : normalized[outputIndex + 1];
     const split = splitIndex < 0 ? "train" : normalized[splitIndex + 1];
-    const maxSpan = maxSpanIndex < 0 ? 16 : Number(normalized[maxSpanIndex + 1]);
+    const maxSpan =
+      maxSpanIndex < 0 && maxQuarterNotesIndex >= 0
+        ? undefined
+        : maxSpanIndex < 0
+          ? 16
+          : Number(normalized[maxSpanIndex + 1]);
+    const maxQuarterNotes = maxQuarterNotesIndex < 0 ? undefined : Number(normalized[maxQuarterNotesIndex + 1]);
     const topK = topKIndex < 0 ? 8 : Number(normalized[topKIndex + 1]);
     if (!manifest || !protocol || !dataRoot || !caseId || !output)
       throw new Error(
-        "usage: harmony:cli structured-oracle <manifest.json> --protocol <protocol.json> --data-root <directory> --case <id> --output <report.json> [--split train|tune] [--max-span <n>] [--top-k <1..8>]",
+        "usage: harmony:cli structured-oracle <manifest.json> --protocol <protocol.json> --data-root <directory> --case <id> --output <report.json> [--split train|tune] [--max-span <n>|--max-quarter-notes <n>] [--top-k <1..8>]",
       );
     if (split !== "train" && split !== "tune") throw new Error("structured oracle --split must be train or tune");
-    if (!Number.isInteger(maxSpan) || maxSpan < 1) throw new Error("--max-span must be a positive integer");
+    if (maxSpanIndex >= 0 && maxQuarterNotesIndex >= 0)
+      throw new Error("--max-span and --max-quarter-notes are mutually exclusive");
+    if (maxSpan !== undefined && (!Number.isInteger(maxSpan) || maxSpan < 1))
+      throw new Error("--max-span must be a positive integer");
+    if (maxQuarterNotes !== undefined && (!Number.isFinite(maxQuarterNotes) || maxQuarterNotes <= 0))
+      throw new Error("--max-quarter-notes must be positive");
     if (!Number.isInteger(topK) || topK < 1 || topK > 8) throw new Error("--top-k must be an integer from 1 to 8");
     return exportHarmonyStructuredOracleFile({
       manifestPath: resolve(cwd, manifest),
@@ -114,7 +126,8 @@ export async function runHarmonyCommand(
       caseId,
       outputPath: resolve(cwd, output),
       split,
-      maxSpan,
+      ...(maxSpan === undefined ? {} : { maxSpan }),
+      ...(maxQuarterNotes === undefined ? {} : { maxQuarterNotes }),
       topK,
     });
   }

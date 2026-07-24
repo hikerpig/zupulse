@@ -19,6 +19,7 @@ export async function exportHarmonyStructuredOracle(options: {
   caseId: string;
   split?: "train" | "tune";
   maxSpan?: number;
+  maxQuarterNotes?: number;
   topK?: number;
 }): Promise<HarmonyStructuredOracleReport> {
   const manifest = harmonyDatasetManifestSchema.parse(JSON.parse(await readFile(options.manifestPath, "utf8")));
@@ -43,7 +44,9 @@ export async function exportHarmonyStructuredOracle(options: {
   assertV3CorpusGroups(policy, allGroups);
   const split = options.split ?? "train";
   const selectedGroups = allGroups.filter((groupId) => assignV3DatasetRole(groupId, policy) === split);
-  const maxSpan = options.maxSpan ?? 16;
+  if (options.maxSpan !== undefined && options.maxQuarterNotes !== undefined)
+    throw new Error("structured oracle accepts only one span limit");
+  const maxSpan = options.maxSpan ?? (options.maxQuarterNotes === undefined ? 16 : undefined);
   const topK = options.topK ?? 8;
   const pieces = [];
   for (const pieceId of pieceIds) {
@@ -66,18 +69,27 @@ export async function exportHarmonyStructuredOracle(options: {
           input: piece.input,
           includedTrackIds: ["dcml"],
           gold: piece.gold,
-          maxSpan,
+          ...(maxSpan === undefined ? {} : { maxSpan }),
+          ...(options.maxQuarterNotes === undefined ? {} : { maxQuarterNotes: options.maxQuarterNotes }),
           topK,
         }),
       ),
     );
   }
   return harmonyStructuredOracleReportSchema.parse({
-    schemaVersion: "1.0.0",
+    schemaVersion: "1.1.0",
     command: "structured-oracle",
     split,
     groupsSha256: hashDatasetGroups(selectedGroups.map((groupId) => `${item.id}:${groupId}`)),
-    searchContract: { boundaryPolicy: "dense-note-events", maxSpan, topK },
+    searchContract:
+      options.maxQuarterNotes === undefined
+        ? { boundaryPolicy: "dense-note-events", spanMode: "boundary-count", maxSpan: maxSpan!, topK }
+        : {
+            boundaryPolicy: "dense-note-events",
+            spanMode: "quarter-notes",
+            maxQuarterNotes: options.maxQuarterNotes,
+            topK,
+          },
     sources: [{ caseId: item.id, revision: item.source.revision, groupsSha256: policy.groupsSha256 }],
     aggregate: aggregate(pieces),
     pieces,
@@ -99,6 +111,10 @@ export async function exportHarmonyStructuredOracleFile(
 }
 
 function aggregate(pieces: HarmonyStructuredOracleReport["pieces"]): HarmonyStructuredOracleReport["aggregate"] {
+  const durationHistogram = new Map<number, number>();
+  for (const piece of pieces)
+    for (const item of piece.durationHistogram)
+      durationHistogram.set(item.quarterNotes, (durationHistogram.get(item.quarterNotes) ?? 0) + item.count);
   const sum = pieces.reduce(
     (total, piece) => ({
       mappedSegments: total.mappedSegments + piece.mappedSegments,
@@ -142,12 +158,28 @@ function aggregate(pieces: HarmonyStructuredOracleReport["pieces"]): HarmonyStru
     spanRatio: ratio(sum.spanRepresentable, sum.spanRequired),
     candidateRecall: ratio(sum.oracleHits, sum.candidateEvaluable),
     pathRatio: ratio(sum.pathRepresentable, sum.mappedSegments),
+    durationP95: percentile(durationHistogram, 0.95),
+    durationP99: percentile(durationHistogram, 0.99),
+    durationP995: percentile(durationHistogram, 0.995),
+    durationMax: Math.max(0, ...durationHistogram.keys()),
     legalBoundaries: sum.legalBoundaries,
     ranges: sum.ranges,
     candidates: sum.candidates,
     candidateCountMode: "top-k-upper-bound",
     estimatedBytes: sum.estimatedBytes,
   };
+}
+
+function percentile(histogram: ReadonlyMap<number, number>, quantile: number): number {
+  const total = [...histogram.values()].reduce((sum, count) => sum + count, 0);
+  if (total === 0) return 0;
+  const target = Math.ceil(total * quantile);
+  let seen = 0;
+  for (const [value, count] of [...histogram.entries()].sort(([a], [b]) => a - b)) {
+    seen += count;
+    if (seen >= target) return value;
+  }
+  return Math.max(...histogram.keys());
 }
 
 function ratio(numerator: number, denominator: number): number {

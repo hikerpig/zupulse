@@ -238,6 +238,119 @@ export const harmonyBoundaryRecordsReportSchema = z
 
 export type HarmonyBoundaryRecordsReport = z.infer<typeof harmonyBoundaryRecordsReportSchema>;
 
+export const harmonyStructuredOracleResultSchema = z
+  .object({
+    corpus: z.string().min(1),
+    groupId: z.string().min(1),
+    mappedSegments: z.number().int().nonnegative(),
+    unsupportedSegments: z.number().int().nonnegative(),
+    boundaries: z
+      .object({
+        required: z.number().int().nonnegative(),
+        representable: z.number().int().nonnegative(),
+        ratio: z.number().min(0).max(1),
+      })
+      .strict(),
+    spans: z
+      .object({
+        required: z.number().int().nonnegative(),
+        representable: z.number().int().nonnegative(),
+        ratio: z.number().min(0).max(1),
+      })
+      .strict(),
+    candidates: z
+      .object({
+        evaluable: z.number().int().nonnegative(),
+        oracleHits: z.number().int().nonnegative(),
+        recall: z.number().min(0).max(1),
+      })
+      .strict(),
+    path: z
+      .object({
+        representableSegments: z.number().int().nonnegative(),
+        ratio: z.number().min(0).max(1),
+        complete: z.boolean(),
+      })
+      .strict(),
+    failures: z
+      .object({
+        missingBoundarySegments: z.number().int().nonnegative(),
+        excessiveSpanSegments: z.number().int().nonnegative(),
+        candidateMissSegments: z.number().int().nonnegative(),
+        maxObservedSpan: z.number().int().nonnegative(),
+        samples: z
+          .array(
+            z
+              .object({
+                range: scoreWrittenRangeSchema,
+                reason: z.enum(["missing-boundary", "excessive-span", "candidate-miss"]),
+                span: z.number().int().nonnegative().optional(),
+                chord: chordSymbolSchema,
+              })
+              .strict(),
+          )
+          .max(20),
+      })
+      .strict(),
+    search: z
+      .object({
+        legalBoundaries: z.number().int().nonnegative(),
+        ranges: z.number().int().nonnegative(),
+        candidates: z.number().int().nonnegative(),
+        candidateCountMode: z.literal("top-k-upper-bound"),
+        estimatedBytes: z.number().int().nonnegative(),
+      })
+      .strict(),
+  })
+  .strict();
+
+export type HarmonyStructuredOracleResult = z.infer<typeof harmonyStructuredOracleResultSchema>;
+
+export const harmonyStructuredOracleReportSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    command: z.literal("structured-oracle"),
+    split: z.enum(["train", "tune"]),
+    groupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    searchContract: z
+      .object({
+        boundaryPolicy: z.literal("dense-note-events"),
+        maxSpan: z.number().int().positive(),
+        topK: z.number().int().min(1).max(8),
+      })
+      .strict(),
+    sources: z.array(
+      z
+        .object({
+          caseId: z.string().min(1),
+          revision: z.string().min(1),
+          groupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
+        })
+        .strict(),
+    ),
+    aggregate: z
+      .object({
+        pieces: z.number().int().nonnegative(),
+        mappedSegments: z.number().int().nonnegative(),
+        unsupportedSegments: z.number().int().nonnegative(),
+        completePaths: z.number().int().nonnegative(),
+        boundaryRatio: z.number().min(0).max(1),
+        spanRatio: z.number().min(0).max(1),
+        candidateRecall: z.number().min(0).max(1),
+        pathRatio: z.number().min(0).max(1),
+        legalBoundaries: z.number().int().nonnegative(),
+        ranges: z.number().int().nonnegative(),
+        candidates: z.number().int().nonnegative(),
+        candidateCountMode: z.literal("top-k-upper-bound"),
+        estimatedBytes: z.number().int().nonnegative(),
+      })
+      .strict(),
+    pieces: z.array(harmonyStructuredOracleResultSchema),
+  })
+  .strict();
+
+export type HarmonyStructuredOracleReport = z.infer<typeof harmonyStructuredOracleReportSchema>;
+
 const fractionSchema = z.number().min(0).max(1);
 const accuracySliceSchema = z
   .object({

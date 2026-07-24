@@ -7,6 +7,7 @@ import { evaluateHarmonyManifest } from "./evaluateManifest";
 import { evaluateHarmonyV3FinalHoldoutFile } from "./evaluateV3FinalHoldout";
 import { exportHarmonyRankingRecordsFile } from "./exportRankingRecords";
 import { exportHarmonyBoundaryRecordsFile } from "./exportBoundaryRecords";
+import { exportHarmonyStructuredOracleFile } from "./exportStructuredOracle";
 import { inspectHarmonyScore, type InspectView } from "./inspectScore";
 import type { DatasetSplit } from "./evaluationProtocol";
 import {
@@ -28,6 +29,7 @@ export async function runHarmonyCommand(
   | HarmonyCalibrationAsset
   | Awaited<ReturnType<typeof exportHarmonyRankingRecordsFile>>
   | Awaited<ReturnType<typeof exportHarmonyBoundaryRecordsFile>>
+  | Awaited<ReturnType<typeof exportHarmonyStructuredOracleFile>>
   | Awaited<ReturnType<typeof evaluateHarmonyV3FinalHoldoutFile>>
 > {
   const normalized = args[0] === "--" ? args.slice(1) : args;
@@ -80,6 +82,40 @@ export async function runHarmonyCommand(
       outputPath: resolve(cwd, output),
       ...(maxTrainGroups === undefined ? {} : { maxTrainGroups }),
       split,
+    });
+  }
+  if (normalized[0] === "structured-oracle") {
+    const manifest = normalized[1];
+    const protocolIndex = normalized.indexOf("--protocol");
+    const dataRootIndex = normalized.indexOf("--data-root");
+    const caseIndex = normalized.indexOf("--case");
+    const outputIndex = normalized.indexOf("--output");
+    const splitIndex = normalized.indexOf("--split");
+    const maxSpanIndex = normalized.indexOf("--max-span");
+    const topKIndex = normalized.indexOf("--top-k");
+    const protocol = protocolIndex < 0 ? undefined : normalized[protocolIndex + 1];
+    const dataRoot = dataRootIndex < 0 ? undefined : normalized[dataRootIndex + 1];
+    const caseId = caseIndex < 0 ? undefined : normalized[caseIndex + 1];
+    const output = outputIndex < 0 ? undefined : normalized[outputIndex + 1];
+    const split = splitIndex < 0 ? "train" : normalized[splitIndex + 1];
+    const maxSpan = maxSpanIndex < 0 ? 16 : Number(normalized[maxSpanIndex + 1]);
+    const topK = topKIndex < 0 ? 8 : Number(normalized[topKIndex + 1]);
+    if (!manifest || !protocol || !dataRoot || !caseId || !output)
+      throw new Error(
+        "usage: harmony:cli structured-oracle <manifest.json> --protocol <protocol.json> --data-root <directory> --case <id> --output <report.json> [--split train|tune] [--max-span <n>] [--top-k <1..8>]",
+      );
+    if (split !== "train" && split !== "tune") throw new Error("structured oracle --split must be train or tune");
+    if (!Number.isInteger(maxSpan) || maxSpan < 1) throw new Error("--max-span must be a positive integer");
+    if (!Number.isInteger(topK) || topK < 1 || topK > 8) throw new Error("--top-k must be an integer from 1 to 8");
+    return exportHarmonyStructuredOracleFile({
+      manifestPath: resolve(cwd, manifest),
+      protocolPath: resolve(cwd, protocol),
+      dataRoot: resolve(cwd, dataRoot),
+      caseId,
+      outputPath: resolve(cwd, output),
+      split,
+      maxSpan,
+      topK,
     });
   }
   if (normalized[0] === "boundary-records") {

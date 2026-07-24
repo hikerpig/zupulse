@@ -835,6 +835,9 @@ drift、生产 Web 资源与 hash、Release 泄漏，再执行 48 项 Swift 和 
 
 ## Task 27: 在 M5 真机完成风险门禁
 
+**Status:** Deferred for personal prototype (2026-07-24) — 初步功能与资源 origin 已在真机确认；用户明确
+延后性能、长稳和完整设备人工验收。正式产品化前必须恢复本任务，不能将延期视为通过。
+
 **Description:** Personal Team 可用后，在 11 英寸 iPad Pro M5/iPadOS 26.5.2 验证资源 origin、音频、
 触控、生命周期、内存和性能。此任务只归档证据；失败时回到对应实现任务，不改 ADR 状态。
 
@@ -861,8 +864,8 @@ drift、生产 Web 资源与 hash、Release 泄漏，再执行 48 项 Swift 和 
 
 **Prepared 2026-07-24:** Simulator/contract/Release 自动化、`pnpm verify` 与 Browser/Desktop
 `pnpm verify:e2e` 已实跑通过；真机验收表已包含 origin、音频、触控、生命周期、两轮 20 份曲谱
-内存采样、20/50 次性能样本与诊断/网络边界证据字段。当前仍为 `not-run-on-device`，Personal Team
-可用前不勾选真机条件，也不接受 ADR 0054–0059。
+内存采样、20/50 次性能样本与诊断/网络边界证据字段。2026-07-24 已补入 Personal Team、M5 资源
+origin 与初步功能证据；性能和长稳由用户按个人原型范围延期，ADR 0054–0059 可在该范围内接受。
 
 ## Task 28: 接受 Shell、Bridge 与数据面 ADR
 
@@ -880,7 +883,7 @@ drift、生产 Web 资源与 hash、Release 泄漏，再执行 48 项 Swift 和 
 - [ ] `pnpm check:arch`
 - [ ] `pnpm format:check`
 
-**Dependencies:** Task 27 passed
+**Dependencies:** Task 27 的架构相关证据已取得；性能/长稳延期已由个人原型范围明确接受
 
 **Files likely touched:**
 

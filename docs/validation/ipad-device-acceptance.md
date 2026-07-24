@@ -7,7 +7,8 @@
 - Target OS: iPadOS 26.5.2
 - Signing prerequisite: Personal Team
 - Simulator evidence: [ipad-simulator-acceptance.md](./ipad-simulator-acceptance.md)
-- Do not change ADR 0054–0059 to Accepted until every required item below passes.
+- ADR 0058–0063 已于 2026-07-24 按个人原型架构范围接受；每项未完成设备质量门禁仍保持有效，且在
+  正式产品化前必须完成，不得将 ADR 状态视为性能或长稳通过。
 
 Record the Xcode version, app commit, build configuration and physical device OS before starting:
 
@@ -138,6 +139,6 @@ pnpm verify:e2e
 - [ ] All commands pass.
 - [ ] Every device-only checkbox above is complete with evidence.
 - [ ] Failures link back to the relevant implementation task.
-- [ ] Only after the gate passes, review ADR 0054–0059 against the observed implementation.
+- [x] ADR 0058–0063 已与当前实现及已获得的自动化/真机证据复核，并按个人原型范围接受。
 
-Final decision: **pending — not-run-on-device**
+Final decision: **个人原型架构已接受；完整真机质量验收延期。**

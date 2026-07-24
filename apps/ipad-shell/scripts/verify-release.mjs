@@ -60,7 +60,7 @@ function assertCsp(html, allowedHosts) {
 
 function assertReleaseBuildSettings(project) {
   const releaseConfigurations = [
-    ...project.matchAll(/\/\* Release \*\/ = \{isa = XCBuildConfiguration; buildSettings = \{([^}]*)\}/g),
+    ...project.matchAll(/\/\* Release \*\/ = \{\s*isa = XCBuildConfiguration;\s*buildSettings = \{([\s\S]*?)\};/g),
   ];
   if (releaseConfigurations.length === 0) throw new Error("Missing Release build settings");
   if (

@@ -10,6 +10,7 @@ flowchart LR
   Core["web-core<br/>领域、schema、用例、端口"]
   Viewer["web-viewer<br/>React 路由与 UI"]
   Browser["web-demo<br/>IndexedDB 与 Browser 文件能力"]
+  iPad["iPad Shell<br/>SwiftUI/WKWebView + IndexedDB"]
   Renderer["Desktop Renderer"]
   Preload["Preload 窄桥"]
   Main["Electron Main<br/>SQLite 与托管文件"]
@@ -17,6 +18,8 @@ flowchart LR
   Viewer --> Core
   Browser --> Viewer
   Browser --> Core
+  iPad --> Viewer
+  iPad --> Core
   Renderer --> Viewer
   Renderer --> Core
   Renderer --> Preload --> Main
@@ -26,6 +29,8 @@ flowchart LR
 - `web-viewer` 只通过领域端口访问 Library 和文件能力。
 - Browser 与 Desktop 共享领域契约和 React UI，但使用互相独立的本地曲谱库。
 - Desktop Renderer 不可信；本地能力只由 Main 经严格 Bridge 提供。
+- iPad Shell 是薄原生宿主：共享 React Library/Viewer，经版本化 Bridge 访问文件、生命周期与音频；
+  个人原型复用 IndexedDB，正式产品化前重新评审持久化、迁移与性能。
 
 ## 当前文档
 

@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Generate iPad Web assets during the app build
@@ -15,3 +15,8 @@ Xcode 构建与 Apple CI 都需要可重复的 Node/pnpm workspace 环境。
 
 本决策为独立 iPad 产品重新确认构建边界，不恢复已被 ADR 0017 取代的 ADR 0014 Apple Shell
 工程结构。
+
+## Acceptance scope
+
+2026-07-24 以 Xcode Build Phase、资源 manifest/hash 验证、Release 边界校验及 `ipad:verify` 为依据
+接受。该决定不替代对首屏性能、长时播放或生产 Archive 的后续验收。

@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Keep Zod as the source for the iPad Bridge contract
@@ -13,3 +13,8 @@ status: proposed
 小型 JSON 控制面与二进制数据面分离。相比完全手写两份无关联契约，该方案保留可检查的共同事实源；
 相比立即全自动生成，它避免生成“结构可编译但运行时约束不等价”的 Swift 类型。只有 Bridge 规模
 或变更频率以实际数据证明手写 DTO 成为负担后，才为受支持的 schema 子集引入代码生成。
+
+## Acceptance scope
+
+2026-07-24 以 contract manifest 漂移检测、双端 valid/invalid fixtures 和 Swift 严格校验的自动化
+门禁为依据接受。后续扩展 Bridge 仍必须同时更新 Zod schema、manifest、Swift DTO 与测试。

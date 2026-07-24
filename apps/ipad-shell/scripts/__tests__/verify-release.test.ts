@@ -8,6 +8,13 @@ const safeHtml = `<!doctype html>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none'; script-src 'self'; connect-src 'self' https://api.example.com">`;
 const safePlist = `<key>ZupulseAllowedHTTPSHosts</key><array><string>api.example.com</string></array>`;
 const safeProject = `/* Release */ = {isa = XCBuildConfiguration; buildSettings = {SWIFT_OPTIMIZATION_LEVEL = "-O";};};`;
+const xcodeFormattedSafeProject = `/* Release */ = {
+  isa = XCBuildConfiguration;
+  buildSettings = {
+    SWIFT_OPTIMIZATION_LEVEL = "-O";
+  };
+  name = Release;
+};`;
 
 describe("verifyRelease", () => {
   it("accepts matching allowlists and rejects remote executable code", async () => {
@@ -15,6 +22,13 @@ describe("verifyRelease", () => {
     await expect(verifyRelease(root)).resolves.toBeUndefined();
     await writeFile(join(root, "web/index.html"), `${safeHtml}<script src="https://api.example.com/app.js"></script>`);
     await expect(verifyRelease(root)).rejects.toThrow("remote executable code");
+  });
+
+  it("accepts Xcode's multiline Release build configuration", async () => {
+    const root = await fixtureRoot();
+    await writeFile(join(root, "Zupulse.xcodeproj/project.pbxproj"), xcodeFormattedSafeProject);
+
+    await expect(verifyRelease(root)).resolves.toBeUndefined();
   });
 });
 

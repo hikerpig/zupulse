@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Allow controlled network access from the iPad WebView
@@ -19,3 +19,8 @@ Bundle 固定发布，不从网络远程替换或热更新。远程入口只承�
 导航委托测试；相比允许任意导航，它保持了 App Shell 的最小权限边界。
 
 本决策不恢复已被 ADR 0017 取代的 ADR 0012；它为独立 iPad 产品重新定义网络与导航边界。
+
+## Acceptance scope
+
+2026-07-24 以 Release 边界校验、导航 policy 测试、CSP/allowlist 检查和 `ipad:verify` 为依据接受。
+允许的远程服务目前仍应保持最小；性能、长期网络稳定性与生产服务接入不在本次个人原型验收范围。

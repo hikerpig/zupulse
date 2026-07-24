@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Use one versioned RPC channel for the iPad Bridge
@@ -14,3 +14,9 @@ iPad App Shell 与共享 React 应用通过一个白名单化的双向 Bridge �
 与 TypeScript 之间的契约一致性；schema 事实源与跨语言验证方式由后续决策确定。
 
 本决策为 iPad 重新确认通信模型，不恢复已被 ADR 0017 取代的 ADR 0010 Apple Shell 交付方案。
+
+## Acceptance scope
+
+2026-07-24 以 Zod manifest、Swift/TypeScript fixtures、Simulator `ipad:verify` 与 M5 真机资源
+origin 测试为依据接受。性能和长稳设备验收延期，不改变请求、响应与事件必须经单一版本化通道校验的
+边界。

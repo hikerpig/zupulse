@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Use a thin SwiftUI and WKWebView shell for iPad
@@ -22,3 +22,9 @@ Viewer。SwiftUI 只拥有应用生命周期、WebView 容器、系统文件交�
 
 本决策落实 ADR 0017 所保留的“未来独立设计 Mobile App”方向，但不恢复 ADR 0010–0015 已被取代
 的具体 Apple Shell 交付结构；Bridge、资源加载和构建方式仍需在本次 iPad 设计中分别重新确认。
+
+## Acceptance scope
+
+2026-07-24 基于 Simulator 自动门禁、M5 真机资源 origin 测试和个人使用的初步导入/播放验证接受。
+这确认的是壳与共享 UI 的架构选择；性能、20 分钟稳定性、完整触控/中断与设备重启验收仍延期，正式
+产品化前必须重新评审。

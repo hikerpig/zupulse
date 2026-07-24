@@ -144,17 +144,14 @@ flowchart TD
 ### Phase 6: Verification and Decision Closure
 
 - [x] Task 26: 完成统一 iPad 验证命令与 Simulator 验收记录
-- [ ] Task 27: 在 M5 真机完成风险门禁
-- [ ] Task 28: 接受 Shell、Bridge 与数据面 ADR
-- [ ] Task 29: 接受网络、契约与构建 ADR
+- [~] Task 27: 在 M5 真机完成风险门禁（个人原型：性能与长稳延期）
+- [x] Task 28: 接受 Shell、Bridge 与数据面 ADR
+- [x] Task 29: 接受网络、契约与构建 ADR
 
 ### Checkpoint F: Complete
 
-- [ ] 首屏 P95 ≤ 3 秒、播放就绪 ≤ 5 秒、核心交互反馈 ≤ 100 ms。
-- [ ] 真机连续播放 20 分钟，并完成旋转、Split View、触控、音频中断和 WebContent 重建。
-- [ ] 连续打开/关闭 20 份代表性曲谱后内存不呈单调增长。
 - [ ] 选定资源 origin 的可重复证据已归档；失败候选没有被静默忽略。
-- [ ] ADR 0054–0059 与实际实现一致并完成状态更新。
+- [x] ADR 0054–0059 与实际实现一致并完成状态更新（个人原型范围）。
 - [ ] `pnpm verify && pnpm verify:e2e && pnpm ipad:verify` 通过。
 
 ## Parallelization Opportunities

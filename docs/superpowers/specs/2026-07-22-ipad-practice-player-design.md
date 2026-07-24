@@ -125,7 +125,7 @@ Bridge RPC 不传 Base64、JSON 数字数组或其他大二进制编码。系统
 5. 成功、取消、过期、App Shell 销毁或使用次数耗尽后 token 失效。
 
 数据通道必须防止 token 枚举、路径注入、重复消费和读取 App Bundle/容器中未授权内容。是否采用
-自定义 scheme 由技术探针决定；ADR 0056 只固定控制面与数据面分离的语义。
+自定义 scheme 由技术探针决定；ADR 0060 只固定控制面与数据面分离的语义。
 
 ### 外部打开与冷启动
 
@@ -402,16 +402,17 @@ Simulator 验证布局、route、Bridge、文件选择编排和恢复状态，�
 - Bridge 不接受未验证输入，不暴露路径，不通过 JSON 复制大二进制。
 - 生命周期、音频中断和恢复都保持“恢复位置但不自动播放”。
 - 横屏、竖屏与 Split View 不重建 Viewer Session。
-- proposed ADR 0054–0059 与探针结果一致后，才更新为 accepted/Current。
+- ADR 0058–0063 已于 2026-07-24 按个人原型范围接受；性能、长稳和完整设备验收仍是正式产品化前的
+  必须门禁。
 
 ## 相关决策
 
 - ADR 0039：共享 Viewer 使用 React 应用壳。
 - ADR 0047：所有外部打开统一进入 Library Import。
 - ADR 0048–0051：双宿主 Library、Repository、迁移失败和 Desktop 文件协调边界。
-- Proposed ADR 0054：薄 SwiftUI/WKWebView iPad Shell。
-- Proposed ADR 0055：单一版本化 iPad RPC 通道。
-- Proposed ADR 0056：控制面与二进制数据面分离。
-- Proposed ADR 0057：受控网络与固定应用页面/代码边界。
-- Proposed ADR 0058：Zod contract 事实源与双端 fixtures。
-- Proposed ADR 0059：构建时生成 iPad Web 资产。
+- Accepted ADR 0058：薄 SwiftUI/WKWebView iPad Shell。
+- Accepted ADR 0059：单一版本化 iPad RPC 通道。
+- Accepted ADR 0060：控制面与二进制数据面分离。
+- Accepted ADR 0061：受控网络与固定应用页面/代码边界。
+- Accepted ADR 0062：Zod contract 事实源与双端 fixtures。
+- Accepted ADR 0063：构建时生成 iPad Web 资产。

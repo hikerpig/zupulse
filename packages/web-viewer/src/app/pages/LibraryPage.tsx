@@ -1,10 +1,12 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 import type { ViewerApplication } from "../ViewerApplication";
 import { SheetLibrary } from "../../features/SheetLibrary";
 import { ViewerPage } from "./ViewerPage";
 
 export function LibraryPage({ application }: { application: ViewerApplication }) {
+  const { t } = useTranslation("library");
   const snapshot = useSyncExternalStore(application.subscribe, application.getSnapshot);
   const navigate = useNavigate();
 
@@ -20,7 +22,7 @@ export function LibraryPage({ application }: { application: ViewerApplication })
     <SheetLibrary
       application={application}
       {...library}
-      {...(library.error === undefined ? {} : { error: "曲谱库不可用" })}
+      {...(library.error === undefined ? {} : { error: t("unavailableMessage") })}
       onImport={(multiple) => application.importScores(multiple)}
       onOpen={(id) => void navigate(`/viewer/${id}`)}
     />

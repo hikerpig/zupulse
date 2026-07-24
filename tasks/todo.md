@@ -51,7 +51,7 @@
 
 ### Phase 3: Shared UI vertical slices
 
-- [ ] Task 8：迁移 Sheet Library。
+- [x] Task 8：迁移 Sheet Library。
 - [ ] Task 9：迁移 Viewer 与 Playback controls。
 - [ ] Task 10：迁移 Studio 页面与状态文案。
 - [ ] Task 11：迁移 Harmony editor 与 range workspace。

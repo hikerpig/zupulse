@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Download, PenLine, Star, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { LibraryScoreSummary } from "@zupulse/web-core";
 import type { ViewerApplication } from "../app/ViewerApplication";
 import pageStyles from "../app/pages/PageShell.module.css";
@@ -12,16 +13,17 @@ function formatDuration(ms: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
-function formatRelativeDate(iso: string): string {
+function formatRelativeDate(iso: string, locale: string, labels: { today: string; yesterday: string }): string {
   const date = new Date(iso);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return "今天";
-  if (diffDays === 1) return "昨天";
-  if (diffDays < 7) return `${diffDays} 天前`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} 周前`;
-  return `${Math.floor(diffDays / 30)} 月前`;
+  if (diffDays === 0) return labels.today;
+  if (diffDays === 1) return labels.yesterday;
+  const formatter = new Intl.RelativeTimeFormat(locale, { numeric: "always" });
+  if (diffDays < 7) return formatter.format(-diffDays, "day");
+  if (diffDays < 30) return formatter.format(-Math.floor(diffDays / 7), "week");
+  return formatter.format(-Math.floor(diffDays / 30), "month");
 }
 
 export function SheetLibrary({
@@ -39,6 +41,8 @@ export function SheetLibrary({
   onImport(multiple: boolean): Promise<void>;
   onOpen(id: string): void;
 }) {
+  const { t, i18n } = useTranslation("library");
+  const locale = i18n.resolvedLanguage ?? i18n.language;
   const [query, setQuery] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [sort, setSort] = useState<"activity" | "imported" | "practiced" | "title">("activity");
@@ -53,7 +57,7 @@ export function SheetLibrary({
         )
         .sort((a, b) =>
           sort === "title"
-            ? a.title.localeCompare(b.title)
+            ? a.title.localeCompare(b.title, locale)
             : Date.parse(
                 sort === "imported"
                   ? a.importedAt
@@ -70,15 +74,15 @@ export function SheetLibrary({
               ),
         )
         .reverse(),
-    [scores, query, favoritesOnly, sort],
+    [scores, query, favoritesOnly, sort, locale],
   );
   if (error)
     return (
       <section className="score-empty-state" role="alert">
-        <p className="empty-title">曲谱库暂时不可用</p>
+        <p className="empty-title">{t("unavailableTitle")}</p>
         <p className="empty-copy">{error}</p>
         <button className="primary-button" onClick={() => void application.refreshLibrary()}>
-          重试
+          {t("retry")}
         </button>
       </section>
     );
@@ -86,26 +90,26 @@ export function SheetLibrary({
     <main className={`${pageStyles.appShell} ${styles.libraryShell} scrollable`}>
       <div className={`${pageStyles.contextBar} ${styles.libraryContextBar}`}>
         <div className={pageStyles.contextMain}>
-          <p className={pageStyles.appKicker}>Library</p>
-          <h1 className={`${pageStyles.contextTitle} ${styles.libraryTitle}`}>曲谱库</h1>
-          <p className={pageStyles.contextSubtitle}>曲谱保存在这台设备上，可离线使用。</p>
+          <p className={pageStyles.appKicker}>{t("kicker")}</p>
+          <h1 className={`${pageStyles.contextTitle} ${styles.libraryTitle}`}>{t("title")}</h1>
+          <p className={pageStyles.contextSubtitle}>{t("subtitle")}</p>
         </div>
         <div className={pageStyles.contextActions}>
           <button className="primary-button" disabled={loading} onClick={() => void onImport(false)}>
-            导入曲谱
+            {t("import")}
           </button>
           <button className="secondary-button" disabled={loading} onClick={() => void onImport(true)}>
-            批量导入
+            {t("importMany")}
           </button>
         </div>
       </div>
-      <section className={styles.libraryControls} aria-label="曲谱库筛选">
+      <section className={styles.libraryControls} aria-label={t("filtersLabel")}>
         <input
           type="text"
-          aria-label="搜索曲名或艺术家"
+          aria-label={t("searchLabel")}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="搜索曲名或艺术家…"
+          placeholder={t("searchPlaceholder")}
         />
         <button
           type="button"
@@ -114,27 +118,27 @@ export function SheetLibrary({
           onClick={() => setFavoritesOnly(!favoritesOnly)}
         >
           <Star size={13} strokeWidth={1.8} aria-hidden="true" />
-          收藏
+          {t("favorites")}
         </button>
         <div className={styles.librarySort}>
-          <span>排序</span>
+          <span>{t("sortLabel")}</span>
           <select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>
-            <option value="activity">最近活动</option>
-            <option value="imported">最近导入</option>
-            <option value="practiced">最近练习</option>
-            <option value="title">标题</option>
+            <option value="activity">{t("sort.activity")}</option>
+            <option value="imported">{t("sort.imported")}</option>
+            <option value="practiced">{t("sort.practiced")}</option>
+            <option value="title">{t("sort.title")}</option>
           </select>
         </div>
       </section>
       {loading ? (
         <p role="status" style={{ padding: "24px 24px", color: "var(--text-secondary)" }}>
-          正在读取曲谱库…
+          {t("loading")}
         </p>
       ) : visible.length ? (
         <>
           <div className={styles.libraryStats}>
             <p className={styles.libraryCount}>
-              <strong>{visible.length}</strong> / {scores.length} 份曲谱
+              {t("visibleCount", { visible: visible.length, total: scores.length })}
             </p>
           </div>
           <ul className={`${styles.libraryList} scrollable`}>
@@ -158,7 +162,7 @@ export function SheetLibrary({
                   </span>
                   <div className={styles.libraryCardBannerActions}>
                     <button
-                      aria-label={score.isFavorite ? "取消收藏" : "收藏"}
+                      aria-label={score.isFavorite ? t("unfavorite") : t("favorite")}
                       aria-pressed={score.isFavorite}
                       onClick={(event) => {
                         event.stopPropagation();
@@ -189,11 +193,13 @@ export function SheetLibrary({
                         className={`${styles.libraryPracticeStatus} ${score.practice.hasLoop ? styles.libraryPracticeStatusLoop : styles.libraryPracticeStatusActive}`}
                       >
                         <span className={styles.libraryPracticeStatusDot} aria-hidden="true" />
-                        {score.practice.lastPosition ? `第 ${score.practice.lastPosition.measureIndex} 小节` : "已练习"}
-                        {score.practice.hasLoop ? " · Loop" : ""}
+                        {score.practice.lastPosition
+                          ? t("measure", { measure: score.practice.lastPosition.measureIndex })
+                          : t("practiced")}
+                        {score.practice.hasLoop ? t("loopSuffix") : ""}
                       </span>
                     ) : (
-                      <span>尚未练习</span>
+                      <span>{t("notPracticed")}</span>
                     )}
                   </div>
                 </div>
@@ -207,11 +213,14 @@ export function SheetLibrary({
                       fontFamily: '"IBM Plex Mono", monospace',
                     }}
                   >
-                    {formatRelativeDate(score.importedAt)}
+                    {formatRelativeDate(score.importedAt, locale, {
+                      today: t("relative.today"),
+                      yesterday: t("relative.yesterday"),
+                    })}
                   </span>
                   <div className={styles.libraryCardFooterActions}>
                     <button
-                      aria-label={`导出 ${score.title}`}
+                      aria-label={t("exportScore", { title: score.title })}
                       onClick={(event) => {
                         event.stopPropagation();
                         void application.exportLibraryScore(score.id);
@@ -220,7 +229,7 @@ export function SheetLibrary({
                       <Download aria-hidden="true" />
                     </button>
                     <button
-                      aria-label={`编辑 ${score.title}`}
+                      aria-label={t("editScore", { title: score.title })}
                       onClick={(event) => {
                         event.stopPropagation();
                         setEditing(score);
@@ -229,7 +238,7 @@ export function SheetLibrary({
                       <PenLine aria-hidden="true" />
                     </button>
                     <button
-                      aria-label={`删除 ${score.title}`}
+                      aria-label={t("deleteScore", { title: score.title })}
                       onClick={(event) => {
                         event.stopPropagation();
                         setDeleting(score);
@@ -245,17 +254,17 @@ export function SheetLibrary({
         </>
       ) : (
         <section className="score-empty-state">
-          <p className="empty-title">你的曲谱会保存在这台设备上</p>
-          <p className="empty-copy">支持 Guitar Pro、MusicXML 和 MXL，导入后可离线使用。</p>
+          <p className="empty-title">{t("emptyTitle")}</p>
+          <p className="empty-copy">{t("emptyCopy")}</p>
           <button className="primary-button" onClick={() => void onImport(false)}>
-            导入第一份曲谱
+            {t("importFirst")}
           </button>
         </section>
       )}
       {editing && (
         <form
           className={styles.libraryEditor}
-          aria-label="编辑曲谱信息"
+          aria-label={t("editDialogLabel")}
           onSubmit={(event) => {
             event.preventDefault();
             const form = new FormData(event.currentTarget);
@@ -269,31 +278,31 @@ export function SheetLibrary({
           }}
         >
           <label>
-            标题 <input name="title" defaultValue={editing.title} autoFocus />
+            {t("fieldTitle")} <input name="title" defaultValue={editing.title} autoFocus />
           </label>
           <label>
-            艺术家 <input name="artist" defaultValue={editing.artist ?? ""} />
+            {t("fieldArtist")} <input name="artist" defaultValue={editing.artist ?? ""} />
           </label>
           <button type="submit" className="primary-button">
-            保存
+            {t("save")}
           </button>
           <button type="button" onClick={() => setEditing(undefined)}>
-            取消
+            {t("cancel")}
           </button>
         </form>
       )}
       {deleting && (
         <section className={styles.libraryDialog} role="alertdialog" aria-modal="true" aria-labelledby="delete-title">
-          <h2 id="delete-title">删除"{deleting.title}"吗？</h2>
-          <p>曲谱文件和全部练习数据将被永久删除，且无法恢复。</p>
+          <h2 id="delete-title">{t("deleteTitle", { title: deleting.title })}</h2>
+          <p>{t("deleteWarning")}</p>
           <button
             className="primary-button"
             autoFocus
             onClick={() => void application.deleteLibraryScore(deleting.id).then(() => setDeleting(undefined))}
           >
-            永久删除
+            {t("deleteForever")}
           </button>
-          <button onClick={() => setDeleting(undefined)}>取消</button>
+          <button onClick={() => setDeleting(undefined)}>{t("cancel")}</button>
         </section>
       )}
     </main>

@@ -1,50 +1,75 @@
-# Zupulse（逐拍）agent context
+# Zupulse Agent Context
 
-## 事实源
+## Language Policy
 
-按以下顺序取信：运行时代码、Zod schema 与数据库约束 > 可重复的测试/构建/E2E >
-Current ADR、架构文档与 `status: current` 的 Feature Contract > 当前规格。冲突必须指出；
-历史文档和过程计划仅作证据。
+- Write Agent instructions and behavioral rules in English.
+- Write machine-readable and engineering contracts in English, including schemas, API fields, invariants,
+  acceptance criteria, error codes, and normative keywords.
+- Write product design documents in Chinese.
+- Technical design documents may mix languages: use Chinese for context and trade-offs, and English for code
+  identifiers, protocols, schemas, and other exact technical terms.
+- Choose one primary language per paragraph. Do not translate code identifiers or invent parallel Chinese names
+  for them.
+- Existing documents do not need mechanical translation. Apply this policy when creating or materially revising
+  them.
 
-导航从 `docs/architecture/README.md` 开始；术语见 `CONTEXT.md` 和
-`docs/architecture/glossary.md`；UI 契约见 `DESIGN.md`。涉及现存或进行中的 Feature，先查
-`docs/features/README.md` 和对应 Contract；其中“进行中的目标差异”不得作为当前行为。
+## Sources of Truth
 
-## 修改前按范围继续读取
+Trust sources in this order:
 
-- 领域、schema、导入、播放：`packages/web-core/AGENTS.md`
-- React 路由、状态、UI：`packages/web-viewer/AGENTS.md`
-- Browser/IndexedDB：`apps/web-demo/AGENTS.md`
-- Electron/Bridge/SQLite：`apps/desktop-shell/AGENTS.md`
-- Electron Main/托管文件：`apps/desktop-shell/src/main/AGENTS.md`
-- 架构或 UI 决策：相关 Current ADR、架构文档或 `DESIGN.md`
+1. Runtime code, Zod schemas, and database constraints.
+2. Reproducible tests, builds, and E2E results.
+3. Current ADRs, current architecture documents, and `status: current` Feature Contracts.
+4. Current specifications.
 
-## 不可破坏的边界
+Report conflicts explicitly. Historical documents and one-time plans are evidence only.
 
-- `web-core` 不依赖 React、Browser 或 Electron；`web-viewer` 只通过端口访问宿主能力。
-- Browser 与 Desktop 馆藏独立。Renderer 不得获得绝对路径；外部文件使用一次性 token，并由 Main 复验。
-- Library Score ID 是 UUID，去重键是小写 SHA-256；Viewer/Studio URL 只使用 `libraryScoreId`。
-- `SheetLibraryRepository` 管馆藏事实，`ScoreFileGateway` 管文件选择/导出。
-- 删除须同时清理托管字节、馆藏、练习数据和 Harmony Analysis Document，不得重建孤儿数据。
+Start navigation at `docs/architecture/README.md`. Use `CONTEXT.md` and
+`docs/architecture/glossary.md` for terminology, and `DESIGN.md` for the UI contract. Before changing an existing
+or in-progress Feature, read `docs/features/README.md` and its Contract. Never treat an in-progress target gap as
+current behavior.
 
-## 实现规则
+## Read Before Editing
 
-- 遵循 `docs/conventions/file-naming.md`；使用 named export、Prettier 双引号和
-  `__tests__/*.test.ts(x)`；禁止 workspace 深导入。
-- `exactOptionalPropertyTypes` 下省略不存在的可选字段，不显式传 `undefined`。
-- 跨进程和持久化输入必须经 Zod 校验；新增 Bridge API 同步添加 request、response、
-  capability 和测试。
-- 用户可见系统文案统一进入 `@zupulse/app-i18n`；`web-core` 只返回语义 code/context，
-  不返回译文或翻译 key，原始异常不得进入 DOM。
-- Locale 由宿主持久化：Browser 使用本地存储，Desktop 由 Main + Bridge 管理；切换时先持久化，
-  再同步 Renderer、菜单和原生对话框。用户内容、曲谱元数据与和弦符号不翻译。
-- 用户可观察行为、领域不变量、平台能力或已知差距发生变化并通过验证后，同步更新对应 Feature
-  Contract。
-- 添加依赖前先检查平台和现有依赖；优先最小实现。失败时定位根因，只改相关文件。
-- 一次性计划和任务记录完成后删除；稳定约束沉淀到 Current 架构、ADR 或本文件。
+- Domain, schemas, import, or playback: `packages/web-core/AGENTS.md`
+- React routes, state, or UI: `packages/web-viewer/AGENTS.md`
+- Browser or IndexedDB: `apps/web-demo/AGENTS.md`
+- Electron, Bridge, or SQLite: `apps/desktop-shell/AGENTS.md`
+- Electron Main or managed files: `apps/desktop-shell/src/main/AGENTS.md`
+- Architecture or UI decisions: the relevant Current ADR, architecture document, or `DESIGN.md`
 
-## 验证
+## Invariants
 
-先运行最小相关测试，再按风险升级：`pnpm verify:fast`、`pnpm verify`、涉及 Browser/Desktop
-流程时运行 `pnpm verify:e2e`。i18n 改动必须通过 `pnpm check:i18n`。提交前运行
-`pnpm format:check` 和 `git diff --check`，并报告实际结果。
+- `web-core` must not depend on React, Browser, or Electron. `web-viewer` accesses host capabilities only through
+  ports.
+- Browser and Desktop libraries are independent. Renderer never receives absolute paths. Main revalidates every
+  one-time token for external files.
+- Library Score IDs are UUIDs; deduplication uses lowercase SHA-256; Viewer and Studio URLs use only
+  `libraryScoreId`.
+- `SheetLibraryRepository` owns library facts. `ScoreFileGateway` owns file selection and export.
+- Deletion removes managed bytes, library records, practice data, and Harmony Analysis Documents without
+  recreating orphaned data.
+
+## Implementation Rules
+
+- Follow `docs/conventions/file-naming.md`. Use named exports, Prettier double quotes, and
+  `__tests__/*.test.ts(x)`. Do not use workspace deep imports.
+- With `exactOptionalPropertyTypes`, omit absent optional fields instead of passing `undefined`.
+- Validate cross-process and persisted inputs with Zod. A new Bridge API requires request, response, capability,
+  and tests.
+- Put user-visible system copy in `@zupulse/app-i18n`. `web-core` returns semantic codes and context, never
+  translations or translation keys. Never expose raw exceptions in the DOM.
+- The host persists locale: Browser uses local storage; Desktop uses Main and Bridge. Persist before synchronizing
+  Renderer, menus, and native dialogs. Do not translate user content, score metadata, or chord symbols.
+- After verified changes to observable behavior, domain invariants, platform capabilities, or known gaps, update
+  the corresponding Feature Contract.
+- Check platform APIs and existing dependencies before adding a dependency. Prefer the smallest sufficient
+  implementation, diagnose root causes, and keep changes scoped.
+- Delete completed one-time plans and task records. Move durable constraints into Current architecture, an ADR,
+  or this file.
+
+## Verification
+
+Run the smallest relevant tests first, then escalate by risk to `pnpm verify:fast`, `pnpm verify`, and
+`pnpm verify:e2e` for Browser/Desktop journeys. Run `pnpm check:i18n` for i18n changes. Before committing, run
+`pnpm format:check` and `git diff --check`, and report the actual results.

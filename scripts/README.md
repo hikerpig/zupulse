@@ -2,6 +2,13 @@
 
 以下命令都从仓库根目录运行。需要 Node.js 与 pnpm；UCI/CMU 脚本会用 manifest 中的 SHA-256 校验数据归档。
 
+## Repository checks
+
+`pnpm check:docs` 检查 Feature Contract 的元数据、生命周期目录、必需章节、当前索引、
+`implementation_paths` 和本地 Markdown 链接。结构错误返回退出码 1；超过 30 天未核对的
+`last_verified` 仅产生警告，命令仍成功。维护规则见
+[`docs/conventions/documentation-gardening.md`](../docs/conventions/documentation-gardening.md)。
+
 ## 快速开始
 
 ```bash

@@ -8,6 +8,7 @@ import {
   checkDesign,
   checkDocumentation,
   readFeatureContracts,
+  runRepositoryCheck,
 } from "../repository-checks.mjs";
 
 const roots: string[] = [];
@@ -402,6 +403,56 @@ supersedes: []
   });
 });
 
+describe("runRepositoryCheck", () => {
+  it("returns success for documentation warnings", async () => {
+    const root = await fixture({
+      "docs/features/README.md": `# Feature Contracts
+
+## 当前索引
+
+| Feature | Contract |
+| --- | --- |
+| Current | [Current](contracts/current.md) |
+`,
+      "docs/features/contracts/current.md": completeCurrentContract({
+        feature: "current-feature",
+        title: "Current",
+        lastVerified: "2026-06-01",
+      }),
+    });
+
+    await expect(runRepositoryCheck("docs", root, { now: new Date("2026-07-25T00:00:00.000Z") })).resolves.toEqual({
+      exitCode: 0,
+      stdout: "docs check passed\n- docs/features/contracts/current.md: last_verified 2026-06-01 is older than 30 days",
+      stderr: "",
+    });
+  });
+
+  it("returns failure for documentation errors", async () => {
+    const root = await fixture({
+      "docs/features/README.md": "# Feature Contracts\n\n## 当前索引\n",
+      "docs/features/contracts/current.md": completeCurrentContract({
+        feature: "current-feature",
+        title: "Current",
+      }),
+    });
+
+    await expect(runRepositoryCheck("docs", root)).resolves.toEqual({
+      exitCode: 1,
+      stdout: "",
+      stderr: "- docs/features/contracts/current.md: current contract is missing from docs/features/README.md index",
+    });
+  });
+
+  it("returns usage error for an unknown command", async () => {
+    await expect(runRepositoryCheck("unknown", "/unused")).resolves.toEqual({
+      exitCode: 2,
+      stdout: "",
+      stderr: "Usage: node scripts/repository-checks.mjs <context|arch|design|docs>",
+    });
+  });
+});
+
 describe("checkContext", () => {
   it("reports missing context files and historical documents without status", async () => {
     const root = await fixture({
@@ -571,14 +622,19 @@ async function fixture(files: Record<string, string>): Promise<string> {
   return root;
 }
 
-function completeCurrentContract(input: { feature: string; title: string; implementationPaths?: string[] }): string {
+function completeCurrentContract(input: {
+  feature: string;
+  title: string;
+  implementationPaths?: string[];
+  lastVerified?: string;
+}): string {
   const paths = input.implementationPaths ?? [];
   return `---
 feature: ${input.feature}
 title: ${input.title}
 status: current
 delivery: available
-last_verified: 2026-07-24
+last_verified: ${input.lastVerified ?? "2026-07-24"}
 hosts: []
 implementation_paths:${paths.length === 0 ? " []" : `\n${paths.map((path) => `  - ${path}`).join("\n")}`}
 supersedes: []

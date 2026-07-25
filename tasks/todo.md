@@ -37,11 +37,11 @@ Detailed plan: [`tasks/plan.md`](plan.md)
 
 ### Task 4: `check:docs` command and blocking gate
 
-- [ ] Add CLI output/exit behavior and `pnpm check:docs`.
-- [ ] Insert `check:docs` into `verify:fast`.
-- [ ] Document only the deterministic behavior now implemented.
-- [ ] Verify: `pnpm check:docs`
-- [ ] Verify: `pnpm verify:fast`
+- [x] Add CLI output/exit behavior and `pnpm check:docs`.
+- [x] Insert `check:docs` into `verify:fast`.
+- [x] Document only the deterministic behavior now implemented.
+- [x] Verify: `pnpm check:docs`
+- [x] Verify: `pnpm verify:fast`
 - Dependencies: Task 3 and checkpoint approval.
 
 ## Phase 2: Non-blocking Impact Analysis

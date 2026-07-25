@@ -588,28 +588,43 @@ async function read(path) {
   }
 }
 
+export async function runRepositoryCheck(command, root, options = {}) {
+  if (!["context", "arch", "design", "docs"].includes(command)) {
+    return {
+      exitCode: 2,
+      stdout: "",
+      stderr: "Usage: node scripts/repository-checks.mjs <context|arch|design|docs>",
+    };
+  }
+  const result =
+    command === "context"
+      ? { errors: await checkContext(root), warnings: [] }
+      : command === "arch"
+        ? { errors: await checkArchitecture(root), warnings: [] }
+        : command === "design"
+          ? { errors: await checkDesign(root), warnings: [] }
+          : await checkDocumentation(root, options);
+  const { errors, warnings } = result;
+  if (errors.length > 0) {
+    return {
+      exitCode: 1,
+      stdout: "",
+      stderr: errors.map((error) => `- ${error}`).join("\n"),
+    };
+  }
+  return {
+    exitCode: 0,
+    stdout: [`${command} check passed`, ...warnings.map((warning) => `- ${warning}`)].join("\n"),
+    stderr: "",
+  };
+}
+
 async function main() {
   const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-  const command = process.argv[2];
-  const errors =
-    command === "context"
-      ? await checkContext(root)
-      : command === "arch"
-        ? await checkArchitecture(root)
-        : command === "design"
-          ? await checkDesign(root)
-          : [];
-  if (command !== "context" && command !== "arch" && command !== "design") {
-    console.error("Usage: node scripts/repository-checks.mjs <context|arch|design>");
-    process.exitCode = 2;
-    return;
-  }
-  if (errors.length > 0) {
-    console.error(errors.map((error) => `- ${error}`).join("\n"));
-    process.exitCode = 1;
-  } else {
-    console.log(`${command} check passed`);
-  }
+  const result = await runRepositoryCheck(process.argv[2], root);
+  if (result.stdout !== "") console.log(result.stdout);
+  if (result.stderr !== "") console.error(result.stderr);
+  process.exitCode = result.exitCode;
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) await main();

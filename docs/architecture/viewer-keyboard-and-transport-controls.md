@@ -5,8 +5,8 @@
 Viewer 的键盘层把明确的用户意图转成已有播放命令，不维护或推断播放状态。播放事实仍由
 `PlaybackController` 和 Playback Engine 拥有，React 只订阅 snapshot 并发送 command。
 
-本设计覆盖 Viewer 页面中的全局播放快捷键和顶部播放控制栏。它不扩展 Bridge API、持久化结构、
-Playback Engine 契约或领域命令集合。
+本设计覆盖 Viewer 页面中的全局播放快捷键、Page Turn 键盘输入和顶部播放控制栏。它不扩展
+Bridge API、持久化结构、Playback Engine 契约或领域命令集合。
 
 ## Space 播放快捷键
 
@@ -56,6 +56,8 @@ flowchart TD
 6. 速度同时显示实际 BPM 和相对原谱百分比；精确输入与预设留在 Popover。
 7. 音频正常时不占据固定状态位；加载或失败时才显示状态与恢复操作。
 8. 练习设置保留循环边界、循环列表、轨道和 Session 详情等低频操作。
+9. 谱面导航模式使用图标 + ContextPopup；Page Turn 才显示页码与上一页/下一页，Detached 显示
+   “返回播放位置”。
 
 所有纯图标按钮必须提供中文 accessible name。可用的循环按钮使用 `aria-pressed` 表达状态；按钮提示解释
 动作或快捷键，不能只依赖图标形状传达含义。
@@ -66,6 +68,11 @@ flowchart TD
 - 不劫持方向键。未来必须先明确按时间、拍还是小节移动，再设计修饰键规则。
 - 不增加节拍器、预备拍或无功能占位按钮；这些能力需要独立扩展播放契约和音频行为。
 - 不在 React 中根据按键直接切换本地 `transport`；Engine 事件仍是播放状态事实源。
+
+## Page Turn 输入
+
+Page Turn Mode 在非交互目标上消费 PageUp / PageDown，一次移动一个 Screen Score Page 并进入
+Detached。输入框、按钮、选择框、可编辑区域和 Slider 保留原生键盘语义。左右方向键不用于翻页。
 
 ## 验证契约
 

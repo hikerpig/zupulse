@@ -9,9 +9,8 @@ Zupulse 是本地优先的乐谱查看与练习应用。当前交付面是共享
 - 提供乐谱呈现、播放、变速、循环和本机练习状态恢复。
 - 在独立 Studio 中推断、修正和预览 MusicXML 和弦符号，并按来源容器导出带和弦的新副本。
 - Browser 使用 IndexedDB；Desktop 使用 SQLite 与应用数据目录中的托管文件。
-- 当前不实现云同步、OPFS、分页、额外状态库、移动端产品或 MIDI 分析。
-- ADR 0064 正在定义 Viewer 翻页与播放跟随的下一阶段语义；通过 Web 验收并转为 accepted 前，
-  Screen Score Page 仍不是当前运行时能力。
+- 当前不实现云同步、OPFS、打印分页、额外状态库、移动端产品或 MIDI 分析。
+- Viewer 已按 ADR 0064 提供 Continuous Follow、Page Turn 和临时 Screen Score Page。
 
 ## 核心语言
 
@@ -28,7 +27,7 @@ Zupulse 是本地优先的乐谱查看与练习应用。当前交付面是共享
   首版核心；它不是 Desktop Shell 的全量移植，Studio、后台播放和跨设备同步需独立进入产品范围。
 - **Viewer Session**：Viewer 中临时的谱面、播放和练习运行时；URL 不保存 Session ID。
 
-### Proposed Viewer navigation language
+### Current Viewer navigation language
 
 - **Score Navigation Mode**：当前设备的 Viewer 阅读偏好，选择 Continuous Follow Mode 或 Page Turn Mode；它不属于某份曲谱的 Practice Sidecar。首次使用时 iPad 默认翻页，Desktop 与 Browser 默认连续跟随，之后不因视口变化自动切换。
 - **Continuous Follow Mode**：Viewer 的逐行谱面跟随模式；当前行保持稳定，播放头跨行时用短动画把新行定位到视口上部并保留预读内容，减少动态效果时直接定位。

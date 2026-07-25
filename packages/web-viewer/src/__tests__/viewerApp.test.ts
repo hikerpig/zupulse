@@ -521,7 +521,7 @@ describe("createDefaultOpenSession cleanup", () => {
         enableCursor: true,
         enableAnimatedBeatCursor: true,
         enableElementHighlighting: true,
-        enableUserInteraction: true,
+        enableUserInteraction: false,
       }),
     );
     expect(settings.core.includeNoteBounds).toBe(true);

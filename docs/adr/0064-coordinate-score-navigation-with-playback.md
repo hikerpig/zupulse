@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Coordinate score navigation with playback over one alphaTab layout

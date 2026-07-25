@@ -55,6 +55,10 @@ test("switches locale during playback without losing workspace state and keeps c
 });
 
 test("follows playback and supports stable score page navigation", async ({ page }) => {
+  const consoleErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
   await page.goto("/");
   await importFixture(page, "导入第一份曲谱", reviewedFixture);
   await expect(page.locator("#alpha-tab .at-surface").first()).toBeVisible();
@@ -70,6 +74,17 @@ test("follows playback and supports stable score page navigation", async ({ page
   await expect(page.getByRole("button", { name: "返回播放位置" })).toBeVisible();
   await page.getByRole("button", { name: "返回播放位置" }).click();
   await expect(page.getByRole("button", { name: "返回播放位置" })).toBeHidden();
+
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 768, height: 1024 },
+    { width: 1024, height: 768 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await expect(page.locator("#alpha-tab .at-surface").first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "谱面导航模式" })).toBeVisible();
+  }
+  expect(consoleErrors).toEqual([]);
 });
 
 test("persists a Browser Library Score and gives a re-import a fresh ID after deletion", async ({ page }) => {

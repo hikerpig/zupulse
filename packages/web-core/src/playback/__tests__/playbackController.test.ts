@@ -78,6 +78,30 @@ describe("PlaybackController", () => {
     expect(persistence.resumeWrites).toHaveLength(0);
   });
 
+  it("publishes ordinary playing positions at most every 100 ms and flushes the latest position on pause", async () => {
+    const schedule = new ManualSchedule();
+    const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" });
+    const controller = createController(engine, new FakePersistence(), schedule);
+    await controller.initialize();
+    engine.emit({ type: "transport", state: "playing" });
+    const positions: number[] = [];
+    controller.subscribe((snapshot) => positions.push(snapshot.position.tick));
+    positions.length = 0;
+
+    for (let index = 1; index <= 20; index += 1) {
+      engine.emit({ type: "position", positionMs: index * 10, endMs: 8000, tick: index * 10 });
+    }
+    expect(positions).toEqual([]);
+    schedule.advanceBy(100);
+    expect(positions).toEqual([200]);
+
+    engine.emit({ type: "position", positionMs: 300, endMs: 8000, tick: 300 });
+    engine.emit({ type: "transport", state: "paused" });
+    expect(positions.at(-1)).toBe(300);
+    schedule.advanceBy(100);
+    expect(positions).toEqual([200, 300]);
+  });
+
   it("pauses and immediately saves resume state", async () => {
     const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" });
     const persistence = new FakePersistence();

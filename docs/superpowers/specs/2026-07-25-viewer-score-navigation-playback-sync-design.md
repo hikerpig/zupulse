@@ -1,6 +1,7 @@
 # Viewer 谱面导航与播放同步初步 Spec
 
-- 状态：Draft；尚未实施。
+- 状态：Implemented；作为初步需求与设计记录保留，当前行为以 Feature Contract、accepted ADR 0064、
+  运行时代码和测试为准。
 - 当前行为：
   [`Viewer Playback Navigation Feature Contract`](../../features/contracts/viewer-playback-navigation.md)。
 - Proposed 决策：ADR 0064。

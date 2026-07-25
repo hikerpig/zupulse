@@ -4,10 +4,9 @@
 
 通过 `#/viewer/:libraryScoreId` 打开的查看与练习工作区。当前不生成、编辑或读取 Studio 的 Harmony Analysis Document；未来若要用于练习，必须先定义独立的发布语义。
 
-## Proposed Viewer navigation language
+## Current Viewer navigation language
 
-以下术语由 Proposed ADR 0064 和对应初步 Spec 定义。它们用于准确讨论目标行为，在 Feature
-Contract 把目标差异迁入当前行为并通过 Web 验收前，不代表已经交付。
+以下术语由 accepted ADR 0064、当前 Feature Contract 和运行时实现定义。
 
 ### Score Navigation Mode
 

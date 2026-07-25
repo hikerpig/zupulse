@@ -55,17 +55,22 @@ export function attachScoreNavigationInputs(
     if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
     navigation.movePage(deltaX < 0 ? 1 : -1);
   };
+  const onPointerDown = (event: PointerEvent) => {
+    if (event.target === element) navigation.manualNavigation();
+  };
 
   element.addEventListener("wheel", onWheel, { passive: false });
   element.addEventListener("touchstart", onTouchStart, { passive: true });
   element.addEventListener("touchmove", onTouchMove, { passive: true });
   element.addEventListener("touchend", onTouchEnd, { passive: true });
+  element.addEventListener("pointerdown", onPointerDown, { passive: true });
   element.ownerDocument.addEventListener("keydown", onKeyDown);
   return () => {
     element.removeEventListener("wheel", onWheel);
     element.removeEventListener("touchstart", onTouchStart);
     element.removeEventListener("touchmove", onTouchMove);
     element.removeEventListener("touchend", onTouchEnd);
+    element.removeEventListener("pointerdown", onPointerDown);
     element.ownerDocument.removeEventListener("keydown", onKeyDown);
   };
 }

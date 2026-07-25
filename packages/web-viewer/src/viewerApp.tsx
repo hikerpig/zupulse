@@ -64,8 +64,12 @@ export function createDefaultOpenSession(
     const navigation = new ScoreNavigationCoordinator({
       viewportHeight: () => scoreScrollElement.clientHeight,
       moveTo(top, behavior) {
+        const reducedMotion = ownerDocument.defaultView?.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
         if (typeof scoreScrollElement.scrollTo === "function") {
-          scoreScrollElement.scrollTo({ top, behavior: behavior === "smooth" ? "smooth" : "auto" });
+          scoreScrollElement.scrollTo({
+            top,
+            behavior: behavior === "smooth" && !reducedMotion ? "smooth" : "auto",
+          });
         } else {
           scoreScrollElement.scrollTop = top;
         }
@@ -296,7 +300,7 @@ export function createViewerAlphaTabSettings(scrollElement: HTMLElement, scoreZo
       enableCursor: true,
       enableAnimatedBeatCursor: true,
       enableElementHighlighting: true,
-      enableUserInteraction: true,
+      enableUserInteraction: false,
       scrollElement,
       soundFont: ALPHATAB_ASSETS.soundFont,
     },

@@ -100,6 +100,10 @@ Zupulse 是面向长期练习、乐谱查看与和声分析的桌面级数字音
 - 乐谱是绝对视觉中心，Transport 与练习控制仓形成连续工作台。
 - Loop、Tracks、Session 使用分仓与细分界，不拼成多张悬浮卡片。
 - 播放是主要操作；mute、solo、删除和设置不得获得同等视觉权重。
+- Score Navigation Mode 是低频设置，使用紧凑图标入口和 ContextPopup；不以介绍文案或常驻状态栏
+  挤占谱面。
+- Page Turn 才显示上一页、下一页和 `n / m`；Detached 只显示明确的“返回播放位置”恢复动作。
+- Continuous Follow 动画短促且可取消；Scrub、Page Turn 和减少动态效果时直接呈现最新目标。
 
 ### Studio
 

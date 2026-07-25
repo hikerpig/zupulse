@@ -55,6 +55,7 @@ export class PlaybackController {
   private detachEngine: (() => void) | undefined;
   private sidecarTimer?: unknown;
   private resumeTimer?: unknown;
+  private positionPublicationTimer?: unknown;
   private sidecarDirty = false;
   private resumeDirty = false;
   private initialized = false;
@@ -196,6 +197,7 @@ export class PlaybackController {
   }
 
   async flush(): Promise<void> {
+    if (this.positionPublicationTimer !== undefined) this.notify();
     this.clearTimers();
     await this.queueSidecarWrite();
     await this.queueResumeWrite();
@@ -299,7 +301,8 @@ export class PlaybackController {
         this.state.position = musicalPositionFromTick(event.tick, event.positionMs, this.options.timeline);
         this.state.durationMs = event.endMs;
         this.markResumeDirty();
-        this.notify();
+        if (this.state.transport === "playing") this.schedulePositionPublication();
+        else this.notify();
         return;
       case "error":
         this.updateState({ transport: "error", errorCode: "playback-error" });
@@ -568,8 +571,10 @@ export class PlaybackController {
   private clearTimers(): void {
     if (this.sidecarTimer !== undefined) this.schedule.clear(this.sidecarTimer);
     if (this.resumeTimer !== undefined) this.schedule.clear(this.resumeTimer);
+    if (this.positionPublicationTimer !== undefined) this.schedule.clear(this.positionPublicationTimer);
     this.sidecarTimer = undefined;
     this.resumeTimer = undefined;
+    this.positionPublicationTimer = undefined;
   }
 
   private activeLoop(): LoopRegion | undefined {
@@ -610,8 +615,20 @@ export class PlaybackController {
   }
 
   private notify(): void {
+    if (this.positionPublicationTimer !== undefined) {
+      this.schedule.clear(this.positionPublicationTimer);
+      this.positionPublicationTimer = undefined;
+    }
     const snapshot = this.getState();
     for (const listener of this.listeners) listener(snapshot);
+  }
+
+  private schedulePositionPublication(): void {
+    if (this.positionPublicationTimer !== undefined) return;
+    this.positionPublicationTimer = this.schedule.set(100, () => {
+      this.positionPublicationTimer = undefined;
+      this.notify();
+    });
   }
 }
 

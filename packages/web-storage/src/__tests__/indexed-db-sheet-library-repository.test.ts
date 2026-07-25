@@ -4,17 +4,17 @@ import type { HarmonyAnalysisDocument } from "@zupulse/web-core";
 import {
   exampleDraft,
   sheetLibraryRepositoryContract,
-} from "../../../../../test-harness/__tests__/sheetLibraryRepositoryContract";
-import { BrowserSheetLibraryRepository } from "../BrowserSheetLibraryRepository";
+} from "../../../../test-harness/__tests__/sheetLibraryRepositoryContract";
+import { IndexedDbSheetLibraryRepository } from "../index";
 
 sheetLibraryRepositoryContract(() => {
   Object.defineProperty(globalThis, "indexedDB", { configurable: true, value: new IDBFactory() });
-  return new BrowserSheetLibraryRepository();
+  return new IndexedDbSheetLibraryRepository();
 });
 
 it("does not create practice data for a missing Library Score", async () => {
   Object.defineProperty(globalThis, "indexedDB", { configurable: true, value: new IDBFactory() });
-  const repository = new BrowserSheetLibraryRepository();
+  const repository = new IndexedDbSheetLibraryRepository();
   await repository.initialize();
   await expect(
     repository.writeResume(crypto.randomUUID(), {
@@ -28,7 +28,7 @@ it("does not create practice data for a missing Library Score", async () => {
 
 it("deletes only an analysis document without deleting its Library Score", async () => {
   Object.defineProperty(globalThis, "indexedDB", { configurable: true, value: new IDBFactory() });
-  const repository = new BrowserSheetLibraryRepository();
+  const repository = new IndexedDbSheetLibraryRepository();
   const draft = exampleDraft();
   await repository.add(draft);
 
@@ -39,7 +39,7 @@ it("deletes only an analysis document without deleting its Library Score", async
 
 it("deletes analysis with its Library Score and rejects stale recreation", async () => {
   Object.defineProperty(globalThis, "indexedDB", { configurable: true, value: new IDBFactory() });
-  const repository = new BrowserSheetLibraryRepository();
+  const repository = new IndexedDbSheetLibraryRepository();
   await repository.initialize();
   const draft = exampleDraft();
   await repository.add(draft);

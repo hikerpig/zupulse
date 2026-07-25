@@ -1,0 +1,15 @@
+{
+  "name": "@zupulse/ipad-shell",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "web:dev": "rspack serve --mode development",
+    "web:build": "rspack build --mode production"
+  },
+  "dependencies": {
+    "@zupulse/web-core": "workspace:*",
+    "@zupulse/web-storage": "workspace:*",
+    "@zupulse/web-viewer": "workspace:*"
+  }
+}

@@ -143,6 +143,85 @@ describe("ViewerApplication", () => {
     await application.destroy();
   });
 
+  it("reopens a library score after its Viewer route releases the previous session", async () => {
+    const scoreId = "00000000-0000-4000-8000-000000000001";
+    const readScore = vi.fn(async () => ({ fileName: "score.gp", bytes: new Uint8Array([1]) }));
+    const destroy = vi.fn(async () => undefined);
+    const openSession = vi.fn(async () => ({
+      togglePlayback: async () => undefined,
+      pauseAndFlush: async () => undefined,
+      destroy,
+    }));
+    const repository: SheetLibraryRepository = {
+      initialize: async () => undefined,
+      list: async () => [],
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore,
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+    };
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      openSession,
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+    );
+
+    await application.openLibraryScore(scoreId);
+    await application.releaseLibraryScore(scoreId);
+    await application.openLibraryScore(scoreId);
+
+    expect(readScore).toHaveBeenCalledTimes(2);
+    expect(openSession).toHaveBeenCalledTimes(2);
+    expect(destroy).toHaveBeenCalledOnce();
+    await application.destroy();
+  });
+
+  it("reports a recoverable Library error when a persisted score cannot be restored", async () => {
+    const scoreId = "00000000-0000-4000-8000-000000000001";
+    const repository = {
+      initialize: async () => undefined,
+      list: async () => [],
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async () => {
+        throw new Error("SCORE_BYTES_MISSING");
+      },
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+    } satisfies SheetLibraryRepository;
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      async () => {
+        throw new Error("unused");
+      },
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+    );
+
+    await expect(application.openLibraryScore(scoreId)).rejects.toThrow("SCORE_BYTES_MISSING");
+
+    expect(application.getSnapshot().currentLibraryScoreId).toBeUndefined();
+    expect(application.getSnapshot().library?.error).toEqual({
+      code: "library-unavailable",
+      recoverable: true,
+    });
+    await application.destroy();
+  });
+
   it("emits an explicit navigation target after a single score import", async () => {
     const bytes = new TextEncoder().encode("<score-partwise><part/><measure/></score-partwise>");
     const adapter: ScoreFormatAdapter = {
@@ -194,7 +273,7 @@ describe("ViewerApplication", () => {
       {
         repository,
         gateway: {
-          selectForImport: async () => [{ fileName: "imported.musicxml", readBytes: async () => bytes }],
+          selectForImport: async () => [],
           saveExport: async () => "cancelled",
         },
         adapters: [adapter],
@@ -216,10 +295,26 @@ describe("ViewerApplication", () => {
     const navigate = vi.fn();
     const unsubscribe = application.subscribeNavigation(navigate);
 
-    await application.importScores(false);
+    await application.importScoreSources([{ fileName: "imported.musicxml", readBytes: async () => bytes }], false);
 
     expect(navigate).toHaveBeenCalledWith(expect.stringMatching(/^[0-9a-f-]{36}$/));
     expect(application.getSnapshot().currentLibraryScoreId).toBeUndefined();
+
+    await application.importScoreSources(
+      [
+        { fileName: "batch.musicxml", readBytes: async () => bytes },
+        { fileName: "broken.txt", readBytes: async () => bytes },
+      ],
+      true,
+    );
+
+    expect(application.getSnapshot().library?.importSummary).toMatchObject({
+      total: 2,
+      cancelled: 0,
+      running: false,
+      results: [{ status: "created" }, { status: "failed", fileName: "broken.txt" }],
+    });
+    expect(navigate).toHaveBeenCalledTimes(1);
     unsubscribe();
     await application.destroy();
   });

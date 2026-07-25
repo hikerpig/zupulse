@@ -4,7 +4,7 @@ import { localPlaybackResumeSchema, sidecarPayloadSchema } from "../storage/sche
 import { libraryMetadataSchema, libraryScoreIdSchema, libraryScoreIdentitySchema } from "../library/schemas";
 import { harmonyAnalysisDocumentSchema } from "../harmony/schemas";
 
-export const BRIDGE_SCHEMA_VERSION = "4.0.0" as const;
+export const BRIDGE_SCHEMA_VERSION = "3.0.0" as const;
 const idSchema = z.string().min(1).max(128);
 export const localePreferenceSchema = z.enum(["system", "zh-CN", "en-US"]);
 export const localeStateSchema = z
@@ -101,9 +101,12 @@ export const capabilitiesSchema = z
 
 export const diagnosticEventSchema = z
   .object({
-    code: idSchema,
+    code: z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/),
     durationMs: z.number().nonnegative().optional(),
-    contentHashPrefix: z.string().max(16).optional(),
+    contentHashPrefix: z
+      .string()
+      .regex(/^[a-f0-9]{8,16}$/)
+      .optional(),
   })
   .strict();
 
@@ -208,6 +211,35 @@ export const bridgeEventSchema = z.discriminatedUnion("type", [
       .strict(),
   ),
 ]);
+
+export const IPAD_BRIDGE_REQUEST_TYPES = [
+  "app.handshake",
+  "app.lifecycleAck",
+  "diagnostics.write",
+  "file.open",
+  "file.select",
+] as const satisfies readonly BridgeRequest["type"][];
+export const IPAD_BRIDGE_EVENT_TYPES = [
+  "app.command",
+  "app.lifecycle",
+] as const satisfies readonly BridgeEvent["type"][];
+
+export const ipadBridgeRequestSchema = bridgeRequestSchema.refine(
+  (request) => (IPAD_BRIDGE_REQUEST_TYPES as readonly string[]).includes(request.type),
+  { message: "Unsupported iPad Bridge request type" },
+);
+export const ipadBridgeEventSchema = bridgeEventSchema.refine(
+  (event) => (IPAD_BRIDGE_EVENT_TYPES as readonly string[]).includes(event.type),
+  { message: "Unsupported iPad Bridge event type" },
+);
+export const ipadBridgeEnvelopeSchema = z
+  .object({
+    bridgeVersion: z.literal(BRIDGE_SCHEMA_VERSION),
+    correlationId: idSchema,
+    type: z.enum([...IPAD_BRIDGE_REQUEST_TYPES, ...IPAD_BRIDGE_EVENT_TYPES]),
+    payload: z.unknown(),
+  })
+  .strict();
 
 export const bridgeResponseSchemas = {
   "app.handshake": z

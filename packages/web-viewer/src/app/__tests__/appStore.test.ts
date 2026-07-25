@@ -11,4 +11,15 @@ describe("createAppStore", () => {
     expect(first.getState().theme).toBe("light");
     expect(second.getState().theme).toBe("dark");
   });
+
+  it("keeps score zoom isolated and clamps it to the supported range", () => {
+    const first = createAppStore("dark", 1);
+    const second = createAppStore("dark", 1);
+
+    first.getState().setScoreZoom(4);
+    expect(first.getState().scoreZoom).toBe(2);
+    first.getState().setScoreZoom(0.2);
+    expect(first.getState().scoreZoom).toBe(0.75);
+    expect(second.getState().scoreZoom).toBe(1);
+  });
 });

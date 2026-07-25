@@ -25,7 +25,7 @@ const HARMONY = "harmony_analyses";
 
 type ScoreRecord = Omit<LibraryScore, "practice">;
 
-export class BrowserSheetLibraryRepository implements SheetLibraryRepository, HarmonyAnalysisRepository {
+export class IndexedDbSheetLibraryRepository implements SheetLibraryRepository, HarmonyAnalysisRepository {
   private database?: Promise<IDBDatabase>;
   private unavailable?: Error;
 

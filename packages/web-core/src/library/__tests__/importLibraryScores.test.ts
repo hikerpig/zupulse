@@ -63,4 +63,34 @@ describe("importLibraryScores", () => {
     expect(results.map((item) => item.status)).toEqual(["created", "failed"]);
     expect(store.add).toHaveBeenCalledOnce();
   });
+
+  it("imports sequentially and cancellation preserves completed items", async () => {
+    const store = repository();
+    const controller = new AbortController();
+    let activeReads = 0;
+    let maximumActiveReads = 0;
+    const source = (fileName: string) => ({
+      fileName,
+      readBytes: async () => {
+        activeReads += 1;
+        maximumActiveReads = Math.max(maximumActiveReads, activeReads);
+        await Promise.resolve();
+        activeReads -= 1;
+        return bytes;
+      },
+    });
+
+    const results = await importLibraryScores({
+      repository: store,
+      adapters: [adapter],
+      sources: [source("first.musicxml"), source("second.musicxml")],
+      signal: controller.signal,
+      onResult: () => controller.abort(),
+    });
+
+    expect(results).toHaveLength(1);
+    expect(results[0]?.status).toBe("created");
+    expect(maximumActiveReads).toBe(1);
+    expect(store.add).toHaveBeenCalledOnce();
+  });
 });

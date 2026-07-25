@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Download, PenLine, Star, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { LibraryScoreSummary } from "@zupulse/web-core";
+import type { ImportItemResult, LibraryScoreSummary } from "@zupulse/web-core";
 import type { ViewerApplication } from "../app/ViewerApplication";
 import pageStyles from "../app/pages/PageShell.module.css";
 import styles from "./SheetLibrary.module.css";
@@ -31,6 +31,8 @@ export function SheetLibrary({
   scores,
   loading,
   error,
+  importing,
+  importSummary,
   onImport,
   onOpen,
 }: {
@@ -38,6 +40,13 @@ export function SheetLibrary({
   scores: readonly LibraryScoreSummary[];
   loading: boolean;
   error?: string;
+  importing?: boolean;
+  importSummary?: {
+    total: number;
+    results: readonly ImportItemResult[];
+    cancelled: number;
+    running: boolean;
+  };
   onImport(multiple: boolean): Promise<void>;
   onOpen(id: string): void;
 }) {
@@ -95,10 +104,10 @@ export function SheetLibrary({
           <p className={pageStyles.contextSubtitle}>{t("subtitle")}</p>
         </div>
         <div className={pageStyles.contextActions}>
-          <button className="primary-button" disabled={loading} onClick={() => void onImport(false)}>
+          <button className="primary-button" disabled={loading || importing} onClick={() => void onImport(false)}>
             {t("import")}
           </button>
-          <button className="secondary-button" disabled={loading} onClick={() => void onImport(true)}>
+          <button className="secondary-button" disabled={loading || importing} onClick={() => void onImport(true)}>
             {t("importMany")}
           </button>
         </div>
@@ -130,6 +139,13 @@ export function SheetLibrary({
           </select>
         </div>
       </section>
+      {importSummary ? (
+        <ImportSummary
+          summary={importSummary}
+          onCancel={() => application.cancelImport()}
+          onDismiss={() => application.dismissImportSummary()}
+        />
+      ) : null}
       {loading ? (
         <p role="status" style={{ padding: "24px 24px", color: "var(--text-secondary)" }}>
           {t("loading")}
@@ -307,4 +323,73 @@ export function SheetLibrary({
       )}
     </main>
   );
+}
+
+function ImportSummary({
+  summary,
+  onCancel,
+  onDismiss,
+}: {
+  summary: {
+    total: number;
+    results: readonly ImportItemResult[];
+    cancelled: number;
+    running: boolean;
+  };
+  onCancel(): void;
+  onDismiss(): void;
+}) {
+  const { t } = useTranslation("library");
+  const created = summary.results.filter((item) => item.status === "created");
+  const existing = summary.results.filter((item) => item.status === "existing");
+  const failed = summary.results.filter((item) => item.status === "failed");
+  return (
+    <section
+      className={styles.importSummary}
+      aria-label={t("importSummary.label", {
+        created: created.length,
+        existing: existing.length,
+        failed: failed.length,
+        cancelled: summary.cancelled,
+      })}
+      aria-live="polite"
+    >
+      <div className={styles.importSummaryHeader}>
+        <div>
+          <strong>{summary.running ? t("importSummary.running") : t("importSummary.complete")}</strong>
+          <span>{t("importSummary.progress", { processed: summary.results.length, total: summary.total })}</span>
+        </div>
+        <button type="button" onClick={summary.running ? onCancel : onDismiss}>
+          {summary.running ? t("importSummary.cancelPending") : t("importSummary.close")}
+        </button>
+      </div>
+      <div className={styles.importSummaryCounts}>
+        <span>{t("importSummary.created", { count: created.length })}</span>
+        <span>{t("importSummary.existing", { count: existing.length })}</span>
+        <span>{t("importSummary.failed", { count: failed.length })}</span>
+        {summary.cancelled > 0 ? <span>{t("importSummary.cancelled", { count: summary.cancelled })}</span> : null}
+      </div>
+      {summary.results.length ? (
+        <details className={styles.importSummaryDetails} open={failed.length > 0}>
+          <summary>{t("importSummary.details")}</summary>
+          <ul>
+            {summary.results.map((item, index) => (
+              <li key={`${importResultFileName(item)}-${index}`}>
+                <span>{importResultFileName(item)}</span>
+                <code>
+                  {item.status === "failed"
+                    ? t("importSummary.statusFailed", { code: item.error.code })
+                    : t(`importSummary.status${item.status === "created" ? "Created" : "Existing"}`)}
+                </code>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+    </section>
+  );
+}
+
+function importResultFileName(result: ImportItemResult): string {
+  return result.status === "failed" ? result.fileName : result.score.fileName;
 }

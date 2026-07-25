@@ -88,6 +88,18 @@ importers:
         specifier: 43.1.0
         version: 43.1.0
 
+  apps/ipad-shell:
+    dependencies:
+      '@zupulse/web-core':
+        specifier: workspace:*
+        version: link:../../packages/web-core
+      '@zupulse/web-storage':
+        specifier: workspace:*
+        version: link:../../packages/web-storage
+      '@zupulse/web-viewer':
+        specifier: workspace:*
+        version: link:../../packages/web-viewer
+
   apps/web-demo:
     dependencies:
       '@zupulse/app-i18n':
@@ -96,6 +108,9 @@ importers:
       '@zupulse/web-core':
         specifier: workspace:*
         version: link:../../packages/web-core
+      '@zupulse/web-storage':
+        specifier: workspace:*
+        version: link:../../packages/web-storage
       '@zupulse/web-viewer':
         specifier: workspace:*
         version: link:../../packages/web-viewer
@@ -124,6 +139,16 @@ importers:
       zod:
         specifier: 4.4.3
         version: 4.4.3
+
+  packages/web-storage:
+    dependencies:
+      '@zupulse/web-core':
+        specifier: workspace:*
+        version: link:../web-core
+    devDependencies:
+      fake-indexeddb:
+        specifier: ^6.2.5
+        version: 6.2.5
 
   packages/web-viewer:
     dependencies:

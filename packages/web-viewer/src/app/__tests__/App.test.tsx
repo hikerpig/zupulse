@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
 import { ViewerApplication } from "../ViewerApplication";
-import type { SheetLibraryRepository } from "@zupulse/web-core";
+import type { HarmonyAnalysisRepository, SheetLibraryRepository } from "@zupulse/web-core";
 import { createAppI18n } from "@zupulse/app-i18n";
 import type { LocaleHost } from "../../i18n/locale-controller";
 
@@ -201,6 +201,105 @@ describe("App", () => {
     await application.destroy();
   });
 
+  it("renders an iPad Studio unavailable route without reading score bytes or analysis storage", async () => {
+    const id = "00000000-0000-4000-8000-000000000001";
+    window.history.replaceState(null, "", `#/studio/${id}`);
+    const readScore = vi.fn(async () => {
+      throw new Error("must not read score bytes");
+    });
+    const readAnalysis = vi.fn(async () => null);
+    const openStudioRuntime = vi.fn(async () => {
+      throw new Error("must not create Studio runtime");
+    });
+    const repository: SheetLibraryRepository & HarmonyAnalysisRepository = {
+      initialize: async () => undefined,
+      list: async () => [],
+      get: async () => ({
+        id,
+        scoreIdentity: "a".repeat(64),
+        fileName: "prelude.musicxml",
+        format: "musicxml",
+        title: "C 大调前奏曲",
+        importedAt: "2026-07-24T00:00:00.000Z",
+        isFavorite: false,
+        practice: { hasLoop: false },
+        metadata: {},
+      }),
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore,
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+      read: readAnalysis,
+      save: async () => {
+        throw new Error("unused");
+      },
+    };
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      async () => {
+        throw new Error("unused");
+      },
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+      openStudioRuntime,
+    );
+
+    render(<App application={application} capabilities={{ harmonyAnalysis: false }} />);
+
+    expect(await screen.findByRole("heading", { name: "和弦分析暂不可用" })).toBeTruthy();
+    expect(screen.getByText("C 大调前奏曲")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "返回查看器" }).getAttribute("href")).toBe(`#/viewer/${id}`);
+    expect(screen.getByRole("link", { name: "返回曲谱库" }).getAttribute("href")).toBe("#/");
+    expect(screen.queryByRole("link", { name: "和弦工作室" })).toBeNull();
+    expect(readScore).not.toHaveBeenCalled();
+    expect(readAnalysis).not.toHaveBeenCalled();
+    expect(openStudioRuntime).not.toHaveBeenCalled();
+    await application.destroy();
+  });
+
+  it("hides Studio entry points when harmony analysis is unavailable", async () => {
+    const id = "00000000-0000-4000-8000-000000000001";
+    window.history.replaceState(null, "", `#/viewer/${id}`);
+    const repository: SheetLibraryRepository = {
+      initialize: async () => undefined,
+      list: async () => [],
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async () => ({ fileName: "score.gp", bytes: new Uint8Array([1]) }),
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+    };
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      async () => ({
+        togglePlayback: async () => undefined,
+        pauseAndFlush: async () => undefined,
+        destroy: async () => undefined,
+      }),
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+    );
+
+    render(<App application={application} capabilities={{ harmonyAnalysis: false }} />);
+
+    expect(await screen.findByRole("link", { name: "查看器" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "和弦工作室" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "和弦分析" })).toBeNull();
+    await application.destroy();
+  });
+
   it("keeps a library click on the requested score instead of restoring the previous route", async () => {
     const firstId = "00000000-0000-4000-8000-000000000001";
     const secondId = "00000000-0000-4000-8000-000000000002";
@@ -252,6 +351,61 @@ describe("App", () => {
     await waitFor(() => expect(window.location.hash).toBe(`#/viewer/${secondId}`));
     await waitFor(() => expect(application.hasSession(secondId)).toBe(true));
     expect(openSession).toHaveBeenCalledTimes(2);
+    await application.destroy();
+  });
+
+  it("reopens the same score after returning to the library through the logo", async () => {
+    const id = "00000000-0000-4000-8000-000000000001";
+    window.history.replaceState(null, "", `#/viewer/${id}`);
+    vi.spyOn(window.navigator, "userAgent", "get").mockReturnValue("browser");
+    const repository: SheetLibraryRepository = {
+      initialize: async () => undefined,
+      list: async () => [
+        {
+          id,
+          title: "Score A",
+          fileName: "score-a.gp",
+          scoreIdentity: "a".repeat(64),
+          format: "gp",
+          importedAt: "2026-07-13T00:00:00.000Z",
+          isFavorite: false,
+          practice: { hasLoop: false },
+        },
+      ],
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async () => ({ fileName: "score-a.gp", bytes: new Uint8Array([1]) }),
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+    };
+    const destroy = vi.fn(async () => undefined);
+    const openSession = vi.fn(async () => ({
+      togglePlayback: async () => undefined,
+      pauseAndFlush: async () => undefined,
+      destroy,
+    }));
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      openSession,
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+    );
+    const user = userEvent.setup();
+    render(<App application={application} />);
+
+    await waitFor(() => expect(application.hasSession(id)).toBe(true));
+    await user.click(screen.getByRole("link", { name: "逐拍首页" }));
+    await user.click((await screen.findByText("Score A")).closest("[role='button']")!);
+
+    await waitFor(() => expect(application.hasSession(id)).toBe(true));
+    expect(openSession).toHaveBeenCalledTimes(2);
+    expect(destroy).toHaveBeenCalledOnce();
     await application.destroy();
   });
 });

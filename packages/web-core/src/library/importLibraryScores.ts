@@ -11,8 +11,17 @@ export async function importLibraryScores(input: {
   sources: readonly ScoreImportSource[];
   repository: SheetLibraryRepository;
   adapters: readonly ScoreFormatAdapter[];
+  signal?: AbortSignal;
+  onResult?(result: ImportItemResult, index: number): void | Promise<void>;
 }): Promise<readonly ImportItemResult[]> {
-  return Promise.all(input.sources.map((source) => importOne(source, input.repository, input.adapters)));
+  const results: ImportItemResult[] = [];
+  for (const [index, source] of input.sources.entries()) {
+    if (input.signal?.aborted) break;
+    const result = await importOne(source, input.repository, input.adapters);
+    results.push(result);
+    await input.onResult?.(result, index);
+  }
+  return results;
 }
 
 async function importOne(

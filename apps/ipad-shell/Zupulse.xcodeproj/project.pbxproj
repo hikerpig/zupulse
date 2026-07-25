@@ -1,0 +1,648 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* ipad-app.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* ipad-app.swift */; };
+		A10000000000000000000002 /* app-shell-view.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* app-shell-view.swift */; };
+		A10000000000000000000003 /* web-view-container.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* web-view-container.swift */; };
+		A10000000000000000000004 /* app-shell-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* app-shell-tests.swift */; };
+		A10000000000000000000005 /* bridge-contract-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* bridge-contract-tests.swift */; };
+		A10000000000000000000006 /* ipad-bridge.json in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* ipad-bridge.json */; };
+		A10000000000000000000007 /* bridge-envelope.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* bridge-envelope.swift */; };
+		A10000000000000000000008 /* bridge-error.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* bridge-error.swift */; };
+		A10000000000000000000009 /* bridge-contract-validator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* bridge-contract-validator.swift */; };
+		A1000000000000000000000A /* bridge-router-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000C /* bridge-router-tests.swift */; };
+		A1000000000000000000000B /* bridge-router.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000D /* bridge-router.swift */; };
+		A1000000000000000000000C /* app-resource-scheme-handler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000E /* app-resource-scheme-handler.swift */; };
+		A1000000000000000000000D /* app-resource-scheme-handler-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000F /* app-resource-scheme-handler-tests.swift */; };
+		A1000000000000000000000E /* file-token-store.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* file-token-store.swift */; };
+		A1000000000000000000000F /* binary-data-scheme-handler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* binary-data-scheme-handler.swift */; };
+		A10000000000000000000010 /* file-token-store-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* file-token-store-tests.swift */; };
+		A10000000000000000000011 /* binary-data-scheme-handler-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* binary-data-scheme-handler-tests.swift */; };
+		A10000000000000000000012 /* document-picker-coordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* document-picker-coordinator.swift */; };
+		A10000000000000000000013 /* document-picker-route-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000015 /* document-picker-route-tests.swift */; };
+		C10000000000000000000001 /* import-viewer-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000001 /* import-viewer-tests.swift */; };
+		C10000000000000000000002 /* desktop-acceptance.gp in Resources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000003 /* desktop-acceptance.gp */; };
+		C10000000000000000000003 /* single-voice.musicxml in Resources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000004 /* single-voice.musicxml */; };
+		C10000000000000000000004 /* viewer-recovery-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000005 /* viewer-recovery-tests.swift */; };
+		C10000000000000000000005 /* broken.mxl in Resources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000006 /* broken.mxl */; };
+		D10000000000000000000001 /* audio-session-controller.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000001 /* audio-session-controller.swift */; };
+		D10000000000000000000002 /* audio-session-controller-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000002 /* audio-session-controller-tests.swift */; };
+		D10000000000000000000003 /* lifecycle-coordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000003 /* lifecycle-coordinator.swift */; };
+		D10000000000000000000004 /* lifecycle-coordinator-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000004 /* lifecycle-coordinator-tests.swift */; };
+		D10000000000000000000005 /* web-content-recovery-coordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000005 /* web-content-recovery-coordinator.swift */; };
+		D10000000000000000000006 /* web-content-recovery-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000006 /* web-content-recovery-tests.swift */; };
+		E10000000000000000000001 /* external-open-queue.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000000000000000000001 /* external-open-queue.swift */; };
+		E10000000000000000000002 /* external-open-queue-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000000000000000000002 /* external-open-queue-tests.swift */; };
+		F10000000000000000000001 /* navigation-policy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000001 /* navigation-policy.swift */; };
+		F10000000000000000000002 /* navigation-policy-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000002 /* navigation-policy-tests.swift */; };
+		F10000000000000000000003 /* diagnostic-logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000003 /* diagnostic-logger.swift */; };
+		F10000000000000000000004 /* diagnostic-exporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000004 /* diagnostic-exporter.swift */; };
+		F10000000000000000000005 /* diagnostic-logger-tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000005 /* diagnostic-logger-tests.swift */; };
+		B10000000000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000001 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A30000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A40000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A50000000000000000000001;
+			remoteInfo = Zupulse;
+		};
+		C30000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A40000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A50000000000000000000001;
+			remoteInfo = Zupulse;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		A20000000000000000000001 /* ipad-app.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ipad-app.swift"; sourceTree = "<group>"; };
+		A20000000000000000000002 /* app-shell-view.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "app-shell-view.swift"; sourceTree = "<group>"; };
+		A20000000000000000000003 /* web-view-container.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "web-view-container.swift"; sourceTree = "<group>"; };
+		A20000000000000000000004 /* app-shell-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "app-shell-tests.swift"; sourceTree = "<group>"; };
+		A20000000000000000000005 /* Zupulse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zupulse.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000000000000000000006 /* ZupulseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZupulseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000000000000000000007 /* bridge-contract-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "bridge-contract-tests.swift"; sourceTree = "<group>"; };
+		A20000000000000000000008 /* ipad-bridge.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "ipad-bridge.json"; path = "../../packages/web-core/src/bridge/__tests__/fixtures/ipad-bridge.json"; sourceTree = SOURCE_ROOT; };
+		A20000000000000000000009 /* bridge-envelope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "bridge-envelope.swift"; sourceTree = "<group>"; };
+		A2000000000000000000000A /* bridge-error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "bridge-error.swift"; sourceTree = "<group>"; };
+		A2000000000000000000000B /* bridge-contract-validator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "bridge-contract-validator.swift"; sourceTree = "<group>"; };
+		A2000000000000000000000C /* bridge-router-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "bridge-router-tests.swift"; sourceTree = "<group>"; };
+		A2000000000000000000000D /* bridge-router.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "bridge-router.swift"; sourceTree = "<group>"; };
+		A2000000000000000000000E /* app-resource-scheme-handler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "app-resource-scheme-handler.swift"; sourceTree = "<group>"; };
+		A2000000000000000000000F /* app-resource-scheme-handler-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "app-resource-scheme-handler-tests.swift"; sourceTree = "<group>"; };
+		A20000000000000000000010 /* file-token-store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "file-token-store.swift"; sourceTree = "<group>"; };
+		A20000000000000000000011 /* binary-data-scheme-handler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "binary-data-scheme-handler.swift"; sourceTree = "<group>"; };
+		A20000000000000000000012 /* file-token-store-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "file-token-store-tests.swift"; sourceTree = "<group>"; };
+		A20000000000000000000013 /* binary-data-scheme-handler-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "binary-data-scheme-handler-tests.swift"; sourceTree = "<group>"; };
+		A20000000000000000000014 /* document-picker-coordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "document-picker-coordinator.swift"; sourceTree = "<group>"; };
+		A20000000000000000000015 /* document-picker-route-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "document-picker-route-tests.swift"; sourceTree = "<group>"; };
+		C20000000000000000000001 /* import-viewer-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "import-viewer-tests.swift"; sourceTree = "<group>"; };
+		C20000000000000000000002 /* ZupulseUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZupulseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C20000000000000000000003 /* desktop-acceptance.gp */ = {isa = PBXFileReference; lastKnownFileType = file; name = "desktop-acceptance.gp"; path = "../../test-fixtures/gp/generated/desktop-acceptance.gp"; sourceTree = SOURCE_ROOT; };
+		C20000000000000000000004 /* single-voice.musicxml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = "single-voice.musicxml"; path = "../../test-fixtures/musicxml/generated/single-voice.musicxml"; sourceTree = SOURCE_ROOT; };
+		C20000000000000000000005 /* viewer-recovery-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "viewer-recovery-tests.swift"; sourceTree = "<group>"; };
+		C20000000000000000000006 /* broken.mxl */ = {isa = PBXFileReference; lastKnownFileType = file; name = broken.mxl; path = "../../test-fixtures/musicxml/generated/broken.mxl"; sourceTree = SOURCE_ROOT; };
+		D20000000000000000000001 /* audio-session-controller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "audio-session-controller.swift"; sourceTree = "<group>"; };
+		D20000000000000000000002 /* audio-session-controller-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "audio-session-controller-tests.swift"; sourceTree = "<group>"; };
+		D20000000000000000000003 /* lifecycle-coordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "lifecycle-coordinator.swift"; sourceTree = "<group>"; };
+		D20000000000000000000004 /* lifecycle-coordinator-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "lifecycle-coordinator-tests.swift"; sourceTree = "<group>"; };
+		D20000000000000000000005 /* web-content-recovery-coordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "web-content-recovery-coordinator.swift"; sourceTree = "<group>"; };
+		D20000000000000000000006 /* web-content-recovery-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "web-content-recovery-tests.swift"; sourceTree = "<group>"; };
+		E20000000000000000000001 /* external-open-queue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "external-open-queue.swift"; sourceTree = "<group>"; };
+		E20000000000000000000002 /* external-open-queue-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "external-open-queue-tests.swift"; sourceTree = "<group>"; };
+		E20000000000000000000003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F20000000000000000000001 /* navigation-policy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "navigation-policy.swift"; sourceTree = "<group>"; };
+		F20000000000000000000002 /* navigation-policy-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "navigation-policy-tests.swift"; sourceTree = "<group>"; };
+		F20000000000000000000003 /* diagnostic-logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "diagnostic-logger.swift"; sourceTree = "<group>"; };
+		F20000000000000000000004 /* diagnostic-exporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "diagnostic-exporter.swift"; sourceTree = "<group>"; };
+		F20000000000000000000005 /* diagnostic-logger-tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "diagnostic-logger-tests.swift"; sourceTree = "<group>"; };
+		B20000000000000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A60000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A60000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C60000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A70000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				A70000000000000000000002 /* app */,
+				D70000000000000000000001 /* audio */,
+				A70000000000000000000006 /* bridge */,
+				F70000000000000000000001 /* diagnostics */,
+				A70000000000000000000007 /* files */,
+				A70000000000000000000003 /* webview */,
+				A70000000000000000000004 /* tests */,
+				C70000000000000000000001 /* ui-tests */,
+				A70000000000000000000005 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A70000000000000000000002 /* app */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000001 /* ipad-app.swift */,
+				A20000000000000000000002 /* app-shell-view.swift */,
+				D20000000000000000000003 /* lifecycle-coordinator.swift */,
+				E20000000000000000000003 /* Info.plist */,
+				B20000000000000000000001 /* Assets.xcassets */,
+			);
+			path = app;
+			sourceTree = "<group>";
+		};
+		A70000000000000000000003 /* webview */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000003 /* web-view-container.swift */,
+				A2000000000000000000000E /* app-resource-scheme-handler.swift */,
+				F20000000000000000000001 /* navigation-policy.swift */,
+				D20000000000000000000005 /* web-content-recovery-coordinator.swift */,
+			);
+			path = webview;
+			sourceTree = "<group>";
+		};
+		A70000000000000000000004 /* tests */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000004 /* app-shell-tests.swift */,
+				A20000000000000000000007 /* bridge-contract-tests.swift */,
+				A2000000000000000000000C /* bridge-router-tests.swift */,
+				A2000000000000000000000F /* app-resource-scheme-handler-tests.swift */,
+				A20000000000000000000012 /* file-token-store-tests.swift */,
+				A20000000000000000000013 /* binary-data-scheme-handler-tests.swift */,
+				A20000000000000000000015 /* document-picker-route-tests.swift */,
+				F20000000000000000000002 /* navigation-policy-tests.swift */,
+				F20000000000000000000005 /* diagnostic-logger-tests.swift */,
+				D20000000000000000000002 /* audio-session-controller-tests.swift */,
+				D20000000000000000000004 /* lifecycle-coordinator-tests.swift */,
+				D20000000000000000000006 /* web-content-recovery-tests.swift */,
+				E20000000000000000000002 /* external-open-queue-tests.swift */,
+				A20000000000000000000008 /* ipad-bridge.json */,
+			);
+			path = tests;
+			sourceTree = "<group>";
+		};
+		A70000000000000000000005 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000005 /* Zupulse.app */,
+				A20000000000000000000006 /* ZupulseTests.xctest */,
+				C20000000000000000000002 /* ZupulseUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A70000000000000000000006 /* bridge */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000009 /* bridge-envelope.swift */,
+				A2000000000000000000000A /* bridge-error.swift */,
+				A2000000000000000000000B /* bridge-contract-validator.swift */,
+				A2000000000000000000000D /* bridge-router.swift */,
+			);
+			path = bridge;
+			sourceTree = "<group>";
+		};
+		A70000000000000000000007 /* files */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000010 /* file-token-store.swift */,
+				A20000000000000000000011 /* binary-data-scheme-handler.swift */,
+				A20000000000000000000014 /* document-picker-coordinator.swift */,
+				E20000000000000000000001 /* external-open-queue.swift */,
+			);
+			path = files;
+			sourceTree = "<group>";
+		};
+		C70000000000000000000001 /* ui-tests */ = {
+			isa = PBXGroup;
+			children = (
+				C20000000000000000000001 /* import-viewer-tests.swift */,
+				C20000000000000000000005 /* viewer-recovery-tests.swift */,
+				C20000000000000000000003 /* desktop-acceptance.gp */,
+				C20000000000000000000004 /* single-voice.musicxml */,
+				C20000000000000000000006 /* broken.mxl */,
+			);
+			path = "ui-tests";
+			sourceTree = "<group>";
+		};
+		D70000000000000000000001 /* audio */ = {
+			isa = PBXGroup;
+			children = (
+				D20000000000000000000001 /* audio-session-controller.swift */,
+			);
+			path = audio;
+			sourceTree = "<group>";
+		};
+		F70000000000000000000001 /* diagnostics */ = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000003 /* diagnostic-logger.swift */,
+				F20000000000000000000004 /* diagnostic-exporter.swift */,
+			);
+			path = diagnostics;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A50000000000000000000001 /* Zupulse */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A80000000000000000000002 /* Build configuration list for PBXNativeTarget "Zupulse" */;
+			buildPhases = (
+				A90000000000000000000001 /* Sources */,
+				A90000000000000000000002 /* Bundle Web Assets */,
+				C90000000000000000000003 /* Resources */,
+				A60000000000000000000001 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Zupulse;
+			productName = Zupulse;
+			productReference = A20000000000000000000005 /* Zupulse.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A50000000000000000000002 /* ZupulseTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A80000000000000000000003 /* Build configuration list for PBXNativeTarget "ZupulseTests" */;
+			buildPhases = (
+				A90000000000000000000003 /* Sources */,
+				A90000000000000000000004 /* Resources */,
+				A60000000000000000000002 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A30000000000000000000002 /* PBXTargetDependency */,
+			);
+			name = ZupulseTests;
+			productName = ZupulseTests;
+			productReference = A20000000000000000000006 /* ZupulseTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		C50000000000000000000001 /* ZupulseUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C80000000000000000000001 /* Build configuration list for PBXNativeTarget "ZupulseUITests" */;
+			buildPhases = (
+				C90000000000000000000001 /* Sources */,
+				C90000000000000000000002 /* Resources */,
+				C60000000000000000000001 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C30000000000000000000002 /* PBXTargetDependency */,
+			);
+			name = ZupulseUITests;
+			productName = ZupulseUITests;
+			productReference = C20000000000000000000002 /* ZupulseUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A40000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2630;
+				LastUpgradeCheck = 2630;
+				TargetAttributes = {
+					A50000000000000000000001 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					A50000000000000000000002 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = A50000000000000000000001;
+					};
+					C50000000000000000000001 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = A50000000000000000000001;
+					};
+				};
+			};
+			buildConfigurationList = A80000000000000000000001 /* Build configuration list for PBXProject "Zupulse" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A70000000000000000000001;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = A70000000000000000000005 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A50000000000000000000001 /* Zupulse */,
+				A50000000000000000000002 /* ZupulseTests */,
+				C50000000000000000000001 /* ZupulseUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A90000000000000000000004 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000006 /* ipad-bridge.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C90000000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C90000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000000000000000000001 /* Assets.xcassets in Resources */,
+				C10000000000000000000002 /* desktop-acceptance.gp in Resources */,
+				C10000000000000000000003 /* single-voice.musicxml in Resources */,
+				C10000000000000000000005 /* broken.mxl in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		A90000000000000000000002 /* Bundle Web Assets */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Bundle Web Assets";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -eu\nREPOSITORY_ROOT=\"$SRCROOT/../..\"\ncd \"$REPOSITORY_ROOT\"\nRUN_TOOL=\"$REPOSITORY_ROOT/apps/ipad-shell/scripts/run-tool-from-xcode.sh\"\n/bin/sh \"$RUN_TOOL\" pnpm ipad:web:build\n/bin/sh \"$RUN_TOOL\" node apps/ipad-shell/scripts/verify-web-assets.mjs\nif [ \"$CONFIGURATION\" = \"Release\" ]; then\n  /bin/sh \"$RUN_TOOL\" node apps/ipad-shell/scripts/verify-release.mjs\nfi\nWEB_DESTINATION=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Web\"\nrm -rf \"$WEB_DESTINATION\"\nmkdir -p \"$WEB_DESTINATION\"\nditto apps/ipad-shell/dist/web \"$WEB_DESTINATION\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A90000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000001 /* ipad-app.swift in Sources */,
+				A10000000000000000000002 /* app-shell-view.swift in Sources */,
+				A10000000000000000000003 /* web-view-container.swift in Sources */,
+				A10000000000000000000007 /* bridge-envelope.swift in Sources */,
+				A10000000000000000000008 /* bridge-error.swift in Sources */,
+				A10000000000000000000009 /* bridge-contract-validator.swift in Sources */,
+				A1000000000000000000000B /* bridge-router.swift in Sources */,
+				A1000000000000000000000C /* app-resource-scheme-handler.swift in Sources */,
+				A1000000000000000000000E /* file-token-store.swift in Sources */,
+				A1000000000000000000000F /* binary-data-scheme-handler.swift in Sources */,
+				A10000000000000000000012 /* document-picker-coordinator.swift in Sources */,
+				D10000000000000000000001 /* audio-session-controller.swift in Sources */,
+				D10000000000000000000003 /* lifecycle-coordinator.swift in Sources */,
+				D10000000000000000000005 /* web-content-recovery-coordinator.swift in Sources */,
+				E10000000000000000000001 /* external-open-queue.swift in Sources */,
+				F10000000000000000000001 /* navigation-policy.swift in Sources */,
+				F10000000000000000000003 /* diagnostic-logger.swift in Sources */,
+				F10000000000000000000004 /* diagnostic-exporter.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A90000000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000004 /* app-shell-tests.swift in Sources */,
+				A10000000000000000000005 /* bridge-contract-tests.swift in Sources */,
+				A1000000000000000000000A /* bridge-router-tests.swift in Sources */,
+				A1000000000000000000000D /* app-resource-scheme-handler-tests.swift in Sources */,
+				A10000000000000000000010 /* file-token-store-tests.swift in Sources */,
+				A10000000000000000000011 /* binary-data-scheme-handler-tests.swift in Sources */,
+				A10000000000000000000013 /* document-picker-route-tests.swift in Sources */,
+				D10000000000000000000002 /* audio-session-controller-tests.swift in Sources */,
+				D10000000000000000000004 /* lifecycle-coordinator-tests.swift in Sources */,
+				D10000000000000000000006 /* web-content-recovery-tests.swift in Sources */,
+				E10000000000000000000002 /* external-open-queue-tests.swift in Sources */,
+				F10000000000000000000002 /* navigation-policy-tests.swift in Sources */,
+				F10000000000000000000005 /* diagnostic-logger-tests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C90000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C10000000000000000000001 /* import-viewer-tests.swift in Sources */,
+				C10000000000000000000004 /* viewer-recovery-tests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A30000000000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A50000000000000000000001 /* Zupulse */;
+			targetProxy = A30000000000000000000001 /* PBXContainerItemProxy */;
+		};
+		C30000000000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A50000000000000000000001 /* Zupulse */;
+			targetProxy = C30000000000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		AA0000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		AA0000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		AA0000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = PS5VXB9FWN;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = app/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "逐拍";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = NO;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hikerpig.zupulse;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Debug;
+		};
+		AA0000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = PS5VXB9FWN;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = app/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "逐拍";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = NO;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hikerpig.zupulse;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Release;
+		};
+		AA0000000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = PS5VXB9FWN;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hikerpig.zupulse.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 2;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Zupulse.app/Zupulse";
+			};
+			name = Debug;
+		};
+		AA0000000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = PS5VXB9FWN;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hikerpig.zupulse.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 2;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Zupulse.app/Zupulse";
+			};
+			name = Release;
+		};
+		CC0000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEVELOPMENT_TEAM = PS5VXB9FWN;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.hikerpig.zupulse.ui-tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 2;
+				TEST_TARGET_NAME = Zupulse;
+			};
+			name = Debug;
+		};
+		CC0000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEVELOPMENT_TEAM = PS5VXB9FWN;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.hikerpig.zupulse.ui-tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 2;
+				TEST_TARGET_NAME = Zupulse;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A80000000000000000000001 /* Build configuration list for PBXProject "Zupulse" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000001 /* Debug */,
+				AA0000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A80000000000000000000002 /* Build configuration list for PBXNativeTarget "Zupulse" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000003 /* Debug */,
+				AA0000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A80000000000000000000003 /* Build configuration list for PBXNativeTarget "ZupulseTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000005 /* Debug */,
+				AA0000000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C80000000000000000000001 /* Build configuration list for PBXNativeTarget "ZupulseUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC0000000000000000000001 /* Debug */,
+				CC0000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A40000000000000000000001 /* Project object */;
+}

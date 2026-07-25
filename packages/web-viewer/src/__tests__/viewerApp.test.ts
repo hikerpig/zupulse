@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
-import { createDefaultOpenSession, renderViewerState, type DefaultOpenSessionDependencies } from "../viewerApp";
+import {
+  attachScoreZoomCommit,
+  createDefaultOpenSession,
+  renderViewerState,
+  type DefaultOpenSessionDependencies,
+} from "../viewerApp";
+import { SCORE_ZOOM_COMMIT_EVENT } from "../scoreZoom";
 import { mountViewerApp } from "../mountViewerApp";
 
 function renderSessionFixture(ownerDocument: Document): void {
@@ -331,6 +337,119 @@ describe("mountViewerApp", () => {
 });
 
 describe("createDefaultOpenSession cleanup", () => {
+  it("maps a score beat selection to the existing written playback position without toggling playback", async () => {
+    renderSessionFixture(document);
+    let beatHandler: ((beat: { displayStart: number; voice: { bar: { index: number } } }) => void) | undefined;
+    let detached = false;
+    const dispatch = vi.fn(async () => undefined);
+    const api = {
+      beatMouseDown: {
+        on(handler: typeof beatHandler) {
+          beatHandler = handler;
+          return () => {
+            detached = true;
+          };
+        },
+      },
+    };
+    const openSession = createDefaultOpenSession(document, {} as never, {
+      createApi: () => api,
+      createAdapter: () => ({ destroy: vi.fn() }) as never,
+      presentFile: async () => ({
+        status: "ready",
+        message: "已加载 Song",
+        identity: { contentHash: "a".repeat(64), format: "gp" },
+        summary: { title: "Song", trackCount: 1, masterBarCount: 2 },
+      }),
+      waitForScore: async () => ({}) as never,
+      extractModel: () => ({
+        baseTempo: 120,
+        tracks: [{ id: "track-0", sourceIndex: 0, name: "Lead" }],
+        timeline: {
+          durationTicks: 3840,
+          durationMs: 4000,
+          measures: [
+            { id: "measure-0", index: 0, startTick: 0, durationTicks: 1920, beatTicks: [0, 480, 960, 1440] },
+            {
+              id: "measure-1",
+              index: 1,
+              startTick: 1920,
+              durationTicks: 1920,
+              beatTicks: [1920, 2400, 2880, 3360],
+            },
+          ],
+        },
+      }),
+      createController: () =>
+        ({
+          initialize: async () => undefined,
+          getState: () => ({
+            sessionId: "session",
+            transport: "playing",
+            position: { measureId: "measure-0", measureIndex: 0, beatIndex: 0, tick: 0, cachedTimeMs: 0 },
+          }),
+          subscribe: () => () => undefined,
+          dispatch,
+          flush: async () => undefined,
+          destroy: async () => undefined,
+        }) as never,
+    });
+    const session = await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
+
+    beatHandler?.({ displayStart: 480, voice: { bar: { index: 1 } } });
+    await vi.waitFor(() =>
+      expect(dispatch).toHaveBeenCalledWith({
+        type: "seek",
+        position: {
+          measureId: "measure-1",
+          measureIndex: 1,
+          beatIndex: 1,
+          tick: 2400,
+          cachedTimeMs: 2500,
+        },
+      }),
+    );
+    expect(dispatch).not.toHaveBeenCalledWith({ type: "toggle-playback" });
+
+    await session.destroy();
+    expect(detached).toBe(true);
+  });
+
+  it("commits alphaTab scale once and restores the written scroll anchor after layout", () => {
+    const scrollElement = document.createElement("div");
+    Object.defineProperties(scrollElement, {
+      clientHeight: { configurable: true, value: 400 },
+      scrollHeight: { configurable: true, value: 1000 },
+    });
+    scrollElement.scrollTop = 300;
+    const updateSettings = vi.fn();
+    const api = {
+      settings: { display: { scale: 1 } },
+      updateSettings,
+      tickPosition: 1920,
+      isLooping: true,
+    };
+    let restore: (() => void) | undefined;
+    const detach = attachScoreZoomCommit(document, api, scrollElement, (callback) => {
+      restore = callback;
+    });
+
+    document.dispatchEvent(new CustomEvent(SCORE_ZOOM_COMMIT_EVENT, { detail: { zoom: 1.4 } }));
+
+    expect(api.settings.display.scale).toBe(1.4);
+    expect(updateSettings).toHaveBeenCalledOnce();
+    expect(api.tickPosition).toBe(1920);
+    expect(api.isLooping).toBe(true);
+    expect(scrollElement.scrollTop).toBe(300);
+    Object.defineProperty(scrollElement, "scrollHeight", { configurable: true, value: 1400 });
+    restore?.();
+    expect(scrollElement.scrollTop).toBe(500);
+
+    detach();
+    document.dispatchEvent(new CustomEvent(SCORE_ZOOM_COMMIT_EVENT, { detail: { zoom: 1.5 } }));
+    expect(updateSettings).toHaveBeenCalledOnce();
+  });
+
   it("clears the empty state before alphaTab establishes its cursor coordinate system", async () => {
     renderSessionFixture(document);
     const createApi = vi.fn((element: HTMLElement) => {
@@ -358,6 +477,8 @@ describe("createDefaultOpenSession cleanup", () => {
 
   it("enables alphaTab playback cursors and element highlighting", async () => {
     renderSessionFixture(document);
+    const scoreHost = document.getElementById("alpha-tab");
+    if (scoreHost) scoreHost.dataset.scoreZoom = "1.25";
     const createApi = vi.fn((_element: HTMLElement, _settings: unknown) => ({ load: () => false }));
     const openSession = createDefaultOpenSession(document, {} as never, {
       createApi,
@@ -379,7 +500,7 @@ describe("createDefaultOpenSession cleanup", () => {
       {
         core: { includeNoteBounds: boolean };
         player: { scrollElement: HTMLElement };
-        display: { resources: { secondaryGlyphColor: string } };
+        display: { scale: number; resources: { secondaryGlyphColor: string } };
       },
     ];
     expect(settings.player).toEqual(
@@ -393,6 +514,7 @@ describe("createDefaultOpenSession cleanup", () => {
     );
     expect(settings.core.includeNoteBounds).toBe(true);
     expect(settings.player.scrollElement).toBe(alphaTabHost.parentElement);
+    expect(settings.display.scale).toBe(1.25);
     expect(settings.display.resources.secondaryGlyphColor).toBe("#000000");
   });
 

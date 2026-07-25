@@ -22,7 +22,9 @@ import type {
   ScoreFormatAdapter,
   SheetLibraryRepository,
   LibraryScoreSummary,
+  ImportItemResult,
   PreviewTransportState,
+  ScoreImportSource,
 } from "@zupulse/web-core";
 import { insertCorrection } from "@zupulse/web-core";
 import { HarmonyStudioSession } from "../harmonyStudioSession";
@@ -46,6 +48,12 @@ export type ViewerApplicationSnapshot = {
     loading: boolean;
     error?: ApplicationIssue;
     importing?: boolean;
+    importSummary?: {
+      total: number;
+      results: readonly ImportItemResult[];
+      cancelled: number;
+      running: boolean;
+    };
   };
   studio?: {
     libraryScoreId: string;
@@ -82,6 +90,7 @@ export class ViewerApplication implements ViewerAppHandle {
   private readonly studioAvailableTrackIds = new Map<string, string[]>();
   private readonly studioSources = new Map<string, { rootXml: string; partIds: readonly string[] }>();
   private destroying = false;
+  private importAbortController: AbortController | undefined;
   private snapshot: ViewerApplicationSnapshot = {};
   private readonly listeners = new Set<() => void>();
   private readonly navigationListeners = new Set<(libraryScoreId: string) => void>();
@@ -549,18 +558,68 @@ export class ViewerApplication implements ViewerAppHandle {
 
   async importScores(multiple: boolean): Promise<void> {
     if (!this.library) return this.scheduleOpen(false);
-    const sources = await this.library.gateway.selectForImport({ multiple });
+    let sources: readonly ScoreImportSource[];
+    try {
+      sources = await this.library.gateway.selectForImport({ multiple });
+    } catch (error) {
+      this.reportDiagnostic(error, "library.import.select");
+      this.setSnapshot({
+        ...this.snapshot,
+        library: {
+          scores: this.snapshot.library?.scores ?? [],
+          loading: false,
+          error: applicationIssue("library-unavailable"),
+        },
+      });
+      return;
+    }
     if (!sources.length) return;
+    await this.importScoreSources(sources, multiple);
+  }
+
+  async importScoreSources(sources: readonly ScoreImportSource[], multiple: boolean): Promise<void> {
+    if (!this.library || !sources.length || this.importAbortController) return;
+    const controller = new AbortController();
+    this.importAbortController = controller;
     this.setSnapshot({
       ...this.snapshot,
-      library: { scores: this.snapshot.library?.scores ?? [], loading: false, importing: true },
+      library: {
+        scores: this.snapshot.library?.scores ?? [],
+        loading: false,
+        importing: true,
+        importSummary: { total: sources.length, results: [], cancelled: 0, running: true },
+      },
     });
+    const completed: ImportItemResult[] = [];
     const results = await importLibraryScores({
       sources,
       repository: this.library.repository,
       adapters: this.library.adapters,
+      signal: controller.signal,
+      onResult: (result) => {
+        completed.push(result);
+        this.setImportSummary(sources.length, completed, false, true);
+      },
+    }).finally(() => {
+      if (this.importAbortController === controller) this.importAbortController = undefined;
     });
     await this.refreshLibrary();
+    this.setImportSummary(sources.length, results, controller.signal.aborted, false);
+    const successful = results.some((item) => item.status === "created" || item.status === "existing");
+    if (!successful) {
+      const failure = results.find((item) => item.status === "failed");
+      if (multiple || controller.signal.aborted) return;
+      this.reportDiagnostic(failure?.error, "library.import");
+      this.setSnapshot({
+        ...this.snapshot,
+        library: {
+          scores: this.snapshot.library?.scores ?? [],
+          loading: false,
+          error: applicationIssue("library-unavailable"),
+        },
+      });
+      return;
+    }
     if (!multiple) {
       const result = results.find((item) => item.status === "created" || item.status === "existing");
       if (result && result.status !== "failed")
@@ -568,10 +627,78 @@ export class ViewerApplication implements ViewerAppHandle {
     }
   }
 
+  cancelImport(): void {
+    this.importAbortController?.abort();
+  }
+
+  dismissImportSummary(): void {
+    const library = this.snapshot.library;
+    if (!library?.importSummary || library.importSummary.running) return;
+    const { importSummary: _importSummary, ...nextLibrary } = library;
+    this.setSnapshot({ ...this.snapshot, library: nextLibrary });
+  }
+
+  private setImportSummary(
+    total: number,
+    results: readonly ImportItemResult[],
+    cancelled: boolean,
+    running: boolean,
+  ): void {
+    this.setSnapshot({
+      ...this.snapshot,
+      library: {
+        scores: this.snapshot.library?.scores ?? [],
+        loading: false,
+        importing: running,
+        importSummary: {
+          total,
+          results: [...results],
+          cancelled: cancelled ? Math.max(0, total - results.length) : 0,
+          running,
+        },
+      },
+    });
+  }
+
   openLibraryScore(id: string): Promise<void> {
     if (!this.library) return Promise.resolve();
     if (this.destroying) return Promise.reject(new Error("Viewer app is being destroyed"));
-    const operation = this.chain.then(() => (this.hasSession(id) ? undefined : this.openLibraryScoreOnce(id)));
+    const operation = this.chain
+      .then(() => (this.hasSession(id) ? undefined : this.openLibraryScoreOnce(id)))
+      .catch((error: unknown) => {
+        this.reportDiagnostic(error, "library.open");
+        this.setSnapshot({
+          ...this.snapshot,
+          library: {
+            scores: this.snapshot.library?.scores ?? [],
+            loading: false,
+            error: applicationIssue("library-unavailable"),
+          },
+        });
+        throw error;
+      });
+    this.chain = operation.then(
+      () => undefined,
+      () => undefined,
+    );
+    return operation;
+  }
+
+  releaseLibraryScore(id: string): Promise<void> {
+    const operation = this.chain.then(async () => {
+      if (this.activeLibraryScoreId !== id) return;
+      const session = this.active;
+      this.active = undefined;
+      this.activeLibraryScoreId = undefined;
+      const {
+        currentSessionId: _currentSessionId,
+        currentLibraryScoreId: _currentLibraryScoreId,
+        ...snapshot
+      } = this.snapshot;
+      this.setSnapshot(snapshot);
+      await session?.pauseAndFlush();
+      await session?.destroy();
+    });
     this.chain = operation.then(
       () => undefined,
       () => undefined,
@@ -650,6 +777,7 @@ export class ViewerApplication implements ViewerAppHandle {
 
   destroy(): Promise<void> {
     this.destroying = true;
+    this.importAbortController?.abort();
     this.destroyPromise ??= this.destroyOnce();
     return this.destroyPromise;
   }

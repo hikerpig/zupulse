@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import styles from "./ContextPopup.module.css";
 
 export function ContextPopup({
@@ -66,7 +67,7 @@ export function ContextPopup({
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className={styles.backdrop}>
       <div
         ref={popupRef}
@@ -77,6 +78,7 @@ export function ContextPopup({
       >
         {children}
       </div>
-    </div>
+    </div>,
+    anchor?.ownerDocument.body ?? document.body,
   );
 }

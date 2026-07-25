@@ -1,22 +1,39 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { Music } from "lucide-react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import type { ViewerApplication } from "../ViewerApplication";
+import type { ViewerProductCapabilities } from "../App";
 import { PlaybackWorkspace } from "../../features/PlaybackWorkspace";
 import { ScoreViewer } from "../../components/ScoreViewer";
 import styles from "./PageShell.module.css";
 
-export function ViewerPage({ application, notFound = false }: { application: ViewerApplication; notFound?: boolean }) {
+export function ViewerPage({
+  application,
+  capabilities = { harmonyAnalysis: true },
+  notFound = false,
+}: {
+  application: ViewerApplication;
+  capabilities?: ViewerProductCapabilities;
+  notFound?: boolean;
+}) {
   const { t } = useTranslation("viewer");
   const snapshot = useSyncExternalStore(application.subscribe, application.getSnapshot);
   const { libraryScoreId } = useParams();
+  const navigate = useNavigate();
   const invalidSession = Boolean(libraryScoreId && !application.hasSession(libraryScoreId));
 
   useEffect(() => {
     if (application.hasLibrary() && libraryScoreId && !application.hasSession(libraryScoreId))
-      void application.openLibraryScore(libraryScoreId).catch(() => undefined);
-  }, [application, libraryScoreId, snapshot.currentLibraryScoreId]);
+      void application.openLibraryScore(libraryScoreId).catch(() => navigate("/", { replace: true }));
+  }, [application, libraryScoreId, navigate, snapshot.currentLibraryScoreId]);
+
+  useEffect(() => {
+    if (!libraryScoreId) return;
+    return () => {
+      void application.releaseLibraryScore(libraryScoreId).catch(() => undefined);
+    };
+  }, [application, libraryScoreId]);
 
   return (
     <main className={styles.appShell}>
@@ -29,7 +46,10 @@ export function ViewerPage({ application, notFound = false }: { application: Vie
           <p className={styles.contextSubtitle}>{t("page.subtitle")}</p>
         </div>
         <div className={styles.contextActions}>
-          {application.hasLibrary() && libraryScoreId && application.hasHarmonyAnalysisStorage() ? (
+          {capabilities.harmonyAnalysis &&
+          application.hasLibrary() &&
+          libraryScoreId &&
+          application.hasHarmonyAnalysisStorage() ? (
             <Link className={styles.harmonyAction} to={`/studio/${libraryScoreId}`}>
               <Music aria-hidden="true" size={16} strokeWidth={2} />
               <span>{t("page.harmony")}</span>

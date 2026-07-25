@@ -23,6 +23,12 @@ ADR 文件保留历史编号；本表决定哪些决策可作为当前实现依�
 - `0055`：generated Loop name 从结构化范围和当前 locale 派生，不作为持久化文案事实。
 - `0056`：生产 UI 只展示本地化 Application Issue，不直接展示原始异常或任意技术详情。
 - `0057`：Renderer 与 Electron Main 共用 `@zupulse/app-i18n` 中的 i18next core catalog。
+- `0058`–`0063`：iPad 薄 SwiftUI/WKWebView 壳、单一版本化 Bridge、token 二进制数据面、受控网络、
+  Zod contract 事实源与构建时 Web 资产。
+
+## Proposed
+
+- 当前没有。
 
 ## Superseded
 

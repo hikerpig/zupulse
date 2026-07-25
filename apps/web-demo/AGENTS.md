@@ -11,5 +11,5 @@
 
 - Repository 行为必须通过与 Desktop 相同的 contract。
 - Browser 关键旅程在真实 Chromium 中验证 IndexedDB、刷新恢复和删除语义。
-- 参考：`src/library/BrowserSheetLibraryRepository.ts`、`src/main.ts`。
+- 参考：`../../packages/web-storage/src/indexed-db-sheet-library-repository.ts`、`src/main.ts`。
 - 最小验证：`pnpm demo:build`；端到端：`pnpm demo:test:e2e`。

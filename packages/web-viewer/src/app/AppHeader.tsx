@@ -7,9 +7,16 @@ import { LogoMark } from "../components/LogoMark";
 import { ContextPopup } from "../components/ContextPopup";
 import type { LocaleHost } from "../i18n/locale-controller";
 import { useAppStore } from "./appStore";
+import type { ViewerProductCapabilities } from "./App";
 import styles from "./AppHeader.module.css";
 
-export function AppHeader({ localeHost }: { localeHost: LocaleHost }) {
+export function AppHeader({
+  localeHost,
+  capabilities,
+}: {
+  localeHost: LocaleHost;
+  capabilities: ViewerProductCapabilities;
+}) {
   const { t, i18n } = useTranslation("common");
   const { t: tErrors } = useTranslation("errors");
   const { pathname } = useLocation();
@@ -64,12 +71,14 @@ export function AppHeader({ localeHost }: { localeHost: LocaleHost }) {
             >
               {t("navigation.viewer")}
             </NavLink>
-            <NavLink
-              className={({ isActive }) => (isActive ? styles.activeLink : styles.navLink)}
-              to={`/studio/${libraryScoreId}`}
-            >
-              {t("navigation.studio")}
-            </NavLink>
+            {capabilities.harmonyAnalysis ? (
+              <NavLink
+                className={({ isActive }) => (isActive ? styles.activeLink : styles.navLink)}
+                to={`/studio/${libraryScoreId}`}
+              >
+                {t("navigation.studio")}
+              </NavLink>
+            ) : null}
           </>
         ) : null}
       </nav>

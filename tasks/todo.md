@@ -66,4 +66,4 @@
 - [x] Task 33：Mozart 首轮序贯 linear tune 门禁失败，停止跨语料。
 - [x] Task 34：触发条件不成立，未比较 MLP、未新增 PyTorch。
 - [x] Task 35：候选在 final 前拒绝；未读取 final/K331，默认保持不变。
-- [ ] Checkpoint H：文档、验证、提交和工作区状态全部完成。
+- [x] Checkpoint H：文档、验证、提交和工作区状态全部完成。

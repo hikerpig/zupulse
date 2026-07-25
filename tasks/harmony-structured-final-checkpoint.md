@@ -27,3 +27,17 @@ Phase 8 完成了 lattice oracle、时值型 span contract、exact Semi-CRF、st
 2. 改进 Top-8 candidate proposal，尤其 inversion/root ambiguity；先提高 oracle，再训练。
 3. 对 density 加显式 segment-count / boundary loss，而不是只靠 path feature。
 4. 在线性候选在 train 与至少一个 tune corpus 稳定改善后，才考虑离线 PyTorch 小 MLP；PyTorch 仍不进入产品 runtime。
+
+## 最终验证
+
+- `pnpm --filter @zupulse/harmony-cli test`：通过。
+- `pnpm verify:fast`：124 test files / 490 tests 通过。
+- `pnpm harmony:benchmark`：analysis P95 `488.15 ms`，reranker ratio `0.9904x`，heap delta `74.86 MB`，全部在预算内。
+- Worktree 在实现提交 `07893d1` 后 clean。
+
+Phase 8 的阶段提交：
+
+- `aa7b1e2`：duration-based span contract
+- `4bc24d4`：exact search、structured features、初版 records
+- `70f057c`：piece-sharded records 与 Checkpoint F
+- `07893d1`：linear trainer、opt-in runtime、Mozart tune 拒绝决定

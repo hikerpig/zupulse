@@ -72,9 +72,9 @@ Detailed plan: [`tasks/plan.md`](plan.md)
 
 ### Task 7: Semantic audit runbook
 
-- [ ] Document selection, finding classes, evidence thresholds and output rules.
-- [ ] Prohibit direct main writes, code fixes and unverifiable `last_verified` updates.
-- [ ] Verify: `pnpm check:docs`
+- [x] Document selection, finding classes, evidence thresholds and output rules.
+- [x] Prohibit direct main writes, code fixes and unverifiable `last_verified` updates.
+- [x] Verify: `pnpm check:docs`
 - Dependencies: deterministic gardening checkpoint.
 
 ### Task 8: Sheet Library dry-run evaluations

@@ -58,8 +58,8 @@
 - [x] Task 28：实现 `maxQuarterNotes=8` 的 exact search 与窗口化惰性 range cache。
 - [x] Checkpoint E：基于 train 冻结时值合同；train/tune span 与 candidate oracle 门禁通过。
 - [x] Task 29：冻结 `semi-crf-linear-v1` segment/transition feature contract。
-- [ ] Task 30：导出严格 split 隔离的 structured path records。
-- [ ] Checkpoint F：records 可重复、紧凑且没有 gold 泄漏。
+- [x] Task 30：导出严格 split 隔离、piece-sharded 的 structured path records。
+- [x] Checkpoint F：records 可重复、可流式验证且没有 gold 泄漏。
 - [ ] Task 31：训练 corpus/group-balanced 线性 structured scorer。
 - [ ] Task 32：以 opt-in Semi-CRF scorer 接入 analyzer。
 - [ ] Checkpoint G：trainer/runtime path 等价，production 默认未改变。

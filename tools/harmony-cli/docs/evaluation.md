@@ -106,6 +106,21 @@ Train 和 tune 使用不同入口，regression/final-holdout 无法由此命令�
 
 旧 `maxSpan=16` 合同的 Mozart train/tune span representability 分别只有 `0.9853` 和 `0.9836`。只根据 train 时值分布冻结 `maxQuarterNotes=8` 后，train/tune 分别提高到 `0.9984` 和 `0.9931`，candidate oracle 保持在 `0.8104` 和 `0.8329`，Checkpoint E 的结构门禁通过。朴素 Top-8 物化上界约为 train `2.11 GB`、tune `0.53 GB`，因此后续 exact decoder 必须使用惰性 range cache 并实测峰值内存。完整结果见 [`tasks/harmony-structured-oracle-checkpoint.md`](../../../tasks/harmony-structured-oracle-checkpoint.md)。
 
+Structured records 使用连续可表达 gold 子路径监督；candidate miss 只切断窗口，不注入 gold candidate。资产以 manifest + piece shards 写出，避免全语料对象常驻：
+
+```bash
+pnpm -s harmony:cli structured-records test-fixtures/harmony/datasets/manifest.json \
+  --protocol test-fixtures/harmony/datasets/protocol-v3.json \
+  --data-root /path/to/harmony-data \
+  --case dcml-mozart-v2.3 \
+  --split train \
+  --output /tmp/mozart-structured-train.json
+
+pnpm -s harmony:structured-verify /tmp/mozart-structured-train.json
+```
+
+Manifest 与每个 shard 都包含 SHA/byte/count 校验；loader 一次只读取一个 piece。Checkpoint F 见 [`tasks/harmony-structured-records-checkpoint.md`](../../../tasks/harmony-structured-records-checkpoint.md)。
+
 ## v3 预登记协议
 
 [`protocol-v3.json`](../../../test-fixtures/harmony/datasets/protocol-v3.json) 在下一轮 primary reranker 训练前冻结新的作品级 final holdout：Beethoven `01`、Chopin `BI105` 和 POP909 `225`。这些 group 不得进入 ranking records、训练、tune 或 threshold 选择。现有 K331 与已经查看过指标的跨语料 cases 只保留为 regression，不能再作为新的泛化声明。

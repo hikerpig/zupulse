@@ -1,5 +1,6 @@
 import { createHarmonyAnalysisInput } from "@zupulse/web-core";
 import { describe, expect, it } from "vitest";
+import { harmonyStructuredRecordPieceSchema } from "../schemas";
 import { createTrainingStructuredRecordPiece, createTuneStructuredRecordPiece } from "../structuredRecords";
 
 const cMajor = { root: { step: "C" as const, alter: 0 as const }, kind: "major" as const, degrees: [] };
@@ -62,6 +63,7 @@ describe("structured path records", () => {
     const second = createTrainingStructuredRecordPiece(request);
 
     expect(first).toEqual(second);
+    expect(harmonyStructuredRecordPieceSchema.parse(JSON.parse(JSON.stringify(first)))).toEqual(first);
     expect(first.windows).toHaveLength(1);
     expect(first.windows[0]).toMatchObject({
       startBoundaryIndex: 0,

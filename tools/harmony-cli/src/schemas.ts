@@ -401,6 +401,38 @@ const structuredRecordGoldSegmentSchema = z
     candidateIndex: z.number().int().min(0).max(7),
   })
   .strict();
+export const harmonyStructuredRecordPieceSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    featureVersion: z.literal(STRUCTURED_FEATURE_VERSION),
+    id: z.string().min(1),
+    corpus: z.string().min(1),
+    groupId: z.string().min(1),
+    boundaries: z.array(scoreWrittenMomentSchema).min(2),
+    chords: z.array(chordSymbolSchema),
+    windows: z.array(
+      z
+        .object({
+          startBoundaryIndex: z.number().int().nonnegative(),
+          endBoundaryIndex: z.number().int().positive(),
+          ranges: z.array(structuredRecordRangeSchema).min(1),
+          gold: z.array(structuredRecordGoldSegmentSchema).min(1),
+        })
+        .strict(),
+    ),
+    excluded: z
+      .object({
+        unsupported: z.number().int().nonnegative(),
+        missingBoundary: z.number().int().nonnegative(),
+        excessiveDuration: z.number().int().nonnegative(),
+        candidateMiss: z.number().int().nonnegative(),
+      })
+      .strict(),
+  })
+  .strict();
+
+export type HarmonyStructuredRecordPiece = z.infer<typeof harmonyStructuredRecordPieceSchema>;
+
 export const harmonyStructuredRecordsReportSchema = z
   .object({
     schemaVersion: z.literal("1.0.0"),
@@ -443,26 +475,14 @@ export const harmonyStructuredRecordsReportSchema = z
           id: z.string().min(1),
           corpus: z.string().min(1),
           groupId: z.string().min(1),
-          boundaries: z.array(scoreWrittenMomentSchema).min(2),
-          chords: z.array(chordSymbolSchema),
-          windows: z.array(
-            z
-              .object({
-                startBoundaryIndex: z.number().int().nonnegative(),
-                endBoundaryIndex: z.number().int().positive(),
-                ranges: z.array(structuredRecordRangeSchema).min(1),
-                gold: z.array(structuredRecordGoldSegmentSchema).min(1),
-              })
-              .strict(),
-          ),
-          excluded: z
-            .object({
-              unsupported: z.number().int().nonnegative(),
-              missingBoundary: z.number().int().nonnegative(),
-              excessiveDuration: z.number().int().nonnegative(),
-              candidateMiss: z.number().int().nonnegative(),
-            })
-            .strict(),
+          path: z.string().min(1),
+          sha256: z.string().regex(/^[a-f0-9]{64}$/),
+          bytes: z.number().int().positive(),
+          windows: z.number().int().nonnegative(),
+          ranges: z.number().int().nonnegative(),
+          candidates: z.number().int().nonnegative(),
+          goldSegments: z.number().int().nonnegative(),
+          excludedSegments: z.number().int().nonnegative(),
         })
         .strict(),
     ),

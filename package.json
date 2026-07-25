@@ -9,6 +9,7 @@
     "check:arch": "node scripts/repository-checks.mjs arch",
     "check:design": "node scripts/repository-checks.mjs design",
     "check:docs": "node scripts/repository-checks.mjs docs",
+    "docs:impact": "node scripts/documentation-impact.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

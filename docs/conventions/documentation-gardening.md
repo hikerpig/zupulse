@@ -1,7 +1,7 @@
 # Documentation Gardening
 
-本文定义当前已经落地的确定性文档门禁。语义漂移审计、变更影响分析和定期自动化不在本文的当前
-承诺中。
+本文定义当前已经落地的确定性文档门禁和非阻塞变更影响提示。语义漂移审计和定期自动化不在本文
+的当前承诺中。
 
 ## 日常使用
 
@@ -36,3 +36,18 @@ Contract；若实现是当前事实，应修正文档。若实现本身不符合
 
 修改 Contract 后至少运行 `pnpm check:docs`。若改动同时涉及用户可观察行为、领域不变量或平台
 能力，还应运行相关最小测试，并按风险升级到仓库验证命令。
+
+## PR 影响提示
+
+本地检查某个 Git base 以来可能受影响的 Current Contract：
+
+```bash
+pnpm docs:impact --base origin/main
+```
+
+命令以 `implementation_paths` 为唯一机器可读匹配来源：目录匹配后代文件，文件路径只精确
+匹配。报告列出命中的实现文件，并说明对应 Contract 是否也在同一 diff 中更新；没有命中时输出
+`no feature contracts affected`。
+
+PR CI 使用 pull request 的 base SHA 运行同一命令，并将结果追加到 GitHub Step Summary。Contract
+被提示复核不会让命令失败；提示只是复核入口，不证明存在语义漂移，也不替代人工核对事实源。

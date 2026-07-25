@@ -1,5 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { analyzeDocumentationImpact, renderDocumentationImpact } from "../documentation-impact.mjs";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  analyzeDocumentationImpact,
+  renderDocumentationImpact,
+  runDocumentationImpact,
+} from "../documentation-impact.mjs";
+
+const roots: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
+});
 
 describe("analyzeDocumentationImpact", () => {
   it("matches directory descendants and exact files without similar-prefix false positives", () => {
@@ -88,6 +102,43 @@ describe("renderDocumentationImpact", () => {
   });
 });
 
+describe("runDocumentationImpact", () => {
+  it("reads the requested Git base and renders a non-blocking report", async () => {
+    const root = await fixture({
+      "docs/features/contracts/sheet-library.md": `---
+feature: sheet-library
+title: Sheet Library
+status: current
+delivery: available
+last_verified: 2026-07-25
+hosts: []
+implementation_paths:
+  - packages/web-core/src/library
+supersedes: []
+---
+`,
+    });
+    const gitChangedFiles = vi
+      .fn()
+      .mockResolvedValue(["packages/web-core/src/library/schemas.ts", "docs/features/contracts/sheet-library.md"]);
+
+    await expect(runDocumentationImpact(root, ["--base", "origin/main"], { gitChangedFiles })).resolves.toEqual({
+      exitCode: 0,
+      output: `Sheet Library may require review:
+- packages/web-core/src/library/schemas.ts changed
+- docs/features/contracts/sheet-library.md contract updated`,
+    });
+    expect(gitChangedFiles).toHaveBeenCalledWith(root, "origin/main");
+  });
+
+  it("returns a usage error when --base is missing", async () => {
+    await expect(runDocumentationImpact("/unused", [])).resolves.toEqual({
+      exitCode: 2,
+      output: "Usage: pnpm docs:impact --base <commit>",
+    });
+  });
+});
+
 function contract(feature: string, title: string, implementationPaths: string[], status = "current") {
   return {
     contents: "",
@@ -104,4 +155,17 @@ function contract(feature: string, title: string, implementationPaths: string[],
     location: "contracts",
     path: `docs/features/contracts/${feature}.md`,
   };
+}
+
+async function fixture(files: Record<string, string>): Promise<string> {
+  const root = await mkdtemp(join(tmpdir(), "documentation-impact-"));
+  roots.push(root);
+  await Promise.all(
+    Object.entries(files).map(async ([path, contents]) => {
+      const absolute = join(root, path);
+      await mkdir(join(absolute, ".."), { recursive: true });
+      await writeFile(absolute, contents);
+    }),
+  );
+  return root;
 }

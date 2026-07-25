@@ -15,6 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           lfs: true
       - uses: pnpm/action-setup@v4
         with:
@@ -24,6 +25,9 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Report Feature Contract impact
+        if: github.event_name == 'pull_request'
+        run: pnpm docs:impact --base "${{ github.event.pull_request.base.sha }}" | tee -a "$GITHUB_STEP_SUMMARY"
       - run: pnpm verify
       - run: pnpm --filter @zupulse/web-demo exec playwright install --with-deps chromium
       - run: pnpm demo:test:e2e

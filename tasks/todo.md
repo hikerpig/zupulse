@@ -55,17 +55,17 @@ Detailed plan: [`tasks/plan.md`](plan.md)
 
 ### Task 6: Git/CI impact integration
 
-- [ ] Add `pnpm docs:impact --base <commit>`.
-- [ ] Append a PR-only, non-blocking report to `$GITHUB_STEP_SUMMARY`.
-- [ ] Ensure CI fetches/resolves the PR base commit.
-- [ ] Verify: `pnpm docs:impact --base HEAD~1`
-- [ ] Verify: `pnpm verify:fast`
+- [x] Add `pnpm docs:impact --base <commit>`.
+- [x] Append a PR-only, non-blocking report to `$GITHUB_STEP_SUMMARY`.
+- [x] Ensure CI fetches/resolves the PR base commit.
+- [x] Verify: `pnpm docs:impact --base HEAD~1`
+- [x] Verify: `pnpm verify:fast`
 - Dependencies: Tasks 4 and 5.
 
 ### Checkpoint: Deterministic gardening
 
-- [ ] Structural drift blocks; semantic impact remains advisory.
-- [ ] CI history/base handling is reviewed.
+- [x] Structural drift blocks; semantic impact remains advisory.
+- [x] CI history/base handling is reviewed.
 - [ ] Human approval before external semantic automation.
 
 ## Phase 3: Semantic Audit and Recurring Operation

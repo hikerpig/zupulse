@@ -2,7 +2,13 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { checkArchitecture, checkContext, checkDesign, readFeatureContracts } from "../repository-checks.mjs";
+import {
+  checkArchitecture,
+  checkContext,
+  checkDesign,
+  checkDocumentation,
+  readFeatureContracts,
+} from "../repository-checks.mjs";
 
 const roots: string[] = [];
 
@@ -94,6 +100,194 @@ status: draft
         "docs/features/contracts/missing-list-items.md:3: frontmatter list hosts requires at least one item or []",
         "docs/features/contracts/nested.md:4: unsupported nested frontmatter",
       ],
+    });
+  });
+});
+
+describe("checkDocumentation", () => {
+  it("accepts valid current, draft and historical lifecycle combinations", async () => {
+    const root = await fixture({
+      "docs/features/contracts/current.md": `---
+feature: current-feature
+title: Current Feature
+status: current
+delivery: partial
+last_verified: 2026-07-24
+hosts:
+  - browser
+implementation_paths:
+  - packages/current
+supersedes: []
+---
+
+# Current Feature
+
+## 一句话契约
+## 用户入口
+## 当前已实现行为
+## 领域不变量
+## 进行中的目标差异
+## 明确非目标
+## 验收契约
+## 证据地图
+## 相关资料
+## 维护触发器
+`,
+      "docs/features/contracts/draft.md": `---
+feature: draft-feature
+title: Draft Feature
+status: draft
+delivery: planned
+last_verified: 2026-07-24
+hosts: []
+implementation_paths: []
+supersedes: []
+---
+
+# Draft Feature
+
+## 进行中的目标差异
+`,
+      "docs/features/archive/retired.md": `---
+feature: retired-feature
+title: Retired Feature
+status: historical
+delivery: retired
+last_verified: 2026-07-24
+hosts: []
+implementation_paths: []
+supersedes: []
+---
+`,
+    });
+
+    await expect(checkDocumentation(root, { now: new Date("2026-07-25T00:00:00.000Z") })).resolves.toEqual({
+      errors: [],
+      warnings: [],
+    });
+  });
+
+  it("reports invalid metadata fields without guessing their meaning", async () => {
+    const root = await fixture({
+      "docs/features/contracts/invalid.md": `---
+feature: Not Valid
+title: []
+status: accepted
+delivery: done
+last_verified: 2026-02-30
+hosts: browser
+implementation_paths: packages/example
+supersedes: old-feature
+extra_field: value
+---
+`,
+    });
+
+    await expect(checkDocumentation(root, { now: new Date("2026-07-25T00:00:00.000Z") })).resolves.toEqual({
+      errors: [
+        "docs/features/contracts/invalid.md: expected delivery: planned|in_progress|partial|available|retired",
+        "docs/features/contracts/invalid.md: expected feature to be a non-empty kebab-case slug",
+        "docs/features/contracts/invalid.md: expected hosts to be a string list",
+        "docs/features/contracts/invalid.md: expected implementation_paths to be a string list",
+        "docs/features/contracts/invalid.md: expected last_verified to be a valid YYYY-MM-DD date",
+        "docs/features/contracts/invalid.md: expected status: draft|current|deprecated|historical",
+        "docs/features/contracts/invalid.md: expected supersedes to be a string list",
+        "docs/features/contracts/invalid.md: expected title to be a non-empty string",
+        "docs/features/contracts/invalid.md: unsupported frontmatter key extra_field",
+      ],
+      warnings: [],
+    });
+  });
+
+  it("reports invalid lifecycle directories and delivery combinations", async () => {
+    const root = await fixture({
+      "docs/features/contracts/retired.md": `---
+feature: retired-in-contracts
+title: Retired
+status: historical
+delivery: retired
+last_verified: 2026-07-24
+hosts: []
+implementation_paths: []
+supersedes: []
+---
+`,
+      "docs/features/archive/current.md": `---
+feature: current-in-archive
+title: Current
+status: current
+delivery: partial
+last_verified: 2026-07-24
+hosts: []
+implementation_paths: []
+supersedes: []
+---
+
+## 一句话契约
+## 用户入口
+## 当前已实现行为
+## 领域不变量
+## 已知差距
+## 明确非目标
+## 验收契约
+## 证据地图
+## 相关资料
+## 维护触发器
+`,
+      "docs/features/archive/available.md": `---
+feature: available-in-archive
+title: Available
+status: deprecated
+delivery: available
+last_verified: 2026-07-24
+hosts: []
+implementation_paths: []
+supersedes: []
+---
+`,
+    });
+
+    await expect(checkDocumentation(root, { now: new Date("2026-07-25T00:00:00.000Z") })).resolves.toEqual({
+      errors: [
+        "docs/features/archive/available.md: archived contract must not have delivery: available",
+        "docs/features/archive/current.md: archived contract must have status: deprecated|historical",
+        "docs/features/archive/current.md: current contract must be in docs/features/contracts",
+        "docs/features/contracts/retired.md: historical retired contract must be in docs/features/archive",
+      ],
+      warnings: [],
+    });
+  });
+
+  it("reports missing required sections and warns when current verification is stale", async () => {
+    const root = await fixture({
+      "docs/features/contracts/stale.md": `---
+feature: stale-feature
+title: Stale Feature
+status: current
+delivery: partial
+last_verified: 2026-06-01
+hosts: []
+implementation_paths: []
+supersedes: []
+---
+
+## 一句话契约
+## 用户入口
+## 当前已实现行为
+## 领域不变量
+## 明确非目标
+## 验收契约
+## 证据地图
+## 相关资料
+`,
+    });
+
+    await expect(checkDocumentation(root, { now: new Date("2026-07-25T00:00:00.000Z") })).resolves.toEqual({
+      errors: [
+        "docs/features/contracts/stale.md: delivery partial requires ## 进行中的目标差异 or ## 已知差距",
+        "docs/features/contracts/stale.md: missing required section ## 维护触发器",
+      ],
+      warnings: ["docs/features/contracts/stale.md: last_verified 2026-06-01 is older than 30 days"],
     });
   });
 });

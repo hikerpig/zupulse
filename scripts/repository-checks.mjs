@@ -38,6 +38,30 @@ const DEFAULT_DOCUMENTATION = {
   archiveDir: "docs/features/archive",
 };
 
+const FEATURE_CONTRACT_KEYS = new Set([
+  "feature",
+  "title",
+  "status",
+  "delivery",
+  "last_verified",
+  "hosts",
+  "implementation_paths",
+  "supersedes",
+]);
+const FEATURE_CONTRACT_STATUSES = ["draft", "current", "deprecated", "historical"];
+const FEATURE_DELIVERY_STATUSES = ["planned", "in_progress", "partial", "available", "retired"];
+const CURRENT_CONTRACT_SECTIONS = [
+  "一句话契约",
+  "用户入口",
+  "当前已实现行为",
+  "领域不变量",
+  "明确非目标",
+  "验收契约",
+  "证据地图",
+  "相关资料",
+  "维护触发器",
+];
+
 const RUNTIME_TSCONFIGS = [
   "packages/web-core/tsconfig.json",
   "packages/web-viewer/tsconfig.json",
@@ -97,6 +121,22 @@ export async function readFeatureContracts(root, options = DEFAULT_DOCUMENTATION
   return {
     contracts: contracts.sort((left, right) => left.path.localeCompare(right.path)),
     errors: errors.sort(),
+  };
+}
+
+export async function checkDocumentation(root, options = {}) {
+  const settings = { ...DEFAULT_DOCUMENTATION, ...options };
+  const result = await readFeatureContracts(root, settings);
+  const errors = [...result.errors];
+  const warnings = [];
+  for (const contract of result.contracts) {
+    const validation = validateFeatureContract(contract, settings.now ?? new Date());
+    errors.push(...validation.errors);
+    warnings.push(...validation.warnings);
+  }
+  return {
+    errors: errors.sort(),
+    warnings: warnings.sort(),
   };
 }
 
@@ -184,6 +224,78 @@ export async function checkDesign(root, options = DEFAULT_DESIGN) {
     }
   }
   return errors.sort();
+}
+
+function validateFeatureContract(contract, now) {
+  const { frontmatter, path, location, contents } = contract;
+  const errors = [];
+  const warnings = [];
+  for (const key of Object.keys(frontmatter)) {
+    if (!FEATURE_CONTRACT_KEYS.has(key)) errors.push(`${path}: unsupported frontmatter key ${key}`);
+  }
+  if (typeof frontmatter.feature !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(frontmatter.feature)) {
+    errors.push(`${path}: expected feature to be a non-empty kebab-case slug`);
+  }
+  if (typeof frontmatter.title !== "string" || frontmatter.title.trim() === "") {
+    errors.push(`${path}: expected title to be a non-empty string`);
+  }
+  if (!FEATURE_CONTRACT_STATUSES.includes(frontmatter.status)) {
+    errors.push(`${path}: expected status: ${FEATURE_CONTRACT_STATUSES.join("|")}`);
+  }
+  if (!FEATURE_DELIVERY_STATUSES.includes(frontmatter.delivery)) {
+    errors.push(`${path}: expected delivery: ${FEATURE_DELIVERY_STATUSES.join("|")}`);
+  }
+  const verifiedAt = parseDate(frontmatter.last_verified);
+  if (verifiedAt === undefined) {
+    errors.push(`${path}: expected last_verified to be a valid YYYY-MM-DD date`);
+  }
+  for (const key of ["hosts", "implementation_paths", "supersedes"]) {
+    if (!Array.isArray(frontmatter[key]) || !frontmatter[key].every((value) => typeof value === "string")) {
+      errors.push(`${path}: expected ${key} to be a string list`);
+    }
+  }
+
+  if (frontmatter.status === "current" && location !== "contracts") {
+    errors.push(`${path}: current contract must be in docs/features/contracts`);
+  }
+  if (location === "contracts" && frontmatter.status === "historical" && frontmatter.delivery === "retired") {
+    errors.push(`${path}: historical retired contract must be in docs/features/archive`);
+  }
+  if (location === "archive") {
+    if (frontmatter.status !== "deprecated" && frontmatter.status !== "historical") {
+      errors.push(`${path}: archived contract must have status: deprecated|historical`);
+    }
+    if (frontmatter.delivery === "available") {
+      errors.push(`${path}: archived contract must not have delivery: available`);
+    }
+  }
+
+  const sections = new Set([...contents.matchAll(/^## (.+?)\s*$/gm)].map((match) => match[1]));
+  if (frontmatter.status === "current") {
+    for (const section of CURRENT_CONTRACT_SECTIONS) {
+      if (!sections.has(section)) errors.push(`${path}: missing required section ## ${section}`);
+    }
+  }
+  if (["planned", "in_progress", "partial"].includes(frontmatter.delivery)) {
+    if (!sections.has("进行中的目标差异") && !sections.has("已知差距")) {
+      errors.push(`${path}: delivery ${frontmatter.delivery} requires ## 进行中的目标差异 or ## 已知差距`);
+    }
+  }
+  if (frontmatter.status === "current" && verifiedAt !== undefined) {
+    const ageDays = Math.floor((startOfUtcDay(now).getTime() - verifiedAt.getTime()) / 86_400_000);
+    if (ageDays > 30) warnings.push(`${path}: last_verified ${frontmatter.last_verified} is older than 30 days`);
+  }
+  return { errors, warnings };
+}
+
+function parseDate(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value ? undefined : date;
+}
+
+function startOfUtcDay(value) {
+  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
 }
 
 function parseFrontmatter(contents, path) {

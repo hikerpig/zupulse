@@ -17,9 +17,9 @@ Detailed plan: [`tasks/plan.md`](plan.md)
 
 ### Task 2: Contract-local validation
 
-- [ ] Validate metadata enums, lifecycle/directory combinations and required headings.
-- [ ] Emit an injected-date warning, not an error, after 30 days.
-- [ ] Verify: `pnpm vitest run scripts/__tests__/repositoryChecks.test.ts`
+- [x] Validate metadata enums, lifecycle/directory combinations and required headings.
+- [x] Emit an injected-date warning, not an error, after 30 days.
+- [x] Verify: `pnpm vitest run scripts/__tests__/repositoryChecks.test.ts`
 - Dependencies: Task 1.
 
 ### Task 3: Cross-document validation

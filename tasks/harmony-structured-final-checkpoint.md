@@ -41,3 +41,4 @@ Phase 8 的阶段提交：
 - `4bc24d4`：exact search、structured features、初版 records
 - `70f057c`：piece-sharded records 与 Checkpoint F
 - `07893d1`：linear trainer、opt-in runtime、Mozart tune 拒绝决定
+- `0193e90`：Checkpoint H 与 Phase 8 收尾

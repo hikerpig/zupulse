@@ -6,6 +6,7 @@ import type {
   PlaybackTimelineMap,
   PlaybackTrack,
 } from "./types";
+import type { PlaybackOccurrence } from "../score/positions";
 
 export function extractAlphaTabPlaybackModel(api: AlphaTabApiLike): {
   baseTempo: number;
@@ -46,6 +47,40 @@ export function extractAlphaTabPlaybackModel(api: AlphaTabApiLike): {
       measures,
     },
   };
+}
+
+export function extractAlphaTabPlaybackOccurrences(
+  api: AlphaTabApiLike,
+  trackIdValue = "track-0",
+): PlaybackOccurrence[] {
+  const model = extractAlphaTabPlaybackModel(api);
+  const expandedBars = api.tickCache?.masterBars;
+  if (!expandedBars?.length) return [];
+
+  const occurrenceCounts = new Map<number, number>();
+  const occurrences: PlaybackOccurrence[] = [];
+  expandedBars.forEach((lookup, pathIndex) => {
+    const measure = model.timeline.measures.find((candidate) => candidate.index === lookup.masterBar.index);
+    if (!measure || !Number.isFinite(lookup.start)) return;
+    const occurrenceIndex = occurrenceCounts.get(measure.index) ?? 0;
+    occurrenceCounts.set(measure.index, occurrenceIndex + 1);
+    measure.beatTicks.forEach((writtenTick, beatIndex) => {
+      occurrences.push({
+        schemaVersion: 1,
+        written: {
+          schemaVersion: 1,
+          trackId: trackIdValue,
+          measureIndex: measure.index,
+          beatIndex,
+          tick: writtenTick,
+        },
+        occurrenceIndex,
+        timelineTick: lookup.start + writtenTick - measure.startTick,
+        path: [pathIndex],
+      });
+    });
+  });
+  return occurrences;
 }
 
 export function waitForAlphaTabScore(api: AlphaTabApiLike): Promise<AlphaTabBrowserScoreLike> {

@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  attachAlphaTabNavigationEvents,
   attachAlphaTabGestureSelection,
   attachAlphaTabPositionEvents,
   createAlphaTabApi,
   loadAlphaTabBytes,
 } from "../alphaTabBrowser";
+import type { AlphaTabApiLike } from "../alphaTabBrowser";
 
 describe("createAlphaTabApi", () => {
   it("uses an injectable factory so tests do not require a browser DOM", () => {
@@ -25,7 +27,7 @@ describe("attachAlphaTabPositionEvents", () => {
   it("maps alphaTab playerPositionChanged events to stable app events", () => {
     let handler: ((arg: unknown) => void) | undefined;
     let detached = false;
-    const api = {
+    const api: AlphaTabApiLike = {
       playerPositionChanged: {
         on(nextHandler: (arg: unknown) => void) {
           handler = nextHandler;
@@ -49,6 +51,55 @@ describe("attachAlphaTabPositionEvents", () => {
       },
     ]);
     expect(detached).toBe(true);
+  });
+});
+
+describe("attachAlphaTabNavigationEvents", () => {
+  it("exposes completed renders and public cursor bounds through a custom scroll handler", () => {
+    let rendered: (() => void) | undefined;
+    let renderDetached = false;
+    const systems: unknown[] = [];
+    const api = {
+      postRenderFinished: {
+        on(handler: () => void) {
+          rendered = handler;
+          return () => {
+            renderDetached = true;
+          };
+        },
+      },
+    };
+
+    const detach = attachAlphaTabNavigationEvents(api, {
+      renderFinished: () => systems.push("rendered"),
+      cursorSystemChanged: (system) => systems.push(system),
+    });
+    rendered?.();
+    api.customScrollHandler?.forceScrollTo({
+      barBounds: {
+        masterBarBounds: {
+          index: 3,
+          staffSystemBounds: {
+            index: 2,
+            realBounds: { x: 0, y: 240, w: 800, h: 180 },
+            bars: [],
+          },
+        },
+      },
+    });
+
+    expect(systems).toEqual([
+      "rendered",
+      {
+        systemIndex: 2,
+        firstMeasureIndex: 3,
+        bounds: { x: 0, y: 240, width: 800, height: 180 },
+      },
+    ]);
+
+    detach();
+    expect(renderDetached).toBe(true);
+    expect(api.customScrollHandler).toBeUndefined();
   });
 });
 

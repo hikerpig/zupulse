@@ -30,6 +30,40 @@ export type AlphaTabBrowserScoreLike = {
   }>;
 };
 
+export type AlphaTabBoundsLike = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+};
+
+export type AlphaTabStaffSystemBoundsLike = {
+  index: number;
+  realBounds: AlphaTabBoundsLike;
+  bars: Array<{ index: number }>;
+};
+
+export type AlphaTabBeatBoundsLike = {
+  barBounds: {
+    masterBarBounds: {
+      index: number;
+      staffSystemBounds: AlphaTabStaffSystemBoundsLike | null;
+    };
+  };
+};
+
+export type AlphaTabScrollHandlerLike = {
+  forceScrollTo(currentBeatBounds: AlphaTabBeatBoundsLike): void;
+  onBeatCursorUpdating?(
+    startBeat: AlphaTabBeatBoundsLike,
+    endBeat: AlphaTabBeatBoundsLike | undefined,
+    cursorMode: unknown,
+    actualBeatCursorStartX: number,
+    actualBeatCursorEndX: number,
+    actualBeatCursorTransitionDuration: number,
+  ): void;
+};
+
 export type AlphaTabApiLike = {
   play?: () => unknown;
   destroy?: () => void;
@@ -61,12 +95,30 @@ export type AlphaTabApiLike = {
   playerReady?: AlphaTabVoidEvent;
   playerStateChanged?: AlphaTabEvent<unknown>;
   playerPositionChanged?: AlphaTabEvent<unknown>;
+  postRenderFinished?: AlphaTabVoidEvent;
+  boundsLookup?: {
+    staffSystems: AlphaTabStaffSystemBoundsLike[];
+  } | null;
+  customScrollHandler?: AlphaTabScrollHandlerLike;
+  tickCache?: {
+    masterBars: Array<{
+      start: number;
+      end: number;
+      masterBar: { index: number };
+    }>;
+  } | null;
   soundFontLoaded?: AlphaTabVoidEvent;
   soundFontLoad?: AlphaTabEvent<{ loaded?: number; total?: number }>;
   beatMouseDown?: AlphaTabEvent<AlphaTabSelectionBeat>;
   noteMouseDown?: AlphaTabEvent<{ beat: AlphaTabSelectionBeat }>;
   error?: AlphaTabEvent<unknown>;
   loadSoundFontFromUrl?: (url: string, append: boolean) => void;
+};
+
+export type AlphaTabCursorSystem = {
+  systemIndex: number;
+  firstMeasureIndex: number;
+  bounds: { x: number; y: number; width: number; height: number };
 };
 
 export type AlphaTabApiFactory = (element: HTMLElement, options: unknown) => AlphaTabApiLike;
@@ -117,6 +169,41 @@ export function attachAlphaTabPositionEvents(
   });
 
   return detach ?? (() => {});
+}
+
+export function attachAlphaTabNavigationEvents(
+  api: AlphaTabApiLike,
+  listeners: {
+    renderFinished(): void;
+    cursorSystemChanged(system: AlphaTabCursorSystem): void;
+  },
+): () => void {
+  const detachRender = api.postRenderFinished?.on(listeners.renderFinished) ?? (() => {});
+  const handler: AlphaTabScrollHandlerLike = {
+    forceScrollTo: (beat) => emitCursorSystem(beat),
+    onBeatCursorUpdating: (beat) => emitCursorSystem(beat),
+  };
+  const emitCursorSystem = (beat: AlphaTabBeatBoundsLike) => {
+    const masterBar = beat.barBounds.masterBarBounds;
+    const system = masterBar.staffSystemBounds;
+    if (!system || !isFiniteBounds(system.realBounds)) return;
+    listeners.cursorSystemChanged({
+      systemIndex: system.index,
+      firstMeasureIndex: system.bars[0]?.index ?? masterBar.index,
+      bounds: {
+        x: system.realBounds.x,
+        y: system.realBounds.y,
+        width: system.realBounds.w,
+        height: system.realBounds.h,
+      },
+    });
+  };
+  api.customScrollHandler = handler;
+
+  return () => {
+    detachRender();
+    if (api.customScrollHandler === handler) delete api.customScrollHandler;
+  };
 }
 
 export function attachAlphaTabGestureSelection(
@@ -187,6 +274,10 @@ export function attachAlphaTabGestureSelection(
 
 function touchPoints(event: Event): ArrayLike<{ clientX: number; clientY: number }> {
   return (event as Event & { touches?: ArrayLike<{ clientX: number; clientY: number }> }).touches ?? [];
+}
+
+function isFiniteBounds(bounds: AlphaTabBoundsLike): boolean {
+  return [bounds.x, bounds.y, bounds.w, bounds.h].every(Number.isFinite);
 }
 
 function defaultAlphaTabApiFactory(element: HTMLElement, options: unknown): AlphaTabApiLike {

@@ -4,25 +4,25 @@ Canonical plan: [`tasks/plan.md`](plan.md)
 
 ## Preconditions
 
-- [ ] Land the Current Contract / initial Spec document split separately.
-- [ ] Human approves `tasks/plan.md`.
+- [x] Land the Current Contract / initial Spec document split separately.
+- [x] Human approves `tasks/plan.md`.
 
 ## Phase 1: Risk-first foundations
 
-- [ ] T1 Public alphaTab navigation seam
-  - [ ] Public staff-system bounds normalize successfully.
-  - [ ] Cursor callbacks stay outside React state.
-  - [ ] Focused tests and typecheck pass.
-- [ ] T2 Exact playback occurrence index
-  - [ ] Repeat fixture exposes distinct path-aware occurrences.
-  - [ ] Current-path → next → first fallback is deterministic.
-  - [ ] Focused core tests pass.
+- [x] T1 Public alphaTab navigation seam
+  - [x] Public staff-system bounds normalize successfully.
+  - [x] Cursor callbacks stay outside React state.
+  - [x] Focused tests and typecheck pass.
+- [x] T2 Exact playback occurrence index
+  - [x] Repeat fixture exposes distinct path-aware occurrences.
+  - [x] Current-path → next → first fallback is deterministic.
+  - [x] Focused core tests pass.
 
 ## Checkpoint A
 
-- [ ] No private alphaTab API or fork is required.
-- [ ] ADR 0064 remains implementable.
-- [ ] Human approves continuation.
+- [x] No private alphaTab API or fork is required.
+- [x] ADR 0064 remains implementable.
+- [x] Human approves continuation.
 
 ## Phase 2: Authoritative seek and Continuous Follow
 

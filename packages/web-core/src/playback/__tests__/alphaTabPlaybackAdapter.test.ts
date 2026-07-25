@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AlphaTabApiLike, AlphaTabBrowserScoreLike, AlphaTabBrowserTrackLike } from "../../gp/alphaTabBrowser";
 import {
+  extractAlphaTabPlaybackOccurrences,
   AlphaTabPlaybackAdapter,
   extractAlphaTabPlaybackModel,
   waitForAlphaTabScore,
@@ -44,6 +45,34 @@ describe("extractAlphaTabPlaybackModel", () => {
     api.endTick = 0;
 
     expect(extractAlphaTabPlaybackModel(api).timeline.durationTicks).toBe(3840);
+  });
+});
+
+describe("extractAlphaTabPlaybackOccurrences", () => {
+  it("uses alphaTab's expanded master-bar tick lookup for repeat occurrences", () => {
+    const api = createApi();
+    api.tickCache = {
+      masterBars: [
+        { start: 0, end: 1920, masterBar: { index: 0 } },
+        { start: 1920, end: 3840, masterBar: { index: 1 } },
+        { start: 3840, end: 5760, masterBar: { index: 0 } },
+      ],
+    };
+
+    const occurrences = extractAlphaTabPlaybackOccurrences(api);
+
+    expect(
+      occurrences
+        .filter((item) => item.written.measureIndex === 0 && item.written.beatIndex === 1)
+        .map((item) => ({
+          occurrenceIndex: item.occurrenceIndex,
+          timelineTick: item.timelineTick,
+          path: item.path,
+        })),
+    ).toEqual([
+      { occurrenceIndex: 0, timelineTick: 480, path: [0] },
+      { occurrenceIndex: 1, timelineTick: 4320, path: [2] },
+    ]);
   });
 });
 

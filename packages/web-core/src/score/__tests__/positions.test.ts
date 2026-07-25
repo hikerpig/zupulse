@@ -15,4 +15,12 @@ describe("position mapping", () => {
     expect(map.occurrencesFor(written)).toHaveLength(2);
     expect(map.restore(occurrence(9999, 2, [9]))?.timelineTick).toBe(960);
   });
+
+  it("resolves the current occurrence, then the next occurrence, then the first fallback", () => {
+    const map = new PositionMap([occurrence(960, 0, [0]), occurrence(2880, 1, [1]), occurrence(4800, 2, [2])]);
+
+    expect(map.resolve(written, 960)?.timelineTick).toBe(960);
+    expect(map.resolve(written, 1000)?.timelineTick).toBe(2880);
+    expect(map.resolve(written, 5000)?.timelineTick).toBe(960);
+  });
 });

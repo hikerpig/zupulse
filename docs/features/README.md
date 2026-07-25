@@ -27,6 +27,8 @@ Feature 保持 `contracts/<feature-slug>.md` 稳定路径；只有已移除或�
 | `CONTEXT.md`     | 产品和领域术语是什么意思               |
 
 Contract 不复制完整 schema、SQL、Bridge payload 或实现细节，而是通过证据地图链接到这些事实源。
+结构门禁、PR 影响提示和周期语义审计的稳定用法见
+[`docs/conventions/documentation-gardening.md`](../conventions/documentation-gardening.md)。
 
 ## 状态
 

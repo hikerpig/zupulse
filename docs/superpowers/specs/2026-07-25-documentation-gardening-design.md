@@ -1,9 +1,10 @@
 # Documentation Gardening 设计
 
-- 状态：已确认设计，尚未实施。
+- 状态：Historical；已于 2026-07-25 实施。
+- 当前替代入口：[`docs/conventions/documentation-gardening.md`](../../conventions/documentation-gardening.md)。
 - 事实边界：运行时代码、Zod schema、数据库约束、可重复测试、Current ADR、当前架构文档和
   `status: current` 的 Feature Contract 高于本文。
-- 本文描述准备建设的文档维护机制，不得被 AI 当作已经存在的命令、CI 或自动任务。
+- 本文仅保留设计依据和实施验收历史；当前命令、CI 与审计规则以替代入口为准。
 
 ## 目标
 

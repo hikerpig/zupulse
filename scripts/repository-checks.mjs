@@ -356,7 +356,7 @@ function markdownSection(contents, title) {
 
 function featureIndexEntries(contents, indexPath) {
   const paths = [];
-  for (const match of contents.matchAll(/\[[^\]]*]\(([^)]+)\)/g)) {
+  for (const match of withoutFencedCode(contents).matchAll(/\[[^\]]*]\(([^)]+)\)/g)) {
     const target = localLinkTarget(match[1]);
     if (target?.startsWith("contracts/")) {
       paths.push(join(dirname(indexPath), target).replaceAll("\\", "/"));
@@ -379,7 +379,7 @@ async function validateImplementationPaths(root, contract) {
 
 async function validateLocalLinks(root, sourcePath, contents, options = {}) {
   const errors = [];
-  for (const match of contents.matchAll(/\[[^\]]*]\(([^)]+)\)/g)) {
+  for (const match of withoutFencedCode(contents).matchAll(/\[[^\]]*]\(([^)]+)\)/g)) {
     const target = localLinkTarget(match[1]);
     if (target === undefined || (options.skipContractLinks && target.startsWith("contracts/"))) continue;
     const absolute = resolve(root, dirname(sourcePath), target);
@@ -398,6 +398,25 @@ function localLinkTarget(rawTarget) {
   }
   const target = trimmed.split("#", 1)[0].split("?", 1)[0];
   return target === "" ? undefined : target;
+}
+
+function withoutFencedCode(contents) {
+  let fence;
+  return contents
+    .split(/\r?\n/)
+    .map((line) => {
+      const marker = /^ {0,3}(`{3,}|~{3,})/.exec(line)?.[1];
+      if (marker && fence === undefined) {
+        fence = marker[0];
+        return "";
+      }
+      if (marker && marker[0] === fence) {
+        fence = undefined;
+        return "";
+      }
+      return fence === undefined ? line : "";
+    })
+    .join("\n");
 }
 
 function isRepositoryRelative(path) {

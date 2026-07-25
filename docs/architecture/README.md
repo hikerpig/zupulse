@@ -37,6 +37,7 @@ flowchart LR
 - 产品语言：`../../CONTEXT.md`、`glossary.md`
 - 产品设计契约：`../../DESIGN.md`
 - Feature Contract 索引：`../features/README.md`
+- Documentation Gardening 机制：`../conventions/documentation-gardening.md`
 - Sheet Library 当前行为：`../features/contracts/sheet-library.md`
 - React 应用系统：`react-application-system.md`
 - 应用国际化：`application-i18n.md`

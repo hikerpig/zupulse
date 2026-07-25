@@ -401,6 +401,37 @@ supersedes: []
       warnings: [],
     });
   });
+
+  it("ignores Markdown links inside fenced code examples", async () => {
+    const root = await fixture({
+      "docs/features/README.md": `# Feature Contracts
+
+## 当前索引
+
+| Feature | Contract |
+| --- | --- |
+| Current | [Current](contracts/current.md) |
+
+\`\`\`markdown
+[Example only](missing-index-example.md)
+\`\`\`
+`,
+      "docs/features/contracts/current.md": `${completeCurrentContract({
+        feature: "current-feature",
+        title: "Current",
+      })}
+
+\`\`\`markdown
+[Example only](../../../missing-contract-example.md)
+\`\`\`
+`,
+    });
+
+    await expect(checkDocumentation(root, { now: new Date("2026-07-25T00:00:00.000Z") })).resolves.toEqual({
+      errors: [],
+      warnings: [],
+    });
+  });
 });
 
 describe("runRepositoryCheck", () => {

@@ -107,6 +107,14 @@ status: draft
 describe("checkDocumentation", () => {
   it("accepts valid current, draft and historical lifecycle combinations", async () => {
     const root = await fixture({
+      "docs/features/README.md": `# Feature Contracts
+
+## 当前索引
+
+| Feature | Contract | Status | Delivery |
+| --- | --- | --- | --- |
+| Current | [Current](contracts/current.md) | current | partial |
+`,
       "docs/features/contracts/current.md": `---
 feature: current-feature
 title: Current Feature
@@ -133,6 +141,7 @@ supersedes: []
 ## 相关资料
 ## 维护触发器
 `,
+      "packages/current/index.ts": "",
       "docs/features/contracts/draft.md": `---
 feature: draft-feature
 title: Draft Feature
@@ -169,6 +178,7 @@ supersedes: []
 
   it("reports invalid metadata fields without guessing their meaning", async () => {
     const root = await fixture({
+      "docs/features/README.md": "# Feature Contracts\n\n## 当前索引\n",
       "docs/features/contracts/invalid.md": `---
 feature: Not Valid
 title: []
@@ -201,6 +211,7 @@ extra_field: value
 
   it("reports invalid lifecycle directories and delivery combinations", async () => {
     const root = await fixture({
+      "docs/features/README.md": "# Feature Contracts\n\n## 当前索引\n",
       "docs/features/contracts/retired.md": `---
 feature: retired-in-contracts
 title: Retired
@@ -260,6 +271,14 @@ supersedes: []
 
   it("reports missing required sections and warns when current verification is stale", async () => {
     const root = await fixture({
+      "docs/features/README.md": `# Feature Contracts
+
+## 当前索引
+
+| Feature | Contract | Status | Delivery |
+| --- | --- | --- | --- |
+| Stale | [Stale](contracts/stale.md) | current | partial |
+`,
       "docs/features/contracts/stale.md": `---
 feature: stale-feature
 title: Stale Feature
@@ -288,6 +307,97 @@ supersedes: []
         "docs/features/contracts/stale.md: missing required section ## 维护触发器",
       ],
       warnings: ["docs/features/contracts/stale.md: last_verified 2026-06-01 is older than 30 days"],
+    });
+  });
+
+  it("reports duplicate feature slugs and invalid current index entries", async () => {
+    const root = await fixture({
+      "docs/features/README.md": `# Feature Contracts
+
+## 当前索引
+
+| Feature | Contract | Status | Delivery |
+| --- | --- | --- | --- |
+| Current | [Current](contracts/current.md) | current | available |
+| Current again | [Current](contracts/current.md) | current | available |
+| Missing | [Missing](contracts/missing.md) | current | available |
+`,
+      "docs/features/contracts/current.md": completeCurrentContract({
+        feature: "duplicate-feature",
+        title: "Current",
+      }),
+      "docs/features/contracts/draft.md": `---
+feature: duplicate-feature
+title: Draft
+status: draft
+delivery: planned
+last_verified: 2026-07-24
+hosts: []
+implementation_paths: []
+supersedes: []
+---
+
+## 进行中的目标差异
+`,
+    });
+
+    await expect(checkDocumentation(root, { now: new Date("2026-07-25T00:00:00.000Z") })).resolves.toEqual({
+      errors: [
+        "docs/features/README.md: duplicate current index entry docs/features/contracts/current.md",
+        "docs/features/README.md: indexed contract docs/features/contracts/missing.md does not exist",
+        "feature duplicate-feature is declared by docs/features/contracts/current.md, docs/features/contracts/draft.md",
+      ],
+      warnings: [],
+    });
+  });
+
+  it("reports a current contract missing from the feature index", async () => {
+    const root = await fixture({
+      "docs/features/README.md": "# Feature Contracts\n\n## 当前索引\n",
+      "docs/features/contracts/current.md": completeCurrentContract({
+        feature: "current-feature",
+        title: "Current",
+      }),
+    });
+
+    await expect(checkDocumentation(root, { now: new Date("2026-07-25T00:00:00.000Z") })).resolves.toEqual({
+      errors: ["docs/features/contracts/current.md: current contract is missing from docs/features/README.md index"],
+      warnings: [],
+    });
+  });
+
+  it("reports missing implementation paths and local link targets without rejecting fragments or external links", async () => {
+    const root = await fixture({
+      "docs/features/README.md": `# Feature Contracts
+
+## 当前索引
+
+| Feature | Contract | Status | Delivery |
+| --- | --- | --- | --- |
+| Current | [Current](contracts/current.md) | current | available |
+
+[Missing guide](missing-guide.md)
+`,
+      "docs/features/contracts/current.md": `${completeCurrentContract({
+        feature: "current-feature",
+        title: "Current",
+        implementationPaths: ["packages/missing"],
+      })}
+
+[Missing evidence](../../../missing-evidence.md)
+[Existing evidence](../../../CONTEXT.md#current-scope)
+[External evidence](https://example.com/docs)
+`,
+      "CONTEXT.md": "# Context\n",
+    });
+
+    await expect(checkDocumentation(root, { now: new Date("2026-07-25T00:00:00.000Z") })).resolves.toEqual({
+      errors: [
+        "docs/features/README.md: local link target docs/features/missing-guide.md does not exist",
+        "docs/features/contracts/current.md: implementation path packages/missing does not exist",
+        "docs/features/contracts/current.md: local link target missing-evidence.md does not exist",
+      ],
+      warnings: [],
     });
   });
 });
@@ -459,4 +569,31 @@ async function fixture(files: Record<string, string>): Promise<string> {
     }),
   );
   return root;
+}
+
+function completeCurrentContract(input: { feature: string; title: string; implementationPaths?: string[] }): string {
+  const paths = input.implementationPaths ?? [];
+  return `---
+feature: ${input.feature}
+title: ${input.title}
+status: current
+delivery: available
+last_verified: 2026-07-24
+hosts: []
+implementation_paths:${paths.length === 0 ? " []" : `\n${paths.map((path) => `  - ${path}`).join("\n")}`}
+supersedes: []
+---
+
+# ${input.title}
+
+## 一句话契约
+## 用户入口
+## 当前已实现行为
+## 领域不变量
+## 明确非目标
+## 验收契约
+## 证据地图
+## 相关资料
+## 维护触发器
+`;
 }

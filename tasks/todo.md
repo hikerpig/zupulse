@@ -24,16 +24,16 @@ Detailed plan: [`tasks/plan.md`](plan.md)
 
 ### Task 3: Cross-document validation
 
-- [ ] Require exact Current Contract/index coverage without duplicates or dangling entries.
-- [ ] Validate `implementation_paths` and local Markdown targets.
-- [ ] Verify a current-repository-equivalent fixture passes.
-- [ ] Verify: `pnpm vitest run scripts/__tests__/repositoryChecks.test.ts`
+- [x] Require exact Current Contract/index coverage without duplicates or dangling entries.
+- [x] Validate `implementation_paths` and local Markdown targets.
+- [x] Verify a current-repository-equivalent fixture passes.
+- [x] Verify: `pnpm vitest run scripts/__tests__/repositoryChecks.test.ts`
 - Dependencies: Task 2.
 
 ### Checkpoint: Contract validation core
 
-- [ ] Tasks 1–3 pass.
-- [ ] Review parser strictness, normalized shape and error messages.
+- [x] Tasks 1–3 pass.
+- [x] Review parser strictness, normalized shape and error messages.
 
 ### Task 4: `check:docs` command and blocking gate
 

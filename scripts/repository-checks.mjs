@@ -1,6 +1,6 @@
-import { readFile, readdir } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
 import { builtinModules } from "node:module";
-import { dirname, join, relative } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const DEFAULT_CONTEXT = {
@@ -36,6 +36,7 @@ const DEFAULT_DESIGN = {
 const DEFAULT_DOCUMENTATION = {
   contractsDir: "docs/features/contracts",
   archiveDir: "docs/features/archive",
+  indexPath: "docs/features/README.md",
 };
 
 const FEATURE_CONTRACT_KEYS = new Set([
@@ -133,6 +134,16 @@ export async function checkDocumentation(root, options = {}) {
     const validation = validateFeatureContract(contract, settings.now ?? new Date());
     errors.push(...validation.errors);
     warnings.push(...validation.warnings);
+  }
+  errors.push(...duplicateFeatureErrors(result.contracts));
+  errors.push(...(await validateFeatureIndex(root, result.contracts, settings.indexPath)));
+  for (const contract of result.contracts) {
+    errors.push(...(await validateImplementationPaths(root, contract)));
+    errors.push(...(await validateLocalLinks(root, contract.path, contract.contents)));
+  }
+  const indexContents = await read(join(root, settings.indexPath));
+  if (indexContents !== undefined) {
+    errors.push(...(await validateLocalLinks(root, settings.indexPath, indexContents, { skipContractLinks: true })));
   }
   return {
     errors: errors.sort(),
@@ -286,6 +297,125 @@ function validateFeatureContract(contract, now) {
     if (ageDays > 30) warnings.push(`${path}: last_verified ${frontmatter.last_verified} is older than 30 days`);
   }
   return { errors, warnings };
+}
+
+function duplicateFeatureErrors(contracts) {
+  const pathsByFeature = new Map();
+  for (const contract of contracts) {
+    if (typeof contract.frontmatter.feature !== "string") continue;
+    const paths = pathsByFeature.get(contract.frontmatter.feature) ?? [];
+    paths.push(contract.path);
+    pathsByFeature.set(contract.frontmatter.feature, paths);
+  }
+  return [...pathsByFeature.entries()]
+    .filter(([, paths]) => paths.length > 1)
+    .map(
+      ([feature, paths]) =>
+        `feature ${feature} is declared by ${paths.sort((left, right) => left.localeCompare(right)).join(", ")}`,
+    );
+}
+
+async function validateFeatureIndex(root, contracts, indexPath) {
+  const contents = await read(join(root, indexPath));
+  if (contents === undefined) return [`${indexPath}: feature contract index is missing`];
+  const currentSection = markdownSection(contents, "当前索引");
+  const entries = currentSection === undefined ? [] : featureIndexEntries(currentSection, indexPath);
+  const errors = [];
+  const counts = new Map();
+  for (const path of entries) counts.set(path, (counts.get(path) ?? 0) + 1);
+  for (const [path, count] of counts) {
+    if (count > 1) errors.push(`${indexPath}: duplicate current index entry ${path}`);
+  }
+
+  const contractsByPath = new Map(contracts.map((contract) => [contract.path, contract]));
+  for (const path of counts.keys()) {
+    const contract = contractsByPath.get(path);
+    if (!contract) {
+      errors.push(`${indexPath}: indexed contract ${path} does not exist`);
+      continue;
+    }
+    if (contract.location !== "contracts" || contract.frontmatter.status !== "current") {
+      errors.push(`${indexPath}: indexed contract ${path} is not current`);
+    }
+  }
+  for (const contract of contracts) {
+    if (contract.location === "contracts" && contract.frontmatter.status === "current" && !counts.has(contract.path)) {
+      errors.push(`${contract.path}: current contract is missing from ${indexPath} index`);
+    }
+  }
+  return errors;
+}
+
+function markdownSection(contents, title) {
+  const match = new RegExp(`^## ${escapeRegExp(title)}\\s*$`, "m").exec(contents);
+  if (!match) return undefined;
+  const start = match.index + match[0].length;
+  const next = /^## .+$/m.exec(contents.slice(start));
+  return contents.slice(start, next === null ? undefined : start + next.index);
+}
+
+function featureIndexEntries(contents, indexPath) {
+  const paths = [];
+  for (const match of contents.matchAll(/\[[^\]]*]\(([^)]+)\)/g)) {
+    const target = localLinkTarget(match[1]);
+    if (target?.startsWith("contracts/")) {
+      paths.push(join(dirname(indexPath), target).replaceAll("\\", "/"));
+    }
+  }
+  return paths;
+}
+
+async function validateImplementationPaths(root, contract) {
+  const paths = contract.frontmatter.implementation_paths;
+  if (!Array.isArray(paths)) return [];
+  const errors = [];
+  for (const path of paths) {
+    if (!isRepositoryRelative(path) || !(await exists(resolve(root, path)))) {
+      errors.push(`${contract.path}: implementation path ${path} does not exist`);
+    }
+  }
+  return errors;
+}
+
+async function validateLocalLinks(root, sourcePath, contents, options = {}) {
+  const errors = [];
+  for (const match of contents.matchAll(/\[[^\]]*]\(([^)]+)\)/g)) {
+    const target = localLinkTarget(match[1]);
+    if (target === undefined || (options.skipContractLinks && target.startsWith("contracts/"))) continue;
+    const absolute = resolve(root, dirname(sourcePath), target);
+    const repositoryPath = relative(root, absolute).replaceAll("\\", "/");
+    if (!isRepositoryRelative(repositoryPath) || !(await exists(absolute))) {
+      errors.push(`${sourcePath}: local link target ${repositoryPath} does not exist`);
+    }
+  }
+  return errors;
+}
+
+function localLinkTarget(rawTarget) {
+  const trimmed = rawTarget.trim().replace(/^<|>$/g, "");
+  if (trimmed.startsWith("#") || trimmed.startsWith("//") || /^[a-z][a-z0-9+.-]*:/i.test(trimmed)) {
+    return undefined;
+  }
+  const target = trimmed.split("#", 1)[0].split("?", 1)[0];
+  return target === "" ? undefined : target;
+}
+
+function isRepositoryRelative(path) {
+  return path !== "" && path !== ".." && !path.startsWith("../") && !path.startsWith("/") && !path.includes("\\");
+}
+
+async function exists(path) {
+  try {
+    await stat(path);
+    return true;
+  } catch (error) {
+    if (error?.code === "ENOENT") return false;
+    throw error;
+  }
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function parseDate(value) {

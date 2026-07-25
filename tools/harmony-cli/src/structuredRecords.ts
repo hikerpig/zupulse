@@ -9,7 +9,7 @@ import {
   type ScoreWrittenRange,
 } from "@zupulse/web-core";
 import type { V3DatasetRole } from "./evaluationProtocol";
-import { harmonyStructuredRecordsReportSchema, type HarmonyStructuredRecordsReport } from "./schemas";
+import { harmonyStructuredRecordPieceSchema, type HarmonyStructuredRecordPiece } from "./schemas";
 
 type StructuredGold = {
   range: ScoreWrittenRange;
@@ -24,7 +24,7 @@ export function createTrainingStructuredRecordPiece(request: {
   input: HarmonyAnalysisInput;
   includedTrackIds: readonly string[];
   gold: readonly StructuredGold[];
-}): HarmonyStructuredRecordsReport["pieces"][number] {
+}): HarmonyStructuredRecordPiece {
   if (request.role !== "train")
     throw new Error(`structured training records require train role: ${request.groupId} is ${request.role}`);
   return createPiece(request);
@@ -38,7 +38,7 @@ export function createTuneStructuredRecordPiece(request: {
   input: HarmonyAnalysisInput;
   includedTrackIds: readonly string[];
   gold: readonly StructuredGold[];
-}): HarmonyStructuredRecordsReport["pieces"][number] {
+}): HarmonyStructuredRecordPiece {
   if (request.role !== "tune")
     throw new Error(`structured tune records require tune role: ${request.groupId} is ${request.role}`);
   return createPiece(request);
@@ -172,7 +172,9 @@ function createPiece(request: {
       }),
     };
   });
-  return harmonyStructuredRecordsReportSchema.shape.pieces.element.parse({
+  return harmonyStructuredRecordPieceSchema.parse({
+    schemaVersion: "1.0.0",
+    featureVersion: "semi-crf-linear-v1",
     id: request.id,
     corpus: request.corpus,
     groupId: request.groupId,

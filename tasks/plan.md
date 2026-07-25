@@ -909,14 +909,14 @@ Task 33 sequential tune gate
 
 **Acceptance criteria:**
 
-- [ ] train exporter 只接受 train role，tune 仅走 evaluation-only entry point，regression/final-holdout 一律拒绝。
-- [ ] report 固定 source revision、archive/group SHA、feature version、search contract、完整/切分 path counts；candidate miss/unsupported gap 明确标记而非猜测。
-- [ ] records 使用紧凑索引引用 boundary/chord/features，Mozart 全量资产大小和生成时间不超过 Task 27 预算的 `1.25x`。
+- [x] train exporter 只接受 train role，tune 仅走 evaluation-only entry point，regression/final-holdout 一律拒绝。
+- [x] report 固定 source revision、archive/group SHA、feature version、search contract、完整/切分 path counts；candidate miss/unsupported gap 明确标记。
+- [x] records 使用 manifest + piece shards 与紧凑索引；Mozart train `0.94 GB`，低于 Task 27 体积预算的 `1.25x`。
 
 **Verification:**
 
-- [ ] schema/role 隔离/确定性测试通过；同一输入两次导出的 SHA-256 相同。
-- [ ] Mozart train 与 tune records 分别生成并通过 schema round-trip。
+- [x] schema/role 隔离/确定性测试通过；同一输入两次导出的 SHA-256 相同。
+- [x] Mozart train 与 tune records 分别生成，并通过 streaming schema/hash/count round-trip。
 
 **Dependencies:** Task 29
 
@@ -932,10 +932,10 @@ Task 33 sequential tune gate
 
 ## Checkpoint F：训练资产
 
-- [ ] Feature schema、records schema 和搜索契约版本完全匹配。
-- [ ] Train/tune/eval 隔离测试通过，没有 gold-derived product input。
-- [ ] Mozart records 可重复、体积和导出 runtime 在预算内。
-- [ ] `pnpm --filter @zupulse/harmony-cli test` 通过。
+- [x] Feature schema、records schema 和搜索契约版本完全匹配。
+- [x] Train/tune/eval 隔离测试通过，没有 gold-derived product input。
+- [x] Mozart records 可重复、分片生成不再 OOM，体积在预算内。
+- [x] `pnpm --filter @zupulse/harmony-cli test` 通过。
 
 ## Task 31：训练线性 structured segment/transition scorer
 

@@ -66,7 +66,7 @@ Detailed plan: [`tasks/plan.md`](plan.md)
 
 - [x] Structural drift blocks; semantic impact remains advisory.
 - [x] CI history/base handling is reviewed.
-- [ ] Human approval before external semantic automation.
+- [x] Human approval before external semantic automation.
 
 ## Phase 3: Semantic Audit and Recurring Operation
 
@@ -87,17 +87,17 @@ Detailed plan: [`tasks/plan.md`](plan.md)
 
 ### Task 9: Weekly Codex automation
 
-- [ ] Confirm the weekly time/timezone and GitHub authorization.
-- [ ] Save an automation bounded to the verified runbook.
-- [ ] Run one bounded audit and inspect its summary.
-- [ ] Confirm `no_drift` creates no PR, issue or repository file.
+- [x] Confirm the weekly time/timezone and GitHub authorization.
+- [x] Save an automation bounded to the verified runbook.
+- [x] Run one bounded audit and inspect its summary.
+- [x] Confirm `no_drift` creates no PR, issue or repository file.
 - Dependencies: Task 8 and operational confirmation.
 
 ### Checkpoint: Semantic gardening
 
 - [x] Three Sheet Library scenarios classify correctly.
-- [ ] Automation schedule and next run are visible.
-- [ ] Human approval before marking the design implemented.
+- [x] Automation schedule and next run are visible.
+- [x] Human approval before marking the design implemented.
 
 ### Task 10: Finalize current docs and clean up
 

@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   analyzeDocumentationImpact,
+  gitDiffArguments,
   renderDocumentationImpact,
   runDocumentationImpact,
 } from "../documentation-impact.mjs";
@@ -103,6 +103,15 @@ describe("renderDocumentationImpact", () => {
 });
 
 describe("runDocumentationImpact", () => {
+  it("includes deleted files when reading changed implementation paths", () => {
+    expect(gitDiffArguments("origin/main")).toEqual([
+      "diff",
+      "--name-only",
+      "--diff-filter=ACDMR",
+      "origin/main...HEAD",
+    ]);
+  });
+
   it("reads the requested Git base and renders a non-blocking report", async () => {
     const root = await fixture({
       "docs/features/contracts/sheet-library.md": `---

@@ -69,11 +69,15 @@ export async function runDocumentationImpact(root, args, options = {}) {
 }
 
 async function readGitChangedFiles(root, base) {
-  const { stdout } = await execFileAsync("git", ["diff", "--name-only", "--diff-filter=ACMR", `${base}...HEAD`], {
+  const { stdout } = await execFileAsync("git", gitDiffArguments(base), {
     cwd: root,
     encoding: "utf8",
   });
   return stdout.split(/\r?\n/).filter(Boolean);
+}
+
+export function gitDiffArguments(base) {
+  return ["diff", "--name-only", "--diff-filter=ACDMR", `${base}...HEAD`];
 }
 
 function matchesImplementationPath(implementationPath, changedPath) {

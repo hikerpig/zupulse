@@ -49,7 +49,7 @@
 
   .progress .control {
     min-height: 0;
-    align-items: flex-end;
+    align-items: flex-start;
   }
 
   .progress .track {

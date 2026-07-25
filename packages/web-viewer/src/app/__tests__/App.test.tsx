@@ -82,7 +82,9 @@ describe("App", () => {
     expect(screen.getByRole("navigation", { name: "主要页面" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "逐拍首页" })).toBeTruthy();
     expect(screen.getByRole("region", { name: "乐谱工作区" })).toBeTruthy();
-    expect(screen.getByText("用于乐谱阅读、播放和循环训练的练习工作区。")).toBeTruthy();
+    expect(screen.queryByText("Score Viewer")).toBeNull();
+    expect(screen.queryByText("用于乐谱阅读、播放和循环训练的练习工作区。")).toBeNull();
+    expect(screen.queryByText("等待选择文件")).toBeNull();
     expect(screen.getByRole("button", { name: "打开乐谱" })).toBeTruthy();
 
     await application.destroy();

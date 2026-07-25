@@ -72,4 +72,28 @@ describe("harmony sequence decoder", () => {
     expect(visited).toEqual(["0-1", "1-2"]);
     expect(result.map((segment) => segment.chord.root.step)).toEqual(["C", "C"]);
   });
+
+  it("keeps learned segment and transition logits separate from rule priors", () => {
+    const candidates = () => [
+      { chord: chord("C"), localScore: 2, sequenceScore: 2, confidence: 0 },
+      { chord: chord("G"), localScore: 1, sequenceScore: 1, confidence: 0 },
+    ];
+    const segmentFlipped = decodeHarmonySequence({
+      boundaries: [moment(0), moment(1)],
+      candidates,
+      searchMode: "exact",
+      learnedSegmentScore: (_range, candidate) => (candidate.chord.root.step === "G" ? 2 : 0),
+    });
+    const transitionFlipped = decodeHarmonySequence({
+      boundaries: [moment(0), moment(1), moment(2)],
+      candidates,
+      searchMode: "exact",
+      maxSpan: 1,
+      learnedTransitionScore: (from, _range, to) =>
+        from.chord.root.step === "G" && to.chord.root.step === "C" ? 10 : 0,
+    });
+
+    expect(segmentFlipped.map((segment) => segment.chord.root.step)).toEqual(["G"]);
+    expect(transitionFlipped.map((segment) => segment.chord.root.step)).toEqual(["G", "C"]);
+  });
 });

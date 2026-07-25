@@ -1,5 +1,9 @@
 import { readFile } from "node:fs/promises";
-import type { HarmonyBoundaryClassifierModel, HarmonyBoundaryPolicy } from "@zupulse/web-core";
+import type {
+  HarmonyBoundaryClassifierModel,
+  HarmonyBoundaryPolicy,
+  HarmonyStructuredLinearModel,
+} from "@zupulse/web-core";
 import { dirname, resolve } from "node:path";
 import { evaluateHarmonyDatasetManifest } from "./evaluateDatasetManifest";
 import type { DatasetSplit } from "./evaluationProtocol";
@@ -23,6 +27,8 @@ export async function evaluateHarmonyManifest(
     decisionThreshold?: number;
     boundaryPolicy?: HarmonyBoundaryPolicy;
     boundaryClassifierModel?: HarmonyBoundaryClassifierModel;
+    structuredModel?: HarmonyStructuredLinearModel;
+    structuredModelSha256?: string;
   } = {},
 ): Promise<HarmonyEvalReport | import("./schemas").HarmonyDatasetEvalReport> {
   const raw = JSON.parse(await readFile(path, "utf8")) as { schemaVersion?: unknown };
@@ -36,6 +42,8 @@ export async function evaluateHarmonyManifest(
       options.decisionThreshold,
       options.boundaryPolicy,
       options.boundaryClassifierModel,
+      options.structuredModel,
+      options.structuredModelSha256,
     );
   }
   const manifest = harmonyRegressionManifestSchema.parse(raw);

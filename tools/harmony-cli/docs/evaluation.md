@@ -121,6 +121,8 @@ pnpm -s harmony:structured-verify /tmp/mozart-structured-train.json
 
 Manifest 与每个 shard 都包含 SHA/byte/count 校验；loader 一次只读取一个 piece。Checkpoint F 见 [`tasks/harmony-structured-records-checkpoint.md`](../../../tasks/harmony-structured-records-checkpoint.md)。
 
+线性 Semi-CRF 的 Mozart tune 首轮门禁失败：相对 dense production，interval accuracy `-0.0912`、predicted-primary `-0.1460`、segments/measure `+20.6%`，learned runtime 约为 dense 的十几倍。Boundary F1 仅持平。评估按 protocol 在第一个 corpus 停止，没有运行跨语料 tune、MLP 或 final holdout，也没有移动 production 默认。完整证据见 [`tasks/harmony-structured-linear-checkpoint.md`](../../../tasks/harmony-structured-linear-checkpoint.md) 与 [`tasks/harmony-structured-final-checkpoint.md`](../../../tasks/harmony-structured-final-checkpoint.md)。
+
 ## v3 预登记协议
 
 [`protocol-v3.json`](../../../test-fixtures/harmony/datasets/protocol-v3.json) 在下一轮 primary reranker 训练前冻结新的作品级 final holdout：Beethoven `01`、Chopin `BI105` 和 POP909 `225`。这些 group 不得进入 ranking records、训练、tune 或 threshold 选择。现有 K331 与已经查看过指标的跨语料 cases 只保留为 regression，不能再作为新的泛化声明。

@@ -1,6 +1,11 @@
 import { resolve } from "node:path";
 import { readFile } from "node:fs/promises";
-import { harmonyBoundaryClassifierModelSchema, type HarmonyBoundaryPolicy } from "@zupulse/web-core";
+import {
+  harmonyBoundaryClassifierModelSchema,
+  harmonyStructuredLinearModelSchema,
+  type HarmonyBoundaryPolicy,
+} from "@zupulse/web-core";
+import { createHash } from "node:crypto";
 import { compareBaselineFiles } from "./compareBaselineFiles";
 import { buildHarmonyCalibrationAssetFile, type HarmonyCalibrationAsset } from "./confidenceCalibration";
 import { evaluateHarmonyManifest } from "./evaluateManifest";
@@ -10,6 +15,7 @@ import { exportHarmonyBoundaryRecordsFile } from "./exportBoundaryRecords";
 import { exportHarmonyStructuredOracleFile } from "./exportStructuredOracle";
 import { exportHarmonyStructuredRecordsFile } from "./exportStructuredRecords";
 import { inspectHarmonyScore, type InspectView } from "./inspectScore";
+import { trainHarmonyStructuredModelFile } from "./trainStructuredModel";
 import type { DatasetSplit } from "./evaluationProtocol";
 import {
   harmonyInspectReportSchema,
@@ -33,9 +39,34 @@ export async function runHarmonyCommand(
   | Awaited<ReturnType<typeof exportHarmonyStructuredOracleFile>>
   | Awaited<ReturnType<typeof exportHarmonyStructuredRecordsFile>>
   | Awaited<ReturnType<typeof evaluateHarmonyV3FinalHoldoutFile>>
+  | Awaited<ReturnType<typeof trainHarmonyStructuredModelFile>>
 > {
   const normalized = args[0] === "--" ? args.slice(1) : args;
   const cwd = context.cwd ?? process.env.INIT_CWD ?? process.cwd();
+  if (normalized[0] === "train-structured") {
+    const records = normalized[1];
+    const outputIndex = normalized.indexOf("--output");
+    const reportIndex = normalized.indexOf("--report");
+    const epochsIndex = normalized.indexOf("--epochs");
+    const learningRateIndex = normalized.indexOf("--learning-rate");
+    const output = outputIndex < 0 ? undefined : normalized[outputIndex + 1];
+    const report = reportIndex < 0 ? undefined : normalized[reportIndex + 1];
+    const epochs = epochsIndex < 0 ? 3 : Number(normalized[epochsIndex + 1]);
+    const learningRate = learningRateIndex < 0 ? 0.1 : Number(normalized[learningRateIndex + 1]);
+    if (!records || !output)
+      throw new Error(
+        "usage: harmony:cli train-structured <records.json> --output <model.json> [--report <report.json>] [--epochs <n>] [--learning-rate <n>]",
+      );
+    if (!Number.isInteger(epochs) || epochs < 0) throw new Error("--epochs must be a nonnegative integer");
+    if (!Number.isFinite(learningRate) || learningRate < 0) throw new Error("--learning-rate must be nonnegative");
+    return trainHarmonyStructuredModelFile({
+      recordsPath: resolve(cwd, records),
+      outputPath: resolve(cwd, output),
+      ...(report === undefined ? {} : { reportPath: resolve(cwd, report) }),
+      epochs,
+      learningRate,
+    });
+  }
   if (normalized[0] === "structured-records") {
     const manifest = normalized[1];
     const protocolIndex = normalized.indexOf("--protocol");
@@ -225,6 +256,8 @@ export async function runHarmonyCommand(
     const boundaryPolicy = boundaryPolicyIndex < 0 ? undefined : normalized[boundaryPolicyIndex + 1];
     const boundaryModelIndex = normalized.indexOf("--boundary-model");
     const boundaryModelPath = boundaryModelIndex < 0 ? undefined : normalized[boundaryModelIndex + 1];
+    const structuredModelIndex = normalized.indexOf("--structured-model");
+    const structuredModelPath = structuredModelIndex < 0 ? undefined : normalized[structuredModelIndex + 1];
     if (splitIndex >= 0 && (reportSplit === undefined || !["train", "tune", "eval"].includes(reportSplit)))
       throw new Error("--split must be train, tune, or eval");
     if (
@@ -250,12 +283,20 @@ export async function runHarmonyCommand(
       throw new Error("--boundary-model is required for learned-evidence policy");
     if (boundaryModelPath !== undefined && boundaryPolicy !== "learned-evidence")
       throw new Error("--boundary-model requires learned-evidence policy");
+    if (structuredModelPath !== undefined && boundaryPolicy !== undefined && boundaryPolicy !== "dense-note-events")
+      throw new Error("--structured-model requires dense-note-events boundary policy");
     const boundaryClassifierModel =
       boundaryModelPath === undefined
         ? undefined
         : harmonyBoundaryClassifierModelSchema.parse(
             JSON.parse(await readFile(resolve(cwd, boundaryModelPath), "utf8")),
           );
+    const structuredModelBytes =
+      structuredModelPath === undefined ? undefined : await readFile(resolve(cwd, structuredModelPath));
+    const structuredModel =
+      structuredModelBytes === undefined
+        ? undefined
+        : harmonyStructuredLinearModelSchema.parse(JSON.parse(structuredModelBytes.toString("utf8")));
     return evaluateHarmonyManifest(resolve(cwd, path), {
       ...(dataRoot === undefined ? {} : { dataRoot: resolve(cwd, dataRoot) }),
       ...(caseId === undefined ? {} : { caseId }),
@@ -263,6 +304,12 @@ export async function runHarmonyCommand(
       ...(decisionThreshold === undefined ? {} : { decisionThreshold }),
       ...(boundaryPolicy === undefined ? {} : { boundaryPolicy: boundaryPolicy as HarmonyBoundaryPolicy }),
       ...(boundaryClassifierModel === undefined ? {} : { boundaryClassifierModel }),
+      ...(structuredModel === undefined
+        ? {}
+        : {
+            structuredModel,
+            structuredModelSha256: createHash("sha256").update(structuredModelBytes!).digest("hex"),
+          }),
     });
   }
   const positional = normalized[0] === "inspect" ? normalized.slice(1) : normalized;

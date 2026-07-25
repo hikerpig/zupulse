@@ -60,10 +60,10 @@
 - [x] Task 29：冻结 `semi-crf-linear-v1` segment/transition feature contract。
 - [x] Task 30：导出严格 split 隔离、piece-sharded 的 structured path records。
 - [x] Checkpoint F：records 可重复、可流式验证且没有 gold 泄漏。
-- [ ] Task 31：训练 corpus/group-balanced 线性 structured scorer。
-- [ ] Task 32：以 opt-in Semi-CRF scorer 接入 analyzer。
-- [ ] Checkpoint G：trainer/runtime path 等价，production 默认未改变。
-- [ ] Task 33：执行 Mozart→跨语料的序贯 linear tune 门禁。
-- [ ] Task 34：仅在稳定非线性 residual 下比较单隐层 MLP。
-- [ ] Task 35：冻结候选并执行一次性 final/regression 发布决策。
+- [x] Task 31：训练 piece-balanced 线性 structured scorer。
+- [x] Task 32：以 opt-in Semi-CRF scorer 接入 analyzer。
+- [x] Checkpoint G：score contract 等价，production 默认未改变。
+- [x] Task 33：Mozart 首轮序贯 linear tune 门禁失败，停止跨语料。
+- [x] Task 34：触发条件不成立，未比较 MLP、未新增 PyTorch。
+- [x] Task 35：候选在 final 前拒绝；未读取 final/K331，默认保持不变。
 - [ ] Checkpoint H：文档、验证、提交和工作区状态全部完成。

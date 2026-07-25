@@ -408,6 +408,7 @@ export const harmonyStructuredRecordPieceSchema = z
     id: z.string().min(1),
     corpus: z.string().min(1),
     groupId: z.string().min(1),
+    ticksPerQuarter: z.number().int().positive(),
     boundaries: z.array(scoreWrittenMomentSchema).min(2),
     chords: z.array(chordSymbolSchema),
     windows: z.array(
@@ -656,6 +657,19 @@ export const harmonyDatasetEvalReportSchema = z
             ]),
             boundaryModel: z
               .object({ featureVersion: z.literal("boundary-evidence-v1"), threshold: fractionSchema })
+              .strict()
+              .optional(),
+            structuredModel: z
+              .object({
+                sha256: z.string().regex(/^[a-f0-9]{64}$/),
+                featureVersion: z.literal("semi-crf-linear-v1"),
+                algorithmVersion: z.literal("averaged-structured-perceptron-v1"),
+                trainingRecordsSha256: z.string().regex(/^[a-f0-9]{64}$/),
+                ruleScale: twoDecimalScoreSchema.nonnegative(),
+                modelScale: twoDecimalScoreSchema.nonnegative(),
+                search: z.literal("dense-qn8-exact"),
+                runtimeMs: z.number().nonnegative(),
+              })
               .strict()
               .optional(),
             sourceRevision: z.string().min(1),

@@ -12,6 +12,15 @@ export function decodeHarmonySequence(input: {
   boundaries: readonly ScoreWrittenMoment[];
   candidates: (range: { start: ScoreWrittenMoment; end: ScoreWrittenMoment }) => readonly HarmonyCandidate[];
   transition?: (from: ChordSymbolInput, to: ChordSymbolInput) => number;
+  learnedSegmentScore?: (
+    range: { start: ScoreWrittenMoment; end: ScoreWrittenMoment },
+    candidate: HarmonyCandidate,
+  ) => number;
+  learnedTransitionScore?: (
+    from: DecodedHarmonySegment,
+    range: { start: ScoreWrittenMoment; end: ScoreWrittenMoment },
+    to: HarmonyCandidate,
+  ) => number;
   searchMode?: "beam" | "exact";
   rangeAllowed?: (
     range: { start: ScoreWrittenMoment; end: ScoreWrittenMoment },
@@ -46,7 +55,11 @@ export function decodeHarmonySequence(input: {
             score:
               previous.score +
               candidate.sequenceScore +
-              (previous.path.length ? transition(previous.chord, candidate.chord) : 0),
+              (input.learnedSegmentScore?.(range, candidate) ?? 0) +
+              (previous.path.length
+                ? transition(previous.chord, candidate.chord) +
+                  (input.learnedTransitionScore?.(previous.path.at(-1)!, range, candidate) ?? 0)
+                : 0),
             candidate,
           };
           endStates.push({ score: segment.score, path: [...previous.path, segment], chord: candidate.chord });
@@ -66,6 +79,15 @@ function decodeExactHarmonySequence(input: {
   boundaries: readonly ScoreWrittenMoment[];
   candidates: (range: { start: ScoreWrittenMoment; end: ScoreWrittenMoment }) => readonly HarmonyCandidate[];
   transition?: (from: ChordSymbolInput, to: ChordSymbolInput) => number;
+  learnedSegmentScore?: (
+    range: { start: ScoreWrittenMoment; end: ScoreWrittenMoment },
+    candidate: HarmonyCandidate,
+  ) => number;
+  learnedTransitionScore?: (
+    from: DecodedHarmonySegment,
+    range: { start: ScoreWrittenMoment; end: ScoreWrittenMoment },
+    to: HarmonyCandidate,
+  ) => number;
   rangeAllowed?: (
     range: { start: ScoreWrittenMoment; end: ScoreWrittenMoment },
     startIndex: number,
@@ -97,7 +119,11 @@ function decodeExactHarmonySequence(input: {
           const score =
             previous.score +
             candidate.sequenceScore +
-            (previous.segment ? transition(previous.chord, candidate.chord) : 0);
+            (input.learnedSegmentScore?.(range, candidate) ?? 0) +
+            (previous.segment
+              ? transition(previous.chord, candidate.chord) +
+                (input.learnedTransitionScore?.(previous.segment, range, candidate) ?? 0)
+              : 0);
           const key = chordKey(candidate.chord);
           const existing = endStates.get(key);
           if (existing && existing.score >= score) continue;

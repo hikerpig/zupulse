@@ -12,6 +12,7 @@ export type ViewerSessionHandle = {
     getState(): PlaybackState;
     subscribe(listener: (state: PlaybackState) => void): () => void;
     dispatch(command: PlaybackCommand): Promise<void>;
+    previewSeek?(position: PlaybackState["position"]): void;
     timeline: PlaybackTimelineMap;
   };
   togglePlayback(): Promise<void>;

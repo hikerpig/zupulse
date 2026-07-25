@@ -57,6 +57,27 @@ describe("PlaybackController", () => {
     expect(engine.calls.at(-1)).toEqual(["speed", 0.7583]);
   });
 
+  it("previews a seek in the engine without notifying or persisting playback state", async () => {
+    const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" });
+    const persistence = new FakePersistence();
+    const controller = createController(engine, persistence);
+    await controller.initialize();
+    let notifications = 0;
+    controller.subscribe(() => {
+      notifications += 1;
+    });
+    const before = controller.getState();
+
+    controller.previewSeek(position(2400, 5000));
+    engine.emit({ type: "position", positionMs: 5000, endMs: 8000, tick: 2400 });
+    await controller.flush();
+
+    expect(engine.calls.at(-1)).toEqual(["seek", 2400]);
+    expect(controller.getState()).toEqual(before);
+    expect(notifications).toBe(1);
+    expect(persistence.resumeWrites).toHaveLength(0);
+  });
+
   it("pauses and immediately saves resume state", async () => {
     const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" });
     const persistence = new FakePersistence();

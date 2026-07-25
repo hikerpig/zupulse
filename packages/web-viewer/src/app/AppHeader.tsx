@@ -127,7 +127,7 @@ export function AppHeader({
           onClick={() => flushSync(() => setTheme(nextTheme))}
         >
           {theme === "dark" ? <Sun aria-hidden="true" size={17} /> : <Moon aria-hidden="true" size={17} />}
-          <span>{theme === "dark" ? t("theme.light") : t("theme.dark")}</span>
+          <span>{theme === "dark" ? t("theme.dark") : t("theme.light")}</span>
         </button>
       </div>
     </header>

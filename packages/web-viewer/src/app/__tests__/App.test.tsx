@@ -109,9 +109,12 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "关闭练习设置" }));
     expect(screen.queryByRole("complementary", { name: "练习设置" })).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: "切换至浅色主题" }));
+    const switchToLight = screen.getByRole("button", { name: "切换至浅色主题" });
+    expect(switchToLight.textContent).toContain("深色");
+    await user.click(switchToLight);
     expect(document.documentElement.dataset.theme).toBe("light");
     expect(window.localStorage.getItem("zupulse-theme")).toBe("light");
+    expect(screen.getByRole("button", { name: "切换至深色主题" }).textContent).toContain("浅色");
     await user.click(screen.getByRole("button", { name: "打开乐谱" }));
     expect(openScore).toHaveBeenCalledOnce();
 

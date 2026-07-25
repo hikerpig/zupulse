@@ -21,13 +21,13 @@
 
 | split | pieces | windows |  ranges | candidates | gold segments | excluded | total bytes |
 | ----- | -----: | ------: | ------: | ---------: | ------------: | -------: | ----------: |
-| train |     30 |   1,793 | 402,139 |  3,208,482 |         6,223 |    2,497 | 939,626,188 |
-| tune  |      9 |     411 | 110,778 |    884,030 |         1,560 |      597 | 259,023,326 |
+| train |     30 |   1,793 | 402,139 |  3,208,482 |         6,223 |    2,497 | 939,626,698 |
+| tune  |      9 |     411 | 110,778 |    884,030 |         1,560 |      597 | 259,023,479 |
 
 Manifest SHA：
 
-- train：`aadb6e2e0111a1a65bf3bcf9dac7a07e99c891de5eebfc837c95d35a6ea09d99`
-- tune：`88518cbcc3fec918d0157afe131ed99d107fd8e068cea0ba7aaf1dc9e35b127f`
+- train：`527c770067c6fa07a19491f831cd13d66380a82d3bd3a44f5ebf9ce9511d3d21`
+- tune：`22d00e661c933ea526be34ef858021d92fee08391d3ecc90ce1a5d7c65ee4b47`
 
 Train 总体积约 `0.94 GB`，低于 Task 27 朴素物化预算 `2.11 GB × 1.25 = 2.64 GB`。完整 train/tune 均通过 `harmony:structured-verify` 的 streaming round-trip。
 

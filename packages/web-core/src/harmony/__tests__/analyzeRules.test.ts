@@ -348,4 +348,51 @@ describe("analyzeHarmonyRules", () => {
 
     expect(learned.some((segment) => segment.range.start.offsetTicks === 360)).toBe(true);
   });
+
+  it("builds each legal exact-search range once through the lazy cache", () => {
+    const input = createHarmonyAnalysisInput({
+      ticksPerQuarter: 480,
+      measures: [{ index: 0, durationTicks: 960, timeSignature: { numerator: 2, denominator: 4 } }],
+      tracks: [
+        {
+          id: "piano",
+          name: "Piano",
+          isPercussion: false,
+          staves: [
+            {
+              index: 0,
+              notes: [0, 480].flatMap((offsetTicks) =>
+                [0, 4, 7].map((soundingPitchClass, index) => ({
+                  id: `${offsetTicks}-${index}`,
+                  moment: { measureIndex: 0, offsetTicks },
+                  durationTicks: 480,
+                  soundingPitchClass,
+                  voice: 1,
+                })),
+              ),
+            },
+          ],
+        },
+      ],
+    });
+    const builtRanges: string[] = [];
+
+    analyzeHarmonyRules(input, {
+      includedTrackIds: ["piano"],
+      topK: 3,
+      decisionThreshold: 0,
+      primaryRerankerModel: false,
+      sequenceSearchMode: "exact",
+      maxSegmentQuarterNotes: 8,
+      diagnostics: {
+        onRangeBuilt: (range) =>
+          builtRanges.push(
+            `${range.start.measureIndex}:${range.start.offsetTicks}-${range.end.measureIndex}:${range.end.offsetTicks}`,
+          ),
+      },
+    });
+
+    expect(builtRanges).toEqual(["0:0-0:480", "0:0-0:960", "0:480-0:960"]);
+    expect(new Set(builtRanges).size).toBe(builtRanges.length);
+  });
 });

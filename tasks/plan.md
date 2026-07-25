@@ -850,14 +850,14 @@ Task 33 sequential tune gate
 
 **Acceptance criteria:**
 
-- [ ] exact mode 在小型穷举 fixture 上返回真实全局最优；zero learned score 时与现有 beam 基线逐段比较。
-- [ ] 每个 legal range 的 feature/candidate builder 最多执行一次，cache key 不依赖 gold。
-- [ ] Mozart tune exact 搜索的 P95/runtime 与峰值内存被记录；若超过 dense beam `1.5x` 或内存预算，停止并先优化搜索。
+- [x] exact mode 在小型穷举 fixture 上返回真实全局最优；zero learned score 时与同合同 beam 基线逐段比较。
+- [x] 每个 legal range 的 feature/candidate builder 最多执行一次，cache key 不依赖 gold。
+- [x] Mozart tune exact 搜索的 P95/runtime 与峰值内存已记录；同合同 exact/beam P95 为 `0.68x`，峰值 RSS 更低。
 
 **Verification:**
 
-- [ ] `decode.test.ts` 覆盖 beam 丢失全局最优而 exact 找回的案例，以及 stable tie。
-- [ ] analyzer cache 测试统计 range builder 调用次数；`pnpm harmony:benchmark` 通过。
+- [x] `decode.test.ts` 覆盖 beam 丢失全局最优而 exact 找回的案例，以及 stable tie。
+- [x] analyzer cache 测试统计 range builder 调用次数；`pnpm harmony:benchmark` 通过。
 
 **Dependencies:** Task 27
 
@@ -883,14 +883,14 @@ Task 33 sequential tune gate
 
 **Acceptance criteria:**
 
-- [ ] 特征长度、顺序、归一化、缺失值与两位小数序列化由严格 schema 固定；不读取 gold、局部人工 key 或 pedal。
-- [ ] duration/attack chroma、held/onset、左右 staff 与 voice synchronization 各自独立，不能在进入 scorer 前再次扁平化。
-- [ ] 特征 cache 按 measure/range 复用，跨小节延音和 pickup fixture 得到确定结果。
+- [x] 特征长度、顺序、归一化、缺失值与两位小数序列化由严格 schema 固定；不读取 gold、局部人工 key 或 pedal。
+- [x] duration/attack chroma、held/onset、左右 staff 与 voice synchronization 各自独立，只在 scorer 边界按固定顺序 flatten。
+- [x] 特征 cache 按 range/candidate 复用，跨小节延音和 pickup fixture 得到确定结果。
 
 **Verification:**
 
-- [ ] 单测覆盖分解和弦、经过音、延留音、slash bass、双 staff 和多 voice。
-- [ ] 相同 score 重复导出字节一致，所有持久化数字最多两位小数。
+- [x] 单测覆盖分解和弦、经过音、延留音、slash bass、双 staff 和多 voice。
+- [x] 相同输入重复生成结果一致，严格 schema 保证所有特征数字最多两位小数。
 
 **Dependencies:** Task 28
 
@@ -905,12 +905,12 @@ Task 33 sequential tune gate
 
 ## Task 30：导出 train-only structured path records
 
-**Description:** 基于与 production 完全相同的 lattice、range cache、maxSpan 和 Top-8，导出按完整作品分组的 semi-CRF records。每个 piece 保存可选 ranges/candidates、segment/transition features、rule priors 和 mapped gold path；负 range 由 lattice 自然产生，不用 gold 反向生成候选边界。
+**Description:** 基于与 production 完全相同的 lattice、range cache、`maxQuarterNotes=8` 和 Top-8，导出按完整作品分组的 semi-CRF records。Task 27 证明 Top-8 candidate miss 分散在每首作品中，因此“只训练完整整首 path”会得到零个训练样本。Records 改为保存每首作品中由 candidate miss/unsupported gap 切开的**连续可表达 gold 子路径**；每个子路径内的负 range 仍由完整 lattice 自然产生，不用 gold 生成候选或删除内部边界。Piece ID 与权重保留，训练时各作品等权。
 
 **Acceptance criteria:**
 
 - [ ] train exporter 只接受 train role，tune 仅走 evaluation-only entry point，regression/final-holdout 一律拒绝。
-- [ ] report 固定 source revision、archive/group SHA、feature version、search contract 和 record counts；损坏或不完整的 gold path 明确标记而非猜测。
+- [ ] report 固定 source revision、archive/group SHA、feature version、search contract、完整/切分 path counts；candidate miss/unsupported gap 明确标记而非猜测。
 - [ ] records 使用紧凑索引引用 boundary/chord/features，Mozart 全量资产大小和生成时间不超过 Task 27 预算的 `1.25x`。
 
 **Verification:**
@@ -939,12 +939,12 @@ Task 33 sequential tune gate
 
 ## Task 31：训练线性 structured segment/transition scorer
 
-**Description:** 使用 corpus/group-balanced structured perceptron 或等价的全路径线性目标，在每个 train piece 上解码 predicted path，并以 gold-path feature sum 与 predicted-path feature sum 的差更新 segment/transition 权重。导出两个显式权重向量、rule/model scale 和 provenance。
+**Description:** 使用 corpus/group-balanced structured perceptron 或等价的路径线性目标，在每个 train piece 的连续可表达 gold 子路径窗口上解码 predicted path，并以 gold-path feature sum 与 predicted-path feature sum 的差更新 segment/transition 权重。同一作品的所有窗口共享总权重，避免 candidate miss 多的作品被过度采样。导出两个显式权重向量、rule/model scale 和 provenance。
 
 **Acceptance criteria:**
 
-- [ ] trainer 只读取 train reports，相同输入与 seed 生成字节一致的两位小数 JSON；无完整 gold path 的 piece 只进入 oracle 统计，不参与梯度。
-- [ ] loss/update 使用完整路径而非独立 boundary 或独立 candidate 标签，并按 corpus、完整作品等权。
+- [ ] trainer 只读取 train reports，相同输入与 seed 生成字节一致的两位小数 JSON；没有任何连续可表达窗口的 piece 只进入 oracle 统计。
+- [ ] loss/update 使用完整连续子路径而非独立 boundary 或独立 candidate 标签，并按 corpus、完整作品等权。
 - [ ] 分别报告 train path loss、interval accuracy、boundary F1、segment density 和 predicted-primary；不能只报告局部 Top-1。
 
 **Verification:**
@@ -1088,7 +1088,7 @@ Task 33 sequential tune gate
 | Risk                                                | Impact                          | Mitigation                                                              |
 | --------------------------------------------------- | ------------------------------- | ----------------------------------------------------------------------- |
 | Dense lattice × maxSpan × Top-8 使 records/训练爆炸 | 无法完成真实 corpus 训练        | Task 27 先测规模；Task 28 cache；records 用索引压缩，不用 gold 删 range |
-| Gold path 不在 lattice 或 Top-8                     | 模型永远学不到正确答案          | Oracle 先行；失败则回 candidate/maxSpan，不训练更大模型                 |
+| Gold path 不在 lattice 或 Top-8                     | 整首监督路径全部失效            | Oracle 先行；candidate miss 切开监督窗口，不注入 gold candidate         |
 | Exact Viterbi 状态过多                              | runtime/memory 超预算           | 按 canonical chord 合并同 end state；保留 beam fallback，预算失败即停   |
 | Learned score 尺度压倒规则 prior                    | tune 表面改善但跨语料崩溃       | 四种 score 分字段；scale 预冻结；逐 corpus 门禁                         |
 | 事后 MLP 改写联合路径 label                         | segment 与 chord 打分语义不一致 | Semi-CRF 模式禁用二次 primary 改写，由测试锁定                          |

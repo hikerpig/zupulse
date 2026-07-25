@@ -2,8 +2,10 @@ import type { HarmonyAnalysisInput } from "./analysisInput";
 import { buildLegalBoundaryLattice, type HarmonyBoundaryPolicy } from "./boundaries";
 import { buildHarmonyFeatureCache } from "./features";
 import { generateHarmonyCandidates } from "./candidates";
+import type { HarmonyCandidate } from "./candidates";
+import type { HarmonyFeatureVector } from "./features";
 import { applyHarmonyConfidence, mergeHarmonySegments, suppressShortNonChordSegments } from "./postprocess";
-import type { HarmonySegment } from "./schemas";
+import type { HarmonySegment, ScoreWrittenRange } from "./schemas";
 import { decodeHarmonySequence } from "./decode";
 import { scoreHarmonyTransition } from "./transitions";
 import { bundledHarmonyRankerModel } from "./bundledHarmonyRanker";
@@ -26,6 +28,11 @@ export function analyzeHarmonyRules(
     rankerWeight?: number;
     primaryRerankerModel?: MlpHarmonyRerankerModel | false;
     primaryConfidenceCalibration?: MlpHarmonyCalibrationAsset | false;
+    sequenceSearchMode?: "beam" | "exact";
+    maxSegmentQuarterNotes?: number;
+    diagnostics?: {
+      onRangeBuilt?: (range: ScoreWrittenRange) => void;
+    };
   },
 ): HarmonySegment[] {
   const included = new Set(options.includedTrackIds);
@@ -62,19 +69,64 @@ export function analyzeHarmonyRules(
       ? {}
       : { boundaryClassifierModel: options.boundaryClassifierModel }),
   }).moments;
-  const decoded = decodeHarmonySequence({
-    boundaries,
-    candidates: (range) =>
-      generateHarmonyCandidates(range, cache.forRange(range), {
+  const rangeCache = new Map<
+    string,
+    {
+      features: ReturnType<typeof cache.forRange>;
+      candidates: ReturnType<typeof generateHarmonyCandidates>;
+    }
+  >();
+  const featuresByCandidate = new WeakMap<HarmonyCandidate, HarmonyFeatureVector>();
+  const forRange = (range: ScoreWrittenRange) => {
+    const key = `${range.start.measureIndex}:${range.start.offsetTicks}-${range.end.measureIndex}:${range.end.offsetTicks}`;
+    const cached = rangeCache.get(key);
+    if (cached) return cached;
+    const features = cache.forRange(range);
+    const built = {
+      features,
+      candidates: generateHarmonyCandidates(range, features, {
         ...(options.topK === undefined ? {} : { topK: options.topK }),
       }),
+    };
+    for (const candidate of built.candidates) featuresByCandidate.set(candidate, features);
+    rangeCache.set(key, built);
+    options.diagnostics?.onRangeBuilt?.(range);
+    return built;
+  };
+  const exactSearch = options.sequenceSearchMode === "exact";
+  const durationSearch = exactSearch || options.maxSegmentQuarterNotes !== undefined;
+  const absoluteTick = durationSearch ? createAbsoluteTick(input) : undefined;
+  const maxSegmentTicks = (options.maxSegmentQuarterNotes ?? 8) * input.ticksPerQuarter;
+  const minimumStartIndices =
+    absoluteTick === undefined
+      ? undefined
+      : boundaries.map((end, endIndex) => {
+          let startIndex = 0;
+          while (startIndex < endIndex && absoluteTick(end) - absoluteTick(boundaries[startIndex]!) > maxSegmentTicks)
+            startIndex += 1;
+          return startIndex;
+        });
+  const decoded = decodeHarmonySequence({
+    boundaries,
+    candidates: (range) => forRange(range).candidates,
     transition: (from, to) => scoreHarmonyTransition(from, to) * input.ticksPerQuarter * 0.1,
+    ...(exactSearch ? { searchMode: "exact" as const } : {}),
+    ...(minimumStartIndices === undefined
+      ? {}
+      : { minimumStartIndex: (endIndex: number) => minimumStartIndices[endIndex] ?? endIndex }),
+    ...(absoluteTick === undefined
+      ? {}
+      : {
+          rangeAllowed: (range: ScoreWrittenRange) =>
+            absoluteTick(range.end) - absoluteTick(range.start) <= maxSegmentTicks,
+        }),
     beamWidth: 16,
     maxSegments: Math.max(64, input.measures.length),
-    maxSpan: 16,
+    ...(durationSearch ? {} : { maxSpan: 16 }),
+    onEndIndexComplete: () => rangeCache.clear(),
   });
   const segments: HarmonySegment[] = decoded.map((selected) => {
-    const rangeFeatures = cache.forRange(selected.range);
+    const rangeFeatures = featuresByCandidate.get(selected.candidate) ?? cache.forRange(selected.range);
     const alternatives = generateHarmonyCandidates(selected.range, rangeFeatures, {
       ...(options.topK === undefined ? {} : { topK: options.topK }),
       rankerModel: options.rankerModel ?? bundledHarmonyRankerModel,
@@ -127,4 +179,15 @@ export function analyzeHarmonyRules(
           };
     });
   }
+}
+
+function createAbsoluteTick(input: Pick<HarmonyAnalysisInput, "measures">) {
+  const starts = new Map<number, number>();
+  let end = 0;
+  for (const measure of input.measures) {
+    starts.set(measure.index, end);
+    end += measure.durationTicks;
+  }
+  return (moment: { measureIndex: number; offsetTicks: number }): number =>
+    (starts.get(moment.measureIndex) ?? end) + moment.offsetTicks;
 }

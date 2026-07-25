@@ -52,15 +52,15 @@ export function extractAlphaTabPlaybackModel(api: AlphaTabApiLike): {
 export function extractAlphaTabPlaybackOccurrences(
   api: AlphaTabApiLike,
   trackIdValue = "track-0",
+  timeline: PlaybackTimelineMap = extractAlphaTabPlaybackModel(api).timeline,
 ): PlaybackOccurrence[] {
-  const model = extractAlphaTabPlaybackModel(api);
   const expandedBars = api.tickCache?.masterBars;
   if (!expandedBars?.length) return [];
 
   const occurrenceCounts = new Map<number, number>();
   const occurrences: PlaybackOccurrence[] = [];
   expandedBars.forEach((lookup, pathIndex) => {
-    const measure = model.timeline.measures.find((candidate) => candidate.index === lookup.masterBar.index);
+    const measure = timeline.measures.find((candidate) => candidate.index === lookup.masterBar.index);
     if (!measure || !Number.isFinite(lookup.start)) return;
     const occurrenceIndex = occurrenceCounts.get(measure.index) ?? 0;
     occurrenceCounts.set(measure.index, occurrenceIndex + 1);

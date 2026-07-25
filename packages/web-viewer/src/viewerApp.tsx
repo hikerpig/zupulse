@@ -2,9 +2,11 @@ import {
   AlphaTabPlaybackAdapter,
   PlaybackController,
   attachAlphaTabGestureSelection,
+  attachAlphaTabNavigationEvents,
   createAlphaTabApi,
   createDefaultSidecar,
   extractAlphaTabPlaybackModel,
+  extractAlphaTabPlaybackOccurrences,
   playbackPositionForWrittenSelection,
   waitForAlphaTabScore,
   type AlphaTabApiLike,
@@ -16,6 +18,7 @@ import { ALPHATAB_ASSETS } from "./playbackAssets";
 import { type DemoState } from "./gpDemoPresenter";
 import { presentScoreFile } from "./importPresenter";
 import { SCORE_ZOOM_COMMIT_EVENT, type ScoreZoomCommitDetail } from "./scoreZoom";
+import { ScoreNavigationCoordinator } from "./score-navigation/score-navigation-coordinator";
 
 export type DefaultOpenSessionDependencies = {
   createApi: typeof createAlphaTabApi;
@@ -55,6 +58,32 @@ export function createDefaultOpenSession(
     );
     const adapter = dependencies.createAdapter(api);
     const detachScoreZoom = attachScoreZoomCommit(ownerDocument, api, scoreScrollElement);
+    const navigation = new ScoreNavigationCoordinator({
+      viewportHeight: () => scoreScrollElement.clientHeight,
+      moveTo(top, behavior) {
+        if (typeof scoreScrollElement.scrollTo === "function") {
+          scoreScrollElement.scrollTo({ top, behavior: behavior === "smooth" ? "smooth" : "auto" });
+        } else {
+          scoreScrollElement.scrollTop = top;
+        }
+      },
+    });
+    const markManualNavigation = () => navigation.manualNavigation();
+    scoreScrollElement.addEventListener("wheel", markManualNavigation, { passive: true });
+    scoreScrollElement.addEventListener("touchmove", markManualNavigation, { passive: true });
+    const detachNavigation = attachAlphaTabNavigationEvents(api, {
+      renderFinished: () => navigation.beginGeneration(),
+      cursorSystemChanged: (system) =>
+        navigation.cursorSystemChanged(
+          { systemIndex: system.systemIndex, y: system.bounds.y, height: system.bounds.height },
+          false,
+        ),
+    });
+    const detachNavigationRuntime = () => {
+      detachNavigation();
+      scoreScrollElement.removeEventListener("wheel", markManualNavigation);
+      scoreScrollElement.removeEventListener("touchmove", markManualNavigation);
+    };
     let detachScoreSelection = () => {};
     let controller: PlaybackController | undefined;
     try {
@@ -68,6 +97,7 @@ export function createDefaultOpenSession(
         api,
       });
       if (state.status !== "ready" || !state.identity) {
+        detachNavigationRuntime();
         detachScoreZoom();
         adapter.destroy();
         renderViewerState(status, summary, state);
@@ -88,13 +118,16 @@ export function createDefaultOpenSession(
       });
       controller = sessionController;
       await sessionController.initialize();
+      const playbackOccurrences = extractAlphaTabPlaybackOccurrences(api, "track-0", model.timeline);
       detachScoreSelection = attachAlphaTabGestureSelection(api, alphaTabHost, (selection) => {
         const position = playbackPositionForWrittenSelection(
           selection,
           sessionController.getState().position,
           model.timeline,
+          playbackOccurrences,
         );
         if (!position) return;
+        navigation.formalSeek();
         void sessionController.dispatch({
           type: "seek",
           position,
@@ -104,6 +137,9 @@ export function createDefaultOpenSession(
       const playbackListeners = new Set<(state: typeof playbackSnapshot) => void>();
       const unsubscribePlayback = sessionController.subscribe((state) => {
         playbackSnapshot = state;
+        if (state.transport === "playing" || state.transport === "paused" || state.transport === "stopped") {
+          navigation.transportChanged(state.transport);
+        }
         for (const listener of playbackListeners) listener(state);
       });
       renderViewerState(status, summary, state);
@@ -115,7 +151,11 @@ export function createDefaultOpenSession(
             listener(playbackSnapshot);
             return () => playbackListeners.delete(listener);
           },
-          dispatch: (command) => sessionController.dispatch(command),
+          dispatch: (command) => {
+            if (command.type === "seek") navigation.formalSeek();
+            if (command.type === "stop") navigation.transportChanged("stopped");
+            return sessionController.dispatch(command);
+          },
           previewSeek: (position) => sessionController.previewSeek(position),
           timeline: model.timeline,
         },
@@ -128,6 +168,7 @@ export function createDefaultOpenSession(
         },
         async destroy() {
           detachScoreSelection();
+          detachNavigationRuntime();
           detachScoreZoom();
           unsubscribePlayback();
           playbackListeners.clear();
@@ -138,6 +179,7 @@ export function createDefaultOpenSession(
       let cleanupError: unknown;
       try {
         detachScoreSelection();
+        detachNavigationRuntime();
         detachScoreZoom();
         if (controller) await controller.destroy();
         else adapter.destroy();

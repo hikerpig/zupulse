@@ -26,17 +26,17 @@ Canonical plan: [`tasks/plan.md`](plan.md)
 
 ## Phase 2: Authoritative seek and Continuous Follow
 
-- [ ] T3 Single-authority score pointing seek
-- [ ] T4 Navigation coordinator state model
-- [ ] T5 Continuous Follow runtime integration
+- [x] T3 Single-authority score pointing seek
+- [x] T4 Navigation coordinator state model
+- [x] T5 Continuous Follow runtime integration
 
 ## Checkpoint B
 
-- [ ] Repeat click selects the intended occurrence.
-- [ ] Cross-system playback moves only the score container.
-- [ ] Manual navigation detaches without programmatic-scroll false positives.
-- [ ] `pnpm verify:fast` passes.
-- [ ] Browser fixture smoke check passes.
+- [x] Repeat click selects the intended occurrence.
+- [x] Cross-system playback moves only the score container.
+- [x] Manual navigation detaches without programmatic-scroll false positives.
+- [x] `pnpm verify:fast` passes.
+- [x] Browser fixture smoke check passes.
 
 ## Phase 3: Recovery UI and Page Turn foundation
 

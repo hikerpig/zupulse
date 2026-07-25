@@ -53,6 +53,7 @@ export type AlphaTabBeatBoundsLike = {
 };
 
 export type AlphaTabScrollHandlerLike = {
+  destroy(): void;
   forceScrollTo(currentBeatBounds: AlphaTabBeatBoundsLike): void;
   onBeatCursorUpdating?(
     startBeat: AlphaTabBeatBoundsLike,
@@ -180,6 +181,7 @@ export function attachAlphaTabNavigationEvents(
 ): () => void {
   const detachRender = api.postRenderFinished?.on(listeners.renderFinished) ?? (() => {});
   const handler: AlphaTabScrollHandlerLike = {
+    destroy: () => {},
     forceScrollTo: (beat) => emitCursorSystem(beat),
     onBeatCursorUpdating: (beat) => emitCursorSystem(beat),
   };

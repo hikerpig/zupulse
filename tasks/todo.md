@@ -79,10 +79,10 @@ Detailed plan: [`tasks/plan.md`](plan.md)
 
 ### Task 8: Sheet Library dry-run evaluations
 
-- [ ] `confirmed_drift`: import limit plus matching test change is detected.
-- [ ] `completed_gap`: Desktop practice summary plus test is detected.
-- [ ] No drift: behavior-preserving Repository refactor requires no Contract change.
-- [ ] Remove disposable worktrees and retain no intentional drift.
+- [x] `confirmed_drift`: import limit plus matching test change is detected.
+- [x] `completed_gap`: Desktop practice summary plus test is detected.
+- [x] No drift: behavior-preserving Repository refactor requires no Contract change.
+- [x] Remove disposable worktrees and retain no intentional drift.
 - Dependencies: Task 7.
 
 ### Task 9: Weekly Codex automation
@@ -95,7 +95,7 @@ Detailed plan: [`tasks/plan.md`](plan.md)
 
 ### Checkpoint: Semantic gardening
 
-- [ ] Three Sheet Library scenarios classify correctly.
+- [x] Three Sheet Library scenarios classify correctly.
 - [ ] Automation schedule and next run are visible.
 - [ ] Human approval before marking the design implemented.
 

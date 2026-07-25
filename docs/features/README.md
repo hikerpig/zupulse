@@ -1,70 +1,75 @@
 # Feature Contracts
 
-Feature Contract 描述当前可观察的产品与领域行为，帮助开发者和 AI 区分已经实现的能力、进行中的
-目标差异和明确非目标。它是面向 Feature 的导航与行为摘要，不替代运行时代码、schema、测试、
-Architecture、ADR 或 UI 契约。
+A Feature Contract describes current observable product and domain behavior. It helps maintainers and AI
+distinguish delivered capabilities, in-progress target gaps, and explicit non-goals. It is a Feature-oriented
+navigation and behavior summary, not a replacement for runtime code, schemas, tests, Architecture, ADRs, or the
+UI contract.
 
-## 当前索引
+## Current Index
 
 | Feature       | Contract                                                   | Status    | Delivery  |
 | ------------- | ---------------------------------------------------------- | --------- | --------- |
 | Sheet Library | [`contracts/sheet-library.md`](contracts/sheet-library.md) | `current` | `partial` |
 
-新 Contract 从 [`templates/feature-contract.md`](templates/feature-contract.md) 复制。仍属于产品的
-Feature 保持 `contracts/<feature-slug>.md` 稳定路径；只有已移除或被取代、仅供追溯的 Feature 才
-移入 `archive/`。
+Create a Contract from [`templates/feature-contract.md`](templates/feature-contract.md). Keep a stable
+`contracts/<feature-slug>.md` path while the Feature remains part of the product. Move a Contract to `archive/`
+only after the Feature has been removed or superseded and is retained solely for traceability.
 
-## 文档分工
+## Document Responsibilities
 
-| 文档             | 回答的问题                             |
-| ---------------- | -------------------------------------- |
-| Feature Contract | 用户现在能做什么，行为和领域边界是什么 |
-| Architecture     | 系统当前如何实现                       |
-| ADR              | 为什么选择一项长期且难以逆转的决策     |
-| Spec             | 某次变更准备实现什么                   |
-| Plan / issue     | 具体按什么步骤实施、当前进度如何       |
-| `DESIGN.md`      | UI、交互与视觉系统必须遵循什么         |
-| `CONTEXT.md`     | 产品和领域术语是什么意思               |
+| Document         | Primary question                                               |
+| ---------------- | -------------------------------------------------------------- |
+| Feature Contract | What can users do now, and what are the behavioral boundaries? |
+| Architecture     | How is the current system implemented?                         |
+| ADR              | Why was a durable, difficult-to-reverse decision made?         |
+| Spec             | What is a particular change intended to deliver?               |
+| Plan / issue     | How will the change be implemented, and what is its progress?  |
+| `DESIGN.md`      | Which UI, interaction, and visual rules must be followed?      |
+| `CONTEXT.md`     | What do the product and domain terms mean?                     |
 
-Contract 不复制完整 schema、SQL、Bridge payload 或实现细节，而是通过证据地图链接到这些事实源。
-结构门禁、PR 影响提示和周期语义审计的稳定用法见
-[`docs/conventions/documentation-gardening.md`](../conventions/documentation-gardening.md)。
+A Contract does not duplicate complete schemas, SQL, Bridge payloads, or implementation details. Its evidence
+map links to those sources of truth. See
+[`docs/conventions/documentation-gardening.md`](../conventions/documentation-gardening.md) for the deterministic
+gate, PR impact report, and recurring semantic audit.
 
-## 状态
+## Lifecycle
 
-`status` 表示 Contract 能否作为当前行为导航：
+`status` determines whether a Contract can guide current behavior:
 
-- `draft`：仍在形成，不得作为当前事实依据。
-- `current`：已经核对当前实现，可以作为行为导航。
-- `deprecated`：Feature 仍存在但正在退出，必须说明替代方案。
-- `historical`：只用于追溯，不得指导当前实现。
+- `draft`: Still being formed; it is not a source of current facts.
+- `current`: Verified against the current implementation and suitable for behavioral navigation.
+- `deprecated`: The Feature still exists but is being retired; the replacement must be identified.
+- `historical`: Retained only for traceability; it must not guide current implementation.
 
-`delivery` 表示 Feature 的交付程度：
+`delivery` describes how much of the Feature has been delivered:
 
-- `planned`：尚未形成可用竖切。
-- `in_progress`：正在实现，但尚未形成稳定可用能力。
-- `partial`：已有稳定能力，仍存在明确缺口。
-- `available`：当前承诺范围已经交付。
-- `retired`：能力已经移除。
+- `planned`: No usable vertical slice exists.
+- `in_progress`: Implementation is underway, but no stable usable capability exists yet.
+- `partial`: Stable capabilities exist with explicit remaining gaps.
+- `available`: The currently promised scope has been delivered.
+- `retired`: The capability has been removed.
 
-`status: current` 与 `delivery: partial` 可以同时成立：文档准确描述现状，但 Feature 尚未全部
-交付。`last_verified` 只在重新核对相关代码/schema，并运行与风险匹配的可重复验证后更新。
+`status: current` and `delivery: partial` may coexist: the document accurately describes the current state while
+the Feature still has known gaps. Update `last_verified` only after rechecking the relevant code or schemas and
+running reproducible verification proportional to risk.
 
-## AI 阅读规则
+## AI Reading Rules
 
-1. 处理现存或进行中的 Feature 前，先读本索引和对应 Contract。
-2. 只有 `status: current` 的 Contract 可以作为当前行为导航。
-3. “进行中的目标差异”与 `planned` 内容不得被当作当前运行时行为。
-4. 沿证据地图继续核对相关代码、schema、数据库约束和测试；发生冲突时以更高事实源为准，并指出
-   Contract 已漂移。
-5. Architecture 解释实现结构，ADR 解释决策，Spec 解释目标变化；不得用其中任一类文档冒充运行时
-   验证。
+1. Before working on an existing or in-progress Feature, read this index and the corresponding Contract.
+2. Only a `status: current` Contract may guide current behavior.
+3. Never treat an in-progress target gap or `planned` content as current runtime behavior.
+4. Follow the evidence map into code, schemas, database constraints, and tests. When sources conflict, trust the
+   higher-ranked source and report that the Contract has drifted.
+5. Architecture explains implementation structure, ADRs explain decisions, and Specs explain intended changes.
+   None of them substitutes for runtime verification.
 
-## 维护流程
+## Maintenance Workflow
 
-1. 新 Feature 使用模板创建 `contracts/<feature-slug>.md`，默认
-   `status: draft`、`delivery: planned`。
-2. 已有 Feature 先从代码、schema、数据库约束和测试建立证据地图，再记录当前行为。
-3. 实施中的目标只写入“进行中的目标差异”，并链接当前 Spec 或 issue。
-4. 行为变化通过验证后，同步更新当前行为、平台矩阵、已知差距、证据地图和 `last_verified`。
-5. Feature 被替代或移除时，填写替代关系，改为 `historical` / `retired`，再移入 `archive/`。
+1. Create a new `contracts/<feature-slug>.md` from the template with `status: draft` and `delivery: planned`.
+2. For an existing Feature, build the evidence map from code, schemas, database constraints, and tests before
+   documenting current behavior.
+3. Record implementation targets only in the in-progress target-gap section and link the current Spec or issue.
+4. After a behavioral change is verified, update current behavior, the platform matrix, known gaps, the evidence
+   map, and `last_verified`.
+5. When a Feature is superseded or removed, record the replacement relationship, set it to
+   `historical` / `retired`, and then move it to `archive/`.

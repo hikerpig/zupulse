@@ -110,7 +110,7 @@ describe("checkDocumentation", () => {
     const root = await fixture({
       "docs/features/README.md": `# Feature Contracts
 
-## 当前索引
+## Current Index
 
 | Feature | Contract | Status | Delivery |
 | --- | --- | --- | --- |
@@ -179,7 +179,7 @@ supersedes: []
 
   it("reports invalid metadata fields without guessing their meaning", async () => {
     const root = await fixture({
-      "docs/features/README.md": "# Feature Contracts\n\n## 当前索引\n",
+      "docs/features/README.md": "# Feature Contracts\n\n## Current Index\n",
       "docs/features/contracts/invalid.md": `---
 feature: Not Valid
 title: []
@@ -212,7 +212,7 @@ extra_field: value
 
   it("reports invalid lifecycle directories and delivery combinations", async () => {
     const root = await fixture({
-      "docs/features/README.md": "# Feature Contracts\n\n## 当前索引\n",
+      "docs/features/README.md": "# Feature Contracts\n\n## Current Index\n",
       "docs/features/contracts/retired.md": `---
 feature: retired-in-contracts
 title: Retired
@@ -274,7 +274,7 @@ supersedes: []
     const root = await fixture({
       "docs/features/README.md": `# Feature Contracts
 
-## 当前索引
+## Current Index
 
 | Feature | Contract | Status | Delivery |
 | --- | --- | --- | --- |
@@ -315,7 +315,7 @@ supersedes: []
     const root = await fixture({
       "docs/features/README.md": `# Feature Contracts
 
-## 当前索引
+## Current Index
 
 | Feature | Contract | Status | Delivery |
 | --- | --- | --- | --- |
@@ -354,7 +354,7 @@ supersedes: []
 
   it("reports a current contract missing from the feature index", async () => {
     const root = await fixture({
-      "docs/features/README.md": "# Feature Contracts\n\n## 当前索引\n",
+      "docs/features/README.md": "# Feature Contracts\n\n## Current Index\n",
       "docs/features/contracts/current.md": completeCurrentContract({
         feature: "current-feature",
         title: "Current",
@@ -371,7 +371,7 @@ supersedes: []
     const root = await fixture({
       "docs/features/README.md": `# Feature Contracts
 
-## 当前索引
+## Current Index
 
 | Feature | Contract | Status | Delivery |
 | --- | --- | --- | --- |
@@ -406,7 +406,7 @@ supersedes: []
     const root = await fixture({
       "docs/features/README.md": `# Feature Contracts
 
-## 当前索引
+## Current Index
 
 | Feature | Contract |
 | --- | --- |
@@ -439,7 +439,7 @@ describe("runRepositoryCheck", () => {
     const root = await fixture({
       "docs/features/README.md": `# Feature Contracts
 
-## 当前索引
+## Current Index
 
 | Feature | Contract |
 | --- | --- |
@@ -461,7 +461,7 @@ describe("runRepositoryCheck", () => {
 
   it("returns failure for documentation errors", async () => {
     const root = await fixture({
-      "docs/features/README.md": "# Feature Contracts\n\n## 当前索引\n",
+      "docs/features/README.md": "# Feature Contracts\n\n## Current Index\n",
       "docs/features/contracts/current.md": completeCurrentContract({
         feature: "current-feature",
         title: "Current",

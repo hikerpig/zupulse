@@ -318,7 +318,7 @@ function duplicateFeatureErrors(contracts) {
 async function validateFeatureIndex(root, contracts, indexPath) {
   const contents = await read(join(root, indexPath));
   if (contents === undefined) return [`${indexPath}: feature contract index is missing`];
-  const currentSection = markdownSection(contents, "当前索引");
+  const currentSection = markdownSection(contents, "Current Index");
   const entries = currentSection === undefined ? [] : featureIndexEntries(currentSection, indexPath);
   const errors = [];
   const counts = new Map();

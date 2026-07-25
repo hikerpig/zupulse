@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PlaybackState } from "@zupulse/web-core";
 import type { ViewerSessionHandle } from "../../host";
 import { createSeekPreviewScheduler, PlaybackWorkspace } from "../PlaybackWorkspace";
+import { AppStoreProvider, createAppStore } from "../../app/appStore";
 
 afterEach(cleanup);
 
@@ -172,6 +173,41 @@ describe("PlaybackWorkspace transport bar", () => {
     await user.tab();
 
     expect(dispatch).toHaveBeenCalledWith({ type: "set-score-speed", speed: 91 / 120 });
+  });
+
+  it("switches score navigation modes and recovers from Detached without changing playback", async () => {
+    const setMode = vi.fn();
+    const returnToPlayback = vi.fn();
+    const viewerSession = session(state("playing"));
+    const navigationState = {
+      mode: "page-turn" as const,
+      followState: "detached" as const,
+      generation: 1,
+      currentPage: 1,
+      pageCount: 3,
+      pageTurnAvailable: true,
+    };
+    viewerSession.navigation = {
+      getState: () => navigationState,
+      subscribe: () => () => undefined,
+      setMode,
+      returnToPlayback,
+      movePage: vi.fn(),
+    };
+    render(
+      <AppStoreProvider store={createAppStore("dark")}>
+        <PlaybackWorkspace session={viewerSession}>乐谱</PlaybackWorkspace>
+      </AppStoreProvider>,
+    );
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "返回播放位置" }));
+    expect(returnToPlayback).toHaveBeenCalledOnce();
+
+    await user.click(screen.getByRole("button", { name: "谱面导航模式" }));
+    await user.click(screen.getByRole("button", { name: "翻页" }));
+    expect(setMode).toHaveBeenLastCalledWith("page-turn");
+    expect(viewerSession.playback?.dispatch).not.toHaveBeenCalled();
   });
 });
 

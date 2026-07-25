@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { createStore, useStore } from "zustand";
 
 export type ViewerTheme = "light" | "dark";
+export type ScoreNavigationMode = "continuous" | "page-turn";
 export type LocaleChangeState = "idle" | "saving" | "error";
 export const DEFAULT_SCORE_ZOOM = 1;
 export const MIN_SCORE_ZOOM = 0.75;
@@ -13,10 +14,12 @@ type AppState = {
   locale: LocaleState;
   localeChange: LocaleChangeState;
   scoreZoom: number;
+  scoreNavigationMode: ScoreNavigationMode;
   setTheme(theme: ViewerTheme): void;
   setLocaleState(locale: LocaleState): void;
   setLocaleChange(localeChange: LocaleChangeState): void;
   setScoreZoom(zoom: number): void;
+  setScoreNavigationMode(mode: ScoreNavigationMode): void;
 };
 export type AppStore = ReturnType<typeof createAppStore>;
 
@@ -24,16 +27,19 @@ export function createAppStore(
   initialTheme: ViewerTheme,
   initialLocale: LocaleState = { preference: "zh-CN", effectiveLocale: "zh-CN" },
   initialScoreZoom = DEFAULT_SCORE_ZOOM,
+  initialScoreNavigationMode: ScoreNavigationMode = "continuous",
 ) {
   return createStore<AppState>()((set) => ({
     theme: initialTheme,
     locale: initialLocale,
     localeChange: "idle",
     scoreZoom: clampScoreZoom(initialScoreZoom),
+    scoreNavigationMode: initialScoreNavigationMode,
     setTheme: (theme) => set({ theme }),
     setLocaleState: (locale) => set({ locale }),
     setLocaleChange: (localeChange) => set({ localeChange }),
     setScoreZoom: (scoreZoom) => set({ scoreZoom: clampScoreZoom(scoreZoom) }),
+    setScoreNavigationMode: (scoreNavigationMode) => set({ scoreNavigationMode }),
   }));
 }
 
@@ -41,7 +47,9 @@ const AppStoreContext = createContext<AppStore | null>(null);
 
 export function AppStoreProvider({ children, store: injectedStore }: { children: ReactNode; store?: AppStore }) {
   const [store] = useState(
-    () => injectedStore ?? createAppStore(readInitialTheme(), undefined, readInitialScoreZoom()),
+    () =>
+      injectedStore ??
+      createAppStore(readInitialTheme(), undefined, readInitialScoreZoom(), readInitialScoreNavigationMode()),
   );
   return <AppStoreContext.Provider value={store}>{children}</AppStoreContext.Provider>;
 }
@@ -70,12 +78,20 @@ export function persistScoreZoom(zoom: number): void {
   storage()?.setItem("zupulse-score-zoom", String(clampScoreZoom(zoom)));
 }
 
+export function persistScoreNavigationMode(mode: ScoreNavigationMode): void {
+  storage()?.setItem("zupulse-score-navigation-mode", mode);
+}
+
 function readInitialTheme(): ViewerTheme {
   return storage()?.getItem("zupulse-theme") === "light" ? "light" : "dark";
 }
 
 function readInitialScoreZoom(): number {
   return clampScoreZoom(Number(storage()?.getItem("zupulse-score-zoom") ?? DEFAULT_SCORE_ZOOM));
+}
+
+function readInitialScoreNavigationMode(): ScoreNavigationMode {
+  return storage()?.getItem("zupulse-score-navigation-mode") === "page-turn" ? "page-turn" : "continuous";
 }
 
 function storage(): Storage | undefined {

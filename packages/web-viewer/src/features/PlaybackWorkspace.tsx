@@ -1,13 +1,15 @@
 import { musicalPositionFromTick } from "@zupulse/web-core";
 import type { PlaybackCommand } from "@zupulse/web-core";
 import { Popover } from "@base-ui/react/popover";
-import { Pause, Play, Repeat2, Square } from "lucide-react";
-import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { BookOpen, ChevronLeft, ChevronRight, LocateFixed, Pause, Play, Repeat2, Square } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import type { ViewerSessionHandle } from "../host";
 import { presentPlayback, type PlaybackViewModel } from "../playbackPresenter";
 import { Slider } from "../components/Slider";
+import { ContextPopup } from "../components/ContextPopup";
+import { persistScoreNavigationMode, useAppStore } from "../app/appStore";
 import styles from "./PlaybackWorkspace.module.css";
 
 export function PlaybackWorkspace({
@@ -17,10 +19,22 @@ export function PlaybackWorkspace({
   session: ViewerSessionHandle | undefined;
   children: ReactNode;
 }) {
-  return <PlaybackLayout playback={session?.playback}>{children}</PlaybackLayout>;
+  return (
+    <PlaybackLayout playback={session?.playback} navigation={session?.navigation}>
+      {children}
+    </PlaybackLayout>
+  );
 }
 
-function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle["playback"]; children: ReactNode }) {
+function PlaybackLayout({
+  playback,
+  navigation,
+  children,
+}: {
+  playback: ViewerSessionHandle["playback"];
+  navigation: ViewerSessionHandle["navigation"];
+  children: ReactNode;
+}) {
   const { t } = useTranslation("viewer");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const seekScheduler = useMemo(() => (playback ? createSeekPreviewScheduler(playback) : undefined), [playback]);
@@ -125,6 +139,7 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
           />
         </div>
         <div className={styles.transportTools}>
+          {navigation ? <ScoreNavigationControls navigation={navigation} /> : null}
           <BpmControl
             baseTempo={view.baseTempo}
             currentTempo={view.currentTempo}
@@ -386,6 +401,84 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
         )}
       </section>
     </>
+  );
+}
+
+function ScoreNavigationControls({ navigation }: { navigation: NonNullable<ViewerSessionHandle["navigation"]> }) {
+  const { t } = useTranslation("viewer");
+  const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const mode = useAppStore((state) => state.scoreNavigationMode);
+  const setMode = useAppStore((state) => state.setScoreNavigationMode);
+  const state = useSyncExternalStore(navigation.subscribe, navigation.getState, navigation.getState);
+
+  useEffect(() => {
+    navigation.setMode(mode);
+  }, [mode, navigation]);
+
+  const chooseMode = (nextMode: typeof mode) => {
+    setMode(nextMode);
+    persistScoreNavigationMode(nextMode);
+    setOpen(false);
+  };
+
+  return (
+    <div className={styles.navigationControls}>
+      {state.followState === "detached" ? (
+        <button
+          className={styles.transportIconButton}
+          type="button"
+          aria-label={t("score.returnToPlayback")}
+          title={t("score.detached")}
+          onClick={() => navigation.returnToPlayback()}
+        >
+          <LocateFixed aria-hidden="true" />
+        </button>
+      ) : null}
+      {mode === "page-turn" && state.pageTurnAvailable ? (
+        <div className={styles.pageControls}>
+          <button
+            type="button"
+            aria-label={t("score.previousPage")}
+            disabled={state.currentPage <= 0}
+            onClick={() => navigation.movePage(-1)}
+          >
+            <ChevronLeft aria-hidden="true" />
+          </button>
+          <output aria-label={t("score.pageStatus", { current: state.currentPage + 1, total: state.pageCount })}>
+            {state.currentPage + 1} / {state.pageCount}
+          </output>
+          <button
+            type="button"
+            aria-label={t("score.nextPage")}
+            disabled={state.currentPage >= state.pageCount - 1}
+            onClick={() => navigation.movePage(1)}
+          >
+            <ChevronRight aria-hidden="true" />
+          </button>
+        </div>
+      ) : null}
+      <button
+        ref={buttonRef}
+        className={styles.transportIconButton}
+        type="button"
+        aria-label={t("score.navigationMode")}
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <BookOpen aria-hidden="true" />
+      </button>
+      <ContextPopup anchor={buttonRef.current} open={open} onOpenChange={setOpen}>
+        <div className={styles.navigationModePopup} aria-label={t("score.navigationMode")}>
+          <button type="button" aria-pressed={mode === "continuous"} onClick={() => chooseMode("continuous")}>
+            {t("score.continuous")}
+          </button>
+          <button type="button" aria-pressed={mode === "page-turn"} onClick={() => chooseMode("page-turn")}>
+            {t("score.pageTurn")}
+          </button>
+        </div>
+      </ContextPopup>
+    </div>
   );
 }
 

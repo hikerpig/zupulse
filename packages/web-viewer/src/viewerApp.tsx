@@ -19,6 +19,7 @@ import { type DemoState } from "./gpDemoPresenter";
 import { presentScoreFile } from "./importPresenter";
 import { SCORE_ZOOM_COMMIT_EVENT, type ScoreZoomCommitDetail } from "./scoreZoom";
 import { ScoreNavigationCoordinator } from "./score-navigation/score-navigation-coordinator";
+import { readAlphaTabStaffSystems } from "./score-navigation/alpha-tab-navigation";
 
 export type DefaultOpenSessionDependencies = {
   createApi: typeof createAlphaTabApi;
@@ -72,7 +73,11 @@ export function createDefaultOpenSession(
     scoreScrollElement.addEventListener("wheel", markManualNavigation, { passive: true });
     scoreScrollElement.addEventListener("touchmove", markManualNavigation, { passive: true });
     const detachNavigation = attachAlphaTabNavigationEvents(api, {
-      renderFinished: () => navigation.beginGeneration(),
+      renderFinished: () => {
+        navigation.beginGeneration();
+        const systems = readAlphaTabStaffSystems(api);
+        if (systems) navigation.setSystems(systems);
+      },
       cursorSystemChanged: (system) =>
         navigation.cursorSystemChanged(
           { systemIndex: system.systemIndex, y: system.bounds.y, height: system.bounds.height },
@@ -144,6 +149,13 @@ export function createDefaultOpenSession(
       });
       renderViewerState(status, summary, state);
       return {
+        navigation: {
+          getState: () => navigation.getSnapshot(),
+          subscribe: (listener) => navigation.subscribe(listener),
+          setMode: (mode) => navigation.setMode(mode),
+          returnToPlayback: () => navigation.returnToPlayback(),
+          movePage: (delta) => navigation.movePage(delta),
+        },
         playback: {
           getState: () => playbackSnapshot,
           subscribe(listener) {

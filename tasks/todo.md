@@ -40,16 +40,16 @@ Canonical plan: [`tasks/plan.md`](plan.md)
 
 ## Phase 3: Recovery UI and Page Turn foundation
 
-- [ ] T6 Detached recovery UI and localized copy
-- [ ] T7 Pure Screen Score Page projection
-- [ ] T8 Device-local navigation mode preference and controls
+- [x] T6 Detached recovery UI and localized copy
+- [x] T7 Pure Screen Score Page projection
+- [x] T8 Device-local navigation mode preference and controls
 
 ## Checkpoint C
 
-- [ ] Mode switch preserves transport and position.
-- [ ] Page Turn shows stable complete-system pages and `n / m`.
-- [ ] Return-to-playback restores Following.
-- [ ] Focused UI tests, i18n check, and Web build pass.
+- [x] Mode switch preserves transport and position.
+- [x] Page Turn shows stable complete-system pages and `n / m`.
+- [x] Return-to-playback restores Following.
+- [x] Focused UI tests, i18n check, and Web build pass.
 
 ## Phase 4: Playback-aware Page Turn
 

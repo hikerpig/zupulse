@@ -1081,7 +1081,7 @@ Task 33 sequential tune gate
 - [x] 所有实际执行的任务验收项与门禁有可复现证据。
 - [x] 没有把 tune/eval gold、PyTorch 或训练工具带入产品 runtime。
 - [x] 发布或拒绝决定、失败原因和下一方向写入文档。
-- [ ] 工作区 clean，所有增量已独立提交。
+- [x] 工作区 clean，所有增量已独立提交。
 
 ## 风险与缓解
 

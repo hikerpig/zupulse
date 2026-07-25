@@ -48,9 +48,9 @@ Detailed plan: [`tasks/plan.md`](plan.md)
 
 ### Task 5: Pure impact matching
 
-- [ ] Match file/directory implementation paths without similar-prefix false positives.
-- [ ] Render deterministic multi-Contract, updated-Contract and no-match results.
-- [ ] Verify: `pnpm vitest run scripts/__tests__/documentation-impact.test.ts`
+- [x] Match file/directory implementation paths without similar-prefix false positives.
+- [x] Render deterministic multi-Contract, updated-Contract and no-match results.
+- [x] Verify: `pnpm vitest run scripts/__tests__/documentation-impact.test.ts`
 - Dependencies: Task 1 normalized Contract shape.
 
 ### Task 6: Git/CI impact integration

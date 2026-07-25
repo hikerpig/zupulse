@@ -33,6 +33,11 @@ const DEFAULT_DESIGN = {
   mapPath: ".design_library/zupulse-te-braun-theme/runtime-token-map.json",
 };
 
+const DEFAULT_DOCUMENTATION = {
+  contractsDir: "docs/features/contracts",
+  archiveDir: "docs/features/archive",
+};
+
 const RUNTIME_TSCONFIGS = [
   "packages/web-core/tsconfig.json",
   "packages/web-viewer/tsconfig.json",
@@ -52,6 +57,47 @@ export async function checkContext(root, options = DEFAULT_CONTEXT) {
     }
   }
   return errors.sort();
+}
+
+export async function readFeatureContracts(root, options = DEFAULT_DOCUMENTATION) {
+  const contracts = [];
+  const errors = [];
+  for (const [location, directory] of [
+    ["contracts", options.contractsDir],
+    ["archive", options.archiveDir],
+  ]) {
+    let entries;
+    try {
+      entries = await readdir(join(root, directory), { withFileTypes: true });
+    } catch (error) {
+      if (error?.code === "ENOENT" && location === "archive") continue;
+      if (error?.code === "ENOENT") {
+        errors.push(`${directory}: feature contract directory is missing`);
+        continue;
+      }
+      throw error;
+    }
+    for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
+      if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+      const path = join(directory, entry.name).replaceAll("\\", "/");
+      const contents = await readFile(join(root, path), "utf8");
+      const parsed = parseFrontmatter(contents, path);
+      if (parsed.errors.length > 0) {
+        errors.push(...parsed.errors);
+        continue;
+      }
+      contracts.push({
+        path,
+        location,
+        contents,
+        frontmatter: parsed.frontmatter,
+      });
+    }
+  }
+  return {
+    contracts: contracts.sort((left, right) => left.path.localeCompare(right.path)),
+    errors: errors.sort(),
+  };
 }
 
 export async function checkArchitecture(root) {
@@ -138,6 +184,84 @@ export async function checkDesign(root, options = DEFAULT_DESIGN) {
     }
   }
   return errors.sort();
+}
+
+function parseFrontmatter(contents, path) {
+  const lines = contents.split(/\r?\n/);
+  if (lines[0] !== "---") {
+    return {
+      frontmatter: {},
+      errors: [`${path}:1: expected frontmatter opening delimiter`],
+    };
+  }
+  const closing = lines.indexOf("---", 1);
+  if (closing === -1) {
+    return {
+      frontmatter: {},
+      errors: [`${path}: expected frontmatter closing delimiter`],
+    };
+  }
+
+  const frontmatter = {};
+  const errors = [];
+  let listKey;
+  let listLineNumber;
+  for (let index = 1; index < closing; index += 1) {
+    const line = lines[index];
+    const lineNumber = index + 1;
+    if (line.trim() === "") continue;
+    const listItem = line.match(/^ {2}- (.+)$/);
+    if (listItem) {
+      if (listKey === undefined) {
+        errors.push(`${path}:${lineNumber}: frontmatter list item has no key`);
+        continue;
+      }
+      frontmatter[listKey].push(listItem[1]);
+      continue;
+    }
+    if (/^\s/.test(line)) {
+      errors.push(`${path}:${lineNumber}: unsupported nested frontmatter`);
+      listKey = undefined;
+      listLineNumber = undefined;
+      continue;
+    }
+    if (listKey !== undefined && frontmatter[listKey].length === 0) {
+      errors.push(`${path}:${listLineNumber}: frontmatter list ${listKey} requires at least one item or []`);
+    }
+    listKey = undefined;
+    listLineNumber = undefined;
+
+    const field = line.match(/^([a-z][a-z0-9_]*):(.*)$/);
+    if (!field) {
+      errors.push(`${path}:${lineNumber}: malformed frontmatter field`);
+      continue;
+    }
+    const key = field[1];
+    const value = field[2].trim();
+    if (Object.hasOwn(frontmatter, key)) {
+      errors.push(`${path}:${lineNumber}: duplicate frontmatter key ${key}`);
+      continue;
+    }
+    if (value === "") {
+      frontmatter[key] = [];
+      listKey = key;
+      listLineNumber = lineNumber;
+      continue;
+    }
+    if (value === "[]") {
+      frontmatter[key] = [];
+      continue;
+    }
+    if (/^[\[{\]|>]/.test(value)) {
+      errors.push(`${path}:${lineNumber}: unsupported frontmatter value for ${key}`);
+      continue;
+    }
+    frontmatter[key] = value;
+  }
+  if (listKey !== undefined && frontmatter[listKey].length === 0) {
+    errors.push(`${path}:${listLineNumber}: frontmatter list ${listKey} requires at least one item or []`);
+  }
+  return { frontmatter, errors };
 }
 
 function cssVariableScopes(css) {

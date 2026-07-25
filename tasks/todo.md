@@ -9,10 +9,10 @@ Detailed plan: [`tasks/plan.md`](plan.md)
 
 ### Task 1: Contract discovery and frontmatter parser
 
-- [ ] Parse the template scalar/list subset into normalized Contract records.
-- [ ] Reject malformed, duplicate, nested or unknown structures deterministically.
-- [ ] Exclude templates and treat a missing archive directory as empty.
-- [ ] Verify: `pnpm vitest run scripts/__tests__/repositoryChecks.test.ts`
+- [x] Parse the template scalar/list subset into normalized Contract records.
+- [x] Reject malformed, duplicate, nested or unknown structures deterministically.
+- [x] Exclude templates and treat a missing archive directory as empty.
+- [x] Verify: `pnpm vitest run scripts/__tests__/repositoryChecks.test.ts`
 - Dependencies: none.
 
 ### Task 2: Contract-local validation

@@ -2,12 +2,100 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { checkArchitecture, checkContext, checkDesign } from "../repository-checks.mjs";
+import { checkArchitecture, checkContext, checkDesign, readFeatureContracts } from "../repository-checks.mjs";
 
 const roots: string[] = [];
 
 afterEach(async () => {
   await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
+});
+
+describe("readFeatureContracts", () => {
+  it("discovers contracts and parses the supported scalar and list frontmatter", async () => {
+    const root = await fixture({
+      "docs/features/contracts/sheet-library.md": `---
+feature: sheet-library
+title: Sheet Library
+status: current
+delivery: partial
+last_verified: 2026-07-24
+hosts:
+  - browser
+  - desktop
+implementation_paths:
+  - packages/web-core/src/library
+supersedes: []
+---
+
+# Sheet Library
+`,
+      "docs/features/templates/feature-contract.md": `<!-- instructions -->
+
+---
+feature: feature-slug
+status: draft
+---
+`,
+    });
+
+    await expect(readFeatureContracts(root)).resolves.toEqual({
+      contracts: [
+        {
+          path: "docs/features/contracts/sheet-library.md",
+          location: "contracts",
+          contents: expect.stringContaining("# Sheet Library"),
+          frontmatter: {
+            feature: "sheet-library",
+            title: "Sheet Library",
+            status: "current",
+            delivery: "partial",
+            last_verified: "2026-07-24",
+            hosts: ["browser", "desktop"],
+            implementation_paths: ["packages/web-core/src/library"],
+            supersedes: [],
+          },
+        },
+      ],
+      errors: [],
+    });
+  });
+
+  it("returns stable errors for duplicate keys and unsupported nested structures", async () => {
+    const root = await fixture({
+      "docs/features/contracts/duplicate.md": `---
+feature: first
+feature: second
+---
+`,
+      "docs/features/contracts/nested.md": `---
+feature: nested
+metadata:
+  owner: docs
+---
+`,
+      "docs/features/contracts/inline-list.md": `---
+feature: inline-list
+hosts: [browser, desktop]
+---
+`,
+      "docs/features/contracts/missing-list-items.md": `---
+feature: missing-list-items
+hosts:
+status: draft
+---
+`,
+    });
+
+    await expect(readFeatureContracts(root)).resolves.toEqual({
+      contracts: [],
+      errors: [
+        "docs/features/contracts/duplicate.md:3: duplicate frontmatter key feature",
+        "docs/features/contracts/inline-list.md:3: unsupported frontmatter value for hosts",
+        "docs/features/contracts/missing-list-items.md:3: frontmatter list hosts requires at least one item or []",
+        "docs/features/contracts/nested.md:4: unsupported nested frontmatter",
+      ],
+    });
+  });
 });
 
 describe("checkContext", () => {

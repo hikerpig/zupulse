@@ -24,6 +24,7 @@ export * from "./harmony/boundaries";
 export * from "./harmony/boundaryEvidence";
 export * from "./harmony/boundaryClassifier";
 export * from "./harmony/features";
+export * from "./harmony/structuredFeatures";
 export * from "./harmony/candidates";
 export * from "./harmony/confidenceCalibration";
 export * from "./harmony/decode";

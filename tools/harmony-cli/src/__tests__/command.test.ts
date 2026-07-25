@@ -126,6 +126,30 @@ describe("harmony CLI inspect command", () => {
     );
   });
 
+  it("validates structured records inputs before reading the manifest", async () => {
+    await expect(runHarmonyCommand(["structured-records", "manifest.json"])).rejects.toThrow(
+      "usage: harmony:cli structured-records",
+    );
+    const required = [
+      "structured-records",
+      "manifest.json",
+      "--protocol",
+      "protocol.json",
+      "--data-root",
+      "data",
+      "--case",
+      "mozart",
+      "--output",
+      "records.json",
+    ];
+    await expect(runHarmonyCommand([...required, "--split", "eval"])).rejects.toThrow(
+      "structured records --split must be train or tune",
+    );
+    await expect(runHarmonyCommand([...required, "--max-groups", "0"])).rejects.toThrow(
+      "--max-groups must be a positive integer",
+    );
+  });
+
   it("rejects invalid ranking-record splits before reading files", async () => {
     await expect(
       runHarmonyCommand([

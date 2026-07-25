@@ -30,6 +30,7 @@
     "harmony:reranker": "vite-node scripts/run-harmony-linear-reranker.ts",
     "harmony:boundary": "vite-node scripts/run-harmony-boundary.ts",
     "harmony:benchmark": "vite-node scripts/harmony-benchmark.ts",
+    "harmony:structured-benchmark": "vite-node scripts/harmony-structured-benchmark.ts",
     "harmony:cli": "vite-node tools/harmony-cli/src/cli.ts",
     "demo:dev": "pnpm --filter @zupulse/web-demo dev",
     "demo:build": "pnpm --filter @zupulse/web-demo build",

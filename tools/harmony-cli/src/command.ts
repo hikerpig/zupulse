@@ -8,6 +8,7 @@ import { evaluateHarmonyV3FinalHoldoutFile } from "./evaluateV3FinalHoldout";
 import { exportHarmonyRankingRecordsFile } from "./exportRankingRecords";
 import { exportHarmonyBoundaryRecordsFile } from "./exportBoundaryRecords";
 import { exportHarmonyStructuredOracleFile } from "./exportStructuredOracle";
+import { exportHarmonyStructuredRecordsFile } from "./exportStructuredRecords";
 import { inspectHarmonyScore, type InspectView } from "./inspectScore";
 import type { DatasetSplit } from "./evaluationProtocol";
 import {
@@ -30,10 +31,42 @@ export async function runHarmonyCommand(
   | Awaited<ReturnType<typeof exportHarmonyRankingRecordsFile>>
   | Awaited<ReturnType<typeof exportHarmonyBoundaryRecordsFile>>
   | Awaited<ReturnType<typeof exportHarmonyStructuredOracleFile>>
+  | Awaited<ReturnType<typeof exportHarmonyStructuredRecordsFile>>
   | Awaited<ReturnType<typeof evaluateHarmonyV3FinalHoldoutFile>>
 > {
   const normalized = args[0] === "--" ? args.slice(1) : args;
   const cwd = context.cwd ?? process.env.INIT_CWD ?? process.cwd();
+  if (normalized[0] === "structured-records") {
+    const manifest = normalized[1];
+    const protocolIndex = normalized.indexOf("--protocol");
+    const dataRootIndex = normalized.indexOf("--data-root");
+    const caseIndex = normalized.indexOf("--case");
+    const outputIndex = normalized.indexOf("--output");
+    const splitIndex = normalized.indexOf("--split");
+    const maxGroupsIndex = normalized.indexOf("--max-groups");
+    const protocol = protocolIndex < 0 ? undefined : normalized[protocolIndex + 1];
+    const dataRoot = dataRootIndex < 0 ? undefined : normalized[dataRootIndex + 1];
+    const caseId = caseIndex < 0 ? undefined : normalized[caseIndex + 1];
+    const output = outputIndex < 0 ? undefined : normalized[outputIndex + 1];
+    const split = splitIndex < 0 ? "train" : normalized[splitIndex + 1];
+    const maxGroups = maxGroupsIndex < 0 ? undefined : Number(normalized[maxGroupsIndex + 1]);
+    if (!manifest || !protocol || !dataRoot || !caseId || !output)
+      throw new Error(
+        "usage: harmony:cli structured-records <manifest.json> --protocol <protocol.json> --data-root <directory> --case <id> --output <records.json> [--split train|tune] [--max-groups <n>]",
+      );
+    if (split !== "train" && split !== "tune") throw new Error("structured records --split must be train or tune");
+    if (maxGroups !== undefined && (!Number.isInteger(maxGroups) || maxGroups < 1))
+      throw new Error("--max-groups must be a positive integer");
+    return exportHarmonyStructuredRecordsFile({
+      manifestPath: resolve(cwd, manifest),
+      protocolPath: resolve(cwd, protocol),
+      dataRoot: resolve(cwd, dataRoot),
+      caseId,
+      outputPath: resolve(cwd, output),
+      split,
+      ...(maxGroups === undefined ? {} : { maxGroups }),
+    });
+  }
   if (normalized[0] === "eval-v3-final") {
     const manifest = normalized[1];
     const protocolIndex = normalized.indexOf("--protocol");

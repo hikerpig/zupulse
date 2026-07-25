@@ -22,6 +22,19 @@ export function buildHarmonyFeatureCache(input: {
   ticksPerQuarter: number;
   notes: readonly FeatureNote[];
 }): HarmonyFeatureCache {
+  const notes = input.notes
+    .map((note) => ({
+      note,
+      start: momentOrder(note.moment),
+      end: momentOrder({
+        measureIndex: note.moment.measureIndex,
+        offsetTicks: note.moment.offsetTicks + note.durationTicks,
+      }),
+    }))
+    .sort((a, b) => a.start - b.start);
+  const maximumEndThroughIndex: number[] = [];
+  for (const [index, prepared] of notes.entries())
+    maximumEndThroughIndex[index] = Math.max(maximumEndThroughIndex[index - 1] ?? -Infinity, prepared.end);
   return {
     forRange(range) {
       const durationByPitchClass = Array.from({ length: 12 }, () => 0);
@@ -30,18 +43,18 @@ export function buildHarmonyFeatureCache(input: {
         { length: 12 },
         () => new Map<string, { pitch: SpelledPitch; weight: number }>(),
       );
-      const notes = input.notes.filter(
-        (note) =>
-          note.soundingPitchClass !== undefined &&
-          compareMoments(note.moment, range.end) < 0 &&
-          compareMoments(
-            { measureIndex: note.moment.measureIndex, offsetTicks: note.moment.offsetTicks + note.durationTicks },
-            range.start,
-          ) > 0,
-      );
+      const overlappingNotes: FeatureNote[] = [];
+      const rangeStart = momentOrder(range.start);
+      let index = lowerBound(notes, momentOrder(range.end)) - 1;
+      while (index >= 0 && maximumEndThroughIndex[index]! > rangeStart) {
+        const prepared = notes[index]!;
+        if (prepared.note.soundingPitchClass !== undefined && prepared.end > rangeStart)
+          overlappingNotes.push(prepared.note);
+        index -= 1;
+      }
       let bass: FeatureNote | undefined;
       const maxDurationByPitchClass = Array.from({ length: 12 }, () => 0);
-      for (const note of notes) {
+      for (const note of overlappingNotes) {
         const start =
           note.moment.measureIndex === range.start.measureIndex
             ? Math.max(note.moment.offsetTicks, range.start.offsetTicks)
@@ -55,7 +68,7 @@ export function buildHarmonyFeatureCache(input: {
           end - start,
         );
       }
-      for (const note of notes) {
+      for (const note of overlappingNotes) {
         const start =
           note.moment.measureIndex === range.start.measureIndex
             ? Math.max(note.moment.offsetTicks, range.start.offsetTicks)
@@ -100,4 +113,19 @@ export function buildHarmonyFeatureCache(input: {
       };
     },
   };
+}
+
+function momentOrder(moment: { measureIndex: number; offsetTicks: number }): number {
+  return moment.measureIndex * 1_000_000_000 + moment.offsetTicks;
+}
+
+function lowerBound(notes: readonly { start: number }[], target: number): number {
+  let low = 0;
+  let high = notes.length;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    if (notes[middle]!.start < target) low = middle + 1;
+    else high = middle;
+  }
+  return low;
 }

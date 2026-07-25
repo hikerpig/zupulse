@@ -104,7 +104,7 @@ pnpm -s harmony:cli structured-oracle test-fixtures/harmony/datasets/manifest.js
 
 Train 和 tune 使用不同入口，regression/final-holdout 无法由此命令导出。`search.candidates` 是 `ranges × topK` 的容量上界，并由 `candidateCountMode: "top-k-upper-bound"` 明示；oracle 只对 gold ranges 真实生成 candidates，避免为了规模计数物化数百万无用对象。
 
-旧 `maxSpan=16` 合同的 Mozart train/tune span representability 分别只有 `0.9853` 和 `0.9836`。只根据 train 时值分布冻结 `maxQuarterNotes=8` 后，train/tune 分别提高到 `0.9984` 和 `0.9931`，candidate oracle 保持在 `0.8104` 和 `0.8329`，Checkpoint E 的结构门禁通过。朴素 Top-8 物化上界约为 train `2.11 GB`、tune `0.53 GB`，因此后续 exact decoder 必须使用惰性 range cache 并实测峰值内存。完整结果见 [`tasks/harmony-structured-oracle-checkpoint.md`](../../../tasks/harmony-structured-oracle-checkpoint.md)。
+旧 `maxSpan=16` 合同的 Mozart train/tune span representability 分别只有 `0.9853` 和 `0.9836`。只根据 train 时值分布冻结 `maxQuarterNotes=8` 后，train/tune 分别提高到 `0.9984` 和 `0.9931`，candidate oracle 保持在 `0.8104` 和 `0.8329`，结构门禁通过。朴素 Top-8 物化上界约为 train `2.11 GB`、tune `0.53 GB`，因此后续 exact decoder 必须使用惰性 range cache 并实测峰值内存。相关失败模式收敛在 [`harmony-tuning-failures.md`](../../../tasks/harmony-tuning-failures.md)。
 
 Structured records 使用连续可表达 gold 子路径监督；candidate miss 只切断窗口，不注入 gold candidate。资产以 manifest + piece shards 写出，避免全语料对象常驻：
 
@@ -119,17 +119,17 @@ pnpm -s harmony:cli structured-records test-fixtures/harmony/datasets/manifest.j
 pnpm -s harmony:structured-verify /tmp/mozart-structured-train.json
 ```
 
-Manifest 与每个 shard 都包含 SHA/byte/count 校验；loader 一次只读取一个 piece。Checkpoint F 见 [`tasks/harmony-structured-records-checkpoint.md`](../../../tasks/harmony-structured-records-checkpoint.md)。
+Manifest 与每个 shard 都包含 SHA/byte/count 校验；loader 一次只读取一个 piece。
 
-线性 Semi-CRF 的 Mozart tune 首轮门禁失败：相对 dense production，interval accuracy `-0.0912`、predicted-primary `-0.1460`、segments/measure `+20.6%`，learned runtime 约为 dense 的十几倍。Boundary F1 仅持平。评估按 protocol 在第一个 corpus 停止，没有运行跨语料 tune、MLP 或 final holdout，也没有移动 production 默认。完整证据见 [`tasks/harmony-structured-linear-checkpoint.md`](../../../tasks/harmony-structured-linear-checkpoint.md) 与 [`tasks/harmony-structured-final-checkpoint.md`](../../../tasks/harmony-structured-final-checkpoint.md)。
+线性 Semi-CRF 的 Mozart tune 首轮门禁失败：相对 dense production，interval accuracy `-0.0912`、predicted-primary `-0.1460`、segments/measure `+20.6%`，learned runtime 约为 dense 的十几倍。Boundary F1 仅持平。评估按 protocol 在第一个 corpus 停止，没有运行跨语料 tune、MLP 或 final holdout，也没有移动 production 默认。完整结论见 [`harmony-tuning-failures.md`](../../../tasks/harmony-tuning-failures.md)。
 
 ## v3 预登记协议
 
 [`protocol-v3.json`](../../../test-fixtures/harmony/datasets/protocol-v3.json) 在下一轮 primary reranker 训练前冻结新的作品级 final holdout：Beethoven `01`、Chopin `BI105` 和 POP909 `225`。这些 group 不得进入 ranking records、训练、tune 或 threshold 选择。现有 K331 与已经查看过指标的跨语料 cases 只保留为 regression，不能再作为新的泛化声明。
 
-Task 16 曾冻结 MLP Top-1 softmax probability + 多语料 train-only weighted PAVA，并在 tune 上按 aggregate precision `>= 0.70` 后最大化 coverage 得到 threshold `0.46`。一次性 v3 final 中 POP909 ECE 回退，历史 DCML regression 又因 coverage 下降失败，因此该资产与阈值未发布，生产默认仍为 Task 15 的 rule confidence + threshold `0.60`。`eval-v3-final` 保留用于未来冻结候选与 rule-only baseline 的同批对照。
+曾冻结 MLP Top-1 softmax probability + 多语料 train-only weighted PAVA，并在 tune 上按 aggregate precision `>= 0.70` 后最大化 coverage 得到 threshold `0.46`。一次性 v3 final 中 POP909 ECE 回退，历史 DCML regression 又因 coverage 下降失败，因此该资产与阈值未发布，生产默认仍为 MLP primary + rule confidence + threshold `0.60`。`eval-v3-final` 保留用于未来冻结候选与 rule-only baseline 的同批对照。
 
-注意：现有 `top1Accuracy` 衡量 `alternatives[0]`，不是 reranker 选出的最终 `predicted` primary。它适合候选排序诊断，但不能单独衡量 primary reranker；当前只能结合 `resolvedPrecision`/`resolvedCoverage` 判断发布行为。下一轮应先新增 threshold 前的 predicted-primary 指标，再开展新的模型实验。
+注意：`top1Accuracy` 衡量 `alternatives[0]`，不是 reranker 选出的最终 `predicted` primary。它适合候选排序诊断，但不能单独衡量 primary reranker；report `2.6.0` 起应使用 threshold 前的 `predictedPrimaryAccuracy`，并结合 `resolvedPrecision`/`resolvedCoverage` 判断发布行为。
 
 未显式登记的 group 继续使用确定性 hash 分配；原本落入 `eval` bucket 的 group 在 v3 中也只作为 regression。协议记录完整 corpus group-set SHA-256 和 revision，运行时重新枚举 group 后必须匹配，防止 corpus 漂移或遗漏作品。
 
@@ -153,7 +153,7 @@ Task 16 曾冻结 MLP Top-1 softmax probability + 多语料 train-only weighted 
 
 `unresolved` 数量本身不是准确率。降低 decision threshold 可以减少拒识，但若 confidence 未校准，只会把低质量 primary 变成已解析错误。是否可接受应同时看 resolved precision、coverage、ECE、Top-8 和 interval/boundary 指标，并保持逐 corpus 门禁，不能用合并均值掩盖某一风格的回退。
 
-当前没有引入 PyTorch 产品运行时的必要。下一步先用相同 train-only ranking records 建立 TypeScript 可推理的线性 reranker；只有线性模型未达门槛、且 train/tune 误差证明剩余信号确实具有非线性时，才使用 PyTorch 离线训练最多两层的小型 MLP。即使触发，产品仍只加载量化到两位小数的 JSON 权重并执行确定性 TypeScript 推理。
+当前没有引入 PyTorch 产品运行时的必要。固定边界 MLP 已证明离线 PyTorch 训练、两位小数 JSON 与确定性 TypeScript 推理的组合可行；但当前 linear Semi-CRF 的主要瓶颈是 candidate miss、过分段和 dense lattice 上的 feature construction，并非 dot product。下一步应先优化 prefix/incremental range cache、Top-8 proposal 和显式 boundary loss；只有线性 structured model 在 train 与未污染 tune 上稳定改善后，才重新比较离线小型 MLP。
 
 baseline 文件：
 

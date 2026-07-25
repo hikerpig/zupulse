@@ -135,7 +135,8 @@ pnpm -s harmony:cli eval test-fixtures/harmony/datasets/manifest.json \
 
 线性资产只有 5 个两位小数权重与一个阈值，产品推理是确定性 TypeScript，不依赖 Python 或 PyTorch。小节线与 musical beats 固定保留，模型只筛选其余 note-event 边界。
 
-仅当 Checkpoint D 触发时，可用本地 PyTorch 离线训练最多两层的 MLP；`--tune-report` 会用量化后的权重重新评测：
+仅当线性模型在 train/tune 稳定欠拟合、且 residual 证明存在非线性交互时，才可用本地
+PyTorch 离线训练最多两层的 MLP；`--tune-report` 会用量化后的权重重新评测：
 
 ```bash
 python3 scripts/train-harmony-mlp.py /tmp/harmony-mlp.json \

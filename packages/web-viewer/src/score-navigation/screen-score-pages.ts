@@ -17,15 +17,39 @@ export type ScreenScorePageProjection = {
 export function projectScreenScorePages(
   systems: readonly ScoreSystemBounds[],
   viewportHeight: number,
+  loopRange?: { startMeasureIndex: number; endMeasureIndex: number },
 ): ScreenScorePageProjection {
   if (!Number.isFinite(viewportHeight) || viewportHeight <= 0) return { pages: [], pageIndexBySystem: {} };
   const ordered = [...systems].sort((a, b) => a.systemIndex - b.systemIndex);
   const pages: ScreenScorePage[] = [];
+  const loopSystemIndexes = loopRange
+    ? ordered
+        .map((system, index) => ({ system, index }))
+        .filter(
+          ({ system }) =>
+            system.lastMeasureIndex >= loopRange.startMeasureIndex &&
+            system.firstMeasureIndex <= loopRange.endMeasureIndex,
+        )
+        .map(({ index }) => index)
+    : [];
+  const loopStart = loopSystemIndexes[0];
+  const loopEnd = loopSystemIndexes.at(-1);
+  const loopFits =
+    loopStart !== undefined &&
+    loopEnd !== undefined &&
+    ordered[loopEnd]!.y + ordered[loopEnd]!.height - ordered[loopStart]!.y <= viewportHeight;
 
-  for (const system of ordered) {
+  for (const [systemPosition, system] of ordered.entries()) {
     const current = pages.at(-1);
     const systemBottom = system.y + system.height;
-    if (!current || systemBottom - current.top > viewportHeight) {
+    const startsLoopPage = loopFits && systemPosition === loopStart && Boolean(current?.systemIndexes.length);
+    const isInsideFittingLoop =
+      loopFits &&
+      loopStart !== undefined &&
+      loopEnd !== undefined &&
+      systemPosition > loopStart &&
+      systemPosition <= loopEnd;
+    if (!current || startsLoopPage || (!isInsideFittingLoop && systemBottom - current.top > viewportHeight)) {
       pages.push({
         index: pages.length,
         systemIndexes: [system.systemIndex],

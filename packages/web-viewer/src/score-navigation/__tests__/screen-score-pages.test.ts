@@ -19,6 +19,26 @@ describe("projectScreenScorePages", () => {
     expect(projection.pages[0]).toMatchObject({ systemIndexes: [0], oversized: true });
     expect(projection.pages[1]).toMatchObject({ systemIndexes: [1], oversized: false });
   });
+
+  it("starts a temporary page for a short loop that would otherwise cross a page boundary", () => {
+    const projection = projectScreenScorePages(
+      [system(0, 0, 180, 0), system(1, 200, 180, 2), system(2, 400, 180, 4)],
+      400,
+      { startMeasureIndex: 2, endMeasureIndex: 5 },
+    );
+
+    expect(projection.pages.map((page) => page.systemIndexes)).toEqual([[0], [1, 2]]);
+  });
+
+  it("keeps normal pages when loop systems exceed the viewport", () => {
+    const projection = projectScreenScorePages(
+      [system(0, 0, 180, 0), system(1, 200, 220, 2), system(2, 440, 220, 4)],
+      400,
+      { startMeasureIndex: 2, endMeasureIndex: 5 },
+    );
+
+    expect(projection.pages.map((page) => page.systemIndexes)).toEqual([[0], [1], [2]]);
+  });
 });
 
 function system(systemIndex: number, y: number, height: number, firstMeasureIndex: number) {

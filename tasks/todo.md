@@ -53,16 +53,16 @@ Canonical plan: [`tasks/plan.md`](plan.md)
 
 ## Phase 4: Playback-aware Page Turn
 
-- [ ] T9 Playback and Scrub page following
-- [ ] T10 Manual page inputs
-- [ ] T11 Re-layout anchors and generation fallback
-- [ ] T12 Loop-aware page projection
+- [x] T9 Playback and Scrub page following
+- [x] T10 Manual page inputs
+- [x] T11 Re-layout anchors and generation fallback
+- [x] T12 Loop-aware page projection
 
 ## Checkpoint D
 
-- [ ] Auto/manual page turn, Scrub, resize, and zoom use the latest generation.
-- [ ] Short cross-page Loops remain stable when their systems fit.
-- [ ] `pnpm verify:fast` and focused Browser E2E pass.
+- [x] Auto/manual page turn, Scrub, resize, and zoom use the latest generation.
+- [x] Short cross-page Loops remain stable when their systems fit.
+- [x] `pnpm verify:fast` and focused Browser E2E pass.
 
 ## Phase 5: Performance and acceptance
 

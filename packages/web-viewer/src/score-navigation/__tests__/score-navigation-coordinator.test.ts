@@ -38,4 +38,32 @@ describe("ScoreNavigationCoordinator", () => {
     expect(coordinator.isCurrentGeneration(first)).toBe(false);
     expect(coordinator.isCurrentGeneration(second)).toBe(true);
   });
+
+  it("turns exactly one page for each manual input and follows the latest cursor page directly during scrub", () => {
+    const moveTo = vi.fn();
+    const coordinator = new ScoreNavigationCoordinator({ moveTo, viewportHeight: () => 400 });
+    coordinator.setSystems([system(0, 0, 180, 0), system(1, 420, 180, 2), system(2, 840, 180, 4)]);
+    coordinator.setMode("page-turn");
+
+    coordinator.movePage(1);
+    expect(coordinator.getSnapshot()).toMatchObject({ currentPage: 1, followState: "detached" });
+    coordinator.returnToPlayback();
+    coordinator.beginScrubPreview();
+    coordinator.cursorSystemChanged({ systemIndex: 2, y: 840, height: 180 }, coordinator.isScrubPreviewing());
+
+    expect(moveTo).toHaveBeenLastCalledWith(840, "direct");
+    expect(coordinator.getSnapshot()).toMatchObject({ currentPage: 2, followState: "following" });
+  });
 });
+
+function system(systemIndex: number, y: number, height: number, firstMeasureIndex: number) {
+  return {
+    systemIndex,
+    firstMeasureIndex,
+    lastMeasureIndex: firstMeasureIndex + 1,
+    x: 0,
+    y,
+    width: 800,
+    height,
+  };
+}

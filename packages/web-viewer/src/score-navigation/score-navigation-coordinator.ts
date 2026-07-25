@@ -35,6 +35,9 @@ export class ScoreNavigationCoordinator {
   private currentSystem: CursorSystemTarget | undefined;
   private projection: ScreenScorePageProjection = { pages: [], pageIndexBySystem: {} };
   private readonly listeners = new Set<() => void>();
+  private scrubPreview = false;
+  private systems: readonly ScoreSystemBounds[] = [];
+  private loopRange: { startMeasureIndex: number; endMeasureIndex: number } | undefined;
 
   constructor(private readonly viewport: ScoreViewportPort) {}
 
@@ -53,8 +56,17 @@ export class ScoreNavigationCoordinator {
   }
 
   formalSeek(): void {
+    this.scrubPreview = false;
     this.snapshot = { ...this.snapshot, followState: "following" };
     this.emit();
+  }
+
+  beginScrubPreview(): void {
+    this.scrubPreview = true;
+  }
+
+  isScrubPreviewing(): boolean {
+    return this.scrubPreview;
   }
 
   returnToPlayback(): void {
@@ -98,7 +110,8 @@ export class ScoreNavigationCoordinator {
   }
 
   setSystems(systems: readonly ScoreSystemBounds[]): void {
-    this.projection = projectScreenScorePages(systems, this.viewport.viewportHeight());
+    this.systems = systems;
+    this.projection = projectScreenScorePages(systems, this.viewport.viewportHeight(), this.loopRange);
     const anchorPage =
       this.snapshot.anchorSystemIndex === undefined
         ? 0
@@ -111,6 +124,16 @@ export class ScoreNavigationCoordinator {
     };
     if (this.snapshot.mode === "page-turn") this.moveToPage(anchorPage, true, false);
     else this.emit();
+  }
+
+  setLoopMeasureRange(range: { startMeasureIndex: number; endMeasureIndex: number } | undefined): void {
+    if (
+      this.loopRange?.startMeasureIndex === range?.startMeasureIndex &&
+      this.loopRange?.endMeasureIndex === range?.endMeasureIndex
+    )
+      return;
+    this.loopRange = range;
+    if (this.systems.length) this.setSystems(this.systems);
   }
 
   movePage(delta: -1 | 1): void {
@@ -135,10 +158,12 @@ export class ScoreNavigationCoordinator {
       if (emit) this.emit();
       return;
     }
+    const anchorSystemIndex = page.systemIndexes[0];
+    if (anchorSystemIndex === undefined) return;
     this.snapshot = {
       ...this.snapshot,
       currentPage: page.index,
-      anchorSystemIndex: page.systemIndexes[0],
+      anchorSystemIndex,
     };
     this.viewport.moveTo(page.top, direct ? "direct" : "smooth");
     if (emit) this.emit();

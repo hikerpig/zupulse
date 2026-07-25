@@ -54,6 +54,24 @@ test("switches locale during playback without losing workspace state and keeps c
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
 
+test("follows playback and supports stable score page navigation", async ({ page }) => {
+  await page.goto("/");
+  await importFixture(page, "导入第一份曲谱", reviewedFixture);
+  await expect(page.locator("#alpha-tab .at-surface").first()).toBeVisible();
+
+  await page.getByRole("button", { name: "谱面导航模式" }).click();
+  await page.getByRole("button", { name: "翻页" }).click();
+  const pageStatus = page.getByRole("status", { name: /第 \d+ \/ \d+ 页/ });
+  await expect(pageStatus).toBeVisible();
+  const initialStatus = await pageStatus.textContent();
+
+  await page.keyboard.press("PageDown");
+  await expect(pageStatus).not.toHaveText(initialStatus ?? "");
+  await expect(page.getByRole("button", { name: "返回播放位置" })).toBeVisible();
+  await page.getByRole("button", { name: "返回播放位置" }).click();
+  await expect(page.getByRole("button", { name: "返回播放位置" })).toBeHidden();
+});
+
 test("persists a Browser Library Score and gives a re-import a fresh ID after deletion", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "曲谱库" })).toBeVisible();

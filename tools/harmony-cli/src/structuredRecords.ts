@@ -90,7 +90,8 @@ function createPiece(request: {
     endBoundaryIndex: number;
   }> = [];
   for (const gold of request.gold) {
-    if (!gold.chord) {
+    const chord = gold.chord;
+    if (!chord) {
       excluded.unsupported += 1;
       continue;
     }
@@ -104,11 +105,11 @@ function createPiece(request: {
       excluded.excessiveDuration += 1;
       continue;
     }
-    if (!candidatesForRange(gold.range).some((candidate) => sameChord(candidate.chord, gold.chord))) {
+    if (!candidatesForRange(gold.range).some((candidate) => sameChord(candidate.chord, chord))) {
       excluded.candidateMiss += 1;
       continue;
     }
-    eligible.push({ range: gold.range, chord: gold.chord, startBoundaryIndex, endBoundaryIndex });
+    eligible.push({ range: gold.range, chord, startBoundaryIndex, endBoundaryIndex });
   }
   const runs: (typeof eligible)[] = [];
   for (const segment of eligible.sort((a, b) => a.startBoundaryIndex - b.startBoundaryIndex)) {
@@ -178,6 +179,7 @@ function createPiece(request: {
     id: request.id,
     corpus: request.corpus,
     groupId: request.groupId,
+    ticksPerQuarter: request.input.ticksPerQuarter,
     boundaries,
     chords,
     windows,

@@ -6,7 +6,7 @@ import type { HarmonyCandidate } from "./candidates";
 import type { HarmonyFeatureVector } from "./features";
 import { applyHarmonyConfidence, mergeHarmonySegments, suppressShortNonChordSegments } from "./postprocess";
 import type { HarmonySegment, ScoreWrittenRange } from "./schemas";
-import { decodeHarmonySequence } from "./decode";
+import { decodeHarmonySequence, type DecodedHarmonySegment } from "./decode";
 import { scoreHarmonyTransition } from "./transitions";
 import { bundledHarmonyRankerModel } from "./bundledHarmonyRanker";
 import { createHarmonyRankerFeatures, type HarmonyRankerModel } from "./learnedRanker";
@@ -14,6 +14,17 @@ import { createMlpHarmonyPrimarySelector, type MlpHarmonyRerankerModel } from ".
 import { bundledHarmonyPrimaryMlp } from "./bundledHarmonyPrimaryMlp";
 import { applyHarmonyCalibration, type MlpHarmonyCalibrationAsset } from "./confidenceCalibration";
 import type { HarmonyBoundaryClassifierModel } from "./boundaryClassifier";
+import {
+  createStructuredFeatureCache,
+  createStructuredTransitionFeatures,
+  flattenStructuredSegmentFeatures,
+  flattenStructuredTransitionFeatures,
+} from "./structuredFeatures";
+import {
+  scoreStructuredSegment,
+  scoreStructuredTransition,
+  type HarmonyStructuredLinearModel,
+} from "./structuredModel";
 
 export function analyzeHarmonyRules(
   input: HarmonyAnalysisInput,
@@ -30,6 +41,7 @@ export function analyzeHarmonyRules(
     primaryConfidenceCalibration?: MlpHarmonyCalibrationAsset | false;
     sequenceSearchMode?: "beam" | "exact";
     maxSegmentQuarterNotes?: number;
+    structuredModel?: HarmonyStructuredLinearModel;
     diagnostics?: {
       onRangeBuilt?: (range: ScoreWrittenRange) => void;
     };
@@ -51,6 +63,13 @@ export function analyzeHarmonyRules(
       ),
     );
   const cache = buildHarmonyFeatureCache({ ticksPerQuarter: input.ticksPerQuarter, notes });
+  const hasStructuredWeights =
+    options.structuredModel !== undefined &&
+    (options.structuredModel.segmentWeights.some((weight) => weight !== 0) ||
+      options.structuredModel.transitionWeights.some((weight) => weight !== 0));
+  const structuredFeatures = !hasStructuredWeights
+    ? undefined
+    : createStructuredFeatureCache(input, options.includedTrackIds);
   const selectPrimary =
     options.primaryRerankerModel === false
       ? undefined
@@ -93,7 +112,7 @@ export function analyzeHarmonyRules(
     options.diagnostics?.onRangeBuilt?.(range);
     return built;
   };
-  const exactSearch = options.sequenceSearchMode === "exact";
+  const exactSearch = options.sequenceSearchMode === "exact" || options.structuredModel !== undefined;
   const durationSearch = exactSearch || options.maxSegmentQuarterNotes !== undefined;
   const absoluteTick = durationSearch ? createAbsoluteTick(input) : undefined;
   const maxSegmentTicks = (options.maxSegmentQuarterNotes ?? 8) * input.ticksPerQuarter;
@@ -109,7 +128,40 @@ export function analyzeHarmonyRules(
   const decoded = decodeHarmonySequence({
     boundaries,
     candidates: (range) => forRange(range).candidates,
-    transition: (from, to) => scoreHarmonyTransition(from, to) * input.ticksPerQuarter * 0.1,
+    transition: (from, to) =>
+      scoreHarmonyTransition(from, to) * input.ticksPerQuarter * 0.1 * (options.structuredModel?.ruleScale ?? 1),
+    ...(options.structuredModel === undefined
+      ? {}
+      : {
+          learnedSegmentScore: (range: ScoreWrittenRange, candidate: HarmonyCandidate) =>
+            (options.structuredModel!.ruleScale - 1) * candidate.sequenceScore +
+            (structuredFeatures === undefined
+              ? 0
+              : options.structuredModel!.modelScale *
+                scoreStructuredSegment(
+                  options.structuredModel!,
+                  flattenStructuredSegmentFeatures(structuredFeatures.forCandidate(range, candidate.chord)),
+                )),
+          ...(structuredFeatures === undefined
+            ? {}
+            : {
+                learnedTransitionScore: (from: DecodedHarmonySegment, range: ScoreWrittenRange, to: HarmonyCandidate) =>
+                  options.structuredModel!.modelScale *
+                  scoreStructuredTransition(
+                    options.structuredModel!,
+                    flattenStructuredTransitionFeatures(
+                      createStructuredTransitionFeatures({
+                        from: from.chord,
+                        to: to.chord,
+                        fromDurationQuarterNotes:
+                          (absoluteTick!(from.range.end) - absoluteTick!(from.range.start)) / input.ticksPerQuarter,
+                        toDurationQuarterNotes:
+                          (absoluteTick!(range.end) - absoluteTick!(range.start)) / input.ticksPerQuarter,
+                      }),
+                    ),
+                  ),
+              }),
+        }),
     ...(exactSearch ? { searchMode: "exact" as const } : {}),
     ...(minimumStartIndices === undefined
       ? {}
@@ -123,15 +175,21 @@ export function analyzeHarmonyRules(
     beamWidth: 16,
     maxSegments: Math.max(64, input.measures.length),
     ...(durationSearch ? {} : { maxSpan: 16 }),
-    onEndIndexComplete: () => rangeCache.clear(),
+    onEndIndexComplete: () => {
+      rangeCache.clear();
+      structuredFeatures?.clear();
+    },
   });
   const segments: HarmonySegment[] = decoded.map((selected) => {
     const rangeFeatures = featuresByCandidate.get(selected.candidate) ?? cache.forRange(selected.range);
-    const alternatives = generateHarmonyCandidates(selected.range, rangeFeatures, {
-      ...(options.topK === undefined ? {} : { topK: options.topK }),
-      rankerModel: options.rankerModel ?? bundledHarmonyRankerModel,
-      ...(options.rankerWeight === undefined ? {} : { rankerWeight: options.rankerWeight }),
-    });
+    const alternatives =
+      options.structuredModel === undefined
+        ? generateHarmonyCandidates(selected.range, rangeFeatures, {
+            ...(options.topK === undefined ? {} : { topK: options.topK }),
+            rankerModel: options.rankerModel ?? bundledHarmonyRankerModel,
+            ...(options.rankerWeight === undefined ? {} : { rankerWeight: options.rankerWeight }),
+          })
+        : forRange(selected.range).candidates;
     return {
       status: "resolved",
       range: selected.range,
@@ -140,6 +198,7 @@ export function analyzeHarmonyRules(
       alternatives,
     };
   });
+  if (options.structuredModel !== undefined) return segments;
   const corrected = suppressShortNonChordSegments(segments, input.ticksPerQuarter / 4);
   if (selectPrimary === undefined)
     return mergeHarmonySegments(applyHarmonyConfidence(corrected, options.decisionThreshold ?? 0.6));

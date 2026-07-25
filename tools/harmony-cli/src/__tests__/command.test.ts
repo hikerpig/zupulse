@@ -150,6 +150,18 @@ describe("harmony CLI inspect command", () => {
     );
   });
 
+  it("validates structured trainer inputs before reading records", async () => {
+    await expect(runHarmonyCommand(["train-structured", "records.json"])).rejects.toThrow(
+      "usage: harmony:cli train-structured",
+    );
+    await expect(
+      runHarmonyCommand(["train-structured", "records.json", "--output", "model.json", "--epochs", "-1"]),
+    ).rejects.toThrow("--epochs must be a nonnegative integer");
+    await expect(
+      runHarmonyCommand(["train-structured", "records.json", "--output", "model.json", "--learning-rate", "-1"]),
+    ).rejects.toThrow("--learning-rate must be nonnegative");
+  });
+
   it("rejects invalid ranking-record splits before reading files", async () => {
     await expect(
       runHarmonyCommand([

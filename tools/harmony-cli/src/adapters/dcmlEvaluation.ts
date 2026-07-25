@@ -5,6 +5,7 @@ import {
   type ChordSymbolInput,
   type HarmonyBoundaryPolicy,
   type HarmonyBoundaryClassifierModel,
+  type HarmonyStructuredLinearModel,
 } from "@zupulse/web-core";
 import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
@@ -38,8 +39,11 @@ export async function evaluateDcmlCorpus(
     primaryRerankerModel?: false;
     boundaryPolicy?: HarmonyBoundaryPolicy;
     boundaryClassifierModel?: HarmonyBoundaryClassifierModel;
+    structuredModel?: HarmonyStructuredLinearModel;
+    structuredModelSha256?: string;
   },
 ) {
+  const runtimeStart = performance.now();
   const reportSplit = options.reportSplit ?? "eval";
   const decisionThreshold = options.decisionThreshold ?? 0.6;
   const boundaryPolicy = options.boundaryPolicy ?? "dense-note-events";
@@ -93,6 +97,7 @@ export async function evaluateDcmlCorpus(
       ...(options.boundaryClassifierModel === undefined
         ? {}
         : { boundaryClassifierModel: options.boundaryClassifierModel }),
+      ...(options.structuredModel === undefined ? {} : { structuredModel: options.structuredModel }),
     });
     predictedSegments += segments.length;
     const primarySegments =
@@ -107,6 +112,7 @@ export async function evaluateDcmlCorpus(
             ...(options.boundaryClassifierModel === undefined
               ? {}
               : { boundaryClassifierModel: options.boundaryClassifierModel }),
+            ...(options.structuredModel === undefined ? {} : { structuredModel: options.structuredModel }),
           });
     intervalDiagnostics.push(
       calculateIntervalOverlapDiagnostics({
@@ -177,6 +183,20 @@ export async function evaluateDcmlCorpus(
           boundaryModel: {
             featureVersion: options.boundaryClassifierModel.featureVersion,
             threshold: options.boundaryClassifierModel.threshold,
+          },
+        }),
+    ...(options.structuredModel === undefined
+      ? {}
+      : {
+          structuredModel: {
+            sha256: options.structuredModelSha256!,
+            featureVersion: options.structuredModel.featureVersion,
+            algorithmVersion: options.structuredModel.algorithmVersion,
+            trainingRecordsSha256: options.structuredModel.trainingRecordsSha256,
+            ruleScale: options.structuredModel.ruleScale,
+            modelScale: options.structuredModel.modelScale,
+            search: "dense-qn8-exact" as const,
+            runtimeMs: performance.now() - runtimeStart,
           },
         }),
     splits: splitCounts,

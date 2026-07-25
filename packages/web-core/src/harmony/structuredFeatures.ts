@@ -76,6 +76,7 @@ export function createStructuredFeatureCache(
   includedTrackIds: readonly string[],
 ): {
   forCandidate(range: ScoreWrittenRange, chord: ChordSymbolInput): StructuredSegmentFeatures;
+  clear(): void;
 } {
   const absoluteTick = createAbsoluteTick(input);
   const included = new Set(includedTrackIds);
@@ -115,6 +116,10 @@ export function createStructuredFeatureCache(
       const features = structuredSegmentFeaturesSchema.parse(createSegmentFeatures(input, range, chord, evidence));
       candidateCache.set(candidateId, features);
       return features;
+    },
+    clear() {
+      rangeCache.clear();
+      candidateCache.clear();
     },
   };
 }
@@ -216,12 +221,13 @@ function buildRangeEvidence(
   const bassByOnset = new Map<number, number>();
   for (const note of overlapping) {
     const overlap = Math.max(0, Math.min(note.end, end) - Math.max(note.start, start));
-    duration[note.pitchClass] += overlap;
-    if (note.start < start) held[note.pitchClass] += overlap;
+    duration[note.pitchClass] = duration[note.pitchClass]! + overlap;
+    if (note.start < start) held[note.pitchClass] = held[note.pitchClass]! + overlap;
     if (note.spelling) spellingKeys.add(`${note.spelling.step}:${note.spelling.alter}`);
     if (note.start < start || note.start >= end) continue;
-    attacks[note.pitchClass] += 1;
-    (note.staffIndex === upperStaffIndex ? upperAttacks : lowerAttacks)[note.pitchClass] += 1;
+    attacks[note.pitchClass] = attacks[note.pitchClass]! + 1;
+    const staffAttacks = note.staffIndex === upperStaffIndex ? upperAttacks : lowerAttacks;
+    staffAttacks[note.pitchClass] = staffAttacks[note.pitchClass]! + 1;
     const staffs = onsetStaff.get(note.start) ?? new Set<number>();
     staffs.add(note.staffIndex);
     onsetStaff.set(note.start, staffs);

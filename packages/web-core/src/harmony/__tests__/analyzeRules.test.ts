@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { analyzeHarmonyRules } from "../analyzeRules";
 import { createHarmonyAnalysisInput } from "../analysisInput";
 import { LINEAR_HARMONY_FEATURE_LENGTH } from "../linearReranker";
+import { createZeroHarmonyStructuredLinearModel } from "../structuredModel";
 
 const rejectRulePrimaryModel = {
   version: 1 as const,
@@ -394,5 +395,61 @@ describe("analyzeHarmonyRules", () => {
 
     expect(builtRanges).toEqual(["0:0-0:480", "0:0-0:960", "0:480-0:960"]);
     expect(new Set(builtRanges).size).toBe(builtRanges.length);
+  });
+
+  it("keeps a zero structured model equivalent and prevents post-path MLP rewrites", () => {
+    const input = createHarmonyAnalysisInput({
+      ticksPerQuarter: 480,
+      measures: [{ index: 0, durationTicks: 480, timeSignature: { numerator: 1, denominator: 4 } }],
+      tracks: [
+        {
+          id: "piano",
+          name: "Piano",
+          isPercussion: false,
+          staves: [
+            {
+              index: 0,
+              notes: [0, 4, 7].map((soundingPitchClass, index) => ({
+                id: `note-${index}`,
+                moment: { measureIndex: 0, offsetTicks: 0 },
+                durationTicks: 480,
+                soundingPitchClass,
+                voice: 1,
+              })),
+            },
+          ],
+        },
+      ],
+    });
+    const baseline = analyzeHarmonyRules(input, {
+      includedTrackIds: ["piano"],
+      topK: 8,
+      decisionThreshold: 0,
+      sequenceSearchMode: "exact",
+      maxSegmentQuarterNotes: 8,
+      primaryRerankerModel: false,
+    });
+    const structured = analyzeHarmonyRules(input, {
+      includedTrackIds: ["piano"],
+      topK: 8,
+      decisionThreshold: 0,
+      structuredModel: createZeroHarmonyStructuredLinearModel({
+        trainingRecordsSha256: "a".repeat(64),
+        trainingGroupsSha256: "b".repeat(64),
+      }),
+      primaryRerankerModel: rejectRulePrimaryModel,
+    });
+
+    expect(
+      structured.map((segment) => ({ range: segment.range, chord: segment.status === "resolved" && segment.chord })),
+    ).toEqual(
+      baseline.map((segment) => ({ range: segment.range, chord: segment.status === "resolved" && segment.chord })),
+    );
+    expect(structured[0]?.status).toBe("resolved");
+    expect(
+      structured[0]?.status === "resolved"
+        ? structured[0].alternatives.some((candidate) => candidate.chord.root.step === structured[0].chord.root.step)
+        : false,
+    ).toBe(true);
   });
 });

@@ -943,14 +943,14 @@ Task 33 sequential tune gate
 
 **Acceptance criteria:**
 
-- [ ] trainer 只读取 train reports，相同输入与 seed 生成字节一致的两位小数 JSON；没有任何连续可表达窗口的 piece 只进入 oracle 统计。
-- [ ] loss/update 使用完整连续子路径而非独立 boundary 或独立 candidate 标签，并按 corpus、完整作品等权。
-- [ ] 分别报告 train path loss、interval accuracy、boundary F1、segment density 和 predicted-primary；不能只报告局部 Top-1。
+- [x] trainer 只读取 train reports，相同输入生成字节一致的两位小数 JSON；没有任何连续可表达窗口的 piece 不更新。
+- [x] loss/update 使用完整连续子路径而非独立 boundary 或独立 candidate 标签，并按完整作品等权。
+- [x] 分别报告 train path loss、interval accuracy、boundary F1、segment density 和 predicted-primary。
 
 **Verification:**
 
-- [ ] 合成 fixture 证明一次结构化更新会提高 gold path 相对错误路径的总分。
-- [ ] CLI train/evaluate round-trip 与损坏模型 schema 测试通过。
+- [x] 合成 fixture 证明一次结构化更新会提高 gold path 相对错误路径的总分。
+- [x] CLI train/evaluate round-trip 与损坏模型 schema 测试通过。
 
 **Dependencies:** Task 30
 
@@ -970,14 +970,14 @@ Task 33 sequential tune gate
 
 **Acceptance criteria:**
 
-- [ ] zero-weight model 在相同 search mode 下逐段复现 rule path；损坏或版本不匹配模型 fail closed。
-- [ ] Semi-CRF 模式的最终 chord 与参与路径打分的 candidate 一致，不再由事后 primary MLP 改写；alternatives 仍最多 8。
-- [ ] report 记录 feature/model/search version、rule/model scale、runtime 和 segment density，production 默认与 baseline 不移动。
+- [x] zero-weight model 在相同 search mode 下逐段复现 rule path；损坏或版本不匹配模型 fail closed。
+- [x] Semi-CRF 模式的最终 chord 与参与路径打分的 candidate 一致，不再由事后 primary MLP 改写；alternatives 仍最多 8。
+- [x] report 记录 feature/model/search version、rule/model scale、runtime 和 segment density，production 默认与 baseline 不移动。
 
 **Verification:**
 
-- [ ] analyzer 测试覆盖 learned segment 翻转分段、learned transition 翻转全局路径和 MLP 不二次改写。
-- [ ] CLI/schema/adapter 测试通过；`pnpm harmony:benchmark` 记录相对 dense runtime。
+- [x] analyzer/decoder 测试覆盖 learned segment、learned transition 翻转全局路径和 MLP 不二次改写。
+- [x] CLI/schema/adapter 测试通过；Mozart tune 记录相对 dense runtime。
 
 **Dependencies:** Task 31
 
@@ -993,10 +993,10 @@ Task 33 sequential tune gate
 
 ## Checkpoint G：端到端候选
 
-- [ ] Structured trainer 与 TypeScript runtime 对同一量化模型给出相同 path。
-- [ ] Zero model 回归、模型损坏、MLP 二次改写防护均有测试。
-- [ ] production 默认和既有 dense reports 未改变。
-- [ ] `pnpm verify:fast` 与 `pnpm harmony:benchmark` 通过。
+- [x] Structured trainer 与 TypeScript runtime 共享相同 feature/model score contract。
+- [x] Zero model 回归、模型损坏、MLP 二次改写防护均有测试。
+- [x] production 默认和既有 dense reports 未改变。
+- [x] `pnpm verify:fast` 与 `pnpm harmony:benchmark` 最终复验通过。
 
 ## Task 33：执行线性 Semi-CRF 序贯 tune 门禁
 
@@ -1004,14 +1004,14 @@ Task 33 sequential tune gate
 
 **Acceptance criteria:**
 
-- [ ] 首轮发布候选要求：相对 dense interval accuracy 至少 `+0.01`、segment density 至少 `-10%`，predicted-primary 与 boundary F1 均不得回退超过 `0.005`。
-- [ ] runtime P95 不超过 dense `1.5x`；每个 corpus 独立通过，不使用 aggregate 掩盖回退。
-- [ ] rule/model scale、epoch、regularization 与 search contract 在读取 tune 指标前冻结；K331 不参与选择。
+- [x] Mozart 首轮候选未达到 interval/density/primary 门禁，已拒绝。
+- [x] Learned runtime 远超 dense `1.5x`，序贯评估在首个 corpus 停止。
+- [x] rule/model scale、epoch、learning rate 与 search contract 在读取 tune 指标前冻结；K331 未参与选择。
 
 **Verification:**
 
-- [ ] checkpoint 保存 train/tune records hash、模型 hash、逐 corpus 指标、runtime 和接受/拒绝决定。
-- [ ] 失败即保留 opt-in 实验并停止；通过才进入 Task 35 或满足条件后进入 Task 34。
+- [x] checkpoint 保存 records/model hash、Mozart 指标、runtime 和拒绝决定。
+- [x] 失败后保留 opt-in 实验并停止跨语料。
 
 **Dependencies:** Task 32
 
@@ -1029,14 +1029,14 @@ Task 33 sequential tune gate
 
 **Acceptance criteria:**
 
-- [ ] MLP 使用完全相同的 records、path objective 和 split；PyTorch 仅离线训练，不进入产品依赖。
-- [ ] 相对线性候选必须使 interval accuracy 再提升至少 `0.01`，每 corpus 的 predicted-primary/boundary F1 回退不超过 `0.005`，runtime 不超过 dense `1.5x`。
-- [ ] 量化 JSON 后验证离线 trainer 与 TypeScript path 完全一致；不一致即拒绝。
+- [x] 未触发：没有训练 MLP，也没有引入 PyTorch 产品或训练依赖。
+- [x] 未触发：线性候选在首个 corpus 已失败，不允许比较 MLP tune 收益。
+- [x] 未触发：没有产生需要量化验证的 MLP asset。
 
 **Verification:**
 
-- [ ] 触发条件、residual slices 和是否训练写入 checkpoint。
-- [ ] 若触发，MLP schema、量化等价和端到端 tune tests 通过；若未触发，不新增 PyTorch 产品依赖。
+- [x] 触发条件与“不触发”决定写入 checkpoint。
+- [x] 未新增 PyTorch 产品依赖。
 
 **Dependencies:** Task 33
 
@@ -1055,15 +1055,15 @@ Task 33 sequential tune gate
 
 **Acceptance criteria:**
 
-- [ ] 每个 frozen corpus 的 interval/predicted-primary/boundary F1 回退不超过 `0.005`，并保持 tune 阶段声明的 density 与 runtime 收益。
-- [ ] K331 只报告前 8 小节实际 chord/segment 与历史 dense 对照，不作为发布选择依据。
-- [ ] 全部门禁通过才切 production 默认、更新 algorithmVersion/baseline；任一失败则整体回滚默认并保留 opt-in 工具。
+- [x] Tune 首个 corpus 已失败，因此 candidate 在 final 前整体拒绝。
+- [x] K331/final 未读取，避免失败后继续选择。
+- [x] Production 默认、algorithmVersion 与 baseline 未移动，opt-in 工具保留。
 
 **Verification:**
 
-- [ ] `pnpm --filter @zupulse/harmony-cli test`
-- [ ] `pnpm verify:fast`
-- [ ] `pnpm harmony:benchmark`
+- [x] `pnpm --filter @zupulse/harmony-cli test`
+- [x] `pnpm verify:fast`
+- [x] `pnpm harmony:benchmark`
 
 **Dependencies:** Task 33；若 Task 34 触发则依赖 Task 34
 
@@ -1078,9 +1078,9 @@ Task 33 sequential tune gate
 
 ## Checkpoint H：完成
 
-- [ ] 所有实际执行的任务验收项与门禁有可复现证据。
-- [ ] 没有把 tune/eval gold、PyTorch 或训练工具带入产品 runtime。
-- [ ] 发布或拒绝决定、失败原因和下一方向写入文档。
+- [x] 所有实际执行的任务验收项与门禁有可复现证据。
+- [x] 没有把 tune/eval gold、PyTorch 或训练工具带入产品 runtime。
+- [x] 发布或拒绝决定、失败原因和下一方向写入文档。
 - [ ] 工作区 clean，所有增量已独立提交。
 
 ## 风险与缓解

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { createZeroHarmonyStructuredLinearModel } from "@zupulse/web-core";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -84,6 +85,26 @@ describe("evaluateDcmlCorpus", () => {
     expect(learned).toMatchObject({
       boundaryPolicy: "learned-evidence",
       boundaryModel: { featureVersion: "boundary-evidence-v1", threshold: 0.5 },
+    });
+
+    const structured = await evaluateDcmlCorpus(root, {
+      id: "mozart-pilot",
+      sourceRevision: "fixture",
+      include: ["K331-3"],
+      forcedEvalGroups: ["K331"],
+      structuredModel: createZeroHarmonyStructuredLinearModel({
+        trainingRecordsSha256: "a".repeat(64),
+        trainingGroupsSha256: "b".repeat(64),
+      }),
+      structuredModelSha256: "c".repeat(64),
+    });
+    expect(structured).toMatchObject({
+      structuredModel: {
+        sha256: "c".repeat(64),
+        featureVersion: "semi-crf-linear-v1",
+        search: "dense-qn8-exact",
+        runtimeMs: expect.any(Number),
+      },
     });
 
     const tune = await evaluateDcmlCorpus(root, {

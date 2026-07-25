@@ -39,6 +39,7 @@ flowchart LR
 - Feature Contract 索引：`../features/README.md`
 - Documentation Gardening 机制：`../conventions/documentation-gardening.md`
 - Sheet Library 当前行为：`../features/contracts/sheet-library.md`
+- Viewer 播放与谱面导航当前行为：`../features/contracts/viewer-playback-navigation.md`
 - React 应用系统：`react-application-system.md`
 - 应用国际化：`application-i18n.md`
 - Viewer 键盘与播放控制：`viewer-keyboard-and-transport-controls.md`

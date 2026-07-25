@@ -4,6 +4,35 @@
 
 通过 `#/viewer/:libraryScoreId` 打开的查看与练习工作区。当前不生成、编辑或读取 Studio 的 Harmony Analysis Document；未来若要用于练习，必须先定义独立的发布语义。
 
+## Proposed Viewer navigation language
+
+以下术语由 Proposed ADR 0064 和对应初步 Spec 定义。它们用于准确讨论目标行为，在 Feature
+Contract 把目标差异迁入当前行为并通过 Web 验收前，不代表已经交付。
+
+### Score Navigation Mode
+
+当前设备的 Viewer 阅读偏好，选择 Continuous Follow Mode 或 Page Turn Mode。它不属于某份 Library Score 的 Practice Sidecar，不跨设备继承。首次使用时 iPad 默认 Page Turn，Desktop 与 Browser 默认 Continuous Follow；用户选择后不因窗口尺寸或设备旋转自动切换模式。
+
+### Continuous Follow Mode
+
+Viewer 的逐行谱面跟随模式。当前谱表行保持稳定；播放头跨行时用短动画把新行定位到视口上部并尽量保留下一行作为预读内容。系统启用减少动态效果时取消动画并直接定位。
+
+### Screen Score Page
+
+Page Turn Mode 中由当前 Viewer 可视区域容纳的若干完整谱表行组成的临时布局投影。视口或缩放变化时以播放头所在谱表行重新分页，Detached 时以用户浏览的第一条谱表行为锚点；单条谱表行高于视口时形成允许有限纵向滚动的超高页。启用的 Loop Region 跨页但相关完整谱表行能同时容纳时，页面临时围绕 Loop 重组；容纳不下时维持正常切页。它不是持久页码、打印纸张分页或 alphaTab Horizontal 布局形成的单行横向长卷。
+
+### Page Turn Mode
+
+Viewer 的离散谱面跟随模式。当前 Screen Score Page 在页内保持静止；播放头或用户导航跨越页面边界时，Viewer 整页切换。左滑、PageDown、滚轮向下和“下一页”按乐谱阅读顺序前进，反向输入后退；UI locale 不反转方向，左右方向键保留给未来的音乐位置导航。
+
+### Score Follow State
+
+Viewer 谱面导航相对播放头的会话态。`Following` 随播放位置自动滚动或翻页；手动滚动、翻页或页面导航进入 `Detached`。谱面点击、播放进度定位、停止或“回到播放位置”恢复 `Following`，单独播放或暂停不改变它；新的 Viewer Session 默认 `Following`。
+
+### Scrub Preview
+
+用户拖动播放进度时对最新目标位置的临时视觉预览。它每个动画帧最多向 alphaTab 提交一次最新位置，只在目标谱表行或 Screen Score Page 改变时直接调整视口，不运行过时的滚动或翻页动画，也不写入正式播放状态；松手后才提交 seek。
+
 ## Studio
 
 通过 `#/studio/:libraryScoreId` 打开的分析与编辑工作区。它负责生成、修正、预览、保存和导出 Harmony Analysis Document，并与 Viewer 使用独立 Session。
@@ -187,6 +216,12 @@ Web Core 中播放练习状态的单一入口。它接收 UI 领域命令，维�
 ## Playback Occurrence
 
 某个 Written Position 在展开播放时间轴中的一次具体出现。用于播放头、seek、AB 循环和 Local Playback Resume，以区分反复或跳转造成的多次经过。
+
+## Score Pointing Seek
+
+Proposed ADR 0064 中的目标术语；当前实现边界见 Viewer Playback Navigation Feature Contract。
+
+用户单击或轻触可见谱面的 beat 后发出的定位意图。系统优先把对应 Written Position 解析到当前展开路径中的 occurrence，其次选择播放头之后最近的 occurrence，最后回退到首次 occurrence；定位不改变播放或暂停状态。拖动用于浏览，捏合用于缩放，均不得在手势结束时误发 seek。
 
 ## Track Playback State
 

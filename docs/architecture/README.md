@@ -36,12 +36,15 @@ flowchart LR
 
 - 产品语言：`../../CONTEXT.md`、`glossary.md`
 - 产品设计契约：`../../DESIGN.md`
+- Feature Contract 索引：`../features/README.md`
+- Documentation Gardening 机制：`../conventions/documentation-gardening.md`
+- Sheet Library 当前行为：`../features/contracts/sheet-library.md`
 - React 应用系统：`react-application-system.md`
 - 应用国际化：`application-i18n.md`
 - Viewer 键盘与播放控制：`viewer-keyboard-and-transport-controls.md`
 - Browser alphaTab DOM 边界：`browser-demo-alphatab-dom-rendering.md`
 - MusicXML 导入：`musicxml-import-design.md`、`musicxml-import-acceptance.md`
-- Sheet Library 当前规格：`../superpowers/specs/2026-07-12-sheet-library-design.md`
+- Sheet Library 原始设计规格：`../superpowers/specs/2026-07-12-sheet-library-design.md`
 - Harmony Analysis 当前实现：`harmony-analysis-system.md`
 - iPad Practice Player：`ipad-practice-player.md`
 - Harmony engine 核心：`../../packages/web-core/docs/harmony.md`

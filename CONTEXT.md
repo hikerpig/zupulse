@@ -9,7 +9,8 @@ Zupulse 是本地优先的乐谱查看与练习应用。当前交付面是共享
 - 提供乐谱呈现、播放、变速、循环和本机练习状态恢复。
 - 在独立 Studio 中推断、修正和预览 MusicXML 和弦符号，并按来源容器导出带和弦的新副本。
 - Browser 使用 IndexedDB；Desktop 使用 SQLite 与应用数据目录中的托管文件。
-- 当前不实现云同步、OPFS、分页、额外状态库、移动端产品或 MIDI 分析。
+- 当前不实现云同步、OPFS、打印分页、额外状态库、移动端产品或 MIDI 分析。
+- Viewer 已按 ADR 0064 提供 Continuous Follow、Page Turn 和临时 Screen Score Page。
 
 ## 核心语言
 
@@ -25,6 +26,18 @@ Zupulse 是本地优先的乐谱查看与练习应用。当前交付面是共享
 - **iPad Practice Player**：规划中的原生 iPad 交付面，以本地 Sheet Library 和 Viewer 前台练习为
   首版核心；它不是 Desktop Shell 的全量移植，Studio、后台播放和跨设备同步需独立进入产品范围。
 - **Viewer Session**：Viewer 中临时的谱面、播放和练习运行时；URL 不保存 Session ID。
+
+### Current Viewer navigation language
+
+- **Score Navigation Mode**：当前设备的 Viewer 阅读偏好，选择 Continuous Follow Mode 或 Page Turn Mode；它不属于某份曲谱的 Practice Sidecar。首次使用时 iPad 默认翻页，Desktop 与 Browser 默认连续跟随，之后不因视口变化自动切换。
+- **Continuous Follow Mode**：Viewer 的逐行谱面跟随模式；当前行保持稳定，播放头跨行时用短动画把新行定位到视口上部并保留预读内容，减少动态效果时直接定位。
+- **Screen Score Page**：翻页练习模式中由当前 Viewer 可视区域容纳的若干完整谱表行组成的布局投影；它不是持久页码、打印纸张分页或单行横向长卷。重分页保留播放头或浏览锚点，单条超高谱表行可在页内有限滚动。
+- **Page Turn Mode**：Viewer 的离散谱面跟随模式；页内保持静止，播放或用户导航跨越 Screen Score Page 边界时整页切换。
+- **Score Follow State**：Viewer 谱面导航相对播放头的会话态；Following 时随播放位置自动滚动或翻页，手动浏览进入 Detached。明确 seek、停止或“回到播放位置”恢复 Following，单独播放或暂停不改变它。
+- **Scrub Preview**：用户拖动播放进度时对最新目标位置的临时视觉预览；它按动画帧合并更新 alphaTab 游标与目标行或页，不写入正式播放状态，松手后才提交 seek。
+
+### Current session and practice language
+
 - **Studio Session**：Studio 中临时的谱面、分析编辑与预览运行时；与同一 Library Score 的 Viewer Session 不共享可变运行时对象。
 - **Preview Transport**：Studio 中用于播放、定位和区间试听的临时播放状态；关闭 Studio 后丢弃，不读写练习数据或续播位置。
 - **Practice Sidecar**：Library Score 的练习设置；删除馆藏时必须一同删除。

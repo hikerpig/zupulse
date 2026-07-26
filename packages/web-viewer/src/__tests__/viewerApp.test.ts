@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   attachScoreZoomCommit,
   createDefaultOpenSession,
+  transportEnteredStopped,
   renderViewerState,
   type DefaultOpenSessionDependencies,
 } from "../viewerApp";
@@ -336,6 +337,15 @@ describe("mountViewerApp", () => {
   });
 });
 
+describe("transport navigation transitions", () => {
+  it("restores following only when transport enters stopped", () => {
+    expect(transportEnteredStopped("playing", "stopped")).toBe(true);
+    expect(transportEnteredStopped("paused", "stopped")).toBe(true);
+    expect(transportEnteredStopped("stopped", "stopped")).toBe(false);
+    expect(transportEnteredStopped("stopped", "playing")).toBe(false);
+  });
+});
+
 describe("createDefaultOpenSession cleanup", () => {
   it("maps a score beat selection to the existing written playback position without toggling playback", async () => {
     renderSessionFixture(document);
@@ -521,7 +531,7 @@ describe("createDefaultOpenSession cleanup", () => {
         enableCursor: true,
         enableAnimatedBeatCursor: true,
         enableElementHighlighting: true,
-        enableUserInteraction: true,
+        enableUserInteraction: false,
       }),
     );
     expect(settings.core.includeNoteBounds).toBe(true);

@@ -69,6 +69,41 @@
   .transportTools .statusChip {
     margin: 0;
   }
+  .navigationControls,
+  .pageControls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .pageControls button {
+    width: 32px;
+    min-height: 32px;
+    padding: 0;
+  }
+  .pageControls svg,
+  .navigationControls > button svg {
+    width: 16px;
+    height: 16px;
+  }
+  .pageControls output {
+    min-width: 48px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+  }
+  .navigationModePopup {
+    display: grid;
+    min-width: 180px;
+    gap: 4px;
+  }
+  .navigationModePopup button {
+    justify-content: flex-start;
+  }
+  .navigationModePopup button[aria-pressed="true"] {
+    color: var(--accent-primary);
+    background: var(--accent-soft);
+  }
   .timeReadout {
     min-width: 96px;
     color: var(--text-secondary);

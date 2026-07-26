@@ -54,6 +54,39 @@ test("switches locale during playback without losing workspace state and keeps c
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
 
+test("follows playback and supports stable score page navigation", async ({ page }) => {
+  const consoleErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
+  await page.goto("/");
+  await importFixture(page, "导入第一份曲谱", reviewedFixture);
+  await expect(page.locator("#alpha-tab .at-surface").first()).toBeVisible();
+
+  await page.getByRole("button", { name: "谱面导航模式" }).click();
+  await page.getByRole("button", { name: "翻页" }).click();
+  const pageStatus = page.getByRole("status", { name: /第 \d+ \/ \d+ 页/ });
+  await expect(pageStatus).toBeVisible();
+  const initialStatus = await pageStatus.textContent();
+
+  await page.keyboard.press("PageDown");
+  await expect(pageStatus).not.toHaveText(initialStatus ?? "");
+  await expect(page.getByRole("button", { name: "返回播放位置" })).toBeVisible();
+  await page.getByRole("button", { name: "返回播放位置" }).click();
+  await expect(page.getByRole("button", { name: "返回播放位置" })).toBeHidden();
+
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 768, height: 1024 },
+    { width: 1024, height: 768 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await expect(page.locator("#alpha-tab .at-surface").first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "谱面导航模式" })).toBeVisible();
+  }
+  expect(consoleErrors).toEqual([]);
+});
+
 test("persists a Browser Library Score and gives a re-import a fresh ID after deletion", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "曲谱库" })).toBeVisible();
@@ -98,15 +131,18 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await page.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
   await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("1 个修正 · 已保存");
   await page.getByRole("button", { name: "片段试听" }).click();
+  const previewPosition = page.getByRole("slider", { name: "预览位置" });
   await page.getByRole("button", { name: "播放预览" }).click();
   const audioUnavailable = page.getByRole("alert").filter({ hasText: "试听不可用" });
   const pausePreview = page.getByRole("button", { name: "暂停预览" });
   await expect(pausePreview.or(audioUnavailable)).toBeVisible();
   if (await pausePreview.isVisible()) {
+    // alphaTab reports playing before its AudioWorklet source has finished starting.
+    await page.waitForTimeout(500);
     await pausePreview.click();
     await expect(page.getByRole("button", { name: "播放预览" })).toBeVisible();
     await page.getByRole("combobox", { name: "预览速度" }).selectOption("1.5");
-    await page.getByRole("slider", { name: "预览位置" }).fill("5000");
+    await previewPosition.fill("5000");
     await page.getByRole("button", { name: "循环选中片段" }).click();
   } else {
     await expect(audioUnavailable).toBeVisible();

@@ -39,6 +39,8 @@ flowchart LR
 - Feature Contract 索引：`../features/README.md`
 - Documentation Gardening 机制：`../conventions/documentation-gardening.md`
 - Sheet Library 当前行为：`../features/contracts/sheet-library.md`
+- Viewer 播放与谱面导航当前行为：`../features/contracts/viewer-playback-navigation.md`
+- Viewer 谱面导航实现：`viewer-score-navigation.md`
 - React 应用系统：`react-application-system.md`
 - 应用国际化：`application-i18n.md`
 - Viewer 键盘与播放控制：`viewer-keyboard-and-transport-controls.md`
@@ -58,7 +60,8 @@ flowchart LR
 - Viewer 使用 `#/viewer/:libraryScoreId`，Studio 使用 `#/studio/:libraryScoreId`；两类 Session 都是可重建的运行时状态。
 - Repository 管馆藏，Gateway 管用户选择的外部文件。
 - 删除联动清理馆藏、托管字节、sidecar、resume 和 Harmony Analysis Document。
-- 当前不包含云同步、OPFS、分页或移动端。产品导入仍不支持 MIDI；Harmony CLI 只为 POP909 评测解析 MIDI，不改变产品格式边界。
+- 当前不包含云同步、OPFS、打印分页或移动端产品。Viewer Screen Score Page 是临时视口投影；
+  产品导入仍不支持 MIDI，Harmony CLI 只为 POP909 评测解析 MIDI，不改变产品格式边界。
 
 ## 历史文档
 

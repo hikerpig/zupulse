@@ -36,6 +36,15 @@ export class PositionMap {
       ) ?? this.occurrencesFor(occurrence.written)[0]
     );
   }
+  resolve(position: WrittenPosition, currentTimelineTick: number): PlaybackOccurrence | undefined {
+    const occurrences = this.occurrencesFor(position);
+    return occurrences.reduce<PlaybackOccurrence | undefined>((closest, item) => {
+      if (!closest) return item;
+      return Math.abs(item.timelineTick - currentTimelineTick) < Math.abs(closest.timelineTick - currentTimelineTick)
+        ? item
+        : closest;
+    }, undefined);
+  }
 }
 function sameWritten(a: WrittenPosition, b: WrittenPosition): boolean {
   return (

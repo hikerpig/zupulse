@@ -2,9 +2,11 @@ import {
   AlphaTabPlaybackAdapter,
   PlaybackController,
   attachAlphaTabGestureSelection,
+  attachAlphaTabNavigationEvents,
   createAlphaTabApi,
   createDefaultSidecar,
   extractAlphaTabPlaybackModel,
+  extractAlphaTabPlaybackOccurrences,
   playbackPositionForWrittenSelection,
   waitForAlphaTabScore,
   type AlphaTabApiLike,
@@ -16,6 +18,9 @@ import { ALPHATAB_ASSETS } from "./playbackAssets";
 import { type DemoState } from "./gpDemoPresenter";
 import { presentScoreFile } from "./importPresenter";
 import { SCORE_ZOOM_COMMIT_EVENT, type ScoreZoomCommitDetail } from "./scoreZoom";
+import { ScoreNavigationCoordinator } from "./score-navigation/score-navigation-coordinator";
+import { readAlphaTabStaffSystems } from "./score-navigation/alpha-tab-navigation";
+import { attachScoreNavigationInputs } from "./score-navigation/score-navigation-inputs";
 
 export type DefaultOpenSessionDependencies = {
   createApi: typeof createAlphaTabApi;
@@ -42,7 +47,8 @@ export function createDefaultOpenSession(
 ): (file: ViewerFile, libraryScoreId?: string) => Promise<ViewerSessionHandle> {
   return async (file, libraryScoreId) => {
     const alphaTabHost = required<HTMLElement>(ownerDocument, "alpha-tab");
-    const scoreScrollElement = alphaTabHost.parentElement;
+    const scoreScrollElement =
+      (alphaTabHost.closest(".scrollable") as HTMLElement | null) ?? alphaTabHost.parentElement;
     if (!scoreScrollElement) throw new Error("Viewer DOM is missing the score scroll container");
     const status = required<HTMLElement>(ownerDocument, "status");
     const summary = required<HTMLElement>(ownerDocument, "summary");
@@ -55,6 +61,52 @@ export function createDefaultOpenSession(
     );
     const adapter = dependencies.createAdapter(api);
     const detachScoreZoom = attachScoreZoomCommit(ownerDocument, api, scoreScrollElement);
+    const navigation = new ScoreNavigationCoordinator({
+      viewportHeight: () => scoreScrollElement.clientHeight,
+      moveTo(top, behavior) {
+        const reducedMotion = ownerDocument.defaultView?.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+        if (typeof scoreScrollElement.scrollTo === "function") {
+          scoreScrollElement.scrollTo({
+            top,
+            behavior: behavior === "smooth" && !reducedMotion ? "smooth" : "auto",
+          });
+        } else {
+          scoreScrollElement.scrollTop = top;
+        }
+      },
+    });
+    const detachNavigationInputs = attachScoreNavigationInputs(scoreScrollElement, {
+      mode: () => navigation.getSnapshot().mode,
+      manualNavigation: () => navigation.manualNavigation(),
+      movePage: (delta) => navigation.movePage(delta),
+    });
+    const detachNavigation = attachAlphaTabNavigationEvents(api, {
+      renderFinished: () => {
+        navigation.beginGeneration();
+        const systems = readAlphaTabStaffSystems(api);
+        if (systems) navigation.setSystems(systems);
+      },
+      cursorSystemChanged: (system) =>
+        navigation.cursorSystemChanged(
+          { systemIndex: system.systemIndex, y: system.bounds.y, height: system.bounds.height },
+          navigation.isScrubPreviewing(),
+        ),
+    });
+    const resizeObserver =
+      ownerDocument.defaultView?.ResizeObserver === undefined
+        ? undefined
+        : new ownerDocument.defaultView.ResizeObserver(() => {
+            const systems = readAlphaTabStaffSystems(api);
+            if (!systems) return;
+            navigation.beginGeneration();
+            navigation.setSystems(systems);
+          });
+    resizeObserver?.observe(scoreScrollElement);
+    const detachNavigationRuntime = () => {
+      detachNavigation();
+      detachNavigationInputs();
+      resizeObserver?.disconnect();
+    };
     let detachScoreSelection = () => {};
     let controller: PlaybackController | undefined;
     try {
@@ -68,6 +120,7 @@ export function createDefaultOpenSession(
         api,
       });
       if (state.status !== "ready" || !state.identity) {
+        detachNavigationRuntime();
         detachScoreZoom();
         adapter.destroy();
         renderViewerState(status, summary, state);
@@ -88,26 +141,55 @@ export function createDefaultOpenSession(
       });
       controller = sessionController;
       await sessionController.initialize();
+      const playbackOccurrences = extractAlphaTabPlaybackOccurrences(api, "track-0", model.timeline);
       detachScoreSelection = attachAlphaTabGestureSelection(api, alphaTabHost, (selection) => {
         const position = playbackPositionForWrittenSelection(
           selection,
           sessionController.getState().position,
           model.timeline,
+          playbackOccurrences,
         );
         if (!position) return;
+        navigation.formalSeek();
         void sessionController.dispatch({
           type: "seek",
           position,
         });
       });
       let playbackSnapshot = sessionController.getState();
+      let navigationLoopKey = "";
       const playbackListeners = new Set<(state: typeof playbackSnapshot) => void>();
       const unsubscribePlayback = sessionController.subscribe((state) => {
+        const previousTransport = playbackSnapshot.transport;
         playbackSnapshot = state;
+        const activeLoop = state.loops.find((loop) => loop.id === state.activeLoopId);
+        const nextLoopKey =
+          state.looping && activeLoop ? `${activeLoop.start.measureIndex}:${activeLoop.end.measureIndex}` : "";
+        if (nextLoopKey !== navigationLoopKey) {
+          navigationLoopKey = nextLoopKey;
+          navigation.setLoopMeasureRange(
+            state.looping && activeLoop
+              ? {
+                  startMeasureIndex: activeLoop.start.measureIndex,
+                  endMeasureIndex: activeLoop.end.measureIndex,
+                }
+              : undefined,
+          );
+        }
+        if (transportEnteredStopped(previousTransport, state.transport)) {
+          navigation.transportChanged(state.transport);
+        }
         for (const listener of playbackListeners) listener(state);
       });
       renderViewerState(status, summary, state);
       return {
+        navigation: {
+          getState: () => navigation.getSnapshot(),
+          subscribe: (listener) => navigation.subscribe(listener),
+          setMode: (mode) => navigation.setMode(mode),
+          returnToPlayback: () => navigation.returnToPlayback(),
+          movePage: (delta) => navigation.movePage(delta),
+        },
         playback: {
           getState: () => playbackSnapshot,
           subscribe(listener) {
@@ -115,8 +197,15 @@ export function createDefaultOpenSession(
             listener(playbackSnapshot);
             return () => playbackListeners.delete(listener);
           },
-          dispatch: (command) => sessionController.dispatch(command),
-          previewSeek: (position) => sessionController.previewSeek(position),
+          dispatch: (command) => {
+            if (command.type === "seek") navigation.formalSeek();
+            if (command.type === "stop") navigation.transportChanged("stopped");
+            return sessionController.dispatch(command);
+          },
+          previewSeek: (position) => {
+            navigation.beginScrubPreview();
+            sessionController.previewSeek(position);
+          },
           timeline: model.timeline,
         },
         async togglePlayback() {
@@ -128,6 +217,7 @@ export function createDefaultOpenSession(
         },
         async destroy() {
           detachScoreSelection();
+          detachNavigationRuntime();
           detachScoreZoom();
           unsubscribePlayback();
           playbackListeners.clear();
@@ -138,6 +228,7 @@ export function createDefaultOpenSession(
       let cleanupError: unknown;
       try {
         detachScoreSelection();
+        detachNavigationRuntime();
         detachScoreZoom();
         if (controller) await controller.destroy();
         else adapter.destroy();
@@ -154,6 +245,10 @@ export function createDefaultOpenSession(
       return emptySession();
     }
   };
+}
+
+export function transportEnteredStopped(previous: string, current: string): current is "stopped" {
+  return previous !== "stopped" && current === "stopped";
 }
 
 export function renderViewerState(status: HTMLElement, summary: HTMLElement, state: DemoState): void {
@@ -210,7 +305,7 @@ export function createViewerAlphaTabSettings(scrollElement: HTMLElement, scoreZo
       enableCursor: true,
       enableAnimatedBeatCursor: true,
       enableElementHighlighting: true,
-      enableUserInteraction: true,
+      enableUserInteraction: false,
       scrollElement,
       soundFont: ALPHATAB_ASSETS.soundFont,
     },

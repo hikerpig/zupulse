@@ -8,6 +8,13 @@ export interface ViewerHost {
 }
 export type { LocaleHost } from "./i18n/locale-controller";
 export type ViewerSessionHandle = {
+  navigation?: {
+    getState(): import("./score-navigation/score-navigation-coordinator").ScoreNavigationSnapshot;
+    subscribe(listener: () => void): () => void;
+    setMode(mode: import("./score-navigation/score-navigation-coordinator").ScoreNavigationMode): void;
+    returnToPlayback(): void;
+    movePage(delta: -1 | 1): void;
+  };
   playback?: {
     getState(): PlaybackState;
     subscribe(listener: (state: PlaybackState) => void): () => void;

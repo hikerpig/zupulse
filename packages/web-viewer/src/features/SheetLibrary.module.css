@@ -429,22 +429,6 @@
     gap: 4px;
   }
 
-  /* ── Dialog ────────────────────────────────────────────── */
-  .libraryDialog {
-    position: fixed;
-    z-index: var(--z-index-library-dialog);
-    inset: 0;
-    display: grid;
-    place-content: center;
-    gap: 12px;
-    padding: 24px;
-    background: var(--bg-shell);
-  }
-  .libraryDialog h2,
-  .libraryDialog p {
-    margin: 0;
-  }
-
   /* ── Responsive ────────────────────────────────────────── */
   @container (max-width: 620px) {
     .libraryContextBar {

@@ -117,6 +117,7 @@ code 包括 `FILE_TOO_LARGE`、`UNSUPPORTED_FORMAT`、`INVALID_SCORE`、`READ_FA
 ### 删除
 
 - 删除入口位于 Library，并在执行前显示永久删除确认。
+- 删除确认使用模态 `alertdialog`；初始焦点落在取消操作，Escape 取消后焦点回到打开菜单的按钮。
 - 删除 Library Score 必须同时删除 Managed Score Copy、Library 记录、Practice Sidecar、
   Local Playback Resume 和 Harmony Analysis Document。
 - Browser 在一个 IndexedDB read-write transaction 中删除这些记录。

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ImportItemResult, LibraryScore } from "@zupulse/web-core";
@@ -191,6 +191,38 @@ describe("SheetLibrary score actions", () => {
     expect(screen.queryByText("尚未练习")).toBeNull();
     expect(screen.queryByText("Library")).toBeNull();
   });
+
+  it("cancels permanent deletion with Escape and restores focus to the actions trigger", async () => {
+    const application = libraryApplication();
+    const user = userEvent.setup();
+
+    render(
+      <SheetLibrary
+        application={application}
+        scores={[libraryScore()]}
+        loading={false}
+        onImport={async () => undefined}
+        onOpen={() => undefined}
+      />,
+    );
+
+    const actionsTrigger = screen.getByRole("button", { name: "Created 的更多操作" });
+    await user.click(actionsTrigger);
+    await user.click(await screen.findByRole("menuitem", { name: "删除 Created" }));
+
+    const dialog = await screen.findByRole("alertdialog", { name: "删除“Created”吗？" });
+    expect(within(dialog).getByText("曲谱文件和全部练习数据将被永久删除，且无法恢复。")).toBeTruthy();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(within(dialog).getByRole("button", { name: "取消" }));
+    });
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(actionsTrigger);
+    });
+    expect(application.deleteLibraryScore).not.toHaveBeenCalled();
+  });
 });
 
 describe("SheetLibrary no-results state", () => {
@@ -257,6 +289,7 @@ function libraryApplication(): ViewerApplication {
     setFavorite: vi.fn(async () => undefined),
     refreshLibrary: vi.fn(async () => undefined),
     exportLibraryScore: vi.fn(async () => undefined),
+    deleteLibraryScore: vi.fn(async () => undefined),
   } as unknown as ViewerApplication;
 }
 

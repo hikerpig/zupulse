@@ -1,11 +1,23 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Menu } from "@base-ui/react/menu";
 import { Download, MoreHorizontal, PenLine, Star, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ImportItemResult, LibraryScoreSummary } from "@zupulse/web-core";
 import type { ViewerApplication } from "../app/ViewerApplication";
 import pageStyles from "../app/pages/PageShell.module.css";
-import { Select, TextField } from "../components/ui";
+import {
+  Button,
+  DialogBackdrop,
+  DialogClose,
+  DialogDescription,
+  DialogPopup,
+  DialogPortal,
+  DialogRoot,
+  DialogTitle,
+  DialogViewport,
+  Select,
+  TextField,
+} from "../components/ui";
 import styles from "./SheetLibrary.module.css";
 
 function formatDuration(ms: number): string {
@@ -59,6 +71,7 @@ export function SheetLibrary({
   const [sort, setSort] = useState<"activity" | "imported" | "practiced" | "title">("activity");
   const [editing, setEditing] = useState<LibraryScoreSummary | undefined>();
   const [deleting, setDeleting] = useState<LibraryScoreSummary | undefined>();
+  const deleteReturnFocusRef = useRef<HTMLButtonElement>(null);
   const normalizedQuery = query.trim();
   const visible = useMemo(
     () =>
@@ -257,6 +270,9 @@ export function SheetLibrary({
                     <Menu.Trigger
                       className={styles.libraryMenuTrigger}
                       aria-label={t("scoreActions", { title: score.title })}
+                      onClick={(event) => {
+                        deleteReturnFocusRef.current = event.currentTarget;
+                      }}
                     >
                       <MoreHorizontal aria-hidden="true" />
                     </Menu.Trigger>
@@ -355,20 +371,35 @@ export function SheetLibrary({
           </button>
         </form>
       )}
-      {deleting && (
-        <section className={styles.libraryDialog} role="alertdialog" aria-modal="true" aria-labelledby="delete-title">
-          <h2 id="delete-title">{t("deleteTitle", { title: deleting.title })}</h2>
-          <p>{t("deleteWarning")}</p>
-          <button
-            className="primary-button"
-            autoFocus
-            onClick={() => void application.deleteLibraryScore(deleting.id).then(() => setDeleting(undefined))}
-          >
-            {t("deleteForever")}
-          </button>
-          <button onClick={() => setDeleting(undefined)}>{t("cancel")}</button>
-        </section>
-      )}
+      <DialogRoot
+        open={Boolean(deleting)}
+        disablePointerDismissal
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setDeleting(undefined);
+        }}
+      >
+        <DialogPortal>
+          <DialogBackdrop />
+          <DialogViewport>
+            <DialogPopup role="alertdialog" finalFocus={deleteReturnFocusRef} className="tw:grid tw:gap-3">
+              <DialogTitle>{deleting ? t("deleteTitle", { title: deleting.title }) : ""}</DialogTitle>
+              <DialogDescription>{t("deleteWarning")}</DialogDescription>
+              <div className="tw:flex tw:flex-wrap tw:justify-end tw:gap-2">
+                <DialogClose render={<Button tone="ghost" />}>{t("cancel")}</DialogClose>
+                <Button
+                  tone="danger"
+                  onClick={() => {
+                    if (!deleting) return;
+                    void application.deleteLibraryScore(deleting.id).then(() => setDeleting(undefined));
+                  }}
+                >
+                  {t("deleteForever")}
+                </Button>
+              </div>
+            </DialogPopup>
+          </DialogViewport>
+        </DialogPortal>
+      </DialogRoot>
     </main>
   );
 }

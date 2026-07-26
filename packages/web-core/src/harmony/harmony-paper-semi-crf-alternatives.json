@@ -1,7 +1,7 @@
 {
   "version": 1,
   "featureVersion": "relative-pc-presence-v1",
-  "algorithmVersion": "frequency-ranker-v2",
+  "algorithmVersion": "paper-semi-crf-alternatives-v1",
   "trainingCorpusSha256": [
     "273029e36c31d7223172508a116bbf4fd7a660ca29a21a6fbd07365db70a253b",
     "6b5a0d52262839ead7605b8b95f455d464299a245638f44990fcb443bd0f4aaf"

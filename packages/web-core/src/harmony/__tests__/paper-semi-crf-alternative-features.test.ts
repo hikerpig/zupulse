@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildHarmonyFeatureCache } from "../features";
+import { buildHarmonyFeatureCache } from "../paper-semi-crf-alternative-features";
 
 describe("harmony feature cache", () => {
   it("matches direct interval evidence and caps doubling", () => {

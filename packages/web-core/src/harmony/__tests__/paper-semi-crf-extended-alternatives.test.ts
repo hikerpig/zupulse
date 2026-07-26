@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateHarmonyCandidates } from "../candidates";
+import { generateHarmonyCandidates } from "../paper-semi-crf-alternatives";
 
 describe("extended harmony candidates", () => {
   it("includes an evidence-backed dominant 13", () => {

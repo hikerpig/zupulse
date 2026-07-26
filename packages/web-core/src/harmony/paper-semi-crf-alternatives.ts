@@ -1,6 +1,10 @@
 import { chordSymbolSchema, type ChordSymbolInput, type ScoreWrittenRange } from "./schemas";
-import type { HarmonyFeatureVector } from "./features";
-import { learnedBassIntervals, scoreHarmonyCandidate, type HarmonyRankerModel } from "./learnedRanker";
+import type { PaperSemiCrfAlternativeFeatures } from "./paper-semi-crf-alternative-features";
+import {
+  learnedBassIntervals,
+  scoreHarmonyCandidate,
+  type HarmonyRankerModel,
+} from "./paper-semi-crf-alternative-ranker";
 
 export type HarmonyCandidate = {
   chord: ReturnType<typeof chordSymbolSchema.parse>;
@@ -78,7 +82,7 @@ const templates: readonly Template[] = [
 
 export function generateHarmonyCandidates(
   _range: ScoreWrittenRange,
-  features: HarmonyFeatureVector,
+  features: PaperSemiCrfAlternativeFeatures,
   options: { topK?: number; rankerModel?: HarmonyRankerModel; rankerWeight?: number } = {},
 ): HarmonyCandidate[] {
   const topK = Math.max(1, Math.min(8, options.topK ?? 8));
@@ -179,7 +183,7 @@ export function generateHarmonyCandidates(
   }));
 }
 
-function learnedRoots(features: HarmonyFeatureVector): number[] {
+function learnedRoots(features: PaperSemiCrfAlternativeFeatures): number[] {
   const sounds = (pitchClass: number) => features.durationByPitchClass[(pitchClass + 12) % 12]! > 0;
   return Array.from({ length: 12 }, (_, root) => root).filter(
     (root) =>
@@ -261,7 +265,7 @@ function clampConfidence(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
-function templatesForRoot(root: number, features: HarmonyFeatureVector): readonly Template[] {
+function templatesForRoot(root: number, features: PaperSemiCrfAlternativeFeatures): readonly Template[] {
   const sounds = (interval: number) => features.durationByPitchClass[(root + interval) % 12]! > 0;
   if (!sounds(4) || !sounds(10)) return templates;
   const ninths = [

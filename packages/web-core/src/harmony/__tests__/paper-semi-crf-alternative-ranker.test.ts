@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { createHarmonyRankerFeatures, harmonyRankerModelSchema, scoreHarmonyCandidate } from "../learnedRanker";
+import {
+  createHarmonyRankerFeatures,
+  harmonyRankerModelSchema,
+  scoreHarmonyCandidate,
+} from "../paper-semi-crf-alternative-ranker";
 
 const featureVector = {
   durationByPitchClass: [480, 0, 0, 0, 480, 0, 0, 480, 0, 0, 0, 0],
@@ -31,7 +35,7 @@ describe("learned harmony ranker", () => {
     const model = harmonyRankerModelSchema.parse({
       version: 1,
       featureVersion: "relative-pc-presence-v1",
-      algorithmVersion: "frequency-ranker-v2",
+      algorithmVersion: "paper-semi-crf-alternatives-v1",
       trainingCorpusSha256: ["1".repeat(64)],
       trainingGroupsSha256: "0".repeat(64),
       prototypes: [{ chordShape: "major||[]|", features, frequency: 1 }],
@@ -41,7 +45,7 @@ describe("learned harmony ranker", () => {
 
   it("validates the bundled model asset", async () => {
     const model = harmonyRankerModelSchema.parse(
-      JSON.parse(await readFile(new URL("../harmony-ranker-model.json", import.meta.url), "utf8")),
+      JSON.parse(await readFile(new URL("../harmony-paper-semi-crf-alternatives.json", import.meta.url), "utf8")),
     );
     expect(model.prototypes.length).toBeGreaterThan(10);
     expect(model.trainingCorpusSha256).toHaveLength(2);

@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { generateHarmonyCandidates, selectHybridCandidates, type HarmonyCandidate } from "../candidates";
-import { createHarmonyRankerFeatures, harmonyChordShape, harmonyRankerModelSchema } from "../learnedRanker";
+import {
+  generateHarmonyCandidates,
+  selectHybridCandidates,
+  type HarmonyCandidate,
+} from "../paper-semi-crf-alternatives";
+import {
+  createHarmonyRankerFeatures,
+  harmonyChordShape,
+  harmonyRankerModelSchema,
+} from "../paper-semi-crf-alternative-ranker";
 
 describe("harmony candidates", () => {
   it("ranks a major triad and keeps a deterministic top-k", () => {
@@ -136,7 +144,7 @@ describe("harmony candidates", () => {
     const model = harmonyRankerModelSchema.parse({
       version: 1,
       featureVersion: "relative-pc-presence-v1",
-      algorithmVersion: "frequency-ranker-v2",
+      algorithmVersion: "paper-semi-crf-alternatives-v1",
       trainingCorpusSha256: ["1".repeat(64)],
       trainingGroupsSha256: "0".repeat(64),
       prototypes: [{ chordShape: "minor||[]|", features: createHarmonyRankerFeatures(features, minor), frequency: 1 }],
@@ -161,7 +169,7 @@ describe("harmony candidates", () => {
     const model = harmonyRankerModelSchema.parse({
       version: 1,
       featureVersion: "relative-pc-presence-v1",
-      algorithmVersion: "frequency-ranker-v2",
+      algorithmVersion: "paper-semi-crf-alternatives-v1",
       trainingCorpusSha256: ["1".repeat(64)],
       trainingGroupsSha256: "0".repeat(64),
       prototypes: [

@@ -2,13 +2,13 @@ import { compareMoments, type ChordSymbolInput, type ScoreWrittenRange } from ".
 
 type SpelledPitch = ChordSymbolInput["root"];
 
-export type HarmonyFeatureVector = {
+export type PaperSemiCrfAlternativeFeatures = {
   durationByPitchClass: number[];
   onsetCountByPitchClass: number[];
   spellingByPitchClass?: Array<SpelledPitch | undefined>;
   bassPitchClass?: number;
 };
-export type HarmonyFeatureCache = { forRange(range: ScoreWrittenRange): HarmonyFeatureVector };
+export type HarmonyFeatureCache = { forRange(range: ScoreWrittenRange): PaperSemiCrfAlternativeFeatures };
 type FeatureNote = {
   moment: { measureIndex: number; offsetTicks: number };
   durationTicks: number;

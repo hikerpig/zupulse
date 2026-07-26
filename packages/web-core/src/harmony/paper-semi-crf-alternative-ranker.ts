@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { chordSymbolSchema, type ChordSymbolInput } from "./schemas";
-import type { HarmonyFeatureVector } from "./features";
+import type { PaperSemiCrfAlternativeFeatures } from "./paper-semi-crf-alternative-features";
 
 const FEATURE_VERSION = "relative-pc-presence-v1";
 const FEATURE_LENGTH = 37;
@@ -17,7 +17,7 @@ export const harmonyRankerModelSchema = z
   .object({
     version: z.literal(1),
     featureVersion: z.literal(FEATURE_VERSION),
-    algorithmVersion: z.literal("frequency-ranker-v2"),
+    algorithmVersion: z.literal("paper-semi-crf-alternatives-v1"),
     trainingCorpusSha256: z.array(z.string().regex(/^[a-f0-9]{64}$/)).min(1),
     trainingGroupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
     prototypes: z.array(prototypeSchema).min(1),
@@ -30,7 +30,7 @@ const modelIndexes = new WeakMap<HarmonyRankerModel, ReadonlyMap<string, readonl
 const bassCatalogs = new WeakMap<HarmonyRankerModel, ReadonlyMap<string, readonly (number | null)[]>>();
 
 export function createHarmonyRankerFeatures(
-  featureVector: HarmonyFeatureVector,
+  featureVector: PaperSemiCrfAlternativeFeatures,
   chordInput: ChordSymbolInput,
 ): number[] {
   const chord = chordSymbolSchema.parse(chordInput);
@@ -77,7 +77,7 @@ export function learnedBassIntervals(model: HarmonyRankerModel, chordInput: Chor
 
 export function scoreHarmonyCandidate(
   model: HarmonyRankerModel,
-  featureVector: HarmonyFeatureVector,
+  featureVector: PaperSemiCrfAlternativeFeatures,
   chordInput: ChordSymbolInput,
 ): number {
   const shape = harmonyChordShape(chordInput);

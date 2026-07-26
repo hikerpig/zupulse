@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { applyHarmonyConfidence } from "../postprocess";
-import { generateHarmonyCandidates } from "../candidates";
+import { generateHarmonyCandidates } from "../paper-semi-crf-alternatives";
+import { applyHarmonyConfidence } from "../paper-semi-crf-confidence";
 
 describe("harmony confidence", () => {
   it("rejects low confidence without turning it into N.C.", () => {

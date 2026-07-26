@@ -1,6 +1,5 @@
 import type { HarmonyAnalysisInput } from "./analysisInput";
-import { bundledHarmonyRankerModel } from "./bundledHarmonyRanker";
-import { generateHarmonyCandidates } from "./candidates";
+import { bundledPaperSemiCrfAlternativesModel } from "./bundledPaperSemiCrfAlternatives";
 import { decodePaperSemiCrfFactorized } from "./paper-semi-crf-decode";
 import { buildPaperSemiCrfEvents } from "./paper-semi-crf-events";
 import { createPaperSemiCrfFactorizedLinearScorers } from "./paper-semi-crf-features";
@@ -10,8 +9,9 @@ import {
   parsePaperSemiCrfLinearModel,
   type PaperSemiCrfLinearModel,
 } from "./paper-semi-crf-model";
-import { applyHarmonyConfidence } from "./postprocess";
-import { buildHarmonyFeatureCache } from "./features";
+import { buildHarmonyFeatureCache } from "./paper-semi-crf-alternative-features";
+import { generateHarmonyCandidates } from "./paper-semi-crf-alternatives";
+import { applyHarmonyConfidence } from "./paper-semi-crf-confidence";
 import type { HarmonySegment } from "./schemas";
 
 export function analyzeHarmonyPaperSemiCrf(
@@ -54,7 +54,7 @@ export function analyzeHarmonyPaperSemiCrf(
       end: events[segment.endEvent - 1]!.range.end,
     };
     const alternatives = generateHarmonyCandidates(range, featureCache.forRange(range), {
-      rankerModel: bundledHarmonyRankerModel,
+      rankerModel: bundledPaperSemiCrfAlternativesModel,
       ...(options.topK === undefined ? {} : { topK: options.topK }),
     });
     const chord = labels[segment.labelId]!.chord;

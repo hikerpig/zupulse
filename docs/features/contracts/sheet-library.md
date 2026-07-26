@@ -46,6 +46,12 @@ Session ID。
 - 页面获得窗口焦点时会刷新列表。
 - Library 提供标题/艺术家搜索、收藏筛选，以及按最近活动、导入时间、最近练习或标题排序。
 - “最近活动”当前按 `lastOpenedAt ?? importedAt` 排序；编辑元数据和切换收藏不会更新它。
+- When an existing Library has no search or favorites-filter matches, the Library shows the applied condition,
+  a `0 / N` count, and an action to clear the condition. Only an empty Library shows the first-score import action.
+- Each Library Score has separate open and favorite buttons. Export, edit, and delete actions live in a Base UI
+  management menu; the enclosing `<li>` has no button semantics.
+- From 390px to 1280px, shared DOM and unnamed container queries scoped by the route viewport reflow the Library
+  header, filters, and Viewer controls without exposing critical actions through horizontal scrolling.
 
 ### 导入
 
@@ -179,10 +185,6 @@ stateDiagram-v2
   汇总和可展开失败详情。
 - `importing` 状态存在于应用 snapshot，但当前 Library 组件只使用通用 `loading` 禁用导入按钮，
   没有完整呈现独立的 importing 状态。
-- 搜索或收藏筛选得到零结果时，当前 UI 复用 Library 空状态，没有独立 No-results 状态和清除条件
-  操作。
-- 当前 Library 行使用带 `role="button"` 的 `<li>` 包裹多个子按钮；尚未达到规格中“行主链接与
-  行内操作使用独立语义控件”的完整可访问性契约。
 - Managed Score Copy 缺失或损坏时，Repository 会拒绝读取；UI 尚未提供规格设想的专用恢复操作。
 - 当前不提供标签、文件夹、歌单、多选、回收站、批量删除或 Library 迁移包。
 
@@ -219,7 +221,7 @@ stateDiagram-v2
 | 双宿主并发去重、元数据身份稳定、删除后新 ID    | Browser/Desktop Repository                                                                                                                                                   | [`sheetLibraryRepositoryContract.ts`](../../../test-harness/__tests__/sheetLibraryRepositoryContract.ts)                                                                                                                                                                                   |
 | Browser 原子存储、练习摘要和删除联动           | [`indexed-db-sheet-library-repository.ts`](../../../packages/web-storage/src/indexed-db-sheet-library-repository.ts)                                                         | [`indexed-db-sheet-library-repository.test.ts`](../../../packages/web-storage/src/__tests__/indexed-db-sheet-library-repository.test.ts)、[`library.spec.ts`](../../../apps/web-demo/e2e/library.spec.ts)                                                                                  |
 | Desktop 托管文件、SQLite 状态和 reconciliation | [`DesktopLibraryStore.ts`](../../../apps/desktop-shell/src/main/library/DesktopLibraryStore.ts)、[`reconcile.ts`](../../../apps/desktop-shell/src/main/library/reconcile.ts) | [`DesktopLibraryStore.test.ts`](../../../apps/desktop-shell/src/main/library/__tests__/DesktopLibraryStore.test.ts)、[`reconcile.test.ts`](../../../apps/desktop-shell/src/main/library/__tests__/reconcile.test.ts)、[`desktop.spec.ts`](../../../apps/desktop-shell/e2e/desktop.spec.ts) |
-| Library UI、过滤、排序、编辑、导出与删除确认   | [`SheetLibrary.tsx`](../../../packages/web-viewer/src/features/SheetLibrary.tsx)                                                                                             | [`App.test.tsx`](../../../packages/web-viewer/src/app/__tests__/App.test.tsx)、Browser E2E                                                                                                                                                                                                 |
+| Library UI、过滤、排序、编辑、导出与删除确认   | [`SheetLibrary.tsx`](../../../packages/web-viewer/src/features/SheetLibrary.tsx)                                                                                             | [`SheetLibrary.test.tsx`](../../../packages/web-viewer/src/features/__tests__/SheetLibrary.test.tsx)、[`App.test.tsx`](../../../packages/web-viewer/src/app/__tests__/App.test.tsx)、[`library.spec.ts`](../../../apps/web-demo/e2e/library.spec.ts)                                       |
 | 单份导入导航、打开与应用状态编排               | [`ViewerApplication.ts`](../../../packages/web-viewer/src/app/ViewerApplication.ts)                                                                                          | [`ViewerApplication.test.ts`](../../../packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts)                                                                                                                                                                                    |
 | Desktop Renderer 不获得文件路径                | Bridge schemas、Main handler、Renderer adapter                                                                                                                               | Desktop Bridge tests、Desktop E2E isolation test                                                                                                                                                                                                                                           |
 

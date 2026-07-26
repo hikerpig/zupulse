@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type TouchEvent } from "react";
-import { Maximize2, Minimize2, Minus, Plus } from "lucide-react";
+import { Popover } from "@base-ui/react/popover";
+import { Maximize2, Minimize2, Minus, Plus, ZoomIn } from "lucide-react";
 import { clampScoreZoom, MAX_SCORE_ZOOM, MIN_SCORE_ZOOM, persistScoreZoom, useAppStore } from "../app/appStore";
 import { SCORE_ZOOM_COMMIT_EVENT } from "../scoreZoom";
 import { useTranslation } from "react-i18next";
@@ -64,27 +65,68 @@ export function ScoreViewer({ compact = false, expandable = false }: { compact?:
       onTouchCancel={finishPinch}
     >
       {!compact ? (
-        <div className={styles.zoomControls} aria-label={t("score.zoomControls")}>
-          <button
-            type="button"
-            aria-label={t("score.zoomOut")}
-            disabled={scoreZoom <= MIN_SCORE_ZOOM}
-            onClick={() => commitZoom(scoreZoom - SCORE_ZOOM_STEP)}
-          >
-            <Minus aria-hidden="true" />
-          </button>
-          <output aria-label={t("score.zoomLevel", { percent: Math.round(scoreZoom * 100) })} aria-live="polite">
-            {Math.round(scoreZoom * 100)}%
-          </output>
-          <button
-            type="button"
-            aria-label={t("score.zoomIn")}
-            disabled={scoreZoom >= MAX_SCORE_ZOOM}
-            onClick={() => commitZoom(scoreZoom + SCORE_ZOOM_STEP)}
-          >
-            <Plus aria-hidden="true" />
-          </button>
-        </div>
+        <>
+          <div className={styles.zoomControls} aria-label={t("score.zoomControls")}>
+            <button
+              type="button"
+              aria-label={t("score.zoomOut")}
+              disabled={scoreZoom <= MIN_SCORE_ZOOM}
+              onClick={() => commitZoom(scoreZoom - SCORE_ZOOM_STEP)}
+            >
+              <Minus aria-hidden="true" />
+            </button>
+            <output aria-label={t("score.zoomLevel", { percent: Math.round(scoreZoom * 100) })} aria-live="polite">
+              {Math.round(scoreZoom * 100)}%
+            </output>
+            <button
+              type="button"
+              aria-label={t("score.zoomIn")}
+              disabled={scoreZoom >= MAX_SCORE_ZOOM}
+              onClick={() => commitZoom(scoreZoom + SCORE_ZOOM_STEP)}
+            >
+              <Plus aria-hidden="true" />
+            </button>
+          </div>
+          <Popover.Root>
+            <Popover.Trigger className={styles.compactZoomTrigger} aria-label={t("score.adjustZoom")}>
+              <ZoomIn aria-hidden="true" />
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Positioner side="bottom" align="end" sideOffset={6} className={styles.compactZoomPositioner}>
+                <Popover.Popup
+                  className={styles.compactZoomPopup}
+                  aria-label={t("score.adjustZoom")}
+                  data-shortcuts-disabled
+                >
+                  <Popover.Title className="sr-only">{t("score.adjustZoom")}</Popover.Title>
+                  <button
+                    type="button"
+                    aria-label={t("score.zoomOut")}
+                    disabled={scoreZoom <= MIN_SCORE_ZOOM}
+                    onClick={() => commitZoom(scoreZoom - SCORE_ZOOM_STEP)}
+                  >
+                    <Minus aria-hidden="true" />
+                  </button>
+                  <output
+                    aria-label={t("score.zoomLevel", { percent: Math.round(scoreZoom * 100) })}
+                    aria-live="polite"
+                  >
+                    {Math.round(scoreZoom * 100)}%
+                  </output>
+                  <button
+                    type="button"
+                    aria-label={t("score.zoomIn")}
+                    disabled={scoreZoom >= MAX_SCORE_ZOOM}
+                    onClick={() => commitZoom(scoreZoom + SCORE_ZOOM_STEP)}
+                  >
+                    <Plus aria-hidden="true" />
+                  </button>
+                  <Popover.Arrow className={styles.compactZoomArrow} />
+                </Popover.Popup>
+              </Popover.Positioner>
+            </Popover.Portal>
+          </Popover.Root>
+        </>
       ) : null}
       {expandable ? (
         <div className={styles.previewBar}>

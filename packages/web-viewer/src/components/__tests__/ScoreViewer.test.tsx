@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ReactElement } from "react";
@@ -9,7 +9,7 @@ import { ScoreViewer } from "../ScoreViewer";
 
 afterEach(() => {
   cleanup();
-  localStorage.clear();
+  window.localStorage?.clear();
 });
 
 describe("ScoreViewer", () => {
@@ -42,6 +42,23 @@ describe("ScoreViewer", () => {
     expect(screen.getByText("110%")).toBeTruthy();
     expect(commits).toHaveBeenCalledTimes(1);
     expect((commits.mock.calls[0]?.[0] as CustomEvent).detail).toEqual({ zoom: 1.1 });
+    document.removeEventListener("zupulse:score-zoom-commit", commits);
+  });
+
+  it("offers the same zoom actions from the compact Popover and restores focus on Escape", async () => {
+    const commits = vi.fn();
+    document.addEventListener("zupulse:score-zoom-commit", commits);
+    renderScoreViewer(<ScoreViewer />);
+    const trigger = screen.getByRole("button", { name: "调整谱面缩放" });
+
+    await userEvent.setup().click(trigger);
+    const popup = await screen.findByRole("dialog", { name: "调整谱面缩放" });
+    await userEvent.setup().click(within(popup).getByRole("button", { name: "放大谱面" }));
+    expect(commits).toHaveBeenCalledOnce();
+
+    await userEvent.setup().keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "调整谱面缩放" })).toBeNull();
+    expect(document.activeElement).toBe(trigger);
     document.removeEventListener("zupulse:score-zoom-commit", commits);
   });
 

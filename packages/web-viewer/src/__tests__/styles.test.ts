@@ -106,29 +106,30 @@ describe("alphaTab playback cursor styles", () => {
       source("../features/SheetLibrary.module.css"),
     ]);
 
-    expect(frameCss).toMatch(/\.routeViewport\s*{[^}]*container-type:\s*inline-size;[^}]*container-name:\s*route;/s);
+    expect(frameCss).toMatch(/\.routeViewport\s*{[^}]*container-type:\s*inline-size;/s);
+    expect(frameCss).not.toMatch(/container-name:/);
     expect(frameCss).toMatch(/\.appFrame\s*{[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden;/s);
     expect(frameCss).not.toMatch(/@media \(max-width:/);
     expect(appCss).toMatch(
       /\.appShell\s*{[^}]*height:\s*100%;[^}]*overflow:\s*hidden;[^}]*grid-template-rows:\s*auto minmax\(0,\s*1fr\) auto;/s,
     );
-    expect(appCss).toMatch(/@container route \(max-width:\s*900px\)/);
-    expect(appCss).toMatch(/@container route \(max-width:\s*620px\)/);
+    expect(appCss).toMatch(/@container \(max-width:\s*900px\)/);
+    expect(appCss).toMatch(/@container \(max-width:\s*620px\)/);
     expect(appCss).not.toMatch(/@media \(max-width:/);
     expect(workspaceCss).toMatch(/\.workspace\s*{[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/s);
     expect(workspaceCss).toMatch(/\.workspace\s*{[^}]*grid-row:\s*2;/s);
     expect(workspaceCss).toMatch(/\.transportBar\s*{[^}]*grid-row:\s*3;/s);
-    expect(workspaceCss).toMatch(/@container route \(max-width:\s*900px\)/);
-    expect(workspaceCss).toMatch(/@container route \(max-width:\s*620px\)/);
+    expect(workspaceCss).toMatch(/@container \(max-width:\s*900px\)/);
+    expect(workspaceCss).toMatch(/@container \(max-width:\s*620px\)/);
     expect(workspaceCss).not.toMatch(/@media \(max-width:/);
     expect(scoreCss).toMatch(/\.stage\s*{[^}]*height:\s*100%;[^}]*overflow:\s*scroll;/s);
     expect(scoreCss).toMatch(/\.frame\s*{[^}]*min-height:\s*0;[^}]*overflow:\s*auto;/s);
     expect(scoreCss).toMatch(/\.viewer\s*{[^}]*height:\s*auto;[^}]*min-height:\s*100%;[^}]*overflow:\s*visible;/s);
     expect(workspaceCss).toMatch(/\.practicePanel\s*{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;/s);
-    expect(scoreCss).toMatch(/@container route \(max-width:\s*620px\)/);
+    expect(scoreCss).toMatch(/@container \(max-width:\s*620px\)/);
     expect(scoreCss).not.toMatch(/@media \(max-width:/);
-    expect(libraryCss).toMatch(/@container route \(max-width:\s*900px\)/);
-    expect(libraryCss).toMatch(/@container route \(max-width:\s*620px\)/);
+    expect(libraryCss).toMatch(/@container \(max-width:\s*900px\)/);
+    expect(libraryCss).toMatch(/@container \(max-width:\s*620px\)/);
     expect(libraryCss).not.toMatch(/@media \(max-width:/);
     expect(`${appCss}\n${workspaceCss}\n${libraryCss}`).toContain("env(safe-area-inset-bottom)");
   });

@@ -61,14 +61,16 @@ export function ViewerPage({
               {statusMessage}
             </p>
           ) : null}
-          <button
-            id="open-score"
-            className="primary-button"
-            type="button"
-            onClick={() => application.requestOpenScore()}
-          >
-            {application.hasLibrary() ? t("page.import") : t("page.open")}
-          </button>
+          {!application.hasLibrary() ? (
+            <button
+              id="open-score"
+              className="primary-button"
+              type="button"
+              onClick={() => application.requestOpenScore()}
+            >
+              {t("page.open")}
+            </button>
+          ) : null}
         </div>
       </div>
       <PlaybackWorkspace session={application.getCurrentSession()}>

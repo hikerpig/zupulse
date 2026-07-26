@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Download, PenLine, Star, Trash2 } from "lucide-react";
+import { Menu } from "@base-ui/react/menu";
+import { Download, MoreHorizontal, PenLine, Star, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ImportItemResult, LibraryScoreSummary } from "@zupulse/web-core";
 import type { ViewerApplication } from "../app/ViewerApplication";
@@ -57,12 +58,13 @@ export function SheetLibrary({
   const [sort, setSort] = useState<"activity" | "imported" | "practiced" | "title">("activity");
   const [editing, setEditing] = useState<LibraryScoreSummary | undefined>();
   const [deleting, setDeleting] = useState<LibraryScoreSummary | undefined>();
+  const normalizedQuery = query.trim();
   const visible = useMemo(
     () =>
       scores
         .filter((score) => !favoritesOnly || score.isFavorite)
         .filter((score) =>
-          `${score.title} ${score.artist ?? ""}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
+          `${score.title} ${score.artist ?? ""}`.toLocaleLowerCase().includes(normalizedQuery.toLocaleLowerCase()),
         )
         .sort((a, b) =>
           sort === "title"
@@ -83,7 +85,7 @@ export function SheetLibrary({
               ),
         )
         .reverse(),
-    [scores, query, favoritesOnly, sort, locale],
+    [scores, normalizedQuery, favoritesOnly, sort, locale],
   );
   if (error)
     return (
@@ -98,12 +100,12 @@ export function SheetLibrary({
   return (
     <main className={`${pageStyles.appShell} ${styles.libraryShell} scrollable`}>
       <div className={`${pageStyles.contextBar} ${styles.libraryContextBar}`}>
-        <div className={pageStyles.contextMain}>
+        <div className={`${pageStyles.contextMain} ${styles.libraryContextMain}`}>
           <p className={pageStyles.appKicker}>{t("kicker")}</p>
           <h1 className={`${pageStyles.contextTitle} ${styles.libraryTitle}`}>{t("title")}</h1>
           <p className={pageStyles.contextSubtitle}>{t("subtitle")}</p>
         </div>
-        <div className={pageStyles.contextActions}>
+        <div className={`${pageStyles.contextActions} ${styles.libraryContextActions}`}>
           <button className="primary-button" disabled={loading || importing} onClick={() => void onImport(false)}>
             {t("import")}
           </button>
@@ -159,16 +161,7 @@ export function SheetLibrary({
           </div>
           <ul className={`${styles.libraryList} scrollable`}>
             {visible.map((score) => (
-              <li
-                key={score.id}
-                className={styles.libraryRow}
-                role="button"
-                tabIndex={0}
-                onClick={() => onOpen(score.id)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") onOpen(score.id);
-                }}
-              >
+              <li key={score.id} className={styles.libraryRow}>
                 {/* Banner: format badge + favorite */}
                 <div className={styles.libraryCardBanner}>
                   <span
@@ -178,10 +171,12 @@ export function SheetLibrary({
                   </span>
                   <div className={styles.libraryCardBannerActions}>
                     <button
-                      aria-label={score.isFavorite ? t("unfavorite") : t("favorite")}
+                      type="button"
+                      aria-label={t(score.isFavorite ? "unfavoriteScore" : "favoriteScore", {
+                        title: score.title,
+                      })}
                       aria-pressed={score.isFavorite}
-                      onClick={(event) => {
-                        event.stopPropagation();
+                      onClick={() => {
                         void application
                           .setFavorite(score.id, !score.isFavorite)
                           .then(() => application.refreshLibrary());
@@ -198,7 +193,12 @@ export function SheetLibrary({
                 </div>
 
                 {/* Main content */}
-                <div className={styles.libraryContent}>
+                <button
+                  type="button"
+                  className={`${styles.libraryContent} ${styles.libraryOpenAction}`}
+                  aria-label={t("openScore", { title: score.title })}
+                  onClick={() => onOpen(score.id)}
+                >
                   <strong>{score.title}</strong>
                   {score.artist ? <span className={styles.libraryArtist}>{score.artist}</span> : null}
                   <div className={styles.libraryMeta}>
@@ -218,56 +218,79 @@ export function SheetLibrary({
                       <span>{t("notPracticed")}</span>
                     )}
                   </div>
-                </div>
+                </button>
 
                 {/* Footer: actions */}
                 <div className={styles.libraryCardFooter}>
-                  <span
-                    style={{
-                      color: "var(--text-tertiary)",
-                      fontSize: "11px",
-                      fontFamily: '"IBM Plex Mono", monospace',
-                    }}
-                  >
+                  <span className={styles.libraryImportedDate}>
                     {formatRelativeDate(score.importedAt, locale, {
                       today: t("relative.today"),
                       yesterday: t("relative.yesterday"),
                     })}
                   </span>
-                  <div className={styles.libraryCardFooterActions}>
-                    <button
-                      aria-label={t("exportScore", { title: score.title })}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        void application.exportLibraryScore(score.id);
-                      }}
+                  <Menu.Root>
+                    <Menu.Trigger
+                      className={styles.libraryMenuTrigger}
+                      aria-label={t("scoreActions", { title: score.title })}
                     >
-                      <Download aria-hidden="true" />
-                    </button>
-                    <button
-                      aria-label={t("editScore", { title: score.title })}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setEditing(score);
-                      }}
-                    >
-                      <PenLine aria-hidden="true" />
-                    </button>
-                    <button
-                      aria-label={t("deleteScore", { title: score.title })}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setDeleting(score);
-                      }}
-                    >
-                      <Trash2 aria-hidden="true" />
-                    </button>
-                  </div>
+                      <MoreHorizontal aria-hidden="true" />
+                    </Menu.Trigger>
+                    <Menu.Portal>
+                      <Menu.Positioner className={styles.libraryMenuPositioner} sideOffset={6} align="end">
+                        <Menu.Popup className={styles.libraryMenuPopup}>
+                          <Menu.Item
+                            className={styles.libraryMenuItem}
+                            onClick={() => void application.exportLibraryScore(score.id)}
+                          >
+                            <Download aria-hidden="true" />
+                            {t("exportScore", { title: score.title })}
+                          </Menu.Item>
+                          <Menu.Item className={styles.libraryMenuItem} onClick={() => setEditing(score)}>
+                            <PenLine aria-hidden="true" />
+                            {t("editScore", { title: score.title })}
+                          </Menu.Item>
+                          <Menu.Item
+                            className={`${styles.libraryMenuItem} ${styles.libraryMenuItemDanger}`}
+                            onClick={() => setDeleting(score)}
+                          >
+                            <Trash2 aria-hidden="true" />
+                            {t("deleteScore", { title: score.title })}
+                          </Menu.Item>
+                        </Menu.Popup>
+                      </Menu.Positioner>
+                    </Menu.Portal>
+                  </Menu.Root>
                 </div>
               </li>
             ))}
           </ul>
         </>
+      ) : scores.length > 0 ? (
+        <section className="score-empty-state" aria-live="polite">
+          <p className="empty-title">
+            {normalizedQuery ? t("noSearchResults", { query: normalizedQuery }) : t("noFavoriteResults")}
+          </p>
+          <p className="empty-copy">{t("visibleCount", { visible: 0, total: scores.length })}</p>
+          <div className={styles.libraryEmptyActions}>
+            {normalizedQuery ? (
+              <button type="button" className="primary-button" onClick={() => setQuery("")}>
+                {t("clearSearch")}
+              </button>
+            ) : null}
+            {favoritesOnly ? (
+              <button
+                type="button"
+                className={normalizedQuery ? "secondary-button" : "primary-button"}
+                onClick={() => {
+                  setQuery("");
+                  setFavoritesOnly(false);
+                }}
+              >
+                {t("clearFilters")}
+              </button>
+            ) : null}
+          </div>
+        </section>
       ) : (
         <section className="score-empty-state">
           <p className="empty-title">{t("emptyTitle")}</p>

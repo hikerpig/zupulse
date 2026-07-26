@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ImportItemResult, LibraryScore } from "@zupulse/web-core";
@@ -65,6 +65,87 @@ describe("SheetLibrary import summary", () => {
     expect(dismissImportSummary).toHaveBeenCalledOnce();
   });
 });
+
+describe("SheetLibrary score actions", () => {
+  it("exposes opening, favorite, and management as distinct controls", async () => {
+    const application = libraryApplication();
+    const onOpen = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <SheetLibrary
+        application={application}
+        scores={[libraryScore()]}
+        loading={false}
+        onImport={async () => undefined}
+        onOpen={onOpen}
+      />,
+    );
+
+    const scoreItem = screen.getByRole("listitem");
+    await user.click(within(scoreItem).getByRole("button", { name: "打开 Created" }));
+    expect(onOpen).toHaveBeenCalledWith("00000000-0000-4000-8000-000000000001");
+
+    expect(within(scoreItem).getByRole("button", { name: "收藏 Created" })).toBeTruthy();
+    fireEvent.mouseDown(within(scoreItem).getByRole("button", { name: "Created 的更多操作" }));
+    expect(await screen.findByRole("menuitem", { name: "导出 Created" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "编辑 Created" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "删除 Created" })).toBeTruthy();
+  });
+});
+
+describe("SheetLibrary no-results state", () => {
+  it("explains a search miss and clears the search without showing the empty-library import action", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[libraryScore()]}
+        loading={false}
+        onImport={async () => undefined}
+        onOpen={() => undefined}
+      />,
+    );
+
+    await user.type(screen.getByRole("textbox", { name: "搜索曲名或艺术家" }), "不存在");
+
+    expect(screen.getByText("没有匹配“不存在”的曲谱")).toBeTruthy();
+    expect(screen.getByText("0 / 1 份曲谱")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "导入第一份曲谱" })).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "清除搜索" }));
+    expect(screen.getByRole("button", { name: "打开 Created" })).toBeTruthy();
+  });
+
+  it("explains an empty favorites filter and clears all filters", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[libraryScore()]}
+        loading={false}
+        onImport={async () => undefined}
+        onOpen={() => undefined}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "收藏" }));
+    expect(screen.getByText("收藏中还没有曲谱")).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "清除全部筛选" }));
+    expect(screen.getByRole("button", { name: "打开 Created" })).toBeTruthy();
+  });
+});
+
+function libraryApplication(): ViewerApplication {
+  return {
+    setFavorite: vi.fn(async () => undefined),
+    refreshLibrary: vi.fn(async () => undefined),
+    exportLibraryScore: vi.fn(async () => undefined),
+  } as unknown as ViewerApplication;
+}
 
 function libraryScore(): LibraryScore {
   return {

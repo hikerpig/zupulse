@@ -91,4 +91,24 @@ describe("paper Semi-CRF corpus training", () => {
 
     expect(duplicated.report.initialObjective - 0.25).toBeCloseTo(2 * (one.report.initialObjective - 0.25), 10);
   });
+
+  it("resumes synthetic corpus training without changing the result", () => {
+    const base = {
+      records: trainingRecords(),
+      l2: 0.1,
+      minFeatureCount: 0,
+      gradientTolerance: 0,
+    };
+    const partial = trainPaperSemiCrf({ ...base, maxIterations: 2 });
+    const resumed = trainPaperSemiCrf({
+      ...base,
+      maxIterations: 3,
+      featureNames: partial.model.featureNames,
+      resume: partial.checkpoint,
+    });
+    const uninterrupted = trainPaperSemiCrf({ ...base, maxIterations: 5 });
+
+    expect(resumed.model).toEqual(uninterrupted.model);
+    expect(resumed.checkpoint).toEqual(uninterrupted.checkpoint);
+  });
 });

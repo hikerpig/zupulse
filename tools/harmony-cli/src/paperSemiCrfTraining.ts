@@ -10,7 +10,7 @@ import {
   type PaperSemiCrfLocalPotentialInput,
   type PaperSemiCrfSupportedLabel,
 } from "@zupulse/web-core";
-import { minimizeWithPaperSemiCrfLbfgs } from "./paperSemiCrfLbfgs";
+import { minimizeWithPaperSemiCrfLbfgs, type PaperSemiCrfLbfgsCheckpoint } from "./paperSemiCrfLbfgs";
 import { parsePaperSemiCrfTrainingRecords, type PaperSemiCrfRecordsFile } from "./paperSemiCrfRecords";
 
 export type TrainPaperSemiCrfInput = {
@@ -21,10 +21,12 @@ export type TrainPaperSemiCrfInput = {
   gradientTolerance?: number;
   featureNames?: readonly string[];
   initialWeights?: readonly number[];
+  resume?: PaperSemiCrfLbfgsCheckpoint;
 };
 
 export function trainPaperSemiCrf(input: TrainPaperSemiCrfInput): {
   model: PaperSemiCrfLinearModel;
+  checkpoint: PaperSemiCrfLbfgsCheckpoint;
   report: {
     algorithmVersion: "deterministic-lbfgs-backtracking-v1";
     status: "converged" | "max-iterations";
@@ -45,18 +47,32 @@ export function trainPaperSemiCrf(input: TrainPaperSemiCrfInput): {
     : collectFeatureNames(records, labels, input.minFeatureCount);
   const dictionary = createPaperSemiCrfFeatureDictionary(featureNames);
   const initialWeights = input.initialWeights ? [...input.initialWeights] : dictionary.featureNames.map(() => 0);
-  if (initialWeights.length !== dictionary.featureNames.length) {
+  if (
+    initialWeights.length !== dictionary.featureNames.length ||
+    (input.resume !== undefined && input.resume.weights.length !== dictionary.featureNames.length)
+  ) {
     throw new Error("initial weights must match paper Semi-CRF feature names");
+  }
+  if (input.resume !== undefined && input.initialWeights !== undefined) {
+    throw new Error("paper Semi-CRF resume and initialWeights are mutually exclusive");
   }
   const evaluate = (weights: readonly number[]) =>
     evaluateCorpusObjective(records, labels, dictionary, weights, input.l2);
-  const initialObjective = evaluate(initialWeights).value;
-  const optimized = minimizeWithPaperSemiCrfLbfgs({
-    initialWeights,
-    evaluate,
-    maxIterations: input.maxIterations,
-    ...(input.gradientTolerance === undefined ? {} : { gradientTolerance: input.gradientTolerance }),
-  });
+  const initialObjective = input.resume?.value ?? evaluate(initialWeights).value;
+  const optimized =
+    input.resume === undefined
+      ? minimizeWithPaperSemiCrfLbfgs({
+          initialWeights,
+          evaluate,
+          maxIterations: input.maxIterations,
+          ...(input.gradientTolerance === undefined ? {} : { gradientTolerance: input.gradientTolerance }),
+        })
+      : minimizeWithPaperSemiCrfLbfgs({
+          resume: input.resume,
+          evaluate,
+          maxIterations: input.maxIterations,
+          ...(input.gradientTolerance === undefined ? {} : { gradientTolerance: input.gradientTolerance }),
+        });
   const model: PaperSemiCrfLinearModel = {
     schemaVersion: "paper-semi-crf-linear-v1",
     labelMappingVersion: PAPER_SEMI_CRF_LABEL_MAPPING_VERSION,
@@ -68,6 +84,7 @@ export function trainPaperSemiCrf(input: TrainPaperSemiCrfInput): {
   };
   return {
     model,
+    checkpoint: optimized.checkpoint,
     report: {
       algorithmVersion: "deterministic-lbfgs-backtracking-v1",
       status: optimized.status,

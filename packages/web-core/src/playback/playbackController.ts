@@ -340,6 +340,8 @@ export class PlaybackController {
 
   private setLoopBoundary(boundary: "start" | "end", position: PlaybackState["position"]): void {
     const snapped = snapMusicalPosition(position, this.state.loopDraft.snapMode, this.options.timeline);
+    const opposite = boundary === "start" ? this.state.loopDraft.end : this.state.loopDraft.start;
+    if (opposite && (boundary === "start" ? snapped.tick >= opposite.tick : snapped.tick <= opposite.tick)) return;
     this.state.loopDraft = { ...this.state.loopDraft, [boundary]: snapped };
     this.notify();
   }
@@ -380,6 +382,11 @@ export class PlaybackController {
   private selectLoop(loopId: string): void {
     const loop = this.requireLoop(loopId);
     this.state.activeLoopId = loop.id;
+    this.state.loopDraft = {
+      start: structuredClone(loop.start),
+      end: structuredClone(loop.end),
+      snapMode: loop.snapMode,
+    };
     this.state.looping = true;
     this.state.position = loop.start;
     this.options.engine.setLoop(loopTicks(loop), true);

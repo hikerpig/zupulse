@@ -61,6 +61,12 @@ describe("musical positions", () => {
       cachedTimeMs: 5200,
     });
   });
+
+  it("preserves the score end as a valid beat-snapped boundary", () => {
+    const scoreEnd = musicalPositionFromTick(timeline.durationTicks, timeline.durationMs, timeline);
+
+    expect(snapMusicalPosition(scoreEnd, "beat", timeline)).toEqual(scoreEnd);
+  });
 });
 
 describe("createLoopRegion", () => {

@@ -282,7 +282,9 @@ export function SheetLibrary({
                           onClick={(event) => {
                             deleteReturnFocusRef.current = event.currentTarget;
                           }}
-                        />
+                        >
+                          {null}
+                        </IconButton>
                       }
                     >
                       <MoreHorizontal aria-hidden="true" />

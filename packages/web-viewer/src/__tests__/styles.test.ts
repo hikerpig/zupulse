@@ -238,13 +238,16 @@ describe("alphaTab playback cursor styles", () => {
   });
 
   it("keeps third-party score layers below viewer controls through shared stacking tokens", async () => {
-    const [tokensCss, scoreCss, workspaceCss, libraryCss, alphaTabCss] = await Promise.all([
-      source("../styles/tokens.css"),
-      source("../components/ScoreViewer.module.css"),
-      source("../features/PlaybackWorkspace.module.css"),
-      source("../features/SheetLibrary.module.css"),
-      source("../styles/vendors/alphaTab.css"),
-    ]);
+    const [tokensCss, tailwindThemeCss, overlaySource, scoreCss, workspaceCss, libraryCss, alphaTabCss] =
+      await Promise.all([
+        source("../styles/tokens.css"),
+        source("../styles/tailwind-theme.css"),
+        source("../components/ui/overlay.tsx"),
+        source("../components/ScoreViewer.module.css"),
+        source("../features/PlaybackWorkspace.module.css"),
+        source("../features/SheetLibrary.module.css"),
+        source("../styles/vendors/alphaTab.css"),
+      ]);
 
     expect(tokensCss).toMatch(/--z-index-score:\s*0;/);
     expect(tokensCss).toMatch(/--z-index-score-cursor:\s*10;/);
@@ -252,11 +255,14 @@ describe("alphaTab playback cursor styles", () => {
     expect(tokensCss).toMatch(/--z-index-practice-panel:\s*30;/);
     expect(tokensCss).toMatch(/--z-index-library-editor:\s*40;/);
     expect(tokensCss).toMatch(/--z-index-library-dialog:\s*50;/);
+    expect(tokensCss).toMatch(/--layer-overlay:\s*var\(--z-index-library-dialog\);/);
+    expect(tailwindThemeCss).toMatch(/--z-index-overlay:\s*var\(--layer-overlay\);/);
     expect(scoreCss).toMatch(/\.stage\s*{[^}]*position:\s*relative;[^}]*z-index:\s*var\(--z-index-score\);/s);
     expect(workspaceCss).toMatch(/\.transportBar\s*{[^}]*z-index:\s*var\(--z-index-transport\);/s);
     expect(workspaceCss).toMatch(/\.practicePanel\s*{[^}]*z-index:\s*var\(--z-index-practice-panel\);/s);
     expect(libraryCss).toMatch(/\.libraryEditor\s*{[^}]*z-index:\s*var\(--z-index-library-editor\);/s);
-    expect(libraryCss).toMatch(/\.libraryDialog\s*{[^}]*z-index:\s*var\(--z-index-library-dialog\);/s);
+    expect(overlaySource).toMatch(/DialogBackdrop[\s\S]*?"[^"]*tw:z-overlay/);
+    expect(overlaySource).toMatch(/DialogViewport[\s\S]*?"[^"]*tw:z-overlay/);
     expect(alphaTabCss).toMatch(
       /\.score-viewer \.at-cursors\s*{[^}]*z-index:\s*var\(--z-index-score-cursor\)\s*!important;/s,
     );

@@ -83,7 +83,7 @@ export function Toolbar({
 
 function toolbarItems(toolbar: HTMLElement | null): HTMLElement[] {
   if (toolbar === null) return [];
-  return [...toolbar.querySelectorAll<HTMLElement>(focusableSelector)].filter(
+  return Array.from(toolbar.querySelectorAll<HTMLElement>(focusableSelector)).filter(
     (item) => !item.hasAttribute("disabled") && item.getAttribute("aria-disabled") !== "true",
   );
 }

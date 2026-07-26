@@ -130,6 +130,8 @@ describe("alphaTab playback cursor styles", () => {
     expect(scoreCss).not.toMatch(/@media \(max-width:/);
     expect(libraryCss).toMatch(/@container \(max-width:\s*620px\)/);
     expect(libraryCss).not.toMatch(/@media \(max-width:/);
+    expect(libraryCss).toMatch(/\.libraryRow:first-child\s*{[^}]*border-start-start-radius:/s);
+    expect(libraryCss).toMatch(/\.libraryRow:last-child\s*{[^}]*border-end-start-radius:/s);
     expect(`${appCss}\n${workspaceCss}\n${libraryCss}`).toContain("env(safe-area-inset-bottom)");
   });
 

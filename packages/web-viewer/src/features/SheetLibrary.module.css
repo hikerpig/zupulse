@@ -194,12 +194,20 @@
     background: var(--bg-panel);
     transition: background-color 140ms ease;
   }
+  .libraryRow:first-child {
+    border-start-start-radius: calc(var(--radius-sm) - 1px);
+    border-start-end-radius: calc(var(--radius-sm) - 1px);
+  }
+  .libraryRow:last-child {
+    border-end-start-radius: calc(var(--radius-sm) - 1px);
+    border-end-end-radius: calc(var(--radius-sm) - 1px);
+  }
   .libraryRow:hover {
     background: color-mix(in srgb, var(--bg-panel) 92%, var(--accent-soft));
   }
   .libraryRow:focus-within {
     z-index: var(--z-index-surface-raised);
-    box-shadow: inset 0 0 0 1px var(--accent-primary);
+    box-shadow: inset 0 0 0 2px var(--accent-primary);
   }
 
   .libraryOpenAction {
@@ -226,7 +234,7 @@
   }
   .libraryOpenAction:focus-visible {
     outline: none;
-    box-shadow: inset 0 0 0 2px var(--accent-primary);
+    box-shadow: none;
   }
   .libraryIdentity {
     min-width: 0;

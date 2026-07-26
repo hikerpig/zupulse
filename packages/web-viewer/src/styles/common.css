@@ -26,6 +26,9 @@ button {
     background-color 140ms ease,
     transform 140ms ease;
 }
+button[data-icon-button] {
+  padding: 0;
+}
 button:hover:not(:disabled) {
   border-color: var(--accent-primary);
   transform: translateY(-1px);

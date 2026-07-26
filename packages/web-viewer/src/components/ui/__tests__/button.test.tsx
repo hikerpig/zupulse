@@ -63,7 +63,9 @@ describe("IconButton", () => {
       </IconButton>,
     );
 
-    expect(screen.getByRole("button", { name: "Settings" }).getAttribute("aria-label")).toBe("Settings");
+    const button = screen.getByRole("button", { name: "Settings" });
+    expect(button.getAttribute("aria-label")).toBe("Settings");
+    expect(button.hasAttribute("data-icon-button")).toBe(true);
   });
 
   it("supports disabled and pressed states", () => {

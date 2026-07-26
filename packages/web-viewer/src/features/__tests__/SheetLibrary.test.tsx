@@ -147,8 +147,10 @@ describe("SheetLibrary score actions", () => {
     await user.click(within(scoreItem).getByRole("button", { name: "打开 Created" }));
     expect(onOpen).toHaveBeenCalledWith("00000000-0000-4000-8000-000000000001");
 
-    expect(within(scoreItem).getByRole("button", { name: "收藏 Created" })).toBeTruthy();
-    fireEvent.mouseDown(within(scoreItem).getByRole("button", { name: "Created 的更多操作" }));
+    expect(within(scoreItem).getByRole("button", { name: "收藏 Created" }).querySelector(".lucide-star")).toBeTruthy();
+    const actionsButton = within(scoreItem).getByRole("button", { name: "Created 的更多操作" });
+    expect(actionsButton.querySelector(".lucide-ellipsis")).toBeTruthy();
+    fireEvent.mouseDown(actionsButton);
     expect(await screen.findByRole("menuitem", { name: "导出 Created" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "编辑 Created" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "删除 Created" })).toBeTruthy();

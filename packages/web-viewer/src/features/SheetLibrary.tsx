@@ -266,6 +266,7 @@ export function SheetLibrary({
                     }}
                   >
                     <Star
+                      className="tw:shrink-0"
                       size={16}
                       strokeWidth={1.8}
                       fill={score.isFavorite ? "currentColor" : "none"}
@@ -282,12 +283,10 @@ export function SheetLibrary({
                           onClick={(event) => {
                             deleteReturnFocusRef.current = event.currentTarget;
                           }}
-                        >
-                          {null}
-                        </IconButton>
+                        />
                       }
                     >
-                      <MoreHorizontal aria-hidden="true" />
+                      <MoreHorizontal className="tw:size-4 tw:shrink-0" aria-hidden="true" />
                     </MenuTrigger>
                     <MenuPortal>
                       <MenuPositioner sideOffset={6} align="end">

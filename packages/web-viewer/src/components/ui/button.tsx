@@ -4,6 +4,7 @@ export type ButtonTone = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
 
 export interface ButtonProps extends Omit<ComponentPropsWithoutRef<"button">, "aria-busy" | "aria-pressed"> {
+  iconOnly?: boolean;
   loading?: boolean;
   pressed?: boolean;
   size?: ButtonSize;
@@ -11,7 +12,7 @@ export interface ButtonProps extends Omit<ComponentPropsWithoutRef<"button">, "a
 }
 
 const baseClasses =
-  "tw:inline-flex tw:shrink-0 tw:cursor-pointer tw:select-none tw:items-center tw:justify-center tw:gap-2 tw:rounded-control tw:border tw:border-solid tw:px-4 tw:font-ui tw:text-body tw:font-semibold tw:transition-colors tw:duration-fast tw:ease-ui tw:focus-visible:outline-none tw:focus-visible:shadow-focus tw:disabled:pointer-events-none tw:disabled:cursor-not-allowed tw:disabled:opacity-50";
+  "tw:inline-flex tw:shrink-0 tw:cursor-pointer tw:select-none tw:items-center tw:justify-center tw:gap-2 tw:rounded-control tw:border tw:border-solid tw:font-ui tw:text-body tw:font-semibold tw:transition-colors tw:duration-fast tw:ease-ui tw:focus-visible:outline-none tw:focus-visible:shadow-focus tw:disabled:pointer-events-none tw:disabled:cursor-not-allowed tw:disabled:opacity-50";
 
 const toneClasses: Record<ButtonTone, string> = {
   primary:
@@ -24,8 +25,13 @@ const toneClasses: Record<ButtonTone, string> = {
 
 const sizeClasses: Record<ButtonSize, string> = {
   sm: "tw:h-control-sm tw:px-3 tw:text-caption",
-  md: "tw:h-control",
+  md: "tw:h-control tw:px-4",
   lg: "tw:h-control-lg tw:px-6 tw:text-lead",
+};
+
+const iconSizeClasses: Record<"sm" | "md", string> = {
+  sm: "tw:h-control-sm tw:text-caption",
+  md: "tw:h-control",
 };
 
 const pressedClasses: Record<ButtonTone, string> = {
@@ -40,6 +46,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     children,
     className,
     disabled = false,
+    iconOnly = false,
     loading = false,
     pressed,
     size = "md",
@@ -57,7 +64,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       className={classes(
         baseClasses,
         toneClasses[tone],
-        sizeClasses[size],
+        iconOnly && size !== "lg" ? iconSizeClasses[size] : sizeClasses[size],
         pressed ? pressedClasses[tone] : undefined,
         className,
       )}
@@ -65,6 +72,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       aria-busy={loading || undefined}
       aria-pressed={pressed}
       data-loading={loading || undefined}
+      data-icon-button={iconOnly || undefined}
     >
       {loading ? <LoadingIndicator /> : null}
       {children}
@@ -72,9 +80,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   );
 });
 
-export interface IconButtonProps extends Omit<ButtonProps, "children" | "size"> {
+export interface IconButtonProps extends Omit<ButtonProps, "children" | "iconOnly" | "size"> {
   "aria-label": string;
-  children: ReactNode;
+  children?: ReactNode;
   size?: "sm" | "md";
 }
 
@@ -82,8 +90,9 @@ export function IconButton({ children, className, size = "md", ...props }: IconB
   return (
     <Button
       {...props}
+      iconOnly
       size={size}
-      className={classes("tw:p-0 tw:rounded-icon", size === "sm" ? "tw:w-control-sm" : "tw:w-control", className)}
+      className={classes("tw:rounded-icon", size === "sm" ? "tw:w-control-sm" : "tw:w-control", className)}
     >
       {children}
     </Button>

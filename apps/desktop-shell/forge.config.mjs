@@ -1,10 +1,15 @@
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
+import { fileURLToPath } from "node:url";
+
+const macIcon = fileURLToPath(new URL("./resources/app-icon.icns", import.meta.url));
+const windowsIcon = fileURLToPath(new URL("./resources/app-icon.ico", import.meta.url));
 
 export default {
   packagerConfig: {
     asar: true,
     arch: process.platform === "darwin" ? "arm64" : "x64",
+    icon: process.platform === "darwin" ? macIcon : windowsIcon,
     // Main, preload, and renderer are fully bundled by Rspack. Excluding the
     // workspace dependency tree also avoids Electron Packager trying to prune
     // pnpm's symlinked development dependencies as if they were runtime code.
@@ -23,6 +28,6 @@ export default {
     process.platform === "darwin"
       ? [new MakerZIP({}, ["darwin"])]
       : process.platform === "win32"
-        ? [new MakerSquirrel({})]
+        ? [new MakerSquirrel({ setupIcon: windowsIcon })]
         : [],
 };

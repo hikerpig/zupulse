@@ -126,6 +126,26 @@ pnpm -s harmony:cli paper-semi-crf-train /tmp/zupulse-paper-semi-crf-train1.json
 - candidate-path feature multiplicity 的逐模板 Java parity 可作为后续研究改进，但不影响已通过的
   same-weight/fresh ±2pp reproduction gates。
 
+### Current-corpus scope audit
+
+未读取任何 final holdout。按 `protocol-v3.json` 允许的 Mozart train/tune groups 做只读审计后，
+现有 paper label contract 的无损 gold mapping coverage 分别只有：
+
+| Split | Gold | Paper-supported | Coverage | Inversions | Unsupported dominant / half-dim |
+| ----- | ---: | --------------: | -------: | ---------: | ------------------------------: |
+| train | 8720 |            3433 |   39.37% |       3467 |                        751 / 40 |
+| tune  | 2157 |             849 |   39.36% |        840 |                         190 / 7 |
+
+此外，train/tune 分别有 28/8 个 supported gold boundary 不能和 basic-event boundary 对齐，
+21/3 个 supported gold span 超过 BaCh 冻结的 20 events（最大 36/24）。因此下一比较不能在不声明
+口径的情况下生成完整 target paths：
+
+1. faithful 方案：只保留连续、对齐、span≤20 的可表达窗口，并明确约 39% mapping coverage；
+2. product-adapted 方案：新增 inversion/dominant simplification 或 label support。
+
+方案 2 会改变已冻结的 label simplification，按规格必须先批准；方案 1 不改变论文合同，但结论只覆盖
+可表达 slice。
+
 ### Fresh TypeScript training performance checkpoint
 
 第一版 objective 为每条 `(segment, current, previous)` edge 构造并缓存完整 feature vector；full fold

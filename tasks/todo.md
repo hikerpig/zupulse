@@ -59,7 +59,7 @@
 ## Phase 4: Pilot slices
 
 - [x] Task 9a: App Header / Toolbar
-- [ ] Task 9b: ContextPopup + Library Menu/Dialog
+- [x] Task 9b: ContextPopup + Library Menu/Dialog
 - [ ] Task 9c: Playback Transport + one practice/track section
 - [ ] Task 10: 运行 pilot metrics 与 Go/No-Go review
 

@@ -42,6 +42,7 @@
   --z-index-library-dialog: 50;
   --layer-overlay: var(--z-index-library-dialog);
   --dialog-max-width: 512px;
+  --menu-min-width: 178px;
   --context-popup-min-width: min(320px, calc(100vw - var(--space-8)));
   --context-popup-max-width: min(480px, calc(100vw - var(--space-8)));
   --context-popup-max-height: calc(100vh - var(--space-12));

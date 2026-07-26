@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Menu } from "@base-ui/react/menu";
 import { Download, MoreHorizontal, PenLine, Star, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ImportItemResult, LibraryScoreSummary } from "@zupulse/web-core";
@@ -15,6 +14,13 @@ import {
   DialogRoot,
   DialogTitle,
   DialogViewport,
+  IconButton,
+  MenuItem,
+  MenuPopup,
+  MenuPortal,
+  MenuPositioner,
+  MenuRoot,
+  MenuTrigger,
   Select,
   TextField,
 } from "../components/ui";
@@ -246,13 +252,13 @@ export function SheetLibrary({
                 </div>
 
                 <div className={styles.libraryRowActions}>
-                  <button
-                    type="button"
-                    className={styles.libraryFavoriteButton}
+                  <IconButton
+                    size="sm"
+                    tone="ghost"
                     aria-label={t(score.isFavorite ? "unfavoriteScore" : "favoriteScore", {
                       title: score.title,
                     })}
-                    aria-pressed={score.isFavorite}
+                    pressed={score.isFavorite}
                     onClick={() => {
                       void application
                         .setFavorite(score.id, !score.isFavorite)
@@ -265,42 +271,44 @@ export function SheetLibrary({
                       fill={score.isFavorite ? "currentColor" : "none"}
                       aria-hidden="true"
                     />
-                  </button>
-                  <Menu.Root>
-                    <Menu.Trigger
-                      className={styles.libraryMenuTrigger}
-                      aria-label={t("scoreActions", { title: score.title })}
-                      onClick={(event) => {
-                        deleteReturnFocusRef.current = event.currentTarget;
-                      }}
+                  </IconButton>
+                  <MenuRoot>
+                    <MenuTrigger
+                      render={
+                        <IconButton
+                          size="sm"
+                          tone="ghost"
+                          aria-label={t("scoreActions", { title: score.title })}
+                          onClick={(event) => {
+                            deleteReturnFocusRef.current = event.currentTarget;
+                          }}
+                        />
+                      }
                     >
                       <MoreHorizontal aria-hidden="true" />
-                    </Menu.Trigger>
-                    <Menu.Portal>
-                      <Menu.Positioner className={styles.libraryMenuPositioner} sideOffset={6} align="end">
-                        <Menu.Popup className={styles.libraryMenuPopup}>
-                          <Menu.Item
-                            className={styles.libraryMenuItem}
-                            onClick={() => void application.exportLibraryScore(score.id)}
-                          >
-                            <Download aria-hidden="true" />
+                    </MenuTrigger>
+                    <MenuPortal>
+                      <MenuPositioner sideOffset={6} align="end">
+                        <MenuPopup>
+                          <MenuItem onClick={() => void application.exportLibraryScore(score.id)}>
+                            <Download className="tw:size-4 tw:shrink-0" aria-hidden="true" />
                             {t("exportScore", { title: score.title })}
-                          </Menu.Item>
-                          <Menu.Item className={styles.libraryMenuItem} onClick={() => setEditing(score)}>
-                            <PenLine aria-hidden="true" />
+                          </MenuItem>
+                          <MenuItem onClick={() => setEditing(score)}>
+                            <PenLine className="tw:size-4 tw:shrink-0" aria-hidden="true" />
                             {t("editScore", { title: score.title })}
-                          </Menu.Item>
-                          <Menu.Item
-                            className={`${styles.libraryMenuItem} ${styles.libraryMenuItemDanger}`}
+                          </MenuItem>
+                          <MenuItem
+                            className="tw:text-danger tw:data-highlighted:bg-danger-surface tw:data-highlighted:text-danger"
                             onClick={() => setDeleting(score)}
                           >
-                            <Trash2 aria-hidden="true" />
+                            <Trash2 className="tw:size-4 tw:shrink-0" aria-hidden="true" />
                             {t("deleteScore", { title: score.title })}
-                          </Menu.Item>
-                        </Menu.Popup>
-                      </Menu.Positioner>
-                    </Menu.Portal>
-                  </Menu.Root>
+                          </MenuItem>
+                        </MenuPopup>
+                      </MenuPositioner>
+                    </MenuPortal>
+                  </MenuRoot>
                 </div>
               </li>
             ))}

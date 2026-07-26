@@ -67,6 +67,7 @@
   --ease-ui: var(--motion-ease-standard);
 
   --container-dialog: var(--dialog-max-width);
+  --container-menu: var(--menu-min-width);
   --container-context-min: var(--context-popup-min-width);
   --container-context-max: var(--context-popup-max-width);
   --z-index-overlay: var(--layer-overlay);

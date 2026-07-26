@@ -151,11 +151,17 @@ faithful-window 导出基础设施已验证，但尚未把该口径当作获批�
 
 | Split | Pieces | Labels | Included gold | Windows | Events | Records SHA-256                                                    |
 | ----- | -----: | -----: | ------------: | ------: | -----: | ------------------------------------------------------------------ |
-| train |     30 |     65 |          3384 |    2248 |  14985 | `aa868798c3fc38806081fdb113e428d5e116b617327012071045d540bbc8090d` |
-| tune  |      9 |     65 |           837 |     585 |   3759 | `c06926d6ee373c3e31dbb4741cfe6025ef56acd0b572046372d0467f4d52be1f` |
+| train |     30 |     62 |          3384 |    2248 |  14985 | `44683706b5120e6465cc840bd006d74a0372030f58fa476207e2e2a90adf67fd` |
+| tune  |      9 |     62 |           838 |     586 |   3770 | `e60ad957a9ce17ee05e1585679c1ad1f490847e32eb41aac7fb098080c274b8e` |
 
 生成文件分别为 13.1 MB 与 3.3 MB；没有读取 regression/eval/final-holdout groups。tune records
 强制复用 train label order，不能从 tune gold 扩充候选 inventory。
+
+第一次训练诊断还暴露了 raw DCML spelling 与冻结 paper normalization 的边界：例如 `C#:maj`
+必须先归一化为 `Db:maj`，否则 raw labels 虽通过 records schema，训练 inventory 去重后仍会出现
+label ID 越界。修复后新增 enharmonic regression test，零迭代 exact objective 成功完成：
+1242 retained features、initial objective `62048.90510763007`、OS maximum RSS
+`2,047,590,400` bytes；compile `115180.44` ms，两次 objective 共 `25070.36` ms。
 
 ### Fresh TypeScript training performance checkpoint
 

@@ -136,6 +136,7 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
     dominant/half-diminished。需确认是只比较连续可表达窗口，还是批准新的 label simplification。
   - [x] faithful-window records exporter：protocol-v3 train/tune role、train-only label inventory、
         unsupported/unaligned/span gap 切窗与外部 report。
+  - [x] DCML raw spelling 使用冻结 paper enharmonic normalization；真实零迭代 objective 验证通过。
   - Acceptance: 不读取 final holdout；CRF primary/boundaries 不被 rule prior、postprocess 或 confidence 改写。
   - Verification: preregistered metric gates and baseline diff.
   - Dependencies: Task 8

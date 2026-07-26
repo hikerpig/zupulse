@@ -28,5 +28,6 @@
   - [x] peak RSS、P95 与差异说明
 - [ ] Task 9: approved current-corpus comparison
   - [x] faithful supported-window DCML records exporter
+  - [x] normalize DCML labels before inventory IDs and complete zero-iteration exact objective
   - [ ] choose faithful supported windows (~39% mapping coverage) or approve current-corpus label simplification
 - [ ] Task 10: production adoption decision

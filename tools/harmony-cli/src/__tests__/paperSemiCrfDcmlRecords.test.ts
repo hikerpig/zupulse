@@ -79,6 +79,56 @@ describe("paper Semi-CRF DCML records", () => {
     ]);
     expect(projected.records.flatMap((record) => record.events.map((event) => event.index))).toEqual([0, 0, 1]);
   });
+
+  it("uses the frozen paper enharmonic normalization for target labels", () => {
+    const piece: DcmlPiece = {
+      corpus: "dcml",
+      groupId: "group",
+      input: createHarmonyAnalysisInput({
+        ticksPerQuarter: 480,
+        measures: [
+          {
+            index: 0,
+            durationTicks: 480,
+            timeSignature: { numerator: 1, denominator: 4 },
+            key: "fifths:0",
+          },
+        ],
+        tracks: [
+          {
+            id: "dcml",
+            name: "fixture",
+            isPercussion: false,
+            staves: [
+              {
+                index: 0,
+                notes: [
+                  {
+                    id: "note",
+                    moment: { measureIndex: 0, offsetTicks: 0 },
+                    durationTicks: 480,
+                    soundingPitchClass: 1,
+                    soundingMidi: 61,
+                    voice: 1,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      gold: [gold(0, 480, { root: { step: "C", alter: 1 }, kind: "major", degrees: [] })],
+    };
+
+    const projected = projectDcmlPieceToPaperSemiCrfWindows({
+      pieceId: "piece",
+      piece,
+      labels: ["Db:maj"],
+      maxSegmentLength: 20,
+    });
+
+    expect(projected.records[0]!.targetSegments[0]!.label).toBe("Db:maj");
+  });
 });
 
 function gold(

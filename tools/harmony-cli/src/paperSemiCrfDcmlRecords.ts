@@ -1,4 +1,9 @@
-import { buildPaperSemiCrfEvents, paperSemiCrfChordToLabel, type PaperSemiCrfEvent } from "@zupulse/web-core";
+import {
+  buildPaperSemiCrfEvents,
+  normalizePaperSemiCrfLabel,
+  paperSemiCrfChordToLabel,
+  type PaperSemiCrfEvent,
+} from "@zupulse/web-core";
 import type { DcmlPiece } from "./adapters/dcml";
 
 type PaperSemiCrfDcmlRecord = {
@@ -67,7 +72,7 @@ export function projectDcmlPieceToPaperSemiCrfWindows(input: {
     let label: string;
     try {
       if (gold.chord === undefined) throw new Error("unsupported DCML gold");
-      label = paperSemiCrfChordToLabel(gold.chord);
+      label = normalizePaperSemiCrfLabel(paperSemiCrfChordToLabel(gold.chord));
       if (!labels.has(label)) throw new Error("label is outside paper inventory");
     } catch {
       stats.excludedUnsupported += 1;

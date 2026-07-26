@@ -1,6 +1,7 @@
 import {
   PAPER_SEMI_CRF_FEATURE_VERSION,
   PAPER_SEMI_CRF_LABEL_MAPPING_VERSION,
+  normalizePaperSemiCrfLabel,
   paperSemiCrfChordToLabel,
 } from "@zupulse/web-core";
 import { createHash } from "node:crypto";
@@ -11,11 +12,7 @@ import { parseDcmlPiece, type DcmlPiece } from "./adapters/dcml";
 import { dcmlGroupId } from "./adapters/dcmlEvaluation";
 import { assignV3DatasetRole, assertV3CorpusGroups, hashDatasetGroups } from "./evaluationProtocol";
 import { projectDcmlPieceToPaperSemiCrfWindows } from "./paperSemiCrfDcmlRecords";
-import {
-  paperSemiCrfRecordsFileSchema,
-  parsePaperSemiCrfTrainingRecords,
-  type PaperSemiCrfRecordsFile,
-} from "./paperSemiCrfRecords";
+import { paperSemiCrfRecordsFileSchema, parsePaperSemiCrfTrainingRecords } from "./paperSemiCrfRecords";
 import { harmonyDatasetManifestSchema, harmonyEvaluationProtocolV3Schema } from "./schemas";
 
 const statsSchema = z
@@ -173,7 +170,9 @@ async function labelInventory(
   for (const { piece } of pieces) {
     for (const gold of piece.gold) {
       try {
-        if (gold.chord !== undefined) labels.add(paperSemiCrfChordToLabel(gold.chord));
+        if (gold.chord !== undefined) {
+          labels.add(normalizePaperSemiCrfLabel(paperSemiCrfChordToLabel(gold.chord)));
+        }
       } catch {
         // Unsupported gold is reported and splits representable windows.
       }

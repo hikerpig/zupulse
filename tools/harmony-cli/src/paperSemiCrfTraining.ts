@@ -1,9 +1,10 @@
 import {
   createPaperSemiCrfFeatureDictionary,
-  createPaperSemiCrfFeatureProvider,
   createPaperSemiCrfLabelInventory,
   createPaperSemiCrfNamedFeatureProvider,
-  evaluatePaperSemiCrfNegativeLogLikelihood,
+  encodePaperSemiCrfNamedFeatures,
+  evaluatePaperSemiCrfFactorizedNegativeLogLikelihood,
+  extractPaperSemiCrfTransitionFeature,
   PAPER_SEMI_CRF_FEATURE_VERSION,
   PAPER_SEMI_CRF_LABEL_MAPPING_VERSION,
   type PaperSemiCrfLinearModel,
@@ -107,9 +108,17 @@ function collectFeatureNames(
   const counts = new Map<string, number>();
   for (const record of records.records) {
     const named = createPaperSemiCrfNamedFeatureProvider({ events: record.events, labels });
-    forEachLegalLocal(record.events.length, labels.length, records.maxSegmentLength, (local) => {
-      for (const name of named(local)) counts.set(name, (counts.get(name) ?? 0) + 1);
+    forEachLegalSegment(record.events.length, labels.length, records.maxSegmentLength, (segment) => {
+      for (const name of named({ segment })) counts.set(name, (counts.get(name) ?? 0) + 1);
     });
+    if (record.events.length > 1) {
+      for (const current of labels) {
+        for (const previous of labels) {
+          const name = extractPaperSemiCrfTransitionFeature(current, previous);
+          counts.set(name, (counts.get(name) ?? 0) + (record.events.length - 1));
+        }
+      }
+    }
   }
   return [...counts].filter(([, count]) => count > minFeatureCount).map(([name]) => name);
 }
@@ -125,12 +134,17 @@ function evaluateCorpusObjective(
   const gradient = weights.map(() => 0);
   const labelIds = new Map(records.labels.map((label, index) => [label, index]));
   for (const record of records.records) {
-    const evaluated = evaluatePaperSemiCrfNegativeLogLikelihood({
+    const named = createPaperSemiCrfNamedFeatureProvider({ events: record.events, labels });
+    const evaluated = evaluatePaperSemiCrfFactorizedNegativeLogLikelihood({
       eventCount: record.events.length,
       labelCount: labels.length,
       maxSegmentLength: records.maxSegmentLength,
       weights,
-      features: createPaperSemiCrfFeatureProvider({ events: record.events, labels, dictionary }),
+      segmentFeatures: (segment) => encodePaperSemiCrfNamedFeatures(dictionary, named({ segment })),
+      transitionFeatures: (currentLabelId, previousLabelId) =>
+        encodePaperSemiCrfNamedFeatures(dictionary, [
+          extractPaperSemiCrfTransitionFeature(labels[currentLabelId]!, labels[previousLabelId]!),
+        ]),
       targetSegments: record.targetSegments.map((segment) => ({
         startEvent: segment.startEvent,
         endEvent: segment.endEvent,
@@ -159,23 +173,16 @@ function supportedLabels(referenceLabels: readonly string[]): PaperSemiCrfSuppor
   return labels as PaperSemiCrfSupportedLabel[];
 }
 
-function forEachLegalLocal(
+function forEachLegalSegment(
   eventCount: number,
   labelCount: number,
   maxSegmentLength: number,
-  visit: (input: PaperSemiCrfLocalPotentialInput) => void,
+  visit: (segment: PaperSemiCrfLocalPotentialInput["segment"]) => void,
 ): void {
   for (let endEvent = 1; endEvent <= eventCount; endEvent += 1) {
     for (let startEvent = Math.max(0, endEvent - maxSegmentLength); startEvent < endEvent; startEvent += 1) {
       for (let labelId = 0; labelId < labelCount; labelId += 1) {
-        const segment = { startEvent, endEvent, labelId };
-        if (startEvent === 0) {
-          visit({ segment });
-        } else {
-          for (let previousLabelId = 0; previousLabelId < labelCount; previousLabelId += 1) {
-            visit({ segment, previousLabelId });
-          }
-        }
+        visit({ startEvent, endEvent, labelId });
       }
     }
   }

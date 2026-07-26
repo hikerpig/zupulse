@@ -21,6 +21,8 @@
 - [ ] Task 8: BaCh fold 1 reproduction
   - [x] same-author-weight TS parity
   - [ ] fresh author / fresh TS training
+    - [x] factorized exact objective
+    - [ ] precompiled sparse segment vectors
   - [ ] peak RSS、P95 与差异说明
 - [ ] Task 9: approved current-corpus comparison
 - [ ] Task 10: production adoption decision

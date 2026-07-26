@@ -18,6 +18,21 @@ export async function importPaperSemiCrfAuthorModelFile(options: { inputPath: st
   };
 }
 
+export function parsePaperSemiCrfAuthorFeatureCounts(text: string, minFeatureCount: number): string[] {
+  if (!Number.isSafeInteger(minFeatureCount) || minFeatureCount < 0) {
+    throw new Error("paper Semi-CRF minFeatureCount must be a nonnegative integer");
+  }
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .flatMap((line) => {
+      const match = /^(\S+)\s+(\d+)$/.exec(line);
+      if (!match) throw new Error("invalid author feature-count row");
+      return Number(match[2]) > minFeatureCount ? [match[1]!] : [];
+    });
+}
+
 export function parsePaperSemiCrfAuthorModelText(text: string): PaperSemiCrfLinearModel {
   const maxSegmentLength = requiredInteger(text, /^Max span:\s*(\d+)\s*$/m, "Max span");
   const featureCount = requiredInteger(text, /^Num features:\s*(\d+)\s*$/m, "Num features");

@@ -114,6 +114,8 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
 - [ ] Task 8: 运行 BaCh reference fold 1、TypeScript parity 与完整报告。
   - [x] same-author-weight TypeScript parity：event 81.17%、segment F1 73.39%，均在作者归档 ±2pp 内。
   - [ ] fresh author / fresh TypeScript fold 1 training parity。
+    - [x] factorized objective 与 generic objective/gradient tiny parity。
+    - [ ] 预编译 sparse segment vectors，消除每次 objective 的重复 feature extraction。
   - [ ] OS peak RSS、逐曲 runtime P95 与剩余 3-event/3-segment 差异说明。
   - Acceptance: 报告 event accuracy、segment P/R/F、峰值内存和 P95 runtime；差异超过规格门槛时给出可复现原因。
   - Verification: frozen report hashes and commands; `pnpm verify`.

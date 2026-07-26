@@ -3,6 +3,7 @@ import { decodePaperSemiCrf } from "../paper-semi-crf-decode";
 import {
   computePaperSemiCrfLogPartition,
   createPaperSemiCrfLinearPotential,
+  evaluatePaperSemiCrfFactorizedNegativeLogLikelihood,
   evaluatePaperSemiCrfNegativeLogLikelihood,
   parsePaperSemiCrfLinearModel,
   PAPER_SEMI_CRF_FEATURE_VERSION,
@@ -80,6 +81,33 @@ describe("paper semi-CRF linear model", () => {
     evaluation.gradient.forEach((gradient, index) => {
       expect(gradient).toBeCloseTo(finiteDifference[index]!, 6);
     });
+  });
+
+  it("matches the generic objective and gradient with factorized local features", () => {
+    const weights = [0.3, -0.4, 0.8];
+    const input = {
+      eventCount: 3,
+      labelCount: 2,
+      maxSegmentLength: 2,
+      targetSegments: [
+        { startEvent: 0, endEvent: 1, labelId: 0 },
+        { startEvent: 1, endEvent: 3, labelId: 1 },
+      ],
+      weights,
+      l2: 0.2,
+    } as const;
+    const generic = evaluatePaperSemiCrfNegativeLogLikelihood({ ...input, features });
+    const factorized = evaluatePaperSemiCrfFactorizedNegativeLogLikelihood({
+      ...input,
+      segmentFeatures: (segment) => [{ index: segment.labelId, value: segment.endEvent - segment.startEvent }],
+      transitionFeatures: (currentLabelId, previousLabelId) =>
+        currentLabelId === previousLabelId ? [] : [{ index: 2, value: 1 }],
+    });
+
+    expect(factorized.value).toBeCloseTo(generic.value, 12);
+    expect(factorized.logPartition).toBeCloseTo(generic.logPartition, 12);
+    expect(factorized.targetScore).toBeCloseTo(generic.targetScore, 12);
+    factorized.gradient.forEach((value, index) => expect(value).toBeCloseTo(generic.gradient[index]!, 12));
   });
 
   it("stays finite for large-magnitude scores by operating in log space", () => {

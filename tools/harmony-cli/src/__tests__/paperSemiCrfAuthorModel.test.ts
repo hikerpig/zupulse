@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePaperSemiCrfAuthorModelText } from "../paperSemiCrfAuthorModel";
+import { parsePaperSemiCrfAuthorFeatureCounts, parsePaperSemiCrfAuthorModelText } from "../paperSemiCrfAuthorModel";
 
 const modelText = `Max span: 20
 Labels:
@@ -35,5 +35,9 @@ describe("paper Semi-CRF author model adapter", () => {
     expect(() => parsePaperSemiCrfAuthorModelText(modelText.replace("min_maj_7 2 -1.25", "min_maj_7 3 -1.25"))).toThrow(
       "author model feature ids must be contiguous",
     );
+  });
+
+  it("retains author feature-count entries above the paper threshold", () => {
+    expect(parsePaperSemiCrfAuthorFeatureCounts("PURITY_101 5\nROOT_COVERED 4\n", 4)).toEqual(["PURITY_101"]);
   });
 });

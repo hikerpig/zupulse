@@ -78,3 +78,18 @@ pnpm -s harmony:cli paper-semi-crf-eval /tmp/zupulse-paper-semi-crf-test1.json \
 - 解释 same-weight 的 3 个 segment / 3 个 event 差异。
 - 使用同一冻结模型记录逐曲 runtime、P95 与 OS peak RSS。
 - 完成后再进入批准的 current-corpus comparison。
+
+### Fresh TypeScript training performance checkpoint
+
+第一版 objective 为每条 `(segment, current, previous)` edge 构造并缓存完整 feature vector；full fold
+feature touch 超过 4 分钟且无法形成可接受的内存上界，已停止。
+
+第二版把 local potential 严格分解为 segment 与 chord-bigram 两部分。tiny lattice 的 NLL、
+log-partition、target score 与 gradient 和 generic 实现逐项一致到 `1e-12`。随后进一步复用
+`incoming[start,current]` 与 `futureMass[start,current]`，把 transition DP 从
+`events × span × labels²` 降为 `events × (span × labels + labels²)`。
+
+使用 fresh author `feature_count1.txt` 跳过重复 feature touch 后，full fold 的零迭代 objective 仍在
+6 分钟内未完成，RSS 稳定在约 541 MB；采样显示主成本已经转移到每次 objective 重建约 900 万个
+segment-label sparse vectors。该 benchmark 已停止。下一实现切片会在 optimizer 前编译这些与权重无关的
+vectors，并让 line search 复用；不能用 beam、Top-K 或 postprocess 绕过 exact objective。

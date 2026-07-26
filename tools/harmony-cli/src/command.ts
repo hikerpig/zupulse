@@ -94,13 +94,14 @@ export async function runHarmonyCommand(
     const checkpoint = optionValue(normalized, "--checkpoint");
     const report = optionValue(normalized, "--report");
     const resume = optionValue(normalized, "--resume");
+    const featureCounts = optionValue(normalized, "--feature-counts");
     const maxIterations = numberOption(normalized, "--max-iterations", 100);
     const minFeatureCount = numberOption(normalized, "--min-feature-count", 4);
     const l2 = numberOption(normalized, "--l2", 1);
     const gradientTolerance = optionalNumberOption(normalized, "--gradient-tolerance");
     if (!records || !output || !checkpoint || !report) {
       throw new Error(
-        "usage: harmony:cli paper-semi-crf-train <records.json> --output <model.json> --checkpoint <checkpoint.json> --report <report.json> [--resume <checkpoint.json>] [--max-iterations <n>] [--min-feature-count <n>] [--l2 <n>] [--gradient-tolerance <n>]",
+        "usage: harmony:cli paper-semi-crf-train <records.json> --output <model.json> --checkpoint <checkpoint.json> --report <report.json> [--resume <checkpoint.json>] [--feature-counts <author-feature-count.txt>] [--max-iterations <n>] [--min-feature-count <n>] [--l2 <n>] [--gradient-tolerance <n>]",
       );
     }
     if (!Number.isSafeInteger(maxIterations) || maxIterations < 0) {
@@ -123,6 +124,7 @@ export async function runHarmonyCommand(
       l2,
       ...(gradientTolerance === undefined ? {} : { gradientTolerance }),
       ...(resume === undefined ? {} : { resumePath: resolve(cwd, resume) }),
+      ...(featureCounts === undefined ? {} : { featureCountsPath: resolve(cwd, featureCounts) }),
     });
   }
   if (normalized[0] === "paper-semi-crf-eval") {

@@ -9,6 +9,7 @@ import {
   parsePaperSemiCrfTrainingRecords,
 } from "./paperSemiCrfRecords";
 import { trainPaperSemiCrf } from "./paperSemiCrfTraining";
+import { parsePaperSemiCrfAuthorFeatureCounts } from "./paperSemiCrfAuthorModel";
 
 const finiteNumber = z.number().refine(Number.isFinite);
 const optimizerCheckpointSchema = z
@@ -39,6 +40,10 @@ const trainingCheckpointSchema = z
     maxSegmentLength: z.number().int().positive(),
     l2: finiteNumber.nonnegative(),
     minFeatureCount: z.number().int().nonnegative(),
+    featureCountsSha256: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional(),
     optimizer: optimizerCheckpointSchema,
   })
   .strict();
@@ -53,10 +58,18 @@ export async function trainPaperSemiCrfFile(options: {
   l2: number;
   gradientTolerance?: number;
   resumePath?: string;
+  featureCountsPath?: string;
 }) {
   const recordsBytes = await readFile(options.recordsPath);
   const recordsSha256 = sha256(recordsBytes);
   const records = parsePaperSemiCrfTrainingRecords(JSON.parse(recordsBytes.toString("utf8")));
+  const featureCountsBytes =
+    options.featureCountsPath === undefined ? undefined : await readFile(options.featureCountsPath);
+  const featureCountsSha256 = featureCountsBytes === undefined ? undefined : sha256(featureCountsBytes);
+  const featureNames =
+    featureCountsBytes === undefined
+      ? undefined
+      : parsePaperSemiCrfAuthorFeatureCounts(featureCountsBytes.toString("utf8"), options.minFeatureCount);
   const resume =
     options.resumePath === undefined
       ? undefined
@@ -66,6 +79,7 @@ export async function trainPaperSemiCrfFile(options: {
     (resume.recordsSha256 !== recordsSha256 ||
       resume.l2 !== options.l2 ||
       resume.minFeatureCount !== options.minFeatureCount ||
+      resume.featureCountsSha256 !== featureCountsSha256 ||
       resume.maxSegmentLength !== records.maxSegmentLength ||
       resume.labels.length !== records.labels.length ||
       resume.labels.some((label, index) => label !== records.labels[index]))
@@ -78,7 +92,11 @@ export async function trainPaperSemiCrfFile(options: {
     minFeatureCount: options.minFeatureCount,
     maxIterations: options.maxIterations,
     ...(options.gradientTolerance === undefined ? {} : { gradientTolerance: options.gradientTolerance }),
-    ...(resume === undefined ? {} : { featureNames: resume.featureNames, resume: resume.optimizer }),
+    ...(resume === undefined
+      ? featureNames === undefined
+        ? {}
+        : { featureNames }
+      : { featureNames: resume.featureNames, resume: resume.optimizer }),
   });
   const modelText = jsonText(trained.model);
   const checkpoint = {
@@ -89,6 +107,7 @@ export async function trainPaperSemiCrfFile(options: {
     maxSegmentLength: records.maxSegmentLength,
     l2: options.l2,
     minFeatureCount: options.minFeatureCount,
+    ...(featureCountsSha256 === undefined ? {} : { featureCountsSha256 }),
     optimizer: trained.checkpoint,
   };
   trainingCheckpointSchema.parse(checkpoint);

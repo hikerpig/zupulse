@@ -66,12 +66,20 @@ export type PaperSemiCrfFeature = {
 };
 
 export type PaperSemiCrfFeatureProvider = (input: PaperSemiCrfLocalPotentialInput) => readonly PaperSemiCrfFeature[];
+export type PaperSemiCrfSegmentFeatureProvider = (segment: PaperSemiCrfSegment) => readonly PaperSemiCrfFeature[];
+export type PaperSemiCrfTransitionFeatureProvider = (
+  currentLabelId: number,
+  previousLabelId: number,
+) => readonly PaperSemiCrfFeature[];
 
-export type PaperSemiCrfLinearLatticeInput = {
+type PaperSemiCrfLatticeShape = {
   eventCount: number;
   labelCount: number;
   maxSegmentLength: number;
   weights: readonly number[];
+};
+
+export type PaperSemiCrfLinearLatticeInput = PaperSemiCrfLatticeShape & {
   features: PaperSemiCrfFeatureProvider;
 };
 
@@ -141,12 +149,108 @@ export function evaluatePaperSemiCrfNegativeLogLikelihood(
   return { value, gradient, logPartition, targetScore };
 }
 
+export function evaluatePaperSemiCrfFactorizedNegativeLogLikelihood(
+  input: Omit<PaperSemiCrfLinearLatticeInput, "features"> & {
+    segmentFeatures: PaperSemiCrfSegmentFeatureProvider;
+    transitionFeatures: PaperSemiCrfTransitionFeatureProvider;
+    targetSegments: readonly PaperSemiCrfSegment[];
+    l2: number;
+  },
+): {
+  value: number;
+  gradient: number[];
+  logPartition: number;
+  targetScore: number;
+} {
+  validateLinearLattice(input);
+  validateTargetPath(input);
+  if (!Number.isFinite(input.l2) || input.l2 < 0) throw new Error("invalid paper semi-CRF regularization");
+  const transitions = Array.from({ length: input.labelCount }, (_, currentLabelId) =>
+    Array.from({ length: input.labelCount }, (_, previousLabelId) =>
+      scoreSparseFeatures(input.weights, input.transitionFeatures(currentLabelId, previousLabelId)),
+    ),
+  );
+  const earliestStarts = Array.from({ length: input.eventCount + 1 }, (_, endEvent) =>
+    Math.max(0, endEvent - input.maxSegmentLength),
+  );
+  const segmentScores = Array.from({ length: input.eventCount + 1 }, (_, endEvent) => {
+    if (endEvent === 0) return new Float64Array();
+    const earliestStart = earliestStarts[endEvent]!;
+    const scores = new Float64Array((endEvent - earliestStart) * input.labelCount);
+    for (let startEvent = earliestStart; startEvent < endEvent; startEvent += 1) {
+      for (let labelId = 0; labelId < input.labelCount; labelId += 1) {
+        scores[(startEvent - earliestStart) * input.labelCount + labelId] = scoreSparseFeatures(
+          input.weights,
+          input.segmentFeatures({ startEvent, endEvent, labelId }),
+        ).score;
+      }
+    }
+    return scores;
+  });
+  const segmentScore = (startEvent: number, endEvent: number, labelId: number): number =>
+    segmentScores[endEvent]![(startEvent - earliestStarts[endEvent]!) * input.labelCount + labelId]!;
+  const { forward, incoming } = factorizedForward(input, transitions, segmentScore);
+  const { backward, futureMass } = factorizedBackward(input, transitions, segmentScore);
+  const logPartition = input.eventCount === 0 ? 0 : logSumExp(forward[input.eventCount]!);
+  const expectedCounts = input.weights.map(() => 0);
+  accumulateFactorizedExpectedCounts(
+    input,
+    transitions,
+    segmentScore,
+    forward,
+    backward,
+    incoming,
+    futureMass,
+    logPartition,
+    expectedCounts,
+  );
+  const targetCounts = input.weights.map(() => 0);
+  let targetScore = 0;
+  for (const [index, segment] of input.targetSegments.entries()) {
+    const segmentScored = scoreSparseFeatures(input.weights, input.segmentFeatures(segment));
+    targetScore += segmentScored.score;
+    addFeatureCounts(targetCounts, segmentScored.features, 1);
+    if (index > 0) {
+      const previousLabelId = input.targetSegments[index - 1]!.labelId;
+      const transition = transitions[segment.labelId]![previousLabelId]!;
+      targetScore += transition.score;
+      addFeatureCounts(targetCounts, transition.features, 1);
+    }
+  }
+  const squaredWeightSum = input.weights.reduce((sum, weight) => sum + weight * weight, 0);
+  const value = logPartition - targetScore + 0.5 * input.l2 * squaredWeightSum;
+  const gradient = input.weights.map(
+    (weight, index) => expectedCounts[index]! - targetCounts[index]! + input.l2 * weight,
+  );
+  if (!Number.isFinite(value) || gradient.some((component) => !Number.isFinite(component))) {
+    throw new Error("non-finite paper semi-CRF objective");
+  }
+  return { value, gradient, logPartition, targetScore };
+}
+
 type ScoredLocal = {
   score: number;
   features: readonly PaperSemiCrfFeature[];
 };
 
 type LinearLocalScorer = (input: PaperSemiCrfLocalPotentialInput) => ScoredLocal;
+
+function scoreSparseFeatures(weights: readonly number[], features: readonly PaperSemiCrfFeature[]): ScoredLocal {
+  let score = 0;
+  for (const feature of features) {
+    if (
+      !Number.isSafeInteger(feature.index) ||
+      feature.index < 0 ||
+      feature.index >= weights.length ||
+      !Number.isFinite(feature.value)
+    ) {
+      throw new Error("invalid paper semi-CRF feature");
+    }
+    score += weights[feature.index]! * feature.value;
+  }
+  if (!Number.isFinite(score)) throw new Error("non-finite paper semi-CRF potential");
+  return { score, features };
+}
 
 function createLinearLocalScorer(
   weights: readonly number[],
@@ -178,6 +282,122 @@ function createLinearLocalScorer(
     cache.set(key, scored);
     return scored;
   };
+}
+
+function factorizedForward(
+  input: Pick<PaperSemiCrfLinearLatticeInput, "eventCount" | "labelCount" | "maxSegmentLength">,
+  transitions: readonly (readonly ScoredLocal[])[],
+  segmentScore: (startEvent: number, endEvent: number, labelId: number) => number,
+): { forward: number[][]; incoming: number[][] } {
+  const forward = Array.from({ length: input.eventCount + 1 }, () =>
+    Array.from({ length: input.labelCount }, () => Number.NEGATIVE_INFINITY),
+  );
+  const incoming = Array.from({ length: input.eventCount + 1 }, () =>
+    Array.from({ length: input.labelCount }, () => Number.NEGATIVE_INFINITY),
+  );
+  for (let endEvent = 1; endEvent <= input.eventCount; endEvent += 1) {
+    for (let labelId = 0; labelId < input.labelCount; labelId += 1) {
+      let total = Number.NEGATIVE_INFINITY;
+      for (let startEvent = Math.max(0, endEvent - input.maxSegmentLength); startEvent < endEvent; startEvent += 1) {
+        const segment = segmentScore(startEvent, endEvent, labelId);
+        if (startEvent === 0) {
+          total = logAddExp(total, segment);
+          continue;
+        }
+        total = logAddExp(total, segment + incoming[startEvent]![labelId]!);
+      }
+      forward[endEvent]![labelId] = total;
+    }
+    for (let currentLabelId = 0; currentLabelId < input.labelCount; currentLabelId += 1) {
+      let total = Number.NEGATIVE_INFINITY;
+      for (let previousLabelId = 0; previousLabelId < input.labelCount; previousLabelId += 1) {
+        total = logAddExp(
+          total,
+          forward[endEvent]![previousLabelId]! + transitions[currentLabelId]![previousLabelId]!.score,
+        );
+      }
+      incoming[endEvent]![currentLabelId] = total;
+    }
+  }
+  return { forward, incoming };
+}
+
+function factorizedBackward(
+  input: Pick<PaperSemiCrfLinearLatticeInput, "eventCount" | "labelCount" | "maxSegmentLength">,
+  transitions: readonly (readonly ScoredLocal[])[],
+  segmentScore: (startEvent: number, endEvent: number, labelId: number) => number,
+): { backward: number[][]; futureMass: number[][] } {
+  const backward = Array.from({ length: input.eventCount + 1 }, () =>
+    Array.from({ length: input.labelCount }, () => Number.NEGATIVE_INFINITY),
+  );
+  const futureMass = Array.from({ length: input.eventCount + 1 }, () =>
+    Array.from({ length: input.labelCount }, () => Number.NEGATIVE_INFINITY),
+  );
+  backward[input.eventCount]!.fill(0);
+  for (let startEvent = input.eventCount - 1; startEvent >= 1; startEvent -= 1) {
+    for (let labelId = 0; labelId < input.labelCount; labelId += 1) {
+      let total = Number.NEGATIVE_INFINITY;
+      for (
+        let endEvent = startEvent + 1;
+        endEvent <= Math.min(input.eventCount, startEvent + input.maxSegmentLength);
+        endEvent += 1
+      ) {
+        total = logAddExp(total, segmentScore(startEvent, endEvent, labelId) + backward[endEvent]![labelId]!);
+      }
+      futureMass[startEvent]![labelId] = total;
+    }
+    for (let previousLabelId = 0; previousLabelId < input.labelCount; previousLabelId += 1) {
+      let total = Number.NEGATIVE_INFINITY;
+      for (let labelId = 0; labelId < input.labelCount; labelId += 1) {
+        total = logAddExp(total, futureMass[startEvent]![labelId]! + transitions[labelId]![previousLabelId]!.score);
+      }
+      backward[startEvent]![previousLabelId] = total;
+    }
+  }
+  return { backward, futureMass };
+}
+
+function accumulateFactorizedExpectedCounts(
+  input: Omit<PaperSemiCrfLinearLatticeInput, "features"> & {
+    segmentFeatures: PaperSemiCrfSegmentFeatureProvider;
+  },
+  transitions: readonly (readonly ScoredLocal[])[],
+  segmentScore: (startEvent: number, endEvent: number, labelId: number) => number,
+  forward: readonly (readonly number[])[],
+  backward: readonly (readonly number[])[],
+  incoming: readonly (readonly number[])[],
+  futureMass: readonly (readonly number[])[],
+  logPartition: number,
+  counts: number[],
+): void {
+  for (let endEvent = 1; endEvent <= input.eventCount; endEvent += 1) {
+    for (let startEvent = Math.max(0, endEvent - input.maxSegmentLength); startEvent < endEvent; startEvent += 1) {
+      for (let labelId = 0; labelId < input.labelCount; labelId += 1) {
+        const segment = { startEvent, endEvent, labelId };
+        const sharedLogScore = segmentScore(startEvent, endEvent, labelId) + backward[endEvent]![labelId]!;
+        let segmentProbability = 0;
+        if (startEvent === 0) {
+          segmentProbability = Math.exp(sharedLogScore - logPartition);
+        } else {
+          segmentProbability = Math.exp(incoming[startEvent]![labelId]! + sharedLogScore - logPartition);
+        }
+        addFeatureCounts(counts, input.segmentFeatures(segment), segmentProbability);
+      }
+    }
+  }
+  for (let startEvent = 1; startEvent < input.eventCount; startEvent += 1) {
+    for (let labelId = 0; labelId < input.labelCount; labelId += 1) {
+      for (let previousLabelId = 0; previousLabelId < input.labelCount; previousLabelId += 1) {
+        const probability = Math.exp(
+          forward[startEvent]![previousLabelId]! +
+            transitions[labelId]![previousLabelId]!.score +
+            futureMass[startEvent]![labelId]! -
+            logPartition,
+        );
+        addFeatureCounts(counts, transitions[labelId]![previousLabelId]!.features, probability);
+      }
+    }
+  }
 }
 
 function computeForward(input: PaperSemiCrfLinearLatticeInput, local: LinearLocalScorer): number[][] {
@@ -260,7 +480,7 @@ function addFeatureCounts(counts: number[], features: readonly PaperSemiCrfFeatu
   for (const feature of features) counts[feature.index]! += feature.value * scale;
 }
 
-function validateLinearLattice(input: PaperSemiCrfLinearLatticeInput): void {
+function validateLinearLattice(input: PaperSemiCrfLatticeShape): void {
   if (
     !Number.isSafeInteger(input.eventCount) ||
     input.eventCount < 0 ||
@@ -277,7 +497,7 @@ function validateLinearLattice(input: PaperSemiCrfLinearLatticeInput): void {
 }
 
 function validateTargetPath(
-  input: PaperSemiCrfLinearLatticeInput & { targetSegments: readonly PaperSemiCrfSegment[] },
+  input: PaperSemiCrfLatticeShape & { targetSegments: readonly PaperSemiCrfSegment[] },
 ): void {
   let nextStart = 0;
   for (const segment of input.targetSegments) {
@@ -305,4 +525,11 @@ function logSumExp(values: readonly number[]): number {
   const result = maximum + Math.log(values.reduce((sum, value) => sum + Math.exp(value - maximum), 0));
   if (!Number.isFinite(result)) throw new Error("non-finite paper semi-CRF partition");
   return result;
+}
+
+function logAddExp(left: number, right: number): number {
+  if (left === Number.NEGATIVE_INFINITY) return right;
+  if (right === Number.NEGATIVE_INFINITY) return left;
+  const maximum = Math.max(left, right);
+  return maximum + Math.log(Math.exp(left - maximum) + Math.exp(right - maximum));
 }

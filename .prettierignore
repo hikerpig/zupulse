@@ -4,4 +4,5 @@ node_modules
 **/test-results
 **/playwright-report
 test-fixtures
+packages/web-core/src/harmony/harmony-paper-semi-crf-model.json
 pnpm-lock.yaml

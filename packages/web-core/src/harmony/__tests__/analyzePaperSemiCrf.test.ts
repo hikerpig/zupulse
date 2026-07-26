@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { analyzeHarmony, BUNDLED_PAPER_SEMI_CRF_ALGORITHM_VERSION } from "../analyzeHarmony";
 import { analyzeHarmonyPaperSemiCrf } from "../analyzePaperSemiCrf";
 import { createHarmonyAnalysisInput } from "../analysisInput";
 import type { PaperSemiCrfLinearModel } from "../paper-semi-crf-model";
@@ -57,6 +58,44 @@ describe("analyzeHarmonyPaperSemiCrf", () => {
       chord: { root: { step: "C", alter: 0 }, kind: "major" },
     });
     expect(segments[0]?.alternatives).toHaveLength(3);
+  });
+
+  it("uses the frozen Mozart Semi-CRF model through the production entry point", () => {
+    const input = createHarmonyAnalysisInput({
+      ticksPerQuarter: 480,
+      measures: [{ index: 0, durationTicks: 1920, timeSignature: { numerator: 4, denominator: 4 } }],
+      tracks: [
+        {
+          id: "piano",
+          name: "Piano",
+          isPercussion: false,
+          staves: [
+            {
+              index: 0,
+              notes: [0, 4, 7].map((soundingPitchClass, index) => ({
+                id: `production-note-${index}`,
+                moment: { measureIndex: 0, offsetTicks: 0 },
+                durationTicks: 1920,
+                soundingPitchClass,
+                soundingMidi: 60 + soundingPitchClass,
+                voice: 1,
+              })),
+            },
+          ],
+        },
+      ],
+    });
+
+    const segments = analyzeHarmony(input, {
+      includedTrackIds: ["piano"],
+      topK: 8,
+      decisionThreshold: 0,
+    });
+
+    expect(BUNDLED_PAPER_SEMI_CRF_ALGORITHM_VERSION).toContain(
+      "6fb18d1245aea9d89f5568a9b384b405c5326cb37015cc2caa5ade8dad5f7515",
+    );
+    expect(segments[0]).toMatchObject({ status: "resolved", chord: { root: { step: "C" }, kind: "major" } });
   });
 
   it("keeps rule confidence separate from the CRF path score", () => {

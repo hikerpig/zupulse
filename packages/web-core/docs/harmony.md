@@ -9,17 +9,17 @@
 ```text
 乐谱与选中轨道
   → analysisInput：校验并建立稳定的分析输入
-  → boundaries：生成合法时间边界 lattice
-  → features：按候选区间汇总 pitch-class、时值、onset 与 bass
-  → candidates：规则生成并评分结构化和弦候选
-  → decode + transitions：用有界 beam search 选择整段和弦序列
-  → learnedRanker：仅扩充和排序每段的 Top-8 alternatives
-  → postprocess：抑制短暂非和弦、合并相邻段、应用 confidence 拒识
-  → Primary Harmony Reranker：在冻结 range 上从 Top-8 选择 primary
+  → paper basic events：相邻 note onset/offset 分区
+  → paper segment features + chord bigram
+  → exact semi-Markov Viterbi：选择 primary 与 boundary
+  → learnedRanker：在冻结 range 上生成 Top-8 alternatives
+  → rule confidence：独立应用 resolved/unresolved 拒识
   → HarmonySegment[]
 ```
 
-生产入口是 [`analyzeRules.ts`](../src/harmony/analyzeRules.ts)。规则候选负责主序列、boundary、后处理和暂时的拒识 confidence；frequency ranker 构造 alternatives，量化 MLP 只在最终冻结 range 上选择 primary chord。两种学习分都不进入序列累计，model logit 也不充当 confidence。
+生产入口是 [`analyzeHarmony.ts`](../src/harmony/analyzeHarmony.ts)。paper-compatible Semi-CRF 负责主序列
+与 boundary；frequency ranker 只在冻结 range 上构造 alternatives，并提供与 CRF path score 分离的
+拒识 confidence。旧 [`analyzeRules.ts`](../src/harmony/analyzeRules.ts) 是显式 legacy baseline。
 
 `alternatives` 是独立排序的候选列表，不承诺第一项等于或一定包含 primary chord。相邻同和弦 segment 合并时，候选按原顺序稳定去重并始终限制为最多 8 个；评测不得把合并前多个列表拼接成大于 Top-8 的 oracle。
 
@@ -31,6 +31,8 @@
 | [`writtenTime.ts`](../src/harmony/writtenTime.ts)                                 | 小节内书写时间、区间比较和位置语义。                                                  |
 | [`analysisInput.ts`](../src/harmony/analysisInput.ts)                             | 将轨道、staff、音符和小节整理成确定性的分析输入。                                     |
 | [`analyzeRules.ts`](../src/harmony/analyzeRules.ts)                               | 编排候选边界、规则解码、学习 alternatives 和后处理。                                  |
+| [`analyzeHarmony.ts`](../src/harmony/analyzeHarmony.ts)                           | 加载冻结模型并执行生产 Semi-CRF 分析。                                                |
+| [`analyzePaperSemiCrf.ts`](../src/harmony/analyzePaperSemiCrf.ts)                 | 把 exact paper path 适配为 `HarmonySegment[]`。                                       |
 | [`boundaries.ts`](../src/harmony/boundaries.ts)                                   | 从小节与音符事件生成去重、合法且有预算上限的边界 lattice。                            |
 | [`features.ts`](../src/harmony/features.ts)                                       | 缓存区间内 pitch-class duration、onset count 和 bass 等特征。                         |
 | [`candidates.ts`](../src/harmony/candidates.ts)                                   | 生成 major/minor、6/7/9/11/13、add、alteration、slash bass 等结构化候选并计算规则分。 |
@@ -108,4 +110,8 @@ ranker 是静态 JSON + TypeScript 实现，不使用 Torch、Python runtime 或
 pnpm vitest run packages/web-core/src/harmony
 ```
 
-训练、真实语料评估和性能 benchmark 见 [`scripts/README.md`](../../../scripts/README.md)，完整系统边界见 [`docs/architecture/harmony-analysis-system.md`](../../../docs/architecture/harmony-analysis-system.md)。架构决策见 [`ADR 0053`](../../../docs/adr/0053-use-bundled-learned-harmony-ranker.md)。运行时代码和测试结果高于文档；若实现边界变化，应同步更新本文和 ADR。
+训练、真实语料评估和性能 benchmark 见 [`scripts/README.md`](../../../scripts/README.md)，完整系统边界见
+[`docs/architecture/harmony-analysis-system.md`](../../../docs/architecture/harmony-analysis-system.md)。
+生产替换决策见
+[`ADR 0066`](../../../docs/adr/0066-use-paper-semi-crf-as-production-harmony-analyzer.md)。运行时代码和
+测试结果高于文档；若实现边界变化，应同步更新本文和 ADR。

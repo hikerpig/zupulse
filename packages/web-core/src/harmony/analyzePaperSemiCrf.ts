@@ -1,9 +1,9 @@
 import type { HarmonyAnalysisInput } from "./analysisInput";
 import { bundledHarmonyRankerModel } from "./bundledHarmonyRanker";
 import { generateHarmonyCandidates } from "./candidates";
-import { decodePaperSemiCrf } from "./paper-semi-crf-decode";
+import { decodePaperSemiCrfFactorized } from "./paper-semi-crf-decode";
 import { buildPaperSemiCrfEvents } from "./paper-semi-crf-events";
-import { createPaperSemiCrfFactorizedLinearPotential } from "./paper-semi-crf-features";
+import { createPaperSemiCrfFactorizedLinearScorers } from "./paper-semi-crf-features";
 import { createPaperSemiCrfLabelInventory } from "./paper-semi-crf-labels";
 import {
   PAPER_SEMI_CRF_FEATURE_VERSION,
@@ -32,17 +32,17 @@ export function analyzeHarmonyPaperSemiCrf(
       throw new Error(`unsupported bundled paper Semi-CRF label: ${label.referenceLabel}`);
     return label;
   });
-  const potential = createPaperSemiCrfFactorizedLinearPotential({
+  const scorers = createPaperSemiCrfFactorizedLinearScorers({
     events,
     labels,
     dictionary: { featureVersion: PAPER_SEMI_CRF_FEATURE_VERSION, featureNames: model.featureNames },
     weights: model.weights,
   });
-  const path = decodePaperSemiCrf({
+  const path = decodePaperSemiCrfFactorized({
     eventCount: events.length,
     labelCount: labels.length,
     maxSegmentLength: model.maxSegmentLength,
-    potential,
+    ...scorers,
   });
   const featureCache = buildHarmonyFeatureCache({
     ticksPerQuarter: input.ticksPerQuarter,
@@ -54,8 +54,8 @@ export function analyzeHarmonyPaperSemiCrf(
       end: events[segment.endEvent - 1]!.range.end,
     };
     const alternatives = generateHarmonyCandidates(range, featureCache.forRange(range), {
-      topK: options.topK,
       rankerModel: bundledHarmonyRankerModel,
+      ...(options.topK === undefined ? {} : { topK: options.topK }),
     });
     const chord = labels[segment.labelId]!.chord;
     const matching = alternatives.find((candidate) => sameChord(candidate.chord, chord));

@@ -1,8 +1,10 @@
 ---
-status: accepted
+status: superseded
 ---
 
 # Use a fixed-boundary quantized MLP for harmony primary selection
+
+> 本决策的生产默认已由 ADR 0066 取代；保留本文仅用于解释旧模型与 legacy baseline。
 
 Zupulse keeps rule decoding and postprocessing authoritative for Score Written Ranges, then uses a bundled `59 → 16 ReLU → 1` MLP to choose the primary Chord Symbol from each final Top-8. The MLP was accepted because its two-decimal JSON asset improved every v3 tune corpus and aggregate oracle-hit Top-1 by `0.0961` over the linear baseline, while measured P95 remained `0.9966x` of rule-only analysis; PyTorch remains an offline training tool and production inference is deterministic TypeScript.
 

@@ -47,6 +47,21 @@ describe("alphaTab MusicXML projection", () => {
     ]);
   });
 
+  it("uses alphaTab calculated master-bar durations when no duration field exists", () => {
+    const input = projectAlphaTabHarmonyInput({
+      masterBars: [
+        {
+          timeSignatureNumerator: 2,
+          timeSignatureDenominator: 4,
+          calculateDuration: () => 960,
+        },
+      ],
+      tracks: [],
+    });
+
+    expect(input.measures[0]?.durationTicks).toBe(960);
+  });
+
   it("projects key-aware source spellings for harmony candidates", () => {
     const input = projectAlphaTabHarmonyInput({
       masterBars: [{ duration: 960 }],

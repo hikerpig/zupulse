@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decodePaperSemiCrf } from "../paper-semi-crf-decode";
+import { decodePaperSemiCrf, decodePaperSemiCrfFactorized } from "../paper-semi-crf-decode";
 import type {
   PaperSemiCrfLocalPotential,
   PaperSemiCrfLocalPotentialInput,
@@ -24,6 +24,32 @@ describe("paper semi-CRF exact Viterbi", () => {
       labelCount: 2,
       maxSegmentLength: 2,
       potential,
+    });
+
+    expect(actual).toEqual(expected);
+  });
+
+  it("matches the generic decoder when segment and transition potentials are factorized", () => {
+    const segmentPotential = (segment: PaperSemiCrfSegment) =>
+      (segment.endEvent - segment.startEvent) * [0.2, 0.6][segment.labelId]! +
+      (segment.startEvent === 1 && segment.labelId === 0 ? 1.3 : 0);
+    const transitionPotential = (currentLabelId: number, previousLabelId: number) =>
+      previousLabelId === 0 && currentLabelId === 1 ? 0.7 : 0;
+    const expected = decodePaperSemiCrf({
+      eventCount: 4,
+      labelCount: 2,
+      maxSegmentLength: 2,
+      potential: ({ segment, previousLabelId }) =>
+        segmentPotential(segment) +
+        (previousLabelId === undefined ? 0 : transitionPotential(segment.labelId, previousLabelId)),
+    });
+
+    const actual = decodePaperSemiCrfFactorized({
+      eventCount: 4,
+      labelCount: 2,
+      maxSegmentLength: 2,
+      segmentPotential,
+      transitionPotential,
     });
 
     expect(actual).toEqual(expected);

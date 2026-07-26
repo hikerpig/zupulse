@@ -1,4 +1,5 @@
 import {
+  analyzeHarmony,
   analyzeHarmonyRules,
   buildLegalBoundaryLattice,
   compareMoments,
@@ -41,6 +42,12 @@ export async function evaluatePop909Corpus(
   const reportSplit = options.reportSplit ?? "eval";
   const decisionThreshold = options.decisionThreshold ?? 0.6;
   const boundaryPolicy = options.boundaryPolicy ?? "dense-note-events";
+  const analyze =
+    options.primaryRerankerModel === false ||
+    options.boundaryPolicy !== undefined ||
+    options.boundaryClassifierModel !== undefined
+      ? analyzeHarmonyRules
+      : analyzeHarmony;
   const songs = (await readdir(root, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory() && /^\d{3}$/.test(entry.name))
     .map((entry) => entry.name)
@@ -78,7 +85,7 @@ export async function evaluatePop909Corpus(
     if (split !== reportSplit) continue;
     reportGroups.add(song);
     reportMeasures += piece.input.measures.length;
-    const segments = analyzeHarmonyRules(piece.input, {
+    const segments = analyze(piece.input, {
       includedTrackIds: ["pop909"],
       topK: 8,
       decisionThreshold,
@@ -92,7 +99,7 @@ export async function evaluatePop909Corpus(
     const primarySegments =
       decisionThreshold === 0
         ? segments
-        : analyzeHarmonyRules(piece.input, {
+        : analyze(piece.input, {
             includedTrackIds: ["pop909"],
             topK: 8,
             decisionThreshold: 0,

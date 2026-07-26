@@ -31,6 +31,7 @@ type HarmonyRuntimeScore = Omit<RuntimeScore, "tracks" | "masterBars"> & {
   masterBars?: Array<{
     index?: number;
     duration?: number;
+    calculateDuration?: () => number;
     timeSignatureNumerator?: number;
     timeSignatureDenominator?: number;
   }>;
@@ -119,9 +120,10 @@ export function projectAlphaTabHarmonyInput(score: HarmonyRuntimeScore): Harmony
   const keySignatures = measureKeySignatures(score);
   const measures = (score.masterBars ?? []).map((bar, index) => {
     const keySignature = keySignatures.get(index);
+    const durationTicks = bar.duration ?? bar.calculateDuration?.() ?? 0;
     return {
       index,
-      durationTicks: Math.max(1, bar.duration ?? 0),
+      durationTicks: Math.max(1, durationTicks),
       timeSignature: { numerator: bar.timeSignatureNumerator ?? 4, denominator: bar.timeSignatureDenominator ?? 4 },
       ...(keySignature === undefined ? {} : { key: `fifths:${keySignature}` }),
     };

@@ -1,4 +1,5 @@
 import {
+  analyzeHarmony,
   analyzeHarmonyRules,
   buildLegalBoundaryLattice,
   compareMoments,
@@ -47,6 +48,13 @@ export async function evaluateDcmlCorpus(
   const reportSplit = options.reportSplit ?? "eval";
   const decisionThreshold = options.decisionThreshold ?? 0.6;
   const boundaryPolicy = options.boundaryPolicy ?? "dense-note-events";
+  const analyze =
+    options.primaryRerankerModel === false ||
+    options.boundaryPolicy !== undefined ||
+    options.boundaryClassifierModel !== undefined ||
+    options.structuredModel !== undefined
+      ? analyzeHarmonyRules
+      : analyzeHarmony;
   const groupMode = options.groupBy ?? "prefix-before-hyphen";
   const files = (await readdir(resolve(root, "harmonies")))
     .filter((name) => name.endsWith(".harmonies.tsv"))
@@ -88,7 +96,7 @@ export async function evaluateDcmlCorpus(
     if (split !== reportSplit) continue;
     reportGroups.add(groupId);
     reportMeasures += piece.input.measures.length;
-    const segments = analyzeHarmonyRules(piece.input, {
+    const segments = analyze(piece.input, {
       includedTrackIds: ["dcml"],
       topK: 8,
       decisionThreshold,
@@ -103,7 +111,7 @@ export async function evaluateDcmlCorpus(
     const primarySegments =
       decisionThreshold === 0
         ? segments
-        : analyzeHarmonyRules(piece.input, {
+        : analyze(piece.input, {
             includedTrackIds: ["dcml"],
             topK: 8,
             decisionThreshold: 0,

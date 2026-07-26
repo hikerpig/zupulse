@@ -189,11 +189,32 @@ windows 从零训练 165 iterations，并在 tune windows 上与当前 `analyzeH
 feature 与 objective，并非 Semi-CRF 方法本身无效。但它仍只覆盖约 39% 可无损映射的 gold labels，
 主动排除了大量 inversion、dominant、unaligned 和 span>20 区域，不能外推到完整当前语料。
 
-因此当前 adoption decision 为 **research-only**：保留 paper-compatible analyzer、训练器与评估
-命令，不替换 production `analyzeHarmonyRules`，不修改现有持久化或 UI contract。进入产品候选前
-至少还需要批准并版本化 product label adaptation、在完整 train/tune contract 上重跑、设定并通过
-整曲 runtime budget，最后才可申请读取 final holdout。这个结论不修改 Current ADR，因为没有发生
-生产架构变更。
+当时的 adoption checkpoint 为 **research-only**；它记录的是用户批准替换生产之前的证据状态，
+不再代表当前决策。
+
+### Production adoption and K331-3 isolated eval
+
+2026-07-26 经明确批准后，production default 已切换到 bundled paper-compatible Semi-CRF。模型仍是
+相同 SHA-256，Studio Revision 的 `algorithmVersion` 包含该 hash，legacy rules 只保留作 baseline。
+
+`K331-3_reviewed.mxl` 本身仍只是结构回归 fixture，不能作为 accuracy gold。准确率来自相同乐章的
+DCML Mozart v2.3 专家标注、隔离 `eval` group；本次读取由用户点名 K331 明确授权。128 个 gold 中
+118 个可映射，mapping coverage 为 `92.19%`。
+
+| Metric                         | Semi-CRF production | Previous rules |     Delta |
+| ------------------------------ | ------------------: | -------------: | --------: |
+| Raw predicted-primary accuracy |              79.30% |         60.86% | +18.44 pp |
+| Raw interval accuracy          |              71.93% |         58.40% | +13.52 pp |
+| Gold-start boundary F1         |              83.87% |         79.05% |  +4.82 pp |
+| Tolerant interval boundary F1  |              77.42% |         41.45% | +35.97 pp |
+
+产品默认 `decisionThreshold=0.6` 下，gold-start resolved precision 为 `90.79%`、coverage 为
+`80.12%`；按完整时长统计的 resolved precision 为 `89.11%`、coverage 为 `71.52%`，把 unresolved
+也计为不正确时 interval accuracy 为 `63.73%`。
+
+同一 `.mxl` 实际输出 121 segments（100 resolved / 21 unresolved）。修复 alphaTab
+`MasterBar.calculateDuration()` 投影后，factorized exact Viterbi 的整曲 wall clock 为 `28.10 s`，
+峰值 RSS `594,526,208` bytes；仍未满足 5 秒目标，已作为 ADR 0066 的显式风险记录。
 
 ### Full-fold resource boundary
 

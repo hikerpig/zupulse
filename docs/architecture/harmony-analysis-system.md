@@ -46,17 +46,18 @@ MusicXML/alphaTab 投影生成可序列化 `HarmonyAnalysisInput`，保留 measu
 
 ## 分析引擎
 
-生产入口是 [`analyzeRules.ts`](../../packages/web-core/src/harmony/analyzeRules.ts)，完整文件职责和评分方法见 [`packages/web-core/docs/harmony.md`](../../packages/web-core/docs/harmony.md)。核心顺序是：
+生产入口是 [`analyzeHarmony.ts`](../../packages/web-core/src/harmony/analyzeHarmony.ts)，核心顺序是：
 
-1. 从小节、拍点、音符与来源事件建立有硬上限的 legal boundary lattice。
-2. 用区间缓存统计 pitch-class duration、onset、bass、voice coverage 等特征。
-3. evidence-driven 生成 triad、sus、power、6/7/9/11/13、add、altered 与 inversion 候选。
-4. 用规则 LocalScore、弱 Transition prior 和有界 beam search 选择全局序列。
-5. bundled frequency ranker 扩充和排序 Top-8 alternatives。
-6. 抑制短暂非和弦片段、合并相邻同和弦，并用独立 confidence threshold 输出 resolved/unresolved。
-7. 两位小数 MLP 只在冻结的最终 range 上从 Top-8 选择 primary，不改变 boundary 或 confidence。
+1. 从相邻 note onset/offset 建立论文定义的 basic events。
+2. 对最长 20 events 的所有 segment 和冻结的 62-label inventory 提取论文特征。
+3. 用随应用发布的 Mozart train-only 线性模型和 chord bigram 执行 exact semi-Markov Viterbi。
+4. Semi-CRF path 决定 primary chord 与 boundary。
+5. bundled frequency ranker 在这些冻结 range 上生成 Top-8 alternatives，并沿用独立规则 confidence
+   做 resolved/unresolved 决策。
 
-模型是静态 JSON 和确定性 TypeScript，不需要 Torch、Python、浏览器网络请求或在线服务。模型损坏会明确失败，不能静默切换算法。
+CRF path score 不作为 confidence。模型是静态 JSON 和确定性 TypeScript，不需要 Torch、Python、
+浏览器网络请求或在线服务。模型损坏会明确失败，不能静默切换算法。旧 `analyzeHarmonyRules`
+保留为显式 legacy baseline 和实验参数路径。
 
 ## Document、来源与 Correction
 
@@ -100,7 +101,10 @@ User Correction > supported source <harmony> > active Analysis Revision
 
 ## 当前质量边界
 
-当前 analyzer 已具备浏览器可运行、确定性、可拒识和可人工修正的完整产品链，但真实语料准确率没有达到历史设计规格中的发布目标。这个事实不影响 Studio、持久化和导出能力的可用性，也不能通过降低 coverage 或把结果全部标为 unresolved 来掩盖。
+当前 analyzer 已具备浏览器可运行、确定性、可拒识和可人工修正的完整产品链。K331-3 隔离 eval
+显示 raw primary accuracy `79.30%`、raw interval accuracy `71.93%`；默认阈值下 resolved precision
+`90.79%`、gold-start coverage `80.12%`。但 `K331-3_reviewed.mxl` 整曲推理约 28 秒，仍明显超过原
+5 秒产品目标。这个性能风险不能通过 label Top-K、beam search 或静默规则回退掩盖。
 
 下一轮准确率工作必须使用冻结的数据集角色、作品级 split 和 no-regression baseline；协议、当前基线和调优循环见：
 
@@ -117,4 +121,5 @@ pnpm verify:fast
 pnpm verify:e2e
 ```
 
-Current 决策见 ADR 0052、0053；产品行为和非目标仍可从历史设计规格 [`2026-07-15-harmony-analysis-studio-design.md`](../superpowers/specs/2026-07-15-harmony-analysis-studio-design.md)追溯。
+Current 决策见 ADR 0052、0053、0066；产品行为和非目标仍可从历史设计规格
+[`2026-07-15-harmony-analysis-studio-design.md`](../superpowers/specs/2026-07-15-harmony-analysis-studio-design.md)追溯。

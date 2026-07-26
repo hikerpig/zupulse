@@ -57,8 +57,9 @@ pnpm -s harmony:cli eval path/to/manifest.json
 
 ### Paper-compatible Semi-CRF
 
-论文复现流程使用独立的 versioned records，不会调用或替换 production analyzer。训练 records 只接受
-`role: "train"`；评测只接受 `tune`，读取 `final` 必须显式传入 `--allow-final`。
+论文复现与训练流程继续使用独立的 versioned records；默认 product evaluation 已由 ADR 0066
+切换到 bundled paper-compatible Semi-CRF。训练 records 只接受 `role: "train"`；评测只接受
+`tune`，读取 `final` 必须显式传入 `--allow-final`。
 
 ```bash
 pnpm -s harmony:cli paper-semi-crf-records /path/to/folds/train1.txt \

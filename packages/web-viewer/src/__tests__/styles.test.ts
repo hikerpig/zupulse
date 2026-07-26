@@ -177,6 +177,14 @@ describe("alphaTab playback cursor styles", () => {
     }
   });
 
+  it("keeps the narrow header navigation horizontally scrollable without a vertical scrollbar", async () => {
+    const css = await source("../app/AppHeader.module.css");
+
+    expect(css).toMatch(
+      /@media \(max-width:\s*680px\)[\s\S]*?\.navigation\s*{[^}]*overflow-x:\s*auto;[^}]*overflow-y:\s*hidden;/s,
+    );
+  });
+
   it("keeps the library page out of the viewer grid regardless of stylesheet order", async () => {
     const css = await source("../features/SheetLibrary.module.css");
 

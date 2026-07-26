@@ -31,12 +31,12 @@
 - [x] Task 4: 修复真实 undefined semantic token references
 - [x] Task 5: 检查 undefined CSS variables
 - [x] Task 5: 禁止 raw/default/arbitrary visual drift
-- [ ] Task 5: 验证 explicit source detection 与 static class maps
+- [x] Task 5: 验证 explicit source detection 与 static class maps
 
 ### Checkpoint C: Design-system guardrails
 
 - [ ] semantic utility vocabulary 已冻结用于 pilot
-- [ ] light/dark computed styles 正确
+- [x] light/dark computed styles 正确
 - [x] CI 能拒绝违规 fixture
 - [x] Base UI/runtime variable exceptions 使用窄 allowlist
 
@@ -57,7 +57,7 @@
 
 ## Phase 4: Pilot slices
 
-- [ ] Task 9a: App Header / Toolbar
+- [x] Task 9a: App Header / Toolbar
 - [ ] Task 9b: ContextPopup + Library Menu/Dialog
 - [ ] Task 9c: Playback Transport + one practice/track section
 - [ ] Task 10: 运行 pilot metrics 与 Go/No-Go review

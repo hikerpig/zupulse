@@ -1,4 +1,4 @@
-import type { ComponentPropsWithoutRef, ReactNode } from "react";
+import { forwardRef, type ComponentPropsWithoutRef, type ReactNode } from "react";
 
 export type ButtonTone = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
@@ -35,20 +35,24 @@ const pressedClasses: Record<ButtonTone, string> = {
   danger: "tw:border-danger tw:bg-danger-surface",
 };
 
-export function Button({
-  children,
-  className,
-  disabled = false,
-  loading = false,
-  pressed,
-  size = "md",
-  tone = "secondary",
-  type = "button",
-  ...props
-}: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  {
+    children,
+    className,
+    disabled = false,
+    loading = false,
+    pressed,
+    size = "md",
+    tone = "secondary",
+    type = "button",
+    ...props
+  },
+  ref,
+) {
   return (
     <button
       {...props}
+      ref={ref}
       type={type}
       className={classes(
         baseClasses,
@@ -66,7 +70,7 @@ export function Button({
       {children}
     </button>
   );
-}
+});
 
 export interface IconButtonProps extends Omit<ButtonProps, "children" | "size"> {
   "aria-label": string;

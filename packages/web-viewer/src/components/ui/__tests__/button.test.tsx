@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Button, IconButton } from "../button";
 
@@ -23,6 +24,13 @@ describe("Button", () => {
     await user.tab();
 
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Save" }));
+  });
+
+  it("forwards its native element ref for overlay anchors", () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(<Button ref={ref}>Language</Button>);
+
+    expect(ref.current).toBe(screen.getByRole("button", { name: "Language" }));
   });
 
   it("disables interaction and exposes loading state", () => {

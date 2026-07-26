@@ -56,3 +56,13 @@ Allowed non-global variables:
 - `pnpm demo:build`: passed.
 - `pnpm desktop:build`: passed.
 - `pnpm ipad:web:build`: passed.
+
+## Pilot 1: App Header / Toolbar
+
+- `AppHeader.module.css` declarations: `86 → 64`，减少 `25.6%`。
+- Button visual ownership 已迁入 `Button` primitive；header grid、navigation underline、responsive layout 和
+  Desktop drag region 继续由 CSS Module 所有。
+- Browser visual checks: `1440×900` light/dark、`390×844` narrow、keyboard focus ring、locale popup 与
+  Escape close 均通过。
+- 窄屏检查发现并修复 navigation 的纵向 scrollbar；保留 `overflow-x: auto`，显式设置
+  `overflow-y: hidden`。

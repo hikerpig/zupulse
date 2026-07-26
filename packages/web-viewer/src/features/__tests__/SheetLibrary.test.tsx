@@ -92,6 +92,44 @@ describe("SheetLibrary score actions", () => {
     expect(screen.getByRole("menuitem", { name: "编辑 Created" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "删除 Created" })).toBeTruthy();
   });
+
+  it("offers a truthful continue action with a one-based measure number", async () => {
+    const onOpen = vi.fn();
+    const fresh = libraryScore();
+    const practiced: LibraryScore = {
+      ...libraryScore(),
+      id: "00000000-0000-4000-8000-000000000002",
+      title: "Practiced",
+      artist: "Player",
+      practice: {
+        hasLoop: true,
+        lastPracticedAt: "2026-07-26T10:00:00.000Z",
+        lastPosition: {
+          measureId: "measure-7",
+          measureIndex: 6,
+          beatIndex: 0,
+          tick: 11520,
+          cachedTimeMs: 24000,
+        },
+      },
+    };
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[fresh, practiced]}
+        loading={false}
+        onImport={async () => undefined}
+        onOpen={onOpen}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "打开 Created" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "继续练习 Practiced" })).toBeTruthy();
+    expect(screen.getByText(/上次练到第 7 小节/)).toBeTruthy();
+    expect(screen.queryByText("尚未练习")).toBeNull();
+    expect(screen.queryByText("Library")).toBeNull();
+  });
 });
 
 describe("SheetLibrary no-results state", () => {

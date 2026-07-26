@@ -101,7 +101,6 @@ export function SheetLibrary({
     <main className={`${pageStyles.appShell} ${styles.libraryShell} scrollable`}>
       <div className={`${pageStyles.contextBar} ${styles.libraryContextBar}`}>
         <div className={`${pageStyles.contextMain} ${styles.libraryContextMain}`}>
-          <p className={pageStyles.appKicker}>{t("kicker")}</p>
           <h1 className={`${pageStyles.contextTitle} ${styles.libraryTitle}`}>{t("title")}</h1>
           <p className={pageStyles.contextSubtitle}>{t("subtitle")}</p>
         </div>
@@ -162,72 +161,92 @@ export function SheetLibrary({
           <ul className={`${styles.libraryList} scrollable`}>
             {visible.map((score) => (
               <li key={score.id} className={styles.libraryRow}>
-                {/* Banner: format badge + favorite */}
-                <div className={styles.libraryCardBanner}>
-                  <span
-                    className={`${styles.libraryFormat} ${score.format === "musicxml" ? styles.libraryFormatMusicxml : ""}`}
-                  >
-                    {score.format.toUpperCase()}
-                  </span>
-                  <div className={styles.libraryCardBannerActions}>
-                    <button
-                      type="button"
-                      aria-label={t(score.isFavorite ? "unfavoriteScore" : "favoriteScore", {
-                        title: score.title,
-                      })}
-                      aria-pressed={score.isFavorite}
-                      onClick={() => {
-                        void application
-                          .setFavorite(score.id, !score.isFavorite)
-                          .then(() => application.refreshLibrary());
-                      }}
-                    >
-                      <Star
-                        size={14}
-                        strokeWidth={1.8}
-                        fill={score.isFavorite ? "currentColor" : "none"}
-                        aria-hidden="true"
-                      />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Main content */}
                 <button
                   type="button"
-                  className={`${styles.libraryContent} ${styles.libraryOpenAction}`}
-                  aria-label={t("openScore", { title: score.title })}
+                  className={styles.libraryOpenAction}
+                  aria-label={t(score.practice.lastPosition ? "continueScore" : "openScore", {
+                    title: score.title,
+                  })}
                   onClick={() => onOpen(score.id)}
                 >
-                  <strong>{score.title}</strong>
-                  {score.artist ? <span className={styles.libraryArtist}>{score.artist}</span> : null}
-                  <div className={styles.libraryMeta}>
-                    {score.durationMs ? <span>{formatDuration(score.durationMs)}</span> : null}
-                    {score.durationMs ? <span className={styles.libraryMetaDot} aria-hidden="true" /> : null}
-                    {score.practice.lastPracticedAt ? (
+                  <span className={styles.libraryIdentity}>
+                    <strong>{score.title}</strong>
+                    {score.artist ? <span className={styles.libraryArtist}>{score.artist}</span> : null}
+                    <span className={styles.libraryMeta}>
                       <span
-                        className={`${styles.libraryPracticeStatus} ${score.practice.hasLoop ? styles.libraryPracticeStatusLoop : styles.libraryPracticeStatusActive}`}
+                        className={`${styles.libraryFormat} ${score.format === "musicxml" ? styles.libraryFormatMusicxml : ""}`}
                       >
-                        <span className={styles.libraryPracticeStatusDot} aria-hidden="true" />
-                        {score.practice.lastPosition
-                          ? t("measure", { measure: score.practice.lastPosition.measureIndex })
-                          : t("practiced")}
-                        {score.practice.hasLoop ? t("loopSuffix") : ""}
+                        {score.format.toUpperCase()}
                       </span>
-                    ) : (
-                      <span>{t("notPracticed")}</span>
-                    )}
-                  </div>
+                      <span>
+                        {formatRelativeDate(score.importedAt, locale, {
+                          today: t("relative.today"),
+                          yesterday: t("relative.yesterday"),
+                        })}
+                      </span>
+                      {score.durationMs ? <span>{formatDuration(score.durationMs)}</span> : null}
+                    </span>
+                  </span>
+                  <span className={styles.libraryPrimaryAction}>
+                    {t(score.practice.lastPosition ? "continue" : "open")}
+                  </span>
                 </button>
 
-                {/* Footer: actions */}
-                <div className={styles.libraryCardFooter}>
-                  <span className={styles.libraryImportedDate}>
-                    {formatRelativeDate(score.importedAt, locale, {
-                      today: t("relative.today"),
-                      yesterday: t("relative.yesterday"),
+                <div className={styles.libraryPractice}>
+                  {score.practice.lastPosition ? (
+                    <span
+                      className={`${styles.libraryPracticeStatus} ${score.practice.hasLoop ? styles.libraryPracticeStatusLoop : styles.libraryPracticeStatusActive}`}
+                    >
+                      <span className={styles.libraryPracticeStatusDot} aria-hidden="true" />
+                      <span>
+                        {t("practicePosition", {
+                          measure: score.practice.lastPosition.measureIndex + 1,
+                        })}
+                        {score.practice.hasLoop ? t("loopSuffix") : ""}
+                      </span>
+                    </span>
+                  ) : score.practice.lastPracticedAt || score.practice.hasLoop ? (
+                    <span
+                      className={`${styles.libraryPracticeStatus} ${score.practice.hasLoop ? styles.libraryPracticeStatusLoop : styles.libraryPracticeStatusActive}`}
+                    >
+                      <span className={styles.libraryPracticeStatusDot} aria-hidden="true" />
+                      <span>
+                        {score.practice.lastPracticedAt ? t("practiced") : t("savedLoop")}
+                        {score.practice.hasLoop && score.practice.lastPracticedAt ? t("loopSuffix") : ""}
+                      </span>
+                    </span>
+                  ) : null}
+                  {score.practice.lastPracticedAt ? (
+                    <span className={styles.libraryPracticeDate}>
+                      {formatRelativeDate(score.practice.lastPracticedAt, locale, {
+                        today: t("relative.today"),
+                        yesterday: t("relative.yesterday"),
+                      })}
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className={styles.libraryRowActions}>
+                  <button
+                    type="button"
+                    className={styles.libraryFavoriteButton}
+                    aria-label={t(score.isFavorite ? "unfavoriteScore" : "favoriteScore", {
+                      title: score.title,
                     })}
-                  </span>
+                    aria-pressed={score.isFavorite}
+                    onClick={() => {
+                      void application
+                        .setFavorite(score.id, !score.isFavorite)
+                        .then(() => application.refreshLibrary());
+                    }}
+                  >
+                    <Star
+                      size={16}
+                      strokeWidth={1.8}
+                      fill={score.isFavorite ? "currentColor" : "none"}
+                      aria-hidden="true"
+                    />
+                  </button>
                   <Menu.Root>
                     <Menu.Trigger
                       className={styles.libraryMenuTrigger}

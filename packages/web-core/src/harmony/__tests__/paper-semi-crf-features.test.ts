@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { PaperSemiCrfEvent, PaperSemiCrfEventNote } from "../paper-semi-crf-events";
-import { extractPaperSemiCrfSegmentFeatures, paperSemiCrfConsistencyBin } from "../paper-semi-crf-features";
+import {
+  createPaperSemiCrfFeatureDictionary,
+  createPaperSemiCrfFeatureProvider,
+  createPaperSemiCrfNamedFeatureProvider,
+  encodePaperSemiCrfNamedFeatures,
+  extractPaperSemiCrfSegmentFeatures,
+  extractPaperSemiCrfTransitionFeature,
+  paperSemiCrfConsistencyBin,
+} from "../paper-semi-crf-features";
 import { createPaperSemiCrfLabelInventory, type PaperSemiCrfSupportedLabel } from "../paper-semi-crf-labels";
 
 describe("paper semi-CRF segment features", () => {
@@ -243,6 +251,53 @@ describe("paper semi-CRF segment features", () => {
         label,
       }),
     ).toContain("FIG_PURITY_80");
+  });
+
+  it("matches the reference current-to-previous chord bigram orientation", () => {
+    const previous = supportedLabel("G:min7");
+    const inventory = createPaperSemiCrfLabelInventory(["C:dim7", "C:maj"]);
+    const current = inventory.labels[1];
+    const sameRootPrevious = inventory.labels[0];
+    if (current?.status !== "supported" || sameRootPrevious?.status !== "supported") {
+      throw new Error("expected supported labels");
+    }
+
+    expect(extractPaperSemiCrfTransitionFeature(current, previous)).toBe("CHORD_BIGRAM_maj_min7_5");
+    expect(extractPaperSemiCrfTransitionFeature(current, sameRootPrevious)).toBe("CHORD_BIGRAM_maj_dim7_0");
+  });
+
+  it("builds a stable dictionary and encodes named local features without inventing unknowns", () => {
+    const labels = createPaperSemiCrfLabelInventory(["C:maj", "G:min"]).labels;
+    if (labels.some((label) => label.status !== "supported")) throw new Error("expected supported labels");
+    const supportedLabels = labels as PaperSemiCrfSupportedLabel[];
+    const events = [event(0, 0, 480, 1, [note("c", 0, 60, 480, false, 1)])];
+    const namedProvider = createPaperSemiCrfNamedFeatureProvider({ events, labels: supportedLabels });
+    const currentFeatures = namedProvider({
+      segment: { startEvent: 0, endEvent: 1, labelId: 1 },
+      previousLabelId: 0,
+    });
+    const dictionary = createPaperSemiCrfFeatureDictionary([
+      "THIRD_COVERED",
+      "PURITY_101",
+      "CHORD_BIGRAM_min_maj_7",
+      "PURITY_101",
+    ]);
+
+    expect(dictionary.featureNames).toEqual(["CHORD_BIGRAM_min_maj_7", "PURITY_101", "THIRD_COVERED"]);
+    expect(currentFeatures).toContain("CHORD_BIGRAM_min_maj_7");
+    expect(encodePaperSemiCrfNamedFeatures(dictionary, ["PURITY_101", "not-retained", "PURITY_101"])).toEqual([
+      { index: 1, value: 2 },
+    ]);
+    expect(
+      createPaperSemiCrfFeatureProvider({
+        events,
+        labels: supportedLabels,
+        dictionary,
+      })({
+        segment: { startEvent: 0, endEvent: 1, labelId: 1 },
+        previousLabelId: 0,
+      }),
+    ).toEqual([{ index: 0, value: 1 }]);
   });
 });
 

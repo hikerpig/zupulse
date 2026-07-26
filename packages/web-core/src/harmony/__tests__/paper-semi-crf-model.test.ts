@@ -4,6 +4,8 @@ import {
   computePaperSemiCrfLogPartition,
   createPaperSemiCrfLinearPotential,
   evaluatePaperSemiCrfNegativeLogLikelihood,
+  parsePaperSemiCrfLinearModel,
+  PAPER_SEMI_CRF_FEATURE_VERSION,
   type PaperSemiCrfFeatureProvider,
   type PaperSemiCrfSegment,
 } from "../paper-semi-crf-model";
@@ -115,6 +117,38 @@ describe("paper semi-CRF linear model", () => {
         features: () => [{ index: 0, value: Number.POSITIVE_INFINITY }],
       }),
     ).toThrow("invalid paper semi-CRF feature");
+  });
+
+  it("validates the complete versioned model asset contract", () => {
+    const asset = {
+      schemaVersion: "paper-semi-crf-linear-v1",
+      labelMappingVersion: "generic-added-notes-v1+masada-bunescu-mode-spelling-v1",
+      featureVersion: PAPER_SEMI_CRF_FEATURE_VERSION,
+      labels: ["C:maj", "G:min"],
+      featureNames: ["PURITY_101", "CHORD_BIGRAM_min_maj_7"],
+      weights: [0.5, -0.25],
+      maxSegmentLength: 8,
+    };
+
+    expect(parsePaperSemiCrfLinearModel(asset)).toEqual(asset);
+    expect(() => parsePaperSemiCrfLinearModel({ ...asset, weights: [0.5] })).toThrow(
+      "featureNames and weights must have equal length",
+    );
+    expect(() =>
+      parsePaperSemiCrfLinearModel({
+        ...asset,
+        featureNames: ["PURITY_101", "PURITY_101"],
+      }),
+    ).toThrow("featureNames must be unique");
+    expect(() =>
+      parsePaperSemiCrfLinearModel({
+        ...asset,
+        featureVersion: "approximate-features",
+      }),
+    ).toThrow();
+    expect(() => parsePaperSemiCrfLinearModel({ ...asset, labels: ["C:ger6"] })).toThrow(
+      "labels must map to ChordSymbol",
+    );
   });
 });
 

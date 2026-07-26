@@ -82,7 +82,7 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
   - Dependencies: Task 5b
   - Files: `paper-semi-crf-features.ts`、相邻测试、parity fixtures。
   - Scope: Medium
-- [ ] Task 6: 实现 mode/root-interval chord bigram features 与严格模型资产 schema。
+- [x] Task 6: 实现 mode/root-interval chord bigram features 与严格模型资产 schema。
   - Acceptance: transition features 与 reference parity fixture 一致；malformed/non-finite asset 明确失败。
   - Verification: paper feature/model focused tests.
   - Dependencies: Tasks 2-5
@@ -92,8 +92,8 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
 ### Checkpoint: Faithful Core
 
 - [ ] Reference-selected songs 的 event count、gold segments 与 feature activations 匹配。
-- [ ] Harmony module tests and `pnpm verify:fast` pass.
-- [ ] Freeze feature and label contract before corpus training.
+- [x] Harmony module tests and `pnpm verify:fast` pass.
+- [x] Freeze feature and label contract before corpus training.
 
 ### Phase 4: Training and Evaluation
 

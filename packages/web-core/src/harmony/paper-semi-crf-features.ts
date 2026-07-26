@@ -1,6 +1,12 @@
 import type { PaperSemiCrfEvent, PaperSemiCrfEventNote } from "./paper-semi-crf-events";
 import type { PaperSemiCrfSupportedLabel } from "./paper-semi-crf-labels";
-import type { PaperSemiCrfSegment } from "./paper-semi-crf-model";
+import {
+  PAPER_SEMI_CRF_FEATURE_VERSION,
+  type PaperSemiCrfFeature,
+  type PaperSemiCrfFeatureProvider,
+  type PaperSemiCrfLocalPotentialInput,
+  type PaperSemiCrfSegment,
+} from "./paper-semi-crf-model";
 
 type FeatureWeight = "count" | "accent" | "duration";
 
@@ -10,6 +16,72 @@ type ChordRoles = {
   fifth: readonly number[];
   added: readonly number[];
 };
+
+export type PaperSemiCrfFeatureDictionary = {
+  featureVersion: typeof PAPER_SEMI_CRF_FEATURE_VERSION;
+  featureNames: string[];
+};
+
+export type PaperSemiCrfNamedFeatureProvider = (input: PaperSemiCrfLocalPotentialInput) => string[];
+
+export function createPaperSemiCrfNamedFeatureProvider(input: {
+  events: readonly PaperSemiCrfEvent[];
+  labels: readonly PaperSemiCrfSupportedLabel[];
+}): PaperSemiCrfNamedFeatureProvider {
+  const labelsById = new Map(input.labels.map((label) => [label.id, label]));
+  return (localInput) => {
+    const label = labelsById.get(localInput.segment.labelId);
+    if (!label) throw new Error("missing paper semi-CRF label");
+    const segmentFeatures = extractPaperSemiCrfSegmentFeatures({
+      events: input.events,
+      segment: localInput.segment,
+      label,
+    });
+    if (localInput.previousLabelId === undefined) return segmentFeatures;
+    const previousLabel = labelsById.get(localInput.previousLabelId);
+    if (!previousLabel) throw new Error("missing paper semi-CRF previous label");
+    return [...segmentFeatures, extractPaperSemiCrfTransitionFeature(label, previousLabel)];
+  };
+}
+
+export function extractPaperSemiCrfTransitionFeature(
+  current: PaperSemiCrfSupportedLabel,
+  previous: PaperSemiCrfSupportedLabel,
+): string {
+  const currentMode = paperModeAndAddedNote(current);
+  const previousMode = paperModeAndAddedNote(previous);
+  const currentRoot = pitchClass(current.chord.root.step, current.chord.root.alter);
+  const previousRoot = pitchClass(previous.chord.root.step, previous.chord.root.alter);
+  return `CHORD_BIGRAM_${currentMode}_${previousMode}_${mod12(currentRoot - previousRoot)}`;
+}
+
+export function createPaperSemiCrfFeatureDictionary(featureNames: readonly string[]): PaperSemiCrfFeatureDictionary {
+  const unique = [...new Set(featureNames)];
+  unique.sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
+  return { featureVersion: PAPER_SEMI_CRF_FEATURE_VERSION, featureNames: unique };
+}
+
+export function createPaperSemiCrfFeatureProvider(input: {
+  events: readonly PaperSemiCrfEvent[];
+  labels: readonly PaperSemiCrfSupportedLabel[];
+  dictionary: PaperSemiCrfFeatureDictionary;
+}): PaperSemiCrfFeatureProvider {
+  const named = createPaperSemiCrfNamedFeatureProvider(input);
+  return (localInput) => encodePaperSemiCrfNamedFeatures(input.dictionary, named(localInput));
+}
+
+export function encodePaperSemiCrfNamedFeatures(
+  dictionary: PaperSemiCrfFeatureDictionary,
+  featureNames: readonly string[],
+): PaperSemiCrfFeature[] {
+  const indices = new Map(dictionary.featureNames.map((name, index) => [name, index]));
+  const counts = new Map<number, number>();
+  for (const name of featureNames) {
+    const index = indices.get(name);
+    if (index !== undefined) counts.set(index, (counts.get(index) ?? 0) + 1);
+  }
+  return [...counts].map(([index, value]) => ({ index, value }));
+}
 
 export function extractPaperSemiCrfSegmentFeatures(input: {
   events: readonly PaperSemiCrfEvent[];
@@ -446,6 +518,12 @@ function chordRoles(label: PaperSemiCrfSupportedLabel): ChordRoles {
             : [mod12(root + 11), mod12(root + 10)]
           : [];
   return { root: [root], third: [third], fifth: [fifth], added };
+}
+
+function paperModeAndAddedNote(label: PaperSemiCrfSupportedLabel): string {
+  const match = /^[A-G](?:bb|##|b|#)?:(maj|min|dim|aug)(4|6|7)?$/.exec(label.normalizedLabel);
+  if (!match) throw new Error("unsupported paper semi-CRF transition label");
+  return `${match[1]}${match[2] ?? ""}`;
 }
 
 function pitchClass(step: string, alter: number): number {

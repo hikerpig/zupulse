@@ -1,3 +1,52 @@
+import { z } from "zod";
+import { createPaperSemiCrfLabelInventory, PAPER_SEMI_CRF_LABEL_MAPPING_VERSION } from "./paper-semi-crf-labels";
+
+export const PAPER_SEMI_CRF_FEATURE_VERSION = "masada-bunescu-enabled-features-v1" as const;
+
+export const paperSemiCrfLinearModelSchema = z
+  .object({
+    schemaVersion: z.literal("paper-semi-crf-linear-v1"),
+    labelMappingVersion: z.literal(PAPER_SEMI_CRF_LABEL_MAPPING_VERSION),
+    featureVersion: z.literal(PAPER_SEMI_CRF_FEATURE_VERSION),
+    labels: z.array(z.string().min(1)).min(1),
+    featureNames: z.array(z.string().min(1)),
+    weights: z.array(z.number().refine(Number.isFinite, "weights must be finite")),
+    maxSegmentLength: z.number().int().positive(),
+  })
+  .strict()
+  .superRefine((model, context) => {
+    if (model.featureNames.length !== model.weights.length) {
+      context.addIssue({
+        code: "custom",
+        path: ["weights"],
+        message: "featureNames and weights must have equal length",
+      });
+    }
+    if (new Set(model.featureNames).size !== model.featureNames.length) {
+      context.addIssue({
+        code: "custom",
+        path: ["featureNames"],
+        message: "featureNames must be unique",
+      });
+    }
+    if (new Set(model.labels).size !== model.labels.length) {
+      context.addIssue({ code: "custom", path: ["labels"], message: "labels must be unique" });
+    }
+    if (createPaperSemiCrfLabelInventory(model.labels).labels.some((label) => label.status === "unsupported")) {
+      context.addIssue({
+        code: "custom",
+        path: ["labels"],
+        message: "labels must map to ChordSymbol",
+      });
+    }
+  });
+
+export type PaperSemiCrfLinearModel = z.infer<typeof paperSemiCrfLinearModelSchema>;
+
+export function parsePaperSemiCrfLinearModel(input: unknown): PaperSemiCrfLinearModel {
+  return paperSemiCrfLinearModelSchema.parse(input);
+}
+
 export type PaperSemiCrfSegment = {
   startEvent: number;
   endEvent: number;

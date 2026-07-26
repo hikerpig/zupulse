@@ -2,8 +2,8 @@
 
 - [x] 规格确认并提交（`32e094f`）
 - [x] Task 1: paper basic-event projection
-- [ ] Task 2: complete label inventory
-- [ ] Checkpoint: observation/state contracts
+- [x] Task 2: complete label inventory
+- [x] Checkpoint: observation/state contracts
 - [ ] Task 3: exact Viterbi
 - [ ] Task 4: log-partition and L2 objective/gradient
 - [ ] Checkpoint: exact inference

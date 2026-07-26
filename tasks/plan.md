@@ -27,7 +27,7 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
   - Dependencies: None
   - Files: `paper-semi-crf-events.ts`、相邻测试、公共导出。
   - Scope: Medium
-- [ ] Task 2: 建立完整 label inventory 与 `ChordSymbol` 无损映射。
+- [x] Task 2: 建立完整 label inventory 与 `ChordSymbol` 无损映射。
   - Acceptance: inventory 稳定去重且不裁剪；不支持 label 明确报错；normalization/simplification 版本化。
   - Verification: `pnpm vitest run packages/web-core/src/harmony/__tests__/paper-semi-crf-labels.test.ts`
   - Dependencies: Task 1
@@ -36,9 +36,9 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
 
 ### Checkpoint: Contracts
 
-- [x] Task 1 focused tests pass.
-- [ ] `pnpm --filter @zupulse/web-core exec tsc -p tsconfig.test.json --noEmit` passes.
-- [ ] Review model contracts before feature implementation.
+- [x] Phase 1 focused tests pass.
+- [x] `pnpm --filter @zupulse/web-core exec tsc -p tsconfig.test.json --noEmit` passes.
+- [x] Review model contracts before feature implementation.
 
 ### Phase 2: Exact Inference Core
 

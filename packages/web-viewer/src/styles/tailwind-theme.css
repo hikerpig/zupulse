@@ -26,6 +26,7 @@
   --color-signal-pink: var(--signal-pink);
   --color-signal-purple: var(--signal-purple);
   --color-signal-yellow: var(--signal-yellow);
+  --color-scrim: var(--bg-scrim);
 
   --font-ui: var(--font-family-ui);
   --font-technical: var(--font-family-technical);
@@ -63,4 +64,7 @@
 
   --transition-duration-fast: var(--duration-fast);
   --ease-ui: var(--motion-ease-standard);
+
+  --container-dialog: var(--dialog-max-width);
+  --z-index-overlay: var(--layer-overlay);
 }

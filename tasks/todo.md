@@ -47,13 +47,13 @@
 - [x] Task 8a: `Field` / `TextField` / `Select`
 - [x] Task 8b: `Panel` / `Status`
 - [x] Task 8b: `Toolbar`
-- [ ] Task 8c: Base UI `Overlay` primitives
+- [x] Task 8c: Base UI `Overlay` primitives
 
 ### Checkpoint D: Primitive layer
 
 - [ ] rest/hover/active/focus-visible/disabled states 通过
 - [ ] loading/selected/error/open/closed states 按组件覆盖
-- [ ] keyboard、focus enter/restore 与 Escape 通过
+- [x] keyboard、focus enter/restore 与 Escape 通过
 - [ ] primitives 不读取 route/store/host/domain state
 
 ## Phase 4: Pilot slices

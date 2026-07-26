@@ -1,6 +1,6 @@
 ---
 status: current
-last-reviewed: 2026-07-21
+last-reviewed: 2026-07-26
 theme-library: .design_library/zupulse-te-braun-theme
 runtime-tokens: packages/web-viewer/src/styles/tokens.css
 ---
@@ -93,12 +93,17 @@ Zupulse 是面向长期练习、乐谱查看与和声分析的桌面级数字音
 
 - 像排练目录，不像专辑商店或 SaaS 后台。
 - 浏览效率高于装饰性封面；搜索、排序、状态和主动作保持清晰。
+- 练习状态只表达已有持久化事实；只有真实 Resume 位置存在时使用“继续练习”，不得把摘要缺失
+  写成“尚未练习”。
+- 单文件常规成功使用短暂、紧凑的就地反馈；批量、重复、失败、取消和进行中结果保持可追溯。
 - 空态告诉用户如何导入第一份乐谱，不使用营销式插画填充空间。
 
 ### Viewer
 
 - 乐谱是绝对视觉中心，Transport 与练习控制仓形成连续工作台。
-- Loop、Tracks、Session 使用分仓与细分界，不拼成多张悬浮卡片。
+- 练习设置首层按“调整速度、设置循环区间、选择主轨道”等用户任务组织；Loop 和 Track 的领域
+  控件进入二级工作区，不在首层平铺内部对象或单独堆叠 Session facts。
+- Transport 快捷入口可以直达对应练习任务；二级工作区返回首层时不关闭控制仓。
 - 播放是主要操作；mute、solo、删除和设置不得获得同等视觉权重。
 - Score Navigation Mode 是低频设置，使用紧凑图标入口和 ContextPopup；不以介绍文案或常驻状态栏
   挤占谱面。

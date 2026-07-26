@@ -38,7 +38,7 @@ const EXTERNAL_CSS_VARIABLES = new Set(["--transform-origin"]);
 const TAILWIND_PALETTE_NAMES =
   "slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose";
 const FORBIDDEN_TAILWIND_PATTERNS = [
-  /^tw:[^\s"']*\[/,
+  /^tw:(?:\[|[^\s"'[]*-\[)/,
   new RegExp(
     `^tw:(?:bg|text|border|ring|outline|decoration|accent|caret|fill|stroke|from|via|to|shadow)-(?:${TAILWIND_PALETTE_NAMES})(?:-|$)`,
   ),

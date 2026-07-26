@@ -672,6 +672,7 @@ describe("checkDesign", () => {
       "token-map.json": JSON.stringify({ mappings: [] }),
       "viewer/Component.tsx":
         '<div className="tw:bg-slate-500 tw:bg-[#fff] tw:rounded-2xl tw:font-mono tw:shadow-xl tw:bg-surface" />\n',
+      "viewer/Component.test.tsx": 'expect(source).toMatch(/tw:shrink-0[^"]*tw:whitespace-nowrap[^"]*/);\n',
     });
 
     expect(

@@ -37,11 +37,6 @@
     align-items: center;
     justify-content: center;
   }
-  .transportActions .transportPlayButton {
-    min-width: 40px;
-    width: 40px;
-    padding: 0;
-  }
   .transportActions .transportIconButton {
     min-width: 34px;
     width: 34px;
@@ -52,7 +47,6 @@
     color: var(--accent-primary);
     background: var(--accent-soft);
   }
-  .transportPlayButton svg,
   .transportIconButton svg {
     width: 18px;
     height: 18px;
@@ -538,10 +532,6 @@
     }
     .transportActions {
       gap: 6px;
-    }
-    .transportActions .transportPlayButton {
-      width: 36px;
-      min-width: 36px;
     }
     .transportActions .transportIconButton {
       width: 32px;

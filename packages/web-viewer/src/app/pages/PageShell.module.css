@@ -1,5 +1,6 @@
 @layer components {
   .appShell {
+    position: relative;
     height: 100%;
     min-height: 0;
     overflow: hidden;
@@ -95,6 +96,16 @@
     border-radius: 999px;
     background: currentColor;
     opacity: 0.9;
+  }
+  .viewerLoading {
+    position: absolute;
+    z-index: var(--z-index-library-dialog);
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--text-secondary);
+    background: var(--bg-app);
+    font-size: 14px;
   }
   .unavailableShell {
     min-height: 100%;

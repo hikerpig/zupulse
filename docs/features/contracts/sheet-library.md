@@ -147,6 +147,8 @@ stateDiagram-v2
 - 只有 `Ready` 的 Desktop 记录出现在正常列表并可读取。
 - `pending` 和 `deleting` 是 Desktop 文件系统/SQLite reconciliation 状态，不是用户可管理的
   Library Score 状态。
+- 从 Library 打开 Viewer 时，Viewer 在 alphaTab 首次渲染完成前保持明确的 loading surface，
+  不暴露空谱面、默认 transport 值或“会话已结束”中间态。
 - 导入取消、导出取消和删除确认取消都不得改变馆藏。
 - Repository 不得为已经不存在的 Library Score 新建练习数据或分析数据。
 

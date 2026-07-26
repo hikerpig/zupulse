@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Music } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -24,12 +24,21 @@ export function ViewerPage({
   const invalidSession = Boolean(libraryScoreId && !application.hasSession(libraryScoreId));
   const session = application.getCurrentSession();
   const currentScore = snapshot.library?.scores.find((score) => score.id === libraryScoreId);
-  const statusMessage = notFound ? t("page.notFound") : invalidSession ? t("page.sessionEnded") : undefined;
+  const [renderReady, setRenderReady] = useState(false);
+  const openingSession = Boolean(libraryScoreId && !renderReady && !notFound);
+  const statusMessage = notFound ? t("page.notFound") : undefined;
 
   useEffect(() => {
     if (application.hasLibrary() && libraryScoreId && !application.hasSession(libraryScoreId))
       void application.openLibraryScore(libraryScoreId).catch(() => navigate("/", { replace: true }));
   }, [application, libraryScoreId, navigate, snapshot.currentLibraryScoreId]);
+
+  useEffect(() => {
+    setRenderReady(false);
+    if (!libraryScoreId || invalidSession) return;
+    const timer = window.setTimeout(() => setRenderReady(true), 150);
+    return () => window.clearTimeout(timer);
+  }, [invalidSession, libraryScoreId, snapshot.currentSessionId]);
 
   useEffect(() => {
     if (!libraryScoreId) return;
@@ -77,6 +86,11 @@ export function ViewerPage({
       <PlaybackWorkspace session={session}>
         <ScoreViewer playback={session?.playback} loopEditor={session?.loopEditor} />
       </PlaybackWorkspace>
+      {openingSession ? (
+        <div id="status" className={styles.viewerLoading} role="status" aria-label={t("page.loading")}>
+          {t("page.loading")}
+        </div>
+      ) : null}
     </main>
   );
 }

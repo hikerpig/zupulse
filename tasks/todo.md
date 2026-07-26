@@ -2,10 +2,10 @@
 
 ## Stage 1 — 数据真实性
 
-- [ ] P1-01 为 `DesktopLibraryStore` 注入当前 sidecar / resume JsonStore 的只读能力。
-- [ ] P1-01 汇总 `hasLoop`、`lastPracticedAt`、`lastPosition`，缺失可选字段时省略。
-- [ ] P1-01 覆盖无数据、sidecar-only、resume-only、完整摘要和读取失败。
-- [ ] P1-01 确认 Renderer 不获得路径、Bridge schema 不变化。
+- [x] P1-01 为 `DesktopLibraryStore` 注入当前 sidecar / resume JsonStore 的只读能力。
+- [x] P1-01 汇总 `hasLoop`、`lastPracticedAt`、`lastPosition`，缺失可选字段时省略。
+- [x] P1-01 覆盖无数据、sidecar-only、resume-only、完整摘要和读取失败。
+- [x] P1-01 确认 Renderer 不获得路径、Bridge schema 不变化。
 
 ## Stage 2 — Library 目录
 

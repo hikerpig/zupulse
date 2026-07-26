@@ -86,9 +86,6 @@ async function startDesktopApp(): Promise<void> {
   };
   const logDirectory = path.join(userData, "logs");
   verifySqliteAvailable();
-  const library = new DesktopLibraryStore(path.join(userData, "library.sqlite"), path.join(userData, "library"));
-  await library.initialize();
-  app.once("will-quit", () => library.close());
   const sendStorageWarning = (category: "sidecar" | "resume") => (code: "CORRUPT_PERSISTED_DATA") => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
     mainWindow.webContents.send(
@@ -98,6 +95,12 @@ async function startDesktopApp(): Promise<void> {
   };
   const sidecarStore = new JsonStore(userData, "sidecars", sidecarPayloadSchema, sendStorageWarning("sidecar"));
   const resumeStore = new JsonStore(userData, "resume", localPlaybackResumeSchema, sendStorageWarning("resume"));
+  const library = new DesktopLibraryStore(path.join(userData, "library.sqlite"), path.join(userData, "library"), {
+    readSidecar: (libraryScoreId) => sidecarStore.read(libraryScoreId),
+    readResume: (libraryScoreId) => resumeStore.read(libraryScoreId),
+  });
+  await library.initialize();
+  app.once("will-quit", () => library.close());
   const diagnostics = new DiagnosticLogger(logDirectory);
   const openDiagnosticsDirectory = async () => {
     const error = await shell.openPath(logDirectory);

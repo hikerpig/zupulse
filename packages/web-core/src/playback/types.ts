@@ -78,6 +78,7 @@ export type PlaybackCommand =
   | { type: "set-loop-enabled"; enabled: boolean }
   | { type: "set-loop-snap"; mode: LoopSnapMode }
   | { type: "set-loop-boundary"; boundary: "start" | "end"; position: MusicalPosition }
+  | { type: "commit-loop-draft" }
   | { type: "select-loop"; loopId: string }
   | { type: "save-loop"; label?: string }
   | { type: "rename-loop"; loopId: string; label: string }

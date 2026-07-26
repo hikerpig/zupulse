@@ -95,7 +95,7 @@ describe("PlaybackWorkspace transport bar", () => {
     const user = userEvent.setup();
 
     expect(screen.getByRole("button", { name: "停止" }).querySelector("svg.lucide-square")).toBeTruthy();
-    const loop = screen.getByRole("button", { name: "启用循环" });
+    const loop = screen.getByRole("button", { name: "循环模式" });
     expect(loop.getAttribute("aria-pressed")).toBe("false");
     await user.click(loop);
 
@@ -116,29 +116,118 @@ describe("PlaybackWorkspace transport bar", () => {
     );
 
     const playButton = screen.getByRole("button", { name: "暂停" });
-    const loopButton = screen.getByRole("button", { name: "关闭循环" });
+    const loopButton = screen.getByRole("button", { name: "循环模式" });
     for (const width of [1194, 834, 597]) {
       Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
       fireEvent(window, new Event("resize"));
     }
 
     expect(screen.getByRole("button", { name: "暂停" })).toBe(playButton);
-    expect(screen.getByRole("button", { name: "关闭循环" })).toBe(loopButton);
+    expect(screen.getByRole("button", { name: "循环模式" })).toBe(loopButton);
     expect(loopButton.getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByRole("link", { name: "返回曲谱库" }).getAttribute("href")).toBe("#/library");
     expect(dispatch).not.toHaveBeenCalled();
     expect(destroy).not.toHaveBeenCalled();
   });
 
-  it("opens practice settings when loop has no saved region", async () => {
-    render(<PlaybackWorkspace session={session(state("paused"))}>乐谱</PlaybackWorkspace>);
+  it("activates loop mode from the transport without opening settings", async () => {
+    const dispatch = vi.fn(async () => undefined);
+    const viewerSession = session(state("paused"), dispatch);
+    viewerSession.playback!.timeline = {
+      durationTicks: 3840,
+      durationMs: 8000,
+      measures: [
+        { id: "measure-0", index: 0, startTick: 0, durationTicks: 1920, beatTicks: [0, 480, 960, 1440] },
+        {
+          id: "measure-1",
+          index: 1,
+          startTick: 1920,
+          durationTicks: 1920,
+          beatTicks: [1920, 2400, 2880, 3360],
+        },
+      ],
+    };
+    render(<PlaybackWorkspace session={viewerSession}>乐谱</PlaybackWorkspace>);
 
-    await userEvent.setup().click(screen.getByRole("button", { name: "设置循环区间" }));
+    await userEvent.setup().click(screen.getByRole("button", { name: "循环模式" }));
 
+    expect(screen.queryByRole("complementary", { name: "练习设置" })).toBeNull();
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "set-loop-boundary",
+      boundary: "start",
+      position: expect.objectContaining({ tick: 0 }),
+    });
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "set-loop-boundary",
+      boundary: "end",
+      position: expect.objectContaining({ tick: 1920 }),
+    });
+    expect(dispatch).toHaveBeenCalledWith({ type: "commit-loop-draft" });
+  });
+
+  it("shows a synchronized loop mode switch in loop settings", async () => {
+    const dispatch = vi.fn(async () => undefined);
+    const playbackState = state("paused");
+    playbackState.looping = true;
+    playbackState.loopDraft = {
+      snapMode: "beat",
+      start: position(480, 1000),
+      end: position(1920, 4000),
+    };
+    render(<PlaybackWorkspace session={session(playbackState, dispatch)}>乐谱</PlaybackWorkspace>);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "练习设置" }));
     const practice = screen.getByRole("complementary", { name: "练习设置" });
-    expect(within(practice).getByRole("heading", { name: "设置循环区间" })).toBeTruthy();
-    expect(within(practice).getByRole("button", { name: "返回练习设置" })).toBeTruthy();
-    expect(within(practice).queryByText("Practice")).toBeNull();
+    await user.click(within(practice).getByRole("button", { name: /设置循环区间/ }));
+
+    const modeSwitch = within(practice).getByRole("switch", { name: "循环模式" });
+    expect((modeSwitch as HTMLInputElement).checked).toBe(true);
+    expect(within(practice).getByRole("button", { name: "保存区间" })).toBeTruthy();
+    expect(within(practice).getByRole("combobox", { name: "边界吸附" })).toBeTruthy();
+
+    await user.click(modeSwitch);
+    expect(dispatch).toHaveBeenCalledWith({ type: "set-loop-enabled", enabled: false });
+  });
+
+  it("hides loop editing actions while loop mode is off", async () => {
+    const playbackState = state("paused");
+    playbackState.loopDraft = {
+      snapMode: "beat",
+      start: position(480, 1000),
+      end: position(1920, 4000),
+    };
+    render(<PlaybackWorkspace session={session(playbackState)}>乐谱</PlaybackWorkspace>);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "练习设置" }));
+    const practice = screen.getByRole("complementary", { name: "练习设置" });
+    await user.click(within(practice).getByRole("button", { name: /设置循环区间/ }));
+
+    expect((within(practice).getByRole("switch", { name: "循环模式" }) as HTMLInputElement).checked).toBe(false);
+    expect(within(practice).getByText("打开循环模式后，可在谱面拖动 A/B 边界。")).toBeTruthy();
+    expect(within(practice).queryByRole("button", { name: "保存区间" })).toBeNull();
+    expect(within(practice).queryByRole("combobox", { name: "边界吸附" })).toBeNull();
+  });
+
+  it("toggles a temporary loop from the outer transport control", async () => {
+    const dispatch = vi.fn(async () => undefined);
+    const playbackState = state("paused");
+    playbackState.looping = true;
+    playbackState.loopDraft = {
+      snapMode: "beat",
+      start: position(480, 1000),
+      end: position(1920, 4000),
+    };
+    render(<PlaybackWorkspace session={session(playbackState, dispatch)}>乐谱</PlaybackWorkspace>);
+
+    const loopButton = screen.getByRole("button", { name: "循环模式" });
+    expect(loopButton.getAttribute("aria-pressed")).toBe("true");
+
+    await userEvent.setup().click(loopButton);
+
+    expect(dispatch).toHaveBeenCalledWith({ type: "set-loop-enabled", enabled: false });
+    expect(screen.queryByRole("complementary", { name: "练习设置" })).toBeNull();
   });
 
   it("organizes practice settings around loop and track tasks", async () => {

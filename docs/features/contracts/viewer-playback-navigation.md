@@ -68,8 +68,14 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 
 - 常规“练习设置”入口打开任务概览，展示速度入口以及“设置循环区间”“选择主轨道”两项任务；
   当前轨道、速度与 Loop 状态不再作为单独的 Session section。
-- 没有已存 Loop 时，Transport 的“设置循环区间”直接进入 Loop 任务；该任务复用 A/B、吸附、
-  保存和已存 Loop 管理命令。
+- Transport 的“循环模式”按钮直接打开或关闭模式，不打开练习设置。首次打开且没有可用区间时，
+  以播放头所在小节建立默认 A/B；再次打开恢复保留的草稿或已选 Loop。
+- Loop 草稿在 alphaTab 谱面上显示跨谱表行区间与 A/B 手柄；指针或触摸拖动按当前吸附规则更新
+  `PlaybackController`，键盘方向键按拍移动边界。完整 A/B 草稿在 handle 提交后立即启用为临时
+  Loop，不写入 Sidecar；“保存区间”才将其持久化为可复用 Loop。
+- 设置面板提供与 Transport 同步的“循环模式”Switch。关闭模式会停止循环并隐藏谱面编辑层和
+  保存、吸附编辑项，但保留 A/B；已保存片段仍可访问，选择片段会自动打开模式。关闭抽屉不关闭
+  模式。设置面板不提供 Set A/B 或 A/B Slider。小屏练习面板改为底部面板，编辑时仍保留谱面上下文。
 - 主轨道任务复用主轨道、附加显示、静音、独奏和音量命令。任务返回只回到概览，不关闭抽屉。
 - 打开概览后焦点进入关闭按钮；进入任务后焦点进入返回按钮。Escape 关闭抽屉并恢复普通练习设置
   触发器焦点。
@@ -119,19 +125,23 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 - 谱面点击只提交一次正式 seek，且不改变 playing/paused transport。
 - Scrub 每帧最多发送一个最新预览，松手只提交一次正式 seek。
 - playing position snapshot 最多约 10Hz；pause、stop、seek 和 Loop 语义立即可观察。
-- 常规练习入口进入任务概览；无已存 Loop 的快捷入口直达 Loop 任务，返回与 Escape 焦点稳定。
+- 常规练习入口进入任务概览；Transport Loop 按钮直接切换模式且不打开抽屉，返回与 Escape 焦点稳定。
+- 进入空 Loop 草稿时按当前小节建立 A/B；谱面手柄与 Controller 草稿保持一致，A/B 手柄可用键盘
+  按拍调整；提交完整草稿后立即进入临时 Loop。关闭模式隐藏编辑层并保留 A/B，再次打开恢复；
+  抽屉 Switch 与 Transport 同步，抽屉不显示 Set A/B 或 A/B Slider。
 
 ## 证据地图
 
-| 契约                     | 代码                                                                                             | 测试                                                         |
-| ------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
-| alphaTab 公开导航边界    | `packages/web-core/src/gp/alphaTabBrowser.ts`                                                    | `packages/web-core/src/gp/__tests__/alphaTabBrowser.test.ts` |
-| occurrence 精确解析      | `packages/web-core/src/score/positions.ts`、`packages/web-core/src/playback/writtenSelection.ts` | 相邻 `__tests__`                                             |
-| Follow State 与页面协调  | `packages/web-viewer/src/score-navigation`                                                       | `packages/web-viewer/src/score-navigation/__tests__`         |
-| 模式、页码与恢复 UI      | `packages/web-viewer/src/features/PlaybackWorkspace.tsx`                                         | `PlaybackWorkspace.test.tsx`                                 |
-| 练习设置任务、降级与焦点 | `packages/web-viewer/src/features/PlaybackWorkspace.tsx`                                         | `PlaybackWorkspace.test.tsx`                                 |
-| position 发布预算        | `packages/web-core/src/playback/playbackController.ts`                                           | `playbackController.test.ts`                                 |
-| Browser 长谱与响应式流程 | `apps/web-demo/e2e/library.spec.ts`                                                              | Playwright Chromium                                          |
+| 契约                      | 代码                                                                                             | 测试                                                         |
+| ------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| alphaTab 公开导航边界     | `packages/web-core/src/gp/alphaTabBrowser.ts`                                                    | `packages/web-core/src/gp/__tests__/alphaTabBrowser.test.ts` |
+| occurrence 精确解析       | `packages/web-core/src/score/positions.ts`、`packages/web-core/src/playback/writtenSelection.ts` | 相邻 `__tests__`                                             |
+| Follow State 与页面协调   | `packages/web-viewer/src/score-navigation`                                                       | `packages/web-viewer/src/score-navigation/__tests__`         |
+| 模式、页码与恢复 UI       | `packages/web-viewer/src/features/PlaybackWorkspace.tsx`                                         | `PlaybackWorkspace.test.tsx`                                 |
+| 练习设置任务、降级与焦点  | `packages/web-viewer/src/features/PlaybackWorkspace.tsx`                                         | `PlaybackWorkspace.test.tsx`                                 |
+| 谱面 Loop 区间与 A/B 手柄 | `packages/web-viewer/src/practice-loop`、`packages/web-viewer/src/components/ScoreViewer.tsx`    | `loop-range-geometry.test.ts`、`ScoreViewer.test.tsx`        |
+| position 发布预算         | `packages/web-core/src/playback/playbackController.ts`                                           | `playbackController.test.ts`                                 |
+| Browser 长谱与响应式流程  | `apps/web-demo/e2e/library.spec.ts`                                                              | Playwright Chromium                                          |
 
 ## 相关资料
 

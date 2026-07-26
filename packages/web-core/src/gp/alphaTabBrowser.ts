@@ -40,7 +40,7 @@ export type AlphaTabBoundsLike = {
 export type AlphaTabStaffSystemBoundsLike = {
   index: number;
   realBounds: AlphaTabBoundsLike;
-  bars: Array<{ index: number }>;
+  bars: Array<{ index: number; realBounds?: AlphaTabBoundsLike }>;
 };
 
 export type AlphaTabBeatBoundsLike = {

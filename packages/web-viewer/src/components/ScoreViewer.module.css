@@ -115,6 +115,11 @@
       0 4px 14px rgb(24 24 24 / 0.08);
   }
 
+  .scoreCanvas {
+    position: relative;
+    min-height: 100%;
+  }
+
   .viewer {
     width: 100%;
     height: auto;

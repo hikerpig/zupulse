@@ -21,17 +21,27 @@ export function snapMusicalPosition(
     timeline.measures.find((item) => item.index === position.measureIndex);
   if (!measure) return position;
 
-  const candidates = mode === "measure" ? [measure.startTick] : measure.beatTicks;
+  const isFinalMeasure = measure.startTick + measure.durationTicks === timeline.durationTicks;
+  const candidates =
+    mode === "measure"
+      ? [measure.startTick]
+      : isFinalMeasure
+        ? [...measure.beatTicks, timeline.durationTicks]
+        : measure.beatTicks;
   const tick = candidates.reduce(
     (best, candidate) => (Math.abs(candidate - position.tick) < Math.abs(best - position.tick) ? candidate : best),
     candidates[0] ?? measure.startTick,
   );
+  const beatIndex =
+    tick === timeline.durationTicks
+      ? Math.max(0, measure.beatTicks.length - 1)
+      : Math.max(0, measure.beatTicks.indexOf(tick));
 
   return {
     ...position,
     measureId: measure.id,
     measureIndex: measure.index,
-    beatIndex: Math.max(0, measure.beatTicks.indexOf(tick)),
+    beatIndex,
     tick,
   };
 }

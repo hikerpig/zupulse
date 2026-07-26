@@ -210,6 +210,94 @@ describe("PlaybackController", () => {
     ]);
   });
 
+  it("applies a completed loop draft immediately without persisting a reusable loop", async () => {
+    const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" });
+    const persistence = new FakePersistence();
+    const controller = createController(engine, persistence);
+    await controller.initialize();
+
+    await controller.dispatch({ type: "set-loop-boundary", boundary: "start", position: position(731, 1500) });
+    await controller.dispatch({ type: "set-loop-boundary", boundary: "end", position: position(2890, 6000) });
+    await controller.dispatch({ type: "commit-loop-draft" });
+
+    expect(controller.getState()).toMatchObject({
+      looping: true,
+      loops: [],
+      loopDraft: {
+        start: { tick: 960 },
+        end: { tick: 2880 },
+      },
+    });
+    expect(controller.getState().activeLoopId).toBeUndefined();
+    expect(engine.calls).toContainEqual(["loop", { range: { startTick: 960, endTick: 2880 }, enabled: true }]);
+
+    await controller.dispatch({ type: "set-loop-enabled", enabled: false });
+    await controller.dispatch({ type: "set-loop-enabled", enabled: true });
+    expect(engine.calls.slice(-2)).toEqual([
+      ["loop", { range: { startTick: 960, endTick: 2880 }, enabled: true }],
+      ["speed", 1],
+    ]);
+
+    await controller.dispatch({ type: "stop" });
+    expect(controller.getState().position.tick).toBe(960);
+  });
+
+  it("synchronizes the editable draft when selecting a saved loop", async () => {
+    const sidecar = createDefaultSidecar(identity, "2026-07-10T00:00:00Z");
+    sidecar.practice.playback.loops = [
+      {
+        id: "saved-loop",
+        label: "Chorus",
+        labelSource: "user",
+        start: position(1920, 4000),
+        end: position(3360, 7000),
+        snapMode: "beat",
+        createdAt: "2026-07-10T01:00:00Z",
+        updatedAt: "2026-07-10T01:00:00Z",
+      },
+    ];
+    const controller = createController(
+      new FakeEngine({ soundFont: "ready", transport: "stopped" }),
+      new FakePersistence(sidecar),
+    );
+    await controller.initialize();
+    await controller.dispatch({ type: "set-loop-boundary", boundary: "start", position: position(0, 0) });
+    await controller.dispatch({ type: "set-loop-boundary", boundary: "end", position: position(960, 2000) });
+
+    await controller.dispatch({ type: "select-loop", loopId: "saved-loop" });
+
+    expect(controller.getState()).toMatchObject({
+      activeLoopId: "saved-loop",
+      looping: true,
+      loopDraft: {
+        start: { tick: 1920 },
+        end: { tick: 3360 },
+        snapMode: "beat",
+      },
+    });
+  });
+
+  it("rejects crossed loop boundaries so the draft stays aligned with playback", async () => {
+    const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" });
+    const controller = createController(engine, new FakePersistence());
+    await controller.initialize();
+    await controller.dispatch({ type: "set-loop-boundary", boundary: "start", position: position(960, 2000) });
+    await controller.dispatch({ type: "set-loop-boundary", boundary: "end", position: position(2880, 6000) });
+    await controller.dispatch({ type: "commit-loop-draft" });
+
+    await controller.dispatch({ type: "set-loop-boundary", boundary: "start", position: position(3360, 7000) });
+    await controller.dispatch({ type: "commit-loop-draft" });
+
+    expect(controller.getState().loopDraft).toMatchObject({
+      start: { tick: 960 },
+      end: { tick: 2880 },
+    });
+    expect(engine.calls.filter(([name]) => name === "loop").at(-1)).toEqual([
+      "loop",
+      { range: { startTick: 960, endTick: 2880 }, enabled: true },
+    ]);
+  });
+
   it("rehydrates legacy loop positions without dirtying the sidecar", async () => {
     const sidecar = createDefaultSidecar(identity, "2026-07-10T00:00:00Z");
     sidecar.practice.playback.loops = [

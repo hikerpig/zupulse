@@ -30,11 +30,6 @@ async function chooseFixture(app: ElectronApplication, filePath = fixture): Prom
   }, filePath);
 }
 
-async function setRange(locator: import("@playwright/test").Locator, value: string): Promise<void> {
-  await locator.fill(value);
-  await locator.blur();
-}
-
 async function openPracticeSettings(window: import("@playwright/test").Page): Promise<void> {
   await window.getByRole("button", { name: "Practice settings" }).click();
   await expect(window.getByRole("complementary", { name: "Practice settings" })).toBeVisible();
@@ -133,9 +128,9 @@ test("opens a GP file and restores persisted practice state", async () => {
     await tempoInput.blur();
     await openLoopSettings(window);
     await window.getByRole("combobox", { name: "Boundary snap" }).selectOption("off");
-    await window.getByRole("button", { name: "Set A" }).click();
-    await setRange(window.getByRole("slider", { name: "Loop point B" }), "500");
-    await expect(window.getByRole("slider", { name: "Loop point B" })).toHaveValue("500");
+    const scorePointB = window.getByLabel("Score loop range").getByRole("slider", { name: "Loop point B" });
+    await expect(scorePointB).toBeVisible();
+    await scorePointB.press("ArrowLeft");
     await window.getByRole("button", { name: "Save range" }).click();
     await expect(window.getByRole("textbox", { name: "Loop name" })).toHaveCount(1);
     await window.waitForTimeout(700);

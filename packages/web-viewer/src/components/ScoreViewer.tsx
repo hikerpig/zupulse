@@ -4,11 +4,23 @@ import { Maximize2, Minimize2, Minus, Plus, ZoomIn } from "lucide-react";
 import { clampScoreZoom, MAX_SCORE_ZOOM, MIN_SCORE_ZOOM, persistScoreZoom, useAppStore } from "../app/appStore";
 import { SCORE_ZOOM_COMMIT_EVENT } from "../scoreZoom";
 import { useTranslation } from "react-i18next";
+import type { ViewerSessionHandle } from "../host";
+import { LoopRangeOverlay } from "../practice-loop/LoopRangeOverlay";
 import styles from "./ScoreViewer.module.css";
 
 const SCORE_ZOOM_STEP = 0.1;
 
-export function ScoreViewer({ compact = false, expandable = false }: { compact?: boolean; expandable?: boolean }) {
+export function ScoreViewer({
+  compact = false,
+  expandable = false,
+  playback,
+  loopEditor,
+}: {
+  compact?: boolean;
+  expandable?: boolean;
+  playback?: ViewerSessionHandle["playback"];
+  loopEditor?: ViewerSessionHandle["loopEditor"];
+}) {
   const { t } = useTranslation("viewer");
   const [expanded, setExpanded] = useState(false);
   const scoreZoom = useAppStore((state) => state.scoreZoom);
@@ -147,18 +159,21 @@ export function ScoreViewer({ compact = false, expandable = false }: { compact?:
         </div>
       ) : null}
       <div className={styles.frame}>
-        <section
-          ref={viewerRef}
-          id="alpha-tab"
-          className={`${styles.viewer} score-viewer`}
-          aria-label={t("score.preview")}
-          data-score-zoom={scoreZoom}
-        >
-          <div className="score-empty-state">
-            <p className="empty-title">{t("score.emptyTitle")}</p>
-            <p className="empty-copy">{t("score.emptyCopy")}</p>
-          </div>
-        </section>
+        <div className={styles.scoreCanvas}>
+          <section
+            ref={viewerRef}
+            id="alpha-tab"
+            className={`${styles.viewer} score-viewer`}
+            aria-label={t("score.preview")}
+            data-score-zoom={scoreZoom}
+          >
+            <div className="score-empty-state">
+              <p className="empty-title">{t("score.emptyTitle")}</p>
+              <p className="empty-copy">{t("score.emptyCopy")}</p>
+            </div>
+          </section>
+          <LoopRangeOverlay playback={playback} loopEditor={loopEditor} />
+        </div>
       </div>
     </section>
   );

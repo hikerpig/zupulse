@@ -23,6 +23,7 @@ export * from "./harmony/paper-semi-crf-labels";
 export * from "./harmony/paper-semi-crf-model";
 export * from "./harmony/paper-semi-crf-decode";
 export * from "./harmony/paper-semi-crf-features";
+export * from "./harmony/analyzePaperSemiCrf";
 export * from "./harmony/analyzeRules";
 export * from "./harmony/sourceHarmony";
 export * from "./harmony/boundaries";

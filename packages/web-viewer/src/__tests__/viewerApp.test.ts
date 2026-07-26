@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   attachScoreZoomCommit,
   createDefaultOpenSession,
+  transportEnteredStopped,
   renderViewerState,
   type DefaultOpenSessionDependencies,
 } from "../viewerApp";
@@ -333,6 +334,15 @@ describe("mountViewerApp", () => {
 
     expect(error).toBeInstanceOf(AggregateError);
     expect(error.errors).toEqual([openFailure, cleanupFailure]);
+  });
+});
+
+describe("transport navigation transitions", () => {
+  it("restores following only when transport enters stopped", () => {
+    expect(transportEnteredStopped("playing", "stopped")).toBe(true);
+    expect(transportEnteredStopped("paused", "stopped")).toBe(true);
+    expect(transportEnteredStopped("stopped", "stopped")).toBe(false);
+    expect(transportEnteredStopped("stopped", "playing")).toBe(false);
   });
 });
 

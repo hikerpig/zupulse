@@ -57,6 +57,7 @@ export class ScoreNavigationCoordinator {
 
   formalSeek(): void {
     this.scrubPreview = false;
+    this.currentSystemIndex = undefined;
     this.snapshot = { ...this.snapshot, followState: "following" };
     this.emit();
   }

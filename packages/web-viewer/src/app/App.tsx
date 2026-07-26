@@ -6,7 +6,7 @@ import { createHashRouter, Outlet, RouterProvider, useNavigate } from "react-rou
 import type { ViewerApplication } from "./ViewerApplication";
 import type { LocaleHost } from "../i18n/locale-controller";
 import { applyLocaleState } from "../i18n/locale-controller";
-import { AppStoreProvider, createAppStore, useApplyTheme, useAppStore } from "./appStore";
+import { AppStoreProvider, createPersistedAppStore, useApplyTheme, useAppStore } from "./appStore";
 import { LibraryPage } from "./pages/LibraryPage";
 import { ViewerPage } from "./pages/ViewerPage";
 import { StudioPage } from "./pages/StudioPage";
@@ -47,7 +47,7 @@ export function App({
     () => injectedI18n ?? createAppI18n(localeHost.initialState.effectiveLocale),
     [injectedI18n, localeHost],
   );
-  const store = useMemo(() => createAppStore(readInitialTheme(), localeHost.initialState), [localeHost]);
+  const store = useMemo(() => createPersistedAppStore(localeHost.initialState), [localeHost]);
   const router = useMemo(
     () =>
       createHashRouter([
@@ -123,12 +123,4 @@ function LocaleApplicator({ children, i18n }: { children: ReactNode; i18n: i18n 
     void applyLocaleState({ state: locale, i18n, document });
   }, [i18n, locale]);
   return children;
-}
-
-function readInitialTheme(): "light" | "dark" {
-  try {
-    return globalThis.localStorage?.getItem("zupulse-theme") === "light" ? "light" : "dark";
-  } catch {
-    return "dark";
-  }
 }

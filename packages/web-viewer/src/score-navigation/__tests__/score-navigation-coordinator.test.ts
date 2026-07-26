@@ -30,6 +30,20 @@ describe("ScoreNavigationCoordinator", () => {
     expect(moveTo).toHaveBeenCalledTimes(1);
   });
 
+  it("recenters a formal seek even when the cursor remains in the same system", () => {
+    const moveTo = vi.fn();
+    const coordinator = new ScoreNavigationCoordinator({ moveTo, viewportHeight: () => 800 });
+    const system = { systemIndex: 2, y: 500, height: 160 };
+    coordinator.cursorSystemChanged(system, false);
+    coordinator.manualNavigation();
+
+    coordinator.formalSeek();
+    coordinator.cursorSystemChanged(system, true);
+
+    expect(moveTo).toHaveBeenCalledTimes(2);
+    expect(moveTo).toHaveBeenLastCalledWith(300, "direct");
+  });
+
   it("invalidates callbacks from older render generations", () => {
     const coordinator = new ScoreNavigationCoordinator({ moveTo: vi.fn(), viewportHeight: () => 800 });
     const first = coordinator.beginGeneration();

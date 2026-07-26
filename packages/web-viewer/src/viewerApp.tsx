@@ -160,6 +160,7 @@ export function createDefaultOpenSession(
       let navigationLoopKey = "";
       const playbackListeners = new Set<(state: typeof playbackSnapshot) => void>();
       const unsubscribePlayback = sessionController.subscribe((state) => {
+        const previousTransport = playbackSnapshot.transport;
         playbackSnapshot = state;
         const activeLoop = state.loops.find((loop) => loop.id === state.activeLoopId);
         const nextLoopKey =
@@ -175,7 +176,7 @@ export function createDefaultOpenSession(
               : undefined,
           );
         }
-        if (state.transport === "playing" || state.transport === "paused" || state.transport === "stopped") {
+        if (transportEnteredStopped(previousTransport, state.transport)) {
           navigation.transportChanged(state.transport);
         }
         for (const listener of playbackListeners) listener(state);
@@ -244,6 +245,10 @@ export function createDefaultOpenSession(
       return emptySession();
     }
   };
+}
+
+export function transportEnteredStopped(previous: string, current: string): current is "stopped" {
+  return previous !== "stopped" && current === "stopped";
 }
 
 export function renderViewerState(status: HTMLElement, summary: HTMLElement, state: DemoState): void {

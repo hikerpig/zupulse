@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createAppStore, persistScoreNavigationMode } from "../appStore";
+import { createAppStore, createPersistedAppStore, persistScoreNavigationMode } from "../appStore";
 
 describe("createAppStore", () => {
   it("keeps theme state isolated per application", () => {
@@ -36,6 +36,19 @@ describe("createAppStore", () => {
     persistScoreNavigationMode(store.getState().scoreNavigationMode);
 
     expect(localStorage.getItem("zupulse-score-navigation-mode")).toBe("page-turn");
+    vi.unstubAllGlobals();
+  });
+
+  it("loads the persisted score navigation mode into an injected application store", () => {
+    const values = new Map([["zupulse-score-navigation-mode", "page-turn"]]);
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+    });
+
+    const store = createPersistedAppStore({ preference: "zh-CN", effectiveLocale: "zh-CN" });
+
+    expect(store.getState().scoreNavigationMode).toBe("page-turn");
     vi.unstubAllGlobals();
   });
 });

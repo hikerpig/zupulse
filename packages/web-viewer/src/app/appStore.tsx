@@ -43,13 +43,15 @@ export function createAppStore(
   }));
 }
 
+export function createPersistedAppStore(initialLocale: LocaleState): AppStore {
+  return createAppStore(readInitialTheme(), initialLocale, readInitialScoreZoom(), readInitialScoreNavigationMode());
+}
+
 const AppStoreContext = createContext<AppStore | null>(null);
 
 export function AppStoreProvider({ children, store: injectedStore }: { children: ReactNode; store?: AppStore }) {
   const [store] = useState(
-    () =>
-      injectedStore ??
-      createAppStore(readInitialTheme(), undefined, readInitialScoreZoom(), readInitialScoreNavigationMode()),
+    () => injectedStore ?? createPersistedAppStore({ preference: "zh-CN", effectiveLocale: "zh-CN" }),
   );
   return <AppStoreContext.Provider value={store}>{children}</AppStoreContext.Provider>;
 }

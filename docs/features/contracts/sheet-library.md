@@ -46,12 +46,14 @@ Session ID。
 - 页面获得窗口焦点时会刷新列表。
 - Library 提供标题/艺术家搜索、收藏筛选，以及按最近活动、导入时间、最近练习或标题排序。
 - “最近活动”当前按 `lastOpenedAt ?? importedAt` 排序；编辑元数据和切换收藏不会更新它。
-- When an existing Library has no search or favorites-filter matches, the Library shows the applied condition,
-  a `0 / N` count, and an action to clear the condition. Only an empty Library shows the first-score import action.
-- Each Library Score has separate open and favorite buttons. Export, edit, and delete actions live in a Base UI
-  management menu; the enclosing `<li>` has no button semantics.
-- From 390px to 1280px, shared DOM and unnamed container queries scoped by the route viewport reflow the Library
-  header, filters, and Viewer controls without exposing critical actions through horizontal scrolling.
+- 已有馆藏在搜索或收藏筛选无结果时显示当前条件、`0 / N` 数量和清除条件动作；只有空馆藏显示
+  首份曲谱导入动作。
+- Library 默认使用单列紧凑排练目录；标题和艺术家为主信息，格式与时长为辅助信息。只有真实
+  `lastPosition` 存在时显示“继续练习”和一基小节号，否则使用中性的“打开”。
+- 每份 Library Score 的打开/继续、收藏和更多菜单是同级独立控件，外层 `<li>` 没有 button
+  语义；导出、编辑和删除位于 Base UI 管理菜单。
+- 390px 到 1280px 使用相同 DOM 和 route viewport 范围内的 unnamed container query 重排标题、
+  筛选、目录状态与 Viewer 控件，不通过水平滚动隐藏关键动作。
 
 ### 导入
 
@@ -67,6 +69,9 @@ Session ID。
 批量导入通过逐项结果隔离失败：无效或不支持的文件不会阻止其他文件导入。结果类型定义的失败
 code 包括 `FILE_TOO_LARGE`、`UNSUPPORTED_FORMAT`、`INVALID_SCORE`、`READ_FAILED`、
 `STORAGE_QUOTA_EXCEEDED`、`LIBRARY_UNAVAILABLE` 和 `UNKNOWN`；调用方不得依赖原始异常文本。
+
+单文件纯新增完成结果使用可手动关闭的 polite inline status，并在 4 秒后自动收起；运行中、批量、
+重复、失败或取消结果保留完整汇总，直到用户主动关闭。
 
 ### 身份与去重
 
@@ -96,9 +101,10 @@ code 包括 `FILE_TOO_LARGE`、`UNSUPPORTED_FORMAT`、`INVALID_SCORE`、`READ_FA
 - 标题显示优先级是：`titleOverride`、谱内标题、去扩展名文件名。
 - 艺术家显示优先级是：`artistOverride`、谱内艺术家、无值。
 - 收藏状态属于 Library Score，可独立切换。
-- Browser 当前从 Practice Sidecar 和 Local Playback Resume 汇总 `hasLoop`、
-  `lastPracticedAt` 和 `lastPosition`。
-- Desktop 当前没有把已保存的 sidecar/resume 汇总进 Library 列表，见“已知差距”。
+- Browser 和 Desktop 都从各自当前实际使用的 Practice Sidecar 与 Local Playback Resume 汇总
+  `hasLoop`、`lastPracticedAt` 和 `lastPosition`。
+- Desktop 通过只读的校验型 JsonStore reader 汇总，不读取迁移中但当前写入路径未使用的 SQLite
+  sidecar / resume 表；单项持久化读取失败作为 storage failure 返回，不伪造成空摘要。
 
 ### 导出
 
@@ -153,7 +159,7 @@ stateDiagram-v2
 | 导入文件选择          | Browser File API             | Main 一次性 token + Bridge                       | 共享 Viewer 只见 `ScoreFileGateway` |
 | 原始文件导出          | Browser download             | 原生保存 Dialog                                  | 都导出 Managed Score Copy           |
 | 删除联动              | 单 IndexedDB transaction     | 文件状态机 + SQLite transaction + reconciliation | 最终语义一致                        |
-| Library 练习摘要      | 已汇总 sidecar/resume        | 尚未汇总                                         | Desktop 当前显示“尚未练习”          |
+| Library 练习摘要      | 已汇总 sidecar/resume        | 已汇总当前 JsonStore sidecar/resume              | 语义一致，数据仍各自本地            |
 | Harmony Analysis 删除 | 随 Library Score 删除        | 随 Library Score 删除                            | 旧 session 均不得重建孤儿文档       |
 
 ## 领域不变量
@@ -179,10 +185,6 @@ stateDiagram-v2
 
 以下内容不得被 AI 当作已经实现的行为：
 
-- Desktop Library 列表尚未从已保存的 Practice Sidecar 和 Local Playback Resume 生成
-  `hasLoop`、`lastPracticedAt`、`lastPosition`；当前摘要固定为 `hasLoop: false`。
-- 批量导入虽逐项返回 created/existing/failed 结果，但 UI 尚未提供规格中完整的成功、失败、重复
-  汇总和可展开失败详情。
 - `importing` 状态存在于应用 snapshot，但当前 Library 组件只使用通用 `loading` 禁用导入按钮，
   没有完整呈现独立的 importing 状态。
 - Managed Score Copy 缺失或损坏时，Repository 会拒绝读取；UI 尚未提供规格设想的专用恢复操作。
@@ -214,16 +216,16 @@ stateDiagram-v2
 
 ## 证据地图
 
-| 契约                                           | 运行时代码 / Schema                                                                                                                                                          | 自动化证据                                                                                                                                                                                                                                                                                 |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 字段约束与 Repository/Gateway 边界             | [`schemas.ts`](../../../packages/web-core/src/library/schemas.ts)、[`ports.ts`](../../../packages/web-core/src/library/ports.ts)                                             | Bridge schema tests、双宿主 repository contract                                                                                                                                                                                                                                            |
-| 逐项导入、格式探测、64 MiB 上限和内容哈希      | [`importLibraryScores.ts`](../../../packages/web-core/src/library/importLibraryScores.ts)                                                                                    | [`importLibraryScores.test.ts`](../../../packages/web-core/src/library/__tests__/importLibraryScores.test.ts)                                                                                                                                                                              |
-| 双宿主并发去重、元数据身份稳定、删除后新 ID    | Browser/Desktop Repository                                                                                                                                                   | [`sheetLibraryRepositoryContract.ts`](../../../test-harness/__tests__/sheetLibraryRepositoryContract.ts)                                                                                                                                                                                   |
-| Browser 原子存储、练习摘要和删除联动           | [`indexed-db-sheet-library-repository.ts`](../../../packages/web-storage/src/indexed-db-sheet-library-repository.ts)                                                         | [`indexed-db-sheet-library-repository.test.ts`](../../../packages/web-storage/src/__tests__/indexed-db-sheet-library-repository.test.ts)、[`library.spec.ts`](../../../apps/web-demo/e2e/library.spec.ts)                                                                                  |
-| Desktop 托管文件、SQLite 状态和 reconciliation | [`DesktopLibraryStore.ts`](../../../apps/desktop-shell/src/main/library/DesktopLibraryStore.ts)、[`reconcile.ts`](../../../apps/desktop-shell/src/main/library/reconcile.ts) | [`DesktopLibraryStore.test.ts`](../../../apps/desktop-shell/src/main/library/__tests__/DesktopLibraryStore.test.ts)、[`reconcile.test.ts`](../../../apps/desktop-shell/src/main/library/__tests__/reconcile.test.ts)、[`desktop.spec.ts`](../../../apps/desktop-shell/e2e/desktop.spec.ts) |
-| Library UI、过滤、排序、编辑、导出与删除确认   | [`SheetLibrary.tsx`](../../../packages/web-viewer/src/features/SheetLibrary.tsx)                                                                                             | [`SheetLibrary.test.tsx`](../../../packages/web-viewer/src/features/__tests__/SheetLibrary.test.tsx)、[`App.test.tsx`](../../../packages/web-viewer/src/app/__tests__/App.test.tsx)、[`library.spec.ts`](../../../apps/web-demo/e2e/library.spec.ts)                                       |
-| 单份导入导航、打开与应用状态编排               | [`ViewerApplication.ts`](../../../packages/web-viewer/src/app/ViewerApplication.ts)                                                                                          | [`ViewerApplication.test.ts`](../../../packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts)                                                                                                                                                                                    |
-| Desktop Renderer 不获得文件路径                | Bridge schemas、Main handler、Renderer adapter                                                                                                                               | Desktop Bridge tests、Desktop E2E isolation test                                                                                                                                                                                                                                           |
+| 契约                                                     | 运行时代码 / Schema                                                                                                                                                                                                                     | 自动化证据                                                                                                                                                                                                                                                                                 |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 字段约束与 Repository/Gateway 边界                       | [`schemas.ts`](../../../packages/web-core/src/library/schemas.ts)、[`ports.ts`](../../../packages/web-core/src/library/ports.ts)                                                                                                        | Bridge schema tests、双宿主 repository contract                                                                                                                                                                                                                                            |
+| 逐项导入、格式探测、64 MiB 上限和内容哈希                | [`importLibraryScores.ts`](../../../packages/web-core/src/library/importLibraryScores.ts)                                                                                                                                               | [`importLibraryScores.test.ts`](../../../packages/web-core/src/library/__tests__/importLibraryScores.test.ts)                                                                                                                                                                              |
+| 双宿主并发去重、元数据身份稳定、删除后新 ID              | Browser/Desktop Repository                                                                                                                                                                                                              | [`sheetLibraryRepositoryContract.ts`](../../../test-harness/__tests__/sheetLibraryRepositoryContract.ts)                                                                                                                                                                                   |
+| Browser 原子存储、练习摘要和删除联动                     | [`indexed-db-sheet-library-repository.ts`](../../../packages/web-storage/src/indexed-db-sheet-library-repository.ts)                                                                                                                    | [`indexed-db-sheet-library-repository.test.ts`](../../../packages/web-storage/src/__tests__/indexed-db-sheet-library-repository.test.ts)、[`library.spec.ts`](../../../apps/web-demo/e2e/library.spec.ts)                                                                                  |
+| Desktop 托管文件、练习摘要、SQLite 状态和 reconciliation | [`DesktopLibraryStore.ts`](../../../apps/desktop-shell/src/main/library/DesktopLibraryStore.ts)、[`main.ts`](../../../apps/desktop-shell/src/main/main.ts)、[`reconcile.ts`](../../../apps/desktop-shell/src/main/library/reconcile.ts) | [`DesktopLibraryStore.test.ts`](../../../apps/desktop-shell/src/main/library/__tests__/DesktopLibraryStore.test.ts)、[`reconcile.test.ts`](../../../apps/desktop-shell/src/main/library/__tests__/reconcile.test.ts)、[`desktop.spec.ts`](../../../apps/desktop-shell/e2e/desktop.spec.ts) |
+| Library 目录、练习动作、过滤、导入反馈与管理菜单         | [`SheetLibrary.tsx`](../../../packages/web-viewer/src/features/SheetLibrary.tsx)                                                                                                                                                        | [`SheetLibrary.test.tsx`](../../../packages/web-viewer/src/features/__tests__/SheetLibrary.test.tsx)、[`App.test.tsx`](../../../packages/web-viewer/src/app/__tests__/App.test.tsx)、[`library.spec.ts`](../../../apps/web-demo/e2e/library.spec.ts)                                       |
+| 单份导入导航、打开与应用状态编排                         | [`ViewerApplication.ts`](../../../packages/web-viewer/src/app/ViewerApplication.ts)                                                                                                                                                     | [`ViewerApplication.test.ts`](../../../packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts)                                                                                                                                                                                    |
+| Desktop Renderer 不获得文件路径                          | Bridge schemas、Main handler、Renderer adapter                                                                                                                                                                                          | Desktop Bridge tests、Desktop E2E isolation test                                                                                                                                                                                                                                           |
 
 ## 相关资料
 

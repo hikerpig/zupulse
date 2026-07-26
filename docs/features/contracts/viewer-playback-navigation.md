@@ -3,7 +3,7 @@ feature: viewer-playback-navigation
 title: Viewer Playback Navigation
 status: current
 delivery: available
-last_verified: 2026-07-25
+last_verified: 2026-07-26
 hosts:
   - browser
   - desktop
@@ -64,6 +64,17 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 - 播放中的普通 position snapshot 最多约 10Hz 发布给 React；transport、正式 seek、stop、Loop
   变更与 pause flush 立即发布。
 
+### 练习设置
+
+- 常规“练习设置”入口打开任务概览，展示速度入口以及“设置循环区间”“选择主轨道”两项任务；
+  当前轨道、速度与 Loop 状态不再作为单独的 Session section。
+- 没有已存 Loop 时，Transport 的“设置循环区间”直接进入 Loop 任务；该任务复用 A/B、吸附、
+  保存和已存 Loop 管理命令。
+- 主轨道任务复用主轨道、附加显示、静音、独奏和音量命令。任务返回只回到概览，不关闭抽屉。
+- 打开概览后焦点进入关闭按钮；进入任务后焦点进入返回按钮。Escape 关闭抽屉并恢复普通练习设置
+  触发器焦点。
+- playback 尚不可用时仍显示相同任务概览，但所有领域动作禁用并显示原因。
+
 ### 生命周期与降级
 
 - render、resize、zoom 和轨道重排使用递增 generation；旧回调不能覆盖新投影。
@@ -80,6 +91,7 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 | 精确 Playback Occurrence 谱面定位    | 支持    | 支持    | 无       |
 | Transport latest-only 游标与视口预览 | 支持    | 支持    | 无       |
 | Loop-aware 临时页面                  | 支持    | 支持    | 无       |
+| 任务式练习设置                       | 支持    | 支持    | 无       |
 
 本轮自动化验收平台是 Chromium Browser Demo；iOS WebView 和实体 iPad 不属于本 Contract 的已验证宿主。
 
@@ -107,6 +119,7 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 - 谱面点击只提交一次正式 seek，且不改变 playing/paused transport。
 - Scrub 每帧最多发送一个最新预览，松手只提交一次正式 seek。
 - playing position snapshot 最多约 10Hz；pause、stop、seek 和 Loop 语义立即可观察。
+- 常规练习入口进入任务概览；无已存 Loop 的快捷入口直达 Loop 任务，返回与 Escape 焦点稳定。
 
 ## 证据地图
 
@@ -116,6 +129,7 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 | occurrence 精确解析      | `packages/web-core/src/score/positions.ts`、`packages/web-core/src/playback/writtenSelection.ts` | 相邻 `__tests__`                                             |
 | Follow State 与页面协调  | `packages/web-viewer/src/score-navigation`                                                       | `packages/web-viewer/src/score-navigation/__tests__`         |
 | 模式、页码与恢复 UI      | `packages/web-viewer/src/features/PlaybackWorkspace.tsx`                                         | `PlaybackWorkspace.test.tsx`                                 |
+| 练习设置任务、降级与焦点 | `packages/web-viewer/src/features/PlaybackWorkspace.tsx`                                         | `PlaybackWorkspace.test.tsx`                                 |
 | position 发布预算        | `packages/web-core/src/playback/playbackController.ts`                                           | `playbackController.test.ts`                                 |
 | Browser 长谱与响应式流程 | `apps/web-demo/e2e/library.spec.ts`                                                              | Playwright Chromium                                          |
 

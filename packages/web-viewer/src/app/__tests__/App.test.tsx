@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
@@ -131,9 +131,10 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App application={application} />);
     await user.click(screen.getByRole("button", { name: "练习设置" }));
-    expect(screen.getByRole("complementary", { name: "练习设置" })).toBeTruthy();
-    expect(screen.getByText("Loop")).toBeTruthy();
-    expect(screen.getByText("Tracks")).toBeTruthy();
+    const practice = screen.getByRole("complementary", { name: "练习设置" });
+    expect(within(practice).getByRole("button", { name: "设置循环区间" })).toBeTruthy();
+    expect(within(practice).getByRole("button", { name: "选择主轨道" })).toBeTruthy();
+    expect(within(practice).queryByText("Session")).toBeNull();
     await application.destroy();
   });
 

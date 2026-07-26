@@ -12,7 +12,7 @@
 - [x] P1-02 先写目录行语义、继续/打开条件和一基小节号的组件测试。
 - [x] P1-02 把卡片网格改成单列紧凑目录，保留 sibling controls。
 - [x] P1-02 覆盖无作者、长标题、无摘要、有 Resume、有 Loop、收藏和菜单。
-- [ ] P1-02 验证 390 / 620 / 1280 容器布局与键盘顺序。
+- [x] P1-02 验证 390 / 620 / 1280 容器布局与键盘顺序。
 
 ## Stage 3A — 导入反馈
 
@@ -32,9 +32,9 @@
 
 ## Stage 4 — 验收与文档
 
-- [ ] P1-05 运行相关组件测试与 `pnpm check:i18n`。
-- [ ] P1-05 运行 Browser E2E、Desktop build / E2E。
+- [x] P1-05 运行相关组件测试与 `pnpm check:i18n`。
+- [x] P1-05 运行 Browser E2E、Desktop build / E2E。
 - [ ] P1-05 人工检查 Light / Dark、390 / 620 / 1280 和键盘。
 - [ ] P1-05 完成发布前 VoiceOver / NVDA 门禁或记录明确负责人。
-- [ ] P1-05 更新 Sheet Library Feature Contract 的当前行为、平台矩阵、差距和证据地图。
-- [ ] P1-05 运行 `pnpm verify:fast`、`pnpm format:check`、`git diff --check`。
+- [x] P1-05 更新 Sheet Library Feature Contract 的当前行为、平台矩阵、差距和证据地图。
+- [x] P1-05 运行 `pnpm verify:fast`、`pnpm format:check`、`git diff --check`。

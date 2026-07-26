@@ -48,6 +48,7 @@
   --spacing-12: var(--space-12);
   --spacing-16: var(--space-16);
   --spacing-control-sm: var(--control-height-sm);
+  --spacing-field: var(--control-height-field);
   --spacing-control: var(--control-height-md);
   --spacing-control-lg: var(--control-height-lg);
 

@@ -44,7 +44,7 @@
 
 - [x] Task 7: `Button`
 - [x] Task 7: `IconButton`
-- [ ] Task 8a: `Field` / `TextField` / `Select`
+- [x] Task 8a: `Field` / `TextField` / `Select`
 - [ ] Task 8b: `Panel` / `Toolbar` / `Status`
 - [ ] Task 8c: Base UI `Overlay` primitives
 

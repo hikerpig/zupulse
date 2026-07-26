@@ -1,15 +1,76 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ImportItemResult, LibraryScore } from "@zupulse/web-core";
 import type { ViewerApplication } from "../../app/ViewerApplication";
 import { SheetLibrary } from "../SheetLibrary";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 describe("SheetLibrary import summary", () => {
+  it("auto-dismisses a compact single-file success after four seconds", () => {
+    vi.useFakeTimers();
+    const dismissImportSummary = vi.fn();
+    const score = libraryScore();
+
+    render(
+      <SheetLibrary
+        application={{ dismissImportSummary } as unknown as ViewerApplication}
+        scores={[score]}
+        loading={false}
+        importSummary={{
+          total: 1,
+          results: [{ status: "created", score }],
+          cancelled: 0,
+          running: false,
+        }}
+        onImport={async () => undefined}
+        onOpen={() => undefined}
+      />,
+    );
+
+    expect(screen.getByRole("status").textContent).toContain("Created 已加入曲谱库");
+    expect(screen.queryByText("查看逐项结果")).toBeNull();
+    act(() => vi.advanceTimersByTime(3999));
+    expect(dismissImportSummary).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(1));
+    expect(dismissImportSummary).toHaveBeenCalledOnce();
+  });
+
+  it("keeps batch and non-created results until the user dismisses them", () => {
+    vi.useFakeTimers();
+    const dismissImportSummary = vi.fn();
+    const score = libraryScore();
+
+    render(
+      <SheetLibrary
+        application={{ dismissImportSummary } as unknown as ViewerApplication}
+        scores={[score]}
+        loading={false}
+        importSummary={{
+          total: 2,
+          results: [
+            { status: "created", score },
+            { status: "existing", score: { ...score, fileName: "existing.gp" } },
+          ],
+          cancelled: 0,
+          running: false,
+        }}
+        onImport={async () => undefined}
+        onOpen={() => undefined}
+      />,
+    );
+
+    expect(screen.getByRole("region", { name: /导入汇总/ })).toBeTruthy();
+    act(() => vi.advanceTimersByTime(4000));
+    expect(dismissImportSummary).not.toHaveBeenCalled();
+  });
+
   it("shows created, existing, failed and cancelled counts with structured details", async () => {
     const cancelImport = vi.fn();
     const dismissImportSummary = vi.fn();
@@ -91,6 +152,44 @@ describe("SheetLibrary score actions", () => {
     expect(await screen.findByRole("menuitem", { name: "导出 Created" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "编辑 Created" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "删除 Created" })).toBeTruthy();
+  });
+
+  it("offers a truthful continue action with a one-based measure number", async () => {
+    const onOpen = vi.fn();
+    const fresh = libraryScore();
+    const practiced: LibraryScore = {
+      ...libraryScore(),
+      id: "00000000-0000-4000-8000-000000000002",
+      title: "Practiced",
+      artist: "Player",
+      practice: {
+        hasLoop: true,
+        lastPracticedAt: "2026-07-26T10:00:00.000Z",
+        lastPosition: {
+          measureId: "measure-7",
+          measureIndex: 6,
+          beatIndex: 0,
+          tick: 11520,
+          cachedTimeMs: 24000,
+        },
+      },
+    };
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[fresh, practiced]}
+        loading={false}
+        onImport={async () => undefined}
+        onOpen={onOpen}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "打开 Created" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "继续练习 Practiced" })).toBeTruthy();
+    expect(screen.getByText(/上次练到第 7 小节/)).toBeTruthy();
+    expect(screen.queryByText("尚未练习")).toBeNull();
+    expect(screen.queryByText("Library")).toBeNull();
   });
 });
 

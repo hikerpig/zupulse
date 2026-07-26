@@ -141,6 +141,41 @@ describe("bridge schemas", () => {
     ).toEqual({ preference: "zh-CN", effectiveLocale: "zh-CN" });
   });
 
+  it("passes Library practice resume facts through the bridge", () => {
+    const lastPosition = {
+      measureId: "measure-7",
+      measureIndex: 6,
+      beatIndex: 1,
+      tick: 12480,
+      cachedTimeMs: 26000,
+    };
+
+    expect(
+      bridgeResponseSchemas["library.list"].parse({
+        scores: [
+          {
+            id: "00000000-0000-4000-8000-000000000001",
+            scoreIdentity: hash,
+            fileName: "practice.gp",
+            format: "gp",
+            title: "Practice",
+            importedAt: "2026-07-26T08:00:00.000Z",
+            isFavorite: false,
+            practice: {
+              hasLoop: true,
+              lastPracticedAt: "2026-07-26T10:00:00.000Z",
+              lastPosition,
+            },
+          },
+        ],
+      }).scores[0]?.practice,
+    ).toEqual({
+      hasLoop: true,
+      lastPracticedAt: "2026-07-26T10:00:00.000Z",
+      lastPosition,
+    });
+  });
+
   it("round-trips MusicXML identities through sidecar requests", () => {
     const identity = {
       contentHash: hash,

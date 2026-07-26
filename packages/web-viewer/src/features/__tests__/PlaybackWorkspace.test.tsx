@@ -135,7 +135,40 @@ describe("PlaybackWorkspace transport bar", () => {
 
     await userEvent.setup().click(screen.getByRole("button", { name: "设置循环区间" }));
 
-    expect(screen.getByRole("complementary", { name: "练习设置" })).toBeTruthy();
+    const practice = screen.getByRole("complementary", { name: "练习设置" });
+    expect(within(practice).getByRole("heading", { name: "设置循环区间" })).toBeTruthy();
+    expect(within(practice).getByRole("button", { name: "返回练习设置" })).toBeTruthy();
+    expect(within(practice).queryByText("Practice")).toBeNull();
+  });
+
+  it("organizes practice settings around loop and track tasks", async () => {
+    render(<PlaybackWorkspace session={session(state("paused"))}>乐谱</PlaybackWorkspace>);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "练习设置" }));
+    const practice = screen.getByRole("complementary", { name: "练习设置" });
+    expect(within(practice).getByRole("button", { name: /设置循环区间/ })).toBeTruthy();
+    await user.click(within(practice).getByRole("button", { name: /选择主轨道/ }));
+
+    expect(within(practice).getByRole("heading", { name: "选择主轨道" })).toBeTruthy();
+    const back = within(practice).getByRole("button", { name: "返回练习设置" });
+    expect(document.activeElement).toBe(back);
+    await user.click(back);
+
+    expect(within(practice).getByRole("button", { name: /设置循环区间/ })).toBeTruthy();
+    expect(within(practice).queryByText("Session")).toBeNull();
+  });
+
+  it("keeps the task overview while playback is unavailable", async () => {
+    render(<PlaybackWorkspace session={undefined}>乐谱</PlaybackWorkspace>);
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "练习设置" }));
+
+    const practice = screen.getByRole("complementary", { name: "练习设置" });
+    expect((within(practice).getByRole("button", { name: "设置循环区间" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((within(practice).getByRole("button", { name: "选择主轨道" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(within(practice).getByText("打开乐谱后可调整循环和轨道")).toBeTruthy();
+    expect(within(practice).queryByText("Session")).toBeNull();
   });
 
   it("moves focus into practice settings, closes with Escape, and restores focus", async () => {

@@ -4,6 +4,8 @@ import type {
   LibraryScoreId,
   LibraryScoreIdentity,
   LibraryScoreSummary,
+  LocalPlaybackResume,
+  SidecarPayload,
   SheetLibraryRepository,
   StoredScoreFile,
   ValidatedLibraryScoreDraft,
@@ -33,11 +35,17 @@ type Row = {
   storage_state: string;
 };
 
+type LibraryPracticeReader = {
+  readSidecar(libraryScoreId: LibraryScoreId): Promise<SidecarPayload | undefined>;
+  readResume(libraryScoreId: LibraryScoreId): Promise<LocalPlaybackResume | undefined>;
+};
+
 export class DesktopLibraryStore implements SheetLibraryRepository, HarmonyAnalysisRepository {
   private readonly database;
   constructor(
     databasePath: string,
     private readonly root: string,
+    private readonly practice?: LibraryPracticeReader,
   ) {
     this.database = openSqliteDatabase(databasePath);
   }
@@ -46,7 +54,23 @@ export class DesktopLibraryStore implements SheetLibraryRepository, HarmonyAnaly
     await reconcileManagedScores(this.database, this.root);
   }
   async list(): Promise<readonly LibraryScoreSummary[]> {
-    return this.rows().map((row) => summary(row));
+    return Promise.all(
+      this.rows().map(async (row) => {
+        const scoreSummary = summary(row);
+        if (!this.practice) return scoreSummary;
+        const [sidecar, resume] = await Promise.all([
+          this.practice.readSidecar(scoreSummary.id),
+          this.practice.readResume(scoreSummary.id),
+        ]);
+        return {
+          ...scoreSummary,
+          practice: {
+            hasLoop: Boolean(sidecar?.practice.playback.loops.length),
+            ...(resume === undefined ? {} : { lastPracticedAt: resume.updatedAt, lastPosition: resume.position }),
+          },
+        };
+      }),
+    );
   }
   async get(id: LibraryScoreId): Promise<LibraryScore | undefined> {
     const row = this.row(id);

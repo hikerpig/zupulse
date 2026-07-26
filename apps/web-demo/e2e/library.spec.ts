@@ -98,9 +98,9 @@ test("persists a Browser Library Score and gives a re-import a fresh ID after de
 
   await page.getByRole("navigation", { name: "主要页面" }).getByRole("link", { name: "曲谱库" }).click();
   await expect(page.getByRole("heading", { name: "曲谱库" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "打开 桌面验收谱" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^(打开|继续练习) 桌面验收谱$/ })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole("button", { name: "打开 桌面验收谱" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^(打开|继续练习) 桌面验收谱$/ })).toBeVisible();
 
   await page.getByRole("button", { name: "桌面验收谱 的更多操作" }).click();
   await page.getByRole("menuitem", { name: "删除 桌面验收谱", exact: true }).click();
@@ -239,7 +239,7 @@ test("keeps the Library to Viewer practice journey usable from 390px through des
     page.getByRole("textbox", { name: "搜索曲名或艺术家" }),
     page.getByRole("button", { name: "收藏", exact: true }),
     page.getByRole("combobox"),
-    page.getByRole("button", { name: "打开 桌面验收谱" }),
+    page.getByRole("button", { name: /^(打开|继续练习) 桌面验收谱$/ }),
     page.getByRole("button", { name: "桌面验收谱 的更多操作" }),
   ];
   for (const width of [390, 620, 640, 1280]) {
@@ -254,7 +254,7 @@ test("keeps the Library to Viewer practice journey usable from 390px through des
   await expect(page.getByText("没有匹配“不存在”的曲谱")).toBeVisible();
   await expect(page.getByText("0 / 1 份曲谱")).toBeVisible();
   await page.getByRole("button", { name: "清除搜索" }).click();
-  await page.getByRole("button", { name: "打开 桌面验收谱" }).click();
+  await page.getByRole("button", { name: /^(打开|继续练习) 桌面验收谱$/ }).click();
 
   await expect(page.getByRole("button", { name: "导入曲谱" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "播放" })).toBeEnabled({ timeout: 30_000 });
@@ -275,6 +275,13 @@ test("keeps the Library to Viewer practice journey usable from 390px through des
   const practice = page.getByRole("complementary", { name: "练习设置" });
   await expect(practice.getByRole("button", { name: /速度 \d+ BPM/ })).toBeVisible();
   await expect(page.getByRole("button", { name: "关闭练习设置" })).toBeFocused();
+  await expect(practice.getByRole("button", { name: /设置循环区间/ })).toBeVisible();
+  await practice.getByRole("button", { name: /选择主轨道/ }).click();
+  await expect(practice.getByRole("heading", { name: "选择主轨道" })).toBeVisible();
+  const backToPractice = practice.getByRole("button", { name: "返回练习设置" });
+  await expect(backToPractice).toBeFocused();
+  await backToPractice.click();
+  await expect(practice.getByRole("button", { name: /设置循环区间/ })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(practice).toHaveCount(0);
   await expect(practiceTrigger).toBeFocused();

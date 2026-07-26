@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { scoreIdentitySchema } from "../score/schemas";
 import { localPlaybackResumeSchema, sidecarPayloadSchema } from "../storage/schemas";
-import { libraryMetadataSchema, libraryScoreIdSchema, libraryScoreIdentitySchema } from "../library/schemas";
+import {
+  libraryMetadataSchema,
+  libraryPracticeSummarySchema,
+  libraryScoreIdSchema,
+  libraryScoreIdentitySchema,
+} from "../library/schemas";
 import { harmonyAnalysisDocumentSchema } from "../harmony/schemas";
 
 export const BRIDGE_SCHEMA_VERSION = "3.0.0" as const;
@@ -34,7 +39,7 @@ const libraryScoreSchema = z
     importedAt: z.iso.datetime(),
     lastOpenedAt: z.iso.datetime().optional(),
     isFavorite: z.boolean(),
-    practice: z.object({ hasLoop: z.boolean() }).strict(),
+    practice: libraryPracticeSummarySchema,
     parsedTitle: z.string().optional(),
     parsedArtist: z.string().optional(),
     metadata: libraryMetadataSchema,

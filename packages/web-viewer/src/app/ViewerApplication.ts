@@ -1,7 +1,8 @@
 import type { ViewerAppHandle, ViewerFile, ViewerHost, ViewerHostEvent, ViewerSessionHandle } from "../host";
 import {
-  analyzeHarmonyRules,
+  analyzeHarmony,
   applyCorrectionCommand,
+  BUNDLED_PAPER_SEMI_CRF_ALGORITHM_VERSION,
   effectiveHarmonyProjection,
   importLibraryScores,
   listMusicXmlPartIds,
@@ -10,7 +11,6 @@ import {
   projectSourceHarmonyEvents,
   readMusicXmlRootXml,
   compareMoments,
-  bundledHarmonyRankerModel,
 } from "@zupulse/web-core";
 import type {
   AnnotationTarget,
@@ -527,10 +527,14 @@ export class ViewerApplication implements ViewerAppHandle {
       documentVersion: 0,
       activeRevision: {
         id: crypto.randomUUID(),
-        algorithmVersion: `rules-${bundledHarmonyRankerModel.algorithmVersion}`,
+        algorithmVersion: BUNDLED_PAPER_SEMI_CRF_ALGORITHM_VERSION,
         createdAt: now,
-        parameters: { scope: { includedTrackIds }, topK: 8, decisionThreshold: 0.6 },
-        segments: analyzeHarmonyRules(
+        parameters: {
+          scope: { includedTrackIds },
+          topK: 8,
+          decisionThreshold: 0.6,
+        },
+        segments: analyzeHarmony(
           projectAlphaTabHarmonyInput(parsed.runtime as Parameters<typeof projectAlphaTabHarmonyInput>[0]),
           {
             includedTrackIds,

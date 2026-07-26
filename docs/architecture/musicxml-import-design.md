@@ -136,7 +136,8 @@ MusicXML 在产品中是用于查看与练习的语义乐谱，不是原制谱�
 - Harmony Analysis Studio 可以按独立规格从原始托管字节生成写有 `<harmony>` 的新副本；它不修改当前馆藏，并负责语义保留未知 MusicXML 元素。
 - 除该和弦标注导出外，导入流程不承诺未知或不支持的 MusicXML 元素能够 round-trip 保留。
 
-其他导出能力仍需单独设计完整来源保留、未知元素处理和双向映射，不能直接建立在当前有损的跨格式业务投影上。和弦标注导出见 `../superpowers/specs/2026-07-15-harmony-analysis-studio-design.md`。
+其他导出能力仍需单独设计完整来源保留、未知元素处理和双向映射，不能直接建立在当前有损的跨格式
+业务投影上。和弦标注导出见 [`harmony-analysis-system.md`](harmony-analysis-system.md)。
 
 ### Score Identity 与版本关系
 

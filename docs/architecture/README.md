@@ -50,8 +50,8 @@ flowchart LR
 - Harmony Analysis 当前实现：`harmony-analysis-system.md`
 - iPad Practice Player：`ipad-practice-player.md`
 - Harmony engine 核心：`../../packages/web-core/docs/harmony.md`
-- Harmony CLI 与调优：`../../tools/harmony-cli/README.md`、`../../tools/harmony-cli/docs/evaluation.md`
-- Harmony Analysis 历史设计规格：`../superpowers/specs/2026-07-15-harmony-analysis-studio-design.md`
+- Harmony CLI 与评测：`../../tools/harmony-cli/README.md`、`../../tools/harmony-cli/docs/evaluation.md`
+- Semi-CRF 当前验证：`../evaluation/semi-crf.md`
 - 架构决策状态：`../adr/README.md`
 
 ## 当前核心不变量

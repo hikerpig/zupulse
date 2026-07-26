@@ -1,4 +1,5 @@
 import { chordSymbolSchema, type ChordSymbolInput } from "@zupulse/web-core";
+import { mergeIntervalOverlapDiagnostics, type IntervalOverlapDiagnostics } from "./intervalMetrics";
 
 export type AccuracyObservation = {
   groupId: string;
@@ -8,29 +9,83 @@ export type AccuracyObservation = {
   expected?: ChordSymbolInput;
   unsupportedLabel?: string;
   predicted?: ChordSymbolInput;
+  primary?: ChordSymbolInput;
   alternatives: readonly ChordSymbolInput[];
   confidence: number;
   expectedBoundary: boolean;
   predictedBoundary: boolean;
 };
 
-type SliceMetrics = { cases: number; top1Accuracy: number; resolvedPrecision: number; resolvedCoverage: number };
+type SliceMetrics = {
+  cases: number;
+  top1Accuracy: number;
+  predictedPrimaryAccuracy: number;
+  resolvedPrecision: number;
+  resolvedCoverage: number;
+};
+export type AccuracyOutcome =
+  | "unsupported-label"
+  | "unresolved-oracle-top1"
+  | "unresolved-oracle-hit"
+  | "unresolved-oracle-miss"
+  | "resolved-correct"
+  | "resolved-wrong-oracle-hit"
+  | "resolved-wrong-oracle-miss";
+export type AccuracyErrorCategory =
+  | "unsupported-label"
+  | "unresolved-oracle-top1"
+  | "unresolved-oracle-hit"
+  | "unresolved-oracle-miss"
+  | "root"
+  | "bass"
+  | "kind"
+  | "extension"
+  | "degrees"
+  | "boundary";
+type DiagnosticBucket = { cases: number; weight: number };
 
 export type AccuracyMetrics = {
   gold: { total: number; mapped: number; unsupported: number };
   mappingCoverage: number;
   unsupportedLabelRate: number;
   top1Accuracy: number;
+  predictedPrimaryAccuracy: number;
   top8OracleRecall: number;
   resolvedPrecision: number;
   resolvedCoverage: number;
   boundaryF1: number;
   expectedCalibrationError: number;
+  segmentDensity: { predictedSegments: number; measures: number; segmentsPerMeasure: number };
   facets: { root: number; bass: number; kind: number; extension: number; degrees: number };
   slices: { corpus: Record<string, SliceMetrics>; chordFamily: Record<string, SliceMetrics> };
+  diagnostics: {
+    outcomes: Partial<Record<AccuracyOutcome, DiagnosticBucket>>;
+    outcomesByFamily: Record<string, Partial<Record<AccuracyOutcome, DiagnosticBucket>>>;
+    errors: Partial<Record<AccuracyErrorCategory, DiagnosticBucket>>;
+    intervalOverlap: IntervalOverlapDiagnostics;
+    confidenceBins: Array<{
+      index: number;
+      cases: number;
+      weight: number;
+      averageConfidence: number;
+      accuracy: number;
+    }>;
+    calibrationBins: Array<{
+      index: number;
+      cases: number;
+      weight: number;
+      averageConfidence: number;
+      accuracy: number;
+    }>;
+    precisionCoverageCurve: Array<{ threshold: number; precision: number; coverage: number }>;
+  };
 };
 
-export function calculateAccuracyMetrics(observations: readonly AccuracyObservation[]): AccuracyMetrics {
+export function calculateAccuracyMetrics(
+  observations: readonly AccuracyObservation[],
+  intervalOverlap: IntervalOverlapDiagnostics = mergeIntervalOverlapDiagnostics([]),
+  segmentation: { predictedSegments: number; measures: number } = { predictedSegments: 0, measures: 0 },
+): AccuracyMetrics {
   const mapped = observations.filter((item): item is AccuracyObservation & { expected: ChordSymbolInput } =>
     Boolean(item.expected),
   );
@@ -51,6 +106,7 @@ export function calculateAccuracyMetrics(observations: readonly AccuracyObservat
     mappingCoverage: ratio(mapped.length, observations.length),
     unsupportedLabelRate: ratio(observations.length - mapped.length, observations.length),
     top1Accuracy: weightedRatio(mapped, (item) => sameChord(item.alternatives[0], item.expected)),
+    predictedPrimaryAccuracy: weightedRatio(mapped, (item) => sameChord(item.primary, item.expected)),
     top8OracleRecall: weightedRatio(mapped, (item) =>
       item.alternatives.some((candidate) => sameChord(candidate, item.expected)),
     ),
@@ -61,6 +117,10 @@ export function calculateAccuracyMetrics(observations: readonly AccuracyObservat
         ? 0
         : (2 * boundaryPrecision * boundaryRecall) / (boundaryPrecision + boundaryRecall),
     expectedCalibrationError: calibrationError(mapped),
+    segmentDensity: {
+      ...segmentation,
+      segmentsPerMeasure: ratio(segmentation.predictedSegments, segmentation.measures),
+    },
     facets: {
       root: weightedRatio(resolved, (item) => same(item.predicted.root, item.expected.root)),
       bass: weightedRatio(resolved, (item) => same(item.predicted.bass, item.expected.bass)),
@@ -72,7 +132,137 @@ export function calculateAccuracyMetrics(observations: readonly AccuracyObservat
       corpus: createSlices(mapped, (item) => item.corpus),
       chordFamily: createSlices(mapped, (item) => item.family),
     },
+    diagnostics: createDiagnostics(observations, intervalOverlap),
   };
+}
+
+export function classifyAccuracyOutcome(item: AccuracyObservation): AccuracyOutcome {
+  if (!item.expected) return "unsupported-label";
+  const expected = item.expected;
+  if (!item.predicted) {
+    if (sameChord(item.alternatives[0], expected)) return "unresolved-oracle-top1";
+    return item.alternatives.some((candidate) => sameChord(candidate, expected))
+      ? "unresolved-oracle-hit"
+      : "unresolved-oracle-miss";
+  }
+  if (sameChord(item.predicted, expected)) return "resolved-correct";
+  return item.alternatives.some((candidate) => sameChord(candidate, expected))
+    ? "resolved-wrong-oracle-hit"
+    : "resolved-wrong-oracle-miss";
+}
+
+export function classifyAccuracyError(item: AccuracyObservation): AccuracyErrorCategory | undefined {
+  if (!item.expected) return "unsupported-label";
+  const expected = item.expected;
+  if (!item.predicted) {
+    if (sameChord(item.alternatives[0], expected)) return "unresolved-oracle-top1";
+    return item.alternatives.some((candidate) => sameChord(candidate, expected))
+      ? "unresolved-oracle-hit"
+      : "unresolved-oracle-miss";
+  }
+  if (!same(item.predicted.root, expected.root)) return "root";
+  if (!same(item.predicted.bass, expected.bass)) return "bass";
+  if (item.predicted.kind !== expected.kind) return "kind";
+  if (item.predicted.extension !== expected.extension) return "extension";
+  if (!same(item.predicted.degrees, expected.degrees)) return "degrees";
+  if (item.expectedBoundary && !item.predictedBoundary) return "boundary";
+  return undefined;
+}
+
+export function shouldIncludeDiagnosticSample(
+  samples: readonly { category: AccuracyErrorCategory }[],
+  category: AccuracyErrorCategory,
+): boolean {
+  return samples.length < 50 && samples.filter((sample) => sample.category === category).length < 5;
+}
+
+function createDiagnostics(
+  observations: readonly AccuracyObservation[],
+  intervalOverlap: IntervalOverlapDiagnostics,
+): AccuracyMetrics["diagnostics"] {
+  const outcomes: Partial<Record<AccuracyOutcome, DiagnosticBucket>> = {};
+  const outcomesByFamily: Record<string, Partial<Record<AccuracyOutcome, DiagnosticBucket>>> = {};
+  const errors: Partial<Record<AccuracyErrorCategory, DiagnosticBucket>> = {};
+  for (const item of observations) {
+    const outcome = classifyAccuracyOutcome(item);
+    addDiagnostic(outcomes, outcome, item.weight);
+    const family = (outcomesByFamily[item.family] ??= {});
+    addDiagnostic(family, outcome, item.weight);
+    const error = classifyAccuracyError(item);
+    if (error) addErrorDiagnostic(errors, error, item.weight);
+  }
+  return {
+    outcomes,
+    outcomesByFamily,
+    errors,
+    intervalOverlap,
+    confidenceBins: createConfidenceBins(observations),
+    calibrationBins: createConfidenceBins(observations, 100),
+    precisionCoverageCurve: createPrecisionCoverageCurve(observations),
+  };
+}
+
+function addErrorDiagnostic(
+  buckets: Partial<Record<AccuracyErrorCategory, DiagnosticBucket>>,
+  category: AccuracyErrorCategory,
+  weight: number,
+): void {
+  const bucket = (buckets[category] ??= { cases: 0, weight: 0 });
+  bucket.cases += 1;
+  bucket.weight += weight;
+}
+
+function addDiagnostic(
+  buckets: Partial<Record<AccuracyOutcome, DiagnosticBucket>>,
+  outcome: AccuracyOutcome,
+  weight: number,
+): void {
+  const bucket = (buckets[outcome] ??= { cases: 0, weight: 0 });
+  bucket.cases += 1;
+  bucket.weight += weight;
+}
+
+function createConfidenceBins(
+  observations: readonly AccuracyObservation[],
+  binCount = 10,
+): AccuracyMetrics["diagnostics"]["confidenceBins"] {
+  const bins = Array.from({ length: binCount }, (_, index) => ({
+    index,
+    cases: 0,
+    weight: 0,
+    confidence: 0,
+    correct: 0,
+  }));
+  for (const item of observations) {
+    if (!item.expected) continue;
+    const confidence = Math.max(0, Math.min(1, item.confidence));
+    const bin = bins[Math.min(binCount - 1, Math.floor(confidence * binCount))]!;
+    bin.cases += 1;
+    bin.weight += item.weight;
+    bin.confidence += confidence * item.weight;
+    bin.correct += Number(item.predicted !== undefined && sameChord(item.predicted, item.expected)) * item.weight;
+  }
+  return bins.map(({ confidence, correct, ...bin }) => ({
+    ...bin,
+    averageConfidence: ratio(confidence, bin.weight),
+    accuracy: ratio(correct, bin.weight),
+  }));
+}
+
+function createPrecisionCoverageCurve(
+  observations: readonly AccuracyObservation[],
+): AccuracyMetrics["diagnostics"]["precisionCoverageCurve"] {
+  const mapped = observations.filter((item): item is AccuracyObservation & { expected: ChordSymbolInput } =>
+    Boolean(item.expected),
+  );
+  return [0, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99].map((threshold) => {
+    const selected = mapped.filter((item) => item.predicted !== undefined && item.confidence >= threshold);
+    return {
+      threshold,
+      precision: weightedRatio(selected, (item) => sameChord(item.predicted, item.expected)),
+      coverage: ratio(totalWeight(selected), totalWeight(mapped)),
+    };
+  });
 }
 
 function createSlices(
@@ -90,6 +280,7 @@ function createSlices(
         {
           cases: items.length,
           top1Accuracy: weightedRatio(items, (item) => sameChord(item.alternatives[0], item.expected)),
+          predictedPrimaryAccuracy: weightedRatio(items, (item) => sameChord(item.primary, item.expected)),
           resolvedPrecision: weightedRatio(resolved, (item) => sameChord(item.predicted, item.expected)),
           resolvedCoverage: ratio(totalWeight(resolved), totalWeight(items)),
         },

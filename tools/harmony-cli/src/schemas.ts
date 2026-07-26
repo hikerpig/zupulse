@@ -91,13 +91,6 @@ export const harmonyDatasetManifestSchema = z
               include: z.array(z.string().min(1)).optional(),
             })
             .strict(),
-          z
-            .object({
-              ...datasetCaseBase,
-              kind: z.literal("label-prior-corpus"),
-              adapter: z.enum(["choco", "wjazzd"]),
-            })
-            .strict(),
         ]),
       )
       .min(1),
@@ -106,13 +99,95 @@ export const harmonyDatasetManifestSchema = z
 
 export type HarmonyDatasetManifest = z.infer<typeof harmonyDatasetManifestSchema>;
 
+const evaluationProtocolCorpusV3Schema = z
+  .object({
+    caseId: z.string().min(1),
+    sourceRevision: z.string().min(1),
+    groupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    finalHoldoutGroups: z.array(z.string().min(1)),
+    regressionGroups: z.array(z.string().min(1)),
+    developmentOnly: z.boolean().optional(),
+  })
+  .strict()
+  .superRefine((corpus, context) => {
+    const overlap = corpus.finalHoldoutGroups.find((group) => corpus.regressionGroups.includes(group));
+    if (overlap)
+      context.addIssue({
+        code: "custom",
+        message: `group cannot be both final holdout and regression: ${overlap}`,
+      });
+    if (corpus.finalHoldoutGroups.length === 0 && corpus.developmentOnly !== true)
+      context.addIssue({ code: "custom", message: "corpus without final holdout must be development-only" });
+  });
+
+export const harmonyEvaluationProtocolV3Schema = z
+  .object({
+    schemaVersion: z.literal("3.0.0"),
+    id: z.string().min(1),
+    historicalRegressionCases: z.array(z.string().min(1)),
+    corpora: z.array(evaluationProtocolCorpusV3Schema).min(1),
+  })
+  .strict();
+
+export type HarmonyEvaluationProtocolV3 = z.infer<typeof harmonyEvaluationProtocolV3Schema>;
+
 const fractionSchema = z.number().min(0).max(1);
 const accuracySliceSchema = z
   .object({
     cases: z.number().int().nonnegative(),
     top1Accuracy: fractionSchema,
+    predictedPrimaryAccuracy: fractionSchema,
     resolvedPrecision: fractionSchema,
     resolvedCoverage: fractionSchema,
+  })
+  .strict();
+const accuracyOutcomeSchema = z.enum([
+  "unsupported-label",
+  "unresolved-oracle-top1",
+  "unresolved-oracle-hit",
+  "unresolved-oracle-miss",
+  "resolved-correct",
+  "resolved-wrong-oracle-hit",
+  "resolved-wrong-oracle-miss",
+]);
+const accuracyErrorCategorySchema = z.enum([
+  "unsupported-label",
+  "unresolved-oracle-top1",
+  "unresolved-oracle-hit",
+  "unresolved-oracle-miss",
+  "root",
+  "bass",
+  "kind",
+  "extension",
+  "degrees",
+  "boundary",
+]);
+const diagnosticBucketSchema = z
+  .object({ cases: z.number().int().nonnegative(), weight: z.number().nonnegative() })
+  .strict();
+const intervalOverlapDiagnosticsSchema = z
+  .object({
+    overlap: z
+      .object({
+        mappedDurationTicks: z.number().int().nonnegative(),
+        correctDurationTicks: z.number().int().nonnegative(),
+        wrongDurationTicks: z.number().int().nonnegative(),
+        unresolvedDurationTicks: z.number().int().nonnegative(),
+        accuracy: fractionSchema,
+        resolvedPrecision: fractionSchema,
+        resolvedCoverage: fractionSchema,
+      })
+      .strict(),
+    boundaries: z
+      .object({
+        expected: z.number().int().nonnegative(),
+        predicted: z.number().int().nonnegative(),
+        truePositive: z.number().int().nonnegative(),
+        overSegmented: z.number().int().nonnegative(),
+        underSegmented: z.number().int().nonnegative(),
+        f1: fractionSchema,
+      })
+      .strict(),
   })
   .strict();
 
@@ -128,11 +203,19 @@ export const harmonyAccuracyMetricsSchema = z
     mappingCoverage: fractionSchema,
     unsupportedLabelRate: fractionSchema,
     top1Accuracy: fractionSchema,
+    predictedPrimaryAccuracy: fractionSchema,
     top8OracleRecall: fractionSchema,
     resolvedPrecision: fractionSchema,
     resolvedCoverage: fractionSchema,
     boundaryF1: fractionSchema,
     expectedCalibrationError: fractionSchema,
+    segmentDensity: z
+      .object({
+        predictedSegments: z.number().int().nonnegative(),
+        measures: z.number().int().nonnegative(),
+        segmentsPerMeasure: z.number().nonnegative(),
+      })
+      .strict(),
     facets: z
       .object({
         root: fractionSchema,
@@ -148,12 +231,49 @@ export const harmonyAccuracyMetricsSchema = z
         chordFamily: z.record(z.string(), accuracySliceSchema),
       })
       .strict(),
+    diagnostics: z
+      .object({
+        outcomes: z.partialRecord(accuracyOutcomeSchema, diagnosticBucketSchema),
+        outcomesByFamily: z.record(z.string(), z.partialRecord(accuracyOutcomeSchema, diagnosticBucketSchema)),
+        errors: z.partialRecord(accuracyErrorCategorySchema, diagnosticBucketSchema),
+        intervalOverlap: intervalOverlapDiagnosticsSchema,
+        confidenceBins: z
+          .array(
+            z
+              .object({
+                index: z.number().int().min(0).max(9),
+                cases: z.number().int().nonnegative(),
+                weight: z.number().nonnegative(),
+                averageConfidence: fractionSchema,
+                accuracy: fractionSchema,
+              })
+              .strict(),
+          )
+          .length(10),
+        calibrationBins: z
+          .array(
+            z
+              .object({
+                index: z.number().int().min(0).max(99),
+                cases: z.number().int().nonnegative(),
+                weight: z.number().nonnegative(),
+                averageConfidence: fractionSchema,
+                accuracy: fractionSchema,
+              })
+              .strict(),
+          )
+          .length(100),
+        precisionCoverageCurve: z.array(
+          z.object({ threshold: fractionSchema, precision: fractionSchema, coverage: fractionSchema }).strict(),
+        ),
+      })
+      .strict(),
   })
   .strict();
 
 export const harmonyDatasetEvalReportSchema = z
   .object({
-    schemaVersion: z.literal("2.0.0"),
+    schemaVersion: z.literal("2.7.0"),
     command: z.literal("eval"),
     manifest: z.string().min(1),
     summary: z.object({ passed: z.number().int().nonnegative(), failed: z.number().int().nonnegative() }).strict(),
@@ -165,6 +285,11 @@ export const harmonyDatasetEvalReportSchema = z
             kind: z.literal("accuracy-corpus"),
             adapter: z.enum(["dcml", "pop909"]),
             status: z.enum(["passed", "failed"]),
+            reportSplit: z.enum(["train", "tune", "eval"]),
+            decisionThreshold: fractionSchema,
+            boundaryPolicy: z.literal("paper-basic-events"),
+            sourceRevision: z.string().min(1),
+            reportGroupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
             splits: z.record(z.enum(["train", "tune", "eval"]), z.number().int().nonnegative()),
             metrics: harmonyAccuracyMetricsSchema,
             errors: z.array(
@@ -176,16 +301,7 @@ export const harmonyDatasetEvalReportSchema = z
                   offsetTicks: z.number().int().nonnegative(),
                   label: z.string().min(1),
                   family: z.string().min(1),
-                  category: z.enum([
-                    "unsupported-label",
-                    "unresolved",
-                    "root",
-                    "bass",
-                    "kind",
-                    "extension",
-                    "degrees",
-                    "boundary",
-                  ]),
+                  category: accuracyErrorCategorySchema,
                 })
                 .strict(),
             ),
@@ -206,17 +322,6 @@ export const harmonyDatasetEvalReportSchema = z
             runtimeMs: z.number().nonnegative(),
           })
           .strict(),
-        z
-          .object({
-            id: z.string().min(1),
-            kind: z.literal("label-prior-corpus"),
-            adapter: z.enum(["choco", "wjazzd"]),
-            status: z.enum(["passed", "failed"]),
-            labels: z.number().int().nonnegative(),
-            mapped: z.number().int().nonnegative(),
-            unsupported: z.number().int().nonnegative(),
-          })
-          .strict(),
       ]),
     ),
   })
@@ -224,75 +329,6 @@ export const harmonyDatasetEvalReportSchema = z
 
 export type HarmonyDatasetEvalReport = z.infer<typeof harmonyDatasetEvalReportSchema>;
 
-const accuracyBaselineCaseSchema = z
-  .object({
-    splits: z
-      .object({
-        train: z.number().int().nonnegative(),
-        tune: z.number().int().nonnegative(),
-        eval: z.number().int().nonnegative(),
-      })
-      .strict(),
-    gold: z
-      .object({
-        total: z.number().int().nonnegative(),
-        mapped: z.number().int().nonnegative(),
-        unsupported: z.number().int().nonnegative(),
-      })
-      .strict(),
-    mappingCoverage: fractionSchema,
-    top1Accuracy: fractionSchema,
-    top8OracleRecall: fractionSchema,
-    resolvedPrecision: fractionSchema,
-    resolvedCoverage: fractionSchema,
-    boundaryF1: fractionSchema,
-    expectedCalibrationError: fractionSchema,
-  })
-  .strict();
-
-export const harmonyAccuracyBaselineSchema = z
-  .object({
-    schemaVersion: z.literal("1.0.0"),
-    sourceManifest: z.string().min(1),
-    datasetRevision: z.string().min(1),
-    algorithmVersion: z.string().min(1),
-    tolerance: fractionSchema,
-    cases: z.record(z.string().min(1), accuracyBaselineCaseSchema),
-  })
-  .strict();
-
-export const harmonyBaselineComparisonReportSchema = z
-  .object({
-    schemaVersion: z.literal("1.0.0"),
-    command: z.literal("compare"),
-    baseline: z.string().min(1),
-    report: z.string().min(1),
-    summary: z.object({ passed: z.number().int().nonnegative(), failed: z.number().int().nonnegative() }).strict(),
-    cases: z.array(
-      z
-        .object({
-          id: z.string().min(1),
-          status: z.enum(["passed", "failed"]),
-          checks: z.array(
-            z
-              .object({
-                field: z.string().min(1),
-                expected: z.number(),
-                actual: z.number(),
-                direction: z.enum(["equal", "higher", "lower"]),
-                tolerance: z.number().nonnegative(),
-                status: z.enum(["passed", "failed"]),
-              })
-              .strict(),
-          ),
-        })
-        .strict(),
-    ),
-  })
-  .strict();
-
-export type HarmonyAccuracyBaseline = z.infer<typeof harmonyAccuracyBaselineSchema>;
-export type HarmonyBaselineComparisonReport = z.infer<typeof harmonyBaselineComparisonReportSchema>;
 export const harmonyRegressionCheckSchema = z
   .object({
     field: z.string().min(1),

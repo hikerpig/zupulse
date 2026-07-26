@@ -4,7 +4,6 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { dcmlGroupId, evaluateDcmlCorpus } from "../adapters/dcmlEvaluation";
-import { runHarmonyCommand } from "../command";
 import { evaluateHarmonyManifest } from "../evaluateManifest";
 
 const directories: string[] = [];
@@ -26,18 +25,60 @@ describe("evaluateDcmlCorpus", () => {
 
     const result = await evaluateDcmlCorpus(root, {
       id: "mozart-pilot",
+      sourceRevision: "fixture",
       include: ["K331-3"],
       forcedEvalGroups: ["K331"],
     });
 
     expect(result).toMatchObject({
       id: "mozart-pilot",
+      sourceRevision: "fixture",
       kind: "accuracy-corpus",
       adapter: "dcml",
       status: "passed",
+      reportSplit: "eval",
+      decisionThreshold: 0.6,
+      boundaryPolicy: "paper-basic-events",
       splits: { train: 0, tune: 0, eval: 2 },
-      metrics: { gold: { total: 2, mapped: 2, unsupported: 0 }, mappingCoverage: 1 },
+      metrics: {
+        gold: { total: 2, mapped: 2, unsupported: 0 },
+        mappingCoverage: 1,
+        predictedPrimaryAccuracy: expect.any(Number),
+        segmentDensity: { predictedSegments: expect.any(Number), measures: 2, segmentsPerMeasure: expect.any(Number) },
+      },
     });
+    expect(result.metrics.diagnostics).toMatchObject({
+      intervalOverlap: {
+        overlap: { mappedDurationTicks: expect.any(Number) },
+        boundaries: { expected: 1, predicted: expect.any(Number) },
+      },
+    });
+    expect(result.metrics.segmentDensity.predictedSegments).toBeGreaterThan(0);
+    expect(result.metrics.predictedPrimaryAccuracy).toBeGreaterThan(0);
+
+    const tune = await evaluateDcmlCorpus(root, {
+      id: "mozart-pilot",
+      include: ["K331-3"],
+      forcedEvalGroups: ["K331"],
+      reportSplit: "tune",
+    });
+    expect(tune).toMatchObject({ reportSplit: "tune", metrics: { gold: { total: 0, mapped: 0, unsupported: 0 } } });
+  });
+
+  it("restricts evaluation to explicitly selected complete groups", async () => {
+    const root = await mkdtemp(resolve(tmpdir(), "dcml-group-filter-"));
+    directories.push(root);
+    await createMiniDcmlCorpus(root);
+
+    await expect(
+      evaluateDcmlCorpus(root, {
+        id: "mozart-pilot",
+        sourceRevision: "fixture",
+        include: ["K331-3"],
+        includeGroups: ["K999"],
+        forcedEvalGroups: ["K999"],
+      }),
+    ).rejects.toThrow("no DCML harmony files");
   });
 
   it("evaluates a checksummed v2 manifest through the CLI evaluator", async () => {
@@ -75,39 +116,13 @@ describe("evaluateDcmlCorpus", () => {
 
     const report = await evaluateHarmonyManifest(manifestPath, { dataRoot, caseId: "mozart-pilot" });
     expect(report).toMatchObject({
-      schemaVersion: "2.0.0",
+      schemaVersion: "2.7.0",
       command: "eval",
       summary: { passed: 1, failed: 0 },
     });
-    if (report.schemaVersion !== "2.0.0" || report.cases[0]?.kind !== "accuracy-corpus") {
+    if (report.schemaVersion !== "2.7.0" || report.cases[0]?.kind !== "accuracy-corpus") {
       throw new Error("expected accuracy report");
     }
-    const reportPath = resolve(dataRoot, "report.json");
-    const baselinePath = resolve(dataRoot, "baseline.json");
-    const {
-      facets: _facets,
-      slices: _slices,
-      unsupportedLabelRate: _unsupportedLabelRate,
-      ...baselineMetrics
-    } = report.cases[0].metrics;
-    await writeFile(reportPath, JSON.stringify(report));
-    await writeFile(
-      baselinePath,
-      JSON.stringify({
-        schemaVersion: "1.0.0",
-        sourceManifest: "dataset-fixture",
-        datasetRevision: "fixture",
-        algorithmVersion: "fixture",
-        tolerance: 0.005,
-        cases: {
-          "mozart-pilot": { splits: report.cases[0].splits, ...baselineMetrics },
-        },
-      }),
-    );
-    await expect(runHarmonyCommand(["compare", baselinePath, reportPath])).resolves.toMatchObject({
-      command: "compare",
-      summary: { passed: 1, failed: 0 },
-    });
   });
 });
 

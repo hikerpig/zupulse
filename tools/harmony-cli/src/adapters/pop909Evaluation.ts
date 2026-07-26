@@ -1,23 +1,50 @@
-import { analyzeHarmonyRules, compareMoments, type ChordSymbolInput } from "@zupulse/web-core";
+import { analyzeHarmony, buildPaperSemiCrfEvents, compareMoments } from "@zupulse/web-core";
+import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { calculateAccuracyMetrics, type AccuracyObservation } from "../accuracyMetrics";
-import { assignDatasetSplit } from "../evaluationProtocol";
+import {
+  calculateAccuracyMetrics,
+  classifyAccuracyError,
+  shouldIncludeDiagnosticSample,
+  type AccuracyErrorCategory,
+  type AccuracyObservation,
+} from "../accuracyMetrics";
+import { assignDatasetSplit, type DatasetSplit } from "../evaluationProtocol";
+import {
+  calculateIntervalOverlapDiagnostics,
+  mergeIntervalOverlapDiagnostics,
+  type IntervalOverlapDiagnostics,
+} from "../intervalMetrics";
 import { parsePop909Piece } from "./pop909";
 
 export async function evaluatePop909Corpus(
   root: string,
-  options: { id: string; include?: readonly string[]; forcedEvalGroups: readonly string[] },
+  options: {
+    id: string;
+    sourceRevision: string;
+    include?: readonly string[];
+    includeGroups?: readonly string[];
+    forcedEvalGroups: readonly string[];
+    reportSplit?: DatasetSplit;
+    decisionThreshold?: number;
+  },
 ) {
+  const reportSplit = options.reportSplit ?? "eval";
+  const decisionThreshold = options.decisionThreshold ?? 0.6;
   const songs = (await readdir(root, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory() && /^\d{3}$/.test(entry.name))
     .map((entry) => entry.name)
     .filter((id) => options.include === undefined || options.include.includes(id))
+    .filter((id) => options.includeGroups === undefined || options.includeGroups.includes(id))
     .sort();
   if (songs.length === 0) throw new Error(`no POP909 songs found in ${root}`);
 
   const splits = { train: 0, tune: 0, eval: 0 };
   const observations: AccuracyObservation[] = [];
+  const reportGroups = new Set<string>();
+  const intervalDiagnostics: IntervalOverlapDiagnostics[] = [];
+  let reportMeasures = 0;
+  let predictedSegments = 0;
   const errors: Array<{
     pieceId: string;
     groupId: string;
@@ -25,7 +52,7 @@ export async function evaluatePop909Corpus(
     offsetTicks: number;
     label: string;
     family: string;
-    category: "unsupported-label" | "unresolved" | "root" | "bass" | "kind" | "extension" | "degrees" | "boundary";
+    category: AccuracyErrorCategory;
   }> = [];
   for (const song of songs) {
     const directory = resolve(root, song);
@@ -38,8 +65,34 @@ export async function evaluatePop909Corpus(
     });
     const split = assignDatasetSplit(song, options.forcedEvalGroups);
     splits[split] += piece.gold.length;
-    if (split !== "eval") continue;
-    const segments = analyzeHarmonyRules(piece.input, { includedTrackIds: ["pop909"], topK: 8 });
+    if (split !== reportSplit) continue;
+    reportGroups.add(song);
+    reportMeasures += piece.input.measures.length;
+    const segments = analyzeHarmony(piece.input, {
+      includedTrackIds: ["pop909"],
+      topK: 8,
+      decisionThreshold,
+    });
+    predictedSegments += segments.length;
+    const primarySegments =
+      decisionThreshold === 0
+        ? segments
+        : analyzeHarmony(piece.input, {
+            includedTrackIds: ["pop909"],
+            topK: 8,
+            decisionThreshold: 0,
+          });
+    const events = buildPaperSemiCrfEvents(piece.input, { includedTrackIds: ["pop909"] });
+    intervalDiagnostics.push(
+      calculateIntervalOverlapDiagnostics({
+        ticksPerQuarter: piece.input.ticksPerQuarter,
+        measures: piece.input.measures,
+        legalMoments:
+          events.length === 0 ? [] : [...events.map((event) => event.range.start), events.at(-1)!.range.end],
+        gold: piece.gold.flatMap((item) => (item.chord ? [{ range: item.range, chord: item.chord }] : [])),
+        predicted: segments,
+      }),
+    );
     for (const [index, gold] of piece.gold.entries()) {
       const segment = segments.find(
         (candidate) =>
@@ -47,11 +100,30 @@ export async function evaluatePop909Corpus(
           compareMoments(gold.range.start, candidate.range.end) < 0,
       );
       const previous = piece.gold[index - 1];
+      const primarySegment = primarySegments.find(
+        (candidate) =>
+          compareMoments(candidate.range.start, gold.range.start) <= 0 &&
+          compareMoments(gold.range.start, candidate.range.end) < 0,
+      );
       const expectedBoundary = index > 0 && !same(previous?.chord, gold.chord);
       const predictedBoundary =
         index > 0 && segments.some((candidate) => compareMoments(candidate.range.start, gold.range.start) === 0);
-      const category = errorCategory(gold.chord, segment, expectedBoundary, predictedBoundary);
-      if (category && errors.length < 50) {
+      const observation: AccuracyObservation = {
+        groupId: song,
+        corpus: options.id,
+        family: gold.family,
+        weight: gold.weight,
+        ...(gold.chord ? { expected: gold.chord } : { unsupportedLabel: gold.unsupportedLabel ?? gold.label }),
+        ...(segment?.status === "resolved"
+          ? { predicted: segment.chord, confidence: segment.confidence }
+          : { confidence: 0 }),
+        ...(primarySegment?.status === "resolved" ? { primary: primarySegment.chord } : {}),
+        alternatives: segment?.alternatives.map((candidate) => candidate.chord) ?? [],
+        expectedBoundary,
+        predictedBoundary,
+      };
+      const category = classifyAccuracyError(observation);
+      if (category && shouldIncludeDiagnosticSample(errors, category)) {
         errors.push({
           pieceId: song,
           groupId: song,
@@ -62,19 +134,7 @@ export async function evaluatePop909Corpus(
           category,
         });
       }
-      observations.push({
-        groupId: song,
-        corpus: options.id,
-        family: gold.family,
-        weight: gold.weight,
-        ...(gold.chord ? { expected: gold.chord } : { unsupportedLabel: gold.unsupportedLabel ?? gold.label }),
-        ...(segment?.status === "resolved"
-          ? { predicted: segment.chord, confidence: segment.confidence }
-          : { confidence: 0 }),
-        alternatives: segment?.alternatives.map((candidate) => candidate.chord) ?? [],
-        expectedBoundary,
-        predictedBoundary,
-      });
+      observations.push(observation);
     }
   }
   return {
@@ -82,27 +142,24 @@ export async function evaluatePop909Corpus(
     kind: "accuracy-corpus" as const,
     adapter: "pop909" as const,
     status: "passed" as const,
+    reportSplit,
+    sourceRevision: options.sourceRevision,
+    reportGroupsSha256: hashGroups(reportGroups),
+    decisionThreshold,
+    boundaryPolicy: "paper-basic-events" as const,
     splits,
-    metrics: calculateAccuracyMetrics(observations),
+    metrics: calculateAccuracyMetrics(observations, mergeIntervalOverlapDiagnostics(intervalDiagnostics), {
+      predictedSegments,
+      measures: reportMeasures,
+    }),
     errors,
   };
 }
 
-function errorCategory(
-  expected: ChordSymbolInput | undefined,
-  segment: ReturnType<typeof analyzeHarmonyRules>[number] | undefined,
-  expectedBoundary: boolean,
-  predictedBoundary: boolean,
-) {
-  if (!expected) return "unsupported-label" as const;
-  if (segment?.status !== "resolved") return "unresolved" as const;
-  if (!same(segment.chord.root, expected.root)) return "root" as const;
-  if (!same(segment.chord.bass, expected.bass)) return "bass" as const;
-  if (segment.chord.kind !== expected.kind) return "kind" as const;
-  if (segment.chord.extension !== expected.extension) return "extension" as const;
-  if (!same(segment.chord.degrees, expected.degrees)) return "degrees" as const;
-  if (expectedBoundary && !predictedBoundary) return "boundary" as const;
-  return undefined;
+function hashGroups(groups: ReadonlySet<string>): string {
+  return createHash("sha256")
+    .update([...groups].sort().join("\n"))
+    .digest("hex");
 }
 
 function same(a: unknown, b: unknown): boolean {

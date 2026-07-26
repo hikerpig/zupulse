@@ -6,6 +6,8 @@ const root = resolve("test-fixtures/musicxml/generated");
 await mkdir(root, { recursive: true });
 const score = (title, parts = 1, extra = "") => `<?xml version="1.0" encoding="UTF-8"?>
 <score-partwise version="4.0"><work><work-title>${title}</work-title></work><part-list>${Array.from({ length: parts }, (_, i) => `<score-part id="P${i + 1}"><part-name>Part ${i + 1}</part-name></score-part>`).join("")}</part-list>${Array.from({ length: parts }, (_, i) => `<part id="P${i + 1}"><measure number="1"><attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time>${i === 0 ? "<staves>2</staves>" : ""}</attributes><note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice></note>${extra}</measure></part>`).join("")}</score-partwise>`;
+const chordMeasure = (number, steps) =>
+  `<measure number="${number}">${number === 1 ? "<attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>" : ""}${steps.map((step, index) => `<note>${index === 0 ? "" : "<chord/>"}<pitch><step>${step}</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice></note>`).join("")}</measure>`;
 const fixtures = {
   "single-voice.musicxml": score("Single Voice"),
   "piano-multistaff.musicxml": score("钢琴双谱表"),
@@ -15,6 +17,17 @@ const fixtures = {
   "lyrics-pickup.musicxml": score("中文歌曲", 1, `<note><lyric><text>你好</text></lyric></note>`),
   "harmony-written-time.musicxml": `<?xml version="1.0" encoding="UTF-8"?>
 <score-partwise version="4.0"><work><work-title>Written Time</work-title></work><part-list><score-part id="P1"><part-name>Part 1</part-name></score-part></part-list><part id="P1"><measure number="1"><attributes><divisions>7</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes><note><pitch><step>C</step><octave>4</octave></pitch><duration>7</duration><voice>1</voice></note><backup><duration>7</duration></backup><note><pitch><step>E</step><octave>4</octave></pitch><duration>1</duration><voice>2</voice><time-modification><actual-notes>7</actual-notes><normal-notes>4</normal-notes></time-modification></note><forward><duration>6</duration></forward><attributes><divisions>11</divisions></attributes><note><pitch><step>G</step><octave>4</octave></pitch><duration>5</duration><voice>2</voice></note></measure></part></score-partwise>`,
+  "harmony-selection.musicxml": `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="4.0"><work><work-title>Harmony Selection</work-title></work><part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list><part id="P1">${[
+    ["C", "E", "G"],
+    ["G", "B", "D"],
+    ["C", "E", "G"],
+    ["F", "A", "C"],
+    ["G", "B", "D"],
+    ["C", "E", "G"],
+  ]
+    .map((steps, index) => chordMeasure(index + 1, steps))
+    .join("")}</part></score-partwise>`,
   "timewise.musicxml": `<?xml version="1.0"?><score-timewise version="4.0"><part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list><measure number="1"><part id="P1"><note><rest/><duration>4</duration></note></part></measure></score-timewise>`,
   "empty.musicxml": `<?xml version="1.0"?><score-partwise version="4.0"></score-partwise>`,
   "malformed.musicxml": `<score-partwise><part>`,

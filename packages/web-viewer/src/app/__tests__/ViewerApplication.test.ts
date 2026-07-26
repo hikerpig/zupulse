@@ -581,6 +581,9 @@ describe("ViewerApplication", () => {
     expect(application.getSnapshot()).toMatchObject({
       studio: { libraryScoreId: studioScoreId, status: "ready" },
     });
+    expect(application.getSnapshot().studio?.document?.activeRevision.algorithmVersion).toContain(
+      "paper-semi-crf-mozart-v1-6fb18d1245aea9d89f5568a9b384b405c5326cb37015cc2caa5ade8dad5f7515",
+    );
     expect(application.getSnapshot().currentLibraryScoreId).toBeUndefined();
     await application.destroy();
     expect(destroyStudio).toHaveBeenCalledOnce();

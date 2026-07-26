@@ -9,7 +9,7 @@
       "sha256": "cf358b873205d72b9a67cada92cc4ac11480a35fc092a25eb181eaa305c3d3f4",
       "expected": {
         "model": { "measures": 137, "tracks": 1, "staves": 2, "notes": 1607 },
-        "result": { "segments": 311, "resolved": 255, "unresolved": 56 }
+        "result": { "segments": 121, "resolved": 100, "unresolved": 21 }
       }
     }
   ]

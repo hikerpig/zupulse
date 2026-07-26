@@ -234,7 +234,7 @@ stateDiagram-v2
 - 当前 UI 契约：[`DESIGN.md`](../../../DESIGN.md)
 - Sheet Library 原始设计规格：
   [`2026-07-12-sheet-library-design.md`](../../superpowers/specs/2026-07-12-sheet-library-design.md)
-- Current ADR：0040–0051、0052
+- Current ADR：0040–0051
 - MusicXML 导入：
   [`musicxml-import-design.md`](../../architecture/musicxml-import-design.md)、
   [`musicxml-import-acceptance.md`](../../architecture/musicxml-import-acceptance.md)

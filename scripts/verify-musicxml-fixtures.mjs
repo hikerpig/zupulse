@@ -4,6 +4,7 @@ const root = resolve("test-fixtures/musicxml/generated");
 const files = await readdir(root);
 for (const required of [
   "single-voice.musicxml",
+  "harmony-selection.musicxml",
   "piano-multistaff.musicxml",
   "timewise.musicxml",
   "simple.mxl",

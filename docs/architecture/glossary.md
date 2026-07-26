@@ -102,11 +102,10 @@ MusicXML 的压缩容器格式，常用扩展名为 `.mxl`。导入时需要验�
 
 一次可取消的和弦分析计算。重新分析期间继续显示并允许修正当前 active Revision；只有最新且完整成功的 Job 可以结合当时最新的 User Corrections 原子替换 active Revision，失败、取消或被替代的 Job 不得提交。
 
-## Learned Harmony Ranker
+## Semi-CRF Alternatives Adapter
 
-随应用发布、离线且确定性运行的和弦候选排序与拒识能力。它接收结构化和声特征与规则候选，
-输出候选分数和置信度，不直接生成任意文本标签。模型版本属于 Analysis Revision 的算法版本，
-训练/调参与最终评估分组严格隔离。
+在 Semi-CRF 已冻结的 Score Written Range 上生成最多八个候选并提供拒识 confidence 的确定性本地
+组件。它不能改变 Semi-CRF primary、boundary 或 range，也不能把 CRF path score 当作 confidence。
 
 ## User Corrections
 

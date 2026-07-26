@@ -145,14 +145,16 @@ K331 单独更偏好 metric beats，但它已是 regression，不能推翻 Mozar
 - 正确做法是由 miss/unsupported gap 切出连续可表达 gold 子路径；子路径内部仍保留完整
   lattice negatives，不能注入 gold candidate 或用 gold 删除 range。
 
-### 当前 linear Semi-CRF 已被否定
+### 旧 structured-feature linear Semi-CRF 已被否定
 
 - Mozart tune 相对 dense：interval `-0.0912`、predicted-primary `-0.1460`、
   segment density `+20.6%`；boundary F1 仅持平，runtime 约为 dense 的十几倍。
 - 按序贯协议在首个 corpus 停止，没有运行 Beethoven/Chopin/POP909 tune、MLP、final
-  holdout 或 K331 选择，也没有改变 production 默认。
-- **结论：** 当前问题是 lattice candidate miss、过分段和 feature construction 成本；
+  holdout 或 K331 选择；该次实验没有改变当时的 production 默认。
+- **结论：** 该实现的问题是 lattice candidate miss、过分段和 feature construction 成本；
   追加 PyTorch/MLP 不能解决这些结构问题。
+- **边界：** 该实验不是后来复现并采用的 paper-compatible basic-event Semi-CRF，不得用它否定
+  ADR 0065 的生产实现。
 
 ## 何时再考虑 PyTorch
 

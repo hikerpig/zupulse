@@ -1,6 +1,7 @@
 # Paper-compatible Semi-CRF：BaCh Fold 1 复现记录
 
-状态：进行中。本文只记录论文复现证据，不代表 production analyzer 的采用决定。
+状态：完成。本文记录 BaCh fold 1 复现、current-corpus comparison、production adoption 与明确的
+资源边界；当前采用决定以 ADR 0065 和 Harmony Analysis Feature Contract 为准。
 
 ## 数据与契约校验
 
@@ -120,9 +121,8 @@ pnpm -s harmony:cli paper-semi-crf-train /tmp/zupulse-paper-semi-crf-train1.json
   --report /tmp/zupulse-paper-semi-crf-fresh-fold1-train-report-l2-0125-iter165.json
 ```
 
-## Remaining
+## 复现边界
 
-- 进入批准的 current-corpus comparison。
 - candidate-path feature multiplicity 的逐模板 Java parity 可作为后续研究改进，但不影响已通过的
   same-weight/fresh ±2pp reproduction gates。
 
@@ -137,17 +137,17 @@ pnpm -s harmony:cli paper-semi-crf-train /tmp/zupulse-paper-semi-crf-train1.json
 | tune  | 2157 |             849 |   39.36% |        840 |                         190 / 7 |
 
 此外，train/tune 分别有 28/8 个 supported gold boundary 不能和 basic-event boundary 对齐，
-21/3 个 supported gold span 超过 BaCh 冻结的 20 events（最大 36/24）。因此下一比较不能在不声明
-口径的情况下生成完整 target paths：
+21/3 个 supported gold span 超过 BaCh 冻结的 20 events（最大 36/24）。因此不能在不声明口径的
+情况下生成完整 target paths：
 
 1. faithful 方案：只保留连续、对齐、span≤20 的可表达窗口，并明确约 39% mapping coverage；
 2. product-adapted 方案：新增 inversion/dominant simplification 或 label support。
 
-方案 2 会改变已冻结的 label simplification，按规格必须先批准；方案 1 不改变论文合同，但结论只覆盖
-可表达 slice。
+方案 2 会改变已冻结的 label simplification，按规格必须先批准；Phase 5 采用方案 1，不改变论文合同，
+并把结论限制在可表达 slice。
 
-faithful-window 导出基础设施已验证，但尚未把该口径当作获批的 Task 9 最终选择。它使用
-`protocol-v3.json` 的 train/tune roles，并在 unsupported、unaligned 或 span>20 处切断窗口：
+faithful-window 导出使用 `protocol-v3.json` 的 train/tune roles，并在 unsupported、unaligned 或
+span>20 处切断窗口：
 
 | Split | Pieces | Labels | Included gold | Windows | Events | Records SHA-256                                                    |
 | ----- | -----: | -----: | ------------: | ------: | -----: | ------------------------------------------------------------------ |

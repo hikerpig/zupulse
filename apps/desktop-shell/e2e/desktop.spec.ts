@@ -40,6 +40,13 @@ async function openPracticeSettings(window: import("@playwright/test").Page): Pr
   await expect(window.getByRole("complementary", { name: "Practice settings" })).toBeVisible();
 }
 
+async function openLoopSettings(window: import("@playwright/test").Page): Promise<void> {
+  await openPracticeSettings(window);
+  const practice = window.getByRole("complementary", { name: "Practice settings" });
+  await practice.getByRole("button", { name: /Set loop range/ }).click();
+  await expect(window.getByRole("heading", { name: "Set loop range" })).toBeVisible();
+}
+
 test("starts offline with an isolated renderer", async () => {
   const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-security-"));
   const app = await launch(userData);
@@ -124,7 +131,7 @@ test("opens a GP file and restores persisted practice state", async () => {
     const reducedTempo = String(Math.round(Number(await tempoInput.inputValue()) * 0.75));
     await tempoInput.fill(reducedTempo);
     await tempoInput.blur();
-    await openPracticeSettings(window);
+    await openLoopSettings(window);
     await window.getByRole("combobox", { name: "Boundary snap" }).selectOption("off");
     await window.getByRole("button", { name: "Set A" }).click();
     await setRange(window.getByRole("slider", { name: "Loop point B" }), "500");
@@ -135,13 +142,14 @@ test("opens a GP file and restores persisted practice state", async () => {
     await app.close();
 
     app = await launch(userData);
-    await chooseFixture(app);
     window = await app.firstWindow();
-    await window.getByRole("button", { name: "Import score" }).first().click();
+    await expect(window.getByRole("heading", { name: "Score Library" })).toBeVisible();
+    await expect(window.getByText("Last practiced at measure 1")).toBeVisible();
+    await window.getByRole("button", { name: "Continue practicing 桌面验收谱" }).click();
     await expect(window.locator("#summary")).toContainText("桌面验收谱");
     await window.getByRole("button", { name: `Speed ${reducedTempo} BPM` }).click();
     await expect(window.getByRole("spinbutton", { name: "Speed BPM" })).toHaveValue(reducedTempo);
-    await openPracticeSettings(window);
+    await openLoopSettings(window);
     await expect(window.getByRole("textbox", { name: "Loop name" })).toHaveCount(1);
   } finally {
     await app.close().catch(() => undefined);

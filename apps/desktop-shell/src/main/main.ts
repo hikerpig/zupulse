@@ -41,6 +41,10 @@ const fileTokens = new FileTokenStore();
 let mainWindow: BrowserWindow | undefined;
 let lifecycle: DesktopLifecycleCoordinator | undefined;
 
+function getRuntimeIconPath(): string {
+  return path.join(app.getAppPath(), "resources/app-icon.png");
+}
+
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
     width: 1280,
@@ -48,6 +52,7 @@ function createMainWindow(): BrowserWindow {
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 18, y: 20 },
     backgroundColor: "#1a1a1a",
+    icon: getRuntimeIconPath(),
     webPreferences: {
       preload: path.join(__dirname, "../preload/preload.cjs"),
       nodeIntegration: false,
@@ -76,6 +81,9 @@ if (!hasSingleInstanceLock) {
 }
 
 async function startDesktopApp(): Promise<void> {
+  if (process.platform === "darwin" && !app.isPackaged) {
+    app.dock.setIcon(getRuntimeIconPath());
+  }
   const rendererRoot = path.join(__dirname, "../renderer");
   const userData = app.getPath("userData");
   const localePreferenceStore = new LocalePreferenceStore(userData);

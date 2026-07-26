@@ -91,4 +91,25 @@ describe("paper Semi-CRF CLI", () => {
       }),
     ).rejects.toThrow("final records require --allow-final");
   });
+
+  it("requires an explicit train or tune role for DCML window export", async () => {
+    await expect(
+      runHarmonyCommand([
+        "paper-semi-crf-dcml-records",
+        "manifest.json",
+        "--protocol",
+        "protocol.json",
+        "--data-root",
+        "data",
+        "--case",
+        "mozart",
+        "--split",
+        "eval",
+        "--output",
+        "records.json",
+        "--report",
+        "report.json",
+      ]),
+    ).rejects.toThrow("paper Semi-CRF DCML records --split must be train or tune");
+  });
 });

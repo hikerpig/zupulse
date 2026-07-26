@@ -134,6 +134,8 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
   - Mozart scope audit：现有 paper label contract 对 train/tune gold 的无损覆盖仅
     `3433/8720`（39.37%）与 `849/2157`（39.36%）；主要缺口为 inversion，其次为
     dominant/half-diminished。需确认是只比较连续可表达窗口，还是批准新的 label simplification。
+  - [x] faithful-window records exporter：protocol-v3 train/tune role、train-only label inventory、
+        unsupported/unaligned/span gap 切窗与外部 report。
   - Acceptance: 不读取 final holdout；CRF primary/boundaries 不被 rule prior、postprocess 或 confidence 改写。
   - Verification: preregistered metric gates and baseline diff.
   - Dependencies: Task 8

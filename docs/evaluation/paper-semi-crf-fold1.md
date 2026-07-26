@@ -146,6 +146,17 @@ pnpm -s harmony:cli paper-semi-crf-train /tmp/zupulse-paper-semi-crf-train1.json
 方案 2 会改变已冻结的 label simplification，按规格必须先批准；方案 1 不改变论文合同，但结论只覆盖
 可表达 slice。
 
+faithful-window 导出基础设施已验证，但尚未把该口径当作获批的 Task 9 最终选择。它使用
+`protocol-v3.json` 的 train/tune roles，并在 unsupported、unaligned 或 span>20 处切断窗口：
+
+| Split | Pieces | Labels | Included gold | Windows | Events | Records SHA-256                                                    |
+| ----- | -----: | -----: | ------------: | ------: | -----: | ------------------------------------------------------------------ |
+| train |     30 |     65 |          3384 |    2248 |  14985 | `aa868798c3fc38806081fdb113e428d5e116b617327012071045d540bbc8090d` |
+| tune  |      9 |     65 |           837 |     585 |   3759 | `c06926d6ee373c3e31dbb4741cfe6025ef56acd0b572046372d0467f4d52be1f` |
+
+生成文件分别为 13.1 MB 与 3.3 MB；没有读取 regression/eval/final-holdout groups。tune records
+强制复用 train label order，不能从 tune gold 扩充候选 inventory。
+
 ### Fresh TypeScript training performance checkpoint
 
 第一版 objective 为每条 `(segment, current, previous)` edge 构造并缓存完整 feature vector；full fold

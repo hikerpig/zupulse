@@ -19,6 +19,7 @@ import { trainHarmonyStructuredModelFile } from "./trainStructuredModel";
 import { evaluatePaperSemiCrfFile, trainPaperSemiCrfFile } from "./paperSemiCrfFiles";
 import { exportPaperSemiCrfAuthorRecordsFile } from "./paperSemiCrfAuthorRecords";
 import { importPaperSemiCrfAuthorModelFile } from "./paperSemiCrfAuthorModel";
+import { exportPaperSemiCrfDcmlRecordsFile } from "./paperSemiCrfDcmlFiles";
 import type { DatasetSplit } from "./evaluationProtocol";
 import {
   harmonyInspectReportSchema,
@@ -47,6 +48,7 @@ export async function runHarmonyCommand(
   | Awaited<ReturnType<typeof evaluatePaperSemiCrfFile>>
   | Awaited<ReturnType<typeof exportPaperSemiCrfAuthorRecordsFile>>
   | Awaited<ReturnType<typeof importPaperSemiCrfAuthorModelFile>>
+  | Awaited<ReturnType<typeof exportPaperSemiCrfDcmlRecordsFile>>
 > {
   const normalized = args[0] === "--" ? args.slice(1) : args;
   const cwd = context.cwd ?? process.env.INIT_CWD ?? process.cwd();
@@ -84,6 +86,39 @@ export async function runHarmonyCommand(
       labelsPath: resolve(cwd, labels),
       role,
       outputPath: resolve(cwd, output),
+      maxSegmentLength,
+      ...(labelOrderRecords === undefined ? {} : { labelOrderRecordsPath: resolve(cwd, labelOrderRecords) }),
+    });
+  }
+  if (normalized[0] === "paper-semi-crf-dcml-records") {
+    const manifest = normalized[1];
+    const protocol = optionValue(normalized, "--protocol");
+    const dataRoot = optionValue(normalized, "--data-root");
+    const caseId = optionValue(normalized, "--case");
+    const split = optionValue(normalized, "--split");
+    const output = optionValue(normalized, "--output");
+    const report = optionValue(normalized, "--report");
+    const labelOrderRecords = optionValue(normalized, "--label-order-records");
+    const maxSegmentLength = numberOption(normalized, "--max-segment-length", 20);
+    if (!manifest || !protocol || !dataRoot || !caseId || !split || !output || !report) {
+      throw new Error(
+        "usage: harmony:cli paper-semi-crf-dcml-records <manifest.json> --protocol <protocol.json> --data-root <directory> --case <id> --split <train|tune> --output <records.json> --report <report.json> [--label-order-records <train-records.json>] [--max-segment-length <n>]",
+      );
+    }
+    if (split !== "train" && split !== "tune") {
+      throw new Error("paper Semi-CRF DCML records --split must be train or tune");
+    }
+    if (!Number.isSafeInteger(maxSegmentLength) || maxSegmentLength < 1) {
+      throw new Error("--max-segment-length must be a positive integer");
+    }
+    return exportPaperSemiCrfDcmlRecordsFile({
+      manifestPath: resolve(cwd, manifest),
+      protocolPath: resolve(cwd, protocol),
+      dataRoot: resolve(cwd, dataRoot),
+      caseId,
+      split,
+      outputPath: resolve(cwd, output),
+      reportPath: resolve(cwd, report),
       maxSegmentLength,
       ...(labelOrderRecords === undefined ? {} : { labelOrderRecordsPath: resolve(cwd, labelOrderRecords) }),
     });

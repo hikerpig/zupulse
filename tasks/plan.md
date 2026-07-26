@@ -42,7 +42,7 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
 
 ### Phase 2: Exact Inference Core
 
-- [ ] Task 3: 建立共享 local-potential contract 与 exact semi-Markov Viterbi。
+- [x] Task 3: 建立共享 local-potential contract 与 exact semi-Markov Viterbi。
   - Acceptance: tiny lattice 的最佳路径与 exhaustive oracle 完全一致；tie-break 确定；非有限分数失败。
   - Verification: `pnpm vitest run packages/web-core/src/harmony/__tests__/paper-semi-crf-decode.test.ts`
   - Dependencies: Task 2

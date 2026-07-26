@@ -4,7 +4,7 @@
 - [x] Task 1: paper basic-event projection
 - [x] Task 2: complete label inventory
 - [x] Checkpoint: observation/state contracts
-- [ ] Task 3: exact Viterbi
+- [x] Task 3: exact Viterbi
 - [ ] Task 4: log-partition and L2 objective/gradient
 - [ ] Checkpoint: exact inference
 - [ ] Task 5: segment feature families

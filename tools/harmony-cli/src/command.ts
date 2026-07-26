@@ -17,6 +17,7 @@ import { exportHarmonyStructuredRecordsFile } from "./exportStructuredRecords";
 import { inspectHarmonyScore, type InspectView } from "./inspectScore";
 import { trainHarmonyStructuredModelFile } from "./trainStructuredModel";
 import { evaluatePaperSemiCrfFile, trainPaperSemiCrfFile } from "./paperSemiCrfFiles";
+import { exportPaperSemiCrfAuthorRecordsFile } from "./paperSemiCrfAuthorRecords";
 import type { DatasetSplit } from "./evaluationProtocol";
 import {
   harmonyInspectReportSchema,
@@ -43,9 +44,35 @@ export async function runHarmonyCommand(
   | Awaited<ReturnType<typeof trainHarmonyStructuredModelFile>>
   | Awaited<ReturnType<typeof trainPaperSemiCrfFile>>
   | Awaited<ReturnType<typeof evaluatePaperSemiCrfFile>>
+  | Awaited<ReturnType<typeof exportPaperSemiCrfAuthorRecordsFile>>
 > {
   const normalized = args[0] === "--" ? args.slice(1) : args;
   const cwd = context.cwd ?? process.env.INIT_CWD ?? process.cwd();
+  if (normalized[0] === "paper-semi-crf-records") {
+    const split = normalized[1];
+    const labels = optionValue(normalized, "--labels");
+    const role = optionValue(normalized, "--role");
+    const output = optionValue(normalized, "--output");
+    const maxSegmentLength = numberOption(normalized, "--max-segment-length", 20);
+    if (!split || !labels || !role || !output) {
+      throw new Error(
+        "usage: harmony:cli paper-semi-crf-records <split.txt> --labels <labels.txt> --role <train|tune|final> --output <records.json> [--max-segment-length <n>]",
+      );
+    }
+    if (role !== "train" && role !== "tune" && role !== "final") {
+      throw new Error("--role must be train, tune, or final");
+    }
+    if (!Number.isSafeInteger(maxSegmentLength) || maxSegmentLength < 1) {
+      throw new Error("--max-segment-length must be a positive integer");
+    }
+    return exportPaperSemiCrfAuthorRecordsFile({
+      splitPath: resolve(cwd, split),
+      labelsPath: resolve(cwd, labels),
+      role,
+      outputPath: resolve(cwd, output),
+      maxSegmentLength,
+    });
+  }
   if (normalized[0] === "paper-semi-crf-train") {
     const records = normalized[1];
     const output = optionValue(normalized, "--output");

@@ -92,17 +92,20 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
 ### Checkpoint: Faithful Core
 
 - [ ] Reference-selected songs 的 event count、gold segments 与 feature activations 匹配。
+  - [x] BaCh fold 1 train event count 5107、gold segments 2801，与作者归档逐项一致。
+  - [x] BaCh fold 1 test event count 563、gold segments 291，并通过完整 records schema。
+  - [ ] 对齐 selected-song feature activations/counts。
 - [x] Harmony module tests and `pnpm verify:fast` pass.
 - [x] Freeze feature and label contract before corpus training.
 
 ### Phase 4: Training and Evaluation
 
-- [ ] Task 7: 增加 CLI records/train/eval 流程和 L2 optimizer integration。
+- [x] Task 7: 增加 CLI records/train/eval 流程和 L2 optimizer integration。
   - [x] 冻结 versioned records schema，并强制 train/tune/final 用途隔离。
   - [x] 实现确定性 L-BFGS 与 checkpoint/resume。
   - [x] 接入 corpus objective 并完成 synthetic training。
   - [x] 接入 records import、paper metrics 与 train/eval CLI commands。
-  - [ ] 接入 author BaCh XML records export 与 selected-song parity。
+  - [x] 接入 author BaCh XML records export，并完成 event/gold parity。
   - Acceptance: train/tune/final role 被强校验；训练可恢复且确定性；不提交外部语料；fresh/archive 报告分离。
   - Verification: Harmony CLI focused tests and synthetic end-to-end training.
   - Dependencies: Tasks 4-6

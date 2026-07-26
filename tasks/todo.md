@@ -12,12 +12,12 @@
 - [x] Task 5c: figuration variants
 - [x] Task 6: transition features and model schema
 - [ ] Checkpoint: faithful core
-- [ ] Task 7: CLI training/evaluation
+- [x] Task 7: CLI training/evaluation
   - [x] records schema 与 train/tune/final role guard
   - [x] deterministic L-BFGS 与 checkpoint/resume
   - [x] corpus objective 与 synthetic training
   - [x] records import、train/eval CLI commands
-  - [ ] author BaCh XML records export
+  - [x] author BaCh XML records export 与 event/gold parity
 - [ ] Task 8: BaCh fold 1 reproduction
 - [ ] Task 9: approved current-corpus comparison
 - [ ] Task 10: production adoption decision

@@ -61,6 +61,11 @@ pnpm -s harmony:cli eval path/to/manifest.json
 `role: "train"`；评测只接受 `tune`，读取 `final` 必须显式传入 `--allow-final`。
 
 ```bash
+pnpm -s harmony:cli paper-semi-crf-records /path/to/folds/train1.txt \
+  --labels /path/to/bach_dataset_chords.txt \
+  --role train --output /tmp/paper-train1-records.json \
+  --max-segment-length 20
+
 pnpm -s harmony:cli paper-semi-crf-train /path/to/train-records.json \
   --output /tmp/paper-model.json \
   --checkpoint /tmp/paper-checkpoint.json \

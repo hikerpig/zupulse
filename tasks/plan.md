@@ -98,6 +98,9 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
 ### Phase 4: Training and Evaluation
 
 - [ ] Task 7: 增加 CLI records/train/eval 流程和 L2 optimizer integration。
+  - [x] 冻结 versioned records schema，并强制 train/tune/final 用途隔离。
+  - [ ] 实现确定性 L-BFGS、checkpoint/resume 与 synthetic training。
+  - [ ] 接入 records export/import、evaluation metrics 与 CLI commands。
   - Acceptance: train/tune/final role 被强校验；训练可恢复且确定性；不提交外部语料；fresh/archive 报告分离。
   - Verification: Harmony CLI focused tests and synthetic end-to-end training.
   - Dependencies: Tasks 4-6
@@ -127,16 +130,17 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
 
 ## Risks and Mitigations
 
-| Risk                                                         | Impact | Mitigation                                                                                        |
-| ------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------- |
-| 作者预处理不在 Java 仓库内，event accent 可能难以完全 parity | High   | 先将 accent 作为显式、可测试的投影 contract；用作者 XML fixture 校准，不凭印象改 bin              |
-| 完整 label × segment lattice 造成时间/内存爆炸               | High   | correctness-first tiny exhaustive tests；单独测量性能，不提前引入 Top-8 或 beam                   |
-| 优化器依赖选择改变训练语义                                   | Medium | exact objective/gradient 先完成；添加依赖前按规格请求确认                                         |
-| 跨小节 note duration 的书面位置处理错误                      | High   | 使用 measure cumulative ticks 和 canonical written moments；覆盖跨小节、非连续 measure index 测试 |
-| 复现指标与作者归档输出口径混淆                               | High   | fresh 与 archived 报告使用不同字段和命令，禁止混名                                                |
+| Risk                                                         | Impact | Mitigation                                                                                            |
+| ------------------------------------------------------------ | ------ | ----------------------------------------------------------------------------------------------------- |
+| 作者预处理不在 Java 仓库内，event accent 可能难以完全 parity | High   | 先将 accent 作为显式、可测试的投影 contract；用作者 XML fixture 校准，不凭印象改 bin                  |
+| 完整 label × segment lattice 造成时间/内存爆炸               | High   | correctness-first tiny exhaustive tests；单独测量性能，不提前引入 Top-8 或 beam                       |
+| 优化器依赖选择改变训练语义                                   | Medium | 已评估 npm/C++ 候选；采用仓内确定性 L-BFGS，并以 quadratic 与 synthetic CRF 测试冻结 line search 语义 |
+| 跨小节 note duration 的书面位置处理错误                      | High   | 使用 measure cumulative ticks 和 canonical written moments；覆盖跨小节、非连续 measure index 测试     |
+| 复现指标与作者归档输出口径混淆                               | High   | fresh 与 archived 报告使用不同字段和命令，禁止混名                                                    |
 
 ## Open Questions
 
-- Task 7 开始前需确认 optimizer dependency；此前使用无依赖 objective/gradient 实现。
+- optimizer dependency 已获准评估；现有 npm 候选维护弱或依赖 native binding，因此 Task 7 采用仓内小型确定性
+  L-BFGS，不新增 optimizer dependency。
 - Task 9 开始前确认第一轮 production comparison 的语料范围。
 - Task 10 只有在复现证据完整后才讨论替换 production analyzer。

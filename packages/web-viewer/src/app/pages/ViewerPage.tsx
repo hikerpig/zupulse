@@ -22,6 +22,7 @@ export function ViewerPage({
   const { libraryScoreId } = useParams();
   const navigate = useNavigate();
   const invalidSession = Boolean(libraryScoreId && !application.hasSession(libraryScoreId));
+  const session = application.getCurrentSession();
   const currentScore = snapshot.library?.scores.find((score) => score.id === libraryScoreId);
   const statusMessage = notFound ? t("page.notFound") : invalidSession ? t("page.sessionEnded") : undefined;
 
@@ -73,8 +74,8 @@ export function ViewerPage({
           ) : null}
         </div>
       </div>
-      <PlaybackWorkspace session={application.getCurrentSession()}>
-        <ScoreViewer />
+      <PlaybackWorkspace session={session}>
+        <ScoreViewer playback={session?.playback} loopEditor={session?.loopEditor} />
       </PlaybackWorkspace>
     </main>
   );

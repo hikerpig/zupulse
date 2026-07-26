@@ -21,6 +21,12 @@ import type {
   TrackPlaybackState,
 } from "./types";
 
+type LoopRange = {
+  start: LoopRegion["start"];
+  end: LoopRegion["end"];
+  speedOverride?: number | undefined;
+};
+
 export type PlaybackControllerOptions = {
   sessionId: string;
   identity: ScoreIdentity;
@@ -160,6 +166,9 @@ export class PlaybackController {
         return;
       case "set-loop-boundary":
         this.setLoopBoundary(command.boundary, command.position);
+        return;
+      case "commit-loop-draft":
+        this.commitLoopDraft();
         return;
       case "select-loop":
         this.selectLoop(command.loopId);
@@ -312,7 +321,7 @@ export class PlaybackController {
 
   private stop(): void {
     this.options.engine.stop();
-    const loop = this.activeLoop();
+    const loop = this.effectiveLoopRange();
     this.state.position =
       this.state.looping && loop ? loop.start : musicalPositionFromTick(0, 0, this.options.timeline);
     this.markResumeDirty();
@@ -332,6 +341,16 @@ export class PlaybackController {
   private setLoopBoundary(boundary: "start" | "end", position: PlaybackState["position"]): void {
     const snapped = snapMusicalPosition(position, this.state.loopDraft.snapMode, this.options.timeline);
     this.state.loopDraft = { ...this.state.loopDraft, [boundary]: snapped };
+    this.notify();
+  }
+
+  private commitLoopDraft(): void {
+    const draft = this.validLoopDraft();
+    if (!draft) return;
+    delete this.state.activeLoopId;
+    this.state.looping = true;
+    this.options.engine.setLoop(loopTicks(draft), true);
+    this.options.engine.setSpeed(this.state.scoreSpeed);
     this.notify();
   }
 
@@ -378,12 +397,21 @@ export class PlaybackController {
       this.notify();
       return;
     }
-    const loop = this.activeLoop();
+    const loop = this.effectiveLoopRange();
     if (!loop) throw new Error("No active loop region");
     this.state.looping = true;
     this.options.engine.setLoop(loopTicks(loop), true);
     this.options.engine.setSpeed(getEffectivePlaybackSpeed(this.state.scoreSpeed, loop));
     this.notify();
+  }
+
+  private validLoopDraft(): LoopRange | undefined {
+    const { start, end } = this.state.loopDraft;
+    return start && end && start.tick < end.tick ? { start, end } : undefined;
+  }
+
+  private effectiveLoopRange(): LoopRange | undefined {
+    return this.activeLoop() ?? this.validLoopDraft();
   }
 
   private renameLoop(loopId: string, label: string): void {
@@ -638,6 +666,6 @@ function rehydrateLegacyPosition(position: LoopRegion["start"], timeline: Playba
     : structuredClone(position);
 }
 
-function loopTicks(loop: LoopRegion) {
+function loopTicks(loop: LoopRange) {
   return { startTick: loop.start.tick, endTick: loop.end.tick };
 }

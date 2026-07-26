@@ -1,4 +1,5 @@
 import type { AlphaTabApiLike } from "@zupulse/web-core";
+import type { ScoreMeasureBounds } from "../practice-loop/loop-range-geometry";
 
 export type ScoreSystemBounds = {
   systemIndex: number;
@@ -41,4 +42,44 @@ export function readAlphaTabStaffSystems(api: AlphaTabApiLike): ScoreSystemBound
     .sort((a, b) => (a?.systemIndex ?? 0) - (b?.systemIndex ?? 0));
 
   return normalized.every((system): system is ScoreSystemBounds => system !== undefined) ? normalized : undefined;
+}
+
+export function readAlphaTabMeasureBounds(api: AlphaTabApiLike): ScoreMeasureBounds[] | undefined {
+  const systems = api.boundsLookup?.staffSystems;
+  if (!systems?.length) return undefined;
+
+  const measures = systems.flatMap((system) =>
+    system.bars.map((bar): ScoreMeasureBounds | undefined => {
+      const bounds = bar.realBounds;
+      const values = [
+        system.index,
+        bar.index,
+        bounds?.x,
+        bounds?.y,
+        bounds?.w,
+        bounds?.h,
+        system.realBounds.x,
+        system.realBounds.y,
+        system.realBounds.w,
+        system.realBounds.h,
+      ];
+      if (!bounds || !values.every(Number.isFinite)) return undefined;
+      return {
+        systemIndex: system.index,
+        measureIndex: bar.index,
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.w,
+        height: bounds.h,
+        systemX: system.realBounds.x,
+        systemY: system.realBounds.y,
+        systemWidth: system.realBounds.w,
+        systemHeight: system.realBounds.h,
+      };
+    }),
+  );
+
+  return measures.every((measure): measure is ScoreMeasureBounds => measure !== undefined)
+    ? measures.sort((a, b) => a.measureIndex - b.measureIndex)
+    : undefined;
 }

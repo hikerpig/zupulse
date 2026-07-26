@@ -210,6 +210,38 @@ describe("PlaybackController", () => {
     ]);
   });
 
+  it("applies a completed loop draft immediately without persisting a reusable loop", async () => {
+    const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" });
+    const persistence = new FakePersistence();
+    const controller = createController(engine, persistence);
+    await controller.initialize();
+
+    await controller.dispatch({ type: "set-loop-boundary", boundary: "start", position: position(731, 1500) });
+    await controller.dispatch({ type: "set-loop-boundary", boundary: "end", position: position(2890, 6000) });
+    await controller.dispatch({ type: "commit-loop-draft" });
+
+    expect(controller.getState()).toMatchObject({
+      looping: true,
+      loops: [],
+      loopDraft: {
+        start: { tick: 960 },
+        end: { tick: 2880 },
+      },
+    });
+    expect(controller.getState().activeLoopId).toBeUndefined();
+    expect(engine.calls).toContainEqual(["loop", { range: { startTick: 960, endTick: 2880 }, enabled: true }]);
+
+    await controller.dispatch({ type: "set-loop-enabled", enabled: false });
+    await controller.dispatch({ type: "set-loop-enabled", enabled: true });
+    expect(engine.calls.slice(-2)).toEqual([
+      ["loop", { range: { startTick: 960, endTick: 2880 }, enabled: true }],
+      ["speed", 1],
+    ]);
+
+    await controller.dispatch({ type: "stop" });
+    expect(controller.getState().position.tick).toBe(960);
+  });
+
   it("rehydrates legacy loop positions without dirtying the sidecar", async () => {
     const sidecar = createDefaultSidecar(identity, "2026-07-10T00:00:00Z");
     sidecar.practice.playback.loops = [

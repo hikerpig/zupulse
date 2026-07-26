@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ReactElement } from "react";
+import type { PlaybackState } from "@zupulse/web-core";
 import { AppStoreProvider } from "../../app/appStore";
 import { ScoreViewer } from "../ScoreViewer";
 
@@ -97,6 +98,132 @@ describe("ScoreViewer", () => {
     expect(commits).not.toHaveBeenCalled();
     document.removeEventListener("zupulse:score-zoom-commit", commits);
   });
+
+  it("previews loop boundaries on the score and adjusts them by beat from the keyboard", async () => {
+    const dispatch = vi.fn(async () => undefined);
+    const playbackState = loopPlaybackState();
+    playbackState.looping = true;
+    renderScoreViewer(
+      <ScoreViewer
+        loopEditor={{
+          getMeasureBounds: () => [
+            {
+              systemIndex: 0,
+              measureIndex: 0,
+              x: 20,
+              y: 40,
+              width: 320,
+              height: 140,
+              systemX: 20,
+              systemY: 40,
+              systemWidth: 320,
+              systemHeight: 140,
+            },
+          ],
+          subscribe: () => () => undefined,
+        }}
+        playback={{
+          getState: () => playbackState,
+          subscribe: () => () => undefined,
+          dispatch,
+          timeline: {
+            durationTicks: 1920,
+            durationMs: 4000,
+            measures: [
+              {
+                id: "measure-0",
+                index: 0,
+                startTick: 0,
+                durationTicks: 1920,
+                beatTicks: [0, 480, 960, 1440],
+              },
+            ],
+          },
+        }}
+      />,
+    );
+
+    const pointA = screen.getByRole("slider", { name: "循环 A 点" });
+    expect(screen.getByRole("slider", { name: "循环 B 点" })).toBeTruthy();
+    const overlay = screen.getByLabelText("谱面循环区间");
+    expect(overlay.querySelectorAll("[data-loop-segment]")).toHaveLength(1);
+
+    pointA.focus();
+    await userEvent.setup().keyboard("{ArrowRight}");
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "set-loop-boundary",
+      boundary: "start",
+      position: expect.objectContaining({ tick: 960 }),
+    });
+
+    vi.spyOn(overlay, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      top: 0,
+      right: 340,
+      bottom: 360,
+      left: 0,
+      width: 340,
+      height: 360,
+      toJSON: () => ({}),
+    });
+    fireEvent(pointA, pointerEvent("pointerdown", 60, 100));
+    fireEvent(window, pointerEvent("pointermove", 260, 100));
+    fireEvent(window, pointerEvent("pointerup", 260, 100));
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "set-loop-boundary",
+      boundary: "start",
+      position: expect.objectContaining({ tick: 1440 }),
+    });
+    expect(dispatch).toHaveBeenCalledWith({ type: "commit-loop-draft" });
+  });
+
+  it("hides the loop editing layer while loop mode is off", () => {
+    const playbackState = loopPlaybackState();
+    renderScoreViewer(
+      <ScoreViewer
+        loopEditor={{
+          getMeasureBounds: () => [
+            {
+              systemIndex: 0,
+              measureIndex: 0,
+              x: 20,
+              y: 40,
+              width: 320,
+              height: 140,
+              systemX: 20,
+              systemY: 40,
+              systemWidth: 320,
+              systemHeight: 140,
+            },
+          ],
+          subscribe: () => () => undefined,
+        }}
+        playback={{
+          getState: () => playbackState,
+          subscribe: () => () => undefined,
+          dispatch: vi.fn(async () => undefined),
+          timeline: {
+            durationTicks: 1920,
+            durationMs: 4000,
+            measures: [
+              {
+                id: "measure-0",
+                index: 0,
+                startTick: 0,
+                durationTicks: 1920,
+                beatTicks: [0, 480, 960, 1440],
+              },
+            ],
+          },
+        }}
+      />,
+    );
+
+    expect(screen.queryByLabelText("谱面循环区间")).toBeNull();
+  });
 });
 
 function renderScoreViewer(viewer: ReactElement) {
@@ -105,4 +232,59 @@ function renderScoreViewer(viewer: ReactElement) {
 
 function touch(clientX: number, clientY: number) {
   return { clientX, clientY, identifier: clientY, target: document.body };
+}
+
+function pointerEvent(type: string, clientX: number, clientY: number): Event {
+  const event = new Event(type, { bubbles: true, cancelable: true });
+  Object.defineProperties(event, {
+    clientX: { value: clientX },
+    clientY: { value: clientY },
+    pointerId: { value: 1 },
+  });
+  return event;
+}
+
+function loopPlaybackState(): PlaybackState {
+  return {
+    sessionId: "session-1",
+    transport: "paused",
+    position: {
+      measureId: "measure-0",
+      measureIndex: 0,
+      beatIndex: 0,
+      tick: 0,
+      cachedTimeMs: 0,
+    },
+    durationMs: 4000,
+    baseTempo: 120,
+    scoreSpeed: 1,
+    looping: false,
+    loopDraft: {
+      snapMode: "beat",
+      start: {
+        measureId: "measure-0",
+        measureIndex: 0,
+        beatIndex: 1,
+        tick: 480,
+        cachedTimeMs: 1000,
+      },
+      end: {
+        measureId: "measure-0",
+        measureIndex: 0,
+        beatIndex: 3,
+        tick: 1440,
+        cachedTimeMs: 3000,
+      },
+    },
+    loops: [],
+    tracks: [],
+    trackState: {
+      primaryVisibleTrackId: "",
+      additionalVisibleTrackIds: [],
+      visibilityUpdatedAt: "2026-07-26T00:00:00Z",
+      settings: {},
+    },
+    soundFont: "ready",
+    persistence: "clean",
+  };
 }

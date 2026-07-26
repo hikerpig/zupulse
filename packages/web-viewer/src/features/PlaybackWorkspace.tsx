@@ -96,15 +96,31 @@ function PlaybackLayout({
     return disabledPlaybackWorkspace(children, drawerOpen, setDrawerOpen, drawerToggleRef, drawerCloseRef, t);
   const view = presentPlayback(state);
   const dispatch = (command: PlaybackCommand) => void playback.dispatch(command);
-  const hasActiveLoop = view.loops.some((loop) => loop.selected);
+  const hasPlayableLoop =
+    view.loops.some((loop) => loop.selected) ||
+    Boolean(state.loopDraft.start && state.loopDraft.end && state.loopDraft.start.tick < state.loopDraft.end.tick);
   const playLabel = view.isPlaying ? t("playback.pause") : t("playback.play");
   const activeLoop = view.loops.find((loop) => loop.selected);
+  const activeLoopState = state.loops.find((loop) => loop.id === state.activeLoopId);
   const position = (ratio: number) =>
     musicalPositionFromTick(
       Math.round(playback.timeline.durationTicks * ratio),
       playback.timeline.durationMs * ratio,
       playback.timeline,
     );
+  const setLoopMode = (enabled: boolean) => {
+    if (enabled === view.looping) return;
+    if (!enabled || hasPlayableLoop) {
+      dispatch({ type: "set-loop-enabled", enabled });
+      return;
+    }
+    initializeLoopDraft(playback, state, activeLoopState);
+  };
+  const openLoopEditor = () => {
+    setLoopMode(true);
+    setPracticeView("loop");
+    setDrawerOpen(true);
+  };
 
   return (
     <>
@@ -133,29 +149,10 @@ function PlaybackLayout({
           <button
             className={styles.transportIconButton}
             type="button"
-            aria-label={
-              hasActiveLoop
-                ? view.looping
-                  ? t("playback.disableLoop")
-                  : t("playback.enableLoop")
-                : t("playback.setLoop")
-            }
-            title={
-              hasActiveLoop
-                ? view.looping
-                  ? t("playback.disableLoop")
-                  : t("playback.enableLoop")
-                : t("playback.setLoop")
-            }
+            aria-label={t("playback.loopMode")}
+            title={view.looping ? t("playback.closeLoopMode") : t("playback.openLoopMode")}
             aria-pressed={view.looping}
-            onClick={() => {
-              if (hasActiveLoop) {
-                dispatch({ type: "set-loop-enabled", enabled: !view.looping });
-                return;
-              }
-              setPracticeView("loop");
-              setDrawerOpen(true);
-            }}
+            onClick={() => setLoopMode(!view.looping)}
           >
             <Repeat2 aria-hidden="true" />
           </button>
@@ -274,7 +271,7 @@ function PlaybackLayout({
                     </div>
                   </section>
                   <div className={styles.taskList}>
-                    <button className={styles.taskEntry} type="button" onClick={() => setPracticeView("loop")}>
+                    <button className={styles.taskEntry} type="button" onClick={openLoopEditor}>
                       <span>
                         <strong>{t("playback.loopTaskTitle")}</strong>
                         <small>
@@ -300,94 +297,42 @@ function PlaybackLayout({
               {practiceView === "loop" ? (
                 <section className={styles.panelSection}>
                   <div className={styles.panelHeader}>
-                    <p className={styles.panelTitle}>{t("playback.loop")}</p>
-                    <label className={styles.toggleRow}>
+                    <label className={styles.loopModeRow}>
+                      <span className={styles.panelTitle}>{t("playback.loopMode")}</span>
                       <input
                         type="checkbox"
+                        role="switch"
                         checked={view.looping}
-                        onChange={(event) =>
-                          dispatch({ type: "set-loop-enabled", enabled: event.currentTarget.checked })
-                        }
+                        onChange={(event) => setLoopMode(event.currentTarget.checked)}
                       />
-                      <span>{t("playback.enableLoop")}</span>
                     </label>
                   </div>
                   <div className={styles.panelContent}>
-                    <div className={styles.buttonRow}>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          dispatch({
-                            type: "set-loop-boundary",
-                            boundary: "start",
-                            position: state.position,
-                          })
-                        }
-                      >
-                        {t("playback.setA")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          dispatch({
-                            type: "set-loop-boundary",
-                            boundary: "end",
-                            position: state.position,
-                          })
-                        }
-                      >
-                        {t("playback.setB")}
-                      </button>
-                      <button type="button" onClick={() => dispatch({ type: "save-loop" })}>
-                        {t("playback.saveLoop")}
-                      </button>
-                    </div>
-                    <label>
-                      <span>{t("playback.snap")}</span>
-                      <select
-                        value={view.loopSnapMode}
-                        onChange={(event) =>
-                          dispatch({
-                            type: "set-loop-snap",
-                            mode: event.currentTarget.value as typeof view.loopSnapMode,
-                          })
-                        }
-                      >
-                        <option value="off">{t("playback.snapOff")}</option>
-                        <option value="beat">{t("playback.snapBeat")}</option>
-                        <option value="measure">{t("playback.snapMeasure")}</option>
-                      </select>
-                    </label>
-                    <label>
-                      <span>{t("playback.pointA")}</span>
-                      <Slider
-                        label={t("playback.loopPointA")}
-                        max={1000}
-                        value={loopValue(state.loopDraft.start?.tick, playback.timeline.durationTicks)}
-                        onValueChange={(value) =>
-                          dispatch({
-                            type: "set-loop-boundary",
-                            boundary: "start",
-                            position: position(value / 1000),
-                          })
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span>{t("playback.pointB")}</span>
-                      <Slider
-                        label={t("playback.loopPointB")}
-                        max={1000}
-                        value={loopValue(state.loopDraft.end?.tick, playback.timeline.durationTicks)}
-                        onValueChange={(value) =>
-                          dispatch({
-                            type: "set-loop-boundary",
-                            boundary: "end",
-                            position: position(value / 1000),
-                          })
-                        }
-                      />
-                    </label>
+                    {view.looping ? (
+                      <>
+                        <button type="button" onClick={() => dispatch({ type: "save-loop" })}>
+                          {t("playback.saveLoop")}
+                        </button>
+                        <label>
+                          <span>{t("playback.snap")}</span>
+                          <select
+                            value={view.loopSnapMode}
+                            onChange={(event) =>
+                              dispatch({
+                                type: "set-loop-snap",
+                                mode: event.currentTarget.value as typeof view.loopSnapMode,
+                              })
+                            }
+                          >
+                            <option value="off">{t("playback.snapOff")}</option>
+                            <option value="beat">{t("playback.snapBeat")}</option>
+                            <option value="measure">{t("playback.snapMeasure")}</option>
+                          </select>
+                        </label>
+                      </>
+                    ) : (
+                      <p className={styles.loopModeHint}>{t("playback.loopModeHint")}</p>
+                    )}
                     <div className={styles.itemList}>
                       {view.loops.map((loop) => (
                         <div className={styles.loopRow} key={loop.id}>
@@ -496,6 +441,43 @@ function PlaybackLayout({
       </section>
     </>
   );
+}
+
+function initializeLoopDraft(
+  playback: NonNullable<ViewerSessionHandle["playback"]>,
+  state: ReturnType<NonNullable<ViewerSessionHandle["playback"]>["getState"]>,
+  activeLoop: (typeof state.loops)[number] | undefined,
+): void {
+  if (state.loopDraft.start && state.loopDraft.end) return;
+  const measure =
+    playback.timeline.measures.find((item) => item.index === state.position.measureIndex) ??
+    playback.timeline.measures[0];
+  if (!measure && !activeLoop) return;
+  const start =
+    activeLoop?.start ??
+    musicalPositionFromTick(
+      measure!.startTick,
+      (measure!.startTick / Math.max(1, playback.timeline.durationTicks)) * playback.timeline.durationMs,
+      playback.timeline,
+    );
+  const endTick =
+    activeLoop?.end.tick ?? Math.min(playback.timeline.durationTicks, measure!.startTick + measure!.durationTicks);
+  const end =
+    activeLoop?.end ??
+    musicalPositionFromTick(
+      endTick,
+      (endTick / Math.max(1, playback.timeline.durationTicks)) * playback.timeline.durationMs,
+      playback.timeline,
+    );
+  if (!state.loopDraft.start) {
+    void playback.dispatch({ type: "set-loop-boundary", boundary: "start", position: start });
+  }
+  if (!state.loopDraft.end) {
+    void playback.dispatch({ type: "set-loop-boundary", boundary: "end", position: end });
+  }
+  if (!activeLoop) {
+    void playback.dispatch({ type: "commit-loop-draft" });
+  }
 }
 
 function ScoreNavigationControls({ navigation }: { navigation: NonNullable<ViewerSessionHandle["navigation"]> }) {
@@ -677,7 +659,7 @@ function disabledPlaybackWorkspace(
           >
             <Square aria-hidden="true" />
           </button>
-          <button className={styles.transportIconButton} type="button" aria-label={t("playback.setLoop")} disabled>
+          <button className={styles.transportIconButton} type="button" aria-label={t("playback.loopMode")} disabled>
             <Repeat2 aria-hidden="true" />
           </button>
           <span className={styles.timeReadout}>0:00 / 0:00</span>
@@ -846,11 +828,6 @@ function loopSpeedCommand(loopId: string, value: string): PlaybackCommand {
   return value === ""
     ? { type: "set-loop-speed", loopId }
     : { type: "set-loop-speed", loopId, speed: Number(value) / 100 };
-}
-
-function loopValue(tick: number | undefined, durationTicks: number): number {
-  if (tick === undefined || durationTicks <= 0) return 0;
-  return Math.round(Math.min(1, Math.max(0, tick / durationTicks)) * 1000);
 }
 
 function loopDisplayLabel(loop: PlaybackViewModel["loops"][number], t: TFunction<"viewer">): string {

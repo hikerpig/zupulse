@@ -8,6 +8,10 @@ export interface ViewerHost {
 }
 export type { LocaleHost } from "./i18n/locale-controller";
 export type ViewerSessionHandle = {
+  loopEditor?: {
+    getMeasureBounds(): readonly import("./practice-loop/loop-range-geometry").ScoreMeasureBounds[];
+    subscribe(listener: () => void): () => void;
+  };
   navigation?: {
     getState(): import("./score-navigation/score-navigation-coordinator").ScoreNavigationSnapshot;
     subscribe(listener: () => void): () => void;

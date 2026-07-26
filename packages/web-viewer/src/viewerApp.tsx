@@ -19,7 +19,7 @@ import { type DemoState } from "./gpDemoPresenter";
 import { presentScoreFile } from "./importPresenter";
 import { SCORE_ZOOM_COMMIT_EVENT, type ScoreZoomCommitDetail } from "./scoreZoom";
 import { ScoreNavigationCoordinator } from "./score-navigation/score-navigation-coordinator";
-import { readAlphaTabStaffSystems } from "./score-navigation/alpha-tab-navigation";
+import { readAlphaTabMeasureBounds, readAlphaTabStaffSystems } from "./score-navigation/alpha-tab-navigation";
 import { attachScoreNavigationInputs } from "./score-navigation/score-navigation-inputs";
 
 export type DefaultOpenSessionDependencies = {
@@ -75,6 +75,12 @@ export function createDefaultOpenSession(
         }
       },
     });
+    let loopMeasureBounds = readAlphaTabMeasureBounds(api) ?? [];
+    const loopEditorListeners = new Set<() => void>();
+    const refreshLoopMeasureBounds = () => {
+      loopMeasureBounds = readAlphaTabMeasureBounds(api) ?? [];
+      for (const listener of loopEditorListeners) listener();
+    };
     const detachNavigationInputs = attachScoreNavigationInputs(scoreScrollElement, {
       mode: () => navigation.getSnapshot().mode,
       manualNavigation: () => navigation.manualNavigation(),
@@ -85,6 +91,7 @@ export function createDefaultOpenSession(
         navigation.beginGeneration();
         const systems = readAlphaTabStaffSystems(api);
         if (systems) navigation.setSystems(systems);
+        refreshLoopMeasureBounds();
       },
       cursorSystemChanged: (system) =>
         navigation.cursorSystemChanged(
@@ -100,6 +107,7 @@ export function createDefaultOpenSession(
             if (!systems) return;
             navigation.beginGeneration();
             navigation.setSystems(systems);
+            refreshLoopMeasureBounds();
           });
     resizeObserver?.observe(scoreScrollElement);
     const detachNavigationRuntime = () => {
@@ -163,15 +171,20 @@ export function createDefaultOpenSession(
         const previousTransport = playbackSnapshot.transport;
         playbackSnapshot = state;
         const activeLoop = state.loops.find((loop) => loop.id === state.activeLoopId);
+        const draftLoop =
+          state.loopDraft.start && state.loopDraft.end && state.loopDraft.start.tick < state.loopDraft.end.tick
+            ? { start: state.loopDraft.start, end: state.loopDraft.end }
+            : undefined;
+        const effectiveLoop = activeLoop ?? draftLoop;
         const nextLoopKey =
-          state.looping && activeLoop ? `${activeLoop.start.measureIndex}:${activeLoop.end.measureIndex}` : "";
+          state.looping && effectiveLoop ? `${effectiveLoop.start.measureIndex}:${effectiveLoop.end.measureIndex}` : "";
         if (nextLoopKey !== navigationLoopKey) {
           navigationLoopKey = nextLoopKey;
           navigation.setLoopMeasureRange(
-            state.looping && activeLoop
+            state.looping && effectiveLoop
               ? {
-                  startMeasureIndex: activeLoop.start.measureIndex,
-                  endMeasureIndex: activeLoop.end.measureIndex,
+                  startMeasureIndex: effectiveLoop.start.measureIndex,
+                  endMeasureIndex: effectiveLoop.end.measureIndex,
                 }
               : undefined,
           );
@@ -183,6 +196,13 @@ export function createDefaultOpenSession(
       });
       renderViewerState(status, summary, state);
       return {
+        loopEditor: {
+          getMeasureBounds: () => loopMeasureBounds,
+          subscribe(listener) {
+            loopEditorListeners.add(listener);
+            return () => loopEditorListeners.delete(listener);
+          },
+        },
         navigation: {
           getState: () => navigation.getSnapshot(),
           subscribe: (listener) => navigation.subscribe(listener),
@@ -221,6 +241,7 @@ export function createDefaultOpenSession(
           detachScoreZoom();
           unsubscribePlayback();
           playbackListeners.clear();
+          loopEditorListeners.clear();
           await sessionController.destroy();
         },
       };

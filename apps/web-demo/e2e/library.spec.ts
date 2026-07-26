@@ -260,8 +260,26 @@ test("keeps the Library to Viewer practice journey usable from 390px through des
   await expect(page.getByRole("button", { name: "播放" })).toBeEnabled({ timeout: 30_000 });
   await expectInsideViewport(page, page.getByRole("button", { name: "播放" }));
   await expectInsideViewport(page, page.getByRole("button", { name: "停止" }));
-  await expectInsideViewport(page, page.getByRole("button", { name: "设置循环区间" }));
+  await expectInsideViewport(page, page.getByRole("button", { name: "循环模式" }));
   await expectInsideViewport(page, page.getByRole("button", { name: "练习设置" }));
+
+  const loopModeButton = page.getByRole("button", { name: "循环模式" });
+  await loopModeButton.click();
+  await expect(loopModeButton).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("complementary", { name: "练习设置" })).toHaveCount(0);
+  const scoreLoopRange = page.getByLabel("谱面循环区间");
+  const scorePointA = scoreLoopRange.getByRole("slider", { name: "循环 A 点" });
+  await expect(scorePointA).toBeVisible();
+  await expect(scoreLoopRange.getByRole("slider", { name: "循环 B 点" })).toBeVisible();
+  const initialPointA = await scorePointA.getAttribute("aria-valuenow");
+  await scorePointA.press("ArrowRight");
+  await expect(scorePointA).not.toHaveAttribute("aria-valuenow", initialPointA ?? "");
+  await loopModeButton.click();
+  await expect(loopModeButton).toHaveAttribute("aria-pressed", "false");
+  await expect(scoreLoopRange).toHaveCount(0);
+  await loopModeButton.click();
+  await expect(loopModeButton).toHaveAttribute("aria-pressed", "true");
+  await expect(scoreLoopRange).toBeVisible();
 
   const zoom = page.getByRole("button", { name: "调整谱面缩放" });
   await expect(zoom).toBeVisible();

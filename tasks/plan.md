@@ -48,7 +48,7 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
   - Dependencies: Task 2
   - Files: `paper-semi-crf-model.ts`、`paper-semi-crf-decode.ts`、相邻测试。
   - Scope: Medium
-- [ ] Task 4: 实现 log-partition、expected counts 与 L2 objective/gradient。
+- [x] Task 4: 实现 log-partition、expected counts 与 L2 objective/gradient。
   - Acceptance: partition 与 exhaustive oracle 一致；analytic gradient 通过 finite difference；非有限输入失败。
   - Verification: `pnpm vitest run packages/web-core/src/harmony/__tests__/paper-semi-crf-model.test.ts`
   - Dependencies: Task 3
@@ -57,9 +57,9 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
 
 ### Checkpoint: Inference
 
-- [ ] Phase 1-2 focused tests pass.
-- [ ] Tiny exhaustive parity covers partition、gradient 和 Viterbi.
-- [ ] `pnpm verify:fast` passes.
+- [x] Phase 1-2 focused tests pass.
+- [x] Tiny exhaustive parity covers partition、gradient 和 Viterbi.
+- [x] `pnpm verify:fast` passes.
 
 ### Phase 3: Paper Features
 

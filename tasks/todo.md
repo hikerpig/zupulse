@@ -5,8 +5,8 @@
 - [x] Task 2: complete label inventory
 - [x] Checkpoint: observation/state contracts
 - [x] Task 3: exact Viterbi
-- [ ] Task 4: log-partition and L2 objective/gradient
-- [ ] Checkpoint: exact inference
+- [x] Task 4: log-partition and L2 objective/gradient
+- [x] Checkpoint: exact inference
 - [ ] Task 5: segment feature families
 - [ ] Task 6: transition features and model schema
 - [ ] Checkpoint: faithful core

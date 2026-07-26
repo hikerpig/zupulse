@@ -9,7 +9,7 @@
 - [x] Checkpoint: exact inference
 - [x] Task 5a: purity/base coverage/beginning accent
 - [x] Task 5b: weighted coverage and bass
-- [ ] Task 5c: figuration variants
+- [x] Task 5c: figuration variants
 - [ ] Task 6: transition features and model schema
 - [ ] Checkpoint: faithful core
 - [ ] Task 7: CLI training/evaluation

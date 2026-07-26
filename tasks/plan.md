@@ -76,7 +76,7 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
   - Dependencies: Task 5a
   - Files: `paper-semi-crf-features.ts`、相邻测试。
   - Scope: Medium
-- [ ] Task 5c: 实现 suspension/anticipation/passing/neighbor figuration variants。
+- [x] Task 5c: 实现 suspension/anticipation/passing/neighbor figuration variants。
   - Acceptance: 每种 figuration 判定有正反 fixture，全部 `FIG_*` enabled families 与 reference parity。
   - Verification: paper feature focused tests and selected author XML parity.
   - Dependencies: Task 5b

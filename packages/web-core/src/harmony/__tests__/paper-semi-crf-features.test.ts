@@ -21,10 +21,13 @@ describe("paper semi-CRF segment features", () => {
       label,
     });
 
-    expect(features.slice(0, 7)).toEqual([
+    expect(features.slice(0, 10)).toEqual([
       "PURITY_80",
       "ACCENTED_PURITY_70",
       "DURATION_PURITY_80",
+      "FIG_PURITY_80",
+      "FIG_ACCENTED_PURITY_70",
+      "FIG_DURATION_PURITY_80",
       "ROOT_COVERED",
       "THIRD_COVERED",
       "FIFTH_COVERED",
@@ -119,6 +122,127 @@ describe("paper semi-CRF segment features", () => {
         label,
       }),
     ).toContain("DURATION_ADDED_NOTE_GREATER_THAN_ROOT");
+  });
+
+  it.each([
+    {
+      name: "passing tone",
+      middleMidi: 62,
+      finalMidi: 64,
+    },
+    {
+      name: "neighbor tone",
+      middleMidi: 62,
+      finalMidi: 60,
+    },
+  ])("removes a $name only from figuration-aware families", ({ middleMidi, finalMidi }) => {
+    const label = supportedLabel("C:maj");
+    const events = [
+      event(0, 0, 480, 1, [note("start", 0, 60, 480, false, 1)]),
+      event(1, 480, 960, 0.5, [note("figure", 2, middleMidi, 480, false, 0.5, 480)]),
+      event(2, 960, 1440, 0.25, [note("end", finalMidi % 12, finalMidi, 480, false, 0.25, 960)]),
+    ];
+
+    const features = extractPaperSemiCrfSegmentFeatures({
+      events,
+      segment: { startEvent: 0, endEvent: 3, labelId: label.id },
+      label,
+    });
+
+    expect(features).toContain("PURITY_70");
+    expect(features).toContain("FIG_PURITY_101");
+  });
+
+  it("does not remove a passing candidate without the reference accent condition", () => {
+    const label = supportedLabel("C:maj");
+    const events = [
+      event(0, 0, 480, 1, [note("start", 0, 60, 480, false, 1)]),
+      event(1, 480, 960, 1, [note("candidate", 2, 62, 480, false, 1, 480)]),
+      event(2, 960, 1440, 0.25, [note("end", 4, 64, 480, false, 0.25, 960)]),
+    ];
+
+    const features = extractPaperSemiCrfSegmentFeatures({
+      events,
+      segment: { startEvent: 0, endEvent: 3, labelId: label.id },
+      label,
+    });
+
+    expect(features).toContain("FIG_PURITY_70");
+  });
+
+  it("removes a harmonic suspension and anticipation, but keeps non-harmonic lookalikes", () => {
+    const label = supportedLabel("C:maj");
+    const harmonicContext = [
+      note("f", 5, 53, 480, false, 1),
+      note("a", 9, 57, 480, false, 1),
+      note("c", 0, 60, 480, false, 1),
+    ];
+    const segmentNotes = [
+      note("f", 5, 53, 480, false, 0.5, 480),
+      note("c", 0, 60, 480, false, 0.5, 480),
+      note("e", 4, 64, 480, false, 0.5, 480),
+      note("g", 7, 67, 480, false, 0.5, 480),
+    ];
+    const suspensionEvents = [event(0, 0, 480, 1, harmonicContext), event(1, 480, 960, 0.5, segmentNotes)];
+    const anticipationEvents = [
+      event(
+        0,
+        0,
+        480,
+        0.5,
+        segmentNotes.map((candidate) => ({ ...candidate, onsetTick: 0 })),
+      ),
+      event(
+        1,
+        480,
+        960,
+        1,
+        harmonicContext.map((candidate) => ({
+          ...candidate,
+          onsetTick: 480,
+          onset: { measureIndex: 0, offsetTicks: 480 },
+          sourceDurationTicks: candidate.id === "f" ? 960 : 480,
+        })),
+      ),
+    ];
+    const nonHarmonicEvents = [
+      event(0, 0, 480, 1, [note("f", 5, 53, 480, false, 1)]),
+      event(1, 480, 960, 0.5, segmentNotes),
+    ];
+    const nonHarmonicAnticipationEvents = [
+      anticipationEvents[0]!,
+      event(1, 480, 960, 1, [note("f", 5, 53, 960, false, 1, 480)]),
+    ];
+
+    const suspensionFeatures = extractPaperSemiCrfSegmentFeatures({
+      events: suspensionEvents,
+      segment: { startEvent: 1, endEvent: 2, labelId: label.id },
+      label,
+    });
+    expect(suspensionFeatures).toContain("FIG_PURITY_101");
+    expect(suspensionFeatures).toContain("FIG_FIRST_BASS_IS_ROOT");
+    expect(suspensionFeatures).not.toContain("FIRST_BASS_IS_ROOT");
+    expect(
+      extractPaperSemiCrfSegmentFeatures({
+        events: anticipationEvents,
+        segment: { startEvent: 0, endEvent: 1, labelId: label.id },
+        label,
+      }),
+    ).toContain("FIG_PURITY_101");
+    expect(
+      extractPaperSemiCrfSegmentFeatures({
+        events: nonHarmonicEvents,
+        segment: { startEvent: 1, endEvent: 2, labelId: label.id },
+        label,
+      }),
+    ).toContain("FIG_PURITY_80");
+    expect(
+      extractPaperSemiCrfSegmentFeatures({
+        events: nonHarmonicAnticipationEvents,
+        segment: { startEvent: 0, endEvent: 1, labelId: label.id },
+        label,
+      }),
+    ).toContain("FIG_PURITY_80");
   });
 });
 

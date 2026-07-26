@@ -52,6 +52,7 @@
   --spacing-field: var(--control-height-field);
   --spacing-control: var(--control-height-md);
   --spacing-control-lg: var(--control-height-lg);
+  --spacing-context-max: var(--context-popup-max-height);
 
   --radius-control: var(--radius-sm);
   --radius-panel: var(--radius-md);
@@ -66,5 +67,7 @@
   --ease-ui: var(--motion-ease-standard);
 
   --container-dialog: var(--dialog-max-width);
+  --container-context-min: var(--context-popup-min-width);
+  --container-context-max: var(--context-popup-max-width);
   --z-index-overlay: var(--layer-overlay);
 }

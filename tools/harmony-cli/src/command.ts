@@ -20,6 +20,7 @@ import { evaluatePaperSemiCrfFile, trainPaperSemiCrfFile } from "./paperSemiCrfF
 import { exportPaperSemiCrfAuthorRecordsFile } from "./paperSemiCrfAuthorRecords";
 import { importPaperSemiCrfAuthorModelFile } from "./paperSemiCrfAuthorModel";
 import { exportPaperSemiCrfDcmlRecordsFile } from "./paperSemiCrfDcmlFiles";
+import { evaluatePaperSemiCrfCurrentComparisonFile } from "./paperSemiCrfCurrentFiles";
 import type { DatasetSplit } from "./evaluationProtocol";
 import {
   harmonyInspectReportSchema,
@@ -49,6 +50,7 @@ export async function runHarmonyCommand(
   | Awaited<ReturnType<typeof exportPaperSemiCrfAuthorRecordsFile>>
   | Awaited<ReturnType<typeof importPaperSemiCrfAuthorModelFile>>
   | Awaited<ReturnType<typeof exportPaperSemiCrfDcmlRecordsFile>>
+  | Awaited<ReturnType<typeof evaluatePaperSemiCrfCurrentComparisonFile>>
 > {
   const normalized = args[0] === "--" ? args.slice(1) : args;
   const cwd = context.cwd ?? process.env.INIT_CWD ?? process.cwd();
@@ -121,6 +123,29 @@ export async function runHarmonyCommand(
       reportPath: resolve(cwd, report),
       maxSegmentLength,
       ...(labelOrderRecords === undefined ? {} : { labelOrderRecordsPath: resolve(cwd, labelOrderRecords) }),
+    });
+  }
+  if (normalized[0] === "paper-semi-crf-current-compare") {
+    const manifest = normalized[1];
+    const protocol = optionValue(normalized, "--protocol");
+    const dataRoot = optionValue(normalized, "--data-root");
+    const caseId = optionValue(normalized, "--case");
+    const records = optionValue(normalized, "--records");
+    const model = optionValue(normalized, "--model");
+    const output = optionValue(normalized, "--output");
+    if (!manifest || !protocol || !dataRoot || !caseId || !records || !model || !output) {
+      throw new Error(
+        "usage: harmony:cli paper-semi-crf-current-compare <manifest.json> --protocol <protocol.json> --data-root <directory> --case <id> --records <tune-records.json> --model <model.json> --output <report.json>",
+      );
+    }
+    return evaluatePaperSemiCrfCurrentComparisonFile({
+      manifestPath: resolve(cwd, manifest),
+      protocolPath: resolve(cwd, protocol),
+      dataRoot: resolve(cwd, dataRoot),
+      caseId,
+      recordsPath: resolve(cwd, records),
+      modelPath: resolve(cwd, model),
+      outputPath: resolve(cwd, output),
     });
   }
   if (normalized[0] === "paper-semi-crf-train") {

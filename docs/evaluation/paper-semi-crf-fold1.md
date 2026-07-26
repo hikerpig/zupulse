@@ -157,6 +157,52 @@ faithful-window 导出基础设施已验证，但尚未把该口径当作获批�
 生成文件分别为 13.1 MB 与 3.3 MB；没有读取 regression/eval/final-holdout groups。tune records
 强制复用 train label order，不能从 tune gold 扩充候选 inventory。
 
+### Faithful-window current-corpus comparison
+
+在不改变 frozen label simplification、且不读取 final holdout 的前提下，已用上述 Mozart train
+windows 从零训练 165 iterations，并在 tune windows 上与当前 `analyzeHarmonyRules`
+（`decisionThreshold=0`）做相同窗口投影比较。
+
+训练模型 SHA-256 为
+`6fb18d1245aea9d89f5568a9b384b405c5326cb37015cc2caa5ade8dad5f7515`。objective 从
+`62048.9051` 降至 `1742.6117`，最终 gradient L2 norm 为 `6.895`；训练总 wall clock
+`2900.53 s`，OS maximum RSS `2,066,317,312` bytes。该成本适合作为离线研究基线，不满足任何已批准
+的产品预算，因为当前没有批准过这样的预算。
+
+同一批 586 tune windows / 3770 events 的结果如下：
+
+| Metric                   | Paper Semi-CRF | Production baseline |     Delta |
+| ------------------------ | -------------: | ------------------: | --------: |
+| Event accuracy           |         88.20% |              59.89% | +28.30 pp |
+| Duration accuracy        |         87.01% |              58.11% | +28.90 pp |
+| Segment F1               |         80.19% |              25.16% | +55.03 pp |
+| Boundary F1              |         79.77% |              28.42% | +51.35 pp |
+| Predicted / gold density |          1.012 |               1.751 |    -0.739 |
+
+报告 records SHA-256 为
+`e60ad957a9ce17ee05e1585679c1ad1f490847e32eb41aac7fb098080c274b8e`。Semi-CRF 的
+`windowRuntimeMs` 为 `35170.36`，P95/window 为 `218.69 ms`；生产基线的
+`fullPieceRuntimeMs` 为 `87824.04`。前者只推理导出的窗口，后者分析 9 首完整乐曲，因此不能据此
+声称运行时提升或退化。
+
+这项比较明确支持最初诊断：此前效果不佳来自当前变体偏离论文 observation、label inventory、
+feature 与 objective，并非 Semi-CRF 方法本身无效。但它仍只覆盖约 39% 可无损映射的 gold labels，
+主动排除了大量 inversion、dominant、unaligned 和 span>20 区域，不能外推到完整当前语料。
+
+因此当前 adoption decision 为 **research-only**：保留 paper-compatible analyzer、训练器与评估
+命令，不替换 production `analyzeHarmonyRules`，不修改现有持久化或 UI contract。进入产品候选前
+至少还需要批准并版本化 product label adaptation、在完整 train/tune contract 上重跑、设定并通过
+整曲 runtime budget，最后才可申请读取 final holdout。这个结论不修改 Current ADR，因为没有发生
+生产架构变更。
+
+### Full-fold resource boundary
+
+规格要求完整跑原始 10 folds，或明确报告资源限制。本轮仅 fresh 训练 fold 1：正确参数下单折约
+48.6 分钟，峰值 RSS 约 1.76 GB；在同一实现与机器上，十折仅训练时间线性外推已超过 8 小时，且还
+不含每折 records/feature preparation 与 evaluation。该执行成本超出本次持续验证窗口，因此没有把
+作者 archived 10-fold outputs 冒充 fresh run，也没有启动剩余九折。BaCh fold 1 的 fresh gate 与
+TypeScript parity gate 均已通过；完整十折留作独立、明确配额的 reproducibility batch。
+
 第一次训练诊断还暴露了 raw DCML spelling 与冻结 paper normalization 的边界：例如 `C#:maj`
 必须先归一化为 `Db:maj`，否则 raw labels 虽通过 records schema，训练 inventory 去重后仍会出现
 label ID 越界。修复后新增 enharmonic regression test，零迭代 exact objective 成功完成：

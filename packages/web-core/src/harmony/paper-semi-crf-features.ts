@@ -46,7 +46,43 @@ export function extractPaperSemiCrfSegmentFeatures(input: {
   if (rootCovered && thirdCovered && fifthCovered && (roles.added.length === 0 || addedCovered)) {
     features.push("ALL_NOTES_COVERED");
   }
+  if (roles.added.length > 0 && addedDurationExceedsRoot(notes, roles)) {
+    features.push("DURATION_ADDED_NOTE_GREATER_THAN_ROOT");
+  }
+  const roleEntries = [
+    { name: "ROOT", pitchClasses: roles.root },
+    { name: "THIRD", pitchClasses: roles.third },
+    { name: "FIFTH", pitchClasses: roles.fifth },
+    { name: "ADDED_NOTE", pitchClasses: roles.added },
+  ] as const;
+  for (const role of roleEntries) {
+    features.push(
+      `DURATION_${role.name}_COVERED_${weightedCoverageBin(notes, events, role.pitchClasses, "duration")}`,
+      `SEGMENT_DURATION_${role.name}_COVERED_${segmentDurationCoverageBin(events, role.pitchClasses)}`,
+    );
+  }
+  for (const role of roleEntries) {
+    features.push(`ACCENT_${role.name}_COVERED_${weightedCoverageBin(notes, events, role.pitchClasses, "accent")}`);
+  }
   features.push(`BEGINNING_ACCENTED_${formatReferenceDouble(events[0]!.metricAccent)}`);
+  const firstBass = lowestNote(events[0]!.notes);
+  const segmentBass = lowestNote(notes);
+  for (const role of roleEntries) {
+    if (firstBass && role.pitchClasses.includes(firstBass.soundingPitchClass)) {
+      features.push(`FIRST_BASS_IS_${role.name}`);
+    }
+  }
+  for (const role of roleEntries) {
+    if (segmentBass && role.pitchClasses.includes(segmentBass.soundingPitchClass)) {
+      features.push(`SEGMENT_BASS_IS_${role.name}`);
+    }
+  }
+  for (const role of roleEntries) {
+    features.push(`DURATION_BASS_IS_${role.name}_${weightedBassBin(events, role.pitchClasses, "duration")}`);
+  }
+  for (const role of roleEntries) {
+    features.push(`ACCENT_BASS_IS_${role.name}_${weightedBassBin(events, role.pitchClasses, "accent")}`);
+  }
   return features;
 }
 
@@ -100,6 +136,84 @@ function noteWeight(note: PaperSemiCrfEventNote, firstEvent: PaperSemiCrfEvent, 
 
 function coversRole(notes: readonly PaperSemiCrfEventNote[], role: readonly number[]): boolean {
   return role.length > 0 && notes.some((note) => role.includes(note.soundingPitchClass));
+}
+
+function weightedCoverageBin(
+  notes: readonly PaperSemiCrfEventNote[],
+  events: readonly PaperSemiCrfEvent[],
+  role: readonly number[],
+  weight: Exclude<FeatureWeight, "count">,
+): number {
+  if (role.length === 0) return 0;
+  let total = 0;
+  let matching = 0;
+  let matchedCount = 0;
+  for (const note of notes) {
+    const value = noteWeight(note, events[0]!, weight);
+    total += value;
+    if (role.includes(note.soundingPitchClass)) {
+      matching += value;
+      matchedCount += 1;
+    }
+  }
+  return paperSemiCrfConsistencyBin({ matching, total, matchedCount, noteCount: notes.length });
+}
+
+function segmentDurationCoverageBin(events: readonly PaperSemiCrfEvent[], role: readonly number[]): number {
+  if (role.length === 0) return 0;
+  const coveredEvents = events.filter((event) => event.notes.some((note) => role.includes(note.soundingPitchClass)));
+  return paperSemiCrfConsistencyBin({
+    matching: coveredEvents.reduce((sum, event) => sum + event.durationTicks, 0),
+    total: events.reduce((sum, event) => sum + event.durationTicks, 0),
+    matchedCount: coveredEvents.length,
+    noteCount: events.length,
+  });
+}
+
+function addedDurationExceedsRoot(notes: readonly PaperSemiCrfEventNote[], roles: ChordRoles): boolean {
+  const durationFor = (role: readonly number[]): number =>
+    notes
+      .filter((note) => role.includes(note.soundingPitchClass))
+      .reduce((sum, note) => sum + note.sourceDurationTicks, 0);
+  return durationFor(roles.added) > durationFor(roles.root);
+}
+
+function weightedBassBin(
+  events: readonly PaperSemiCrfEvent[],
+  role: readonly number[],
+  weight: Exclude<FeatureWeight, "count">,
+): number {
+  if (role.length === 0) return 0;
+  let matching = 0;
+  let total = 0;
+  let matchedCount = 0;
+  for (const event of events) {
+    const eventWeight = weight === "duration" ? event.durationTicks : event.metricAccent;
+    const bass = lowestNote(event.notes);
+    total += eventWeight;
+    if (bass && role.includes(bass.soundingPitchClass)) {
+      matching += eventWeight;
+      matchedCount += 1;
+    }
+  }
+  return paperSemiCrfConsistencyBin({
+    matching,
+    total,
+    matchedCount,
+    noteCount: events.length,
+  });
+}
+
+function lowestNote(notes: readonly PaperSemiCrfEventNote[]): PaperSemiCrfEventNote | undefined {
+  return notes.reduce<PaperSemiCrfEventNote | undefined>((bass, note) => {
+    if (!bass) return note;
+    if (note.soundingMidi !== undefined && bass.soundingMidi !== undefined) {
+      return note.soundingMidi < bass.soundingMidi ? note : bass;
+    }
+    if (note.soundingMidi !== undefined) return note;
+    if (bass.soundingMidi !== undefined) return bass;
+    return note.soundingPitchClass < bass.soundingPitchClass ? note : bass;
+  }, undefined);
 }
 
 function chordRoles(label: PaperSemiCrfSupportedLabel): ChordRoles {

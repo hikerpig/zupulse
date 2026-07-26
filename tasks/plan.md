@@ -70,7 +70,7 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
   - Dependencies: Tasks 1-4
   - Files: `paper-semi-crf-features.ts`、相邻测试。
   - Scope: Medium
-- [ ] Task 5b: 实现 weighted coverage 与 bass feature families。
+- [x] Task 5b: 实现 weighted coverage 与 bass feature families。
   - Acceptance: duration/accent/event-duration coverage、first/segment/weighted bass 与 reference parity。
   - Verification: paper feature focused tests.
   - Dependencies: Task 5a

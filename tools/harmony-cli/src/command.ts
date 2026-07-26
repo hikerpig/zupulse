@@ -16,6 +16,7 @@ import { exportHarmonyStructuredOracleFile } from "./exportStructuredOracle";
 import { exportHarmonyStructuredRecordsFile } from "./exportStructuredRecords";
 import { inspectHarmonyScore, type InspectView } from "./inspectScore";
 import { trainHarmonyStructuredModelFile } from "./trainStructuredModel";
+import { evaluatePaperSemiCrfFile, trainPaperSemiCrfFile } from "./paperSemiCrfFiles";
 import type { DatasetSplit } from "./evaluationProtocol";
 import {
   harmonyInspectReportSchema,
@@ -40,9 +41,64 @@ export async function runHarmonyCommand(
   | Awaited<ReturnType<typeof exportHarmonyStructuredRecordsFile>>
   | Awaited<ReturnType<typeof evaluateHarmonyV3FinalHoldoutFile>>
   | Awaited<ReturnType<typeof trainHarmonyStructuredModelFile>>
+  | Awaited<ReturnType<typeof trainPaperSemiCrfFile>>
+  | Awaited<ReturnType<typeof evaluatePaperSemiCrfFile>>
 > {
   const normalized = args[0] === "--" ? args.slice(1) : args;
   const cwd = context.cwd ?? process.env.INIT_CWD ?? process.cwd();
+  if (normalized[0] === "paper-semi-crf-train") {
+    const records = normalized[1];
+    const output = optionValue(normalized, "--output");
+    const checkpoint = optionValue(normalized, "--checkpoint");
+    const report = optionValue(normalized, "--report");
+    const resume = optionValue(normalized, "--resume");
+    const maxIterations = numberOption(normalized, "--max-iterations", 100);
+    const minFeatureCount = numberOption(normalized, "--min-feature-count", 4);
+    const l2 = numberOption(normalized, "--l2", 1);
+    const gradientTolerance = optionalNumberOption(normalized, "--gradient-tolerance");
+    if (!records || !output || !checkpoint || !report) {
+      throw new Error(
+        "usage: harmony:cli paper-semi-crf-train <records.json> --output <model.json> --checkpoint <checkpoint.json> --report <report.json> [--resume <checkpoint.json>] [--max-iterations <n>] [--min-feature-count <n>] [--l2 <n>] [--gradient-tolerance <n>]",
+      );
+    }
+    if (!Number.isSafeInteger(maxIterations) || maxIterations < 0) {
+      throw new Error("--max-iterations must be a nonnegative integer");
+    }
+    if (!Number.isSafeInteger(minFeatureCount) || minFeatureCount < 0) {
+      throw new Error("--min-feature-count must be a nonnegative integer");
+    }
+    if (!Number.isFinite(l2) || l2 < 0) throw new Error("--l2 must be nonnegative");
+    if (gradientTolerance !== undefined && (!Number.isFinite(gradientTolerance) || gradientTolerance < 0)) {
+      throw new Error("--gradient-tolerance must be nonnegative");
+    }
+    return trainPaperSemiCrfFile({
+      recordsPath: resolve(cwd, records),
+      outputPath: resolve(cwd, output),
+      checkpointPath: resolve(cwd, checkpoint),
+      reportPath: resolve(cwd, report),
+      maxIterations,
+      minFeatureCount,
+      l2,
+      ...(gradientTolerance === undefined ? {} : { gradientTolerance }),
+      ...(resume === undefined ? {} : { resumePath: resolve(cwd, resume) }),
+    });
+  }
+  if (normalized[0] === "paper-semi-crf-eval") {
+    const records = normalized[1];
+    const model = optionValue(normalized, "--model");
+    const output = optionValue(normalized, "--output");
+    if (!records || !model || !output) {
+      throw new Error(
+        "usage: harmony:cli paper-semi-crf-eval <records.json> --model <model.json> --output <report.json> [--allow-final]",
+      );
+    }
+    return evaluatePaperSemiCrfFile({
+      recordsPath: resolve(cwd, records),
+      modelPath: resolve(cwd, model),
+      outputPath: resolve(cwd, output),
+      ...(normalized.includes("--allow-final") ? { allowFinal: true } : {}),
+    });
+  }
   if (normalized[0] === "train-structured") {
     const records = normalized[1];
     const outputIndex = normalized.indexOf("--output");
@@ -327,4 +383,19 @@ export async function runHarmonyCommand(
     ...(view === "result" ? {} : { model: inspected.model }),
     ...(view === "model" ? {} : { result: inspected.result }),
   });
+}
+
+function optionValue(args: readonly string[], name: string): string | undefined {
+  const index = args.indexOf(name);
+  return index < 0 ? undefined : args[index + 1];
+}
+
+function numberOption(args: readonly string[], name: string, fallback: number): number {
+  const value = optionValue(args, name);
+  return value === undefined && !args.includes(name) ? fallback : Number(value);
+}
+
+function optionalNumberOption(args: readonly string[], name: string): number | undefined {
+  const value = optionValue(args, name);
+  return value === undefined && !args.includes(name) ? undefined : Number(value);
 }

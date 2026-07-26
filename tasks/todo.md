@@ -16,7 +16,8 @@
   - [x] records schema 与 train/tune/final role guard
   - [x] deterministic L-BFGS 与 checkpoint/resume
   - [x] corpus objective 与 synthetic training
-  - [ ] records/train/eval CLI commands
+  - [x] records import、train/eval CLI commands
+  - [ ] author BaCh XML records export
 - [ ] Task 8: BaCh fold 1 reproduction
 - [ ] Task 9: approved current-corpus comparison
 - [ ] Task 10: production adoption decision

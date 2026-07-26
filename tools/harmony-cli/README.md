@@ -55,6 +55,28 @@ pnpm -s harmony:cli eval path/to/manifest.json
 
 当前 Turkish March case 是 `structural-regression`：它只锁定解析模型和算法结果摘要，不代表和弦正确。只有人工审核的时间区间与和弦标签才能成为 accuracy gold。
 
+### Paper-compatible Semi-CRF
+
+论文复现流程使用独立的 versioned records，不会调用或替换 production analyzer。训练 records 只接受
+`role: "train"`；评测只接受 `tune`，读取 `final` 必须显式传入 `--allow-final`。
+
+```bash
+pnpm -s harmony:cli paper-semi-crf-train /path/to/train-records.json \
+  --output /tmp/paper-model.json \
+  --checkpoint /tmp/paper-checkpoint.json \
+  --report /tmp/paper-train-report.json \
+  --max-iterations 100 --min-feature-count 4 --l2 1
+
+pnpm -s harmony:cli paper-semi-crf-eval /path/to/tune-records.json \
+  --model /tmp/paper-model.json \
+  --output /tmp/paper-tune-report.json
+```
+
+恢复训练时增加 `--resume /tmp/paper-checkpoint.json`；CLI 会校验 records SHA-256、label inventory、
+`maxSegmentLength`、L2 和 feature count threshold，防止 checkpoint 被用于另一份语料或配置。训练与评测
+报告都标记 `provenance: "fresh"`，不会与作者归档结果混写。外部 BaCh records、模型和 checkpoint 不进入
+Git。
+
 ### Dataset eval
 
 Phase 8 的 v2 manifest 把带专家 gold 的 accuracy、只有谱面结构的 ingestion robustness、只有标签的 prior corpus 分开。外部数据不进 git；下载并解压到本地目录后运行：

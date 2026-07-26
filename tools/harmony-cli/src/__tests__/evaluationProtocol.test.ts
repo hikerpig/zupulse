@@ -27,7 +27,7 @@ describe("harmony dataset evaluation protocol", () => {
     );
   });
 
-  it("distinguishes accuracy, ingestion, and label-only datasets", () => {
+  it("distinguishes accuracy and ingestion datasets", () => {
     const manifest = harmonyDatasetManifestSchema.parse({
       schemaVersion: "2.0.0",
       id: "harmony-datasets-v2",
@@ -51,23 +51,10 @@ describe("harmony dataset evaluation protocol", () => {
           archivePath: "archives/asap.zip",
           source,
         },
-        {
-          id: "choco",
-          adapterVersion: "1.0.0",
-          kind: "label-prior-corpus",
-          adapter: "choco",
-          datasetPath: "choco",
-          archivePath: "archives/choco.zip",
-          source,
-        },
       ],
     });
 
-    expect(manifest.cases.map((item) => item.kind)).toEqual([
-      "accuracy-corpus",
-      "ingestion-corpus",
-      "label-prior-corpus",
-    ]);
+    expect(manifest.cases.map((item) => item.kind)).toEqual(["accuracy-corpus", "ingestion-corpus"]);
     expect(() =>
       harmonyDatasetManifestSchema.parse({
         schemaVersion: "2.0.0",

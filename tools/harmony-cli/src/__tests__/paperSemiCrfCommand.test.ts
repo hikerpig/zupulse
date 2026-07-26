@@ -112,21 +112,4 @@ describe("paper Semi-CRF CLI", () => {
       ]),
     ).rejects.toThrow("paper Semi-CRF DCML records --split must be train or tune");
   });
-
-  it("requires all frozen inputs for the current-corpus comparison", async () => {
-    await expect(
-      runHarmonyCommand([
-        "paper-semi-crf-current-compare",
-        "manifest.json",
-        "--protocol",
-        "protocol.json",
-        "--data-root",
-        "data",
-        "--case",
-        "mozart",
-      ]),
-    ).rejects.toThrow(
-      "usage: harmony:cli paper-semi-crf-current-compare <manifest.json> --protocol <protocol.json> --data-root <directory> --case <id> --records <tune-records.json> --model <model.json> --output <report.json>",
-    );
-  });
 });

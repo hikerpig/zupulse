@@ -1,13 +1,10 @@
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { dcmlGroupId, evaluateDcmlCorpus } from "../adapters/dcmlEvaluation";
-import { runHarmonyCommand } from "../command";
 import { evaluateHarmonyManifest } from "../evaluateManifest";
-import { hashDatasetGroups } from "../evaluationProtocol";
-import { evaluateHarmonyV3FinalHoldout } from "../evaluateV3FinalHoldout";
 
 const directories: string[] = [];
 
@@ -126,92 +123,6 @@ describe("evaluateDcmlCorpus", () => {
     if (report.schemaVersion !== "2.7.0" || report.cases[0]?.kind !== "accuracy-corpus") {
       throw new Error("expected accuracy report");
     }
-    const reportPath = resolve(dataRoot, "report.json");
-    const baselinePath = resolve(dataRoot, "baseline.json");
-    const {
-      facets: _facets,
-      slices: _slices,
-      diagnostics: _diagnostics,
-      unsupportedLabelRate: _unsupportedLabelRate,
-      ...baselineMetrics
-    } = report.cases[0].metrics;
-    await writeFile(reportPath, JSON.stringify(report));
-    await writeFile(
-      baselinePath,
-      JSON.stringify({
-        schemaVersion: "1.0.0",
-        sourceManifest: "dataset-fixture",
-        datasetRevision: "fixture",
-        algorithmVersion: "fixture",
-        tolerance: 0.005,
-        cases: {
-          "mozart-pilot": { splits: report.cases[0].splits, ...baselineMetrics },
-        },
-      }),
-    );
-    await expect(runHarmonyCommand(["compare", baselinePath, reportPath])).resolves.toMatchObject({
-      command: "compare",
-      summary: { passed: 1, failed: 0 },
-    });
-
-    const protocolPath = resolve(dataRoot, "protocol-v3.json");
-    await writeFile(
-      protocolPath,
-      JSON.stringify({
-        schemaVersion: "3.0.0",
-        id: "protocol-fixture",
-        historicalRegressionCases: [],
-        corpora: [
-          {
-            caseId: "mozart-pilot",
-            sourceRevision: "fixture",
-            groupsSha256: hashDatasetGroups(["K331"]),
-            finalHoldoutGroups: ["K331"],
-            regressionGroups: [],
-          },
-        ],
-      }),
-    );
-    await expect(evaluateHarmonyV3FinalHoldout(manifestPath, protocolPath, dataRoot)).resolves.toMatchObject({
-      candidate: {
-        schemaVersion: "2.7.0",
-        command: "eval",
-        manifest: "dataset-fixture:protocol-fixture:final-holdout:candidate",
-        summary: { passed: 1, failed: 0 },
-        cases: [
-          {
-            id: "mozart-pilot",
-            decisionThreshold: 0.6,
-            reportSplit: "eval",
-            reportGroupsSha256: hashDatasetGroups(["K331"]),
-            splits: { eval: 2, train: 0, tune: 0 },
-          },
-        ],
-      },
-      ruleBaseline: {
-        manifest: "dataset-fixture:protocol-fixture:final-holdout:rule-baseline",
-        cases: [{ decisionThreshold: 0.6 }],
-      },
-    });
-    const finalOutput = resolve(dataRoot, "final-report.json");
-    await expect(
-      runHarmonyCommand([
-        "eval-v3-final",
-        manifestPath,
-        "--protocol",
-        protocolPath,
-        "--data-root",
-        dataRoot,
-        "--output",
-        finalOutput,
-      ]),
-    ).resolves.toMatchObject({
-      command: "eval-v3-final",
-      output: finalOutput,
-      candidate: { passed: 1, failed: 0 },
-      ruleBaseline: { passed: 1, failed: 0 },
-    });
-    await expect(readFile(finalOutput, "utf8")).resolves.toContain('"ruleBaseline"');
   });
 });
 

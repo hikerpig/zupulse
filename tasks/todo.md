@@ -7,38 +7,38 @@
 
 ### Checkpoint A: Architecture approved
 
-- [ ] 新决策只取代 ADR 0039 的 Tailwind defer clause
-- [ ] runtime tokens、Base UI、Tailwind 与专用 CSS 的所有权清楚
+- [x] 新决策只取代 ADR 0039 的 Tailwind defer clause
+- [x] runtime tokens、Base UI、Tailwind 与专用 CSS 的所有权清楚
 - [ ] 人工审阅并批准进入构建 PoC
 
 ## Phase 1: Build pipeline
 
-- [ ] Task 3: 验证 Rspack + Tailwind 单一 production pipeline
-- [ ] Task 6: 配置 Tailwind class formatting
+- [x] Task 3: 验证 Rspack + Tailwind 单一 production pipeline
+- [x] Task 6: 配置 Tailwind class formatting
 
 ### Checkpoint B: Build Go / No-Go
 
-- [ ] Browser build 通过
-- [ ] Desktop build 通过
-- [ ] iPad web assets build 通过
-- [ ] Preflight 未进入产物
-- [ ] CSS Modules、source maps、layer order 正常
-- [ ] build time 回退未超过未解释的 15%
+- [x] Browser build 通过
+- [x] Desktop build 通过
+- [x] iPad web assets build 通过
+- [x] Preflight 未进入产物
+- [x] CSS Modules、source maps、layer order 正常
+- [x] build time 回退未超过未解释的 15%
 
 ## Phase 2: Tokens and governance
 
-- [ ] Task 4: 建立 semantic Tailwind theme projection
-- [ ] Task 4: 修复真实 undefined semantic token references
-- [ ] Task 5: 检查 undefined CSS variables
-- [ ] Task 5: 禁止 raw/default/arbitrary visual drift
+- [x] Task 4: 建立 semantic Tailwind theme projection
+- [x] Task 4: 修复真实 undefined semantic token references
+- [x] Task 5: 检查 undefined CSS variables
+- [x] Task 5: 禁止 raw/default/arbitrary visual drift
 - [ ] Task 5: 验证 explicit source detection 与 static class maps
 
 ### Checkpoint C: Design-system guardrails
 
 - [ ] semantic utility vocabulary 已冻结用于 pilot
 - [ ] light/dark computed styles 正确
-- [ ] CI 能拒绝违规 fixture
-- [ ] Base UI/runtime variable exceptions 使用窄 allowlist
+- [x] CI 能拒绝违规 fixture
+- [x] Base UI/runtime variable exceptions 使用窄 allowlist
 
 ## Phase 3: UI primitives
 

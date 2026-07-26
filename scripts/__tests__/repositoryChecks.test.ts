@@ -638,6 +638,58 @@ describe("checkDesign", () => {
       'token-map.json: token drift :root --brand-accent (#f26b4f) != :root[data-theme="light"] --accent-primary (#000000)',
     ]);
   });
+
+  it("reports undefined CSS variables while allowing fallbacks and Base UI runtime variables", async () => {
+    const root = await fixture({
+      "DESIGN.md": "---\nstatus: current\n---\n\n# Design\n",
+      "theme.css": ":root { --brand-accent: #f26b4f; }\n",
+      "runtime.css": ":root { --accent-primary: #f26b4f; }\n",
+      "token-map.json": JSON.stringify({ mappings: [] }),
+      "viewer/component.css": [
+        ".defined { color: var(--accent-primary); }",
+        ".fallback { color: var(--component-local, red); }",
+        ".positioner { transform-origin: var(--transform-origin); }",
+        ".missing { color: var(--missing-token); }",
+      ].join("\n"),
+    });
+
+    expect(
+      await checkDesign(root, {
+        designPath: "DESIGN.md",
+        sourceCssPath: "theme.css",
+        runtimeCssPath: "runtime.css",
+        mapPath: "token-map.json",
+        stylesDir: "viewer",
+      }),
+    ).toEqual(["viewer/component.css:4: undefined CSS variable --missing-token"]);
+  });
+
+  it("rejects Tailwind utilities that bypass the semantic theme", async () => {
+    const root = await fixture({
+      "DESIGN.md": "---\nstatus: current\n---\n\n# Design\n",
+      "theme.css": ":root { --brand-accent: #f26b4f; }\n",
+      "runtime.css": ":root { --accent-primary: #f26b4f; }\n",
+      "token-map.json": JSON.stringify({ mappings: [] }),
+      "viewer/Component.tsx":
+        '<div className="tw:bg-slate-500 tw:bg-[#fff] tw:rounded-2xl tw:font-mono tw:shadow-xl tw:bg-surface" />\n',
+    });
+
+    expect(
+      await checkDesign(root, {
+        designPath: "DESIGN.md",
+        sourceCssPath: "theme.css",
+        runtimeCssPath: "runtime.css",
+        mapPath: "token-map.json",
+        stylesDir: "viewer",
+      }),
+    ).toEqual([
+      'viewer/Component.tsx:1: forbidden Tailwind utility "tw:bg-[#fff]"',
+      'viewer/Component.tsx:1: forbidden Tailwind utility "tw:bg-slate-500"',
+      'viewer/Component.tsx:1: forbidden Tailwind utility "tw:font-mono"',
+      'viewer/Component.tsx:1: forbidden Tailwind utility "tw:rounded-2xl"',
+      'viewer/Component.tsx:1: forbidden Tailwind utility "tw:shadow-xl"',
+    ]);
+  });
 });
 
 async function fixture(files: Record<string, string>): Promise<string> {

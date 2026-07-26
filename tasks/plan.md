@@ -1,0 +1,130 @@
+# Implementation Plan: Paper-compatible Semi-CRF
+
+## Overview
+
+在不改动现有 Harmony 数据结构和 production analyzer 的前提下，先建立可独立验证的
+paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有语料对比。实现按风险优先：
+先证明 observation lattice 与 exact inference 正确，再扩展论文特征和优化器。
+
+## Architecture Decisions
+
+- 新实现位于 `packages/web-core/src/harmony/paper-semi-crf-*`，只依赖纯领域类型；未完成复现前不接入
+  `analyzeHarmonyRules`。
+- observation lattice 仅由选中轨道的 note onset/offset 构造，使用现有 written-time 安全语义；gold
+  只提供目标路径。
+- label inventory 是冻结且完整的模型契约，每个 legal segment 都遍历全量 label，不借用规则 Top-8。
+- local potential 是 forward/backward、gradient 与 exact Viterbi 的单一事实源；数值计算使用 log-space。
+- BaCh、DCML 和 POP909 外部数据不进入 Git，仓库只保留小型合成或许可清晰的 parity fixtures。
+
+## Task List
+
+### Phase 1: Observation and State Contracts
+
+- [x] Task 1: 建立 paper basic-event 投影。
+  - Acceptance: 相邻唯一 onset/offset 形成 event；每个 event 保留 sounding pitch、event 内 duration、
+    held-from-previous、bass 和 metric evidence；scope 与 percussion 过滤正确。
+  - Verification: `pnpm vitest run packages/web-core/src/harmony/__tests__/paper-semi-crf-events.test.ts`
+  - Dependencies: None
+  - Files: `paper-semi-crf-events.ts`、相邻测试、公共导出。
+  - Scope: Medium
+- [ ] Task 2: 建立完整 label inventory 与 `ChordSymbol` 无损映射。
+  - Acceptance: inventory 稳定去重且不裁剪；不支持 label 明确报错；normalization/simplification 版本化。
+  - Verification: `pnpm vitest run packages/web-core/src/harmony/__tests__/paper-semi-crf-labels.test.ts`
+  - Dependencies: Task 1
+  - Files: `paper-semi-crf-labels.ts`、相邻测试、公共导出。
+  - Scope: Medium
+
+### Checkpoint: Contracts
+
+- [x] Task 1 focused tests pass.
+- [ ] `pnpm --filter @zupulse/web-core exec tsc -p tsconfig.test.json --noEmit` passes.
+- [ ] Review model contracts before feature implementation.
+
+### Phase 2: Exact Inference Core
+
+- [ ] Task 3: 建立共享 local-potential contract 与 exact semi-Markov Viterbi。
+  - Acceptance: tiny lattice 的最佳路径与 exhaustive oracle 完全一致；tie-break 确定；非有限分数失败。
+  - Verification: `pnpm vitest run packages/web-core/src/harmony/__tests__/paper-semi-crf-decode.test.ts`
+  - Dependencies: Task 2
+  - Files: `paper-semi-crf-model.ts`、`paper-semi-crf-decode.ts`、相邻测试。
+  - Scope: Medium
+- [ ] Task 4: 实现 log-partition、expected counts 与 L2 objective/gradient。
+  - Acceptance: partition 与 exhaustive oracle 一致；analytic gradient 通过 finite difference；非有限输入失败。
+  - Verification: `pnpm vitest run packages/web-core/src/harmony/__tests__/paper-semi-crf-model.test.ts`
+  - Dependencies: Task 3
+  - Files: `paper-semi-crf-model.ts`、相邻测试。
+  - Scope: Medium
+
+### Checkpoint: Inference
+
+- [ ] Phase 1-2 focused tests pass.
+- [ ] Tiny exhaustive parity covers partition、gradient 和 Viterbi.
+- [ ] `pnpm verify:fast` passes.
+
+### Phase 3: Paper Features
+
+- [ ] Task 5: 实现 paper-compatible segment feature families。
+  - Acceptance: purity、accented/duration/figuration variants、coverage、bass、beginning accent 在 bin 边界
+    具有 parity tests；feature extraction 不读取 gold。
+  - Verification: `pnpm vitest run packages/web-core/src/harmony/__tests__/paper-semi-crf-features.test.ts`
+  - Dependencies: Tasks 1-4
+  - Files: `paper-semi-crf-features.ts`、相邻测试、parity fixtures。
+  - Scope: Medium
+- [ ] Task 6: 实现 mode/root-interval chord bigram features 与严格模型资产 schema。
+  - Acceptance: transition features 与 reference parity fixture 一致；malformed/non-finite asset 明确失败。
+  - Verification: paper feature/model focused tests.
+  - Dependencies: Tasks 2-5
+  - Files: `paper-semi-crf-features.ts`、`paper-semi-crf-model.ts`、相邻测试。
+  - Scope: Medium
+
+### Checkpoint: Faithful Core
+
+- [ ] Reference-selected songs 的 event count、gold segments 与 feature activations 匹配。
+- [ ] Harmony module tests and `pnpm verify:fast` pass.
+- [ ] Freeze feature and label contract before corpus training.
+
+### Phase 4: Training and Evaluation
+
+- [ ] Task 7: 增加 CLI records/train/eval 流程和 L2 optimizer integration。
+  - Acceptance: train/tune/final role 被强校验；训练可恢复且确定性；不提交外部语料；fresh/archive 报告分离。
+  - Verification: Harmony CLI focused tests and synthetic end-to-end training.
+  - Dependencies: Tasks 4-6
+  - Files: `tools/harmony-cli/src/paper-semi-crf-*.ts`、相邻测试、CLI docs。
+  - Scope: Medium
+- [ ] Task 8: 运行 BaCh reference fold 1、TypeScript parity 与完整报告。
+  - Acceptance: 报告 event accuracy、segment P/R/F、峰值内存和 P95 runtime；差异超过规格门槛时给出可复现原因。
+  - Verification: frozen report hashes and commands; `pnpm verify`.
+  - Dependencies: Task 7
+  - Files: evaluation docs and non-dataset report metadata.
+  - Scope: Medium
+
+### Phase 5: Product Decision
+
+- [ ] Task 9: 在批准的 current-corpus train/tune groups 上比较。
+  - Acceptance: 不读取 final holdout；CRF primary/boundaries 不被 rule prior、postprocess 或 confidence 改写。
+  - Verification: preregistered metric gates and baseline diff.
+  - Dependencies: Task 8
+  - Files: Harmony CLI evaluation reports/config.
+  - Scope: Medium
+- [ ] Task 10: 根据准确率与 runtime 证据形成 production adoption 决策。
+  - Acceptance: 若采用则先获批并更新 Current ADR/architecture/Feature Contract；若不采用则保留研究边界和原因。
+  - Verification: documentation cross-check and full required gates.
+  - Dependencies: Task 9
+  - Files: relevant ADR/current docs only after decision.
+  - Scope: Small
+
+## Risks and Mitigations
+
+| Risk                                                         | Impact | Mitigation                                                                                        |
+| ------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------- |
+| 作者预处理不在 Java 仓库内，event accent 可能难以完全 parity | High   | 先将 accent 作为显式、可测试的投影 contract；用作者 XML fixture 校准，不凭印象改 bin              |
+| 完整 label × segment lattice 造成时间/内存爆炸               | High   | correctness-first tiny exhaustive tests；单独测量性能，不提前引入 Top-8 或 beam                   |
+| 优化器依赖选择改变训练语义                                   | Medium | exact objective/gradient 先完成；添加依赖前按规格请求确认                                         |
+| 跨小节 note duration 的书面位置处理错误                      | High   | 使用 measure cumulative ticks 和 canonical written moments；覆盖跨小节、非连续 measure index 测试 |
+| 复现指标与作者归档输出口径混淆                               | High   | fresh 与 archived 报告使用不同字段和命令，禁止混名                                                |
+
+## Open Questions
+
+- Task 7 开始前需确认 optimizer dependency；此前使用无依赖 objective/gradient 实现。
+- Task 9 开始前确认第一轮 production comparison 的语料范围。
+- Task 10 只有在复现证据完整后才讨论替换 production analyzer。

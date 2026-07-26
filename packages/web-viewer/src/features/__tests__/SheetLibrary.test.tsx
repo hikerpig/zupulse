@@ -194,6 +194,20 @@ describe("SheetLibrary score actions", () => {
 });
 
 describe("SheetLibrary no-results state", () => {
+  it("exposes the sort control with its visible label", () => {
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[libraryScore()]}
+        loading={false}
+        onImport={async () => undefined}
+        onOpen={() => undefined}
+      />,
+    );
+
+    expect(screen.getByRole("combobox", { name: "排序" })).toBeTruthy();
+  });
+
   it("explains a search miss and clears the search without showing the empty-library import action", async () => {
     const user = userEvent.setup();
 

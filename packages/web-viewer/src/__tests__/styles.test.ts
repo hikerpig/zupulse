@@ -185,6 +185,13 @@ describe("alphaTab playback cursor styles", () => {
     );
   });
 
+  it("keeps the Library sort label on one line beside its select", async () => {
+    const sourceCode = await source("../features/SheetLibrary.tsx");
+
+    expect(sourceCode).toMatch(/className=\{`[^`]*styles\.librarySort[^`]*tw:shrink-0[^`]*`\}/);
+    expect(sourceCode).toMatch(/<span className="[^"]*tw:whitespace-nowrap[^"]*">/);
+  });
+
   it("keeps the library page out of the viewer grid regardless of stylesheet order", async () => {
     const css = await source("../features/SheetLibrary.module.css");
 

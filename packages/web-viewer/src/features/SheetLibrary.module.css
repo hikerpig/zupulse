@@ -40,20 +40,6 @@
     align-items: center;
     gap: 8px;
   }
-  .libraryControls input[type="text"] {
-    flex: 1;
-    min-height: 40px;
-    padding: 0 12px;
-    border-color: var(--border-default);
-    background: var(--bg-panel);
-    transition:
-      border-color 140ms ease,
-      box-shadow 140ms ease;
-  }
-  .libraryControls input[type="text"]:focus {
-    border-color: var(--accent-primary);
-    box-shadow: var(--focus-ring);
-  }
   .libraryControls button[aria-pressed="true"] {
     color: var(--accent-primary);
     border-color: var(--accent-primary);
@@ -74,28 +60,6 @@
     color: var(--accent-primary);
     border-color: var(--accent-primary);
     background: var(--accent-soft);
-  }
-  .libraryControls .librarySort {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 34px;
-    padding: 0 10px;
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-md);
-    background: var(--bg-control);
-  }
-  .libraryControls .librarySort span {
-    color: var(--text-secondary);
-    font-size: 12px;
-  }
-  .libraryControls .librarySort select {
-    border: 0;
-    background: transparent;
-    padding: 0;
-    min-height: auto;
-    font-size: 13px;
-    cursor: pointer;
   }
   /* ── Stats Bar ─────────────────────────────────────────── */
   .libraryStats {
@@ -530,7 +494,7 @@
       grid-template-columns: auto minmax(0, 1fr);
       width: auto;
     }
-    .libraryControls input[type="text"] {
+    .librarySearch {
       width: 100%;
       min-width: 0;
       grid-column: 1 / -1;

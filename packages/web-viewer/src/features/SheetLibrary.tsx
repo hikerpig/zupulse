@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import type { ImportItemResult, LibraryScoreSummary } from "@zupulse/web-core";
 import type { ViewerApplication } from "../app/ViewerApplication";
 import pageStyles from "../app/pages/PageShell.module.css";
+import { Select, TextField } from "../components/ui";
 import styles from "./SheetLibrary.module.css";
 
 function formatDuration(ms: number): string {
@@ -114,7 +115,8 @@ export function SheetLibrary({
         </div>
       </div>
       <section className={styles.libraryControls} aria-label={t("filtersLabel")}>
-        <input
+        <TextField
+          className={`${styles.librarySearch} tw:min-w-0 tw:flex-1`}
           type="text"
           aria-label={t("searchLabel")}
           value={query}
@@ -130,15 +132,19 @@ export function SheetLibrary({
           <Star size={13} strokeWidth={1.8} aria-hidden="true" />
           {t("favorites")}
         </button>
-        <div className={styles.librarySort}>
-          <span>{t("sortLabel")}</span>
-          <select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>
+        <label className={`${styles.librarySort} tw:inline-flex tw:shrink-0 tw:items-center tw:gap-2`}>
+          <span className="tw:text-caption tw:whitespace-nowrap tw:text-muted">{t("sortLabel")}</span>
+          <Select
+            className="tw:min-w-0 tw:w-auto tw:text-caption"
+            value={sort}
+            onChange={(event) => setSort(event.target.value as typeof sort)}
+          >
             <option value="activity">{t("sort.activity")}</option>
             <option value="imported">{t("sort.imported")}</option>
             <option value="practiced">{t("sort.practiced")}</option>
             <option value="title">{t("sort.title")}</option>
-          </select>
-        </div>
+          </Select>
+        </label>
       </section>
       {importSummary ? (
         <ImportSummary

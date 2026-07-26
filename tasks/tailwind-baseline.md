@@ -66,3 +66,12 @@ Allowed non-global variables:
   Escape close 均通过。
 - 窄屏检查发现并修复 navigation 的纵向 scrollbar；保留 `overflow-x: auto`，显式设置
   `overflow-y: hidden`。
+
+## Library controls slice
+
+- `SheetLibrary.module.css` declarations: `344 → 320`；本切片删除 24 个重复的 input/select visual
+  declarations，responsive grid ownership 继续留在 CSS Module。
+- 搜索框与排序选择器迁移到 `TextField` / `Select`；排序 `<select>` 同时获得原先缺失的 accessible
+  name。
+- Browser visual checks: `1440×900` light/dark 与 `390×844` narrow 均通过；控件高度为 `40px`，无横向
+  overflow，focus ring 和 native select arrow 正常。

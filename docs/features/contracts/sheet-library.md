@@ -46,12 +46,12 @@ Session ID。
 - 页面获得窗口焦点时会刷新列表。
 - Library 提供标题/艺术家搜索、收藏筛选，以及按最近活动、导入时间、最近练习或标题排序。
 - “最近活动”当前按 `lastOpenedAt ?? importedAt` 排序；编辑元数据和切换收藏不会更新它。
-- 已有馆藏但搜索或收藏筛选无结果时，Library 显示条件上下文、`0 / N` 计数和清除条件动作；只有
-  真正的空馆藏显示“导入第一份曲谱”。
-- 每份 Library Score 使用独立的打开按钮和收藏按钮；导出、编辑、删除位于 Base UI 管理 Menu，
-  `<li>` 本身不承担按钮语义。
-- 390px–1280px 使用共享 DOM 与 route viewport container queries 重排 Library 顶部、筛选和
-  Viewer 控件；不通过水平滚动暴露关键动作。
+- When an existing Library has no search or favorites-filter matches, the Library shows the applied condition,
+  a `0 / N` count, and an action to clear the condition. Only an empty Library shows the first-score import action.
+- Each Library Score has separate open and favorite buttons. Export, edit, and delete actions live in a Base UI
+  management menu; the enclosing `<li>` has no button semantics.
+- From 390px to 1280px, shared DOM and unnamed container queries scoped by the route viewport reflow the Library
+  header, filters, and Viewer controls without exposing critical actions through horizontal scrolling.
 
 ### 导入
 

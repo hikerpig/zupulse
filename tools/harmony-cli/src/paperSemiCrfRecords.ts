@@ -29,7 +29,7 @@ const paperSemiCrfEventNoteSchema = z
     spelling: z
       .object({
         step: z.enum(["C", "D", "E", "F", "G", "A", "B"]),
-        alter: z.number().int(),
+        alter: z.union([z.literal(-2), z.literal(-1), z.literal(0), z.literal(1), z.literal(2)]),
       })
       .strict()
       .optional(),

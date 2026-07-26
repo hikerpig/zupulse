@@ -187,6 +187,13 @@ describe("alphaTab playback cursor styles", () => {
     );
   });
 
+  it("keeps anchored buttons stationary on hover", async () => {
+    const css = await source("../styles/common.css");
+    const hoverRule = css.match(/button:hover:not\(:disabled\)\s*{([^}]*)}/)?.[1] ?? "";
+
+    expect(hoverRule).not.toContain("transform:");
+  });
+
   it("keeps the Library sort label on one line beside its select", async () => {
     const sourceCode = await source("../features/SheetLibrary.tsx");
 

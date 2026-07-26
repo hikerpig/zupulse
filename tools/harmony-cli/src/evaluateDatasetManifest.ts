@@ -1,9 +1,4 @@
 import { createHash } from "node:crypto";
-import type {
-  HarmonyBoundaryClassifierModel,
-  HarmonyBoundaryPolicy,
-  HarmonyStructuredLinearModel,
-} from "@zupulse/web-core";
 import { readFile } from "node:fs/promises";
 import { resolve, sep } from "node:path";
 import { evaluateDcmlCorpus } from "./adapters/dcmlEvaluation";
@@ -18,10 +13,6 @@ export async function evaluateHarmonyDatasetManifest(
   caseId?: string,
   reportSplit: DatasetSplit = "eval",
   decisionThreshold = 0.6,
-  boundaryPolicy?: HarmonyBoundaryPolicy,
-  boundaryClassifierModel?: HarmonyBoundaryClassifierModel,
-  structuredModel?: HarmonyStructuredLinearModel,
-  structuredModelSha256?: string,
 ): Promise<HarmonyDatasetEvalReport> {
   const manifest = harmonyDatasetManifestSchema.parse(JSON.parse(await readFile(path, "utf8")));
   const selected = caseId === undefined ? manifest.cases : manifest.cases.filter((item) => item.id === caseId);
@@ -42,9 +33,6 @@ export async function evaluateHarmonyDatasetManifest(
           ...(item.groupBy === undefined ? {} : { groupBy: item.groupBy }),
           reportSplit,
           decisionThreshold,
-          ...(boundaryPolicy === undefined ? {} : { boundaryPolicy }),
-          ...(boundaryClassifierModel === undefined ? {} : { boundaryClassifierModel }),
-          ...(structuredModel === undefined ? {} : { structuredModel, structuredModelSha256: structuredModelSha256! }),
         }),
       );
       continue;
@@ -58,8 +46,6 @@ export async function evaluateHarmonyDatasetManifest(
           ...(item.include === undefined ? {} : { include: item.include }),
           reportSplit,
           decisionThreshold,
-          ...(boundaryPolicy === undefined ? {} : { boundaryPolicy }),
-          ...(boundaryClassifierModel === undefined ? {} : { boundaryClassifierModel }),
         }),
       );
       continue;

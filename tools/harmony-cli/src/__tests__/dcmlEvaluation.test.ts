@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import { createZeroHarmonyStructuredLinearModel } from "@zupulse/web-core";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -42,6 +41,7 @@ describe("evaluateDcmlCorpus", () => {
       status: "passed",
       reportSplit: "eval",
       decisionThreshold: 0.6,
+      boundaryPolicy: "paper-basic-events",
       splits: { train: 0, tune: 0, eval: 2 },
       metrics: {
         gold: { total: 2, mapped: 2, unsupported: 0 },
@@ -58,54 +58,6 @@ describe("evaluateDcmlCorpus", () => {
     });
     expect(result.metrics.segmentDensity.predictedSegments).toBeGreaterThan(0);
     expect(result.metrics.predictedPrimaryAccuracy).toBeGreaterThan(0);
-
-    const metric = await evaluateDcmlCorpus(root, {
-      id: "mozart-pilot",
-      sourceRevision: "fixture",
-      include: ["K331-3"],
-      forcedEvalGroups: ["K331"],
-      boundaryPolicy: "metric-beats",
-    });
-    expect(metric.boundaryPolicy).toBe("metric-beats");
-
-    const learned = await evaluateDcmlCorpus(root, {
-      id: "mozart-pilot",
-      sourceRevision: "fixture",
-      include: ["K331-3"],
-      forcedEvalGroups: ["K331"],
-      boundaryPolicy: "learned-evidence",
-      boundaryClassifierModel: {
-        schemaVersion: "1.0.0",
-        featureVersion: "boundary-evidence-v1",
-        weights: [0, 0, 0, 0, 0],
-        bias: 0,
-        threshold: 0.5,
-      },
-    });
-    expect(learned).toMatchObject({
-      boundaryPolicy: "learned-evidence",
-      boundaryModel: { featureVersion: "boundary-evidence-v1", threshold: 0.5 },
-    });
-
-    const structured = await evaluateDcmlCorpus(root, {
-      id: "mozart-pilot",
-      sourceRevision: "fixture",
-      include: ["K331-3"],
-      forcedEvalGroups: ["K331"],
-      structuredModel: createZeroHarmonyStructuredLinearModel({
-        trainingRecordsSha256: "a".repeat(64),
-        trainingGroupsSha256: "b".repeat(64),
-      }),
-      structuredModelSha256: "c".repeat(64),
-    });
-    expect(structured).toMatchObject({
-      structuredModel: {
-        sha256: "c".repeat(64),
-        featureVersion: "semi-crf-linear-v1",
-        search: "dense-qn8-exact",
-        runtimeMs: expect.any(Number),
-      },
-    });
 
     const tune = await evaluateDcmlCorpus(root, {
       id: "mozart-pilot",

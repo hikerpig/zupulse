@@ -648,30 +648,7 @@ export const harmonyDatasetEvalReportSchema = z
             status: z.enum(["passed", "failed"]),
             reportSplit: z.enum(["train", "tune", "eval"]),
             decisionThreshold: fractionSchema,
-            boundaryPolicy: z.enum([
-              "dense-note-events",
-              "metric-beats",
-              "metric-half-beats",
-              "metric-strong-onsets",
-              "learned-evidence",
-            ]),
-            boundaryModel: z
-              .object({ featureVersion: z.literal("boundary-evidence-v1"), threshold: fractionSchema })
-              .strict()
-              .optional(),
-            structuredModel: z
-              .object({
-                sha256: z.string().regex(/^[a-f0-9]{64}$/),
-                featureVersion: z.literal("semi-crf-linear-v1"),
-                algorithmVersion: z.literal("averaged-structured-perceptron-v1"),
-                trainingRecordsSha256: z.string().regex(/^[a-f0-9]{64}$/),
-                ruleScale: twoDecimalScoreSchema.nonnegative(),
-                modelScale: twoDecimalScoreSchema.nonnegative(),
-                search: z.literal("dense-qn8-exact"),
-                runtimeMs: z.number().nonnegative(),
-              })
-              .strict()
-              .optional(),
+            boundaryPolicy: z.literal("paper-basic-events"),
             sourceRevision: z.string().min(1),
             reportGroupsSha256: z.string().regex(/^[a-f0-9]{64}$/),
             splits: z.record(z.enum(["train", "tune", "eval"]), z.number().int().nonnegative()),

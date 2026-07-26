@@ -1,11 +1,4 @@
-import {
-  analyzeHarmony,
-  analyzeHarmonyRules,
-  buildLegalBoundaryLattice,
-  compareMoments,
-  type HarmonyBoundaryPolicy,
-  type HarmonyBoundaryClassifierModel,
-} from "@zupulse/web-core";
+import { analyzeHarmony, buildPaperSemiCrfEvents, compareMoments } from "@zupulse/web-core";
 import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -34,20 +27,10 @@ export async function evaluatePop909Corpus(
     forcedEvalGroups: readonly string[];
     reportSplit?: DatasetSplit;
     decisionThreshold?: number;
-    primaryRerankerModel?: false;
-    boundaryPolicy?: HarmonyBoundaryPolicy;
-    boundaryClassifierModel?: HarmonyBoundaryClassifierModel;
   },
 ) {
   const reportSplit = options.reportSplit ?? "eval";
   const decisionThreshold = options.decisionThreshold ?? 0.6;
-  const boundaryPolicy = options.boundaryPolicy ?? "dense-note-events";
-  const analyze =
-    options.primaryRerankerModel === false ||
-    options.boundaryPolicy !== undefined ||
-    options.boundaryClassifierModel !== undefined
-      ? analyzeHarmonyRules
-      : analyzeHarmony;
   const songs = (await readdir(root, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory() && /^\d{3}$/.test(entry.name))
     .map((entry) => entry.name)
@@ -85,35 +68,27 @@ export async function evaluatePop909Corpus(
     if (split !== reportSplit) continue;
     reportGroups.add(song);
     reportMeasures += piece.input.measures.length;
-    const segments = analyze(piece.input, {
+    const segments = analyzeHarmony(piece.input, {
       includedTrackIds: ["pop909"],
       topK: 8,
       decisionThreshold,
-      ...(options.primaryRerankerModel === false ? { primaryRerankerModel: false } : {}),
-      boundaryPolicy,
-      ...(options.boundaryClassifierModel === undefined
-        ? {}
-        : { boundaryClassifierModel: options.boundaryClassifierModel }),
     });
     predictedSegments += segments.length;
     const primarySegments =
       decisionThreshold === 0
         ? segments
-        : analyze(piece.input, {
+        : analyzeHarmony(piece.input, {
             includedTrackIds: ["pop909"],
             topK: 8,
             decisionThreshold: 0,
-            ...(options.primaryRerankerModel === false ? { primaryRerankerModel: false } : {}),
-            boundaryPolicy,
-            ...(options.boundaryClassifierModel === undefined
-              ? {}
-              : { boundaryClassifierModel: options.boundaryClassifierModel }),
           });
+    const events = buildPaperSemiCrfEvents(piece.input, { includedTrackIds: ["pop909"] });
     intervalDiagnostics.push(
       calculateIntervalOverlapDiagnostics({
         ticksPerQuarter: piece.input.ticksPerQuarter,
         measures: piece.input.measures,
-        legalMoments: buildLegalBoundaryLattice(piece.input).moments,
+        legalMoments:
+          events.length === 0 ? [] : [...events.map((event) => event.range.start), events.at(-1)!.range.end],
         gold: piece.gold.flatMap((item) => (item.chord ? [{ range: item.range, chord: item.chord }] : [])),
         predicted: segments,
       }),
@@ -171,15 +146,7 @@ export async function evaluatePop909Corpus(
     sourceRevision: options.sourceRevision,
     reportGroupsSha256: hashGroups(reportGroups),
     decisionThreshold,
-    boundaryPolicy,
-    ...(options.boundaryClassifierModel === undefined
-      ? {}
-      : {
-          boundaryModel: {
-            featureVersion: options.boundaryClassifierModel.featureVersion,
-            threshold: options.boundaryClassifierModel.threshold,
-          },
-        }),
+    boundaryPolicy: "paper-basic-events" as const,
     splits,
     metrics: calculateAccuracyMetrics(observations, mergeIntervalOverlapDiagnostics(intervalDiagnostics), {
       predictedSegments,

@@ -1,13 +1,4 @@
-import {
-  analyzeHarmony,
-  analyzeHarmonyRules,
-  buildLegalBoundaryLattice,
-  compareMoments,
-  type ChordSymbolInput,
-  type HarmonyBoundaryPolicy,
-  type HarmonyBoundaryClassifierModel,
-  type HarmonyStructuredLinearModel,
-} from "@zupulse/web-core";
+import { analyzeHarmony, buildPaperSemiCrfEvents, compareMoments, type ChordSymbolInput } from "@zupulse/web-core";
 import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -37,24 +28,10 @@ export async function evaluateDcmlCorpus(
     groupBy?: "prefix-before-hyphen" | "corpus";
     reportSplit?: DatasetSplit;
     decisionThreshold?: number;
-    primaryRerankerModel?: false;
-    boundaryPolicy?: HarmonyBoundaryPolicy;
-    boundaryClassifierModel?: HarmonyBoundaryClassifierModel;
-    structuredModel?: HarmonyStructuredLinearModel;
-    structuredModelSha256?: string;
   },
 ) {
-  const runtimeStart = performance.now();
   const reportSplit = options.reportSplit ?? "eval";
   const decisionThreshold = options.decisionThreshold ?? 0.6;
-  const boundaryPolicy = options.boundaryPolicy ?? "dense-note-events";
-  const analyze =
-    options.primaryRerankerModel === false ||
-    options.boundaryPolicy !== undefined ||
-    options.boundaryClassifierModel !== undefined ||
-    options.structuredModel !== undefined
-      ? analyzeHarmonyRules
-      : analyzeHarmony;
   const groupMode = options.groupBy ?? "prefix-before-hyphen";
   const files = (await readdir(resolve(root, "harmonies")))
     .filter((name) => name.endsWith(".harmonies.tsv"))
@@ -96,37 +73,27 @@ export async function evaluateDcmlCorpus(
     if (split !== reportSplit) continue;
     reportGroups.add(groupId);
     reportMeasures += piece.input.measures.length;
-    const segments = analyze(piece.input, {
+    const segments = analyzeHarmony(piece.input, {
       includedTrackIds: ["dcml"],
       topK: 8,
       decisionThreshold,
-      ...(options.primaryRerankerModel === false ? { primaryRerankerModel: false } : {}),
-      boundaryPolicy,
-      ...(options.boundaryClassifierModel === undefined
-        ? {}
-        : { boundaryClassifierModel: options.boundaryClassifierModel }),
-      ...(options.structuredModel === undefined ? {} : { structuredModel: options.structuredModel }),
     });
     predictedSegments += segments.length;
     const primarySegments =
       decisionThreshold === 0
         ? segments
-        : analyze(piece.input, {
+        : analyzeHarmony(piece.input, {
             includedTrackIds: ["dcml"],
             topK: 8,
             decisionThreshold: 0,
-            ...(options.primaryRerankerModel === false ? { primaryRerankerModel: false } : {}),
-            boundaryPolicy,
-            ...(options.boundaryClassifierModel === undefined
-              ? {}
-              : { boundaryClassifierModel: options.boundaryClassifierModel }),
-            ...(options.structuredModel === undefined ? {} : { structuredModel: options.structuredModel }),
           });
+    const events = buildPaperSemiCrfEvents(piece.input, { includedTrackIds: ["dcml"] });
     intervalDiagnostics.push(
       calculateIntervalOverlapDiagnostics({
         ticksPerQuarter: piece.input.ticksPerQuarter,
         measures: piece.input.measures,
-        legalMoments: buildLegalBoundaryLattice(piece.input).moments,
+        legalMoments:
+          events.length === 0 ? [] : [...events.map((event) => event.range.start), events.at(-1)!.range.end],
         gold: piece.gold.flatMap((item) => (item.chord ? [{ range: item.range, chord: item.chord }] : [])),
         predicted: segments,
       }),
@@ -184,29 +151,7 @@ export async function evaluateDcmlCorpus(
     sourceRevision: options.sourceRevision,
     reportGroupsSha256: hashGroups(reportGroups),
     decisionThreshold,
-    boundaryPolicy,
-    ...(options.boundaryClassifierModel === undefined
-      ? {}
-      : {
-          boundaryModel: {
-            featureVersion: options.boundaryClassifierModel.featureVersion,
-            threshold: options.boundaryClassifierModel.threshold,
-          },
-        }),
-    ...(options.structuredModel === undefined
-      ? {}
-      : {
-          structuredModel: {
-            sha256: options.structuredModelSha256!,
-            featureVersion: options.structuredModel.featureVersion,
-            algorithmVersion: options.structuredModel.algorithmVersion,
-            trainingRecordsSha256: options.structuredModel.trainingRecordsSha256,
-            ruleScale: options.structuredModel.ruleScale,
-            modelScale: options.structuredModel.modelScale,
-            search: "dense-qn8-exact" as const,
-            runtimeMs: performance.now() - runtimeStart,
-          },
-        }),
+    boundaryPolicy: "paper-basic-events" as const,
     splits: splitCounts,
     metrics: calculateAccuracyMetrics(evalObservations, mergeIntervalOverlapDiagnostics(intervalDiagnostics), {
       predictedSegments,

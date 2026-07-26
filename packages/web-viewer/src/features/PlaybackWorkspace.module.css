@@ -439,7 +439,7 @@
       animation: none;
     }
   }
-  @container route (max-width: 900px) {
+  @container (max-width: 900px) {
     .practicePanel {
       position: fixed;
       top: max(12px, env(safe-area-inset-top));
@@ -447,7 +447,7 @@
       overflow-y: auto;
     }
   }
-  @container route (max-width: 620px) {
+  @container (max-width: 620px) {
     .transportBar {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;

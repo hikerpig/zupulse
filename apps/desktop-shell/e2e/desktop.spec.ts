@@ -159,6 +159,7 @@ test("opens MusicXML and MXL through the unified score entry", async () => {
     await window.getByRole("button", { name: "Import score" }).first().click();
     await expect(window.locator("#summary")).toContainText("Single Voice");
 
+    await window.getByRole("link", { name: "Library" }).click();
     await chooseFixture(app, mxlFixture);
     await window.getByRole("button", { name: "Import score" }).first().click();
     await expect(window.locator("#summary")).toContainText("Single Voice");

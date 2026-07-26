@@ -45,41 +45,41 @@ All component slices
 
 ### Phase 1: Library Core
 
-- [ ] Task 1: Separate Library Score primary and management actions
-- [ ] Task 2: Add recoverable No-results states
-- [ ] Task 3: Make Library header and filters fit narrow containers
+- [x] Task 1: Separate Library Score primary and management actions
+- [x] Task 2: Add recoverable No-results states
+- [x] Task 3: Make Library header and filters fit narrow containers
 
 ### Checkpoint: Library
 
-- [ ] Library component tests pass
-- [ ] 390px Library has no horizontal overflow
-- [ ] Accessibility tree exposes one open action and one delete action per score
+- [x] Library component tests pass
+- [x] 390px Library has no horizontal overflow
+- [x] Accessibility tree exposes one open action and one delete action per score
 
 ### Phase 2: Viewer Core
 
-- [ ] Task 4: Remove Library-backed Viewer import competition
-- [ ] Task 5: Implement narrow Transport hierarchy and practice-panel focus
-- [ ] Task 6: Collapse narrow score zoom into a Popover
+- [x] Task 4: Remove Library-backed Viewer import competition
+- [x] Task 5: Implement narrow Transport hierarchy and practice-panel focus
+- [x] Task 6: Collapse narrow score zoom into a Popover
 
 ### Checkpoint: Viewer
 
-- [ ] Viewer / Playback / ScoreViewer component tests pass
-- [ ] 390px Viewer core controls are visible in disabled, ready and error states
-- [ ] Practice panel and Zoom Popover support Escape and focus restoration
+- [x] Viewer / Playback / ScoreViewer component tests pass
+- [x] 390px Viewer core controls are visible in disabled, ready and error states
+- [x] Practice panel and Zoom Popover support Escape and focus restoration
 
 ### Phase 3: Journey and Documentation
 
-- [ ] Task 7: Add Browser responsive journey coverage
-- [ ] Task 8: Run shared-host verification and update current documentation
+- [x] Task 7: Add Browser responsive journey coverage
+- [x] Task 8: Run shared-host verification and update current documentation
 
 ### Checkpoint: Complete
 
-- [ ] `pnpm check:i18n` passes
-- [ ] `pnpm verify:fast` passes
-- [ ] `pnpm demo:build` and targeted Browser E2E pass
-- [ ] `pnpm desktop:build` and Desktop smoke pass
-- [ ] `git diff --check` passes
-- [ ] P0 success criteria in the spec are met
+- [x] `pnpm check:i18n` passes
+- [x] `pnpm verify:fast` passes
+- [x] `pnpm demo:build` and targeted Browser E2E pass
+- [x] `pnpm desktop:build` and Desktop smoke pass
+- [x] `git diff --check` passes
+- [x] P0 success criteria in the spec are met
 
 ## Vertical Slices
 
@@ -154,8 +154,8 @@ git diff --check
 | P0 CSS is discarded by P1 list redesign                  | Medium | Make action semantics structural and layout styles local              |
 | Shared UI passes Browser but breaks Desktop shell chrome | Medium | Run Desktop build and targeted E2E smoke before handoff               |
 
-## Open Questions
+## Confirmed Decisions
 
-- Confirm 390px as the formal minimum core-journey width.
-- Confirm Library-backed Viewer removes page-level import at every width.
-- Confirm P0 ships independently before P1 directory-row work.
+- 390px is the formal minimum core-journey width.
+- Library-backed Viewer removes page-level import at every width.
+- P0 ships independently before P1 directory-row work.

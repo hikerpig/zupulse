@@ -15,7 +15,7 @@ Viewer、练习设置、删除取消、键盘焦点，以及 1280×720 与 390×
 本文记录整体优化顺序，并定义 P0 的产品和工程设计。P1、P2 只固定目标与依赖，不在本文内提前
 设计具体组件。
 
-## 已确认方向与当前假设
+## 已确认方向
 
 - 优化顺序为 `P0 核心可用性 → P1 信息架构与层级 → P2 产品假设验证`。
 - Browser、Desktop 与 iPad 继续共享 `packages/web-viewer` 的 Library / Viewer UI，不复制页面。
@@ -28,8 +28,8 @@ Viewer、练习设置、删除取消、键盘焦点，以及 1280×720 与 390×
 - 自动化覆盖 Accessibility tree、键盘和真实浏览器布局；VoiceOver / NVDA 真人测试作为发布前人工
   门禁，不在单元测试中伪造。
 
-如果 390px 不属于正式支持面，需要在实施前改为明确的最小宽度和阻断提示；不能继续保留控件
-局部可见、实际不可用的状态。
+以上三项发布决策已于 2026-07-26 确认：390px 是正式最窄核心旅程宽度；Library-backed Viewer
+在所有宽度移除页内导入；P0 独立发布，不等待 P1 目录行重构。
 
 ## 目标
 
@@ -99,7 +99,7 @@ P1 可使用现有 `LibraryScoreSummary.practice` 数据，但 Desktop 练习摘
 
 ### 1. Library 顶部与筛选区
 
-宽容器保持当前左右结构。`@container route (max-width: 620px)` 下：
+宽容器保持当前左右结构。route viewport 的 unnamed `@container (max-width: 620px)` 下：
 
 - `libraryContextBar` 只做 Library 局部覆盖，改为两行，不修改共享 `PageShell.contextBar` 的全局
   结构。
@@ -277,7 +277,8 @@ git diff --check
 - 可选字段不存在时省略，不传 `undefined`。
 - 用户可见文案只进入 `@zupulse/app-i18n`。
 - UI 测试按 role / accessible name 查询，不断言内部组件名。
-- 布局使用 `@container route` 与 semantic tokens，不直接消费 theme library 原始色阶。
+- 布局使用 route viewport 的 unnamed `@container` 与 semantic tokens，不直接消费 theme library
+  原始色阶。使用 unnamed query 可避免 CSS Modules 分别哈希跨模块 container name。
 
 ## 测试策略
 
@@ -353,8 +354,8 @@ git diff --check
 | P0 与 P1 卡片重构重复劳动                   | 中   | P0 只固定语义组件边界，P1 复用主动作与 Menu，不绑定卡片结构           |
 | Desktop 缺少练习摘要导致未来“继续”不一致    | 中   | P0 不实现“继续”；P1 设计前先解决或明确平台差异                        |
 
-## 待评审项
+## 已确认实施决策
 
-1. 是否确认 390px 是 Browser / Split View 的正式最窄核心旅程宽度？
-2. 是否确认 Library-backed Viewer 在所有宽度都移除页内“导入曲谱”，而不只在窄屏隐藏？
-3. P0 完成后，是先上线修复再进入 P1，还是与 P1 目录行合并发布？
+1. 390px 是 Browser / Split View 的正式最窄核心旅程宽度。
+2. Library-backed Viewer 在所有宽度移除页内“导入曲谱”，不只在窄屏隐藏。
+3. P0 完成后独立发布，再进入 P1 目录行工作。

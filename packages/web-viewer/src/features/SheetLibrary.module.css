@@ -487,12 +487,12 @@
   }
 
   /* ── Responsive ────────────────────────────────────────── */
-  @container route (max-width: 900px) {
+  @container (max-width: 900px) {
     .libraryList {
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     }
   }
-  @container route (max-width: 620px) {
+  @container (max-width: 620px) {
     .libraryContextBar {
       display: grid;
       grid-template-columns: 1fr;
@@ -533,6 +533,14 @@
     }
     .librarySort {
       justify-self: end;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .libraryControls .librarySort select {
+      width: 112px;
+      min-width: 0;
+      max-width: 100%;
     }
     .libraryStats {
       margin: 12px max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));

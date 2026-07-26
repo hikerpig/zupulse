@@ -200,13 +200,13 @@
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
 
-  @container route (max-width: 900px) {
+  @container (max-width: 900px) {
     .frame {
       padding: 6px;
     }
   }
 
-  @container route (max-width: 620px) {
+  @container (max-width: 620px) {
     .zoomControls {
       display: none;
     }

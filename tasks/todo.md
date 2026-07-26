@@ -1,5 +1,8 @@
 # P0 Task List: Library 与 Viewer 核心可用性
 
+**Status:** Completed on 2026-07-26. The checklists below remain as the acceptance record; verified command evidence
+is summarized in `tasks/plan.md` and PR #7.
+
 ## Task 1: 分离 Library Score 主动作与管理动作
 
 **Description:** 保留当前卡片视觉，移除 `li[role="button"]`，建立独立打开按钮、收藏按钮和管理

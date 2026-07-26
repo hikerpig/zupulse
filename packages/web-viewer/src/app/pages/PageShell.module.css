@@ -170,13 +170,13 @@
     outline: none;
     box-shadow: var(--focus-ring);
   }
-  @container route (max-width: 900px) {
+  @container (max-width: 900px) {
     .contextBar {
       padding-block: 8px;
     }
   }
 
-  @container route (max-width: 620px) {
+  @container (max-width: 620px) {
     .contextBar {
       align-items: center;
       gap: 8px;

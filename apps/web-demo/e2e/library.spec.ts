@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { fileURLToPath } from "node:url";
 
 const fixture = fileURLToPath(new URL("../../../test-fixtures/gp/generated/desktop-acceptance.gp", import.meta.url));
@@ -98,11 +98,12 @@ test("persists a Browser Library Score and gives a re-import a fresh ID after de
 
   await page.getByRole("navigation", { name: "主要页面" }).getByRole("link", { name: "曲谱库" }).click();
   await expect(page.getByRole("heading", { name: "曲谱库" })).toBeVisible();
-  await expect(page.getByRole("button", { name: /^GP 收藏 桌面验收谱/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "打开 桌面验收谱" })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole("button", { name: /^GP 收藏 桌面验收谱/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "打开 桌面验收谱" })).toBeVisible();
 
-  await page.getByRole("button", { name: "删除 桌面验收谱", exact: true }).click();
+  await page.getByRole("button", { name: "桌面验收谱 的更多操作" }).click();
+  await page.getByRole("menuitem", { name: "删除 桌面验收谱", exact: true }).click();
   await expect(page.getByRole("alertdialog")).toContainText("全部练习数据");
   await page.getByRole("button", { name: "永久删除" }).click();
   await expect(page.getByText("你的曲谱会保存在这台设备上")).toBeVisible();
@@ -159,7 +160,8 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("1 个修正 · 已保存");
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "曲谱库" })).toBeVisible();
-  await page.getByRole("button", { name: "删除 Single Voice", exact: true }).click();
+  await page.getByRole("button", { name: "Single Voice 的更多操作" }).click();
+  await page.getByRole("menuitem", { name: "删除 Single Voice", exact: true }).click();
   await expect(page.getByRole("alertdialog")).toContainText("全部练习数据");
   await page.getByRole("button", { name: "永久删除" }).click();
   await expect(page.getByRole("button", { name: "导入第一份曲谱" })).toBeVisible();
@@ -226,9 +228,75 @@ test("surfaces a CAS conflict when two Browser Studio windows save the same revi
   await stalePage.close();
 });
 
+test("keeps the Library to Viewer practice journey usable from 390px through desktop", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await importFixture(page, "导入第一份曲谱");
+  await page.getByRole("navigation", { name: "主要页面" }).getByRole("link", { name: "曲谱库" }).click();
+
+  const libraryControls = [
+    page.getByRole("button", { name: "导入曲谱" }),
+    page.getByRole("textbox", { name: "搜索曲名或艺术家" }),
+    page.getByRole("button", { name: "收藏", exact: true }),
+    page.getByRole("combobox"),
+    page.getByRole("button", { name: "打开 桌面验收谱" }),
+    page.getByRole("button", { name: "桌面验收谱 的更多操作" }),
+  ];
+  for (const width of [390, 620, 640, 1280]) {
+    await page.setViewportSize({ width, height: width === 1280 ? 720 : 844 });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    for (const control of libraryControls) await expectInsideViewport(page, control);
+  }
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const search = page.getByRole("textbox", { name: "搜索曲名或艺术家" });
+  await search.fill("不存在");
+  await expect(page.getByText("没有匹配“不存在”的曲谱")).toBeVisible();
+  await expect(page.getByText("0 / 1 份曲谱")).toBeVisible();
+  await page.getByRole("button", { name: "清除搜索" }).click();
+  await page.getByRole("button", { name: "打开 桌面验收谱" }).click();
+
+  await expect(page.getByRole("button", { name: "导入曲谱" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "播放" })).toBeEnabled({ timeout: 30_000 });
+  await expectInsideViewport(page, page.getByRole("button", { name: "播放" }));
+  await expectInsideViewport(page, page.getByRole("button", { name: "停止" }));
+  await expectInsideViewport(page, page.getByRole("button", { name: "设置循环区间" }));
+  await expectInsideViewport(page, page.getByRole("button", { name: "练习设置" }));
+
+  const zoom = page.getByRole("button", { name: "调整谱面缩放" });
+  await expect(zoom).toBeVisible();
+  await zoom.click();
+  await expect(page.getByRole("dialog", { name: "调整谱面缩放" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(zoom).toBeFocused();
+
+  const practiceTrigger = page.getByRole("button", { name: "练习设置" });
+  await practiceTrigger.click();
+  const practice = page.getByRole("complementary", { name: "练习设置" });
+  await expect(practice.getByRole("button", { name: /速度 \d+ BPM/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "关闭练习设置" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(practice).toHaveCount(0);
+  await expect(practiceTrigger).toBeFocused();
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
 async function importFixture(page: Page, buttonName: string, filePath = fixture): Promise<void> {
   const chooser = page.waitForEvent("filechooser");
   await page.getByRole("button", { name: buttonName }).click();
   await (await chooser).setFiles(filePath);
   await expect.poll(() => page.url()).toContain("#/viewer/");
+}
+
+async function expectInsideViewport(page: Page, locator: Locator): Promise<void> {
+  await expect(locator).toBeVisible();
+  const box = await locator.boundingBox();
+  expect(box).not.toBeNull();
+  const viewport = page.viewportSize();
+  expect(viewport).not.toBeNull();
+  expect(box!.x).toBeGreaterThanOrEqual(0);
+  expect(
+    box!.x + box!.width,
+    `${(await locator.getAttribute("aria-label")) ?? (await locator.textContent())} stays within ${viewport!.width}px`,
+  ).toBeLessThanOrEqual(viewport!.width);
 }

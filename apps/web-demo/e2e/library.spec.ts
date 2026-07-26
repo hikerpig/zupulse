@@ -8,6 +8,9 @@ const musicXmlFixture = fileURLToPath(
 const multiPartFixture = fileURLToPath(
   new URL("../../../test-fixtures/musicxml/generated/multi-part.musicxml", import.meta.url),
 );
+const harmonySelectionFixture = fileURLToPath(
+  new URL("../../../test-fixtures/musicxml/generated/harmony-selection.musicxml", import.meta.url),
+);
 const reviewedFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/K331-3_reviewed.mxl", import.meta.url));
 
 test("persists English across representative Library, Viewer, and Studio flows", async ({ page }) => {
@@ -183,9 +186,9 @@ test("reanalyses a multi-part Studio scope and allows a track to be added back",
   await expect(scope.locator("option:checked")).toHaveCount(2);
 });
 
-test("synchronizes a reviewed score selection between the range list and alphaTab", async ({ page }) => {
+test("synchronizes a score selection between the range list and alphaTab", async ({ page }) => {
   await page.goto("/");
-  await importFixture(page, "导入第一份曲谱", reviewedFixture);
+  await importFixture(page, "导入第一份曲谱", harmonySelectionFixture);
   await page.getByRole("link", { name: "和弦分析" }).click();
   await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("已保存", { timeout: 30_000 });
   const list = page.getByRole("list", { name: "分析片段" });

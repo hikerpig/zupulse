@@ -206,6 +206,60 @@ describe("App", () => {
     await application.destroy();
   });
 
+  it("offers Studio navigation only after the routed Viewer session is ready", async () => {
+    const id = "8f14e45f-ea42-4c2e-a9f4-6f1f8f60d88a";
+    window.history.replaceState(null, "", `#/viewer/${id}`);
+    let resolveOpenSession:
+      | ((session: {
+          togglePlayback(): Promise<void>;
+          pauseAndFlush(): Promise<void>;
+          destroy(): Promise<void>;
+        }) => void)
+      | undefined;
+    const pendingSession = new Promise<{
+      togglePlayback(): Promise<void>;
+      pauseAndFlush(): Promise<void>;
+      destroy(): Promise<void>;
+    }>((resolve) => {
+      resolveOpenSession = resolve;
+    });
+    const repository: SheetLibraryRepository & HarmonyAnalysisRepository = {
+      initialize: async () => undefined,
+      list: async () => [],
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async () => ({ fileName: "score.musicxml", bytes: new Uint8Array([1]) }),
+      updateMetadata: async () => undefined,
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+      read: async () => null,
+      save: async () => {
+        throw new Error("unused");
+      },
+    };
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      async () => pendingSession,
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+    );
+
+    render(<App application={application} />);
+    await screen.findByText("会话已结束，请重新打开乐谱");
+    expect(screen.queryByRole("link", { name: "和弦分析" })).toBeNull();
+
+    resolveOpenSession?.({
+      togglePlayback: async () => undefined,
+      pauseAndFlush: async () => undefined,
+      destroy: async () => undefined,
+    });
+    expect(await screen.findByRole("link", { name: "和弦分析" })).toBeTruthy();
+    await application.destroy();
+  });
+
   it("renders an iPad Studio unavailable route without reading score bytes or analysis storage", async () => {
     const id = "00000000-0000-4000-8000-000000000001";
     window.history.replaceState(null, "", `#/studio/${id}`);

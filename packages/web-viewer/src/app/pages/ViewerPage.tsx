@@ -49,6 +49,7 @@ export function ViewerPage({
           {capabilities.harmonyAnalysis &&
           application.hasLibrary() &&
           libraryScoreId &&
+          application.hasSession(libraryScoreId) &&
           application.hasHarmonyAnalysisStorage() ? (
             <Link className={styles.harmonyAction} to={`/studio/${libraryScoreId}`}>
               <Music aria-hidden="true" size={16} strokeWidth={2} />

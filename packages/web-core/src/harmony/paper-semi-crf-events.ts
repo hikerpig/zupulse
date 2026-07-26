@@ -10,6 +10,7 @@ export type PaperSemiCrfEventNote = {
   staffIndex: number;
   voice: number;
   onset: ScoreWrittenMoment;
+  onsetTick: number;
   soundingPitchClass: number;
   durationTicks: number;
   sourceDurationTicks: number;
@@ -23,6 +24,8 @@ export type PaperSemiCrfEventNote = {
 export type PaperSemiCrfEvent = {
   index: number;
   range: ScoreWrittenRange;
+  startTick: number;
+  endTick: number;
   durationTicks: number;
   metricAccent: number;
   notes: PaperSemiCrfEventNote[];
@@ -100,6 +103,7 @@ export function buildPaperSemiCrfEvents(
       staffIndex: note.staffIndex,
       voice: note.voice,
       onset: note.onset,
+      onsetTick: note.start,
       soundingPitchClass: note.soundingPitchClass,
       durationTicks: Math.min(note.end, end) - Math.max(note.start, start),
       sourceDurationTicks: note.durationTicks,
@@ -113,6 +117,8 @@ export function buildPaperSemiCrfEvents(
     return {
       index,
       range: { start: timeline.toMoment(start), end: timeline.toMoment(end) },
+      startTick: start,
+      endTick: end,
       durationTicks: end - start,
       metricAccent,
       notes: eventNotes,

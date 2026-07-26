@@ -63,11 +63,23 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
 
 ### Phase 3: Paper Features
 
-- [ ] Task 5: 实现 paper-compatible segment feature families。
-  - Acceptance: purity、accented/duration/figuration variants、coverage、bass、beginning accent 在 bin 边界
-    具有 parity tests；feature extraction 不读取 gold。
+- [x] Task 5a: 实现 reference purity、base coverage、beginning accent 与离散 binning。
+  - Acceptance: count/accent/duration purity、root/third/fifth/added/all coverage 和每个 bin 边界具有 parity tests；
+    feature extraction 不读取 gold。
   - Verification: `pnpm vitest run packages/web-core/src/harmony/__tests__/paper-semi-crf-features.test.ts`
   - Dependencies: Tasks 1-4
+  - Files: `paper-semi-crf-features.ts`、相邻测试。
+  - Scope: Medium
+- [ ] Task 5b: 实现 weighted coverage 与 bass feature families。
+  - Acceptance: duration/accent/event-duration coverage、first/segment/weighted bass 与 reference parity。
+  - Verification: paper feature focused tests.
+  - Dependencies: Task 5a
+  - Files: `paper-semi-crf-features.ts`、相邻测试。
+  - Scope: Medium
+- [ ] Task 5c: 实现 suspension/anticipation/passing/neighbor figuration variants。
+  - Acceptance: 每种 figuration 判定有正反 fixture，全部 `FIG_*` enabled families 与 reference parity。
+  - Verification: paper feature focused tests and selected author XML parity.
+  - Dependencies: Task 5b
   - Files: `paper-semi-crf-features.ts`、相邻测试、parity fixtures。
   - Scope: Medium
 - [ ] Task 6: 实现 mode/root-interval chord bigram features 与严格模型资产 schema。

@@ -42,8 +42,8 @@
 
 ## Phase 3: UI primitives
 
-- [ ] Task 7: `Button`
-- [ ] Task 7: `IconButton`
+- [x] Task 7: `Button`
+- [x] Task 7: `IconButton`
 - [ ] Task 8a: `Field` / `TextField` / `Select`
 - [ ] Task 8b: `Panel` / `Toolbar` / `Status`
 - [ ] Task 8c: Base UI `Overlay` primitives

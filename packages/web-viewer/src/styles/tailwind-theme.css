@@ -47,13 +47,19 @@
   --spacing-8: var(--space-8);
   --spacing-12: var(--space-12);
   --spacing-16: var(--space-16);
+  --spacing-control-sm: var(--control-height-sm);
+  --spacing-control: var(--control-height-md);
+  --spacing-control-lg: var(--control-height-lg);
 
   --radius-control: var(--radius-sm);
   --radius-panel: var(--radius-md);
   --radius-overlay: var(--radius-lg);
+  --radius-icon: var(--radius-round);
 
   --shadow-workbench: var(--shadow-panel);
   --shadow-overlay: var(--shadow-elevated);
+  --shadow-focus: var(--focus-ring);
 
+  --transition-duration-fast: var(--duration-fast);
   --ease-ui: var(--motion-ease-standard);
 }

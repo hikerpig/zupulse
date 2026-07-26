@@ -18,10 +18,14 @@
   --space-8: 32px;
   --space-12: 48px;
   --space-16: 64px;
+  --control-height-sm: 36px;
+  --control-height-md: 44px;
+  --control-height-lg: 48px;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-xl: 20px;
+  --radius-round: 9999px;
   --shadow-soft: 0 6px 18px rgb(24 24 24 / 0.08);
   --shadow-panel: 0 14px 30px -10px rgb(24 24 24 / 0.18);
   --shadow-elevated: 0 20px 44px -14px rgb(24 24 24 / 0.22);

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PlaybackState } from "@zupulse/web-core";
@@ -136,6 +136,35 @@ describe("PlaybackWorkspace transport bar", () => {
     await userEvent.setup().click(screen.getByRole("button", { name: "设置循环区间" }));
 
     expect(screen.getByRole("complementary", { name: "练习设置" })).toBeTruthy();
+  });
+
+  it("moves focus into practice settings, closes with Escape, and restores focus", async () => {
+    render(<PlaybackWorkspace session={session(state("paused"))}>乐谱</PlaybackWorkspace>);
+    const user = userEvent.setup();
+    const trigger = screen.getByRole("button", { name: "练习设置" });
+
+    await user.click(trigger);
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "关闭练习设置" }));
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("complementary", { name: "练习设置" })).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("keeps speed editing and audio retry available inside practice settings", async () => {
+    const dispatch = vi.fn(async () => undefined);
+    const playbackState = state("paused");
+    playbackState.soundFont = "error";
+    render(<PlaybackWorkspace session={session(playbackState, dispatch)}>乐谱</PlaybackWorkspace>);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "练习设置" }));
+    const practice = screen.getByRole("complementary", { name: "练习设置" });
+    await user.click(within(practice).getByRole("button", { name: "速度 96 BPM，80%" }));
+    expect(screen.getByRole("spinbutton", { name: "速度 BPM" })).toBeTruthy();
+
+    await user.click(within(practice).getByRole("button", { name: "重试音频" }));
+    expect(dispatch).toHaveBeenCalledWith({ type: "retry-soundfont" });
   });
 
   it("hides the healthy audio status but keeps non-ready status visible", () => {

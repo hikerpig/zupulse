@@ -15,7 +15,9 @@ afterEach(() => {
 
 beforeEach(() => {
   delete document.documentElement.dataset.theme;
-  window.localStorage.clear();
+  if (!window.localStorage)
+    Object.defineProperty(window, "localStorage", { configurable: true, value: memoryStorage() });
+  window.localStorage?.clear();
 });
 
 describe("App", () => {
@@ -203,6 +205,7 @@ describe("App", () => {
     expect(libraryLink.querySelector("svg.lucide-library-big")).toBeTruthy();
     expect(screen.getByRole("link", { name: "查看器" }).getAttribute("aria-current")).toBe("page");
     expect(screen.getByRole("link", { name: "和弦工作室" }).getAttribute("href")).toBe(`#/studio/${id}`);
+    expect(screen.queryByRole("button", { name: "导入曲谱" })).toBeNull();
     await application.destroy();
   });
 
@@ -405,7 +408,7 @@ describe("App", () => {
 
     await waitFor(() => expect(application.hasSession(firstId)).toBe(true));
     await user.click(screen.getByRole("link", { name: "曲谱库" }));
-    await user.click((await screen.findByText("Second")).closest("[role='button']")!);
+    await user.click(await screen.findByRole("button", { name: "打开 Second" }));
 
     await waitFor(() => expect(window.location.hash).toBe(`#/viewer/${secondId}`));
     await waitFor(() => expect(application.hasSession(secondId)).toBe(true));
@@ -460,7 +463,7 @@ describe("App", () => {
 
     await waitFor(() => expect(application.hasSession(id)).toBe(true));
     await user.click(screen.getByRole("link", { name: "逐拍首页" }));
-    await user.click((await screen.findByText("Score A")).closest("[role='button']")!);
+    await user.click(await screen.findByRole("button", { name: "打开 Score A" }));
 
     await waitFor(() => expect(application.hasSession(id)).toBe(true));
     expect(openSession).toHaveBeenCalledTimes(2);
@@ -468,3 +471,17 @@ describe("App", () => {
     await application.destroy();
   });
 });
+
+function memoryStorage(): Storage {
+  const values = new Map<string, string>();
+  return {
+    get length() {
+      return values.size;
+    },
+    clear: () => values.clear(),
+    getItem: (key) => values.get(key) ?? null,
+    key: (index) => [...values.keys()][index] ?? null,
+    removeItem: (key) => values.delete(key),
+    setItem: (key, value) => values.set(key, String(value)),
+  };
+}

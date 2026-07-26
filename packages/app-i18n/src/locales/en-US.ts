@@ -126,6 +126,7 @@ export const enUS = {
       collapse: "Collapse score preview",
       expand: "Expand score preview",
       zoomControls: "Score zoom",
+      adjustZoom: "Adjust score zoom",
       zoomOut: "Zoom score out",
       zoomIn: "Zoom score in",
       zoomLevel: "Score zoom {{percent}}%",

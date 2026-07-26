@@ -44,6 +44,65 @@
     font-size: 12px;
     text-align: center;
   }
+  .compactZoomTrigger {
+    position: sticky;
+    z-index: var(--z-index-transport);
+    top: 8px;
+    left: 100%;
+    width: 44px;
+    min-height: 44px;
+    display: none;
+    margin: 8px 8px -52px auto;
+    padding: 0;
+    place-items: center;
+    border-color: var(--border-default);
+    background: color-mix(in srgb, var(--bg-shell) 94%, transparent);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(12px);
+  }
+  .compactZoomTrigger svg {
+    width: 17px;
+    height: 17px;
+  }
+  .compactZoomPositioner {
+    z-index: var(--z-index-practice-panel);
+    max-width: calc(100vw - 16px);
+  }
+  .compactZoomPopup {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    max-width: 100%;
+    padding: 3px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-panel);
+  }
+  .compactZoomPopup button {
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+  .compactZoomPopup button svg {
+    width: 16px;
+    height: 16px;
+  }
+  .compactZoomPopup output {
+    min-width: 50px;
+    color: var(--text-secondary);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    text-align: center;
+  }
+  .compactZoomArrow {
+    width: 10px;
+    height: 10px;
+    border-top: 1px solid var(--border-default);
+    border-left: 1px solid var(--border-default);
+    background: var(--bg-elevated);
+    transform: rotate(45deg);
+  }
 
   .frame {
     min-height: 0;
@@ -148,6 +207,12 @@
   }
 
   @container route (max-width: 620px) {
+    .zoomControls {
+      display: none;
+    }
+    .compactZoomTrigger {
+      display: grid;
+    }
     .frame {
       padding: 4px;
     }

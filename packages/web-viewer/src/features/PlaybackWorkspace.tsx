@@ -1,8 +1,18 @@
 import { musicalPositionFromTick } from "@zupulse/web-core";
 import type { PlaybackCommand } from "@zupulse/web-core";
 import { Popover } from "@base-ui/react/popover";
-import { BookOpen, ChevronLeft, ChevronRight, LocateFixed, Pause, Play, Repeat2, Square } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import {
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  LocateFixed,
+  Pause,
+  Play,
+  Repeat2,
+  SlidersHorizontal,
+  Square,
+} from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import type { ViewerSessionHandle } from "../host";
@@ -37,12 +47,29 @@ function PlaybackLayout({
 }) {
   const { t } = useTranslation("viewer");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerToggleRef = useRef<HTMLButtonElement>(null);
+  const drawerCloseRef = useRef<HTMLButtonElement>(null);
+  const wasDrawerOpen = useRef(false);
   const seekScheduler = useMemo(() => (playback ? createSeekPreviewScheduler(playback) : undefined), [playback]);
   const state = useSyncExternalStore(
     (listener) => playback?.subscribe(() => listener()) ?? (() => undefined),
     () => playback?.getState() ?? null,
   );
   useEffect(() => () => seekScheduler?.destroy(), [seekScheduler]);
+  useEffect(() => {
+    if (drawerOpen) {
+      drawerCloseRef.current?.focus();
+      const closeOnEscape = (event: KeyboardEvent) => {
+        if (event.key === "Escape") setDrawerOpen(false);
+      };
+      window.addEventListener("keydown", closeOnEscape);
+      wasDrawerOpen.current = true;
+      return () => window.removeEventListener("keydown", closeOnEscape);
+    }
+    if (wasDrawerOpen.current) drawerToggleRef.current?.focus();
+    wasDrawerOpen.current = false;
+    return undefined;
+  }, [drawerOpen]);
   useEffect(() => {
     if (!playback || state?.soundFont !== "ready") return;
     const togglePlayback = (event: KeyboardEvent) => {
@@ -62,7 +89,8 @@ function PlaybackLayout({
     window.addEventListener("keydown", togglePlayback);
     return () => window.removeEventListener("keydown", togglePlayback);
   }, [playback, state?.soundFont]);
-  if (!playback || !state) return disabledPlaybackWorkspace(children, drawerOpen, setDrawerOpen, t);
+  if (!playback || !state)
+    return disabledPlaybackWorkspace(children, drawerOpen, setDrawerOpen, drawerToggleRef, drawerCloseRef, t);
   const view = presentPlayback(state);
   const dispatch = (command: PlaybackCommand) => void playback.dispatch(command);
   const hasActiveLoop = view.loops.some((loop) => loop.selected);
@@ -140,23 +168,29 @@ function PlaybackLayout({
         </div>
         <div className={styles.transportTools}>
           {navigation ? <ScoreNavigationControls navigation={navigation} /> : null}
-          <BpmControl
-            baseTempo={view.baseTempo}
-            currentTempo={view.currentTempo}
-            speedPercent={view.speedPercent}
-            onCommit={(tempo) => dispatch({ type: "set-score-speed", speed: tempo / view.baseTempo })}
-          />
+          <div className={styles.transportSpeedControl}>
+            <BpmControl
+              baseTempo={view.baseTempo}
+              currentTempo={view.currentTempo}
+              speedPercent={view.speedPercent}
+              onCommit={(tempo) => dispatch({ type: "set-score-speed", speed: tempo / view.baseTempo })}
+            />
+          </div>
           {state.soundFont !== "ready" && (
             <p className={`${styles.statusChip} ${styles[view.audioStatusTone]}`}>
               {audioStatusLabel(view.soundFont, t)}
             </p>
           )}
           {view.soundFont === "error" && (
-            <button type="button" onClick={() => dispatch({ type: "retry-soundfont" })}>
+            <button
+              className={styles.transportRetry}
+              type="button"
+              onClick={() => dispatch({ type: "retry-soundfont" })}
+            >
               {t("playback.retryAudio")}
             </button>
           )}
-          <DrawerToggle open={drawerOpen} onClick={() => setDrawerOpen((open) => !open)} />
+          <DrawerToggle buttonRef={drawerToggleRef} open={drawerOpen} onClick={() => setDrawerOpen((open) => !open)} />
         </div>
       </section>
       <section className={styles.workspace}>
@@ -176,6 +210,7 @@ function PlaybackLayout({
                 </p>
               </div>
               <button
+                ref={drawerCloseRef}
                 className={styles.drawerClose}
                 type="button"
                 aria-label={t("playback.closePractice")}
@@ -185,6 +220,24 @@ function PlaybackLayout({
               </button>
             </div>
             <div className={styles.panelShell}>
+              <section className={`${styles.panelSection} ${styles.practiceSpeedControl}`}>
+                <div className={styles.panelHeader}>
+                  <p className={styles.panelTitle}>{t("playback.speedTitle")}</p>
+                </div>
+                <div className={styles.panelContent}>
+                  <BpmControl
+                    baseTempo={view.baseTempo}
+                    currentTempo={view.currentTempo}
+                    speedPercent={view.speedPercent}
+                    onCommit={(tempo) => dispatch({ type: "set-score-speed", speed: tempo / view.baseTempo })}
+                  />
+                  {view.soundFont === "error" ? (
+                    <button type="button" onClick={() => dispatch({ type: "retry-soundfont" })}>
+                      {t("playback.retryAudio")}
+                    </button>
+                  ) : null}
+                </div>
+              </section>
               <section className={styles.panelSection}>
                 <div className={styles.panelHeader}>
                   <p className={styles.panelTitle}>{t("playback.loop")}</p>
@@ -557,6 +610,8 @@ function disabledPlaybackWorkspace(
   children: ReactNode,
   drawerOpen: boolean,
   setDrawerOpen: (open: boolean) => void,
+  drawerToggleRef: RefObject<HTMLButtonElement | null>,
+  drawerCloseRef: RefObject<HTMLButtonElement | null>,
   t: TFunction<"viewer">,
 ) {
   return (
@@ -591,9 +646,11 @@ function disabledPlaybackWorkspace(
           <Slider label={t("playback.progress")} variant="progress" max={1000} value={0} disabled />
         </div>
         <div className={styles.transportTools}>
-          <BpmControl baseTempo={120} currentTempo={120} speedPercent={100} disabled />
+          <div className={styles.transportSpeedControl}>
+            <BpmControl baseTempo={120} currentTempo={120} speedPercent={100} disabled />
+          </div>
           <p className="status-chip subtle">{t("playback.audio.loading")}</p>
-          <DrawerToggle open={drawerOpen} onClick={() => setDrawerOpen(!drawerOpen)} />
+          <DrawerToggle buttonRef={drawerToggleRef} open={drawerOpen} onClick={() => setDrawerOpen(!drawerOpen)} />
         </div>
       </section>
       <section className={styles.workspace}>
@@ -606,6 +663,7 @@ function disabledPlaybackWorkspace(
                 <h2 className={styles.drawerTitle}>{t("playback.practice")}</h2>
               </div>
               <button
+                ref={drawerCloseRef}
                 className={styles.drawerClose}
                 type="button"
                 aria-label={t("playback.closePractice")}
@@ -707,17 +765,28 @@ function BpmControl({
   );
 }
 
-function DrawerToggle({ open, onClick }: { open: boolean; onClick(): void }) {
+function DrawerToggle({
+  buttonRef,
+  open,
+  onClick,
+}: {
+  buttonRef: RefObject<HTMLButtonElement | null>;
+  open: boolean;
+  onClick(): void;
+}) {
   const { t } = useTranslation("viewer");
   return (
     <button
       className={styles.drawerToggle}
+      ref={buttonRef}
       type="button"
+      aria-label={open ? t("playback.collapsePractice") : t("playback.practice")}
       aria-controls="practice-drawer"
       aria-expanded={open}
       onClick={onClick}
     >
-      {open ? t("playback.collapsePractice") : t("playback.practice")}
+      <SlidersHorizontal aria-hidden="true" />
+      <span>{open ? t("playback.collapsePractice") : t("playback.practice")}</span>
     </button>
   );
 }

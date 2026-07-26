@@ -104,6 +104,9 @@
     color: var(--accent-primary);
     background: var(--accent-soft);
   }
+  .transportSpeedControl {
+    display: contents;
+  }
   .timeReadout {
     min-width: 96px;
     color: var(--text-secondary);
@@ -296,6 +299,18 @@
     border-color: var(--accent-primary);
     background: var(--accent-soft);
   }
+  .drawerToggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .drawerToggle svg {
+    width: 16px;
+    height: 16px;
+  }
+  .practiceSpeedControl {
+    display: none;
+  }
   @keyframes drawer-enter {
     from {
       opacity: 0;
@@ -434,18 +449,61 @@
   }
   @container route (max-width: 620px) {
     .transportBar {
-      flex-wrap: wrap;
-      gap: 8px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 6px;
+      padding-inline: max(8px, env(safe-area-inset-left)) max(8px, env(safe-area-inset-right));
+    }
+    .transportActions {
+      gap: 6px;
+    }
+    .transportActions .transportPlayButton {
+      width: 36px;
+      min-width: 36px;
+    }
+    .transportActions .transportIconButton {
+      width: 32px;
+      min-width: 32px;
+    }
+    .transportDivider {
+      display: none;
     }
     .transportTools {
       margin-left: auto;
+      gap: 5px;
     }
     .timeReadout {
-      min-width: 82px;
-      font-size: 12px;
+      min-width: 76px;
+      font-size: 11px;
     }
-    .speedControl {
-      min-width: 0;
+    .transportSpeedControl,
+    .transportRetry {
+      display: none;
+    }
+    .transportTools .statusChip {
+      min-height: 28px;
+      max-width: 74px;
+      overflow: hidden;
+      padding-inline: 7px;
+      text-overflow: ellipsis;
+    }
+    .drawerToggle {
+      width: 34px;
+      min-height: 34px;
+      justify-content: center;
+      padding: 0;
+    }
+    .drawerToggle span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    .practiceSpeedControl {
+      display: block;
     }
   }
 }

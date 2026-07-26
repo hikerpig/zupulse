@@ -184,6 +184,8 @@
     }
     .contextActions {
       gap: 6px;
+      flex: 0 0 auto;
+      max-width: 55%;
     }
     .contextTitle {
       font-size: 16px;
@@ -192,6 +194,25 @@
     .contextActions :global(.primary-button) {
       min-height: 34px;
       padding-inline: 9px;
+    }
+    .harmonyAction {
+      width: 34px;
+      padding: 0;
+      justify-content: center;
+    }
+    .harmonyAction span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    .statusChip {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .unavailableWorkspace {
       grid-template-columns: 1fr;

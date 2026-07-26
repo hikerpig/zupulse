@@ -122,6 +122,7 @@ export const zhCN = {
       collapse: "收起乐谱预览",
       expand: "放大乐谱预览",
       zoomControls: "谱面缩放",
+      adjustZoom: "调整谱面缩放",
       zoomOut: "缩小谱面",
       zoomIn: "放大谱面",
       zoomLevel: "谱面缩放 {{percent}}%",

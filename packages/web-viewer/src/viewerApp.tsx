@@ -116,6 +116,7 @@ export function createDefaultOpenSession(
             return () => playbackListeners.delete(listener);
           },
           dispatch: (command) => sessionController.dispatch(command),
+          previewSeek: (position) => sessionController.previewSeek(position),
           timeline: model.timeline,
         },
         async togglePlayback() {

@@ -22,6 +22,8 @@ export function ViewerPage({
   const { libraryScoreId } = useParams();
   const navigate = useNavigate();
   const invalidSession = Boolean(libraryScoreId && !application.hasSession(libraryScoreId));
+  const currentScore = snapshot.library?.scores.find((score) => score.id === libraryScoreId);
+  const statusMessage = notFound ? t("page.notFound") : invalidSession ? t("page.sessionEnded") : undefined;
 
   useEffect(() => {
     if (application.hasLibrary() && libraryScoreId && !application.hasSession(libraryScoreId))
@@ -39,28 +41,26 @@ export function ViewerPage({
     <main className={styles.appShell}>
       <div className={styles.contextBar}>
         <div className={styles.contextMain}>
-          <p className={styles.appKicker}>{t("page.kicker")}</p>
           <h1 id="summary" className={styles.contextTitle} aria-live="polite">
-            {t("page.title")}
+            {currentScore?.title ?? t("page.title")}
           </h1>
-          <p className={styles.contextSubtitle}>{t("page.subtitle")}</p>
         </div>
         <div className={styles.contextActions}>
           {capabilities.harmonyAnalysis &&
           application.hasLibrary() &&
           libraryScoreId &&
+          application.hasSession(libraryScoreId) &&
           application.hasHarmonyAnalysisStorage() ? (
             <Link className={styles.harmonyAction} to={`/studio/${libraryScoreId}`}>
               <Music aria-hidden="true" size={16} strokeWidth={2} />
               <span>{t("page.harmony")}</span>
-              <span className={styles.harmonyActionArrow} aria-hidden="true">
-                →
-              </span>
             </Link>
           ) : null}
-          <p id="status" className={styles.statusChip} role="status">
-            {notFound ? t("page.notFound") : invalidSession ? t("page.sessionEnded") : t("page.waiting")}
-          </p>
+          {statusMessage ? (
+            <p id="status" className={styles.statusChip} role="status">
+              {statusMessage}
+            </p>
+          ) : null}
           <button
             id="open-score"
             className="primary-button"

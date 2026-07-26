@@ -82,7 +82,9 @@ describe("App", () => {
     expect(screen.getByRole("navigation", { name: "主要页面" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "逐拍首页" })).toBeTruthy();
     expect(screen.getByRole("region", { name: "乐谱工作区" })).toBeTruthy();
-    expect(screen.getByText("用于乐谱阅读、播放和循环训练的练习工作区。")).toBeTruthy();
+    expect(screen.queryByText("Score Viewer")).toBeNull();
+    expect(screen.queryByText("用于乐谱阅读、播放和循环训练的练习工作区。")).toBeNull();
+    expect(screen.queryByText("等待选择文件")).toBeNull();
     expect(screen.getByRole("button", { name: "打开乐谱" })).toBeTruthy();
 
     await application.destroy();
@@ -107,9 +109,12 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "关闭练习设置" }));
     expect(screen.queryByRole("complementary", { name: "练习设置" })).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: "切换至浅色主题" }));
+    const switchToLight = screen.getByRole("button", { name: "切换至浅色主题" });
+    expect(switchToLight.textContent).toContain("深色");
+    await user.click(switchToLight);
     expect(document.documentElement.dataset.theme).toBe("light");
     expect(window.localStorage.getItem("zupulse-theme")).toBe("light");
+    expect(screen.getByRole("button", { name: "切换至深色主题" }).textContent).toContain("浅色");
     await user.click(screen.getByRole("button", { name: "打开乐谱" }));
     expect(openScore).toHaveBeenCalledOnce();
 
@@ -198,6 +203,60 @@ describe("App", () => {
     expect(libraryLink.querySelector("svg.lucide-library-big")).toBeTruthy();
     expect(screen.getByRole("link", { name: "查看器" }).getAttribute("aria-current")).toBe("page");
     expect(screen.getByRole("link", { name: "和弦工作室" }).getAttribute("href")).toBe(`#/studio/${id}`);
+    await application.destroy();
+  });
+
+  it("offers Studio navigation only after the routed Viewer session is ready", async () => {
+    const id = "8f14e45f-ea42-4c2e-a9f4-6f1f8f60d88a";
+    window.history.replaceState(null, "", `#/viewer/${id}`);
+    let resolveOpenSession:
+      | ((session: {
+          togglePlayback(): Promise<void>;
+          pauseAndFlush(): Promise<void>;
+          destroy(): Promise<void>;
+        }) => void)
+      | undefined;
+    const pendingSession = new Promise<{
+      togglePlayback(): Promise<void>;
+      pauseAndFlush(): Promise<void>;
+      destroy(): Promise<void>;
+    }>((resolve) => {
+      resolveOpenSession = resolve;
+    });
+    const repository: SheetLibraryRepository & HarmonyAnalysisRepository = {
+      initialize: async () => undefined,
+      list: async () => [],
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async () => ({ fileName: "score.musicxml", bytes: new Uint8Array([1]) }),
+      updateMetadata: async () => undefined,
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+      read: async () => null,
+      save: async () => {
+        throw new Error("unused");
+      },
+    };
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      async () => pendingSession,
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+    );
+
+    render(<App application={application} />);
+    await screen.findByText("会话已结束，请重新打开乐谱");
+    expect(screen.queryByRole("link", { name: "和弦分析" })).toBeNull();
+
+    resolveOpenSession?.({
+      togglePlayback: async () => undefined,
+      pauseAndFlush: async () => undefined,
+      destroy: async () => undefined,
+    });
+    expect(await screen.findByRole("link", { name: "和弦分析" })).toBeTruthy();
     await application.destroy();
   });
 

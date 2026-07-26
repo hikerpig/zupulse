@@ -96,6 +96,33 @@ describe("createStudioScoreRuntime", () => {
     expect(destroy).toHaveBeenCalledOnce();
   });
 
+  it("waits for alphaTab to confirm playback before reporting a playing transport", async () => {
+    document.body.innerHTML = '<div><section id="alpha-tab"></section></div>';
+    const playerState = testEvent<unknown>();
+    const playPause = vi.fn();
+    const api = {
+      playPause,
+      playerStateChanged: playerState.event,
+    } as unknown as AlphaTabApiLike;
+    const runtime = await createStudioScoreRuntime(
+      document,
+      { fileName: "score.musicxml", bytes: new Uint8Array([1]) },
+      {
+        createApi: () => api,
+        presentFile: async () => ({ status: "ready", identity: {} as never, summary: {} as never }),
+        waitForScore: async () => undefined,
+      },
+    );
+
+    expect(runtime.togglePlayback()).toEqual({ status: "toggled" });
+    expect(playPause).toHaveBeenCalledOnce();
+    expect(runtime.getSnapshot().transport.status).toBe("paused");
+
+    playerState.emit({ state: 1 });
+    expect(runtime.getSnapshot().transport.status).toBe("playing");
+    await runtime.destroy();
+  });
+
   it("destroys the alphaTab API when initialization fails", async () => {
     document.body.innerHTML = '<div><section id="alpha-tab"></section></div><p id="status"></p><h1 id="summary"></h1>';
     const destroy = vi.fn();

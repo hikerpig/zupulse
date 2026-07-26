@@ -166,7 +166,12 @@ export class ViewerApplication implements ViewerAppHandle {
 
   async openStudio(id: string): Promise<void> {
     if (this.studioOpening?.id === id) return this.studioOpening.promise;
-    const promise = this.openStudioOnce(id).finally(() => {
+    const operation = this.chain.then(() => this.openStudioOnce(id));
+    this.chain = operation.then(
+      () => undefined,
+      () => undefined,
+    );
+    const promise = operation.finally(() => {
       if (this.studioOpening?.promise === promise) this.studioOpening = undefined;
     });
     this.studioOpening = { id, promise };

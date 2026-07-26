@@ -1,4 +1,5 @@
 import { Slider as BaseSlider } from "@base-ui/react/slider";
+import { useEffect, useRef, useState } from "react";
 import styles from "./Slider.module.css";
 
 export type SliderProps = {
@@ -24,16 +25,37 @@ export function Slider({
   onValueChange,
   onValueCommitted,
 }: SliderProps) {
+  const [displayValue, setDisplayValue] = useState(value);
+  const pendingValueRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    const pendingValue = pendingValueRef.current;
+    if (pendingValue !== undefined && pendingValue !== value) return;
+    pendingValueRef.current = undefined;
+    setDisplayValue(value);
+  }, [value]);
+
+  const previewValue = (next: number) => {
+    pendingValueRef.current = next;
+    setDisplayValue(next);
+    onValueChange?.(next);
+  };
+  const commitValue = (next: number) => {
+    pendingValueRef.current = next;
+    setDisplayValue(next);
+    onValueCommitted?.(next);
+  };
+
   return (
     <BaseSlider.Root
       className={`${styles.root} ${variant === "progress" ? styles.progress : ""}`}
       min={min}
       max={max}
       step={step}
-      value={value}
+      value={displayValue}
       disabled={disabled}
-      onValueChange={(next) => onValueChange?.(next)}
-      onValueCommitted={(next) => onValueCommitted?.(next)}
+      onValueChange={previewValue}
+      onValueCommitted={commitValue}
     >
       <BaseSlider.Control className={styles.control}>
         <BaseSlider.Track className={styles.track}>

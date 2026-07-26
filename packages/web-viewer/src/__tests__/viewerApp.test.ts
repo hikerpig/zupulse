@@ -342,6 +342,7 @@ describe("createDefaultOpenSession cleanup", () => {
     let beatHandler: ((beat: { displayStart: number; voice: { bar: { index: number } } }) => void) | undefined;
     let detached = false;
     const dispatch = vi.fn(async () => undefined);
+    const previewSeek = vi.fn();
     const api = {
       beatMouseDown: {
         on(handler: typeof beatHandler) {
@@ -390,11 +391,22 @@ describe("createDefaultOpenSession cleanup", () => {
           }),
           subscribe: () => () => undefined,
           dispatch,
+          previewSeek,
           flush: async () => undefined,
           destroy: async () => undefined,
         }) as never,
     });
     const session = await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
+    const previewPosition = {
+      measureId: "measure-0",
+      measureIndex: 0,
+      beatIndex: 1,
+      tick: 480,
+      cachedTimeMs: 500,
+    };
+
+    session.playback?.previewSeek?.(previewPosition);
+    expect(previewSeek).toHaveBeenCalledWith(previewPosition);
 
     beatHandler?.({ displayStart: 480, voice: { bar: { index: 1 } } });
     await vi.waitFor(() =>

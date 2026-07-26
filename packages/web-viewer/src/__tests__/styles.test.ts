@@ -185,7 +185,7 @@ describe("alphaTab playback cursor styles", () => {
 
     expect(workspaceCss).toMatch(/\.workspace\s*{[^}]*display:\s*block;[^}]*padding:\s*12px;/s);
     expect(workspaceCss).toMatch(
-      /\.transportBar\s*{[^}]*border-bottom:\s*1px solid[^}]*padding:[^}]*env\(safe-area-inset-bottom\)/s,
+      /\.transportBar\s*{[^}]*border-top:\s*1px solid[^}]*padding:[^}]*env\(safe-area-inset-bottom\)/s,
     );
     expect(workspaceCss).toMatch(/\.transportDivider\s*{[^}]*width:\s*1px;[^}]*align-self:\s*stretch;/s);
     expect(workspaceCss).toMatch(/\.practicePanel\s*{[^}]*top:\s*8px;[^}]*right:\s*8px;[^}]*bottom:\s*8px;/s);
@@ -195,14 +195,14 @@ describe("alphaTab playback cursor styles", () => {
     );
   });
 
-  it("keeps playback progress on the toolbar edge until it is interactive", async () => {
+  it("keeps playback progress on the toolbar top edge until it is interactive", async () => {
     const [workspaceCss, sliderCss] = await Promise.all([
       source("../features/PlaybackWorkspace.module.css"),
       source("../components/Slider.module.css"),
     ]);
 
     expect(workspaceCss).toMatch(
-      /\.transportProgress\s*{[^}]*position:\s*absolute;[^}]*inset-inline:\s*0;[^}]*bottom:\s*-1px;/s,
+      /\.transportProgress\s*{[^}]*position:\s*absolute;[^}]*inset-inline:\s*0;[^}]*top:\s*-1px;/s,
     );
     expect(sliderCss).toMatch(/\.progress \.track\s*{[^}]*height:\s*2px;/s);
     expect(sliderCss).toMatch(/\.progress \.thumb\s*{[^}]*opacity:\s*0;/s);

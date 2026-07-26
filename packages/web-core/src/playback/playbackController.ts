@@ -59,6 +59,7 @@ export class PlaybackController {
   private resumeDirty = false;
   private initialized = false;
   private destroyed = false;
+  private readonly previewSeekTicks = new Set<number>();
   private sidecarWriteChain = Promise.resolve();
   private resumeWriteChain = Promise.resolve();
 
@@ -72,6 +73,16 @@ export class PlaybackController {
 
   getState(): PlaybackState {
     return structuredClone(this.state);
+  }
+
+  previewSeek(position: PlaybackState["position"]): void {
+    if (this.destroyed) throw new Error("Playback controller is destroyed");
+    this.previewSeekTicks.add(position.tick);
+    if (this.previewSeekTicks.size > 8) {
+      const oldest = this.previewSeekTicks.values().next().value;
+      if (oldest !== undefined) this.previewSeekTicks.delete(oldest);
+    }
+    this.options.engine.seekTick(position.tick);
   }
 
   subscribe(listener: (state: PlaybackState) => void): () => void {
@@ -196,6 +207,7 @@ export class PlaybackController {
     this.destroyed = true;
     this.detachEngine?.();
     this.detachEngine = undefined;
+    this.previewSeekTicks.clear();
     this.options.engine.destroy();
     this.listeners.clear();
   }
@@ -283,6 +295,7 @@ export class PlaybackController {
         if (event.state !== "playing") void this.queueResumeWrite();
         return;
       case "position":
+        if (this.previewSeekTicks.delete(event.tick)) return;
         this.state.position = musicalPositionFromTick(event.tick, event.positionMs, this.options.timeline);
         this.state.durationMs = event.endMs;
         this.markResumeDirty();

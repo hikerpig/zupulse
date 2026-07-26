@@ -3,7 +3,7 @@ feature: sheet-library
 title: Sheet Library
 status: current
 delivery: partial
-last_verified: 2026-07-24
+last_verified: 2026-07-26
 hosts:
   - browser
   - desktop
@@ -78,6 +78,8 @@ code 包括 `FILE_TOO_LARGE`、`UNSUPPORTED_FORMAT`、`INVALID_SCORE`、`READ_FA
 - 外部原文件被移动、修改或删除，不影响已经成功写入的 Library Score。
 - 打开 Viewer 时，应用先按 Library Score ID 读取 Managed Score Copy，再记录 `lastOpenedAt`，
   最后创建临时 Viewer Session。
+- Viewer Session 建立后才提供进入 Studio 的操作；Viewer 与 Studio runtime 的替换按顺序执行，
+  不允许两个打开流程并发争用同一个渲染宿主。
 - 刷新或重新打开 `#/viewer/:libraryScoreId` 时，Session 可由 Repository 中的馆藏事实重建。
 - Renderer 和共享 Viewer 不获得 Desktop 绝对路径。
 

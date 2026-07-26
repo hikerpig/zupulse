@@ -4,11 +4,44 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PlaybackState } from "@zupulse/web-core";
 import type { ViewerSessionHandle } from "../../host";
-import { PlaybackWorkspace } from "../PlaybackWorkspace";
+import { createSeekPreviewScheduler, PlaybackWorkspace } from "../PlaybackWorkspace";
 
 afterEach(cleanup);
 
 describe("PlaybackWorkspace transport bar", () => {
+  it("coalesces drag previews to the latest position per frame and commits once", async () => {
+    const previewSeek = vi.fn();
+    const dispatch = vi.fn(async () => undefined);
+    const frames: FrameRequestCallback[] = [];
+    const cancelFrame = vi.fn();
+    const scheduler = createSeekPreviewScheduler(
+      { previewSeek, dispatch } as never,
+      (callback) => {
+        frames.push(callback);
+        return frames.length;
+      },
+      cancelFrame,
+    );
+    const first = position(480, 1000);
+    const latest = position(2400, 5000);
+
+    scheduler.preview(first);
+    scheduler.preview(latest);
+    expect(frames).toHaveLength(1);
+    expect(previewSeek).not.toHaveBeenCalled();
+
+    frames[0]?.(0);
+    expect(previewSeek).toHaveBeenCalledOnce();
+    expect(previewSeek).toHaveBeenCalledWith(latest);
+    expect(dispatch).not.toHaveBeenCalled();
+
+    scheduler.preview(first);
+    await scheduler.commit(latest);
+    expect(cancelFrame).toHaveBeenCalledWith(2);
+    expect(dispatch).toHaveBeenCalledOnce();
+    expect(dispatch).toHaveBeenCalledWith({ type: "seek", position: latest });
+  });
+
   it("toggles playback with Space from the workspace and prevents scrolling", () => {
     const dispatch = vi.fn(async () => undefined);
     render(<PlaybackWorkspace session={session(state("paused"), dispatch)}>乐谱</PlaybackWorkspace>);
@@ -170,6 +203,16 @@ function loopRegion() {
     snapMode: "beat" as const,
     createdAt: "2026-07-13T00:00:00Z",
     updatedAt: "2026-07-13T00:00:00Z",
+  };
+}
+
+function position(tick: number, cachedTimeMs: number) {
+  return {
+    measureId: tick >= 1920 ? "measure-1" : "measure-0",
+    measureIndex: tick >= 1920 ? 1 : 0,
+    beatIndex: 1,
+    tick,
+    cachedTimeMs,
   };
 }
 

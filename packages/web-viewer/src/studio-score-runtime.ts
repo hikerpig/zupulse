@@ -136,10 +136,7 @@ export async function createStudioScoreRuntime(
       return result;
     },
     togglePlayback: () => {
-      const result = toggleAlphaTabPreviewPlayback(studioApi);
-      if (result.status === "toggled")
-        publishTransport({ ...transport, status: transport.status === "playing" ? "paused" : "playing" });
-      return result;
+      return toggleAlphaTabPreviewPlayback(studioApi);
     },
     setPosition: (positionTicks) => {
       const result = setAlphaTabPreviewPosition(studioApi, positionTicks);

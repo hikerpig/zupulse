@@ -2,7 +2,7 @@ import { musicalPositionFromTick } from "@zupulse/web-core";
 import type { PlaybackCommand } from "@zupulse/web-core";
 import { Popover } from "@base-ui/react/popover";
 import { Pause, Play, Repeat2, Square } from "lucide-react";
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import type { ViewerSessionHandle } from "../host";
@@ -23,10 +23,12 @@ export function PlaybackWorkspace({
 function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle["playback"]; children: ReactNode }) {
   const { t } = useTranslation("viewer");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const seekScheduler = useMemo(() => (playback ? createSeekPreviewScheduler(playback) : undefined), [playback]);
   const state = useSyncExternalStore(
     (listener) => playback?.subscribe(() => listener()) ?? (() => undefined),
     () => playback?.getState() ?? null,
   );
+  useEffect(() => () => seekScheduler?.destroy(), [seekScheduler]);
   useEffect(() => {
     if (!playback || state?.soundFont !== "ready") return;
     const togglePlayback = (event: KeyboardEvent) => {
@@ -118,7 +120,8 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
             variant="progress"
             max={1000}
             value={Math.round(view.progress * 1000)}
-            onValueChange={(value) => dispatch({ type: "seek", position: position(value / 1000) })}
+            onValueChange={(value) => seekScheduler?.preview(position(value / 1000))}
+            onValueCommitted={(value) => void seekScheduler?.commit(position(value / 1000))}
           />
         </div>
         <div className={styles.transportTools}>
@@ -384,6 +387,45 @@ function PlaybackLayout({ playback, children }: { playback: ViewerSessionHandle[
       </section>
     </>
   );
+}
+
+type SeekPlayback = Pick<NonNullable<ViewerSessionHandle["playback"]>, "dispatch" | "previewSeek">;
+
+export function createSeekPreviewScheduler(
+  playback: SeekPlayback,
+  requestFrame: (callback: FrameRequestCallback) => number = requestAnimationFrame,
+  cancelFrame: (handle: number) => void = cancelAnimationFrame,
+) {
+  let frame: number | undefined;
+  let pending: Extract<PlaybackCommand, { type: "seek" }>["position"] | undefined;
+
+  const cancelPendingFrame = () => {
+    if (frame === undefined) return;
+    cancelFrame(frame);
+    frame = undefined;
+  };
+
+  return {
+    preview(position: Extract<PlaybackCommand, { type: "seek" }>["position"]) {
+      pending = position;
+      if (frame !== undefined) return;
+      frame = requestFrame(() => {
+        frame = undefined;
+        const next = pending;
+        pending = undefined;
+        if (next) playback.previewSeek?.(next);
+      });
+    },
+    commit(position: Extract<PlaybackCommand, { type: "seek" }>["position"]) {
+      cancelPendingFrame();
+      pending = undefined;
+      return playback.dispatch({ type: "seek", position });
+    },
+    destroy() {
+      cancelPendingFrame();
+      pending = undefined;
+    },
+  };
 }
 
 function isInteractiveShortcutTarget(target: EventTarget | null): boolean {

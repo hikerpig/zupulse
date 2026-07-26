@@ -30,6 +30,8 @@ Studio 使用独立的 `StudioScoreRuntime`，不创建 Viewer 的 `PlaybackCont
 右栏的事实源是 Effective Harmony Range，而非 Revision 数组下标。谱面 Beat/Note 点击与列表选择以书面 range 联动；选择恢复使用书面焦点时刻。列表显示当前有效和弦、来源和置信度，并支持筛选与键盘导航。
 
 Studio runtime 以公开 alphaTab API 临时投影完整 Effective Harmony Projection；每次刷新先恢复上次派生绑定，因而不会重复叠加来源和弦。预览渲染失败和音频不可用均为就地状态，不阻止 Correction 保存或导出。Transport snapshot 由 runtime 拥有，播放、定位、速度和线性局部循环不写入 Viewer 练习状态。
+播放状态以 alphaTab 的 `playerStateChanged` 事件为准；调用 `playPause()` 本身不提前宣告状态切换，
+避免音频源尚未真正启动时让 UI 提供暂停操作。
 
 ## 书面时间与分析输入
 

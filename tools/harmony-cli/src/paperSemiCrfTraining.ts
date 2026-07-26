@@ -9,6 +9,7 @@ import {
   PAPER_SEMI_CRF_LABEL_MAPPING_VERSION,
   type PaperSemiCrfLinearModel,
   type PaperSemiCrfLocalPotentialInput,
+  type PaperSemiCrfPackedFeatures,
   type PaperSemiCrfSupportedLabel,
 } from "@zupulse/web-core";
 import { minimizeWithPaperSemiCrfLbfgs, type PaperSemiCrfLbfgsCheckpoint } from "./paperSemiCrfLbfgs";
@@ -25,6 +26,12 @@ export type TrainPaperSemiCrfInput = {
   resume?: PaperSemiCrfLbfgsCheckpoint;
 };
 
+type CompiledPaperSemiCrfRecord = {
+  eventCount: number;
+  segmentFeatures: (segment: PaperSemiCrfLocalPotentialInput["segment"]) => PaperSemiCrfPackedFeatures;
+  targetSegments: PaperSemiCrfLocalPotentialInput["segment"][];
+};
+
 export function trainPaperSemiCrf(input: TrainPaperSemiCrfInput): {
   model: PaperSemiCrfLinearModel;
   checkpoint: PaperSemiCrfLbfgsCheckpoint;
@@ -38,6 +45,11 @@ export function trainPaperSemiCrf(input: TrainPaperSemiCrfInput): {
     minFeatureCount: number;
     initialObjective: number;
     finalObjective: number;
+    performance: {
+      compileMs: number;
+      objectiveEvaluations: number;
+      objectiveRuntimeMs: number;
+    };
   };
 } {
   const records = parsePaperSemiCrfTrainingRecords(input.records);
@@ -57,8 +69,30 @@ export function trainPaperSemiCrf(input: TrainPaperSemiCrfInput): {
   if (input.resume !== undefined && input.initialWeights !== undefined) {
     throw new Error("paper Semi-CRF resume and initialWeights are mutually exclusive");
   }
-  const evaluate = (weights: readonly number[]) =>
-    evaluateCorpusObjective(records, labels, dictionary, weights, input.l2);
+  const compileStartedAt = performance.now();
+  const compiledRecords = compileRecords(records, labels, dictionary);
+  const transitionFeatures = labels.map((current) =>
+    labels.map((previous) =>
+      encodePaperSemiCrfNamedFeatures(dictionary, [extractPaperSemiCrfTransitionFeature(current, previous)]),
+    ),
+  );
+  const compileMs = performance.now() - compileStartedAt;
+  let objectiveEvaluations = 0;
+  let objectiveRuntimeMs = 0;
+  const evaluate = (weights: readonly number[]) => {
+    const startedAt = performance.now();
+    const evaluated = evaluateCorpusObjective(
+      compiledRecords,
+      transitionFeatures,
+      labels.length,
+      records.maxSegmentLength,
+      weights,
+      input.l2,
+    );
+    objectiveEvaluations += 1;
+    objectiveRuntimeMs += performance.now() - startedAt;
+    return evaluated;
+  };
   const initialObjective = input.resume?.value ?? evaluate(initialWeights).value;
   const optimized =
     input.resume === undefined
@@ -96,6 +130,7 @@ export function trainPaperSemiCrf(input: TrainPaperSemiCrfInput): {
       minFeatureCount: input.minFeatureCount,
       initialObjective,
       finalObjective: optimized.value,
+      performance: { compileMs, objectiveEvaluations, objectiveRuntimeMs },
     },
   };
 }
@@ -124,32 +159,24 @@ function collectFeatureNames(
 }
 
 function evaluateCorpusObjective(
-  records: PaperSemiCrfRecordsFile & { role: "train" },
-  labels: readonly PaperSemiCrfSupportedLabel[],
-  dictionary: ReturnType<typeof createPaperSemiCrfFeatureDictionary>,
+  records: readonly CompiledPaperSemiCrfRecord[],
+  transitionFeatures: readonly (readonly ReturnType<typeof encodePaperSemiCrfNamedFeatures>[])[],
+  labelCount: number,
+  maxSegmentLength: number,
   weights: readonly number[],
   l2: number,
 ): { value: number; gradient: number[] } {
   let value = 0;
   const gradient = weights.map(() => 0);
-  const labelIds = new Map(records.labels.map((label, index) => [label, index]));
-  for (const record of records.records) {
-    const named = createPaperSemiCrfNamedFeatureProvider({ events: record.events, labels });
+  for (const record of records) {
     const evaluated = evaluatePaperSemiCrfFactorizedNegativeLogLikelihood({
-      eventCount: record.events.length,
-      labelCount: labels.length,
-      maxSegmentLength: records.maxSegmentLength,
+      eventCount: record.eventCount,
+      labelCount,
+      maxSegmentLength,
       weights,
-      segmentFeatures: (segment) => encodePaperSemiCrfNamedFeatures(dictionary, named({ segment })),
-      transitionFeatures: (currentLabelId, previousLabelId) =>
-        encodePaperSemiCrfNamedFeatures(dictionary, [
-          extractPaperSemiCrfTransitionFeature(labels[currentLabelId]!, labels[previousLabelId]!),
-        ]),
-      targetSegments: record.targetSegments.map((segment) => ({
-        startEvent: segment.startEvent,
-        endEvent: segment.endEvent,
-        labelId: labelIds.get(segment.label)!,
-      })),
+      segmentFeatures: record.segmentFeatures,
+      transitionFeatures: (currentLabelId, previousLabelId) => transitionFeatures[currentLabelId]![previousLabelId]!,
+      targetSegments: record.targetSegments,
       l2: 0,
     });
     value += evaluated.value;
@@ -163,6 +190,129 @@ function evaluateCorpusObjective(
     throw new Error("non-finite paper Semi-CRF corpus objective");
   }
   return { value, gradient };
+}
+
+function compileRecords(
+  records: PaperSemiCrfRecordsFile & { role: "train" },
+  labels: readonly PaperSemiCrfSupportedLabel[],
+  dictionary: ReturnType<typeof createPaperSemiCrfFeatureDictionary>,
+): CompiledPaperSemiCrfRecord[] {
+  const labelIds = new Map(records.labels.map((label, index) => [label, index]));
+  return records.records.map((record) => {
+    const named = createPaperSemiCrfNamedFeatureProvider({ events: record.events, labels });
+    const vectorCount = countLegalSegments(record.events.length, records.maxSegmentLength) * labels.length;
+    const builder = new PackedFeatureBuilder(vectorCount);
+    forEachLegalSegment(record.events.length, labels.length, records.maxSegmentLength, (segment) => {
+      builder.append(encodePaperSemiCrfNamedFeatures(dictionary, named({ segment })));
+    });
+    const packed = builder.finish();
+    return {
+      eventCount: record.events.length,
+      segmentFeatures: (segment) => packed.vector(denseSegmentIndex(segment, labels.length, records.maxSegmentLength)),
+      targetSegments: record.targetSegments.map((segment) => ({
+        startEvent: segment.startEvent,
+        endEvent: segment.endEvent,
+        labelId: labelIds.get(segment.label)!,
+      })),
+    };
+  });
+}
+
+const PACKED_FEATURE_CHUNK_SIZE = 65_536;
+
+class PackedFeatureBuilder {
+  readonly #offsets: Uint32Array;
+  readonly #indexChunks: Uint16Array[] = [];
+  readonly #valueChunks: Uint16Array[] = [];
+  #featureCount = 0;
+  #vectorCount = 0;
+
+  constructor(vectorCount: number) {
+    this.#offsets = new Uint32Array(vectorCount + 1);
+  }
+
+  append(features: ReturnType<typeof encodePaperSemiCrfNamedFeatures>): void {
+    for (const feature of features) {
+      if (
+        feature.index > 65_535 ||
+        !Number.isSafeInteger(feature.value) ||
+        feature.value < 0 ||
+        feature.value > 65_535
+      ) {
+        throw new Error("paper Semi-CRF packed feature exceeds uint16");
+      }
+      const chunkIndex = Math.floor(this.#featureCount / PACKED_FEATURE_CHUNK_SIZE);
+      const chunkOffset = this.#featureCount % PACKED_FEATURE_CHUNK_SIZE;
+      if (chunkOffset === 0) {
+        this.#indexChunks.push(new Uint16Array(PACKED_FEATURE_CHUNK_SIZE));
+        this.#valueChunks.push(new Uint16Array(PACKED_FEATURE_CHUNK_SIZE));
+      }
+      this.#indexChunks[chunkIndex]![chunkOffset] = feature.index;
+      this.#valueChunks[chunkIndex]![chunkOffset] = feature.value;
+      this.#featureCount += 1;
+    }
+    this.#vectorCount += 1;
+    if (this.#vectorCount >= this.#offsets.length) throw new Error("too many paper Semi-CRF packed vectors");
+    this.#offsets[this.#vectorCount] = this.#featureCount;
+  }
+
+  finish(): PackedFeatureTable {
+    if (this.#vectorCount + 1 !== this.#offsets.length) {
+      throw new Error("incomplete paper Semi-CRF packed vectors");
+    }
+    return new PackedFeatureTable(this.#offsets, this.#indexChunks, this.#valueChunks);
+  }
+}
+
+class PackedFeatureTable {
+  readonly #view: PaperSemiCrfPackedFeatures;
+  #vectorIndex = 0;
+
+  constructor(
+    readonly offsets: Uint32Array,
+    readonly indexChunks: readonly Uint16Array[],
+    readonly valueChunks: readonly Uint16Array[],
+  ) {
+    this.#view = {
+      forEachFeature: (visit) => {
+        const start = this.offsets[this.#vectorIndex]!;
+        const end = this.offsets[this.#vectorIndex + 1]!;
+        for (let position = start; position < end; position += 1) {
+          const chunkIndex = Math.floor(position / PACKED_FEATURE_CHUNK_SIZE);
+          const chunkOffset = position % PACKED_FEATURE_CHUNK_SIZE;
+          visit(this.indexChunks[chunkIndex]![chunkOffset]!, this.valueChunks[chunkIndex]![chunkOffset]!);
+        }
+      },
+    };
+  }
+
+  vector(index: number): PaperSemiCrfPackedFeatures {
+    if (!Number.isSafeInteger(index) || index < 0 || index + 1 >= this.offsets.length) {
+      throw new Error("invalid paper Semi-CRF packed vector index");
+    }
+    this.#vectorIndex = index;
+    return this.#view;
+  }
+}
+
+function denseSegmentIndex(
+  segment: PaperSemiCrfLocalPotentialInput["segment"],
+  labelCount: number,
+  maxSegmentLength: number,
+): number {
+  const previousEnd = segment.endEvent - 1;
+  const previousSegments =
+    previousEnd <= maxSegmentLength
+      ? (previousEnd * (previousEnd + 1)) / 2
+      : (maxSegmentLength * (maxSegmentLength + 1)) / 2 + (previousEnd - maxSegmentLength) * maxSegmentLength;
+  const earliestStart = Math.max(0, segment.endEvent - maxSegmentLength);
+  return (previousSegments + segment.startEvent - earliestStart) * labelCount + segment.labelId;
+}
+
+function countLegalSegments(eventCount: number, maxSegmentLength: number): number {
+  return eventCount <= maxSegmentLength
+    ? (eventCount * (eventCount + 1)) / 2
+    : (maxSegmentLength * (maxSegmentLength + 1)) / 2 + (eventCount - maxSegmentLength) * maxSegmentLength;
 }
 
 function supportedLabels(referenceLabels: readonly string[]): PaperSemiCrfSupportedLabel[] {

@@ -110,6 +110,39 @@ describe("paper semi-CRF linear model", () => {
     factorized.gradient.forEach((value, index) => expect(value).toBeCloseTo(generic.gradient[index]!, 12));
   });
 
+  it("evaluates packed sparse features exactly like feature-object arrays", () => {
+    const input = {
+      eventCount: 3,
+      labelCount: 2,
+      maxSegmentLength: 2,
+      targetSegments: [
+        { startEvent: 0, endEvent: 1, labelId: 0 },
+        { startEvent: 1, endEvent: 3, labelId: 1 },
+      ],
+      weights: [0.3, -0.4, 0.8],
+      l2: 0.2,
+    } as const;
+    const unpacked = evaluatePaperSemiCrfFactorizedNegativeLogLikelihood({
+      ...input,
+      segmentFeatures: (segment) => [{ index: segment.labelId, value: segment.endEvent - segment.startEvent }],
+      transitionFeatures: (currentLabelId, previousLabelId) =>
+        currentLabelId === previousLabelId ? [] : [{ index: 2, value: 1 }],
+    });
+    const packed = evaluatePaperSemiCrfFactorizedNegativeLogLikelihood({
+      ...input,
+      segmentFeatures: (segment) => ({
+        forEachFeature: (visit) => visit(segment.labelId, segment.endEvent - segment.startEvent),
+      }),
+      transitionFeatures: (currentLabelId, previousLabelId) => ({
+        forEachFeature: (visit) => {
+          if (currentLabelId !== previousLabelId) visit(2, 1);
+        },
+      }),
+    });
+
+    expect(packed).toEqual(unpacked);
+  });
+
   it("stays finite for large-magnitude scores by operating in log space", () => {
     const result = evaluatePaperSemiCrfNegativeLogLikelihood({
       eventCount: 3,

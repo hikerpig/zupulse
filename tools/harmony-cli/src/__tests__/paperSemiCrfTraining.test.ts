@@ -67,7 +67,12 @@ describe("paper Semi-CRF corpus training", () => {
     expect(first.report.finalObjective).toBeLessThan(first.report.initialObjective);
     expect(first.report.featureCount).toBeGreaterThan(0);
     expect(parsePaperSemiCrfLinearModel(first.model)).toEqual(first.model);
-    expect(first).toEqual(second);
+    expect(first.model).toEqual(second.model);
+    expect(first.checkpoint).toEqual(second.checkpoint);
+    expect({ ...first.report, performance: undefined }).toEqual({ ...second.report, performance: undefined });
+    expect(first.report.performance.compileMs).toBeGreaterThanOrEqual(0);
+    expect(first.report.performance.objectiveEvaluations).toBeGreaterThan(0);
+    expect(first.report.performance.objectiveRuntimeMs).toBeGreaterThanOrEqual(0);
   });
 
   it("applies L2 once to the corpus objective", () => {

@@ -22,7 +22,7 @@
   - [x] same-author-weight TS parity
   - [ ] fresh author / fresh TS training
     - [x] factorized exact objective
-    - [ ] precompiled sparse segment vectors
+    - [x] precompiled sparse segment vectors
       - object-array cache 在 4.53 GB OS RSS 可复现 OOM；改用 packed offsets + integer indices
       - [x] reuse feature-name index per dictionary
   - [ ] peak RSS、P95 与差异说明

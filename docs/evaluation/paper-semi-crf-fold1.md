@@ -102,3 +102,16 @@ OS maximum RSS 为 4,534,534,144 bytes；使用 16 GB heap 的诊断运行超过
 另已修复 `encodePaperSemiCrfNamedFeatures` 为每个 vector 重建完整 feature-name index 的问题，
 改为按 dictionary identity 复用索引。无缓存 full-fold 零迭代 objective 在 6 分 30 秒后仍未完成，
 已停止；这说明 packed 编译仍是必需项，而不是可选的微优化。
+
+packed 实现使用每条 record 的 `Uint32Array offsets` 与分块 `Uint16Array feature indices/values`，
+并通过 allocation-free visitor 供 exact objective 读取。full fold 零迭代已完成：
+
+- initial objective: `23036.362808627335`
+- model SHA-256: `231896ff08afa8de410ceb5563eb15cd5989e1311a7e02b4a089e73d4ec1c77e`
+- OS maximum RSS: `1,678,409,728` bytes
+- `/usr/bin/time` user CPU: `383.72` seconds
+
+从零迭代 checkpoint resume 一轮后，objective 降到 `15200.869299984884`，gradient L2 norm 为
+`7673.513786403404`；OS maximum RSS 为 `1,761,574,912` bytes，user CPU 为 `463.07` 秒。
+两次 `time` 的 wall clock 分别异常记录为 3688.99 与 1946.61 秒，和交互侧观测不一致，因此不作为
+runtime gate；后续在训练器内用 monotonic clock 分别记录 compile 与 objective runtime。

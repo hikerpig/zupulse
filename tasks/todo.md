@@ -23,12 +23,12 @@
 
 ## Stage 3B — 练习任务
 
-- [ ] P1-04 先写 overview / loop / tracks 导航与焦点测试。
-- [ ] P1-04 复用现有命令实现“设置循环区间”“选择主轨道”“调整速度”。
-- [ ] P1-04 让 Loop 快捷入口直接进入 loop task。
-- [ ] P1-04 统一正常与 disabled/loading 抽屉结构。
-- [ ] P1-04 验证返回、Escape、触发器焦点恢复和音频错误重试。
-- [ ] P1-04 清理 Library / Practice 目标区域的中文英文装饰标题。
+- [x] P1-04 先写 overview / loop / tracks 导航与焦点测试。
+- [x] P1-04 复用现有命令实现“设置循环区间”“选择主轨道”“调整速度”。
+- [x] P1-04 让 Loop 快捷入口直接进入 loop task。
+- [x] P1-04 统一正常与 disabled/loading 抽屉结构。
+- [x] P1-04 验证返回、Escape、触发器焦点恢复和音频错误重试。
+- [x] P1-04 清理 Library / Practice 目标区域的中文英文装饰标题。
 
 ## Stage 4 — 验收与文档
 

@@ -268,16 +268,8 @@
     padding: 4px 4px 12px;
     background: var(--bg-shell);
   }
-  .drawerKicker,
   .drawerTitle {
     margin: 0;
-  }
-  .drawerKicker {
-    color: var(--text-secondary);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
   }
   .drawerTitle {
     margin-top: 2px;
@@ -294,6 +286,21 @@
     font-size: 22px;
     line-height: 1;
   }
+  .drawerBack {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 30px;
+    margin: 0 0 8px -8px;
+    padding: 4px 8px;
+    border-color: transparent;
+    background: transparent;
+    color: var(--text-secondary);
+  }
+  .drawerBack svg {
+    width: 16px;
+    height: 16px;
+  }
   .drawerToggle[aria-expanded="true"] {
     color: var(--accent-primary);
     border-color: var(--accent-primary);
@@ -307,9 +314,6 @@
   .drawerToggle svg {
     width: 16px;
     height: 16px;
-  }
-  .practiceSpeedControl {
-    display: none;
   }
   @keyframes drawer-enter {
     from {
@@ -327,6 +331,38 @@
   .panelShell {
     display: grid;
     gap: 16px;
+  }
+  .taskList {
+    display: grid;
+    gap: 10px;
+  }
+  .taskEntry {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 12px;
+    text-align: left;
+  }
+  .taskEntry > span {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+  }
+  .taskEntry strong {
+    color: var(--text-primary);
+    font-size: 14px;
+  }
+  .taskEntry small {
+    overflow-wrap: anywhere;
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+  .taskEntry svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
   }
   .panelHeader {
     display: flex;
@@ -419,21 +455,6 @@
   .persistenceStatus:not(:empty) {
     color: var(--status-warning-text);
   }
-  .sessionFacts {
-    display: grid;
-    gap: 8px;
-  }
-  .sessionFact {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    color: var(--text-secondary);
-    font-size: 13px;
-  }
-  .sessionFactValue {
-    color: var(--text-primary);
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .practicePanel {
       animation: none;
@@ -501,9 +522,6 @@
       clip: rect(0 0 0 0);
       clip-path: inset(50%);
       white-space: nowrap;
-    }
-    .practiceSpeedControl {
-      display: block;
     }
   }
 }

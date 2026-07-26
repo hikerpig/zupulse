@@ -22,6 +22,8 @@ import { ContextPopup } from "../components/ContextPopup";
 import { persistScoreNavigationMode, useAppStore } from "../app/appStore";
 import styles from "./PlaybackWorkspace.module.css";
 
+type PracticeView = "overview" | "loop" | "tracks";
+
 export function PlaybackWorkspace({
   session,
   children,
@@ -47,6 +49,7 @@ function PlaybackLayout({
 }) {
   const { t } = useTranslation("viewer");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [practiceView, setPracticeView] = useState<PracticeView>("overview");
   const drawerToggleRef = useRef<HTMLButtonElement>(null);
   const drawerCloseRef = useRef<HTMLButtonElement>(null);
   const wasDrawerOpen = useRef(false);
@@ -145,9 +148,14 @@ function PlaybackLayout({
                 : t("playback.setLoop")
             }
             aria-pressed={view.looping}
-            onClick={() =>
-              hasActiveLoop ? dispatch({ type: "set-loop-enabled", enabled: !view.looping }) : setDrawerOpen(true)
-            }
+            onClick={() => {
+              if (hasActiveLoop) {
+                dispatch({ type: "set-loop-enabled", enabled: !view.looping });
+                return;
+              }
+              setPracticeView("loop");
+              setDrawerOpen(true);
+            }}
           >
             <Repeat2 aria-hidden="true" />
           </button>
@@ -190,7 +198,14 @@ function PlaybackLayout({
               {t("playback.retryAudio")}
             </button>
           )}
-          <DrawerToggle buttonRef={drawerToggleRef} open={drawerOpen} onClick={() => setDrawerOpen((open) => !open)} />
+          <DrawerToggle
+            buttonRef={drawerToggleRef}
+            open={drawerOpen}
+            onClick={() => {
+              if (!drawerOpen) setPracticeView("overview");
+              setDrawerOpen((open) => !open);
+            }}
+          />
         </div>
       </section>
       <section className={styles.workspace}>
@@ -199,15 +214,33 @@ function PlaybackLayout({
           <aside id="practice-drawer" className={styles.practicePanel} aria-label={t("playback.practice")}>
             <div className={styles.drawerHeader}>
               <div>
-                <p className={styles.drawerKicker}>{t("playback.practiceKicker")}</p>
-                <h2 className={styles.drawerTitle}>{t("playback.practice")}</h2>
-                <p className={styles.drawerSummary}>
-                  {t("playback.summary", {
-                    track: view.primaryTrackName ?? t("playback.noSelection"),
-                    count: view.trackCount,
-                    speed: view.speedPercent,
-                  })}
-                </p>
+                {practiceView !== "overview" ? (
+                  <button
+                    autoFocus
+                    className={styles.drawerBack}
+                    type="button"
+                    onClick={() => setPracticeView("overview")}
+                  >
+                    <ChevronLeft aria-hidden="true" />
+                    {t("playback.backToPractice")}
+                  </button>
+                ) : null}
+                <h2 className={styles.drawerTitle}>
+                  {practiceView === "loop"
+                    ? t("playback.loopTaskTitle")
+                    : practiceView === "tracks"
+                      ? t("playback.trackTaskTitle")
+                      : t("playback.practice")}
+                </h2>
+                {practiceView === "overview" ? (
+                  <p className={styles.drawerSummary}>
+                    {t("playback.summary", {
+                      track: view.primaryTrackName ?? t("playback.noSelection"),
+                      count: view.trackCount,
+                      speed: view.speedPercent,
+                    })}
+                  </p>
+                ) : null}
               </div>
               <button
                 ref={drawerCloseRef}
@@ -220,232 +253,240 @@ function PlaybackLayout({
               </button>
             </div>
             <div className={styles.panelShell}>
-              <section className={`${styles.panelSection} ${styles.practiceSpeedControl}`}>
-                <div className={styles.panelHeader}>
-                  <p className={styles.panelTitle}>{t("playback.speedTitle")}</p>
-                </div>
-                <div className={styles.panelContent}>
-                  <BpmControl
-                    baseTempo={view.baseTempo}
-                    currentTempo={view.currentTempo}
-                    speedPercent={view.speedPercent}
-                    onCommit={(tempo) => dispatch({ type: "set-score-speed", speed: tempo / view.baseTempo })}
-                  />
-                  {view.soundFont === "error" ? (
-                    <button type="button" onClick={() => dispatch({ type: "retry-soundfont" })}>
-                      {t("playback.retryAudio")}
+              {practiceView === "overview" ? (
+                <>
+                  <section className={styles.panelSection}>
+                    <div className={styles.panelHeader}>
+                      <p className={styles.panelTitle}>{t("playback.speedTitle")}</p>
+                    </div>
+                    <div className={styles.panelContent}>
+                      <BpmControl
+                        baseTempo={view.baseTempo}
+                        currentTempo={view.currentTempo}
+                        speedPercent={view.speedPercent}
+                        onCommit={(tempo) => dispatch({ type: "set-score-speed", speed: tempo / view.baseTempo })}
+                      />
+                      {view.soundFont === "error" ? (
+                        <button type="button" onClick={() => dispatch({ type: "retry-soundfont" })}>
+                          {t("playback.retryAudio")}
+                        </button>
+                      ) : null}
+                    </div>
+                  </section>
+                  <div className={styles.taskList}>
+                    <button className={styles.taskEntry} type="button" onClick={() => setPracticeView("loop")}>
+                      <span>
+                        <strong>{t("playback.loopTaskTitle")}</strong>
+                        <small>
+                          {activeLoop ? loopDisplayLabel(activeLoop, t) : t("playback.loopTaskDescription")}
+                        </small>
+                      </span>
+                      <ChevronRight aria-hidden="true" />
                     </button>
-                  ) : null}
-                </div>
-              </section>
-              <section className={styles.panelSection}>
-                <div className={styles.panelHeader}>
-                  <p className={styles.panelTitle}>{t("playback.loop")}</p>
-                  <label className={styles.toggleRow}>
-                    <input
-                      type="checkbox"
-                      checked={view.looping}
-                      onChange={(event) => dispatch({ type: "set-loop-enabled", enabled: event.currentTarget.checked })}
-                    />
-                    <span>{t("playback.enableLoop")}</span>
-                  </label>
-                </div>
-                <div className={styles.panelContent}>
-                  <div className={styles.buttonRow}>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        dispatch({
-                          type: "set-loop-boundary",
-                          boundary: "start",
-                          position: state.position,
-                        })
-                      }
-                    >
-                      {t("playback.setA")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        dispatch({
-                          type: "set-loop-boundary",
-                          boundary: "end",
-                          position: state.position,
-                        })
-                      }
-                    >
-                      {t("playback.setB")}
-                    </button>
-                    <button type="button" onClick={() => dispatch({ type: "save-loop" })}>
-                      {t("playback.saveLoop")}
+                    <button className={styles.taskEntry} type="button" onClick={() => setPracticeView("tracks")}>
+                      <span>
+                        <strong>{t("playback.trackTaskTitle")}</strong>
+                        <small>
+                          {view.primaryTrackName
+                            ? t("playback.primaryTrackSummary", { track: view.primaryTrackName })
+                            : t("playback.trackTaskDescription")}
+                        </small>
+                      </span>
+                      <ChevronRight aria-hidden="true" />
                     </button>
                   </div>
-                  <label>
-                    <span>{t("playback.snap")}</span>
-                    <select
-                      value={view.loopSnapMode}
-                      onChange={(event) =>
-                        dispatch({
-                          type: "set-loop-snap",
-                          mode: event.currentTarget.value as typeof view.loopSnapMode,
-                        })
-                      }
-                    >
-                      <option value="off">{t("playback.snapOff")}</option>
-                      <option value="beat">{t("playback.snapBeat")}</option>
-                      <option value="measure">{t("playback.snapMeasure")}</option>
-                    </select>
-                  </label>
-                  <label>
-                    <span>{t("playback.pointA")}</span>
-                    <Slider
-                      label={t("playback.loopPointA")}
-                      max={1000}
-                      value={loopValue(state.loopDraft.start?.tick, playback.timeline.durationTicks)}
-                      onValueChange={(value) =>
-                        dispatch({
-                          type: "set-loop-boundary",
-                          boundary: "start",
-                          position: position(value / 1000),
-                        })
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>{t("playback.pointB")}</span>
-                    <Slider
-                      label={t("playback.loopPointB")}
-                      max={1000}
-                      value={loopValue(state.loopDraft.end?.tick, playback.timeline.durationTicks)}
-                      onValueChange={(value) =>
-                        dispatch({
-                          type: "set-loop-boundary",
-                          boundary: "end",
-                          position: position(value / 1000),
-                        })
-                      }
-                    />
-                  </label>
-                  <div className={styles.itemList}>
-                    {view.loops.map((loop) => (
-                      <div className={styles.loopRow} key={loop.id}>
-                        <button type="button" onClick={() => dispatch({ type: "select-loop", loopId: loop.id })}>
-                          {loop.selected ? t("playback.current") : t("playback.select")}
-                        </button>
-                        <input
-                          aria-label={t("playback.loopName")}
-                          value={loopDisplayLabel(loop, t)}
-                          onChange={(event) =>
+                </>
+              ) : null}
+              {practiceView === "loop" ? (
+                <section className={styles.panelSection}>
+                  <div className={styles.panelHeader}>
+                    <p className={styles.panelTitle}>{t("playback.loop")}</p>
+                    <label className={styles.toggleRow}>
+                      <input
+                        type="checkbox"
+                        checked={view.looping}
+                        onChange={(event) =>
+                          dispatch({ type: "set-loop-enabled", enabled: event.currentTarget.checked })
+                        }
+                      />
+                      <span>{t("playback.enableLoop")}</span>
+                    </label>
+                  </div>
+                  <div className={styles.panelContent}>
+                    <div className={styles.buttonRow}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          dispatch({
+                            type: "set-loop-boundary",
+                            boundary: "start",
+                            position: state.position,
+                          })
+                        }
+                      >
+                        {t("playback.setA")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          dispatch({
+                            type: "set-loop-boundary",
+                            boundary: "end",
+                            position: state.position,
+                          })
+                        }
+                      >
+                        {t("playback.setB")}
+                      </button>
+                      <button type="button" onClick={() => dispatch({ type: "save-loop" })}>
+                        {t("playback.saveLoop")}
+                      </button>
+                    </div>
+                    <label>
+                      <span>{t("playback.snap")}</span>
+                      <select
+                        value={view.loopSnapMode}
+                        onChange={(event) =>
+                          dispatch({
+                            type: "set-loop-snap",
+                            mode: event.currentTarget.value as typeof view.loopSnapMode,
+                          })
+                        }
+                      >
+                        <option value="off">{t("playback.snapOff")}</option>
+                        <option value="beat">{t("playback.snapBeat")}</option>
+                        <option value="measure">{t("playback.snapMeasure")}</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>{t("playback.pointA")}</span>
+                      <Slider
+                        label={t("playback.loopPointA")}
+                        max={1000}
+                        value={loopValue(state.loopDraft.start?.tick, playback.timeline.durationTicks)}
+                        onValueChange={(value) =>
+                          dispatch({
+                            type: "set-loop-boundary",
+                            boundary: "start",
+                            position: position(value / 1000),
+                          })
+                        }
+                      />
+                    </label>
+                    <label>
+                      <span>{t("playback.pointB")}</span>
+                      <Slider
+                        label={t("playback.loopPointB")}
+                        max={1000}
+                        value={loopValue(state.loopDraft.end?.tick, playback.timeline.durationTicks)}
+                        onValueChange={(value) =>
+                          dispatch({
+                            type: "set-loop-boundary",
+                            boundary: "end",
+                            position: position(value / 1000),
+                          })
+                        }
+                      />
+                    </label>
+                    <div className={styles.itemList}>
+                      {view.loops.map((loop) => (
+                        <div className={styles.loopRow} key={loop.id}>
+                          <button type="button" onClick={() => dispatch({ type: "select-loop", loopId: loop.id })}>
+                            {loop.selected ? t("playback.current") : t("playback.select")}
+                          </button>
+                          <input
+                            aria-label={t("playback.loopName")}
+                            value={loopDisplayLabel(loop, t)}
+                            onChange={(event) =>
+                              dispatch({
+                                type: "rename-loop",
+                                loopId: loop.id,
+                                label: event.currentTarget.value,
+                              })
+                            }
+                          />
+                          <span>
+                            {t("playback.measureRange", {
+                              start: loop.startMeasureIndex + 1,
+                              end: loop.endMeasureIndex + 1,
+                            })}
+                          </span>
+                          <input
+                            type="number"
+                            min="25"
+                            max="200"
+                            step="5"
+                            value={loop.speedPercent ?? ""}
+                            placeholder={t("playback.defaultSpeed")}
+                            aria-label={t("playback.loopSpeed")}
+                            onChange={(event) => dispatch(loopSpeedCommand(loop.id, event.currentTarget.value))}
+                          />
+                          <button type="button" onClick={() => dispatch({ type: "delete-loop", loopId: loop.id })}>
+                            {t("playback.delete")}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              ) : null}
+              {practiceView === "tracks" ? (
+                <section className={styles.panelSection}>
+                  <div className={styles.panelHeader}>
+                    <p className={styles.panelTitle}>{t("playback.tracks")}</p>
+                  </div>
+                  <div className={`${styles.panelContent} ${styles.itemList}`}>
+                    {view.tracks.map((track) => (
+                      <div className={styles.trackRow} key={track.id}>
+                        <strong>{trackDisplayName(track, t)}</strong>
+                        <Check
+                          label={t("playback.primary")}
+                          type="radio"
+                          name="primary-track"
+                          checked={track.primary}
+                          onChange={() => dispatch({ type: "set-primary-track", trackId: track.id })}
+                        />
+                        <Check
+                          label={t("playback.visible")}
+                          checked={track.additional}
+                          onChange={(checked) =>
                             dispatch({
-                              type: "rename-loop",
-                              loopId: loop.id,
-                              label: event.currentTarget.value,
+                              type: "set-additional-tracks",
+                              trackIds: checked
+                                ? [...new Set([...state.trackState.additionalVisibleTrackIds, track.id])]
+                                : state.trackState.additionalVisibleTrackIds.filter((id) => id !== track.id),
                             })
                           }
                         />
-                        <span>
-                          {t("playback.measureRange", {
-                            start: loop.startMeasureIndex + 1,
-                            end: loop.endMeasureIndex + 1,
-                          })}
-                        </span>
-                        <input
-                          type="number"
-                          min="25"
-                          max="200"
-                          step="5"
-                          value={loop.speedPercent ?? ""}
-                          placeholder={t("playback.defaultSpeed")}
-                          aria-label={t("playback.loopSpeed")}
-                          onChange={(event) => dispatch(loopSpeedCommand(loop.id, event.currentTarget.value))}
+                        <Check
+                          label={t("playback.mute")}
+                          checked={track.muted}
+                          onChange={(muted) => dispatch({ type: "set-track-mute", trackId: track.id, muted })}
                         />
-                        <button type="button" onClick={() => dispatch({ type: "delete-loop", loopId: loop.id })}>
-                          {t("playback.delete")}
-                        </button>
+                        <Check
+                          label={t("playback.solo")}
+                          checked={track.solo}
+                          onChange={(solo) => dispatch({ type: "set-track-solo", trackId: track.id, solo })}
+                        />
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={track.volumePercent}
+                          aria-label={t("playback.volume", { track: trackDisplayName(track, t) })}
+                          onChange={(event) =>
+                            dispatch({
+                              type: "set-track-volume",
+                              trackId: track.id,
+                              volume: Number(event.currentTarget.value) / 100,
+                            })
+                          }
+                        />
                       </div>
                     ))}
                   </div>
-                </div>
-              </section>
-              <section className={styles.panelSection}>
-                <div className={styles.panelHeader}>
-                  <p className={styles.panelTitle}>{t("playback.tracks")}</p>
-                </div>
-                <div className={`${styles.panelContent} ${styles.itemList}`}>
-                  {view.tracks.map((track) => (
-                    <div className={styles.trackRow} key={track.id}>
-                      <strong>{trackDisplayName(track, t)}</strong>
-                      <Check
-                        label={t("playback.primary")}
-                        type="radio"
-                        name="primary-track"
-                        checked={track.primary}
-                        onChange={() => dispatch({ type: "set-primary-track", trackId: track.id })}
-                      />
-                      <Check
-                        label={t("playback.visible")}
-                        checked={track.additional}
-                        onChange={(checked) =>
-                          dispatch({
-                            type: "set-additional-tracks",
-                            trackIds: checked
-                              ? [...new Set([...state.trackState.additionalVisibleTrackIds, track.id])]
-                              : state.trackState.additionalVisibleTrackIds.filter((id) => id !== track.id),
-                          })
-                        }
-                      />
-                      <Check
-                        label={t("playback.mute")}
-                        checked={track.muted}
-                        onChange={(muted) => dispatch({ type: "set-track-mute", trackId: track.id, muted })}
-                      />
-                      <Check
-                        label={t("playback.solo")}
-                        checked={track.solo}
-                        onChange={(solo) => dispatch({ type: "set-track-solo", trackId: track.id, solo })}
-                      />
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={track.volumePercent}
-                        aria-label={t("playback.volume", { track: trackDisplayName(track, t) })}
-                        onChange={(event) =>
-                          dispatch({
-                            type: "set-track-volume",
-                            trackId: track.id,
-                            volume: Number(event.currentTarget.value) / 100,
-                          })
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
-              </section>
-              <section className={styles.panelSection}>
-                <div className={styles.panelHeader}>
-                  <p className={styles.panelTitle}>{t("playback.session")}</p>
-                </div>
-                <div className="panel-content session-facts">
-                  {[
-                    { label: t("playback.factTracks"), value: String(view.trackCount) },
-                    { label: t("playback.factTempo"), value: `${view.speedPercent}%` },
-                    {
-                      label: t("playback.factLoop"),
-                      value: activeLoop ? loopDisplayLabel(activeLoop, t) : t("playback.loopDisabled"),
-                    },
-                    {
-                      label: t("playback.factPrimary"),
-                      value: view.primaryTrackName ?? t("playback.noSelection"),
-                    },
-                  ].map((fact) => (
-                    <div className={styles.sessionFact} key={fact.label}>
-                      <span className={styles.sessionFactLabel}>{fact.label}</span>
-                      <strong className={styles.sessionFactValue}>{fact.value}</strong>
-                    </div>
-                  ))}
-                </div>
-              </section>
+                </section>
+              ) : null}
             </div>
             <p className={styles.persistenceStatus} aria-live="polite">
               {persistenceMessage(view.persistence, t)}
@@ -659,7 +700,6 @@ function disabledPlaybackWorkspace(
           <aside id="practice-drawer" className={styles.practicePanel} aria-label={t("playback.practice")}>
             <div className={styles.drawerHeader}>
               <div>
-                <p className={styles.drawerKicker}>{t("playback.practiceKicker")}</p>
                 <h2 className={styles.drawerTitle}>{t("playback.practice")}</h2>
               </div>
               <button
@@ -673,13 +713,24 @@ function disabledPlaybackWorkspace(
               </button>
             </div>
             <div className={styles.panelShell}>
-              {[t("playback.loop"), t("playback.tracks"), t("playback.session")].map((title) => (
-                <section className={styles.panelSection} key={title}>
-                  <div className={styles.panelHeader}>
-                    <p className={styles.panelTitle}>{title}</p>
-                  </div>
-                </section>
-              ))}
+              <section className={styles.panelSection}>
+                <div className={styles.panelHeader}>
+                  <p className={styles.panelTitle}>{t("playback.speedTitle")}</p>
+                </div>
+                <div className={styles.panelContent}>
+                  <BpmControl baseTempo={120} currentTempo={120} speedPercent={100} disabled />
+                </div>
+              </section>
+              <div className={styles.taskList}>
+                {[t("playback.loopTaskTitle"), t("playback.trackTaskTitle")].map((title) => (
+                  <button className={styles.taskEntry} type="button" key={title} disabled>
+                    <span>
+                      <strong>{title}</strong>
+                    </span>
+                    <ChevronRight aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
             </div>
             <p className={styles.persistenceStatus}>{t("playback.disabledHint")}</p>
           </aside>

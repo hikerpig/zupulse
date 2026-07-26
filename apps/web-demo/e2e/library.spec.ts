@@ -131,15 +131,18 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await page.getByRole("list", { name: "结构化和弦候选" }).getByRole("button").first().click();
   await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("1 个修正 · 已保存");
   await page.getByRole("button", { name: "片段试听" }).click();
+  const previewPosition = page.getByRole("slider", { name: "预览位置" });
   await page.getByRole("button", { name: "播放预览" }).click();
   const audioUnavailable = page.getByRole("alert").filter({ hasText: "试听不可用" });
   const pausePreview = page.getByRole("button", { name: "暂停预览" });
   await expect(pausePreview.or(audioUnavailable)).toBeVisible();
   if (await pausePreview.isVisible()) {
+    // alphaTab reports playing before its AudioWorklet source has finished starting.
+    await page.waitForTimeout(500);
     await pausePreview.click();
     await expect(page.getByRole("button", { name: "播放预览" })).toBeVisible();
     await page.getByRole("combobox", { name: "预览速度" }).selectOption("1.5");
-    await page.getByRole("slider", { name: "预览位置" }).fill("5000");
+    await previewPosition.fill("5000");
     await page.getByRole("button", { name: "循环选中片段" }).click();
   } else {
     await expect(audioUnavailable).toBeVisible();

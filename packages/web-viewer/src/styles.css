@@ -1,6 +1,10 @@
-@layer tokens, base, vendor, components;
+@layer tokens, base, vendor, components, utilities;
 
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import "tailwindcss/utilities.css" layer(utilities) source(none) prefix(tw);
 @import "./styles/tokens.css" layer(tokens);
+@import "./styles/tailwind-theme.css" layer(tokens);
 @import "./styles/common.css" layer(base);
 @import "./styles/vendors/alphaTab.css" layer(vendor);
+@source "./";
+@source inline("tw:hidden tw:bg-surface tw:text-foreground");

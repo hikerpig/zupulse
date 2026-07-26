@@ -24,6 +24,8 @@
 - `0058`–`0063`：iPad 薄 SwiftUI/WKWebView 壳、单一版本化 Bridge、token 二进制数据面、受控网络、
   Zod contract 事实源与构建时 Web 资产。
 - `0064`：在单一 alphaTab 纵向布局上协调连续跟随、屏幕翻页、谱面点击与播放进度。
+- `0065`：共享 Viewer UI 使用受约束的 Tailwind utility layer；运行时 semantic token 与 Base UI
+  所有权保持不变。
 
 ## Proposed
 
@@ -35,6 +37,7 @@
 - `0013`–`0017` 中 Apple Web/Native Shell 交付结构由 Electron Desktop Shell 和 `0032` 取代。
 - `0046` 取代任何把 Viewer Session ID 放入 URL 的早期路由描述。
 - `0048`、`0049`、`0051` 取代临时 Viewer 文件或通用 key-value store 作为馆藏事实源的设计。
+- `0065` 取代 `0039` 中“暂不引入 Tailwind”的局部决定；`0039` 的其余 React 应用壳决策继续有效。
 
 ## 维护规则
 

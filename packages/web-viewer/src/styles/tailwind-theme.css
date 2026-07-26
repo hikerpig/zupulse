@@ -1,0 +1,59 @@
+@theme inline prefix(tw) {
+  --color-app: var(--bg-app);
+  --color-shell: var(--bg-shell);
+  --color-surface: var(--bg-panel);
+  --color-surface-muted: var(--bg-panel-muted);
+  --color-elevated: var(--bg-elevated);
+  --color-control: var(--bg-control);
+  --color-control-active: var(--bg-control-active);
+  --color-score: var(--bg-score);
+  --color-foreground: var(--text-primary);
+  --color-muted: var(--text-secondary);
+  --color-subtle: var(--text-tertiary);
+  --color-on-accent: var(--text-on-accent);
+  --color-border: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-accent: var(--accent-primary);
+  --color-accent-hover: var(--accent-primary-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-ready: var(--status-ready-text);
+  --color-ready-surface: var(--status-ready-bg);
+  --color-warning: var(--status-warning-text);
+  --color-warning-surface: var(--status-warning-bg);
+  --color-danger: var(--status-error-text);
+  --color-danger-surface: var(--status-error-bg);
+  --color-signal-blue: var(--signal-blue);
+  --color-signal-pink: var(--signal-pink);
+  --color-signal-purple: var(--signal-purple);
+  --color-signal-yellow: var(--signal-yellow);
+
+  --font-ui: var(--font-family-ui);
+  --font-technical: var(--font-family-technical);
+
+  --text-eyebrow: var(--font-size-eyebrow);
+  --text-caption: var(--font-size-caption);
+  --text-technical: var(--font-size-technical);
+  --text-body: var(--font-size-body);
+  --text-lead: var(--font-size-lead);
+  --text-title-sm: var(--font-size-title-sm);
+  --text-title-md: var(--font-size-title-md);
+  --text-title-lg: var(--font-size-title-lg);
+
+  --spacing-1: var(--space-1);
+  --spacing-2: var(--space-2);
+  --spacing-3: var(--space-3);
+  --spacing-4: var(--space-4);
+  --spacing-6: var(--space-6);
+  --spacing-8: var(--space-8);
+  --spacing-12: var(--space-12);
+  --spacing-16: var(--space-16);
+
+  --radius-control: var(--radius-sm);
+  --radius-panel: var(--radius-md);
+  --radius-overlay: var(--radius-lg);
+
+  --shadow-workbench: var(--shadow-panel);
+  --shadow-overlay: var(--shadow-elevated);
+
+  --ease-ui: var(--motion-ease-standard);
+}

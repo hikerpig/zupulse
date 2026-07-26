@@ -106,7 +106,7 @@
   }
 
   .statDot[data-origin="source"] {
-    background: var(--accent-secondary);
+    background: var(--signal-blue);
   }
 
   .statDot[data-origin="analysis"] {
@@ -154,7 +154,7 @@
   }
 
   .list button[data-origin="source"]::before {
-    background: var(--accent-secondary);
+    background: var(--signal-blue);
   }
 
   .list button[data-origin="analysis"]::before {

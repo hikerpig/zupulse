@@ -178,6 +178,10 @@ Zupulse 不是营销落地页、SaaS 管理后台、赛博音乐概念图或硬�
 - `.design_library/zupulse-te-braun-theme` 是上游主题资料库，不直接导入应用或覆盖运行时 CSS。
 - `packages/web-viewer/src/styles/tokens.css` 是当前运行时 token 事实源。
 - `.design_library/zupulse-te-braun-theme/runtime-token-map.json` 只记录已经正式采用的原始 token 到运行时语义 token 映射。
+- Tailwind 只把运行时语义 token 投影为受约束 utility，不保存独立产品色值，也不改变本文件、
+  theme library 与运行时 token 的事实源顺序。
+- Tailwind 默认 palette、font、radius 和 shadow 不属于 Zupulse 设计系统；产品组件只能消费批准的
+  semantic utility。alphaTab、动态音乐可视化和复杂几何样式可以继续直接消费运行时 CSS variable。
 - `check:design` 验证入口文件和映射不漂移，不负责评价所有视觉质量。
 - 不自动生成本文件；token 差异可以自动检查，产品设计判断由人维护。
 

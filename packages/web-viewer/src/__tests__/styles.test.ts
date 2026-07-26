@@ -133,16 +133,28 @@ describe("alphaTab playback cursor styles", () => {
     expect(`${appCss}\n${workspaceCss}\n${libraryCss}`).toContain("env(safe-area-inset-bottom)");
   });
 
-  it("keeps the public stylesheet limited to common and vendor styles", async () => {
-    const [entryCss, viewerSource, librarySource, workspaceSource, sliderSource] = await Promise.all([
+  it("keeps the public stylesheet layered with constrained Tailwind utilities and no Preflight", async () => {
+    const [entryCss, themeCss, viewerSource, librarySource, workspaceSource, sliderSource] = await Promise.all([
       source("../styles.css"),
+      source("../styles/tailwind-theme.css"),
       source("../app/pages/ViewerPage.tsx"),
       source("../features/SheetLibrary.tsx"),
       source("../features/PlaybackWorkspace.tsx"),
       source("../components/Slider.tsx"),
     ]);
 
-    expect(entryCss).toMatch(/@layer tokens, base, vendor, components;/);
+    expect(entryCss).toMatch(/@layer tokens, base, vendor, components, utilities;/);
+    expect(entryCss).toMatch(/@import "tailwindcss\/utilities\.css" layer\(utilities\) source\(none\) prefix\(tw\);/);
+    expect(entryCss).toMatch(/@import "\.\/styles\/tailwind-theme\.css" layer\(tokens\);/);
+    expect(entryCss).not.toContain("tailwindcss/preflight.css");
+    expect(entryCss).not.toContain('@import "tailwindcss";');
+    expect(entryCss).toContain('@source "./";');
+    expect(entryCss).toContain('@source inline("tw:hidden tw:bg-surface tw:text-foreground");');
+    expect(themeCss).toContain("--color-surface: var(--bg-panel);");
+    expect(themeCss).toContain("--color-foreground: var(--text-primary);");
+    expect(themeCss).toContain("--radius-control: var(--radius-sm);");
+    expect(themeCss).toContain("--shadow-overlay: var(--shadow-elevated);");
+    expect(themeCss).not.toMatch(/#[\da-f]{3,8}/i);
     expect(entryCss).toMatch(/@import "\.\/styles\/tokens\.css" layer\(tokens\);/);
     expect(entryCss).toMatch(/@import "\.\/styles\/common\.css" layer\(base\);/);
     expect(entryCss).toMatch(/@import "\.\/styles\/vendors\/alphaTab\.css" layer\(vendor\);/);

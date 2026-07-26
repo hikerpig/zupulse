@@ -101,7 +101,7 @@
     display: grid;
     place-items: center;
     padding: 24px;
-    background: var(--bg-primary);
+    background: var(--bg-app);
   }
   .unavailableWorkspace {
     width: min(100%, 680px);

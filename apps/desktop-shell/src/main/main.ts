@@ -81,9 +81,8 @@ if (!hasSingleInstanceLock) {
 }
 
 async function startDesktopApp(): Promise<void> {
-  if (process.platform === "darwin" && !app.isPackaged) {
-    app.dock.setIcon(getRuntimeIconPath());
-  }
+  const dock = process.platform === "darwin" && !app.isPackaged ? app.dock : undefined;
+  if (dock) dock.setIcon(getRuntimeIconPath());
   const rendererRoot = path.join(__dirname, "../renderer");
   const userData = app.getPath("userData");
   const localePreferenceStore = new LocalePreferenceStore(userData);

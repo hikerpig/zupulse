@@ -160,6 +160,11 @@ export async function evaluatePaperSemiCrfFile(options: {
     ...(options.allowFinal === undefined ? {} : { allowFinal: options.allowFinal }),
   });
   const runtimeMs = performance.now() - startedAt;
+  const sortedRecordRuntimeMs = evaluated.recordPerformance.map((record) => record.runtimeMs).sort((a, b) => a - b);
+  const p95RecordRuntimeMs =
+    sortedRecordRuntimeMs.length === 0
+      ? 0
+      : sortedRecordRuntimeMs[Math.max(0, Math.ceil(sortedRecordRuntimeMs.length * 0.95) - 1)]!;
   const report = {
     schemaVersion: "paper-semi-crf-evaluation-report-v1",
     command: "paper-semi-crf-eval" as const,
@@ -170,6 +175,8 @@ export async function evaluatePaperSemiCrfFile(options: {
     metrics: evaluated.metrics,
     performance: {
       runtimeMs,
+      p95RecordRuntimeMs,
+      records: evaluated.recordPerformance,
       rssBytesBefore: rssBefore,
       rssBytesAfter: process.memoryUsage.rss(),
     },

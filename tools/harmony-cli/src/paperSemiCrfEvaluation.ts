@@ -28,6 +28,7 @@ export function evaluatePaperSemiCrfRecords(input: {
 }): {
   metrics: PaperSemiCrfEvaluationMetrics;
   predictions: Array<{ id: string; segments: PaperSemiCrfSegment[] }>;
+  recordPerformance: Array<{ id: string; eventCount: number; runtimeMs: number }>;
 } {
   const records = parsePaperSemiCrfEvaluationRecords(input.records, {
     ...(input.allowFinal === undefined ? {} : { allowFinal: input.allowFinal }),
@@ -53,7 +54,9 @@ export function evaluatePaperSemiCrfRecords(input: {
   let predictedSegments = 0;
   let goldSegments = 0;
   const labelIds = new Map(model.labels.map((label, index) => [label, index]));
+  const recordPerformance: Array<{ id: string; eventCount: number; runtimeMs: number }> = [];
   const predictions = records.records.map((record) => {
+    const startedAt = performance.now();
     const decoded = decodePaperSemiCrf({
       eventCount: record.events.length,
       labelCount: labels.length,
@@ -64,6 +67,11 @@ export function evaluatePaperSemiCrfRecords(input: {
         dictionary,
         weights: model.weights,
       }),
+    });
+    recordPerformance.push({
+      id: record.id,
+      eventCount: record.events.length,
+      runtimeMs: performance.now() - startedAt,
     });
     const gold = record.targetSegments.map((segment) => ({
       startEvent: segment.startEvent,
@@ -101,6 +109,7 @@ export function evaluatePaperSemiCrfRecords(input: {
       },
     },
     predictions,
+    recordPerformance,
   };
 }
 

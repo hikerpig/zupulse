@@ -42,13 +42,54 @@ model 有 90 labels、423 retained features，SHA-256 为
 | Segment recall    | 71.48%          | 72.51%                  | +1.03pp |
 | Segment F1        | 72.85%          | 73.39%                  | +0.54pp |
 
-结果满足规格中 ±2pp 的 same-weight parity 门槛。当前仍有 3 个 exact-segment 差异需要在 fresh
-TypeScript training 前定位，但不会用 postprocess 或 rule prior 改写 CRF 路径。
+结果满足规格中 ±2pp 的 same-weight parity 门槛。预测路径差异只出现在 `003109b`：events 58–60
+由作者的 `C:maj` 变为 TS 的 `A:min`，events 63–67 由 `C:maj` 变为 `G:maj`。这 8 个 event-level
+path differences 恰好带来 +3 correct events；TS 将作者的一个长 segment 拆成五个局部 segments，
+解释了 predicted segment +4 和 correct segment +3。
+
+用归档权重重评分这两个完整路径时，TS scorer 认为 TS path 高 `84.18991557221852`，远大于浮点
+tie 范围。差异主要来自拆段后重复激活的 coverage、segment-duration 与 chord-bigram features。因此
+该偏差已定位为 candidate-path feature firing semantics，而不是 label order、weight order、Viterbi
+tie-break 或数值精度。gold-path activated feature-name 集合完全一致并不足以证明所有 candidate
+vectors 的 multiplicity 一致；这是 same-weight parity 仍非逐路径完全一致的明确边界。
 
 本次 6 首解码的 records SHA-256 为
 `31e5827f3070de15a011be745aff09452d65fc67f07d186a1f02715fbd9eb175`；总 runtime 为
-49.45 秒。进程内 RSS 采样从 235,798,528 bytes 到 349,814,784 bytes。该数值不是操作系统级 peak
-RSS；最终报告仍需用外部进程测量补充 peak 与逐曲 P95。
+49.45 秒。进程内 RSS 采样从 235,798,528 bytes 到 349,814,784 bytes。
+
+## Fresh TypeScript fold 1
+
+作者模型声明 `L2 param: 0.125`。最终 fresh TS run 使用相同的 54-song train split、423 retained
+features、max span 20、`l2=0.125`，从零权重运行确定性 L-BFGS 165 iterations。不能将此前
+`l2=1` 的性能实验当作复现模型。
+
+| 指标              | Author archived | Fresh TypeScript | 差值    |
+| ----------------- | --------------- | ---------------- | ------- |
+| Event correct     | 454 / 563       | 455 / 563        | +1      |
+| Event accuracy    | 80.64%          | 80.82%           | +0.18pp |
+| Segment correct   | 208             | 209              | +1      |
+| Segment predicted | 280             | 280              | 0       |
+| Segment precision | 74.29%          | 74.64%           | +0.35pp |
+| Segment recall    | 71.48%          | 71.82%           | +0.34pp |
+| Segment F1        | 72.85%          | 73.20%           | +0.35pp |
+
+模型 SHA-256 为 `41948b59199e0037a7366f6436b2db39b88c39bac3c4d34df58d77ac80d39ac8`。
+objective 从 `23036.362808627335` 降至 `1667.7855816624083`；165 iterations 共执行 196 次
+objective evaluation。最终 gradient L2 norm 为 `41.964534524223474`，因此这是和作者停止轮数对齐、
+指标已过门槛的 preregistered checkpoint，不宣称满足本实现的 gradient convergence。
+
+训练 OS maximum RSS 为 `1,759,363,072` bytes。冻结模型的 6-song evaluation wall runtime 为
+51.51 秒，OS maximum RSS 为 `375,767,040` bytes；逐曲 decode P95（nearest-rank）为
+15,886.44 ms。逐曲 runtime 为：
+
+| Record                         | Events | Runtime ms |
+| ------------------------------ | -----: | ---------: |
+| `003306b`                      |    148 |   15886.44 |
+| `013705channotated_events.xml` |     64 |    4936.96 |
+| `002806b`                      |     81 |    6588.96 |
+| `005708b`                      |     70 |    5440.06 |
+| `003109b`                      |    114 |   10887.81 |
+| `001606b`                      |     86 |    7018.41 |
 
 ## Commands
 
@@ -70,14 +111,20 @@ pnpm -s harmony:cli paper-semi-crf-import-author-model <author-fold1-model.txt> 
 pnpm -s harmony:cli paper-semi-crf-eval /tmp/zupulse-paper-semi-crf-test1.json \
   --model /tmp/zupulse-paper-semi-crf-author-fold1-model.json \
   --output /tmp/zupulse-paper-semi-crf-author-model-ts-eval1.json
+
+pnpm -s harmony:cli paper-semi-crf-train /tmp/zupulse-paper-semi-crf-train1.json \
+  --feature-counts <author-repo>/feature_count1.txt \
+  --max-iterations 165 --min-feature-count 4 --l2 0.125 \
+  --output /tmp/zupulse-paper-semi-crf-fresh-fold1-model-l2-0125-iter165.json \
+  --checkpoint /tmp/zupulse-paper-semi-crf-fresh-fold1-checkpoint-l2-0125-iter165.json \
+  --report /tmp/zupulse-paper-semi-crf-fresh-fold1-train-report-l2-0125-iter165.json
 ```
 
 ## Remaining
 
-- 完成 fresh TypeScript fold 1 training，不能以作者归档权重替代。
-- 解释 same-weight 的 3 个 segment / 3 个 event 差异。
-- 使用同一冻结模型记录逐曲 runtime、P95 与 OS peak RSS。
-- 完成后再进入批准的 current-corpus comparison。
+- 进入批准的 current-corpus comparison。
+- candidate-path feature multiplicity 的逐模板 Java parity 可作为后续研究改进，但不影响已通过的
+  same-weight/fresh ±2pp reproduction gates。
 
 ### Fresh TypeScript training performance checkpoint
 

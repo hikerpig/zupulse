@@ -111,9 +111,9 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
   - Dependencies: Tasks 4-6
   - Files: `tools/harmony-cli/src/paper-semi-crf-*.ts`、相邻测试、CLI docs。
   - Scope: Medium
-- [ ] Task 8: 运行 BaCh reference fold 1、TypeScript parity 与完整报告。
+- [x] Task 8: 运行 BaCh reference fold 1、TypeScript parity 与完整报告。
   - [x] same-author-weight TypeScript parity：event 81.17%、segment F1 73.39%，均在作者归档 ±2pp 内。
-  - [ ] fresh author / fresh TypeScript fold 1 training parity。
+  - [x] fresh author / fresh TypeScript fold 1 training parity。
     - [x] factorized objective 与 generic objective/gradient tiny parity。
     - [x] 预编译 sparse segment vectors，消除每次 objective 的重复 feature extraction。
       - object-array 原型已否决：139.87 秒后在 4.53 GB OS RSS 触发默认 V8 heap OOM；必须使用
@@ -121,7 +121,7 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
       - feature dictionary index 已改为按 dictionary identity 复用；无缓存 objective 超过 6 分 30 秒，
         packed 编译仍为阻塞项。
       - packed full-fold objective 已完成，RSS 1.68 GB；一轮 objective 从 23036.36 降至 15200.87。
-  - [ ] OS peak RSS、逐曲 runtime P95 与剩余 3-event/3-segment 差异说明。
+  - [x] OS peak RSS、逐曲 runtime P95 与剩余 3-event/3-segment 差异说明。
   - Acceptance: 报告 event accuracy、segment P/R/F、峰值内存和 P95 runtime；差异超过规格门槛时给出可复现原因。
   - Verification: frozen report hashes and commands; `pnpm verify`.
   - Dependencies: Task 7

@@ -61,10 +61,19 @@ describe("paper Semi-CRF evaluation", () => {
       maxIterations: 20,
     });
 
-    expect(evaluatePaperSemiCrfRecords({ records: records("tune"), model: trained.model }).metrics).toEqual({
+    const evaluated = evaluatePaperSemiCrfRecords({ records: records("tune"), model: trained.model });
+    expect(evaluated.metrics).toEqual({
       events: { correct: 1, total: 1, accuracy: 1 },
       segments: { correct: 1, predicted: 1, gold: 1, precision: 1, recall: 1, f1: 1 },
     });
+    expect(evaluated.recordPerformance).toEqual([
+      {
+        id: "tune-c-major",
+        eventCount: 1,
+        runtimeMs: expect.any(Number),
+      },
+    ]);
+    expect(evaluated.recordPerformance[0]!.runtimeMs).toBeGreaterThanOrEqual(0);
   });
 
   it("rejects a model whose label inventory differs from the records", () => {

@@ -65,12 +65,18 @@ export type PaperSemiCrfFeature = {
   value: number;
 };
 
-export type PaperSemiCrfFeatureProvider = (input: PaperSemiCrfLocalPotentialInput) => readonly PaperSemiCrfFeature[];
-export type PaperSemiCrfSegmentFeatureProvider = (segment: PaperSemiCrfSegment) => readonly PaperSemiCrfFeature[];
+export type PaperSemiCrfPackedFeatures = {
+  forEachFeature: (visit: (index: number, value: number) => void) => void;
+};
+
+export type PaperSemiCrfSparseFeatures = readonly PaperSemiCrfFeature[] | PaperSemiCrfPackedFeatures;
+
+export type PaperSemiCrfFeatureProvider = (input: PaperSemiCrfLocalPotentialInput) => PaperSemiCrfSparseFeatures;
+export type PaperSemiCrfSegmentFeatureProvider = (segment: PaperSemiCrfSegment) => PaperSemiCrfSparseFeatures;
 export type PaperSemiCrfTransitionFeatureProvider = (
   currentLabelId: number,
   previousLabelId: number,
-) => readonly PaperSemiCrfFeature[];
+) => PaperSemiCrfSparseFeatures;
 
 type PaperSemiCrfLatticeShape = {
   eventCount: number;
@@ -230,24 +236,19 @@ export function evaluatePaperSemiCrfFactorizedNegativeLogLikelihood(
 
 type ScoredLocal = {
   score: number;
-  features: readonly PaperSemiCrfFeature[];
+  features: PaperSemiCrfSparseFeatures;
 };
 
 type LinearLocalScorer = (input: PaperSemiCrfLocalPotentialInput) => ScoredLocal;
 
-function scoreSparseFeatures(weights: readonly number[], features: readonly PaperSemiCrfFeature[]): ScoredLocal {
+function scoreSparseFeatures(weights: readonly number[], features: PaperSemiCrfSparseFeatures): ScoredLocal {
   let score = 0;
-  for (const feature of features) {
-    if (
-      !Number.isSafeInteger(feature.index) ||
-      feature.index < 0 ||
-      feature.index >= weights.length ||
-      !Number.isFinite(feature.value)
-    ) {
+  forEachSparseFeature(features, (index, value) => {
+    if (!Number.isSafeInteger(index) || index < 0 || index >= weights.length || !Number.isFinite(value)) {
       throw new Error("invalid paper semi-CRF feature");
     }
-    score += weights[feature.index]! * feature.value;
-  }
+    score += weights[index]! * value;
+  });
   if (!Number.isFinite(score)) throw new Error("non-finite paper semi-CRF potential");
   return { score, features };
 }
@@ -266,17 +267,12 @@ function createLinearLocalScorer(
     if (cached) return cached;
     const features = featureProvider(input);
     let score = 0;
-    for (const feature of features) {
-      if (
-        !Number.isSafeInteger(feature.index) ||
-        feature.index < 0 ||
-        feature.index >= weights.length ||
-        !Number.isFinite(feature.value)
-      ) {
+    forEachSparseFeature(features, (index, value) => {
+      if (!Number.isSafeInteger(index) || index < 0 || index >= weights.length || !Number.isFinite(value)) {
         throw new Error("invalid paper semi-CRF feature");
       }
-      score += weights[feature.index]! * feature.value;
-    }
+      score += weights[index]! * value;
+    });
     if (!Number.isFinite(score)) throw new Error("non-finite paper semi-CRF potential");
     const scored = { score, features };
     cache.set(key, scored);
@@ -476,8 +472,21 @@ function accumulateExpectedCounts(
   }
 }
 
-function addFeatureCounts(counts: number[], features: readonly PaperSemiCrfFeature[], scale: number): void {
-  for (const feature of features) counts[feature.index]! += feature.value * scale;
+function addFeatureCounts(counts: number[], features: PaperSemiCrfSparseFeatures, scale: number): void {
+  forEachSparseFeature(features, (index, value) => {
+    counts[index]! += value * scale;
+  });
+}
+
+function forEachSparseFeature(
+  features: PaperSemiCrfSparseFeatures,
+  visit: (index: number, value: number) => void,
+): void {
+  if (Array.isArray(features)) {
+    for (const feature of features) visit(feature.index, feature.value);
+    return;
+  }
+  (features as PaperSemiCrfPackedFeatures).forEachFeature(visit);
 }
 
 function validateLinearLattice(input: PaperSemiCrfLatticeShape): void {

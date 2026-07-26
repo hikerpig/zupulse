@@ -25,6 +25,8 @@ export type PaperSemiCrfFeatureDictionary = {
 
 export type PaperSemiCrfNamedFeatureProvider = (input: PaperSemiCrfLocalPotentialInput) => string[];
 
+const featureDictionaryIndices = new WeakMap<PaperSemiCrfFeatureDictionary, ReadonlyMap<string, number>>();
+
 export function createPaperSemiCrfNamedFeatureProvider(input: {
   events: readonly PaperSemiCrfEvent[];
   labels: readonly PaperSemiCrfSupportedLabel[];
@@ -119,7 +121,11 @@ export function encodePaperSemiCrfNamedFeatures(
   dictionary: PaperSemiCrfFeatureDictionary,
   featureNames: readonly string[],
 ): PaperSemiCrfFeature[] {
-  const indices = new Map(dictionary.featureNames.map((name, index) => [name, index]));
+  let indices = featureDictionaryIndices.get(dictionary);
+  if (indices === undefined) {
+    indices = new Map(dictionary.featureNames.map((name, index) => [name, index]));
+    featureDictionaryIndices.set(dictionary, indices);
+  }
   const counts = new Map<number, number>();
   for (const name of featureNames) {
     const index = indices.get(name);

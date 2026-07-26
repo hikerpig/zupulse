@@ -116,6 +116,10 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
   - [ ] fresh author / fresh TypeScript fold 1 training parity。
     - [x] factorized objective 与 generic objective/gradient tiny parity。
     - [ ] 预编译 sparse segment vectors，消除每次 objective 的重复 feature extraction。
+      - object-array 原型已否决：139.87 秒后在 4.53 GB OS RSS 触发默认 V8 heap OOM；必须使用
+        packed offsets + integer indices。
+      - feature dictionary index 已改为按 dictionary identity 复用；无缓存 objective 超过 6 分 30 秒，
+        packed 编译仍为阻塞项。
   - [ ] OS peak RSS、逐曲 runtime P95 与剩余 3-event/3-segment 差异说明。
   - Acceptance: 报告 event accuracy、segment P/R/F、峰值内存和 P95 runtime；差异超过规格门槛时给出可复现原因。
   - Verification: frozen report hashes and commands; `pnpm verify`.

@@ -93,3 +93,12 @@ log-partition、target score 与 gradient 和 generic 实现逐项一致到 `1e-
 6 分钟内未完成，RSS 稳定在约 541 MB；采样显示主成本已经转移到每次 objective 重建约 900 万个
 segment-label sparse vectors。该 benchmark 已停止。下一实现切片会在 optimizer 前编译这些与权重无关的
 vectors，并让 line search 复用；不能用 beam、Top-K 或 postprocess 绕过 exact objective。
+
+稠密编号但保留 JavaScript feature-object arrays 的原型在默认 V8 heap 下运行 139.87 秒后 OOM，
+OS maximum RSS 为 4,534,534,144 bytes；使用 16 GB heap 的诊断运行超过 4 分 30 秒仍未完成，已停止。
+因此该原型不作为实现提交。下一版必须使用 packed offsets + integer feature indices，避免为约 900
+万个 segment-label vector 及其 feature 创建独立 JavaScript 对象。
+
+另已修复 `encodePaperSemiCrfNamedFeatures` 为每个 vector 重建完整 feature-name index 的问题，
+改为按 dictionary identity 复用索引。无缓存 full-fold 零迭代 objective 在 6 分 30 秒后仍未完成，
+已停止；这说明 packed 编译仍是必需项，而不是可选的微优化。

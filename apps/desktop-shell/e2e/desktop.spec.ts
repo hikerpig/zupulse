@@ -9,7 +9,9 @@ const musicXmlFixture = fileURLToPath(
   new URL("../../../test-fixtures/musicxml/generated/single-voice.musicxml", import.meta.url),
 );
 const mxlFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/generated/simple.mxl", import.meta.url));
-const reviewedFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/K331-3_reviewed.mxl", import.meta.url));
+const harmonySelectionFixture = fileURLToPath(
+  new URL("../../../test-fixtures/musicxml/generated/harmony-selection.musicxml", import.meta.url),
+);
 
 async function launch(userData: string): Promise<ElectronApplication> {
   try {
@@ -219,12 +221,12 @@ test("opens a saved MusicXML Studio document", async () => {
   }
 });
 
-test("synchronizes a reviewed Studio selection and closes its runtime", async () => {
-  const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-reviewed-studio-"));
+test("synchronizes a Studio selection and closes its runtime", async () => {
+  const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-selection-studio-"));
   const app = await launch(userData);
   try {
     const window = await app.firstWindow();
-    await chooseFixture(app, reviewedFixture);
+    await chooseFixture(app, harmonySelectionFixture);
     await window.getByRole("button", { name: "Import score" }).first().click();
     await window.getByRole("link", { name: "Harmony analysis" }).click();
     await expect(window.getByRole("status", { name: "Analysis document status" })).toContainText("Saved", {

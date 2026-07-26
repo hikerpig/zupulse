@@ -83,6 +83,7 @@ export const zhCN = {
       label: "导入汇总：新增 {{created}}，已存在 {{existing}}，失败 {{failed}}，未开始 {{cancelled}}",
       running: "正在导入曲谱",
       complete: "导入完成",
+      compactCreated: "{{title}} 已加入曲谱库",
       progress: "已处理 {{processed}} / {{total}}",
       cancelPending: "取消未开始项",
       close: "关闭",

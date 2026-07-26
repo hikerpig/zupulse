@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Menu } from "@base-ui/react/menu";
 import { Download, MoreHorizontal, PenLine, Star, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -385,6 +385,25 @@ function ImportSummary({
   const created = summary.results.filter((item) => item.status === "created");
   const existing = summary.results.filter((item) => item.status === "existing");
   const failed = summary.results.filter((item) => item.status === "failed");
+  const compactResult =
+    !summary.running && summary.total === 1 && summary.cancelled === 0 && summary.results.length === 1
+      ? summary.results[0]
+      : undefined;
+  const compact = compactResult?.status === "created";
+  useEffect(() => {
+    if (!compact) return;
+    const timer = window.setTimeout(onDismiss, 4000);
+    return () => window.clearTimeout(timer);
+  }, [compact, onDismiss]);
+  if (compact && compactResult.status === "created")
+    return (
+      <section className={styles.importSummaryCompact} role="status" aria-live="polite">
+        <span>{t("importSummary.compactCreated", { title: compactResult.score.title })}</span>
+        <button type="button" aria-label={t("importSummary.close")} onClick={onDismiss}>
+          {t("importSummary.close")}
+        </button>
+      </section>
+    );
   return (
     <section
       className={styles.importSummary}

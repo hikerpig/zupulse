@@ -125,6 +125,29 @@
     background: var(--bg-panel);
     box-shadow: var(--shadow-soft);
   }
+  .importSummaryCompact {
+    width: min(1180px, calc(100% - 48px));
+    margin: 12px auto 0;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 10px 7px 12px;
+    border: 1px solid var(--status-ready-text);
+    border-radius: var(--radius-sm);
+    background: var(--status-ready-bg);
+    color: var(--status-ready-text);
+    font-size: 12px;
+  }
+  .importSummaryCompact button {
+    min-height: 28px;
+    padding: 0 8px;
+    border-color: transparent;
+    background: transparent;
+    color: inherit;
+    box-shadow: none;
+  }
   .importSummaryHeader,
   .importSummaryHeader > div,
   .importSummaryCounts {
@@ -526,6 +549,11 @@
     .libraryStats {
       margin: 12px max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
       width: auto;
+    }
+    .importSummary,
+    .importSummaryCompact {
+      width: auto;
+      margin-inline: max(16px, env(safe-area-inset-left));
     }
   }
 }

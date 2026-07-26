@@ -16,10 +16,10 @@
 
 ## Stage 3A — 导入反馈
 
-- [ ] P1-03 先写单文件纯新增与完整汇总分类测试。
-- [ ] P1-03 实现 compact success 和 4 秒自动 dismiss / cleanup。
-- [ ] P1-03 保证 running、batch、existing、failed、cancelled 不自动消失。
-- [ ] P1-03 覆盖 live region、手动关闭与失败详情默认展开。
+- [x] P1-03 先写单文件纯新增与完整汇总分类测试。
+- [x] P1-03 实现 compact success 和 4 秒自动 dismiss / cleanup。
+- [x] P1-03 保证 running、batch、existing、failed、cancelled 不自动消失。
+- [x] P1-03 覆盖 live region、手动关闭与失败详情默认展开。
 
 ## Stage 3B — 练习任务
 

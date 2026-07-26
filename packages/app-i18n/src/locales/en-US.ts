@@ -87,6 +87,7 @@ export const enUS = {
         "Import summary: {{created}} added, {{existing}} already present, {{failed}} failed, {{cancelled}} not started",
       running: "Importing scores",
       complete: "Import complete",
+      compactCreated: "{{title}} was added to the Library",
       progress: "Processed {{processed}} / {{total}}",
       cancelPending: "Cancel pending items",
       close: "Close",

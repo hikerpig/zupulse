@@ -1,8 +1,6 @@
 import {
-  createPaperSemiCrfFeatureDictionary,
-  createPaperSemiCrfFeatureProvider,
+  createPaperSemiCrfFactorizedLinearPotential,
   createPaperSemiCrfLabelInventory,
-  createPaperSemiCrfLinearPotential,
   decodePaperSemiCrf,
   parsePaperSemiCrfLinearModel,
   type PaperSemiCrfLinearModel,
@@ -45,7 +43,10 @@ export function evaluatePaperSemiCrfRecords(input: {
     throw new Error("model maxSegmentLength must match evaluation records");
   }
   const labels = supportedLabels(model.labels);
-  const dictionary = createPaperSemiCrfFeatureDictionary(model.featureNames);
+  const dictionary = {
+    featureVersion: model.featureVersion,
+    featureNames: model.featureNames,
+  };
   let correctEvents = 0;
   let totalEvents = 0;
   let correctSegments = 0;
@@ -53,12 +54,16 @@ export function evaluatePaperSemiCrfRecords(input: {
   let goldSegments = 0;
   const labelIds = new Map(model.labels.map((label, index) => [label, index]));
   const predictions = records.records.map((record) => {
-    const features = createPaperSemiCrfFeatureProvider({ events: record.events, labels, dictionary });
     const decoded = decodePaperSemiCrf({
       eventCount: record.events.length,
       labelCount: labels.length,
       maxSegmentLength: model.maxSegmentLength,
-      potential: createPaperSemiCrfLinearPotential(model.weights, features),
+      potential: createPaperSemiCrfFactorizedLinearPotential({
+        events: record.events,
+        labels,
+        dictionary,
+        weights: model.weights,
+      }),
     });
     const gold = record.targetSegments.map((segment) => ({
       startEvent: segment.startEvent,

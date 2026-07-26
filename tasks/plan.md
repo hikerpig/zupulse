@@ -91,10 +91,10 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
 
 ### Checkpoint: Faithful Core
 
-- [ ] Reference-selected songs 的 event count、gold segments 与 feature activations 匹配。
+- [x] Reference-selected songs 的 event count、gold segments 与 feature activations 匹配。
   - [x] BaCh fold 1 train event count 5107、gold segments 2801，与作者归档逐项一致。
   - [x] BaCh fold 1 test event count 563、gold segments 291，并通过完整 records schema。
-  - [ ] 对齐 selected-song feature activations/counts。
+  - [x] 54 首 gold paths 激活 598 个 feature names；与作者 fresh/archived 集合交集 598、差集 0。
 - [x] Harmony module tests and `pnpm verify:fast` pass.
 - [x] Freeze feature and label contract before corpus training.
 
@@ -112,6 +112,9 @@ paper-compatible Semi-CRF 核心，再接入离线训练、BaCh 复现和现有�
   - Files: `tools/harmony-cli/src/paper-semi-crf-*.ts`、相邻测试、CLI docs。
   - Scope: Medium
 - [ ] Task 8: 运行 BaCh reference fold 1、TypeScript parity 与完整报告。
+  - [x] same-author-weight TypeScript parity：event 81.17%、segment F1 73.39%，均在作者归档 ±2pp 内。
+  - [ ] fresh author / fresh TypeScript fold 1 training parity。
+  - [ ] OS peak RSS、逐曲 runtime P95 与剩余 3-event/3-segment 差异说明。
   - Acceptance: 报告 event accuracy、segment P/R/F、峰值内存和 P95 runtime；差异超过规格门槛时给出可复现原因。
   - Verification: frozen report hashes and commands; `pnpm verify`.
   - Dependencies: Task 7

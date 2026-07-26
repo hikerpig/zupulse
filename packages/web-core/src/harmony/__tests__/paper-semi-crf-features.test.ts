@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { PaperSemiCrfEvent, PaperSemiCrfEventNote } from "../paper-semi-crf-events";
 import {
   createPaperSemiCrfFeatureDictionary,
+  createPaperSemiCrfFactorizedLinearPotential,
   createPaperSemiCrfFeatureProvider,
   createPaperSemiCrfNamedFeatureProvider,
   encodePaperSemiCrfNamedFeatures,
@@ -10,6 +11,7 @@ import {
   paperSemiCrfConsistencyBin,
 } from "../paper-semi-crf-features";
 import { createPaperSemiCrfLabelInventory, type PaperSemiCrfSupportedLabel } from "../paper-semi-crf-labels";
+import { createPaperSemiCrfLinearPotential } from "../paper-semi-crf-model";
 
 describe("paper semi-CRF segment features", () => {
   it("matches the reference purity, coverage, and beginning-accent feature values", () => {
@@ -298,6 +300,53 @@ describe("paper semi-CRF segment features", () => {
         previousLabelId: 0,
       }),
     ).toEqual([{ index: 0, value: 1 }]);
+  });
+
+  it("factorizes segment and transition scores without changing local potentials", () => {
+    const labels = createPaperSemiCrfLabelInventory(["C:maj", "G:min"]).labels;
+    if (labels.some((label) => label.status !== "supported")) throw new Error("expected supported labels");
+    const supportedLabels = labels as PaperSemiCrfSupportedLabel[];
+    const events = [event(0, 0, 480, 1, [note("c", 0, 60, 480, false, 1)])];
+    const dictionary = createPaperSemiCrfFeatureDictionary([
+      "PURITY_101",
+      "CHORD_BIGRAM_min_maj_7",
+      "CHORD_BIGRAM_maj_min_5",
+    ]);
+    const weights = [0.5, 2, -3];
+    const generic = createPaperSemiCrfLinearPotential(
+      weights,
+      createPaperSemiCrfFeatureProvider({ events, labels: supportedLabels, dictionary }),
+    );
+    const factorized = createPaperSemiCrfFactorizedLinearPotential({
+      events,
+      labels: supportedLabels,
+      dictionary,
+      weights,
+    });
+    const inputs = [
+      { segment: { startEvent: 0, endEvent: 1, labelId: 0 } },
+      { segment: { startEvent: 0, endEvent: 1, labelId: 1 }, previousLabelId: 0 },
+      { segment: { startEvent: 0, endEvent: 1, labelId: 0 }, previousLabelId: 1 },
+    ];
+
+    expect(inputs.map(factorized)).toEqual(inputs.map(generic));
+  });
+
+  it("preserves an asset dictionary's feature-to-weight order", () => {
+    const labels = createPaperSemiCrfLabelInventory(["C:maj"]).labels;
+    if (labels[0]?.status !== "supported") throw new Error("expected supported label");
+    const events = [event(0, 0, 480, 1, [note("c", 0, 60, 480, false, 1)])];
+    const potential = createPaperSemiCrfFactorizedLinearPotential({
+      events,
+      labels: [labels[0]],
+      dictionary: {
+        featureVersion: "masada-bunescu-enabled-features-v1",
+        featureNames: ["ROOT_COVERED", "PURITY_101"],
+      },
+      weights: [7, 0],
+    });
+
+    expect(potential({ segment: { startEvent: 0, endEvent: 1, labelId: 0 } })).toBe(7);
   });
 });
 

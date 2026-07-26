@@ -4,6 +4,7 @@ import {
   PAPER_SEMI_CRF_FEATURE_VERSION,
   type PaperSemiCrfFeature,
   type PaperSemiCrfFeatureProvider,
+  type PaperSemiCrfLocalPotential,
   type PaperSemiCrfLocalPotentialInput,
   type PaperSemiCrfSegment,
 } from "./paper-semi-crf-model";
@@ -70,6 +71,50 @@ export function createPaperSemiCrfFeatureProvider(input: {
   return (localInput) => encodePaperSemiCrfNamedFeatures(input.dictionary, named(localInput));
 }
 
+export function createPaperSemiCrfFactorizedLinearPotential(input: {
+  events: readonly PaperSemiCrfEvent[];
+  labels: readonly PaperSemiCrfSupportedLabel[];
+  dictionary: PaperSemiCrfFeatureDictionary;
+  weights: readonly number[];
+}): PaperSemiCrfLocalPotential {
+  if (input.weights.length !== input.dictionary.featureNames.length) {
+    throw new Error("paper semi-CRF weights must match feature dictionary");
+  }
+  if (input.weights.some((weight) => !Number.isFinite(weight))) {
+    throw new Error("non-finite paper semi-CRF weight");
+  }
+  const featureWeights = new Map(
+    input.dictionary.featureNames.map((name, index) => [name, input.weights[index]!] as const),
+  );
+  const labelsById = new Map(input.labels.map((label) => [label.id, label]));
+  const segmentScores = new Map<string, number>();
+  const transitionScores = new Map<string, number>();
+  return ({ segment, previousLabelId }) => {
+    const segmentKey = `${segment.startEvent}:${segment.endEvent}:${segment.labelId}`;
+    let segmentScore = segmentScores.get(segmentKey);
+    if (segmentScore === undefined) {
+      const label = labelsById.get(segment.labelId);
+      if (!label) throw new Error("missing paper semi-CRF label");
+      segmentScore = scoreNamedFeatures(
+        extractPaperSemiCrfSegmentFeatures({ events: input.events, segment, label }),
+        featureWeights,
+      );
+      segmentScores.set(segmentKey, segmentScore);
+    }
+    if (previousLabelId === undefined) return segmentScore;
+    const transitionKey = `${segment.labelId}:${previousLabelId}`;
+    let transitionScore = transitionScores.get(transitionKey);
+    if (transitionScore === undefined) {
+      const current = labelsById.get(segment.labelId);
+      const previous = labelsById.get(previousLabelId);
+      if (!current || !previous) throw new Error("missing paper semi-CRF transition label");
+      transitionScore = featureWeights.get(extractPaperSemiCrfTransitionFeature(current, previous)) ?? 0;
+      transitionScores.set(transitionKey, transitionScore);
+    }
+    return segmentScore + transitionScore;
+  };
+}
+
 export function encodePaperSemiCrfNamedFeatures(
   dictionary: PaperSemiCrfFeatureDictionary,
   featureNames: readonly string[],
@@ -81,6 +126,12 @@ export function encodePaperSemiCrfNamedFeatures(
     if (index !== undefined) counts.set(index, (counts.get(index) ?? 0) + 1);
   }
   return [...counts].map(([index, value]) => ({ index, value }));
+}
+
+function scoreNamedFeatures(featureNames: readonly string[], weights: ReadonlyMap<string, number>): number {
+  let score = 0;
+  for (const name of featureNames) score += weights.get(name) ?? 0;
+  return score;
 }
 
 export function extractPaperSemiCrfSegmentFeatures(input: {

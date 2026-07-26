@@ -4,6 +4,7 @@ import {
   PAPER_SEMI_CRF_LABEL_MAPPING_VERSION,
   scoreWrittenMomentSchema,
   scoreWrittenRangeSchema,
+  type PaperSemiCrfEvent,
 } from "@zupulse/web-core";
 import { z } from "zod";
 
@@ -145,22 +146,27 @@ export const paperSemiCrfRecordsFileSchema = z
     }
   });
 
-export type PaperSemiCrfRecordsFile = z.infer<typeof paperSemiCrfRecordsFileSchema>;
+type InferredPaperSemiCrfRecordsFile = z.infer<typeof paperSemiCrfRecordsFileSchema>;
+type InferredPaperSemiCrfRecord = InferredPaperSemiCrfRecordsFile["records"][number];
+
+export type PaperSemiCrfRecordsFile = Omit<InferredPaperSemiCrfRecordsFile, "records"> & {
+  records: Array<Omit<InferredPaperSemiCrfRecord, "events"> & { events: PaperSemiCrfEvent[] }>;
+};
 
 export function parsePaperSemiCrfTrainingRecords(input: unknown): PaperSemiCrfRecordsFile & { role: "train" } {
-  const file = paperSemiCrfRecordsFileSchema.parse(input);
+  const file = paperSemiCrfRecordsFileSchema.parse(input) as PaperSemiCrfRecordsFile;
   if (file.role !== "train") throw new Error("paper Semi-CRF training requires train records");
-  return file;
+  return { ...file, role: "train" };
 }
 
 export function parsePaperSemiCrfEvaluationRecords(
   input: unknown,
   options: { allowFinal?: boolean } = {},
 ): PaperSemiCrfRecordsFile & { role: "tune" | "final" } {
-  const file = paperSemiCrfRecordsFileSchema.parse(input);
+  const file = paperSemiCrfRecordsFileSchema.parse(input) as PaperSemiCrfRecordsFile;
   if (file.role === "train") throw new Error("paper Semi-CRF evaluation requires tune or final records");
   if (file.role === "final" && options.allowFinal !== true) {
     throw new Error("final records require explicit authorization");
   }
-  return file;
+  return file.role === "tune" ? { ...file, role: "tune" } : { ...file, role: "final" };
 }

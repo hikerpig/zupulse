@@ -11,7 +11,7 @@
 - [x] Task 5b: weighted coverage and bass
 - [x] Task 5c: figuration variants
 - [x] Task 6: transition features and model schema
-- [ ] Checkpoint: faithful core
+- [x] Checkpoint: faithful core
 - [x] Task 7: CLI training/evaluation
   - [x] records schema 与 train/tune/final role guard
   - [x] deterministic L-BFGS 与 checkpoint/resume
@@ -19,5 +19,8 @@
   - [x] records import、train/eval CLI commands
   - [x] author BaCh XML records export 与 event/gold parity
 - [ ] Task 8: BaCh fold 1 reproduction
+  - [x] same-author-weight TS parity
+  - [ ] fresh author / fresh TS training
+  - [ ] peak RSS、P95 与差异说明
 - [ ] Task 9: approved current-corpus comparison
 - [ ] Task 10: production adoption decision

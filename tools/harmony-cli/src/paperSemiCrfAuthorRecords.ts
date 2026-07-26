@@ -18,11 +18,12 @@ export async function exportPaperSemiCrfAuthorRecordsFile(options: {
   role: "train" | "tune" | "final";
   maxSegmentLength: number;
   ticksPerQuarter?: number;
+  labelOrderRecordsPath?: string;
 }) {
   const ticksPerQuarter = options.ticksPerQuarter ?? 480;
   const splitText = await readFile(options.splitPath, "utf8");
   const paths = nonemptyLines(splitText).map((path) => resolve(dirname(options.splitPath), path));
-  const labels = nonemptyLines(await readFile(options.labelsPath, "utf8"));
+  const availableLabels = nonemptyLines(await readFile(options.labelsPath, "utf8"));
   if (paths.length === 0) throw new Error("author split must contain at least one song");
   const records = await Promise.all(
     paths.map(async (path) =>
@@ -34,6 +35,10 @@ export async function exportPaperSemiCrfAuthorRecordsFile(options: {
       }),
     ),
   );
+  const labels =
+    options.labelOrderRecordsPath === undefined
+      ? encounterOrderedLabels(records, availableLabels)
+      : paperSemiCrfRecordsFileSchema.parse(JSON.parse(await readFile(options.labelOrderRecordsPath, "utf8"))).labels;
   const file = paperSemiCrfRecordsFileSchema.parse({
     schemaVersion: "paper-semi-crf-records-v1",
     command: "paper-semi-crf-records",
@@ -221,4 +226,13 @@ function nonemptyLines(text: string): string[] {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
+}
+
+function encounterOrderedLabels(records: readonly PaperSemiCrfRecord[], availableLabels: readonly string[]): string[] {
+  const ordered = new Set<string>();
+  for (const record of records) {
+    for (const segment of record.targetSegments) ordered.add(segment.label);
+  }
+  for (const label of availableLabels) ordered.add(label);
+  return [...ordered];
 }

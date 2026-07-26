@@ -3,7 +3,11 @@ import { readFile, writeFile } from "node:fs/promises";
 import { parsePaperSemiCrfLinearModel } from "@zupulse/web-core";
 import { z } from "zod";
 import { evaluatePaperSemiCrfRecords } from "./paperSemiCrfEvaluation";
-import { paperSemiCrfRecordsFileSchema } from "./paperSemiCrfRecords";
+import {
+  paperSemiCrfRecordsFileSchema,
+  parsePaperSemiCrfEvaluationRecords,
+  parsePaperSemiCrfTrainingRecords,
+} from "./paperSemiCrfRecords";
 import { trainPaperSemiCrf } from "./paperSemiCrfTraining";
 
 const finiteNumber = z.number().refine(Number.isFinite);
@@ -52,7 +56,7 @@ export async function trainPaperSemiCrfFile(options: {
 }) {
   const recordsBytes = await readFile(options.recordsPath);
   const recordsSha256 = sha256(recordsBytes);
-  const records = paperSemiCrfRecordsFileSchema.parse(JSON.parse(recordsBytes.toString("utf8")));
+  const records = parsePaperSemiCrfTrainingRecords(JSON.parse(recordsBytes.toString("utf8")));
   const resume =
     options.resumePath === undefined
       ? undefined
@@ -120,10 +124,13 @@ export async function evaluatePaperSemiCrfFile(options: {
   allowFinal?: boolean;
 }) {
   const recordsBytes = await readFile(options.recordsPath);
-  const records = paperSemiCrfRecordsFileSchema.parse(JSON.parse(recordsBytes.toString("utf8")));
-  if (records.role === "final" && options.allowFinal !== true) {
+  const rawRecords = paperSemiCrfRecordsFileSchema.parse(JSON.parse(recordsBytes.toString("utf8")));
+  if (rawRecords.role === "final" && options.allowFinal !== true) {
     throw new Error("final records require --allow-final");
   }
+  const records = parsePaperSemiCrfEvaluationRecords(rawRecords, {
+    ...(options.allowFinal === undefined ? {} : { allowFinal: options.allowFinal }),
+  });
   const modelBytes = await readFile(options.modelPath);
   const model = parsePaperSemiCrfLinearModel(JSON.parse(modelBytes.toString("utf8")));
   const rssBefore = process.memoryUsage.rss();
@@ -136,7 +143,7 @@ export async function evaluatePaperSemiCrfFile(options: {
   const runtimeMs = performance.now() - startedAt;
   const report = {
     schemaVersion: "paper-semi-crf-evaluation-report-v1",
-    command: "paper-semi-crf-eval",
+    command: "paper-semi-crf-eval" as const,
     provenance: "fresh" as const,
     role: records.role as "tune" | "final",
     records: { path: options.recordsPath, sha256: sha256(recordsBytes), count: records.records.length },

@@ -46,7 +46,7 @@
 - [x] Task 7: `IconButton`
 - [x] Task 8a: `Field` / `TextField` / `Select`
 - [x] Task 8b: `Panel` / `Status`
-- [ ] Task 8b: `Toolbar`
+- [x] Task 8b: `Toolbar`
 - [ ] Task 8c: Base UI `Overlay` primitives
 
 ### Checkpoint D: Primitive layer

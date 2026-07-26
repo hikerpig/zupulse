@@ -6,16 +6,16 @@ Git history remain clear.
 
 ## Conventions
 
-| Kind                          | Convention                           | Examples                                     |
-| ----------------------------- | ------------------------------------ | -------------------------------------------- |
-| Source modules                | `kebab-case.ts` or `kebab-case.tsx`  | `browser-host.ts`, `viewer-app.tsx`          |
-| Unit and component tests      | `__tests__/<source-name>.test.ts(x)` | `__tests__/viewer-app.test.tsx`              |
-| End-to-end tests              | `e2e/<scenario-name>.spec.ts`        | `e2e/sheet-library.spec.ts`                  |
-| Directories                   | `kebab-case`                         | `desktop-shell`, `web-core`                  |
-| Documentation                 | `kebab-case.md`                      | `musicxml-import-design.md`                  |
-| Architecture Decision Records | `NNNN-kebab-case.md`                 | `0053-use-bundled-learned-harmony-ranker.md` |
-| Scripts                       | `kebab-case.mjs`                     | `verify-assets.mjs`                          |
-| Type declarations             | `kebab-case.d.ts`                    | `playback-assets.d.ts`                       |
+| Kind                          | Convention                           | Examples                                            |
+| ----------------------------- | ------------------------------------ | --------------------------------------------------- |
+| Source modules                | `kebab-case.ts` or `kebab-case.tsx`  | `browser-host.ts`, `viewer-app.tsx`                 |
+| Unit and component tests      | `__tests__/<source-name>.test.ts(x)` | `__tests__/viewer-app.test.tsx`                     |
+| End-to-end tests              | `e2e/<scenario-name>.spec.ts`        | `e2e/sheet-library.spec.ts`                         |
+| Directories                   | `kebab-case`                         | `desktop-shell`, `web-core`                         |
+| Documentation                 | `kebab-case.md`                      | `musicxml-import-design.md`                         |
+| Architecture Decision Records | `NNNN-kebab-case.md`                 | `0064-coordinate-score-navigation-with-playback.md` |
+| Scripts                       | `kebab-case.mjs`                     | `verify-assets.mjs`                                 |
+| Type declarations             | `kebab-case.d.ts`                    | `playback-assets.d.ts`                              |
 
 Test names must use the same stem as the source module they cover. Use names that describe
 the module's responsibility rather than its implementation details.

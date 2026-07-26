@@ -220,7 +220,9 @@ Data Router 只负责 route 匹配、lazy module、错误边界和导航，不�
 - 打开馆藏成功后创建对应 Session；不得根据 URL 伪造 Library Score 或 Session。
 - Electron 菜单命令仍经 `ViewerHost.subscribe` 进入应用 service，再由 router/session 分发，不让 Main Process 操作 URL。
 
-Viewer 的 Practice Sidecar / Local Playback Resume 与 Studio 的 Harmony Analysis Document 由不同 Repository 和 Session 所有；两者不通过 Zustand 共享可变状态。Studio 的详细边界见 ADR 0052 和 `../superpowers/specs/2026-07-15-harmony-analysis-studio-design.md`。
+Viewer 的 Practice Sidecar / Local Playback Resume 与 Studio 的 Harmony Analysis Document 由不同
+Repository 和 Session 所有；两者不通过 Zustand 共享可变状态。Studio 的详细边界见
+[`harmony-analysis-system.md`](harmony-analysis-system.md)。
 
 ## Provider 顺序与入口
 

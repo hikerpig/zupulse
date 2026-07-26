@@ -23,10 +23,10 @@ supersedes: []
 
 用户可以在独立的 Harmony Studio 中分析 MusicXML/MXL Library Score、修正和弦、预览结果并导出
 标注副本。生产分析由随应用发布的 paper-compatible Semi-CRF 决定 primary chord 与 boundary；
-规则候选只负责 alternatives 和拒识 confidence，不改写 Semi-CRF 路径。
+独立 adapter 只负责 alternatives 和拒识 confidence，不改写 Semi-CRF 路径。
 
 本文描述当前可观察行为。发生冲突时，运行时代码、Zod schema、数据库约束和可重复测试优先于
-本文；Current ADR 与当前架构文档优先于历史规格。“进行中的目标差异”不是已经交付的行为。
+本文；当前架构文档优先于一次性计划。“进行中的目标差异”不是已经交付的行为。
 
 ## 用户入口
 
@@ -45,8 +45,8 @@ supersedes: []
 SHA-256 为 `6fb18d1245aea9d89f5568a9b384b405c5326cb37015cc2caa5ade8dad5f7515`，其 hash
 进入新 Revision 的 `algorithmVersion`。
 
-Semi-CRF 路径决定 primary chord 与 boundary。bundled frequency ranker 仅在这些冻结 range 上生成
-Top-8 alternatives，并用独立的规则 confidence 与默认 `decisionThreshold=0.6` 决定
+Semi-CRF 路径决定 primary chord 与 boundary。Bundled alternatives adapter 仅在这些冻结 range
+上生成 Top-8 alternatives，并用独立 confidence 与默认 `decisionThreshold=0.6` 决定
 resolved/unresolved；CRF path score 不是 confidence。低于阈值的区间保留为
 `low-confidence`，不会伪装成 N.C.。
 
@@ -72,7 +72,7 @@ Projection 生成新的 MusicXML/XML/MXL 副本，只写已确定结果，不修
 
 - 首次分析失败时不创建空 Document，并显示稳定的产品错误。
 - 已有 Revision 的重分析失败、取消或被更新意图取代时，继续保留旧 Revision 与 Corrections。
-- 模型 JSON 损坏或不符合 contract 时明确失败，不能静默回退到 rules analyzer。
+- 模型 JSON 损坏或不符合 contract 时明确失败，不存在第二套 analyzer fallback。
 - 保存冲突保留本地 Document 并暴露 `version-conflict`；不会覆盖外部新版本。
 - 预览渲染或音频失败不阻止 Correction 保存与导出；原始异常不直接进入 DOM。
 
@@ -120,7 +120,7 @@ stateDiagram-v2
 
 ## 领域不变量
 
-1. Semi-CRF path 独占生产 primary chord 与 boundary 决策；rule prior、postprocess、alternatives 和
+1. Semi-CRF path 独占生产 primary chord 与 boundary 决策；alternatives 和
    confidence 不得改写它。
 2. Production decoder 必须是完整 label inventory 上的 exact semi-Markov Viterbi；不得以 Top-K
    label pruning、beam search 或静默 fallback 改变结果。
@@ -146,7 +146,7 @@ stateDiagram-v2
 - 性能尚未达标：`K331-3_reviewed.mxl` 在当前开发机整曲推理约 28 秒，超过原 5 秒目标。
 - label coverage 仍有限：paper inventory 不表达大量 inversion、dominant 与 half-diminished gold；
   Mozart train/tune 的无损映射覆盖约 39%。生产采用不等于这些 chord families 已完整支持。
-- confidence 尚未按 Semi-CRF 概率校准；当前是冻结 range 上的规则 adapter，因此只能解释为产品拒识
+- confidence 尚未按 Semi-CRF 概率校准；当前是冻结 range 上的 alternatives adapter，因此只能解释为产品拒识
   分数。
 - BaCh 已完成 fresh fold 1 reproduction，但没有在本次资源预算内 fresh 训练全部 10 folds。
 
@@ -154,7 +154,7 @@ stateDiagram-v2
 
 - 在线服务、浏览器网络推理、Python/Java/Torch runtime 或运行时训练。
 - 用 CRF path score 冒充 confidence。
-- 为满足时延预算而引入近似 decoder、label pruning 或 silent rules fallback。
+- 为满足时延预算而引入近似 decoder、label pruning 或 silent fallback。
 - 用 final holdout 调参，或把结构 fixture 本身当作 accuracy gold。
 - 在本次 analyzer 替换中改变 Document、Revision、Correction、Repository 或导出数据结构。
 - 把分析结果直接写回 Managed Score Copy，或把 Harmony Studio 混入 Viewer 练习状态。
@@ -188,7 +188,7 @@ stateDiagram-v2
 | autosave、CAS、重分析与取消               | [`harmonyStudioSession.ts`](../../../packages/web-viewer/src/harmonyStudioSession.ts)、[`repository.ts`](../../../packages/web-core/src/harmony/repository.ts)                                                        | [`harmonyStudioSession.test.ts`](../../../packages/web-viewer/src/__tests__/harmonyStudioSession.test.ts)、[`repositoryContract.test.ts`](../../../packages/web-core/src/harmony/__tests__/repositoryContract.test.ts)           |
 | Browser/Desktop 持久化与删除联动          | [`indexed-db-sheet-library-repository.ts`](../../../packages/web-storage/src/indexed-db-sheet-library-repository.ts)、[`DesktopLibraryStore.ts`](../../../apps/desktop-shell/src/main/library/DesktopLibraryStore.ts) | 双宿主 Repository tests                                                                                                                                                                                                          |
 | Effective Projection 的 MusicXML/MXL 导出 | [`exportMusicXmlHarmony.ts`](../../../packages/web-core/src/harmony/exportMusicXmlHarmony.ts)、[`harmonyStudioExport.ts`](../../../packages/web-viewer/src/harmonyStudioExport.ts)                                    | [`exportMusicXmlHarmony.test.ts`](../../../packages/web-core/src/harmony/__tests__/exportMusicXmlHarmony.test.ts)、[`harmonyStudioExport.test.ts`](../../../packages/web-viewer/src/__tests__/harmonyStudioExport.test.ts)       |
-| reproduction、current-corpus 与 K331 证据 | [`paper-semi-crf-fold1.md`](../../evaluation/paper-semi-crf-fold1.md)                                                                                                                                                 | CLI reports、模型/records SHA-256 与已记录命令                                                                                                                                                                                   |
+| reproduction、current-corpus 与 K331 证据 | [`semi-crf.md`](../../evaluation/semi-crf.md)                                                                                                                                                                         | 模型/records SHA-256 与已记录指标                                                                                                                                                                                                |
 
 ## 相关资料
 
@@ -197,15 +197,10 @@ stateDiagram-v2
 - 当前 UI 契约：[`DESIGN.md`](../../../DESIGN.md)
 - 当前架构：
   [`harmony-analysis-system.md`](../../architecture/harmony-analysis-system.md)
-- Current ADR：
-  [`0052`](../../adr/0052-separate-studio-harmony-analysis-from-viewer-practice.md)、
-  [`0053`](../../adr/0053-use-bundled-learned-harmony-ranker.md)、
-  [`0066`](../../adr/0066-use-paper-semi-crf-as-production-harmony-analyzer.md)
-- 复现与采用证据：
-  [`paper-semi-crf-fold1.md`](../../evaluation/paper-semi-crf-fold1.md)
-- Historical / Superseded：
-  [`Harmony Analysis Studio 原始设计规格`](../../superpowers/specs/2026-07-15-harmony-analysis-studio-design.md)、
-  [`ADR 0065`](../../adr/0065-use-fixed-boundary-mlp-for-harmony-primary.md)
+- 当前 Semi-CRF 模块：
+  [`packages/web-core/docs/harmony.md`](../../../packages/web-core/docs/harmony.md)
+- 当前验证证据：
+  [`semi-crf.md`](../../evaluation/semi-crf.md)
 
 ## 维护触发器
 

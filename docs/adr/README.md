@@ -1,7 +1,7 @@
 # ADR 状态索引
 
-ADR 文件保留历史编号；本表决定哪些决策可作为当前实现依据。未列入 Current 的早期 ADR 只能
-作为历史背景，若与代码、测试或当前架构索引冲突，不得继续指导实现。
+本表只索引仍有维护价值的架构决策。已删除的实验方案和 Feature 实现历史不在 ADR 中保留；
+当前行为以代码、测试、Feature Contract 与架构文档为准。
 
 ## Current
 
@@ -17,8 +17,6 @@ ADR 文件保留历史编号；本表决定哪些决策可作为当前实现依�
 - `0036`、`0037`、`0038`：MusicXML 与播放位置模型。
 - `0039`：共享 Viewer 使用 React 应用壳。
 - `0040`–`0051`：Managed Score Copy、Library 身份/路由、双宿主 Repository、迁移与故障恢复。
-- `0052`：Studio 和弦分析与 Viewer 练习分离，并以独立派生数据层保存和导出。
-- `0053`：随应用发布的本地学习型 ranker 继续为生产 Semi-CRF range 提供 alternatives 与拒识证据。
 - `0054`：UI Locale Preference 由各宿主持久化；Desktop 由 Main 在 Renderer 挂载前解析并提供。
 - `0055`：generated Loop name 从结构化范围和当前 locale 派生，不作为持久化文案事实。
 - `0056`：生产 UI 只展示本地化 Application Issue，不直接展示原始异常或任意技术详情。
@@ -26,8 +24,6 @@ ADR 文件保留历史编号；本表决定哪些决策可作为当前实现依�
 - `0058`–`0063`：iPad 薄 SwiftUI/WKWebView 壳、单一版本化 Bridge、token 二进制数据面、受控网络、
   Zod contract 事实源与构建时 Web 资产。
 - `0064`：在单一 alphaTab 纵向布局上协调连续跟随、屏幕翻页、谱面点击与播放进度。
-- `0066`：以 paper-compatible Semi-CRF 作为生产 primary/boundary analyzer，规则候选只适配
-  alternatives 与拒识 confidence。
 
 ## Proposed
 
@@ -39,7 +35,6 @@ ADR 文件保留历史编号；本表决定哪些决策可作为当前实现依�
 - `0013`–`0017` 中 Apple Web/Native Shell 交付结构由 Electron Desktop Shell 和 `0032` 取代。
 - `0046` 取代任何把 Viewer Session ID 放入 URL 的早期路由描述。
 - `0048`、`0049`、`0051` 取代临时 Viewer 文件或通用 key-value store 作为馆藏事实源的设计。
-- `0066` 取代 `0065` 的规则边界与 MLP primary 生产默认。
 
 ## 维护规则
 

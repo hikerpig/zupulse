@@ -592,4 +592,4 @@ IndexedDB quota 不足时当前文件导入失败，已有 Library 不受影响�
 - ADR 0049：应用通过领域 Repository/Gateway 访问宿主能力。
 - ADR 0050：schema 迁移失败不重建曲谱库。
 - ADR 0051：Desktop 文件与数据库操作使用 staging/reconciliation 恢复。
-- ADR 0052：Studio 和弦分析与 Viewer 练习分离，并随 Library Score 生命周期清理分析文档。
+- Harmony Analysis 当前架构：Studio 与 Viewer 练习状态分离，并随 Library Score 生命周期清理分析文档。

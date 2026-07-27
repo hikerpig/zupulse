@@ -287,6 +287,39 @@ describe("SheetLibrary no-results state", () => {
 });
 
 describe("SheetLibrary import dialog", () => {
+  it("adds a bundled sample to the normal candidate list before submission", async () => {
+    const sample = {
+      id: "first-light-practice",
+      title: "First Light Practice",
+      fileName: "first-light-practice.mxl",
+      format: "musicxml",
+      attribution: "Zupulse",
+      license: "CC0-1.0",
+      sha256: "ec1a465e7a0796637122f8c74b0fe16c798c4cb8d82121eb850152d1d3c177ec",
+    } as const;
+    const source = { fileName: sample.fileName, readBytes: async () => new Uint8Array([1]) };
+    const onImportSources = vi.fn(async () => undefined);
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[]}
+        loading={false}
+        onSelectImportFiles={async () => []}
+        sampleScores={[sample]}
+        onSelectSample={() => source}
+        onImportSources={onImportSources}
+        onOpen={() => undefined}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "导入自己的曲谱" }));
+    await userEvent.click(screen.getByRole("button", { name: "使用样例 First Light Practice" }));
+    expect(screen.getByText("first-light-practice.mxl")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "导入 1 份" }));
+    expect(onImportSources).toHaveBeenCalledWith([source]);
+  });
+
   it("adds Browser-dropped files to the same candidate list", async () => {
     const droppedFile = new File([new Uint8Array([7, 8, 9])], "dropped.mxl");
     const onImportSources = vi.fn(async () => undefined);

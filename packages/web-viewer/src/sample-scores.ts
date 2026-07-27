@@ -10,6 +10,11 @@ export type BundledSampleScore = {
   sha256: "ec1a465e7a0796637122f8c74b0fe16c798c4cb8d82121eb850152d1d3c177ec";
 };
 
+export type BundledSampleSource = {
+  sample: BundledSampleScore;
+  createSource(): ScoreImportSource;
+};
+
 export const bundledSampleScores: readonly BundledSampleScore[] = [
   {
     id: "first-light-practice",

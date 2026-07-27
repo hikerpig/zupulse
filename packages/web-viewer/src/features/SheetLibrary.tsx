@@ -3,6 +3,7 @@ import { Download, MoreHorizontal, PenLine, Star, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ImportItemResult, LibraryScoreSummary, ScoreImportSource } from "@zupulse/web-core";
 import type { ViewerApplication } from "../app/ViewerApplication";
+import type { BundledSampleScore } from "../sample-scores";
 import pageStyles from "../app/pages/PageShell.module.css";
 import {
   Button,
@@ -57,6 +58,8 @@ export function SheetLibrary({
   importSummary,
   onSelectImportFiles,
   onDropImportFiles,
+  sampleScores,
+  onSelectSample,
   onImportSources,
   onOpen,
 }: {
@@ -73,6 +76,8 @@ export function SheetLibrary({
   };
   onSelectImportFiles(): Promise<readonly ScoreImportSource[]>;
   onDropImportFiles?(files: readonly File[]): readonly ScoreImportSource[];
+  sampleScores?: readonly BundledSampleScore[];
+  onSelectSample?(id: BundledSampleScore["id"]): ScoreImportSource | undefined;
   onImportSources(sources: readonly ScoreImportSource[]): Promise<void>;
   onOpen(id: string): void;
 }) {
@@ -415,6 +420,8 @@ export function SheetLibrary({
         key={importDialogGeneration}
         onSelectFiles={onSelectImportFiles}
         {...(onDropImportFiles === undefined ? {} : { onDropFiles: onDropImportFiles })}
+        sampleScores={sampleScores ?? []}
+        {...(onSelectSample === undefined ? {} : { onSelectSample })}
         onImport={onImportSources}
       />
     </DialogRoot>

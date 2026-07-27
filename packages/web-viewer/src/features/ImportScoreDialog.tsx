@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FilePlus2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ScoreImportSource } from "@zupulse/web-core";
+import type { BundledSampleScore } from "../sample-scores";
 import {
   Button,
   DialogBackdrop,
@@ -17,10 +18,14 @@ import {
 export function ImportScoreDialog({
   onSelectFiles,
   onDropFiles,
+  sampleScores,
+  onSelectSample,
   onImport,
 }: {
   onSelectFiles(): Promise<readonly ScoreImportSource[]>;
   onDropFiles?(files: readonly File[]): readonly ScoreImportSource[];
+  sampleScores: readonly BundledSampleScore[];
+  onSelectSample?(id: BundledSampleScore["id"]): ScoreImportSource | undefined;
   onImport(sources: readonly ScoreImportSource[]): Promise<void>;
 }) {
   const { t } = useTranslation("library");
@@ -131,6 +136,46 @@ export function ImportScoreDialog({
                 </li>
               ))}
             </ul>
+          ) : null}
+          {sampleScores.length && onSelectSample ? (
+            <section
+              className="tw:grid tw:gap-2 tw:border-t tw:border-solid tw:border-x-0 tw:border-b-0 tw:border-border tw:pt-3"
+              aria-labelledby="import-sample-title"
+            >
+              <div className="tw:grid tw:gap-1">
+                <h3 id="import-sample-title" className="tw:m-0 tw:text-body tw:font-semibold">
+                  {t("importDialog.sampleTitle")}
+                </h3>
+                <p className="tw:m-0 tw:text-caption tw:text-muted">{t("importDialog.sampleDescription")}</p>
+              </div>
+              {sampleScores.map((sample) => {
+                const selected = candidates.some((candidate) => candidate.fileName === sample.fileName);
+                return (
+                  <Button
+                    key={sample.id}
+                    className="tw:h-auto tw:min-h-control tw:w-full tw:justify-between tw:py-2 tw:text-left"
+                    disabled={selected}
+                    aria-label={t("importDialog.useSample", { title: sample.title })}
+                    onClick={() => {
+                      const source = onSelectSample(sample.id);
+                      if (source) setCandidates((current) => [...current, source]);
+                    }}
+                  >
+                    <span className="tw:grid tw:min-w-0 tw:gap-0.5">
+                      <strong className="tw:overflow-hidden tw:text-ellipsis tw:whitespace-nowrap">
+                        {sample.title}
+                      </strong>
+                      <small className="tw:text-caption tw:font-normal tw:text-muted">
+                        {t("importDialog.sampleAttribution", { attribution: sample.attribution })}
+                      </small>
+                    </span>
+                    <span className="tw:shrink-0">
+                      {selected ? t("importDialog.sampleAdded") : t("importDialog.sampleAction")}
+                    </span>
+                  </Button>
+                );
+              })}
+            </section>
           ) : null}
           <div className="tw:flex tw:flex-wrap tw:justify-end tw:gap-2">
             <DialogClose render={<Button tone="ghost" />}>{t("cancel")}</DialogClose>

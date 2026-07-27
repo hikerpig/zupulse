@@ -28,6 +28,8 @@ export function LibraryPage({ application }: { application: ViewerApplication })
       {...(application.supportsDroppedFileImport()
         ? { onDropImportFiles: (files: readonly File[]) => application.createDroppedImportSources(files) }
         : {})}
+      sampleScores={application.getBundledSampleScores()}
+      onSelectSample={(id) => application.createBundledSampleSource(id)}
       onImportSources={(sources) => application.importScoreSources(sources)}
       onOpen={(id) => void navigate(`/viewer/${id}`)}
     />

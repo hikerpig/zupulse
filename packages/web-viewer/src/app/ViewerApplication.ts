@@ -44,6 +44,7 @@ import {
 } from "../harmony-analysis-worker-client";
 import { exportHarmonyStudioDocument } from "../harmonyStudioExport";
 import type { StudioScoreRuntime, StudioScoreRuntimeSnapshot } from "../studio-score-runtime";
+import type { BundledSampleScore, BundledSampleSource } from "../sample-scores";
 import { ApplicationFailure, applicationIssue, type ApplicationIssue } from "./applicationIssue";
 import {
   createHarmonyRangeViewItems,
@@ -137,6 +138,7 @@ export class ViewerApplication implements ViewerAppHandle {
       gateway: ScoreFileGateway;
       adapters: readonly ScoreFormatAdapter[];
       createDroppedImportSources?(files: readonly File[]): readonly ScoreImportSource[];
+      sampleSources?: readonly BundledSampleSource[];
     },
     private readonly openStudioRuntime?: (file: ViewerFile) => Promise<StudioScoreRuntime>,
     private readonly harmonyAnalysisRunner: HarmonyAnalysisRunner = createDefaultHarmonyAnalysisRunner(),
@@ -643,6 +645,14 @@ export class ViewerApplication implements ViewerAppHandle {
 
   createDroppedImportSources(files: readonly File[]): readonly ScoreImportSource[] {
     return this.library?.createDroppedImportSources?.(files) ?? [];
+  }
+
+  getBundledSampleScores(): readonly BundledSampleScore[] {
+    return this.library?.sampleSources?.map(({ sample }) => sample) ?? [];
+  }
+
+  createBundledSampleSource(id: BundledSampleScore["id"]): ScoreImportSource | undefined {
+    return this.library?.sampleSources?.find(({ sample }) => sample.id === id)?.createSource();
   }
 
   async importScoreSources(sources: readonly ScoreImportSource[]): Promise<void> {

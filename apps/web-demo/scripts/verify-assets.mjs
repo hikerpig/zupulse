@@ -1,4 +1,5 @@
 import { readdir, readFile, stat } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const requiredAssets = [
@@ -9,6 +10,9 @@ const requiredAssets = [
   "../dist/alphatab/font/Bravura.woff2",
   "../dist/alphatab/soundfont/sonivox.sf3",
   "../dist/alphatab/soundfont/LICENSE",
+  "../dist/samples/first-light-practice.mxl",
+  "../dist/samples/manifest.json",
+  "../dist/samples/LICENSE.md",
 ];
 
 for (const relativePath of requiredAssets) {
@@ -17,6 +21,16 @@ for (const relativePath of requiredAssets) {
     if (!info.isFile() || info.size === 0) throw new Error("empty");
   } catch {
     throw new Error(`Missing playback asset: ${relativePath.replace("../dist/", "")}`);
+  }
+}
+
+const sampleManifest = JSON.parse(
+  await readFile(fileURLToPath(new URL("../dist/samples/manifest.json", import.meta.url)), "utf8"),
+);
+for (const sample of sampleManifest.samples) {
+  const bytes = await readFile(fileURLToPath(new URL(`../dist/samples/${sample.fileName}`, import.meta.url)));
+  if (createHash("sha256").update(bytes).digest("hex") !== sample.sha256) {
+    throw new Error(`Bundled sample hash mismatch: ${sample.id}`);
   }
 }
 

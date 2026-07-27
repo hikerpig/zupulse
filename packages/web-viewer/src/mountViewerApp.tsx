@@ -19,6 +19,7 @@ import type {
   SheetLibraryRepository,
 } from "@zupulse/web-core";
 import { createAppI18n } from "@zupulse/app-i18n";
+import type { BundledSampleSource } from "./sample-scores";
 
 export type ViewerAppDependencies = {
   host: ViewerHost;
@@ -31,6 +32,7 @@ export type ViewerAppDependencies = {
     gateway: ScoreFileGateway;
     adapters: readonly ScoreFormatAdapter[];
     createDroppedImportSources?(files: readonly File[]): readonly ScoreImportSource[];
+    sampleSources?: readonly BundledSampleSource[];
   };
 };
 

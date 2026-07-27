@@ -20,7 +20,10 @@ const createConfig = (_env, argv) => ({
     htmlOptions: { template: "./index.html", scriptLoading: "module" },
     plugins: [
       new CopyRspackPlugin({
-        patterns: [{ from: join(demoRoot, "public"), to: "." }],
+        patterns: [
+          { from: join(demoRoot, "public"), to: "." },
+          { from: join(demoRoot, "../../product-assets/samples"), to: "samples" },
+        ],
       }),
     ],
   }),

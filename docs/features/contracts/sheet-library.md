@@ -62,6 +62,9 @@ Session ID。
 未提交的候选只存在于 import modal 的 presentation state。取消文件选择、关闭弹窗或移除候选
 不会改变 Library facts、import summary 或 route。
 
+Import modal 使用适合候选审阅的宽版布局，并在窄视口内收缩。点击弹窗外部会关闭弹窗、清空候选，
+并完整释放遮罩与页面交互。
+
 Browser import modal 还接受 Web `File` 拖放，并把 picker 与 dropped files 归一为相同的
 `ScoreImportSource`。Desktop 未声明该 capability，因此不显示或接受拖放。
 

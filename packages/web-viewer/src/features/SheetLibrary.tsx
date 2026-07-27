@@ -89,7 +89,7 @@ export function SheetLibrary({
   const [editing, setEditing] = useState<LibraryScoreSummary | undefined>();
   const [deleting, setDeleting] = useState<LibraryScoreSummary | undefined>();
   const deleteReturnFocusRef = useRef<HTMLButtonElement>(null);
-  const [importDialogGeneration, setImportDialogGeneration] = useState(0);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const normalizedQuery = query.trim();
   const visible = useMemo(
     () =>
@@ -130,7 +130,7 @@ export function SheetLibrary({
       </section>
     );
   return (
-    <DialogRoot onOpenChange={(open) => !open && setImportDialogGeneration((generation) => generation + 1)}>
+    <DialogRoot open={importDialogOpen} onOpenChange={setImportDialogOpen}>
       <main className={`${pageStyles.appShell} ${styles.libraryShell} scrollable`}>
         <div className={`${pageStyles.contextBar} ${styles.libraryContextBar}`}>
           <div className={`${pageStyles.contextMain} ${styles.libraryContextMain}`}>
@@ -138,7 +138,9 @@ export function SheetLibrary({
             <p className={pageStyles.contextSubtitle}>{t("subtitle")}</p>
           </div>
           <div className={`${pageStyles.contextActions} ${styles.libraryContextActions}`}>
-            <DialogTrigger render={<Button disabled={loading || importing} />}>{t("import")}</DialogTrigger>
+            <DialogTrigger render={<Button tone="primary" disabled={loading || importing} />}>
+              {t("import")}
+            </DialogTrigger>
           </div>
         </div>
         <section className={styles.libraryControls} aria-label={t("filtersLabel")}>
@@ -353,7 +355,7 @@ export function SheetLibrary({
           <section className="score-empty-state">
             <p className="empty-title">{t("emptyTitle")}</p>
             <p className="empty-copy">{t("emptyCopy")}</p>
-            <DialogTrigger render={<Button />}>{t("importOwn")}</DialogTrigger>
+            <DialogTrigger render={<Button tone="primary" />}>{t("importOwn")}</DialogTrigger>
           </section>
         )}
         {editing && (
@@ -417,7 +419,7 @@ export function SheetLibrary({
         </DialogRoot>
       </main>
       <ImportScoreDialog
-        key={importDialogGeneration}
+        open={importDialogOpen}
         onSelectFiles={onSelectImportFiles}
         {...(onDropImportFiles === undefined ? {} : { onDropFiles: onDropImportFiles })}
         sampleScores={sampleScores ?? []}

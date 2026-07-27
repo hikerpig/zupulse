@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FilePlus2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ScoreImportSource } from "@zupulse/web-core";
@@ -16,12 +16,14 @@ import {
 } from "../components/ui";
 
 export function ImportScoreDialog({
+  open,
   onSelectFiles,
   onDropFiles,
   sampleScores,
   onSelectSample,
   onImport,
 }: {
+  open: boolean;
   onSelectFiles(): Promise<readonly ScoreImportSource[]>;
   onDropFiles?(files: readonly File[]): readonly ScoreImportSource[];
   sampleScores: readonly BundledSampleScore[];
@@ -33,6 +35,14 @@ export function ImportScoreDialog({
   const [selecting, setSelecting] = useState(false);
   const [selectionFailed, setSelectionFailed] = useState(false);
   const [dropActive, setDropActive] = useState(false);
+
+  useEffect(() => {
+    if (open) return;
+    setCandidates([]);
+    setSelecting(false);
+    setSelectionFailed(false);
+    setDropActive(false);
+  }, [open]);
 
   const selectFiles = async () => {
     setSelecting(true);
@@ -55,7 +65,7 @@ export function ImportScoreDialog({
       />
       <DialogViewport>
         <DialogPopup
-          className="tw:grid tw:gap-4"
+          className="tw:max-w-2xl tw:grid tw:gap-4"
           onDragOver={onDropFiles ? (event) => event.preventDefault() : undefined}
           onDrop={onDropFiles ? (event) => event.preventDefault() : undefined}
         >

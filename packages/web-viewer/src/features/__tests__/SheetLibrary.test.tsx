@@ -287,6 +287,65 @@ describe("SheetLibrary no-results state", () => {
 });
 
 describe("SheetLibrary import dialog", () => {
+  it("uses the primary accent treatment for Library import actions", () => {
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[]}
+        loading={false}
+        {...emptyImportProps()}
+        onOpen={() => undefined}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "导入曲谱" }).className).toContain("tw:bg-accent");
+    expect(screen.getByRole("button", { name: "导入自己的曲谱" }).className).toContain("tw:bg-accent");
+  });
+
+  it("fully removes the modal layer after pointer dismissal", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[]}
+        loading={false}
+        {...emptyImportProps()}
+        onOpen={() => undefined}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "导入自己的曲谱" });
+    await user.click(trigger);
+    expect(screen.getByRole("dialog", { name: "导入曲谱" })).toBeTruthy();
+
+    await user.click(document.body);
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "导入曲谱" })).toBeNull();
+      expect(document.querySelector("[data-base-ui-portal]")).toBeNull();
+    });
+    const favorites = screen.getByRole("button", { name: "收藏" });
+    await user.click(favorites);
+    expect(favorites.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("uses the wider import-specific dialog width", async () => {
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[]}
+        loading={false}
+        {...emptyImportProps()}
+        onOpen={() => undefined}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "导入自己的曲谱" }));
+
+    expect(screen.getByRole("dialog", { name: "导入曲谱" }).className).toContain("tw:max-w-2xl");
+  });
+
   it("adds a bundled sample to the normal candidate list before submission", async () => {
     const sample = {
       id: "first-light-practice",
@@ -382,7 +441,9 @@ describe("SheetLibrary import dialog", () => {
     await user.click(screen.getByRole("button", { name: "导入 1 份" }));
 
     expect(onImportSources).toHaveBeenCalledWith([second]);
-    expect(screen.getByRole("dialog", { name: "导入曲谱" }).getAttribute("data-closed")).not.toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "导入曲谱" })).toBeNull();
+    });
   });
 
   it("cancels without submitting and restores focus to the trigger", async () => {

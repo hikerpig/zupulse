@@ -36,6 +36,8 @@ export const zhCN = {
       description: "选择一份或多份曲谱，确认后再加入曲谱库。",
       hint: "支持 Guitar Pro、MusicXML 和 MXL；单个文件不超过 64 MiB。文件只保存在这台设备上。",
       selectFiles: "选择文件",
+      selectOrDropFiles: "选择文件或拖放文件",
+      dropActive: "释放后添加文件",
       selecting: "正在选择…",
       selectionFailed: "无法读取所选文件，请重试。",
       candidates: "待导入文件",

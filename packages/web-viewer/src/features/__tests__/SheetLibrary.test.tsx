@@ -287,6 +287,40 @@ describe("SheetLibrary no-results state", () => {
 });
 
 describe("SheetLibrary import dialog", () => {
+  it("adds Browser-dropped files to the same candidate list", async () => {
+    const droppedFile = new File([new Uint8Array([7, 8, 9])], "dropped.mxl");
+    const onImportSources = vi.fn(async () => undefined);
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[]}
+        loading={false}
+        onSelectImportFiles={async () => []}
+        onDropImportFiles={(files) =>
+          files.map((file) => ({
+            fileName: file.name,
+            readBytes: async () => new Uint8Array([7, 8, 9]),
+          }))
+        }
+        onImportSources={onImportSources}
+        onOpen={() => undefined}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "导入自己的曲谱" }));
+    const dropZone = screen.getByRole("button", { name: "选择文件或拖放文件" });
+    fireEvent.dragEnter(dropZone, { dataTransfer: { files: [droppedFile] } });
+    expect(screen.getByText("释放后添加文件")).toBeTruthy();
+    fireEvent.drop(dropZone, { dataTransfer: { files: [droppedFile] } });
+
+    expect(screen.getByText("dropped.mxl")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "导入 1 份" }));
+    const submitted = onImportSources.mock.calls[0]?.[0]?.[0];
+    expect(submitted?.fileName).toBe("dropped.mxl");
+    await expect(submitted?.readBytes()).resolves.toEqual(new Uint8Array([7, 8, 9]));
+  });
+
   it("reviews selected files before submitting the remaining candidates", async () => {
     const user = userEvent.setup();
     const first = { fileName: "first.gp5", readBytes: async () => new Uint8Array([1]) };

@@ -39,6 +39,8 @@ export const enUS = {
       description: "Choose one or more scores to review before adding them to your Library.",
       hint: "Supports Guitar Pro, MusicXML, and MXL up to 64 MiB per file. Files stay on this device.",
       selectFiles: "Choose files",
+      selectOrDropFiles: "Choose or drop files",
+      dropActive: "Drop to add files",
       selecting: "Choosing…",
       selectionFailed: "The selected files could not be read. Try again.",
       candidates: "Files to import",

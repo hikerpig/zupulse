@@ -2,7 +2,7 @@ import "@zupulse/web-viewer/styles.css";
 import { IndexedDbSheetLibraryRepository } from "@zupulse/web-storage";
 import { mountViewerApp } from "@zupulse/web-viewer";
 import { createBrowserHost, createBrowserLocaleHost } from "./browserHost";
-import { BrowserScoreFileGateway } from "./library/BrowserScoreFileGateway";
+import { BrowserScoreFileGateway, createBrowserImportSources } from "./library/BrowserScoreFileGateway";
 import { BrowserLibraryPlaybackPersistence } from "./library/BrowserLibraryPlaybackPersistence";
 
 export const DEMO_APP_NAME = "Zupulse";
@@ -28,6 +28,7 @@ if (typeof document !== "undefined") {
     library: {
       repository,
       gateway: new BrowserScoreFileGateway(document),
+      createDroppedImportSources: createBrowserImportSources,
       adapters: [
         {
           format: "gp",

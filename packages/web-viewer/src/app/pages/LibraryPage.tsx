@@ -25,6 +25,9 @@ export function LibraryPage({ application }: { application: ViewerApplication })
       {...libraryProps}
       {...(error === undefined ? {} : { error: t("unavailableMessage") })}
       onSelectImportFiles={() => application.selectImportSources()}
+      {...(application.supportsDroppedFileImport()
+        ? { onDropImportFiles: (files: readonly File[]) => application.createDroppedImportSources(files) }
+        : {})}
       onImportSources={(sources) => application.importScoreSources(sources)}
       onOpen={(id) => void navigate(`/viewer/${id}`)}
     />

@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 const fixture = fileURLToPath(new URL("../../../test-fixtures/gp/generated/desktop-acceptance.gp", import.meta.url));
@@ -13,13 +14,38 @@ const harmonySelectionFixture = fileURLToPath(
 );
 const reviewedFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/K331-3_reviewed.mxl", import.meta.url));
 
+test("adds single and multiple Browser drops to the import review without importing on outside drops", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "导入自己的曲谱" }).click();
+  const dropZone = page.getByRole("button", { name: "选择文件或拖放文件" });
+
+  await dropFiles(page, dropZone, [{ name: "single.musicxml", bytes: await readFile(musicXmlFixture) }]);
+  await expect(page.getByText("single.musicxml")).toBeVisible();
+
+  await dropFiles(page, dropZone, [
+    { name: "multi.musicxml", bytes: await readFile(multiPartFixture) },
+    { name: "invalid.gp", bytes: Buffer.from("not a score") },
+  ]);
+  await expect(page.getByText("multi.musicxml")).toBeVisible();
+  await expect(page.getByText("invalid.gp")).toBeVisible();
+
+  const dialog = page.getByRole("dialog", { name: "导入曲谱" });
+  await dropFiles(page, dialog, [{ name: "outside.musicxml", bytes: await readFile(musicXmlFixture) }]);
+  await expect(page.getByText("outside.musicxml")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "导入 3 份" }).click();
+  await expect(page.getByRole("region", { name: /导入汇总/ })).toContainText("失败 1");
+});
+
 test("persists English across representative Library, Viewer, and Studio flows", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "语言" }).click();
   await page.getByRole("menuitemradio", { name: "English" }).click();
   await expect(page.getByRole("heading", { name: "Score Library" })).toBeVisible();
 
-  await importFixture(page, "Import your first score", musicXmlFixture);
+  await importFixture(page, "Import your own scores", musicXmlFixture);
   await expect(page.getByRole("link", { name: "Harmony analysis" })).toBeVisible();
   await page.getByRole("link", { name: "Harmony analysis" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Harmony analysis" })).toBeVisible();
@@ -34,7 +60,7 @@ test("switches locale during playback without losing workspace state and keeps c
   page,
 }) => {
   await page.goto("/");
-  await importFixture(page, "导入第一份曲谱");
+  await importFixture(page, "导入自己的曲谱");
   const viewerUrl = page.url();
   const play = page.getByRole("button", { name: "播放" });
   await expect(play).toBeEnabled();
@@ -80,7 +106,7 @@ test("follows playback and supports stable score page navigation", async ({ page
     if (message.type() === "error") consoleErrors.push(message.text());
   });
   await page.goto("/");
-  await importFixture(page, "导入第一份曲谱", reviewedFixture);
+  await importFixture(page, "导入自己的曲谱", reviewedFixture);
   await expect(page.locator(".score-viewer .at-surface").first()).toBeVisible();
 
   await page.getByRole("button", { name: "谱面导航模式" }).click();
@@ -147,7 +173,7 @@ test("persists a Browser Library Score and gives a re-import a fresh ID after de
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "曲谱库" })).toBeVisible();
 
-  await importFixture(page, "导入第一份曲谱");
+  await importFixture(page, "导入自己的曲谱");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("桌面验收谱");
   const firstId = page.url().split("/viewer/")[1];
   expect(firstId).toBeTruthy();
@@ -164,7 +190,7 @@ test("persists a Browser Library Score and gives a re-import a fresh ID after de
   await page.getByRole("button", { name: "永久删除" }).click();
   await expect(page.getByText("你的曲谱会保存在这台设备上")).toBeVisible();
 
-  await importFixture(page, "导入第一份曲谱");
+  await importFixture(page, "导入自己的曲谱");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("桌面验收谱");
   const secondId = page.url().split("/viewer/")[1];
   expect(secondId).toBeTruthy();
@@ -173,7 +199,7 @@ test("persists a Browser Library Score and gives a re-import a fresh ID after de
 
 test("opens a MusicXML Library Score in Studio and restores its saved document", async ({ page }) => {
   await page.goto("/");
-  await importFixture(page, "导入第一份曲谱", musicXmlFixture);
+  await importFixture(page, "导入自己的曲谱", musicXmlFixture);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Single Voice");
   await page.getByRole("link", { name: "和弦分析" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "和弦分析" })).toBeVisible();
@@ -231,7 +257,7 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
 
 test("reanalyses a multi-part Studio scope and allows a track to be added back", async ({ page }) => {
   await page.goto("/");
-  await importFixture(page, "导入第一份曲谱", multiPartFixture);
+  await importFixture(page, "导入自己的曲谱", multiPartFixture);
   await page.getByRole("link", { name: "和弦分析" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "和弦分析" })).toBeVisible();
   await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("已保存");
@@ -285,7 +311,7 @@ test("keeps K331 responsive and terminates a cancelled analysis", async ({ page 
 
 test("synchronizes a score selection between the range list and alphaTab", async ({ page }) => {
   await page.goto("/");
-  await importFixture(page, "导入第一份曲谱", harmonySelectionFixture);
+  await importFixture(page, "导入自己的曲谱", harmonySelectionFixture);
   await page.getByRole("link", { name: "和弦分析" }).click();
   await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("已保存", { timeout: 30_000 });
   const list = page.getByRole("list", { name: "分析片段" });
@@ -313,7 +339,7 @@ test("synchronizes a score selection between the range list and alphaTab", async
 
 test("surfaces a CAS conflict when two Browser Studio windows save the same revision", async ({ page, context }) => {
   await page.goto("/");
-  await importFixture(page, "导入第一份曲谱", musicXmlFixture);
+  await importFixture(page, "导入自己的曲谱", musicXmlFixture);
   await page.getByRole("link", { name: "和弦分析" }).click();
   await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("已保存");
 
@@ -331,7 +357,7 @@ test("surfaces a CAS conflict when two Browser Studio windows save the same revi
 test("keeps the Library to Viewer practice journey usable from 390px through desktop", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await importFixture(page, "导入第一份曲谱");
+  await importFixture(page, "导入自己的曲谱");
   await page.getByRole("navigation", { name: "主要页面" }).getByRole("link", { name: "曲谱库" }).click();
 
   const libraryControls = [
@@ -407,10 +433,30 @@ test("keeps the Library to Viewer practice journey usable from 390px through des
 });
 
 async function importFixture(page: Page, buttonName: string, filePath = fixture): Promise<void> {
-  const chooser = page.waitForEvent("filechooser");
   await page.getByRole("button", { name: buttonName }).click();
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: /选择文件|Choose or drop files/ }).click();
   await (await chooser).setFiles(filePath);
+  await page.getByRole("button", { name: /导入 1 份|Import 1/ }).click();
   await expect.poll(() => page.url()).toContain("#/viewer/");
+}
+
+async function dropFiles(
+  page: Page,
+  target: Locator,
+  files: readonly { name: string; bytes: Uint8Array }[],
+): Promise<void> {
+  await target.evaluate(
+    (element, droppedFiles) => {
+      const transfer = new DataTransfer();
+      for (const file of droppedFiles) {
+        transfer.items.add(new File([new Uint8Array(file.bytes)], file.name));
+      }
+      element.dispatchEvent(new DragEvent("dragenter", { bubbles: true, dataTransfer: transfer }));
+      element.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: transfer }));
+    },
+    files.map((file) => ({ name: file.name, bytes: Array.from(file.bytes) })),
+  );
 }
 
 async function expectInsideViewport(page: Page, locator: Locator): Promise<void> {

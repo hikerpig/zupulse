@@ -136,6 +136,7 @@ export class ViewerApplication implements ViewerAppHandle {
       repository: SheetLibraryRepository;
       gateway: ScoreFileGateway;
       adapters: readonly ScoreFormatAdapter[];
+      createDroppedImportSources?(files: readonly File[]): readonly ScoreImportSource[];
     },
     private readonly openStudioRuntime?: (file: ViewerFile) => Promise<StudioScoreRuntime>,
     private readonly harmonyAnalysisRunner: HarmonyAnalysisRunner = createDefaultHarmonyAnalysisRunner(),
@@ -634,6 +635,14 @@ export class ViewerApplication implements ViewerAppHandle {
       this.reportDiagnostic(error, "library.import.select");
       throw error;
     }
+  }
+
+  supportsDroppedFileImport(): boolean {
+    return this.library?.createDroppedImportSources !== undefined;
+  }
+
+  createDroppedImportSources(files: readonly File[]): readonly ScoreImportSource[] {
+    return this.library?.createDroppedImportSources?.(files) ?? [];
   }
 
   async importScoreSources(sources: readonly ScoreImportSource[]): Promise<void> {

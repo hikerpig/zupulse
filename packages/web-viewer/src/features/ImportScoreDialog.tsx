@@ -16,15 +16,18 @@ import {
 
 export function ImportScoreDialog({
   onSelectFiles,
+  onDropFiles,
   onImport,
 }: {
   onSelectFiles(): Promise<readonly ScoreImportSource[]>;
+  onDropFiles?(files: readonly File[]): readonly ScoreImportSource[];
   onImport(sources: readonly ScoreImportSource[]): Promise<void>;
 }) {
   const { t } = useTranslation("library");
   const [candidates, setCandidates] = useState<readonly ScoreImportSource[]>([]);
   const [selecting, setSelecting] = useState(false);
   const [selectionFailed, setSelectionFailed] = useState(false);
+  const [dropActive, setDropActive] = useState(false);
 
   const selectFiles = async () => {
     setSelecting(true);
@@ -41,9 +44,16 @@ export function ImportScoreDialog({
 
   return (
     <DialogPortal>
-      <DialogBackdrop />
+      <DialogBackdrop
+        onDragOver={onDropFiles ? (event) => event.preventDefault() : undefined}
+        onDrop={onDropFiles ? (event) => event.preventDefault() : undefined}
+      />
       <DialogViewport>
-        <DialogPopup className="tw:grid tw:gap-4">
+        <DialogPopup
+          className="tw:grid tw:gap-4"
+          onDragOver={onDropFiles ? (event) => event.preventDefault() : undefined}
+          onDrop={onDropFiles ? (event) => event.preventDefault() : undefined}
+        >
           <div className="tw:grid tw:gap-1">
             <DialogTitle>{t("importDialog.title")}</DialogTitle>
             <DialogDescription>{t("importDialog.description")}</DialogDescription>
@@ -52,12 +62,43 @@ export function ImportScoreDialog({
             {t("importDialog.hint")}
           </p>
           <Button
-            className="tw:min-h-22 tw:h-auto tw:w-full tw:border-dashed"
+            className={`tw:min-h-22 tw:h-auto tw:w-full ${
+              dropActive ? "tw:border-solid tw:border-accent tw:bg-accent-soft" : "tw:border-dashed"
+            }`}
             loading={selecting}
             onClick={() => void selectFiles()}
+            onDragEnter={
+              onDropFiles
+                ? (event) => {
+                    event.preventDefault();
+                    setDropActive(true);
+                  }
+                : undefined
+            }
+            onDragLeave={onDropFiles ? () => setDropActive(false) : undefined}
+            onDragOver={onDropFiles ? (event) => event.preventDefault() : undefined}
+            onDrop={
+              onDropFiles
+                ? (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setDropActive(false);
+                    const dropped = onDropFiles(Array.from(event.dataTransfer.files));
+                    if (dropped.length) setCandidates((current) => [...current, ...dropped]);
+                  }
+                : undefined
+            }
           >
             <FilePlus2 className="tw:size-4 tw:shrink-0" aria-hidden="true" />
-            {t(selecting ? "importDialog.selecting" : "importDialog.selectFiles")}
+            {t(
+              selecting
+                ? "importDialog.selecting"
+                : dropActive
+                  ? "importDialog.dropActive"
+                  : onDropFiles
+                    ? "importDialog.selectOrDropFiles"
+                    : "importDialog.selectFiles",
+            )}
           </Button>
           {selectionFailed ? (
             <p className="tw:m-0 tw:text-caption tw:text-danger" role="alert">

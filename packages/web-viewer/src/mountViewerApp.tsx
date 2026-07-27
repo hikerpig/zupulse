@@ -12,7 +12,12 @@ import type {
 import { App, type ViewerProductCapabilities } from "./app/App";
 import { ViewerApplication } from "./app/ViewerApplication";
 import { createStudioScoreRuntime, type StudioScoreRuntime } from "./studio-score-runtime";
-import type { ScoreFileGateway, ScoreFormatAdapter, SheetLibraryRepository } from "@zupulse/web-core";
+import type {
+  ScoreFileGateway,
+  ScoreFormatAdapter,
+  ScoreImportSource,
+  SheetLibraryRepository,
+} from "@zupulse/web-core";
 import { createAppI18n } from "@zupulse/app-i18n";
 
 export type ViewerAppDependencies = {
@@ -21,7 +26,12 @@ export type ViewerAppDependencies = {
   openSession(file: ViewerFile, libraryScoreId?: string, domBindings?: ViewerDomBindings): Promise<ViewerSessionHandle>;
   openStudioRuntime?(file: ViewerFile): Promise<StudioScoreRuntime>;
   capabilities?: ViewerProductCapabilities;
-  library?: { repository: SheetLibraryRepository; gateway: ScoreFileGateway; adapters: readonly ScoreFormatAdapter[] };
+  library?: {
+    repository: SheetLibraryRepository;
+    gateway: ScoreFileGateway;
+    adapters: readonly ScoreFormatAdapter[];
+    createDroppedImportSources?(files: readonly File[]): readonly ScoreImportSource[];
+  };
 };
 
 export function mountViewerApp(rootElement: HTMLElement, dependencies: ViewerAppDependencies): ViewerAppHandle {

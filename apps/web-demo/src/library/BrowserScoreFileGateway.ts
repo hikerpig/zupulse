@@ -1,5 +1,12 @@
 import type { ScoreFileGateway, ScoreImportSource, StoredScoreFile } from "@zupulse/web-core";
 
+export function createBrowserImportSources(files: readonly File[]): readonly ScoreImportSource[] {
+  return files.map((file) => ({
+    fileName: file.name,
+    readBytes: async () => new Uint8Array(await file.arrayBuffer()),
+  }));
+}
+
 export class BrowserScoreFileGateway implements ScoreFileGateway {
   constructor(private readonly ownerDocument: Document) {}
   async selectForImport(options: { multiple: boolean }): Promise<readonly ScoreImportSource[]> {
@@ -11,10 +18,7 @@ export class BrowserScoreFileGateway implements ScoreFileGateway {
       input.addEventListener("change", () => resolve(Array.from(input.files ?? [])), { once: true });
       input.click();
     });
-    return files.map((file) => ({
-      fileName: file.name,
-      readBytes: async () => new Uint8Array(await file.arrayBuffer()),
-    }));
+    return createBrowserImportSources(files);
   }
   async saveExport(file: StoredScoreFile): Promise<"saved" | "cancelled"> {
     const link = this.ownerDocument.createElement("a");

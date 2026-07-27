@@ -56,6 +56,7 @@ export function SheetLibrary({
   importing,
   importSummary,
   onSelectImportFiles,
+  onDropImportFiles,
   onImportSources,
   onOpen,
 }: {
@@ -71,6 +72,7 @@ export function SheetLibrary({
     running: boolean;
   };
   onSelectImportFiles(): Promise<readonly ScoreImportSource[]>;
+  onDropImportFiles?(files: readonly File[]): readonly ScoreImportSource[];
   onImportSources(sources: readonly ScoreImportSource[]): Promise<void>;
   onOpen(id: string): void;
 }) {
@@ -412,6 +414,7 @@ export function SheetLibrary({
       <ImportScoreDialog
         key={importDialogGeneration}
         onSelectFiles={onSelectImportFiles}
+        {...(onDropImportFiles === undefined ? {} : { onDropFiles: onDropImportFiles })}
         onImport={onImportSources}
       />
     </DialogRoot>

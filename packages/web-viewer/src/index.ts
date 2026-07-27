@@ -7,6 +7,7 @@ export * from "./importJob";
 export * from "./importPresenter";
 export * from "./viewerApp";
 export * from "./mountViewerApp";
+export * from "./sample-scores";
 export * from "./app/ViewerApplication";
 export * from "./playbackPresenter";
 export * from "./gpDemoPresenter";

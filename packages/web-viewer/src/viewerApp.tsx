@@ -23,7 +23,12 @@ import {
 import { ALPHATAB_ASSETS } from "./playbackAssets";
 import { type DemoState } from "./gpDemoPresenter";
 import { presentScoreFile } from "./importPresenter";
-import { SCORE_ZOOM_COMMIT_EVENT, type ScoreZoomCommitDetail } from "./scoreZoom";
+import {
+  SCORE_LAYOUT_COMMIT_EVENT,
+  SCORE_ZOOM_COMMIT_EVENT,
+  type ScoreLayoutCommitDetail,
+  type ScoreZoomCommitDetail,
+} from "./scoreZoom";
 import { ScoreNavigationCoordinator } from "./score-navigation/score-navigation-coordinator";
 import { readAlphaTabMeasureBounds, readAlphaTabStaffSystems } from "./score-navigation/alpha-tab-navigation";
 import { attachScoreNavigationInputs } from "./score-navigation/score-navigation-inputs";
@@ -361,47 +366,88 @@ export function attachScoreZoomCommit(
   scrollElement: HTMLElement,
   schedule: (callback: () => void) => void = (callback) => requestAnimationFrame(callback),
 ): () => void {
+  type PendingRestore = {
+    scoreAnchor: ReturnType<typeof captureScoreAnchor>;
+    scrollRatio: number;
+    requestedZoom?: number;
+    renderingZoom?: number;
+  };
+
+  let pendingRestore: PendingRestore | undefined;
   let detachPendingRestore: (() => void) | undefined;
-  const commit = (event: Event) => {
-    const zoom = (event as CustomEvent<ScoreZoomCommitDetail>).detail?.zoom;
-    if (!Number.isFinite(zoom) || !api.settings?.display) return;
+
+  const clearPendingRestore = () => {
     detachPendingRestore?.();
     detachPendingRestore = undefined;
-    const scoreAnchor = captureScoreAnchor(api, scrollElement);
-    const scrollRange = Math.max(0, scrollElement.scrollHeight - scrollElement.clientHeight);
-    const scrollRatio = scrollRange === 0 ? 0 : scrollElement.scrollTop / scrollRange;
-    api.settings.display.scale = zoom;
-    api.updateSettings?.();
-    api.render?.();
-    let restored = false;
-    const restore = () => {
-      if (restored) return;
-      restored = true;
-      detachPendingRestore?.();
-      detachPendingRestore = undefined;
-      const nextRange = Math.max(0, scrollElement.scrollHeight - scrollElement.clientHeight);
-      const anchorSystemIndex = scoreAnchor?.systemIndex;
-      const nextSystem =
-        anchorSystemIndex === undefined
-          ? undefined
-          : readAlphaTabStaffSystems(api)?.find((system) => system.systemIndex === anchorSystemIndex);
-      const nextScrollTop =
-        nextSystem && scoreAnchor
-          ? nextSystem.y + scoreAnchor.centerOffset - scrollElement.clientHeight / 2
-          : undefined;
-      scrollElement.scrollTop = Math.min(nextRange, Math.max(0, nextScrollTop ?? scrollRatio * nextRange));
-    };
+    pendingRestore = undefined;
+  };
+  const restore = () => {
+    const pending = pendingRestore;
+    if (!pending) return;
+    if (pending.requestedZoom !== undefined && pending.renderingZoom !== pending.requestedZoom) {
+      startZoomRender(pending.requestedZoom);
+      return;
+    }
+    const nextRange = Math.max(0, scrollElement.scrollHeight - scrollElement.clientHeight);
+    const anchorSystemIndex = pending.scoreAnchor?.systemIndex;
+    const nextSystem =
+      anchorSystemIndex === undefined
+        ? undefined
+        : readAlphaTabStaffSystems(api)?.find((system) => system.systemIndex === anchorSystemIndex);
+    const nextScrollTop =
+      nextSystem && pending.scoreAnchor
+        ? nextSystem.y + pending.scoreAnchor.centerOffset - scrollElement.clientHeight / 2
+        : undefined;
+    scrollElement.scrollTop = Math.min(nextRange, Math.max(0, nextScrollTop ?? pending.scrollRatio * nextRange));
+    clearPendingRestore();
+  };
+  const listenForRender = () => {
+    if (detachPendingRestore) return;
     if (api.postRenderFinished) {
       detachPendingRestore = api.postRenderFinished.on(restore) ?? (() => {});
     } else {
       schedule(restore);
     }
   };
-  ownerDocument.addEventListener(SCORE_ZOOM_COMMIT_EVENT, commit);
+  const startZoomRender = (zoom: number) => {
+    const pending = pendingRestore;
+    if (!pending || !api.settings?.display) return;
+    pending.renderingZoom = zoom;
+    api.settings.display.scale = zoom;
+    api.updateSettings?.();
+    api.render?.();
+    listenForRender();
+  };
+  const capturePendingRestore = (): PendingRestore => {
+    const scoreAnchor = captureScoreAnchor(api, scrollElement);
+    const scrollRange = Math.max(0, scrollElement.scrollHeight - scrollElement.clientHeight);
+    const scrollRatio = scrollRange === 0 ? 0 : scrollElement.scrollTop / scrollRange;
+    return { scoreAnchor, scrollRatio };
+  };
+  const commitZoom = (event: Event) => {
+    const zoom = (event as CustomEvent<ScoreZoomCommitDetail>).detail?.zoom;
+    if (!Number.isFinite(zoom) || !api.settings?.display) return;
+    if (!pendingRestore) {
+      pendingRestore = capturePendingRestore();
+    }
+    pendingRestore.requestedZoom = zoom;
+    if (pendingRestore.renderingZoom === undefined) {
+      startZoomRender(zoom);
+    }
+  };
+  const commitLayout = (event: Event) => {
+    const reason = (event as CustomEvent<ScoreLayoutCommitDetail>).detail?.reason;
+    if (reason !== "width") return;
+    clearPendingRestore();
+    pendingRestore = capturePendingRestore();
+    listenForRender();
+  };
+  ownerDocument.addEventListener(SCORE_ZOOM_COMMIT_EVENT, commitZoom);
+  ownerDocument.addEventListener(SCORE_LAYOUT_COMMIT_EVENT, commitLayout);
   return () => {
-    detachPendingRestore?.();
-    detachPendingRestore = undefined;
-    ownerDocument.removeEventListener(SCORE_ZOOM_COMMIT_EVENT, commit);
+    clearPendingRestore();
+    ownerDocument.removeEventListener(SCORE_ZOOM_COMMIT_EVENT, commitZoom);
+    ownerDocument.removeEventListener(SCORE_LAYOUT_COMMIT_EVENT, commitLayout);
   };
 }
 

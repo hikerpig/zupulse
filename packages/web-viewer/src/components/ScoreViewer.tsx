@@ -9,7 +9,7 @@ import {
   persistScoreWidthMode,
   useAppStore,
 } from "../app/appStore";
-import { SCORE_ZOOM_COMMIT_EVENT } from "../scoreZoom";
+import { SCORE_LAYOUT_COMMIT_EVENT, SCORE_ZOOM_COMMIT_EVENT } from "../scoreZoom";
 import { useTranslation } from "react-i18next";
 import type { ViewerSessionHandle } from "../host";
 import { LoopRangeOverlay } from "../practice-loop/LoopRangeOverlay";
@@ -84,6 +84,7 @@ export function ScoreViewer({
 
   const toggleScoreWidth = () => {
     const nextMode = scoreWidthMode === "full" ? "comfortable" : "full";
+    document.dispatchEvent(new CustomEvent(SCORE_LAYOUT_COMMIT_EVENT, { detail: { reason: "width" } }));
     setScoreWidthMode(nextMode);
     persistScoreWidthMode(nextMode);
   };
@@ -121,6 +122,9 @@ export function ScoreViewer({
       onTouchEnd={finishPinch}
       onTouchCancel={finishPinch}
     >
+      <output className="sr-only" role="status" aria-live="polite">
+        {t("score.zoomLevel", { percent: Math.round(scoreZoom * 100) })}
+      </output>
       {!compact ? (
         <>
           <div className={styles.viewControls}>

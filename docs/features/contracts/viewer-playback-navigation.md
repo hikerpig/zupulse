@@ -53,8 +53,10 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 
 ### 谱面宽度与缩放
 
-- 宽屏默认使用居中的 Comfortable 阅读宽度，谱面框最大宽度为 `1280px`；用户可切换 Full width，
+- 宽屏默认使用居中的 Comfortable 阅读宽度，谱面框最大宽度为 `960px`；用户可切换 Full width，
   该偏好保存在设备本地，并由 Viewer 与 Studio 共用。
+- Viewer 与 Studio 共用紧凑的 alphaTab 字体资源：标题 28px、副标题 18px，其余常用谱面标注相对
+  原默认值下调 1–2px；宿主不得单独覆盖出不同的谱面密度。
 - 缩放范围为 50%–200%，以 10% 为步长。工具栏百分比可直接复位为 100%，并支持
   `Ctrl/Cmd +`、`Ctrl/Cmd -` 与 `Ctrl/Cmd 0`。
 - 缩放提交先更新 alphaTab settings，再显式触发 render；重排完成后优先恢复视口中心的书面谱表行，
@@ -138,7 +140,7 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 - 播放跨谱表行或页面只移动谱面滚动容器，文档根节点不滚动。
 - 手动浏览保持 Detached；正式定位、stop 或恢复动作回到 Following。
 - Page Turn 的每个离散输入最多移动一页；resize 和 zoom 后保留书面锚点。
-- 宽屏默认居中且不超过 1280px；Full width 偏好刷新后保留。缩放会实际重排谱面并保持当前书面位置，
+- 宽屏默认居中且不超过 960px；Full width 偏好刷新后保留。缩放会实际重排谱面并保持当前书面位置，
   100% 复位和键盘快捷键可用，窄屏不产生横向溢出。
 - 谱面点击只提交一次正式 seek，且不改变 playing/paused transport。
 - Scrub 每帧最多发送一个最新预览，松手只提交一次正式 seek。

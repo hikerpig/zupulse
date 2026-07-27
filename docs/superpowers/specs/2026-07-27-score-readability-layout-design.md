@@ -21,12 +21,12 @@ HIK-6 聚焦 Viewer 与 Studio 的谱面阅读效率。当前共享 `ScoreViewer
 
 - Browser、Desktop 与 iPad 继续共享 `packages/web-viewer` 的 React UI，不复制宿主实现。
 - Viewer 与 Studio 共用缩放范围、步长、宽度模式、文案和持久化规则。
-- 默认“舒适宽度”的初始上限为 `1280px`；它是剩余谱面工作区内的阅读面上限，不是整个窗口宽度。
+- 默认“舒适宽度”的上限为 `960px`；它是剩余谱面工作区内的阅读面上限，不是整个窗口宽度。
 - 桌面端记住宽度模式；窄屏固定适应可用宽度，不显示没有实际价值的全宽切换。
 - 缩放范围调整为 `50%–200%`，步长 `10%`，默认 `100%`。现有 `75%` 下限随本轮规格更新。
 - 缩放继续通过 alphaTab `display.scale` 和 `updateSettings()` 触发重排，不用 CSS transform 作为最终状态。
 - 不新增依赖，不改变 Library、Playback、Practice Sidecar、Harmony Analysis Document、Bridge 或数据库。
-- 本轮不引入遥测框架；`1280px` 是可根据后续真实使用调整的产品默认值。
+- 本轮不引入遥测框架；`960px` 是经本地真实谱面验收确认的产品默认值。
 
 ## 目标
 
@@ -59,23 +59,23 @@ HIK-6 聚焦 Viewer 与 Studio 的谱面阅读效率。当前共享 `ScoreViewer
 桌面端首次打开 Viewer 或 Studio 时使用 `comfortable`：
 
 - 阅读面在剩余谱面工作区水平居中。
-- `max-width: 1280px`，可用宽度不足时退化为 `width: 100%`。
+- `max-width: 960px`，可用宽度不足时退化为 `width: 100%`。
 - 工作区两侧至少保留现有 frame padding；不为达到留白制造横向滚动。
 - 约从 `1440px` 可用谱面宽度开始明显出现居中留白；超宽屏仍保持上限。
 
 `full` 使用剩余谱面工作区的全部宽度。切换按钮属于“视图模式”，不得命名为“全屏”：
 
-| 当前状态      | 按钮动作名称   | `aria-pressed` | 结果                     |
-| ------------- | -------------- | -------------- | ------------------------ |
-| `comfortable` | `切换为全宽`   | `false`        | 阅读面占满剩余工作区     |
-| `full`        | `恢复舒适宽度` | `true`         | 阅读面回到 1280px 并居中 |
+| 当前状态      | 按钮动作名称   | `aria-pressed` | 结果                    |
+| ------------- | -------------- | -------------- | ----------------------- |
+| `comfortable` | `切换为全宽`   | `false`        | 阅读面占满剩余工作区    |
+| `full`        | `恢复舒适宽度` | `true`         | 阅读面回到 960px 并居中 |
 
 按钮使用 `lucide-react` 的横向扩展/收拢语义图标。宽容器直接显示在谱面视图控制组；空间不足时进入现有
 Popover。`max-width: 620px` 的容器固定 `comfortable` 的适应屏幕结果，不显示切换入口，也不覆盖
 用户在桌面端保存的偏好。
 
 Studio 的宽度以可拖动分栏左侧的剩余宽度计算，不以窗口计算。分隔条移动后阅读面重新居中；当左栏
-本身小于 `1280px` 时两种模式可以视觉相同，但偏好和值不得被重置。
+本身小于 `960px` 时两种模式可以视觉相同，但偏好和值不得被重置。
 
 ### 2. 缩放控件
 
@@ -118,8 +118,9 @@ Page，不能由缩放控件直接写页码。旧 generation 的回调不得覆�
 - 控制组内部间距 `4px`，组间 `8–12px`。
 - UI 辅助文字以 `13–14px` 为主，次要状态与数值为 `12px`；高频数值继续使用 tabular numerals。
 - Score frame padding 使用现有语义 token 对齐，桌面目标 `6–8px`，窄屏 `4px`。
-- 不直接修改 alphaTab 的标题、歌词、指法等资源字体，除非真实 fixture 的视觉验收证明其相对谱面
-  比例仍过大；若需要修改，必须单独记录 fixture 前后截图和受影响资源。
+- alphaTab 字体资源由 Viewer 与 Studio 共用同一配置，并在真实 fixture 验收后整体下调一档：
+  标题 `32→28px`、副标题 `20→18px`，歌词、谱号标注、指法、方向和编号谱等常用字体下调
+  `1–2px`；不得由宿主各自覆盖出不同的谱面密度。
 
 低频设置继续进入现有 Popover / ContextPopup。Viewer 首层只保留播放、速度、导航、Loop、缩放和
 宽度模式；Studio 的编辑主操作不因加入视图控制而移动或失焦。
@@ -160,7 +161,7 @@ React store 负责可观察 UI 偏好，Viewer / Studio runtime 负责把 commit
 
 | 表面          | 必须覆盖的状态                                                                      |
 | ------------- | ----------------------------------------------------------------------------------- |
-| 宽度模式      | comfortable、full、非法持久值、窄屏强制适应、Studio 分栏小于 1280px                 |
+| 宽度模式      | comfortable、full、非法持久值、窄屏强制适应、Studio 分栏小于 960px                  |
 | Zoom          | default、min、max、reset、Popover、keyboard、pinch preview、pinch commit            |
 | Runtime       | Viewer ready/destroy、Studio ready/destroy、初始化失败、快速路由切换、旧 generation |
 | Navigation    | Following、Detached、Page Turn、播放头锚点、无 bounds 回退                          |
@@ -284,7 +285,7 @@ git diff --check
 
 ## 验收标准
 
-1. `1920px` 与 `2560px` Viewer 首次打开时，阅读面不超过 `1280px` 且在可用谱面工作区居中。
+1. `1920px` 与 `2560px` Viewer 首次打开时，阅读面不超过 `960px` 且在可用谱面工作区居中。
 2. 桌面端可一键切换舒适宽度 / 全宽，刷新后保持；`620px` 以下不显示切换且无横向溢出。
 3. Viewer 与 Studio 的 `− / + / 复位 / 快捷键 / pinch` 都更新百分比并触发真实 alphaTab 重排。
 4. 缩放范围为 `50%–200%`、步长 `10%`，边界禁用态、持久值和运行时 scale 始终一致。

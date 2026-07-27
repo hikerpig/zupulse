@@ -1,4 +1,4 @@
-import type { HarmonyAnalysisInput, HarmonySegment } from "@zupulse/web-core";
+import type { HarmonyAnalysisInput, HarmonySegment } from "@zupulse/web-core/harmony-worker";
 import {
   harmonyAnalysisWorkerResponseSchema,
   type HarmonyAnalysisWorkerOptions,

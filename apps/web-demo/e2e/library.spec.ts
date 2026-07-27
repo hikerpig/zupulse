@@ -186,6 +186,44 @@ test("reanalyses a multi-part Studio scope and allows a track to be added back",
   await expect(scope.locator("option:checked")).toHaveCount(2);
 });
 
+test("keeps K331 responsive and terminates a cancelled analysis", async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.goto("/");
+  await importFixture(page, "导入第一份曲谱", reviewedFixture);
+  await page.getByRole("link", { name: "和弦分析" }).click();
+  const documentStatus = page.getByRole("status", { name: "分析文档状态" });
+  await expect(documentStatus).toContainText("已保存", { timeout: 30_000 });
+
+  await page.getByRole("button", { name: "重新分析" }).click();
+  const cancel = page.getByRole("button", { name: "取消分析" });
+  await expect(cancel).toBeVisible({ timeout: 1_000 });
+  await page.evaluate(() => {
+    const probe = { ticks: 0, maximumDelayMs: 0, previous: performance.now(), timer: 0 };
+    probe.timer = window.setInterval(() => {
+      const now = performance.now();
+      probe.maximumDelayMs = Math.max(probe.maximumDelayMs, now - probe.previous - 5);
+      probe.previous = now;
+      probe.ticks += 1;
+    }, 5);
+    (window as unknown as { harmonyResponsivenessProbe: typeof probe }).harmonyResponsivenessProbe = probe;
+  });
+  await page.waitForTimeout(100);
+  const responsiveness = await page.evaluate(() => {
+    const probe = (
+      window as unknown as {
+        harmonyResponsivenessProbe: { ticks: number; maximumDelayMs: number; timer: number };
+      }
+    ).harmonyResponsivenessProbe;
+    window.clearInterval(probe.timer);
+    return { ticks: probe.ticks, maximumDelayMs: probe.maximumDelayMs };
+  });
+  expect(responsiveness.ticks).toBeGreaterThan(5);
+  expect(responsiveness.maximumDelayMs).toBeLessThanOrEqual(50);
+  await cancel.click();
+  await expect(page.getByRole("button", { name: "重新分析" })).toBeVisible();
+  await expect(documentStatus).toContainText("已保存");
+});
+
 test("synchronizes a score selection between the range list and alphaTab", async ({ page }) => {
   await page.goto("/");
   await importFixture(page, "导入第一份曲谱", harmonySelectionFixture);

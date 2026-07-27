@@ -1,4 +1,4 @@
-import { analyzeHarmony, harmonyAnalysisInputSchema, harmonySegmentSchema } from "@zupulse/web-core";
+import { analyzeHarmony, harmonyAnalysisInputSchema, harmonySegmentSchema } from "@zupulse/web-core/harmony-worker";
 import { z } from "zod";
 
 export const harmonyAnalysisWorkerRequestSchema = z

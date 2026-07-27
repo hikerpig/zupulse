@@ -126,6 +126,31 @@ Rust/WASM。
   repeated range scan. A new profile will then either close the 5-second gap or provide the clean kernel evidence
   required by the WASM gate.
 
+### 2026-07-27: Checkpoint B complete and Task 7 decision
+
+- Commit `ce98a2914e7dfe70d37f51991e28711d6575a32a` completed the intended prefix evidence: interior figuration
+  aggregates are prefix-addressable, retained-note contexts use compact numeric storage, repeated role coverage
+  is cached, and consistency scoring no longer allocates per potential.
+- The authoritative five isolated K331 samples were
+  `5,054.43 / 4,797.78 / 4,925.84 / 4,913.62 / 4,774.76 ms`. Median was `4,913.62 ms`, maximum RSS was
+  `484,098,048 bytes`, and every sample produced 121 segments with canonical checksum
+  `9b0d56e25913116c1a44b460432280a681dc6dcfc2ed9812ab3c3178bb927ff0`. Both required time and RSS gates pass.
+- The post-prefix CPU profile measured a `4,887.48 ms` cold analysis. Its largest self-time entries were
+  `collectPaperSemiCrfSegmentFeatures` (`1.093 s`), figuration `forRange` (`0.448 s`), `addPrefixRange`
+  (`0.350 s`), coverage bins (`0.339 s`) and bass bins (`0.297 s`). No single typed-array-ready kernel remains at
+  the required `40%`; the largest entry is approximately `22%`.
+- Amdahl analysis no longer justifies a second runtime: even an impossible infinite speedup of the largest
+  remaining entry would save about `22%`, below the `30%` incremental adoption gate, while TypeScript already
+  meets the end-to-end requirement.
+- Browser and Desktop production builds emit the same dedicated Worker chunk without Node/Electron APIs. A
+  package-root import initially pulled alphaTab into the Worker and failed in real Chromium; the supported
+  `@zupulse/web-core/harmony-worker` entry now keeps the Worker graph isolated.
+- Real Chromium and Electron K331 E2E tests verify that cancel becomes available, the analysis-period event loop
+  has no task over `50 ms`, cancellation restores the saved document, and the underlying job is terminated.
+- **Task 7 decision: do not use WASM.** The TypeScript gate is met, the remaining profile does not expose a
+  qualifying kernel, and Rust/WASM would add CSP, offline asset, initialization, serialization and supply-chain
+  work without satisfying the incremental-gain gate. No Rust crate or WASM production path was created.
+
 ## 2. Non-negotiable constraints
 
 - Production 必须继续在完整 62-label inventory 和最长 20 events span 上运行 exact

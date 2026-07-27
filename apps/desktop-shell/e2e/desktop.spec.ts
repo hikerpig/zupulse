@@ -12,6 +12,7 @@ const mxlFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/genera
 const harmonySelectionFixture = fileURLToPath(
   new URL("../../../test-fixtures/musicxml/generated/harmony-selection.musicxml", import.meta.url),
 );
+const reviewedFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/K331-3_reviewed.mxl", import.meta.url));
 
 async function launch(userData: string): Promise<ElectronApplication> {
   try {
@@ -210,6 +211,52 @@ test("opens a saved MusicXML Studio document", async () => {
     await window.getByRole("button", { name: "Export annotated score" }).click();
     await expect(window.getByText("Annotated score exported")).toBeVisible();
     await expect.poll(async () => new TextDecoder().decode(await readFile(exportPath))).toContain("<harmony>");
+  } finally {
+    await app.close();
+    await rm(userData, { recursive: true, force: true });
+  }
+});
+
+test("keeps K331 responsive and terminates a cancelled Desktop analysis", async () => {
+  test.setTimeout(60_000);
+  const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-harmony-worker-"));
+  const app = await launch(userData);
+  try {
+    const window = await app.firstWindow();
+    await chooseFixture(app, reviewedFixture);
+    await window.getByRole("button", { name: "Import score" }).first().click();
+    await window.getByRole("link", { name: "Harmony analysis" }).click();
+    const documentStatus = window.getByRole("status", { name: "Analysis document status" });
+    await expect(documentStatus).toContainText("Saved", { timeout: 30_000 });
+
+    await window.getByRole("button", { name: "Reanalyze" }).click();
+    const cancel = window.getByRole("button", { name: "Cancel analysis" });
+    await expect(cancel).toBeVisible({ timeout: 1_000 });
+    await window.evaluate(() => {
+      const probe = { ticks: 0, maximumDelayMs: 0, previous: performance.now(), timer: 0 };
+      probe.timer = window.setInterval(() => {
+        const now = performance.now();
+        probe.maximumDelayMs = Math.max(probe.maximumDelayMs, now - probe.previous - 5);
+        probe.previous = now;
+        probe.ticks += 1;
+      }, 5);
+      (window as unknown as { harmonyResponsivenessProbe: typeof probe }).harmonyResponsivenessProbe = probe;
+    });
+    await window.waitForTimeout(100);
+    const responsiveness = await window.evaluate(() => {
+      const probe = (
+        window as unknown as {
+          harmonyResponsivenessProbe: { ticks: number; maximumDelayMs: number; timer: number };
+        }
+      ).harmonyResponsivenessProbe;
+      window.clearInterval(probe.timer);
+      return { ticks: probe.ticks, maximumDelayMs: probe.maximumDelayMs };
+    });
+    expect(responsiveness.ticks).toBeGreaterThan(5);
+    expect(responsiveness.maximumDelayMs).toBeLessThanOrEqual(50);
+    await cancel.click();
+    await expect(window.getByRole("button", { name: "Reanalyze" })).toBeVisible();
+    await expect(documentStatus).toContainText("Saved");
   } finally {
     await app.close();
     await rm(userData, { recursive: true, force: true });

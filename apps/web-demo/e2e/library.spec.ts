@@ -280,7 +280,7 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await page.getByRole("menuitem", { name: "删除 Single Voice", exact: true }).click();
   await expect(page.getByRole("alertdialog")).toContainText("全部练习数据");
   await page.getByRole("button", { name: "永久删除" }).click();
-  await expect(page.getByRole("button", { name: "导入第一份曲谱" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "导入自己的曲谱" })).toBeVisible();
 });
 
 test("reanalyses a multi-part Studio scope and allows a track to be added back", async ({ page }) => {

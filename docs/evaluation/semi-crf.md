@@ -51,9 +51,37 @@ interval accuracy 为 `63.73%`。
 
 同一 `.mxl` 输出 121 segments，其中 100 resolved、21 unresolved。
 
+### Production performance
+
+基线 production 入口为 `27.87 s`、最大 RSS `516,849,664 bytes`。完成 numeric weights、range
+evidence、figuration prefix evidence 与 allocation reduction 后，在相同 Apple M2 Max、Node
+`v22.22.1` 上对 commit `ce98a2914e7dfe70d37f51991e28711d6575a32a` 执行一次 warm-up，再用隔离
+process 采集五次 production `analyzeHarmony`：
+
+| Sample | Analysis-only |
+| -----: | ------------: |
+|      1 | `5,054.43 ms` |
+|      2 | `4,797.78 ms` |
+|      3 | `4,925.84 ms` |
+|      4 | `4,913.62 ms` |
+|      5 | `4,774.76 ms` |
+
+Median 为 `4,913.62 ms`，最大 RSS 为 `484,098,048 bytes`。输入包含 1,607 pitched notes、793 basic
+events、62 labels、最长 20-event span 与 971,540 segment-label potentials。五次均输出 121
+segments，canonical checksum 均为
+`9b0d56e25913116c1a44b460432280a681dc6dcfc2ed9812ab3c3178bb927ff0`。
+
+Post-prefix cold profile 为 `4,887.48 ms`；最大 self-time entry
+`collectPaperSemiCrfSegmentFeatures` 为 `1.093 s`（约 22%），其后为 figuration `forRange`
+`0.448 s` 与 `addPrefixRange` `0.350 s`。没有单一 typed-array-ready kernel 达到 40% WASM spike
+门禁。TypeScript 已满足 5 秒 required gate，即使无限加速最大 entry 也达不到 30% incremental
+adoption gate，因此当前不采用 WASM。
+
+Browser 与 Desktop 使用相同 module Worker 和协议。真实 Chromium/Electron K331 E2E 验证分析期
+事件循环最大延迟不超过 50 ms、取消会终止 job 并保留已保存 Document。
+
 ## 已知边界
 
-- `K331-3_reviewed.mxl` 整曲推理约 28 秒，仍超过 5 秒目标。
 - Paper inventory 不完整表达 inversion、dominant 与 half-diminished families。
 - Confidence 是 alternatives adapter 的拒识证据，尚未按 Semi-CRF 概率校准。
 - 不得用 label pruning、beam search 或 silent fallback 掩盖性能问题。

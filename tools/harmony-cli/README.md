@@ -14,6 +14,21 @@ pnpm -s harmony:cli inspect path/to/score.mxl --view result
 stdout 是版本化 JSON；alphaTab warning 写到 stderr。`model` 是 `HarmonyAnalysisInput`，`result` 是
 生产 `HarmonySegment[]`。
 
+## Benchmark
+
+```bash
+pnpm benchmark:harmony
+pnpm -s harmony:cli benchmark path/to/score.mxl \
+  --runs 5 \
+  --warmup-runs 1 \
+  --expected-result-sha256 <sha256>
+```
+
+Benchmark 只调用生产 `analyzeHarmony`，不维护第二套 analyzer。它把文件读取、MusicXML
+parse/projection 和 analysis-only 时间分开记录，并报告每次 analysis 样本、median、RSS、输入规模、
+运行环境和 canonical result checksum。根命令默认使用 K331 fixture 与受版本控制的 golden checksum；
+显式 benchmark 不进入快速验证。
+
 ## Structural regression
 
 ```bash

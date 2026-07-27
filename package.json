@@ -23,6 +23,7 @@
     "fixtures:gp": "node scripts/generate-gp-fixtures.mjs && node scripts/verify-gp-fixtures.mjs",
     "fixtures:musicxml": "node scripts/generate-musicxml-fixtures.mjs && node scripts/verify-musicxml-fixtures.mjs",
     "benchmark:musicxml": "node scripts/benchmark-musicxml-import.mjs",
+    "benchmark:harmony": "node scripts/benchmark-harmony-analysis.mjs",
     "harmony:cli": "vite-node tools/harmony-cli/src/cli.ts",
     "demo:dev": "pnpm --filter @zupulse/web-demo dev",
     "demo:build": "pnpm --filter @zupulse/web-demo build",

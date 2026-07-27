@@ -35,6 +35,17 @@ describe("harmony CLI inspect command", () => {
     expect(report.source.name).toBe("simple.mxl");
   });
 
+  it("runs the production benchmark with explicit sample counts", async () => {
+    const report = await runHarmonyCommand(["benchmark", score, "--runs", "1", "--warmup-runs", "0"]);
+
+    expect(report).toMatchObject({
+      schemaVersion: "harmony-analysis-benchmark-v1",
+      command: "benchmark",
+      workload: { runs: 1, warmupRuns: 0 },
+      result: { sha256: expect.stringMatching(/^[a-f0-9]{64}$/) },
+    });
+  });
+
   it("rejects an invalid dataset report split before reading the manifest", async () => {
     await expect(runHarmonyCommand(["eval", "missing.json", "--split", "invalid"])).rejects.toThrow(
       "--split must be train, tune, or eval",

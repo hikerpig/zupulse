@@ -52,6 +52,7 @@ flowchart LR
 - Harmony engine 核心：`../../packages/web-core/docs/harmony.md`
 - Harmony CLI 与评测：`../../tools/harmony-cli/README.md`、`../../tools/harmony-cli/docs/evaluation.md`
 - Semi-CRF 当前验证：`../evaluation/semi-crf.md`
+- Harmony Analysis 性能优化总结：`../evaluation/harmony-analysis-performance-summary.md`
 - 架构决策状态：`../adr/README.md`
 
 ## 当前核心不变量

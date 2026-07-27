@@ -1,6 +1,21 @@
 import type { PaperSemiCrfEvent, PaperSemiCrfEventNote } from "./paper-semi-crf-events";
 import type { PaperSemiCrfSupportedLabel } from "./paper-semi-crf-labels";
 import {
+  createPaperSemiCrfFigurationEvidenceCache,
+  type PaperSemiCrfFigurationEvidenceCache,
+} from "./paper-semi-crf-figuration-evidence";
+import { createPaperSemiCrfRangeEvidenceCache, type PaperSemiCrfRangeEvidence } from "./paper-semi-crf-range-evidence";
+import {
+  compilePaperSemiCrfFeatureWeights,
+  PaperSemiCrfBinnedFeature,
+  type PaperSemiCrfCompiledFeatureWeights,
+  PaperSemiCrfFixedFeature,
+  PaperSemiCrfRole,
+  PaperSemiCrfRoleBinnedFeature,
+  PaperSemiCrfRoleFeature,
+  paperSemiCrfConsistencyBinIndex,
+} from "./paper-semi-crf-compiled-weights";
+import {
   PAPER_SEMI_CRF_FEATURE_VERSION,
   type PaperSemiCrfFeature,
   type PaperSemiCrfFeatureProvider,
@@ -10,12 +25,40 @@ import {
 } from "./paper-semi-crf-model";
 
 type FeatureWeight = "count" | "accent" | "duration";
+type NoteEvidence = Pick<
+  PaperSemiCrfRangeEvidence,
+  | "noteCount"
+  | "noteCountByPitchClass"
+  | "durationTotal"
+  | "durationByPitchClass"
+  | "accentTotal"
+  | "accentByPitchClass"
+>;
+type BassEvidence = Pick<
+  PaperSemiCrfRangeEvidence,
+  | "eventCount"
+  | "eventDurationTotal"
+  | "eventAccentTotal"
+  | "durationBassByPitchClass"
+  | "accentBassByPitchClass"
+  | "bassEventCountByPitchClass"
+>;
 
 type ChordRoles = {
   root: readonly number[];
   third: readonly number[];
   fifth: readonly number[];
   added: readonly number[];
+};
+type RoleEntry = {
+  role: Role;
+  pitchClasses: readonly number[];
+};
+type LabelFeatureContext = {
+  roles: ChordRoles;
+  chordPitchClasses: ReadonlySet<number>;
+  chordPitchClassList: readonly number[];
+  roleEntries: readonly RoleEntry[];
 };
 
 export type PaperSemiCrfFeatureDictionary = {
@@ -26,22 +69,26 @@ export type PaperSemiCrfFeatureDictionary = {
 export type PaperSemiCrfNamedFeatureProvider = (input: PaperSemiCrfLocalPotentialInput) => string[];
 
 const featureDictionaryIndices = new WeakMap<PaperSemiCrfFeatureDictionary, ReadonlyMap<string, number>>();
+const labelFeatureContexts = new WeakMap<PaperSemiCrfSupportedLabel, LabelFeatureContext>();
 
 export function createPaperSemiCrfNamedFeatureProvider(input: {
   events: readonly PaperSemiCrfEvent[];
   labels: readonly PaperSemiCrfSupportedLabel[];
 }): PaperSemiCrfNamedFeatureProvider {
-  const labelsById = new Map(input.labels.map((label) => [label.id, label]));
+  const labelsById: Array<PaperSemiCrfSupportedLabel | undefined> = [];
+  for (const label of input.labels) labelsById[label.id] = label;
+  const evidenceCache = createPaperSemiCrfRangeEvidenceCache(input.events);
+  const figurationCache = createPaperSemiCrfFigurationEvidenceCache(input.events);
   return (localInput) => {
-    const label = labelsById.get(localInput.segment.labelId);
+    const label = labelsById[localInput.segment.labelId];
     if (!label) throw new Error("missing paper semi-CRF label");
-    const segmentFeatures = extractPaperSemiCrfSegmentFeatures({
-      events: input.events,
-      segment: localInput.segment,
-      label,
-    });
+    const segmentFeatures = extractPaperSemiCrfSegmentFeaturesWithEvidence(
+      { events: input.events, segment: localInput.segment, label },
+      evidenceCache.forRange(localInput.segment.startEvent, localInput.segment.endEvent),
+      figurationCache,
+    );
     if (localInput.previousLabelId === undefined) return segmentFeatures;
-    const previousLabel = labelsById.get(localInput.previousLabelId);
+    const previousLabel = labelsById[localInput.previousLabelId];
     if (!previousLabel) throw new Error("missing paper semi-CRF previous label");
     return [...segmentFeatures, extractPaperSemiCrfTransitionFeature(label, previousLabel)];
   };
@@ -80,9 +127,20 @@ export function createPaperSemiCrfFactorizedLinearPotential(input: {
   weights: readonly number[];
 }): PaperSemiCrfLocalPotential {
   const scorers = createPaperSemiCrfFactorizedLinearScorers(input);
-  return ({ segment, previousLabelId }) =>
-    scorers.segmentPotential(segment) +
-    (previousLabelId === undefined ? 0 : scorers.transitionPotential(segment.labelId, previousLabelId));
+  const segmentScores = new Map<number, number>();
+  const eventStride = input.events.length + 1;
+  const labelStride = input.labels.length;
+  return ({ segment, previousLabelId }) => {
+    const segmentKey = (segment.startEvent * eventStride + segment.endEvent) * labelStride + segment.labelId;
+    let segmentScore = segmentScores.get(segmentKey);
+    if (segmentScore === undefined) {
+      segmentScore = scorers.segmentPotential(segment);
+      segmentScores.set(segmentKey, segmentScore);
+    }
+    return (
+      segmentScore + (previousLabelId === undefined ? 0 : scorers.transitionPotential(segment.labelId, previousLabelId))
+    );
+  };
 }
 
 export function createPaperSemiCrfFactorizedLinearScorers(input: {
@@ -100,36 +158,39 @@ export function createPaperSemiCrfFactorizedLinearScorers(input: {
   if (input.weights.some((weight) => !Number.isFinite(weight))) {
     throw new Error("non-finite paper semi-CRF weight");
   }
-  const featureWeights = new Map(
-    input.dictionary.featureNames.map((name, index) => [name, input.weights[index]!] as const),
-  );
-  const labelsById = new Map(input.labels.map((label) => [label.id, label]));
-  const segmentScores = new Map<string, number>();
-  const transitionScores = new Map<string, number>();
+  const compiledWeights = compilePaperSemiCrfFeatureWeights({
+    featureNames: input.dictionary.featureNames,
+    weights: input.weights,
+  });
+  const labelsById: Array<PaperSemiCrfSupportedLabel | undefined> = [];
+  for (const label of input.labels) labelsById[label.id] = label;
+  const accumulator = new CompiledFeatureAccumulator(compiledWeights);
+  const evidenceCache = createPaperSemiCrfRangeEvidenceCache(input.events);
+  const figurationCache = createPaperSemiCrfFigurationEvidenceCache(input.events);
   const segmentPotential = (segment: PaperSemiCrfSegment) => {
-    const segmentKey = `${segment.startEvent}:${segment.endEvent}:${segment.labelId}`;
-    let segmentScore = segmentScores.get(segmentKey);
-    if (segmentScore === undefined) {
-      const label = labelsById.get(segment.labelId);
-      if (!label) throw new Error("missing paper semi-CRF label");
-      segmentScore = scoreNamedFeatures(
-        extractPaperSemiCrfSegmentFeatures({ events: input.events, segment, label }),
-        featureWeights,
-      );
-      segmentScores.set(segmentKey, segmentScore);
-    }
-    return segmentScore;
+    const label = labelsById[segment.labelId];
+    if (!label) throw new Error("missing paper semi-CRF label");
+    accumulator.reset();
+    collectPaperSemiCrfSegmentFeatures(
+      { events: input.events, segment, label },
+      evidenceCache.forRange(segment.startEvent, segment.endEvent),
+      figurationCache,
+      accumulator,
+    );
+    return accumulator.score;
   };
+  const transitionScores = Float64Array.from({ length: input.labels.length * input.labels.length }, (_, index) => {
+    const currentLabelId = Math.floor(index / input.labels.length);
+    const previousLabelId = index % input.labels.length;
+    const current = labelsById[currentLabelId];
+    const previous = labelsById[previousLabelId];
+    if (!current || !previous) throw new Error("missing paper semi-CRF transition label");
+    const featureIndex = input.dictionary.featureNames.indexOf(extractPaperSemiCrfTransitionFeature(current, previous));
+    return featureIndex < 0 ? 0 : input.weights[featureIndex]!;
+  });
   const transitionPotential = (currentLabelId: number, previousLabelId: number) => {
-    const transitionKey = `${currentLabelId}:${previousLabelId}`;
-    let transitionScore = transitionScores.get(transitionKey);
-    if (transitionScore === undefined) {
-      const current = labelsById.get(currentLabelId);
-      const previous = labelsById.get(previousLabelId);
-      if (!current || !previous) throw new Error("missing paper semi-CRF transition label");
-      transitionScore = featureWeights.get(extractPaperSemiCrfTransitionFeature(current, previous)) ?? 0;
-      transitionScores.set(transitionKey, transitionScore);
-    }
+    const transitionScore = transitionScores[currentLabelId * input.labels.length + previousLabelId];
+    if (transitionScore === undefined) throw new Error("missing paper semi-CRF transition label");
     return transitionScore;
   };
   return { segmentPotential, transitionPotential };
@@ -152,17 +213,42 @@ export function encodePaperSemiCrfNamedFeatures(
   return [...counts].map(([index, value]) => ({ index, value }));
 }
 
-function scoreNamedFeatures(featureNames: readonly string[], weights: ReadonlyMap<string, number>): number {
-  let score = 0;
-  for (const name of featureNames) score += weights.get(name) ?? 0;
-  return score;
-}
-
 export function extractPaperSemiCrfSegmentFeatures(input: {
   events: readonly PaperSemiCrfEvent[];
   segment: PaperSemiCrfSegment;
   label: PaperSemiCrfSupportedLabel;
 }): string[] {
+  return extractPaperSemiCrfSegmentFeaturesWithEvidence(
+    input,
+    createPaperSemiCrfRangeEvidenceCache(input.events).forRange(input.segment.startEvent, input.segment.endEvent),
+    createPaperSemiCrfFigurationEvidenceCache(input.events),
+  );
+}
+
+function extractPaperSemiCrfSegmentFeaturesWithEvidence(
+  input: {
+    events: readonly PaperSemiCrfEvent[];
+    segment: PaperSemiCrfSegment;
+    label: PaperSemiCrfSupportedLabel;
+  },
+  evidence: PaperSemiCrfRangeEvidence,
+  figurationCache: PaperSemiCrfFigurationEvidenceCache,
+): string[] {
+  const sink = new NamedFeatureSink();
+  collectPaperSemiCrfSegmentFeatures(input, evidence, figurationCache, sink);
+  return sink.features;
+}
+
+function collectPaperSemiCrfSegmentFeatures(
+  input: {
+    events: readonly PaperSemiCrfEvent[];
+    segment: PaperSemiCrfSegment;
+    label: PaperSemiCrfSupportedLabel;
+  },
+  evidence: PaperSemiCrfRangeEvidence,
+  figurationCache: PaperSemiCrfFigurationEvidenceCache,
+  sink: SegmentFeatureSink,
+): void {
   if (
     input.segment.labelId !== input.label.id ||
     input.segment.startEvent < 0 ||
@@ -171,114 +257,235 @@ export function extractPaperSemiCrfSegmentFeatures(input: {
   ) {
     throw new Error("invalid paper semi-CRF feature segment");
   }
-  const events = input.events.slice(input.segment.startEvent, input.segment.endEvent);
-  const notes = notesInSegment(events);
-  const roles = chordRoles(input.label);
-  const chordPitchClasses = new Set([...roles.root, ...roles.third, ...roles.fifth, ...roles.added]);
-  const nonFigurationNotes = notesWithoutFiguration(input.events, input.segment, chordPitchClasses);
-  const features = [
-    `PURITY_${purityBin(notes, events, chordPitchClasses, "count")}`,
-    `ACCENTED_PURITY_${purityBin(notes, events, chordPitchClasses, "accent")}`,
-    `DURATION_PURITY_${purityBin(notes, events, chordPitchClasses, "duration")}`,
-    `FIG_PURITY_${purityBin(nonFigurationNotes, events, chordPitchClasses, "count")}`,
-    `FIG_ACCENTED_PURITY_${purityBin(nonFigurationNotes, events, chordPitchClasses, "accent")}`,
-    `FIG_DURATION_PURITY_${purityBin(nonFigurationNotes, events, chordPitchClasses, "duration")}`,
-  ];
-  const rootCovered = coversRole(notes, roles.root);
-  const thirdCovered = coversRole(notes, roles.third);
-  const fifthCovered = coversRole(notes, roles.fifth);
-  const addedCovered = coversRole(notes, roles.added);
-  if (rootCovered) features.push("ROOT_COVERED");
-  if (thirdCovered) features.push("THIRD_COVERED");
-  if (fifthCovered) features.push("FIFTH_COVERED");
-  if (roles.added.length > 0) {
-    features.push(addedCovered ? "ADDED_NOTE_COVERED" : "ADDED_NOTE_NOT_COVERED");
-  }
-  if (rootCovered && thirdCovered && fifthCovered && (roles.added.length === 0 || addedCovered)) {
-    features.push("ALL_NOTES_COVERED");
-  }
-  if (roles.added.length > 0 && addedDurationExceedsRoot(notes, roles)) {
-    features.push("DURATION_ADDED_NOTE_GREATER_THAN_ROOT");
-  }
-  const roleEntries = [
-    { name: "ROOT", pitchClasses: roles.root },
-    { name: "THIRD", pitchClasses: roles.third },
-    { name: "FIFTH", pitchClasses: roles.fifth },
-    { name: "ADDED_NOTE", pitchClasses: roles.added },
-  ] as const;
-  for (const role of roleEntries) {
-    features.push(
-      `DURATION_${role.name}_COVERED_${weightedCoverageBin(notes, events, role.pitchClasses, "duration")}`,
-      `FIG_DURATION_${role.name}_COVERED_${weightedCoverageBin(nonFigurationNotes, events, role.pitchClasses, "duration")}`,
-      `SEGMENT_DURATION_${role.name}_COVERED_${segmentDurationCoverageBin(events, role.pitchClasses)}`,
-    );
-  }
-  for (const role of roleEntries) {
-    features.push(
-      `ACCENT_${role.name}_COVERED_${weightedCoverageBin(notes, events, role.pitchClasses, "accent")}`,
-      `FIG_ACCENT_${role.name}_COVERED_${weightedCoverageBin(nonFigurationNotes, events, role.pitchClasses, "accent")}`,
-    );
-  }
-  features.push(`BEGINNING_ACCENTED_${formatReferenceDouble(events[0]!.metricAccent)}`);
-  const firstBass = lowestNote(events[0]!.notes);
-  const segmentBass = lowestNote(notes);
-  const firstNonFigurationNotes = notesWithoutFiguration(
-    input.events,
-    { ...input.segment, endEvent: input.segment.startEvent + 1 },
+  const labelContext = labelFeatureContext(input.label);
+  const { roles, chordPitchClasses, chordPitchClassList, roleEntries } = labelContext;
+  const figurationEvidence = figurationCache.forRange(
+    input.segment.startEvent,
+    input.segment.endEvent,
     chordPitchClasses,
   );
-  const firstNonFigurationBass = lowestNote(firstNonFigurationNotes);
-  const segmentNonFigurationBass = lowestNote(nonFigurationNotes);
-  const nonFigurationBassNotes = events.map((_, index) =>
-    lowestNote(
-      notesWithoutFiguration(
-        input.events,
-        {
-          ...input.segment,
-          startEvent: input.segment.startEvent + index,
-          endEvent: input.segment.startEvent + index + 1,
-        },
-        chordPitchClasses,
-      ),
-    ),
+  sink.binned(PaperSemiCrfBinnedFeature.Purity, purityBinFromEvidence(evidence, chordPitchClassList, "count"));
+  sink.binned(PaperSemiCrfBinnedFeature.AccentedPurity, purityBinFromEvidence(evidence, chordPitchClassList, "accent"));
+  sink.binned(
+    PaperSemiCrfBinnedFeature.DurationPurity,
+    purityBinFromEvidence(evidence, chordPitchClassList, "duration"),
   );
+  sink.binned(
+    PaperSemiCrfBinnedFeature.FigPurity,
+    purityBinFromEvidence(figurationEvidence, chordPitchClassList, "count"),
+  );
+  sink.binned(
+    PaperSemiCrfBinnedFeature.FigAccentedPurity,
+    purityBinFromEvidence(figurationEvidence, chordPitchClassList, "accent"),
+  );
+  sink.binned(
+    PaperSemiCrfBinnedFeature.FigDurationPurity,
+    purityBinFromEvidence(figurationEvidence, chordPitchClassList, "duration"),
+  );
+  const rootCovered = coversRoleFromEvidence(evidence, roles.root);
+  const thirdCovered = coversRoleFromEvidence(evidence, roles.third);
+  const fifthCovered = coversRoleFromEvidence(evidence, roles.fifth);
+  const addedCovered = coversRoleFromEvidence(evidence, roles.added);
+  if (rootCovered) sink.fixed(PaperSemiCrfFixedFeature.RootCovered);
+  if (thirdCovered) sink.fixed(PaperSemiCrfFixedFeature.ThirdCovered);
+  if (fifthCovered) sink.fixed(PaperSemiCrfFixedFeature.FifthCovered);
+  if (roles.added.length > 0) {
+    sink.fixed(addedCovered ? PaperSemiCrfFixedFeature.AddedNoteCovered : PaperSemiCrfFixedFeature.AddedNoteNotCovered);
+  }
+  if (rootCovered && thirdCovered && fifthCovered && (roles.added.length === 0 || addedCovered)) {
+    sink.fixed(PaperSemiCrfFixedFeature.AllNotesCovered);
+  }
+  if (roles.added.length > 0 && addedDurationExceedsRootEvidence(evidence, roles)) {
+    sink.fixed(PaperSemiCrfFixedFeature.DurationAddedNoteGreaterThanRoot);
+  }
+  for (const role of roleEntries) {
+    sink.roleBinned(
+      PaperSemiCrfRoleBinnedFeature.DurationCovered,
+      role.role,
+      weightedCoverageBinFromEvidence(evidence, role.pitchClasses, "duration"),
+    );
+    sink.roleBinned(
+      PaperSemiCrfRoleBinnedFeature.FigDurationCovered,
+      role.role,
+      weightedCoverageBinFromEvidence(figurationEvidence, role.pitchClasses, "duration"),
+    );
+    sink.roleBinned(
+      PaperSemiCrfRoleBinnedFeature.SegmentDurationCovered,
+      role.role,
+      segmentDurationCoverageBinFromEvidence(evidence, role.pitchClasses),
+    );
+  }
+  for (const role of roleEntries) {
+    sink.roleBinned(
+      PaperSemiCrfRoleBinnedFeature.AccentCovered,
+      role.role,
+      weightedCoverageBinFromEvidence(evidence, role.pitchClasses, "accent"),
+    );
+    sink.roleBinned(
+      PaperSemiCrfRoleBinnedFeature.FigAccentCovered,
+      role.role,
+      weightedCoverageBinFromEvidence(figurationEvidence, role.pitchClasses, "accent"),
+    );
+  }
+  sink.beginningAccent(input.events[input.segment.startEvent]!.metricAccent);
+  const firstBass = evidence.firstEventBass;
+  const segmentBass = evidence.segmentBass;
+  const firstNonFigurationBass = figurationCache.singleEventBass(input.segment.startEvent, chordPitchClasses);
+  const segmentNonFigurationBass = figurationEvidence.segmentBass;
   for (const role of roleEntries) {
     if (firstBass && role.pitchClasses.includes(firstBass.soundingPitchClass)) {
-      features.push(`FIRST_BASS_IS_${role.name}`);
+      sink.role(PaperSemiCrfRoleFeature.FirstBassIs, role.role);
     }
   }
   for (const role of roleEntries) {
     if (firstNonFigurationBass && role.pitchClasses.includes(firstNonFigurationBass.soundingPitchClass)) {
-      features.push(`FIG_FIRST_BASS_IS_${role.name}`);
+      sink.role(PaperSemiCrfRoleFeature.FigFirstBassIs, role.role);
     }
   }
   for (const role of roleEntries) {
     if (segmentBass && role.pitchClasses.includes(segmentBass.soundingPitchClass)) {
-      features.push(`SEGMENT_BASS_IS_${role.name}`);
+      sink.role(PaperSemiCrfRoleFeature.SegmentBassIs, role.role);
     }
   }
   for (const role of roleEntries) {
     if (segmentNonFigurationBass && role.pitchClasses.includes(segmentNonFigurationBass.soundingPitchClass)) {
-      features.push(`FIG_SEGMENT_BASS_IS_${role.name}`);
+      sink.role(PaperSemiCrfRoleFeature.FigSegmentBassIs, role.role);
     }
   }
   for (const role of roleEntries) {
-    features.push(`DURATION_BASS_IS_${role.name}_${weightedBassBin(events, role.pitchClasses, "duration")}`);
-  }
-  for (const role of roleEntries) {
-    features.push(`ACCENT_BASS_IS_${role.name}_${weightedBassBin(events, role.pitchClasses, "accent")}`);
-  }
-  for (const role of roleEntries) {
-    features.push(
-      `FIG_DURATION_BASS_IS_${role.name}_${weightedBassBin(events, role.pitchClasses, "duration", nonFigurationBassNotes)}`,
+    sink.roleBinned(
+      PaperSemiCrfRoleBinnedFeature.DurationBassIs,
+      role.role,
+      weightedBassBinFromEvidence(evidence, role.pitchClasses, "duration"),
     );
   }
   for (const role of roleEntries) {
-    features.push(
-      `FIG_ACCENT_BASS_IS_${role.name}_${weightedBassBin(events, role.pitchClasses, "accent", nonFigurationBassNotes)}`,
+    sink.roleBinned(
+      PaperSemiCrfRoleBinnedFeature.AccentBassIs,
+      role.role,
+      weightedBassBinFromEvidence(evidence, role.pitchClasses, "accent"),
     );
   }
-  return features;
+  for (const role of roleEntries) {
+    sink.roleBinned(
+      PaperSemiCrfRoleBinnedFeature.FigDurationBassIs,
+      role.role,
+      weightedBassBinFromEvidence(figurationEvidence, role.pitchClasses, "duration"),
+    );
+  }
+  for (const role of roleEntries) {
+    sink.roleBinned(
+      PaperSemiCrfRoleBinnedFeature.FigAccentBassIs,
+      role.role,
+      weightedBassBinFromEvidence(figurationEvidence, role.pitchClasses, "accent"),
+    );
+  }
+}
+
+type FixedFeature = Exclude<PaperSemiCrfFixedFeature, PaperSemiCrfFixedFeature.Count>;
+type BinnedFeature = Exclude<PaperSemiCrfBinnedFeature, PaperSemiCrfBinnedFeature.Count>;
+type Role = Exclude<PaperSemiCrfRole, PaperSemiCrfRole.Count>;
+type RoleBinnedFeature = Exclude<PaperSemiCrfRoleBinnedFeature, PaperSemiCrfRoleBinnedFeature.Count>;
+type RoleFeature = Exclude<PaperSemiCrfRoleFeature, PaperSemiCrfRoleFeature.Count>;
+
+type SegmentFeatureSink = {
+  fixed(feature: FixedFeature): void;
+  binned(feature: BinnedFeature, bin: number): void;
+  roleBinned(feature: RoleBinnedFeature, role: Role, bin: number): void;
+  role(feature: RoleFeature, role: Role): void;
+  beginningAccent(accent: number): void;
+};
+
+const FIXED_FEATURE_NAMES = [
+  "ROOT_COVERED",
+  "THIRD_COVERED",
+  "FIFTH_COVERED",
+  "ADDED_NOTE_COVERED",
+  "ADDED_NOTE_NOT_COVERED",
+  "ALL_NOTES_COVERED",
+  "DURATION_ADDED_NOTE_GREATER_THAN_ROOT",
+] as const;
+const BINNED_FEATURE_NAMES = [
+  "PURITY",
+  "ACCENTED_PURITY",
+  "DURATION_PURITY",
+  "FIG_PURITY",
+  "FIG_ACCENTED_PURITY",
+  "FIG_DURATION_PURITY",
+] as const;
+const ROLE_NAMES = ["ROOT", "THIRD", "FIFTH", "ADDED_NOTE"] as const;
+const ROLE_BINNED_FEATURE_NAMES = [
+  ["DURATION_", "_COVERED"],
+  ["FIG_DURATION_", "_COVERED"],
+  ["SEGMENT_DURATION_", "_COVERED"],
+  ["ACCENT_", "_COVERED"],
+  ["FIG_ACCENT_", "_COVERED"],
+  ["DURATION_BASS_IS_", ""],
+  ["ACCENT_BASS_IS_", ""],
+  ["FIG_DURATION_BASS_IS_", ""],
+  ["FIG_ACCENT_BASS_IS_", ""],
+] as const;
+const ROLE_FEATURE_NAMES = [
+  ["FIRST_BASS_IS_", ""],
+  ["FIG_FIRST_BASS_IS_", ""],
+  ["SEGMENT_BASS_IS_", ""],
+  ["FIG_SEGMENT_BASS_IS_", ""],
+] as const;
+
+class NamedFeatureSink implements SegmentFeatureSink {
+  readonly features: string[] = [];
+
+  fixed(feature: FixedFeature): void {
+    this.features.push(FIXED_FEATURE_NAMES[feature]!);
+  }
+
+  binned(feature: BinnedFeature, bin: number): void {
+    this.features.push(`${BINNED_FEATURE_NAMES[feature]}_${bin}`);
+  }
+
+  roleBinned(feature: RoleBinnedFeature, role: Role, bin: number): void {
+    const [prefix, suffix] = ROLE_BINNED_FEATURE_NAMES[feature]!;
+    this.features.push(`${prefix}${ROLE_NAMES[role]}${suffix}_${bin}`);
+  }
+
+  role(feature: RoleFeature, role: Role): void {
+    const [prefix, suffix] = ROLE_FEATURE_NAMES[feature]!;
+    this.features.push(`${prefix}${ROLE_NAMES[role]}${suffix}`);
+  }
+
+  beginningAccent(accent: number): void {
+    this.features.push(`BEGINNING_ACCENTED_${formatReferenceDouble(accent)}`);
+  }
+}
+
+class CompiledFeatureAccumulator implements SegmentFeatureSink {
+  score = 0;
+
+  constructor(private readonly weights: PaperSemiCrfCompiledFeatureWeights) {}
+
+  reset(): void {
+    this.score = 0;
+  }
+
+  fixed(feature: FixedFeature): void {
+    this.score += this.weights.fixed[feature]!;
+  }
+
+  binned(feature: BinnedFeature, bin: number): void {
+    this.score += this.weights.binned[feature]![paperSemiCrfConsistencyBinIndex(bin)]!;
+  }
+
+  roleBinned(feature: RoleBinnedFeature, role: Role, bin: number): void {
+    this.score += this.weights.roleBinned[feature]![role]![paperSemiCrfConsistencyBinIndex(bin)]!;
+  }
+
+  role(feature: RoleFeature, role: Role): void {
+    this.score += this.weights.role[feature]![role]!;
+  }
+
+  beginningAccent(accent: number): void {
+    this.score += this.weights.beginningAccent.get(accent) ?? 0;
+  }
 }
 
 export function paperSemiCrfConsistencyBin(input: {
@@ -287,117 +494,121 @@ export function paperSemiCrfConsistencyBin(input: {
   matchedCount: number;
   noteCount: number;
 }): number {
-  if (input.matchedCount === 0) return 0;
-  if (input.matchedCount === input.noteCount) return 101;
-  const percentage = input.matching / input.total;
-  const bins = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
-  for (const bin of bins) {
-    if (percentage <= bin) return bin * 100;
-  }
+  return consistencyBin(input.matching, input.total, input.matchedCount, input.noteCount);
+}
+
+function consistencyBin(matching: number, total: number, matchedCount: number, noteCount: number): number {
+  if (matchedCount === 0) return 0;
+  if (matchedCount === noteCount) return 101;
+  const percentage = matching / total;
+  if (percentage <= 0.1) return 10;
+  if (percentage <= 0.2) return 20;
+  if (percentage <= 0.3) return 30;
+  if (percentage <= 0.4) return 40;
+  if (percentage <= 0.5) return 50;
+  if (percentage <= 0.6) return 60;
+  if (percentage <= 0.7) return 70;
+  if (percentage <= 0.8) return 80;
+  if (percentage <= 0.9) return 90;
+  if (percentage <= 1) return 100;
   return 0;
 }
 
-function purityBin(
-  notes: readonly PaperSemiCrfEventNote[],
-  events: readonly PaperSemiCrfEvent[],
-  chordPitchClasses: ReadonlySet<number>,
+function purityBinFromEvidence(
+  evidence: NoteEvidence,
+  chordPitchClasses: readonly number[],
   weight: FeatureWeight,
 ): number {
-  let total = 0;
-  let matching = 0;
-  let matchedCount = 0;
-  for (const note of notes) {
-    const value = noteWeight(note, events[0]!, weight);
-    total += value;
-    if (chordPitchClasses.has(note.soundingPitchClass)) {
-      matching += value;
-      matchedCount += 1;
+  const values =
+    weight === "count"
+      ? evidence.noteCountByPitchClass
+      : weight === "accent"
+        ? evidence.accentByPitchClass
+        : evidence.durationByPitchClass;
+  const total =
+    weight === "count" ? evidence.noteCount : weight === "accent" ? evidence.accentTotal : evidence.durationTotal;
+  return consistencyBin(
+    sumPitchClasses(values, chordPitchClasses),
+    total,
+    sumPitchClasses(evidence.noteCountByPitchClass, chordPitchClasses),
+    evidence.noteCount,
+  );
+}
+
+function coversRoleFromEvidence(evidence: PaperSemiCrfRangeEvidence, role: readonly number[]): boolean {
+  return role.length > 0 && sumPitchClasses(evidence.noteCountByPitchClass, role) > 0;
+}
+
+function weightedCoverageBinFromEvidence(
+  evidence: NoteEvidence,
+  role: readonly number[],
+  weight: Exclude<FeatureWeight, "count">,
+): number {
+  if (role.length === 0) return 0;
+  const values = weight === "duration" ? evidence.durationByPitchClass : evidence.accentByPitchClass;
+  const total = weight === "duration" ? evidence.durationTotal : evidence.accentTotal;
+  return consistencyBin(
+    sumPitchClasses(values, role),
+    total,
+    sumPitchClasses(evidence.noteCountByPitchClass, role),
+    evidence.noteCount,
+  );
+}
+
+function segmentDurationCoverageBinFromEvidence(evidence: PaperSemiCrfRangeEvidence, role: readonly number[]): number {
+  if (role.length === 0) return 0;
+  const coverage = evidence.segmentDurationCoverage(role);
+  return consistencyBin(coverage.matching, coverage.total, coverage.matchedCount, coverage.eventCount);
+}
+
+function addedDurationExceedsRootEvidence(evidence: PaperSemiCrfRangeEvidence, roles: ChordRoles): boolean {
+  return (
+    sumPitchClasses(evidence.sourceDurationByPitchClass, roles.added) >
+    sumPitchClasses(evidence.sourceDurationByPitchClass, roles.root)
+  );
+}
+
+function weightedBassBinFromEvidence(
+  evidence: BassEvidence,
+  role: readonly number[],
+  weight: Exclude<FeatureWeight, "count">,
+): number {
+  if (role.length === 0) return 0;
+  return consistencyBin(
+    sumPitchClasses(weight === "duration" ? evidence.durationBassByPitchClass : evidence.accentBassByPitchClass, role),
+    weight === "duration" ? evidence.eventDurationTotal : evidence.eventAccentTotal,
+    sumPitchClasses(evidence.bassEventCountByPitchClass, role),
+    evidence.eventCount,
+  );
+}
+
+function sumPitchClasses(values: ArrayLike<number>, pitchClasses: readonly number[]): number {
+  switch (pitchClasses.length) {
+    case 0:
+      return 0;
+    case 1:
+      return values[pitchClasses[0]!] ?? 0;
+    case 2:
+      return (values[pitchClasses[0]!] ?? 0) + (values[pitchClasses[1]!] ?? 0);
+    case 3:
+      return (values[pitchClasses[0]!] ?? 0) + (values[pitchClasses[1]!] ?? 0) + (values[pitchClasses[2]!] ?? 0);
+    case 4:
+      return (
+        (values[pitchClasses[0]!] ?? 0) +
+        (values[pitchClasses[1]!] ?? 0) +
+        (values[pitchClasses[2]!] ?? 0) +
+        (values[pitchClasses[3]!] ?? 0)
+      );
+    default: {
+      let total = 0;
+      for (const pitchClass of pitchClasses) total += values[pitchClass] ?? 0;
+      return total;
     }
   }
-  return paperSemiCrfConsistencyBin({ matching, total, matchedCount, noteCount: notes.length });
 }
 
 function notesInSegment(events: readonly PaperSemiCrfEvent[]): PaperSemiCrfEventNote[] {
   return events.flatMap((event, index) => event.notes.filter((note) => index === 0 || !note.heldFromPrevious));
-}
-
-function noteWeight(note: PaperSemiCrfEventNote, firstEvent: PaperSemiCrfEvent, weight: FeatureWeight): number {
-  if (weight === "count") return 1;
-  if (weight === "accent") return note.heldFromPrevious ? 0 : note.metricAccent;
-  return note.heldFromPrevious
-    ? note.sourceDurationTicks - (firstEvent.startTick - note.onsetTick)
-    : note.sourceDurationTicks;
-}
-
-function coversRole(notes: readonly PaperSemiCrfEventNote[], role: readonly number[]): boolean {
-  return role.length > 0 && notes.some((note) => role.includes(note.soundingPitchClass));
-}
-
-function weightedCoverageBin(
-  notes: readonly PaperSemiCrfEventNote[],
-  events: readonly PaperSemiCrfEvent[],
-  role: readonly number[],
-  weight: Exclude<FeatureWeight, "count">,
-): number {
-  if (role.length === 0) return 0;
-  let total = 0;
-  let matching = 0;
-  let matchedCount = 0;
-  for (const note of notes) {
-    const value = noteWeight(note, events[0]!, weight);
-    total += value;
-    if (role.includes(note.soundingPitchClass)) {
-      matching += value;
-      matchedCount += 1;
-    }
-  }
-  return paperSemiCrfConsistencyBin({ matching, total, matchedCount, noteCount: notes.length });
-}
-
-function segmentDurationCoverageBin(events: readonly PaperSemiCrfEvent[], role: readonly number[]): number {
-  if (role.length === 0) return 0;
-  const coveredEvents = events.filter((event) => event.notes.some((note) => role.includes(note.soundingPitchClass)));
-  return paperSemiCrfConsistencyBin({
-    matching: coveredEvents.reduce((sum, event) => sum + event.durationTicks, 0),
-    total: events.reduce((sum, event) => sum + event.durationTicks, 0),
-    matchedCount: coveredEvents.length,
-    noteCount: events.length,
-  });
-}
-
-function addedDurationExceedsRoot(notes: readonly PaperSemiCrfEventNote[], roles: ChordRoles): boolean {
-  const durationFor = (role: readonly number[]): number =>
-    notes
-      .filter((note) => role.includes(note.soundingPitchClass))
-      .reduce((sum, note) => sum + note.sourceDurationTicks, 0);
-  return durationFor(roles.added) > durationFor(roles.root);
-}
-
-function weightedBassBin(
-  events: readonly PaperSemiCrfEvent[],
-  role: readonly number[],
-  weight: Exclude<FeatureWeight, "count">,
-  bassNotes?: readonly (PaperSemiCrfEventNote | undefined)[],
-): number {
-  if (role.length === 0) return 0;
-  let matching = 0;
-  let total = 0;
-  let matchedCount = 0;
-  for (const [index, event] of events.entries()) {
-    const eventWeight = weight === "duration" ? event.durationTicks : event.metricAccent;
-    const bass = bassNotes ? bassNotes[index] : lowestNote(event.notes);
-    total += eventWeight;
-    if (bass && role.includes(bass.soundingPitchClass)) {
-      matching += eventWeight;
-      matchedCount += 1;
-    }
-  }
-  return paperSemiCrfConsistencyBin({
-    matching,
-    total,
-    matchedCount,
-    noteCount: events.length,
-  });
 }
 
 function notesWithoutFiguration(
@@ -593,6 +804,26 @@ function chordRoles(label: PaperSemiCrfSupportedLabel): ChordRoles {
             : [mod12(root + 11), mod12(root + 10)]
           : [];
   return { root: [root], third: [third], fifth: [fifth], added };
+}
+
+function labelFeatureContext(label: PaperSemiCrfSupportedLabel): LabelFeatureContext {
+  const cached = labelFeatureContexts.get(label);
+  if (cached) return cached;
+  const roles = chordRoles(label);
+  const chordPitchClassList = [...new Set([...roles.root, ...roles.third, ...roles.fifth, ...roles.added])];
+  const context = {
+    roles,
+    chordPitchClasses: new Set(chordPitchClassList),
+    chordPitchClassList,
+    roleEntries: [
+      { role: PaperSemiCrfRole.Root, pitchClasses: roles.root },
+      { role: PaperSemiCrfRole.Third, pitchClasses: roles.third },
+      { role: PaperSemiCrfRole.Fifth, pitchClasses: roles.fifth },
+      { role: PaperSemiCrfRole.AddedNote, pitchClasses: roles.added },
+    ],
+  } satisfies LabelFeatureContext;
+  labelFeatureContexts.set(label, context);
+  return context;
 }
 
 function paperModeAndAddedNote(label: PaperSemiCrfSupportedLabel): string {

@@ -18,6 +18,7 @@ export class HarmonyStudioSession {
   private redoStack: HarmonyAnalysisDocument[] = [];
   private saveQueue = Promise.resolve();
   private autosaveTimer: ReturnType<typeof setTimeout> | undefined;
+  private analysisAbortController: AbortController | undefined;
   constructor(
     private readonly repository: HarmonyAnalysisRepository,
     private readonly libraryScoreId: string,
@@ -27,16 +28,22 @@ export class HarmonyStudioSession {
   getState(): HarmonyStudioSessionState {
     return this.state;
   }
-  async load(analyze: () => Promise<HarmonyAnalysisDocument>): Promise<HarmonyStudioSessionState> {
+  async load(
+    analyze: (input: { signal: AbortSignal }) => Promise<HarmonyAnalysisDocument>,
+  ): Promise<HarmonyStudioSessionState> {
+    let controller: AbortController | undefined;
     try {
       const existing = await this.repository.read(this.libraryScoreId);
       if (existing) return this.set({ status: "ready", document: existing });
-      const generated = await analyze();
+      controller = this.beginAnalysis();
+      const generated = await analyze({ signal: controller.signal });
+      this.finishAnalysis(controller);
       const saved = await this.repository.save({ document: generated, expectedDocumentVersion: null });
       if (saved.status === "conflict")
         return this.set({ status: "error", document: null, errorCode: "version-conflict" });
       return this.set({ status: "ready", document: saved.document });
     } catch (error) {
+      if (controller) this.finishAnalysis(controller);
       return this.set({ status: "error", document: null, errorCode: "analysis-failed" });
     }
   }
@@ -61,7 +68,7 @@ export class HarmonyStudioSession {
   }
   async setScope(
     includedTrackIds: readonly string[],
-    analyze: (input: { scope: readonly string[] }) => Promise<HarmonyAnalysisDocument>,
+    analyze: (input: { scope: readonly string[]; signal: AbortSignal }) => Promise<HarmonyAnalysisDocument>,
   ): Promise<HarmonyStudioSessionState> {
     this.edit((document) => ({
       ...document,
@@ -88,15 +95,17 @@ export class HarmonyStudioSession {
     return this.set({ status: "unsaved", document: next });
   }
   async reanalyze(
-    analyze: (input: { scope: readonly string[] }) => Promise<HarmonyAnalysisDocument>,
+    analyze: (input: { scope: readonly string[]; signal: AbortSignal }) => Promise<HarmonyAnalysisDocument>,
   ): Promise<HarmonyStudioSessionState> {
     if (this.autosaveTimer !== undefined) clearTimeout(this.autosaveTimer);
     this.autosaveTimer = undefined;
     const intent = ++this.intent;
     this.set({ status: "analyzing", document: this.state.document });
+    const controller = this.beginAnalysis();
     try {
       const scope = this.state.document?.activeRevision.parameters.scope.includedTrackIds ?? [];
-      const generated = await analyze({ scope });
+      const generated = await analyze({ scope, signal: controller.signal });
+      this.finishAnalysis(controller);
       if (intent !== this.intent) return this.state;
       const current = this.state.document;
       const next =
@@ -120,6 +129,7 @@ export class HarmonyStudioSession {
         return this.set({ status: "conflict", document: this.state.document, errorCode: "version-conflict" });
       return this.set({ status: "ready", document: saved.document });
     } catch (error) {
+      this.finishAnalysis(controller);
       if (intent !== this.intent) return this.state;
       return this.set({
         status: "error",
@@ -130,6 +140,8 @@ export class HarmonyStudioSession {
   }
   cancelReanalysis(): HarmonyStudioSessionState {
     this.intent += 1;
+    this.analysisAbortController?.abort();
+    this.analysisAbortController = undefined;
     return this.set({ status: this.state.document === null ? "error" : "ready", document: this.state.document });
   }
   dispose(): void {
@@ -138,6 +150,17 @@ export class HarmonyStudioSession {
     this.undoStack = [];
     this.redoStack = [];
     this.intent += 1;
+    this.analysisAbortController?.abort();
+    this.analysisAbortController = undefined;
+  }
+  private beginAnalysis(): AbortController {
+    this.analysisAbortController?.abort();
+    const controller = new AbortController();
+    this.analysisAbortController = controller;
+    return controller;
+  }
+  private finishAnalysis(controller: AbortController): void {
+    if (this.analysisAbortController === controller) this.analysisAbortController = undefined;
   }
   private edit(transform: (document: HarmonyAnalysisDocument) => HarmonyAnalysisDocument): HarmonyStudioSessionState {
     const current = this.state.document;

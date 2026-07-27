@@ -154,7 +154,7 @@ export function SheetLibrary({
         <label className={`${styles.librarySort} tw:inline-flex tw:shrink-0 tw:items-center tw:gap-2`}>
           <span className="tw:text-caption tw:whitespace-nowrap tw:text-muted">{t("sortLabel")}</span>
           <Select
-            className="tw:min-w-0 tw:w-auto tw:text-caption"
+            className="tw:w-auto tw:min-w-0 tw:text-caption"
             value={sort}
             onChange={(event) => setSort(event.target.value as typeof sort)}
           >

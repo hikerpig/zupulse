@@ -40,7 +40,7 @@ export const PopoverTitle = forwardRef<HTMLHeadingElement, ComponentPropsWithout
       <BasePopover.Title
         {...props}
         ref={ref}
-        className={mergeClassName("tw:m-0 tw:font-semibold tw:text-title-sm tw:text-foreground", className)}
+        className={mergeClassName("tw:font-semibold tw:m-0 tw:text-title-sm tw:text-foreground", className)}
       />
     );
   },
@@ -71,7 +71,7 @@ export const DialogBackdrop = forwardRef<HTMLDivElement, ComponentPropsWithoutRe
         {...props}
         ref={ref}
         className={mergeClassName(
-          "tw:inset-0 tw:fixed tw:z-overlay tw:bg-scrim tw:transition-opacity tw:duration-fast tw:ease-ui tw:data-ending-style:opacity-0 tw:data-starting-style:opacity-0 tw:motion-reduce:transition-none",
+          "tw:fixed tw:inset-0 tw:z-overlay tw:bg-scrim tw:transition-opacity tw:duration-fast tw:ease-ui tw:data-ending-style:opacity-0 tw:data-starting-style:opacity-0 tw:motion-reduce:transition-none",
           className,
         )}
       />
@@ -86,7 +86,7 @@ export const DialogViewport = forwardRef<HTMLDivElement, ComponentPropsWithoutRe
         {...props}
         ref={ref}
         className={mergeClassName(
-          "tw:inset-0 tw:fixed tw:z-overlay tw:flex tw:items-start tw:justify-center tw:overflow-y-auto tw:p-4",
+          "tw:fixed tw:inset-0 tw:z-overlay tw:flex tw:items-start tw:justify-center tw:overflow-y-auto tw:p-4",
           className,
         )}
       />
@@ -115,7 +115,7 @@ export const DialogTitle = forwardRef<HTMLHeadingElement, ComponentPropsWithoutR
       <BaseDialog.Title
         {...props}
         ref={ref}
-        className={mergeClassName("tw:m-0 tw:font-semibold tw:text-title-sm tw:text-foreground", className)}
+        className={mergeClassName("tw:font-semibold tw:m-0 tw:text-title-sm tw:text-foreground", className)}
       />
     );
   },

@@ -42,7 +42,7 @@ export function Field({ children, className, description, error, label }: FieldP
           </p>
         )}
         {error == null ? null : (
-          <p id={errorId} className="tw:m-0 tw:font-semibold tw:text-caption tw:text-danger" role="alert">
+          <p id={errorId} className="tw:font-semibold tw:m-0 tw:text-caption tw:text-danger" role="alert">
             {error}
           </p>
         )}

@@ -128,7 +128,7 @@ function PlaybackLayout({
       <section className={styles.transportBar} aria-label={t("playback.controls")}>
         <div className={styles.transportActions}>
           <Button
-            className="tw:p-0 tw:size-field"
+            className="tw:size-field tw:p-0"
             tone="primary"
             aria-label={playLabel}
             title={t("playback.shortcutTitle", { action: playLabel })}
@@ -647,7 +647,7 @@ function disabledPlaybackWorkspace(
       <section className={styles.transportBar} aria-label={t("playback.controls")}>
         <div className={styles.transportActions}>
           <Button
-            className="tw:p-0 tw:size-field"
+            className="tw:size-field tw:p-0"
             tone="primary"
             aria-label={t("playback.play")}
             title={t("playback.shortcutTitle", { action: t("playback.play") })}

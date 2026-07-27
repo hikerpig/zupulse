@@ -460,9 +460,11 @@ describe("createDefaultOpenSession cleanup", () => {
     });
     scrollElement.scrollTop = 300;
     const updateSettings = vi.fn();
+    const render = vi.fn();
     const api = {
       settings: { display: { scale: 1 } },
       updateSettings,
+      render,
       tickPosition: 1920,
       isLooping: true,
     };
@@ -475,6 +477,8 @@ describe("createDefaultOpenSession cleanup", () => {
 
     expect(api.settings.display.scale).toBe(1.4);
     expect(updateSettings).toHaveBeenCalledOnce();
+    expect(render).toHaveBeenCalledOnce();
+    expect(updateSettings.mock.invocationCallOrder[0]).toBeLessThan(render.mock.invocationCallOrder[0]!);
     expect(api.tickPosition).toBe(1920);
     expect(api.isLooping).toBe(true);
     expect(scrollElement.scrollTop).toBe(300);

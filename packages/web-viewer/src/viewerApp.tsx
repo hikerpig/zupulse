@@ -372,6 +372,7 @@ export function attachScoreZoomCommit(
     const scrollRatio = scrollRange === 0 ? 0 : scrollElement.scrollTop / scrollRange;
     api.settings.display.scale = zoom;
     api.updateSettings?.();
+    api.render?.();
     let restored = false;
     const restore = () => {
       if (restored) return;

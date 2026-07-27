@@ -134,16 +134,17 @@ describe("HarmonyStudioSession", () => {
     await repository.save({ document, expectedDocumentVersion: null });
     const session = new HarmonyStudioSession(repository, document.libraryScoreId);
     await session.load(async () => document);
-    let release: (() => void) | undefined;
+    let analysisSignal: AbortSignal | undefined;
     const pending = session.reanalyze(
-      () =>
-        new Promise<HarmonyAnalysisDocument>((resolve) => {
-          release = () => resolve({ ...document, activeRevision: { ...document.activeRevision, id: "cancelled" } });
+      ({ signal }) =>
+        new Promise<HarmonyAnalysisDocument>((resolve, reject) => {
+          analysisSignal = signal;
+          signal.addEventListener("abort", () => reject(new Error("cancelled")), { once: true });
         }),
     );
     expect(session.getState().status).toBe("analyzing");
     expect(session.cancelReanalysis().status).toBe("ready");
-    release?.();
+    expect(analysisSignal?.aborted).toBe(true);
     await pending;
     expect(session.getState().document?.activeRevision.id).toBe(document.activeRevision.id);
   });

@@ -29,6 +29,11 @@ import type {
 import { insertCorrection } from "@zupulse/web-core";
 import { HarmonyStudioSession } from "../harmonyStudioSession";
 import type { HarmonyStudioSessionState } from "../harmonyStudioSession";
+import {
+  createHarmonyAnalysisWorkerRunner,
+  HarmonyAnalysisCancelledError,
+  type HarmonyAnalysisRunner,
+} from "../harmony-analysis-worker-client";
 import { exportHarmonyStudioDocument } from "../harmonyStudioExport";
 import type { StudioScoreRuntime, StudioScoreRuntimeSnapshot } from "../studio-score-runtime";
 import { ApplicationFailure, applicationIssue, type ApplicationIssue } from "./applicationIssue";
@@ -39,6 +44,16 @@ import {
   type HarmonyRangeViewItem,
   type HarmonySelection,
 } from "../features/harmony-studio/harmony-range-view-model";
+
+function createDefaultHarmonyAnalysisRunner(): HarmonyAnalysisRunner {
+  if (typeof Worker !== "undefined") return createHarmonyAnalysisWorkerRunner();
+  return {
+    async analyze(input, options, signal) {
+      if (signal?.aborted) throw new HarmonyAnalysisCancelledError();
+      return analyzeHarmony(input, options);
+    },
+  };
+}
 
 export type ViewerApplicationSnapshot = {
   currentSessionId?: string;
@@ -105,6 +120,7 @@ export class ViewerApplication implements ViewerAppHandle {
       adapters: readonly ScoreFormatAdapter[];
     },
     private readonly openStudioRuntime?: (file: ViewerFile) => Promise<StudioScoreRuntime>,
+    private readonly harmonyAnalysisRunner: HarmonyAnalysisRunner = createDefaultHarmonyAnalysisRunner(),
   ) {
     this.unsubscribe = host.subscribe((event) => this.onHostEvent(event));
     if (library) void this.refreshLibrary();
@@ -361,14 +377,16 @@ export class ViewerApplication implements ViewerAppHandle {
     if (includedTrackIds.length === 0) throw new Error("STUDIO_SCOPE_EMPTY");
     const session = this.studioSessions.get(id);
     if (!session) return;
-    const state = await session.setScope(includedTrackIds, ({ scope }) => this.createStudioDocument(id, scope));
+    const state = await session.setScope(includedTrackIds, ({ scope, signal }) =>
+      this.createStudioDocument(id, scope, signal),
+    );
     this.setStudioState(id, state);
   }
 
   async reanalyzeStudio(id: string): Promise<void> {
     const session = this.studioSessions.get(id);
     if (!session) return;
-    const state = await session.reanalyze(({ scope }) => this.createStudioDocument(id, scope));
+    const state = await session.reanalyze(({ scope, signal }) => this.createStudioDocument(id, scope, signal));
     this.setStudioState(id, state);
   }
 
@@ -443,7 +461,7 @@ export class ViewerApplication implements ViewerAppHandle {
         listMusicXmlPartIds(source.bytes).map((_, index) => `track-${index + 1}`),
       );
       const session = this.getStudioSession(id, repository);
-      const state = await session.load(() => this.createStudioDocument(id));
+      const state = await session.load(({ signal }) => this.createStudioDocument(id, undefined, signal));
       if (intent === this.studioIntent) this.setStudioState(id, state);
     } catch (error) {
       this.reportDiagnostic(error, "studio.open");
@@ -503,7 +521,11 @@ export class ViewerApplication implements ViewerAppHandle {
     return session;
   }
 
-  private async createStudioDocument(id: string, requestedScope?: readonly string[]): Promise<HarmonyAnalysisDocument> {
+  private async createStudioDocument(
+    id: string,
+    requestedScope?: readonly string[],
+    signal?: AbortSignal,
+  ): Promise<HarmonyAnalysisDocument> {
     const library = this.library;
     if (!library) throw new ApplicationFailure(applicationIssue("studio-storage-unavailable", false));
     const score = await library.repository.get(id as LibraryScore["id"]);
@@ -519,6 +541,18 @@ export class ViewerApplication implements ViewerAppHandle {
       throw new ApplicationFailure(applicationIssue("studio-no-analyzable-tracks", false));
     if (includedTrackIds.some((trackId) => !allTrackIds.includes(trackId)))
       throw new Error("STUDIO_SCOPE_TRACK_NOT_FOUND");
+    const analysisInput = projectAlphaTabHarmonyInput(
+      parsed.runtime as Parameters<typeof projectAlphaTabHarmonyInput>[0],
+    );
+    const segments = await this.harmonyAnalysisRunner.analyze(
+      analysisInput,
+      {
+        includedTrackIds,
+        topK: 8,
+        decisionThreshold: 0.6,
+      },
+      signal,
+    );
     const now = new Date().toISOString();
     return {
       schemaVersion: "1.0.0",
@@ -534,14 +568,7 @@ export class ViewerApplication implements ViewerAppHandle {
           topK: 8,
           decisionThreshold: 0.6,
         },
-        segments: analyzeHarmony(
-          projectAlphaTabHarmonyInput(parsed.runtime as Parameters<typeof projectAlphaTabHarmonyInput>[0]),
-          {
-            includedTrackIds,
-            topK: 8,
-            decisionThreshold: 0.6,
-          },
-        ),
+        segments,
       },
       corrections: [],
       annotationTarget: { trackId: includedTrackIds[0]!, staffIndex: 0 },

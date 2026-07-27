@@ -1,6 +1,6 @@
 # Harmony Analysis Performance Optimization Plan
 
-> **Status:** proposed
+> **Status:** in progress
 >
 > **Implementation rule:** Execute one task at a time. Preserve the exact production Semi-CRF result and rerun
 > the checkpoint before continuing. Do not start the WASM branch unless Task 7 reaches its decision gate.
@@ -92,6 +92,20 @@ Rust/WASM。
 - The root benchmark uses isolated sample processes because repeated high-RSS V8 runs were terminated in the Codex
   execution environment even after explicit GC. Each reported sample has an independent RSS lifecycle and performs
   its own configured warm-up.
+
+### 2026-07-27: Task 6 implementation
+
+- Added a strict, versioned Worker request/response protocol containing only validated Harmony domain input,
+  analysis parameters, segments and stable error codes.
+- Browser and Desktop now run Studio analysis through the same module Worker. `AbortSignal` cancellation,
+  replacement analysis and session disposal terminate the underlying Worker; the existing intent check remains
+  the final stale-result guard.
+- The client rejects malformed Worker output without exposing payloads or raw exceptions. Non-browser test/SSR
+  execution retains a direct reference runner; production Browser/Desktop bundles always select the Worker path.
+- Worker client and session tests pass (`11/11`), all web-viewer tests pass (`63/63`), and web-viewer typecheck
+  passes.
+- Browser and Desktop Rspack builds pass and emit dedicated `zupulse-harmony-analysis.*.js` Worker chunks. Manual
+  K331 responsiveness/cancellation verification remains part of Checkpoint B.
 
 ## 2. Non-negotiable constraints
 

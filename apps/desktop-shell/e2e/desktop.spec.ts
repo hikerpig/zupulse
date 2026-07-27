@@ -233,23 +233,32 @@ test("keeps K331 responsive and terminates a cancelled Desktop analysis", async 
     const cancel = window.getByRole("button", { name: "Cancel analysis" });
     await expect(cancel).toBeVisible({ timeout: 1_000 });
     await window.evaluate(() => {
-      const probe = { ticks: 0, maximumDelayMs: 0, previous: performance.now(), timer: 0 };
-      probe.timer = window.setInterval(() => {
+      const probe = {
+        ticks: 0,
+        maximumDelayMs: 0,
+        previous: performance.now(),
+        timer: undefined as ReturnType<typeof setInterval> | undefined,
+      };
+      probe.timer = globalThis.setInterval(() => {
         const now = performance.now();
         probe.maximumDelayMs = Math.max(probe.maximumDelayMs, now - probe.previous - 5);
         probe.previous = now;
         probe.ticks += 1;
       }, 5);
-      (window as unknown as { harmonyResponsivenessProbe: typeof probe }).harmonyResponsivenessProbe = probe;
+      (globalThis as unknown as { harmonyResponsivenessProbe: typeof probe }).harmonyResponsivenessProbe = probe;
     });
     await window.waitForTimeout(100);
     const responsiveness = await window.evaluate(() => {
       const probe = (
-        window as unknown as {
-          harmonyResponsivenessProbe: { ticks: number; maximumDelayMs: number; timer: number };
+        globalThis as unknown as {
+          harmonyResponsivenessProbe: {
+            ticks: number;
+            maximumDelayMs: number;
+            timer: ReturnType<typeof setInterval> | undefined;
+          };
         }
       ).harmonyResponsivenessProbe;
-      window.clearInterval(probe.timer);
+      if (probe.timer !== undefined) globalThis.clearInterval(probe.timer);
       return { ticks: probe.ticks, maximumDelayMs: probe.maximumDelayMs };
     });
     expect(responsiveness.ticks).toBeGreaterThan(5);

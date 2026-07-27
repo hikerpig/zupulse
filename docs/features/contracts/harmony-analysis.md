@@ -3,13 +3,15 @@ feature: harmony-analysis
 title: Harmony Analysis
 status: current
 delivery: partial
-last_verified: 2026-07-26
+last_verified: 2026-07-27
 hosts:
   - browser
   - desktop
 implementation_paths:
   - packages/web-core/src/harmony
   - packages/web-viewer/src/harmonyStudioSession.ts
+  - packages/web-viewer/src/harmony-analysis-worker-client.ts
+  - packages/web-viewer/src/harmony-analysis-worker.ts
   - packages/web-viewer/src/features/harmony-studio
   - packages/web-viewer/src/app/ViewerApplication.ts
   - packages/web-storage/src/indexed-db-sheet-library-repository.ts
@@ -72,6 +74,10 @@ Projection 生成新的 MusicXML/XML/MXL 副本，只写已确定结果，不修
 
 - 首次分析失败时不创建空 Document，并显示稳定的产品错误。
 - 已有 Revision 的重分析失败、取消或被更新意图取代时，继续保留旧 Revision 与 Corrections。
+- Browser 与 Desktop Renderer 通过相同 module Worker 运行生产分析。取消、替代 job、Session dispose
+  或离开 Studio 会终止 Worker，不只是忽略迟到结果；intent check 继续作为提交前的最终防线。
+- Worker 消息只包含经过 Zod 校验的投影输入、参数、segments 与稳定错误码；不传 alphaTab runtime、
+  DOM、Repository、绝对路径或原始异常。
 - 模型 JSON 损坏或不符合 contract 时明确失败，不存在第二套 analyzer fallback。
 - 保存冲突保留本地 Document 并暴露 `version-conflict`；不会覆盖外部新版本。
 - 预览渲染或音频失败不阻止 Correction 保存与导出；原始异常不直接进入 DOM。
@@ -109,14 +115,14 @@ stateDiagram-v2
 
 ## 平台能力矩阵
 
-| 能力               | Browser                         | Desktop                          | 当前差异                     |
-| ------------------ | ------------------------------- | -------------------------------- | ---------------------------- |
-| 生产 Semi-CRF 推理 | 本地确定性 TypeScript           | 本地确定性 TypeScript            | 模型与算法相同               |
-| Document 持久化    | IndexedDB                       | Main SQLite                      | Repository contract 相同     |
-| Studio 路由与编辑  | `#/studio/:libraryScoreId`      | `#/studio/:libraryScoreId`       | UI 行为相同                  |
-| MusicXML/MXL 导出  | Browser download                | 原生保存 Dialog                  | 都从 Managed Score Copy 导出 |
-| 外部文件与绝对路径 | Browser File API 后进入 Library | Main token/Bridge 后进入 Library | Renderer 均不持有绝对路径    |
-| Library 删除联动   | 单 IndexedDB transaction        | SQLite/files reconciliation      | 最终语义相同                 |
+| 能力               | Browser                         | Desktop                           | 当前差异                     |
+| ------------------ | ------------------------------- | --------------------------------- | ---------------------------- |
+| 生产 Semi-CRF 推理 | 本地 TypeScript module Worker   | Renderer TypeScript module Worker | 协议、模型与算法相同         |
+| Document 持久化    | IndexedDB                       | Main SQLite                       | Repository contract 相同     |
+| Studio 路由与编辑  | `#/studio/:libraryScoreId`      | `#/studio/:libraryScoreId`        | UI 行为相同                  |
+| MusicXML/MXL 导出  | Browser download                | 原生保存 Dialog                   | 都从 Managed Score Copy 导出 |
+| 外部文件与绝对路径 | Browser File API 后进入 Library | Main token/Bridge 后进入 Library  | Renderer 均不持有绝对路径    |
+| Library 删除联动   | 单 IndexedDB transaction        | SQLite/files reconciliation       | 最终语义相同                 |
 
 ## 领域不变量
 
@@ -139,11 +145,25 @@ stateDiagram-v2
 [`packages/web-core/src/harmony/repository.ts`](../../../packages/web-core/src/harmony/repository.ts)；
 本文不复制完整 schema。
 
+## 当前性能合同
+
+在 Apple M2 Max、Node `v22.22.1` 上，commit
+`ce98a2914e7dfe70d37f51991e28711d6575a32a` 对 K331 做一次 warm-up 后采集五个隔离样本：
+`5,054.43 / 4,797.78 / 4,925.84 / 4,913.62 / 4,774.76 ms`。analysis-only median 为
+`4,913.62 ms`，最大 RSS 为 `484,098,048 bytes`；五次均输出 121 segments 与 canonical checksum
+`9b0d56e25913116c1a44b460432280a681dc6dcfc2ed9812ab3c3178bb927ff0`。
+
+生产 scorer 使用编译后的 numeric weights、range/prefix evidence 和有界 retained-note cache，但仍在
+完整 62-label inventory 与最长 20 events span 上执行 exact decoder。Browser 与 Desktop 的真实
+K331 E2E 同时约束分析期主线程延迟不超过 50 ms，并验证取消恢复旧 Document。
+
+当前 TypeScript 已满足 5 秒门禁；post-prefix profile 没有占剩余 CPU 40% 以上的单一连续 numeric
+kernel，因此没有引入 WASM、Rust runtime 或静默 fallback。
+
 ## 进行中的目标差异
 
 以下内容不得被 AI 当作已经实现的行为：
 
-- 性能尚未达标：`K331-3_reviewed.mxl` 在当前开发机整曲推理约 28 秒，超过原 5 秒目标。
 - label coverage 仍有限：paper inventory 不表达大量 inversion、dominant 与 half-diminished gold；
   Mozart train/tune 的无损映射覆盖约 39%。生产采用不等于这些 chord families 已完整支持。
 - confidence 尚未按 Semi-CRF 概率校准；当前是冻结 range 上的 alternatives adapter，因此只能解释为产品拒识
@@ -170,6 +190,8 @@ stateDiagram-v2
   Revision 的顺序取值。
 - 给定已有 Revision，当重分析失败、取消或被更新意图取代时，旧 Revision 与最新 Corrections 必须
   保留。
+- 给定 Browser 或 Desktop 正在分析，当用户取消、替代 job、dispose Session 或离开 Studio 时，
+  对应 Worker 必须终止，迟到结果不得保存，Renderer 仍可响应事件和重绘。
 - 给定两个 session 基于同一 document version 保存，当后一个遇到 CAS 冲突时，不得覆盖先提交的
   Document。
 - 给定用户导出 MusicXML/MXL，当完成导出时，原 Library Score、Managed Score Copy 和容器类型必须
@@ -186,6 +208,7 @@ stateDiagram-v2
 | Effective Projection 与 Corrections       | [`effectiveProjection.ts`](../../../packages/web-core/src/harmony/effectiveProjection.ts)、[`correctionCommands.ts`](../../../packages/web-core/src/harmony/correctionCommands.ts)                                    | [`effectiveProjection.test.ts`](../../../packages/web-core/src/harmony/__tests__/effectiveProjection.test.ts)、[`correctionCommands.test.ts`](../../../packages/web-core/src/harmony/__tests__/correctionCommands.test.ts)       |
 | Studio 首次分析、恢复和生产模型版本       | [`ViewerApplication.ts`](../../../packages/web-viewer/src/app/ViewerApplication.ts)                                                                                                                                   | [`ViewerApplication.test.ts`](../../../packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts)                                                                                                                          |
 | autosave、CAS、重分析与取消               | [`harmonyStudioSession.ts`](../../../packages/web-viewer/src/harmonyStudioSession.ts)、[`repository.ts`](../../../packages/web-core/src/harmony/repository.ts)                                                        | [`harmonyStudioSession.test.ts`](../../../packages/web-viewer/src/__tests__/harmonyStudioSession.test.ts)、[`repositoryContract.test.ts`](../../../packages/web-core/src/harmony/__tests__/repositoryContract.test.ts)           |
+| Worker 协议、真实取消与 Renderer 响应性   | [`harmony-analysis-worker-client.ts`](../../../packages/web-viewer/src/harmony-analysis-worker-client.ts)、[`harmony-analysis-worker.ts`](../../../packages/web-viewer/src/harmony-analysis-worker.ts)                | [`harmony-analysis-worker-client.test.ts`](../../../packages/web-viewer/src/__tests__/harmony-analysis-worker-client.test.ts)、Browser/Desktop K331 E2E                                                                          |
 | Browser/Desktop 持久化与删除联动          | [`indexed-db-sheet-library-repository.ts`](../../../packages/web-storage/src/indexed-db-sheet-library-repository.ts)、[`DesktopLibraryStore.ts`](../../../apps/desktop-shell/src/main/library/DesktopLibraryStore.ts) | 双宿主 Repository tests                                                                                                                                                                                                          |
 | Effective Projection 的 MusicXML/MXL 导出 | [`exportMusicXmlHarmony.ts`](../../../packages/web-core/src/harmony/exportMusicXmlHarmony.ts)、[`harmonyStudioExport.ts`](../../../packages/web-viewer/src/harmonyStudioExport.ts)                                    | [`exportMusicXmlHarmony.test.ts`](../../../packages/web-core/src/harmony/__tests__/exportMusicXmlHarmony.test.ts)、[`harmonyStudioExport.test.ts`](../../../packages/web-viewer/src/__tests__/harmonyStudioExport.test.ts)       |
 | reproduction、current-corpus 与 K331 证据 | [`semi-crf.md`](../../evaluation/semi-crf.md)                                                                                                                                                                         | 模型/records SHA-256 与已记录指标                                                                                                                                                                                                |

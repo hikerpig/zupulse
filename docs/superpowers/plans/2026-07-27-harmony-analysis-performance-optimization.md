@@ -107,6 +107,25 @@ Rust/WASM。
 - Browser and Desktop Rspack builds pass and emit dedicated `zupulse-harmony-analysis.*.js` Worker chunks. Manual
   K331 responsiveness/cancellation verification remains part of Checkpoint B.
 
+### 2026-07-27: Checkpoint B in progress
+
+- Fresh isolated K331 samples were
+  `8,965.93 / 9,041.33 / 9,085.39 / 9,902.86 / 9,267.74 ms`; median was `9,085.39 ms`, maximum RSS was
+  `487,718,912 bytes`, and every run retained 121 segments plus the canonical checksum.
+- `pnpm verify:fast` passes: 140 test files and 618 tests, including all web-core, web-viewer and Harmony CLI
+  suites. Browser/Desktop production builds and formatting checks pass.
+- A Browser K331 run loaded the dedicated Worker and completed without replacing or blocking rendering of the
+  Studio document. The browser automation transport serializes an awaited click handler, so it cannot provide
+  trustworthy sub-50-ms interaction timing or an analysis-in-flight cancel click; those items remain open rather
+  than being inferred from unit tests.
+- The fresh CPU profile assigns `44.4%` to `paper-semi-crf-features.ts`, `33.7%` to
+  `paper-semi-crf-figuration-evidence.ts`, `3.0%` to range evidence, and `1.4%` to the decoder. Although the first
+  two files dominate, their current boundary still traverses `ReadonlySet`, note objects, callbacks and every
+  event in every range. Task 7 therefore does not yet have the required clean typed-array kernel boundary.
+- Before deciding on WASM, the remaining intended TypeScript prefix-evidence optimization will remove this
+  repeated range scan. A new profile will then either close the 5-second gap or provide the clean kernel evidence
+  required by the WASM gate.
+
 ## 2. Non-negotiable constraints
 
 - Production 必须继续在完整 62-label inventory 和最长 20 events span 上运行 exact

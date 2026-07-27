@@ -15,7 +15,7 @@ export type HarmonyAnalysisRunner = {
 
 export type HarmonyAnalysisWorkerLike = {
   onmessage: ((event: MessageEvent<unknown>) => void) | null;
-  onerror: ((event: Event) => void) | null;
+  onerror: ((event: ErrorEvent) => void) | null;
   postMessage(message: HarmonyAnalysisWorkerRequest): void;
   terminate(): void;
 };

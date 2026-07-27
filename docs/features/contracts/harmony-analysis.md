@@ -70,8 +70,8 @@ Projection 的边界集合，也不覆盖 active Analysis Revision。
 
 Studio 把 Effective Projection 作为临时 alphaTab chord preview 应用到当前 score runtime。range start
 优先挂到同一 Score Written Moment 的 beat；当分析边界来自不可直接挂载的细分事件时，挂到该
-range 内第一个实际 beat。单个非 beat 边界不得让整份曲谱预览失败；range 内完全没有 beat 时才报告
-预览不可表达。
+range 内 written moment 最早的实际 beat，不依赖 track、staff 或 voice 的遍历顺序。单个非 beat
+边界不得让整份曲谱预览失败；range 内完全没有 beat 时才报告预览不可表达。
 
 重分析生成新的不可变 active Revision，并把当时最新的 Corrections 与 annotation target 叠加到新
 结果；首版不持久化旧 Revision 历史。导出从不可变 Managed Score Copy 与固化的 Effective
@@ -209,6 +209,9 @@ kernel，因此没有引入 WASM、Rust runtime 或静默 fallback。
 - 给定 Effective Projection 中存在小节内起始位置，当导出 MusicXML/MXL 时，必须按源谱对应小节的
   `divisions` 和 Studio 的 `ticksPerQuarter` 写入 `<harmony><offset>`；低于一个 source division
   的装饰音边界使用 MusicXML decimal divisions 表达，不得导致整份导出失败或静默丢弃和弦。
+- 给定导出的 MusicXML/MXL 被重新导入，当解析来源 `<harmony><offset>` 时，必须按当前有效
+  `divisions` 恢复 Score Written Moment，并按 written moment 排序同小节事件；源谱省略
+  `<divisions>` 时使用兼容 timebase 1。
 - 给定 Library Score 被删除，当旧 session 再保存时，Repository 必须拒绝重建 Harmony Analysis
   Document。
 

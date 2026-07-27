@@ -44,12 +44,11 @@ export function listMusicXmlMeasureDivisions(bytes: Uint8Array, partId: string):
   const tags = readXmlTags(source);
   const targets =
     root === "score-partwise" ? partwiseMeasureTargets(tags, partId) : timewiseMeasureTargets(tags, partId);
-  let effective: number | undefined;
+  let effective = 1;
   return targets.map((target) => {
     const attributes = findDirectChild(tags, target, "attributes", () => true);
     const divisions = attributes === undefined ? undefined : findDirectChild(tags, attributes, "divisions", () => true);
     if (divisions !== undefined) effective = positiveIntegerElementValue(source, tags, divisions);
-    if (effective === undefined) throw new Error("divisions-missing");
     return effective;
   });
 }

@@ -267,6 +267,44 @@ describe("applyAlphaTabHarmonyPreview", () => {
     expect(grace.chordId).toBeUndefined();
     expect(chords.get(firstAttachable.chordId!)?.name).toBe("Bm");
   });
+
+  it("uses the chronologically first fallback beat across voices", () => {
+    const chords = new Map<string, { name?: string }>();
+    const staff = {
+      addChord: (id: string, chord: { name?: string }) => chords.set(id, chord),
+    };
+    const laterVoiceBeat = { ...beat(0, 8), voice: { bar: { index: 0, staff } } };
+    const earlierVoiceBeat = { ...beat(0, 4), voice: { bar: { index: 0, staff } } };
+    const previewScore = {
+      masterBars: [{ start: 0 }],
+      tracks: [
+        {
+          staves: [
+            {
+              bars: [
+                {
+                  voices: [{ beats: [laterVoiceBeat] }, { beats: [earlierVoiceBeat] }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = applyAlphaTabHarmonyPreview({ score: previewScore, renderTracks: () => undefined }, [
+      {
+        type: "chord",
+        range: { start: { measureIndex: 0, offsetTicks: 1 }, end: { measureIndex: 0, offsetTicks: 10 } },
+        chord: { root: { step: "D", alter: 0 }, kind: "major", degrees: [] },
+        origin: "analysis",
+      },
+    ]);
+
+    expect(result.status).toBe("applied");
+    expect(laterVoiceBeat.chordId).toBeUndefined();
+    expect(chords.get(earlierVoiceBeat.chordId!)?.name).toBe("D");
+  });
 });
 
 describe("Studio alphaTab preview transport", () => {

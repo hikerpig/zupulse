@@ -209,10 +209,14 @@ function findPreviewBeat(
   beats: readonly AlphaTabStudioBeat[],
   range: ScoreWrittenRange,
 ): AlphaTabStudioBeat | undefined {
-  return (
-    beats.find((beat) => compareMoments(toScoreWrittenMoment(beat), range.start) === 0) ??
-    beats.find((beat) => contains(range, toScoreWrittenMoment(beat)))
-  );
+  const exact = beats.find((beat) => compareMoments(toScoreWrittenMoment(beat), range.start) === 0);
+  if (exact) return exact;
+  return beats
+    .filter((beat) => contains(range, toScoreWrittenMoment(beat)))
+    .reduce<AlphaTabStudioBeat | undefined>((earliest, beat) => {
+      if (!earliest) return beat;
+      return compareMoments(toScoreWrittenMoment(beat), toScoreWrittenMoment(earliest)) < 0 ? beat : earliest;
+    }, undefined);
 }
 
 function contains(range: ScoreWrittenRange, moment: ScoreWrittenMoment): boolean {

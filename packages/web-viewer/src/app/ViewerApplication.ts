@@ -1,4 +1,12 @@
-import type { ViewerAppHandle, ViewerFile, ViewerHost, ViewerHostEvent, ViewerSessionHandle } from "../host";
+import {
+  ViewerOpenFailure,
+  type ViewerAppHandle,
+  type ViewerDomBindings,
+  type ViewerFile,
+  type ViewerHost,
+  type ViewerHostEvent,
+  type ViewerSessionHandle,
+} from "../host";
 import {
   analyzeHarmony,
   applyCorrectionCommand,
@@ -43,6 +51,11 @@ import {
 export type ViewerApplicationSnapshot = {
   currentSessionId?: string;
   currentLibraryScoreId?: string;
+  viewer?: {
+    libraryScoreId: string;
+    status: "loading" | "ready" | "error";
+    error?: ApplicationIssue;
+  };
   library?: {
     scores: readonly LibraryScoreSummary[];
     loading: boolean;
@@ -95,10 +108,15 @@ export class ViewerApplication implements ViewerAppHandle {
   private readonly listeners = new Set<() => void>();
   private readonly navigationListeners = new Set<(libraryScoreId: string) => void>();
   private readonly unsubscribe: () => void;
+  private viewerDomBindings: ViewerDomBindings | undefined;
 
   constructor(
     private readonly host: ViewerHost,
-    private readonly openSession: (file: ViewerFile, libraryScoreId?: string) => Promise<ViewerSessionHandle>,
+    private readonly openSession: (
+      file: ViewerFile,
+      libraryScoreId?: string,
+      domBindings?: ViewerDomBindings,
+    ) => Promise<ViewerSessionHandle>,
     private readonly library?: {
       repository: SheetLibraryRepository;
       gateway: ScoreFileGateway;
@@ -132,6 +150,10 @@ export class ViewerApplication implements ViewerAppHandle {
 
   getCurrentStudioSession(): StudioScoreRuntime | undefined {
     return this.studioRuntime;
+  }
+
+  bindViewerDom(bindings: ViewerDomBindings | undefined): void {
+    this.viewerDomBindings = bindings;
   }
 
   openScore(): Promise<void> {
@@ -672,16 +694,26 @@ export class ViewerApplication implements ViewerAppHandle {
   openLibraryScore(id: string): Promise<void> {
     if (!this.library) return Promise.resolve();
     if (this.destroying) return Promise.reject(new Error("Viewer app is being destroyed"));
+    this.setSnapshot({
+      ...this.snapshot,
+      viewer: { libraryScoreId: id, status: "loading" },
+    });
     const operation = this.chain
       .then(() => (this.hasSession(id) ? undefined : this.openLibraryScoreOnce(id)))
       .catch((error: unknown) => {
         this.reportDiagnostic(error, "library.open");
         this.setSnapshot({
           ...this.snapshot,
-          library: {
-            scores: this.snapshot.library?.scores ?? [],
-            loading: false,
-            error: applicationIssue("library-unavailable"),
+          viewer: {
+            libraryScoreId: id,
+            status: "error",
+            error: applicationIssue(
+              error instanceof ApplicationFailure && error.issue.code === "viewer-library-failed"
+                ? "viewer-library-failed"
+                : error instanceof ViewerOpenFailure && error.stage === "render"
+                  ? "viewer-render-failed"
+                  : "viewer-session-failed",
+            ),
           },
         });
         throw error;
@@ -718,8 +750,13 @@ export class ViewerApplication implements ViewerAppHandle {
   private async openLibraryScoreOnce(id: string): Promise<void> {
     const library = this.library;
     if (!library) return;
-    const file = await library.repository.readScore(id);
-    await library.repository.markOpened(id, new Date().toISOString());
+    let file: ViewerFile;
+    try {
+      file = await library.repository.readScore(id);
+      await library.repository.markOpened(id, new Date().toISOString());
+    } catch (error) {
+      throw new ApplicationFailure(applicationIssue("viewer-library-failed"), { cause: error });
+    }
     const previous = this.active;
     const previousStudio = this.studioRuntime;
     this.active = undefined;
@@ -728,9 +765,14 @@ export class ViewerApplication implements ViewerAppHandle {
     this.studioRuntimeLibraryScoreId = undefined;
     await previous?.destroy();
     await previousStudio?.destroy();
-    this.active = await this.openSession(file, id);
+    this.active = await this.openSession(file, id, this.viewerDomBindings);
     this.activeLibraryScoreId = id;
-    this.setSnapshot({ ...this.snapshot, currentSessionId: crypto.randomUUID(), currentLibraryScoreId: id });
+    this.setSnapshot({
+      ...this.snapshot,
+      currentSessionId: crypto.randomUUID(),
+      currentLibraryScoreId: id,
+      viewer: { libraryScoreId: id, status: "ready" },
+    });
   }
 
   async exportLibraryScore(id: string): Promise<void> {

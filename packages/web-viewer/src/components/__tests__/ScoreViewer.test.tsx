@@ -28,7 +28,7 @@ describe("ScoreViewer", () => {
 
   it("keeps the alphaTab host contract without showing expansion controls in Viewer", () => {
     const view = renderScoreViewer(<ScoreViewer />);
-    expect(view.container.querySelector("#alpha-tab")).toBeTruthy();
+    expect(view.container.querySelector(".score-viewer")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /乐谱预览/ })).toBeNull();
   });
 
@@ -68,7 +68,7 @@ describe("ScoreViewer", () => {
     document.addEventListener("zupulse:score-zoom-commit", commits);
     const view = renderScoreViewer(<ScoreViewer />);
     const stage = screen.getByRole("region", { name: "乐谱工作区" });
-    const viewer = view.container.querySelector("#alpha-tab") as HTMLElement;
+    const viewer = view.container.querySelector(".score-viewer") as HTMLElement;
 
     fireEvent.touchStart(stage, { touches: [touch(0, 0), touch(0, 100)] });
     fireEvent.touchMove(stage, { touches: [touch(0, 0), touch(0, 140)] });
@@ -88,7 +88,7 @@ describe("ScoreViewer", () => {
     document.addEventListener("zupulse:score-zoom-commit", commits);
     const view = renderScoreViewer(<ScoreViewer />);
     const stage = screen.getByRole("region", { name: "乐谱工作区" });
-    const viewer = view.container.querySelector("#alpha-tab") as HTMLElement;
+    const viewer = view.container.querySelector(".score-viewer") as HTMLElement;
 
     fireEvent.touchStart(stage, { touches: [touch(0, 100)] });
     fireEvent.touchMove(stage, { touches: [touch(0, 40)] });

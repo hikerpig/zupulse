@@ -57,6 +57,23 @@ test("switches locale during playback without losing workspace state and keeps c
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
 
+test("keeps the Library to Viewer transition on a loading surface until the score renders", async ({ page }) => {
+  await page.goto("/");
+  await importFixture(page, "导入第一份曲谱");
+  await expect(page.locator(".score-viewer .at-surface").first()).toBeVisible();
+  await page.getByRole("navigation", { name: "主要页面" }).getByRole("link", { name: "曲谱库" }).click();
+
+  const openScore = page.getByRole("button", { name: /^(打开|继续练习) 桌面验收谱$/ });
+  const click = openScore.click();
+  await expect(page).toHaveURL(/#\/viewer\//);
+  await expect(page.getByRole("status", { name: "正在加载文件" })).toBeVisible();
+  await click;
+
+  await expect(page.getByRole("heading", { level: 1, name: "桌面验收谱" })).toBeVisible();
+  await expect(page.locator(".score-viewer .at-surface").first()).toBeVisible();
+  await expect(page.getByText("曲谱库不可用")).toHaveCount(0);
+});
+
 test("follows playback and supports stable score page navigation", async ({ page }) => {
   const consoleErrors: string[] = [];
   page.on("console", (message) => {
@@ -64,7 +81,7 @@ test("follows playback and supports stable score page navigation", async ({ page
   });
   await page.goto("/");
   await importFixture(page, "导入第一份曲谱", reviewedFixture);
-  await expect(page.locator("#alpha-tab .at-surface").first()).toBeVisible();
+  await expect(page.locator(".score-viewer .at-surface").first()).toBeVisible();
 
   await page.getByRole("button", { name: "谱面导航模式" }).click();
   await page.getByRole("button", { name: "翻页" }).click();
@@ -72,6 +89,7 @@ test("follows playback and supports stable score page navigation", async ({ page
   await expect(pageStatus).toBeVisible();
   const initialStatus = await pageStatus.textContent();
 
+  await page.locator(".score-viewer").click({ position: { x: 20, y: 20 } });
   await page.keyboard.press("PageDown");
   await expect(pageStatus).not.toHaveText(initialStatus ?? "");
   await expect(page.getByRole("button", { name: "返回播放位置" })).toBeVisible();
@@ -84,7 +102,7 @@ test("follows playback and supports stable score page navigation", async ({ page
     { width: 1024, height: 768 },
   ]) {
     await page.setViewportSize(viewport);
-    await expect(page.locator("#alpha-tab .at-surface").first()).toBeVisible();
+    await expect(page.locator(".score-viewer .at-surface").first()).toBeVisible();
     await expect(page.getByRole("button", { name: "谱面导航模式" })).toBeVisible();
   }
   expect(consoleErrors).toEqual([]);
@@ -95,7 +113,7 @@ test("persists a Browser Library Score and gives a re-import a fresh ID after de
   await expect(page.getByRole("heading", { name: "曲谱库" })).toBeVisible();
 
   await importFixture(page, "导入第一份曲谱");
-  await expect(page.locator("#summary")).toContainText("桌面验收谱");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("桌面验收谱");
   const firstId = page.url().split("/viewer/")[1];
   expect(firstId).toBeTruthy();
 
@@ -112,7 +130,7 @@ test("persists a Browser Library Score and gives a re-import a fresh ID after de
   await expect(page.getByText("你的曲谱会保存在这台设备上")).toBeVisible();
 
   await importFixture(page, "导入第一份曲谱");
-  await expect(page.locator("#summary")).toContainText("桌面验收谱");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("桌面验收谱");
   const secondId = page.url().split("/viewer/")[1];
   expect(secondId).toBeTruthy();
   expect(secondId).not.toBe(firstId);
@@ -121,7 +139,7 @@ test("persists a Browser Library Score and gives a re-import a fresh ID after de
 test("opens a MusicXML Library Score in Studio and restores its saved document", async ({ page }) => {
   await page.goto("/");
   await importFixture(page, "导入第一份曲谱", musicXmlFixture);
-  await expect(page.locator("#summary")).toContainText("Single Voice");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Single Voice");
   await page.getByRole("link", { name: "和弦分析" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "和弦分析" })).toBeVisible();
   await expect(page.getByRole("button", { name: "分析设置" })).toBeVisible();
@@ -197,13 +215,13 @@ test("synchronizes a score selection between the range list and alphaTab", async
   const distantSegment = segments.last();
   await distantSegment.click();
   await expect(distantSegment).toHaveAttribute("aria-pressed", "true");
-  await page.locator("#alpha-tab").evaluate((host) => {
+  await page.locator(".score-viewer").evaluate((host) => {
     host.parentElement?.scrollTo({ top: 0 });
   });
 
-  const scoreSurface = page.locator("#alpha-tab .at-surface").first();
+  const scoreSurface = page.locator(".score-viewer .at-surface").first();
   await expect(scoreSurface).toBeVisible();
-  await page.locator("#alpha-tab").evaluate((host) => {
+  await page.locator(".score-viewer").evaluate((host) => {
     host.dispatchEvent(
       new CustomEvent("alphaTab.beatMouseDown", {
         detail: { displayStart: 0, voice: { bar: { index: 0 } } },

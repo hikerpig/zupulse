@@ -1,7 +1,14 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
-import type { LocaleHost, ViewerAppHandle, ViewerFile, ViewerHost, ViewerSessionHandle } from "./host";
+import type {
+  LocaleHost,
+  ViewerAppHandle,
+  ViewerDomBindings,
+  ViewerFile,
+  ViewerHost,
+  ViewerSessionHandle,
+} from "./host";
 import { App, type ViewerProductCapabilities } from "./app/App";
 import { ViewerApplication } from "./app/ViewerApplication";
 import { createStudioScoreRuntime, type StudioScoreRuntime } from "./studio-score-runtime";
@@ -11,7 +18,7 @@ import { createAppI18n } from "@zupulse/app-i18n";
 export type ViewerAppDependencies = {
   host: ViewerHost;
   localeHost?: LocaleHost;
-  openSession(file: ViewerFile, libraryScoreId?: string): Promise<ViewerSessionHandle>;
+  openSession(file: ViewerFile, libraryScoreId?: string, domBindings?: ViewerDomBindings): Promise<ViewerSessionHandle>;
   openStudioRuntime?(file: ViewerFile): Promise<StudioScoreRuntime>;
   capabilities?: ViewerProductCapabilities;
   library?: { repository: SheetLibraryRepository; gateway: ScoreFileGateway; adapters: readonly ScoreFormatAdapter[] };

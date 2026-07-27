@@ -7,6 +7,7 @@ import type {
   SheetLibraryRepository,
 } from "@zupulse/web-core";
 import { ViewerApplication } from "../ViewerApplication";
+import { ViewerOpenFailure } from "../../host";
 
 function studioRuntime({
   destroy = async () => undefined,
@@ -184,7 +185,7 @@ describe("ViewerApplication", () => {
     await application.destroy();
   });
 
-  it("reports a recoverable Library error when a persisted score cannot be restored", async () => {
+  it("reports a Viewer library-stage error without marking the Library unavailable", async () => {
     const scoreId = "00000000-0000-4000-8000-000000000001";
     const repository = {
       initialize: async () => undefined,
@@ -212,11 +213,83 @@ describe("ViewerApplication", () => {
       { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
     );
 
-    await expect(application.openLibraryScore(scoreId)).rejects.toThrow("SCORE_BYTES_MISSING");
+    await expect(application.openLibraryScore(scoreId)).rejects.toThrow("viewer-library-failed");
 
     expect(application.getSnapshot().currentLibraryScoreId).toBeUndefined();
-    expect(application.getSnapshot().library?.error).toEqual({
-      code: "library-unavailable",
+    expect(application.getSnapshot().library?.error).toBeUndefined();
+    expect(application.getSnapshot().viewer?.error).toEqual({
+      code: "viewer-library-failed",
+      recoverable: true,
+    });
+    await application.destroy();
+  });
+
+  it("distinguishes Viewer session failures from Library failures", async () => {
+    const scoreId = "00000000-0000-4000-8000-000000000001";
+    const repository = {
+      initialize: async () => undefined,
+      list: async () => [],
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async () => ({ fileName: "score.gp", bytes: new Uint8Array([1]) }),
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+    } satisfies SheetLibraryRepository;
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      async () => {
+        throw new Error("controller initialization failed");
+      },
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+    );
+
+    await expect(application.openLibraryScore(scoreId)).rejects.toThrow("controller initialization failed");
+
+    expect(application.getSnapshot().library?.error).toBeUndefined();
+    expect(application.getSnapshot().viewer?.error).toEqual({
+      code: "viewer-session-failed",
+      recoverable: true,
+    });
+    await application.destroy();
+  });
+
+  it("distinguishes Viewer render failures from session failures", async () => {
+    const scoreId = "00000000-0000-4000-8000-000000000001";
+    const repository = {
+      initialize: async () => undefined,
+      list: async () => [],
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async () => ({ fileName: "score.gp", bytes: new Uint8Array([1]) }),
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+    } satisfies SheetLibraryRepository;
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      async () => {
+        throw new ViewerOpenFailure("render");
+      },
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+    );
+
+    await expect(application.openLibraryScore(scoreId)).rejects.toThrow("Viewer render failed");
+
+    expect(application.getSnapshot().viewer?.error).toEqual({
+      code: "viewer-render-failed",
       recoverable: true,
     });
     await application.destroy();

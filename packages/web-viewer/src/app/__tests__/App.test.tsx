@@ -225,7 +225,7 @@ describe("App", () => {
     await user.click(await screen.findByRole("button", { name: "打开 Score A" }));
 
     expect(window.location.hash).toBe(`#/viewer/${id}`);
-    expect(screen.getByRole("status", { name: "正在加载文件" }).getAttribute("id")).toBe("status");
+    expect(screen.getByRole("status", { name: "正在加载文件" }).getAttribute("id")).toBeNull();
     expect(screen.queryByText("会话已结束，请重新打开乐谱")).toBeNull();
 
     resolveOpenSession?.({

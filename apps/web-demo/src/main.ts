@@ -17,11 +17,12 @@ if (typeof document !== "undefined") {
   mountViewerApp(root, {
     host,
     localeHost,
-    openSession: async (file, libraryScoreId) => {
+    openSession: async (file, libraryScoreId, domBindings) => {
       const { createDefaultOpenSession } = await import("@zupulse/web-viewer");
       return createDefaultOpenSession(document, new BrowserLibraryPlaybackPersistence(repository))(
         file,
         libraryScoreId,
+        domBindings,
       );
     },
     library: {

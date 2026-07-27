@@ -3,7 +3,7 @@ feature: viewer-playback-navigation
 title: Viewer Playback Navigation
 status: current
 delivery: available
-last_verified: 2026-07-26
+last_verified: 2026-07-27
 hosts:
   - browser
   - desktop
@@ -86,6 +86,11 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 - render、resize、zoom 和轨道重排使用递增 generation；旧回调不能覆盖新投影。
 - staff-system bounds 暂不可用时不阻断播放，保留模式偏好并等待下一次完整 render。
 - Session destroy 清理选择、alphaTab 导航事件、输入监听、ResizeObserver、Controller 和预览状态。
+- Viewer route 在 Session 与首次 alphaTab render 完成前维持 loading surface。Managed Score 读取、
+  Session 初始化和 Render 失败分别形成 `viewer-library-failed`、`viewer-session-failed` 与
+  `viewer-render-failed`，错误停留在 Viewer 并可就地重试，不回写 Library 全局不可用状态。
+- Viewer runtime 只消费 React route 显式注册的 `ViewerDomBindings`；Viewer route 不依赖固定 DOM ID
+  定位谱面宿主、滚动宿主、标题或状态节点。
 
 ## 平台能力矩阵
 

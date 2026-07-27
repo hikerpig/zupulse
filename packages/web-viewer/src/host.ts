@@ -1,4 +1,20 @@
 export type ViewerFile = { fileName: string; bytes: Uint8Array };
+export type ViewerDomBindings = {
+  alphaTabHost: HTMLElement;
+  scoreScrollElement: HTMLElement;
+  status: HTMLElement;
+  summary: HTMLElement;
+};
+export type ViewerOpenFailureStage = "render" | "session";
+export class ViewerOpenFailure extends Error {
+  constructor(
+    public readonly stage: ViewerOpenFailureStage,
+    options?: ErrorOptions,
+  ) {
+    super(`Viewer ${stage} failed`, options);
+    this.name = "ViewerOpenFailure";
+  }
+}
 export type ViewerHostEvent =
   { type: "open-score" } | { type: "toggle-playback" } | { type: "suspend" } | { type: "prepare-close" };
 export interface ViewerHost {

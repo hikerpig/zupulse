@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type TouchEvent } from "react";
+import { useEffect, useRef, useState, type Ref, type TouchEvent } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { Maximize2, Minimize2, Minus, Plus, ZoomIn } from "lucide-react";
 import { clampScoreZoom, MAX_SCORE_ZOOM, MIN_SCORE_ZOOM, persistScoreZoom, useAppStore } from "../app/appStore";
@@ -15,11 +15,17 @@ export function ScoreViewer({
   expandable = false,
   playback,
   loopEditor,
+  domId,
+  scoreHostRef,
+  scoreScrollRef,
 }: {
   compact?: boolean;
   expandable?: boolean;
   playback?: ViewerSessionHandle["playback"];
   loopEditor?: ViewerSessionHandle["loopEditor"];
+  domId?: string;
+  scoreHostRef?: Ref<HTMLElement>;
+  scoreScrollRef?: Ref<HTMLElement>;
 }) {
   const { t } = useTranslation("viewer");
   const [expanded, setExpanded] = useState(false);
@@ -69,6 +75,7 @@ export function ScoreViewer({
 
   return (
     <section
+      ref={scoreScrollRef}
       className={`scrollable ${styles.stage} ${compact ? styles.compact : ""} ${expanded ? styles.expanded : ""}`}
       aria-label={t("score.workspace")}
       onTouchStart={startPinch}
@@ -161,8 +168,11 @@ export function ScoreViewer({
       <div className={styles.frame}>
         <div className={styles.scoreCanvas}>
           <section
-            ref={viewerRef}
-            id="alpha-tab"
+            ref={(element) => {
+              viewerRef.current = element;
+              assignRef(scoreHostRef, element);
+            }}
+            id={domId}
             className={`${styles.viewer} score-viewer`}
             aria-label={t("score.preview")}
             data-score-zoom={scoreZoom}
@@ -177,6 +187,11 @@ export function ScoreViewer({
       </div>
     </section>
   );
+}
+
+function assignRef<T>(ref: Ref<T> | undefined, value: T | null): void {
+  if (typeof ref === "function") ref(value);
+  else if (ref) ref.current = value;
 }
 
 function touchDistance(event: TouchEvent<HTMLElement>): number {

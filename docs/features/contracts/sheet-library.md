@@ -3,7 +3,7 @@ feature: sheet-library
 title: Sheet Library
 status: current
 delivery: partial
-last_verified: 2026-07-26
+last_verified: 2026-07-27
 hosts:
   - browser
   - desktop
@@ -149,6 +149,11 @@ stateDiagram-v2
   Library Score 状态。
 - 从 Library 打开 Viewer 时，Viewer 在 alphaTab 首次渲染完成前保持明确的 loading surface，
   不暴露空谱面、默认 transport 值或“会话已结束”中间态。
+- 打开失败按边界区分为 Managed Score 读取失败、Viewer Session 初始化失败和谱面 Render 失败；
+  后两者不得把 `snapshot.library.error` 标记为“曲谱库不可用”，三类失败都停留在当前 Viewer
+  route 并提供就地重试。
+- Viewer imperative runtime 通过 React 提供的显式 DOM bindings 获得谱面宿主、滚动宿主和状态
+  节点，不依赖 `#status`、`#summary` 或 Viewer route 上的 `#alpha-tab` 查询约定。
 - 导入取消、导出取消和删除确认取消都不得改变馆藏。
 - Repository 不得为已经不存在的 Library Score 新建练习数据或分析数据。
 
@@ -228,6 +233,7 @@ stateDiagram-v2
 | Desktop 托管文件、练习摘要、SQLite 状态和 reconciliation | [`DesktopLibraryStore.ts`](../../../apps/desktop-shell/src/main/library/DesktopLibraryStore.ts)、[`main.ts`](../../../apps/desktop-shell/src/main/main.ts)、[`reconcile.ts`](../../../apps/desktop-shell/src/main/library/reconcile.ts) | [`DesktopLibraryStore.test.ts`](../../../apps/desktop-shell/src/main/library/__tests__/DesktopLibraryStore.test.ts)、[`reconcile.test.ts`](../../../apps/desktop-shell/src/main/library/__tests__/reconcile.test.ts)、[`desktop.spec.ts`](../../../apps/desktop-shell/e2e/desktop.spec.ts) |
 | Library 目录、练习动作、过滤、导入反馈与管理菜单         | [`SheetLibrary.tsx`](../../../packages/web-viewer/src/features/SheetLibrary.tsx)                                                                                                                                                        | [`SheetLibrary.test.tsx`](../../../packages/web-viewer/src/features/__tests__/SheetLibrary.test.tsx)、[`App.test.tsx`](../../../packages/web-viewer/src/app/__tests__/App.test.tsx)、[`library.spec.ts`](../../../apps/web-demo/e2e/library.spec.ts)                                       |
 | 单份导入导航、打开与应用状态编排                         | [`ViewerApplication.ts`](../../../packages/web-viewer/src/app/ViewerApplication.ts)                                                                                                                                                     | [`ViewerApplication.test.ts`](../../../packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts)                                                                                                                                                                                    |
+| Library → Viewer loading 中间态、错误边界与 route 稳定性 | [`ViewerPage.tsx`](../../../packages/web-viewer/src/app/pages/ViewerPage.tsx)、[`viewerApp.tsx`](../../../packages/web-viewer/src/viewerApp.tsx)                                                                                        | [`App.test.tsx`](../../../packages/web-viewer/src/app/__tests__/App.test.tsx)、[`library.spec.ts`](../../../apps/web-demo/e2e/library.spec.ts)                                                                                                                                             |
 | Desktop Renderer 不获得文件路径                          | Bridge schemas、Main handler、Renderer adapter                                                                                                                                                                                          | Desktop Bridge tests、Desktop E2E isolation test                                                                                                                                                                                                                                           |
 
 ## 相关资料

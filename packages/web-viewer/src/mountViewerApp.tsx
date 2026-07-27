@@ -54,7 +54,7 @@ export function mountViewerApp(rootElement: HTMLElement, dependencies: ViewerApp
   let destroyPromise: Promise<void> | undefined;
   return {
     openScore: () => application.openScore(),
-    importScoreSources: (sources, multiple) => application.importScoreSources(sources, multiple),
+    importScoreSources: (sources) => application.importScoreSources(sources),
     togglePlayback: () => application.togglePlayback(),
     pauseAndFlush: () => application.pauseAndFlush(),
     destroy: () => (destroyPromise ??= application.destroy().finally(() => root.unmount())),

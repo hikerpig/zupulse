@@ -297,6 +297,7 @@ describe("ViewerApplication", () => {
 
   it("emits an explicit navigation target after a single score import", async () => {
     const bytes = new TextEncoder().encode("<score-partwise><part/><measure/></score-partwise>");
+    let selectedForImport: { fileName: string; readBytes(): Promise<Uint8Array> }[] = [];
     const adapter: ScoreFormatAdapter = {
       format: "musicxml",
       parse: async () => ({
@@ -346,7 +347,7 @@ describe("ViewerApplication", () => {
       {
         repository,
         gateway: {
-          selectForImport: async () => [],
+          selectForImport: async () => selectedForImport,
           saveExport: async () => "cancelled",
         },
         adapters: [adapter],
@@ -368,18 +369,33 @@ describe("ViewerApplication", () => {
     const navigate = vi.fn();
     const unsubscribe = application.subscribeNavigation(navigate);
 
-    await application.importScoreSources([{ fileName: "imported.musicxml", readBytes: async () => bytes }], false);
+    await application.importScoreSources([{ fileName: "imported.musicxml", readBytes: async () => bytes }]);
 
     expect(navigate).toHaveBeenCalledWith(expect.stringMatching(/^[0-9a-f-]{36}$/));
     expect(application.getSnapshot().currentLibraryScoreId).toBeUndefined();
 
-    await application.importScoreSources(
-      [
-        { fileName: "batch.musicxml", readBytes: async () => bytes },
-        { fileName: "broken.txt", readBytes: async () => bytes },
-      ],
-      true,
-    );
+    selectedForImport = [{ fileName: "single-from-multi-picker.musicxml", readBytes: async () => bytes }];
+    await application.importScores(true);
+
+    expect(navigate).toHaveBeenCalledTimes(2);
+
+    await application.importScoreSources([{ fileName: "broken.txt", readBytes: async () => bytes }]);
+
+    expect(application.getSnapshot().library).toMatchObject({
+      importSummary: {
+        total: 1,
+        cancelled: 0,
+        running: false,
+        results: [{ status: "failed", fileName: "broken.txt" }],
+      },
+    });
+    expect(application.getSnapshot().library?.error).toBeUndefined();
+    expect(navigate).toHaveBeenCalledTimes(2);
+
+    await application.importScoreSources([
+      { fileName: "batch.musicxml", readBytes: async () => bytes },
+      { fileName: "broken.txt", readBytes: async () => bytes },
+    ]);
 
     expect(application.getSnapshot().library?.importSummary).toMatchObject({
       total: 2,
@@ -387,7 +403,7 @@ describe("ViewerApplication", () => {
       running: false,
       results: [{ status: "created" }, { status: "failed", fileName: "broken.txt" }],
     });
-    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledTimes(2);
     unsubscribe();
     await application.destroy();
   });

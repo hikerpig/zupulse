@@ -29,6 +29,8 @@ Sheet Library 是当前设备持久保存和管理已导入曲谱的主页。导
 
 - Browser Demo 和 Desktop Shell 启动后都以 Sheet Library 为根页面。
 - 用户可选择单份或多份 Guitar Pro、MusicXML、MXL 文件导入。
+- Library 顶部和空馆藏状态共用一个“导入曲谱”意图；弹窗允许多次选择、审阅和移除候选，
+  只有用户确认“导入 N 份”后才提交。
 - 单份导入成功或命中重复内容后，应用导航到 `#/viewer/:libraryScoreId`。
 - 批量导入完成后留在 Library。
 - Library Score 可从 Library 打开 Viewer；MusicXML/MXL Library Score 还可从应用导航进入
@@ -56,6 +58,9 @@ Session ID。
   筛选、目录状态与 Viewer 控件，不通过水平滚动隐藏关键动作。
 
 ### 导入
+
+未提交的候选只存在于 import modal 的 presentation state。取消文件选择、关闭弹窗或移除候选
+不会改变 Library facts、import summary 或 route。
 
 每份候选文件独立执行以下流程：
 
@@ -193,8 +198,11 @@ stateDiagram-v2
 
 以下内容不得被 AI 当作已经实现的行为：
 
-- `importing` 状态存在于应用 snapshot，但当前 Library 组件只使用通用 `loading` 禁用导入按钮，
-  没有完整呈现独立的 importing 状态。
+- `importing` 状态会禁用新的导入入口并显示现有汇总，但尚未在 modal 内提供提交后的独立进度面。
+- 尚未落地：drag/drop 入口与可选择的 bundled sample onboarding。
+  目标问题、最小范围和目标契约见
+  [`2026-07-27-library-import-onboarding-product-spec.md`](../../superpowers/specs/2026-07-27-library-import-onboarding-product-spec.md)；
+  该 approved product spec 不描述当前运行时行为。
 - Managed Score Copy 缺失或损坏时，Repository 会拒绝读取；UI 尚未提供规格设想的专用恢复操作。
 - 当前不提供标签、文件夹、歌单、多选、回收站、批量删除或 Library 迁移包。
 
@@ -241,6 +249,8 @@ stateDiagram-v2
 - 产品术语：[`CONTEXT.md`](../../../CONTEXT.md)
 - 当前架构入口：[`docs/architecture/README.md`](../../architecture/README.md)
 - 当前 UI 契约：[`DESIGN.md`](../../../DESIGN.md)
+- Approved Library 导入与首次体验规格：
+  [`2026-07-27-library-import-onboarding-product-spec.md`](../../superpowers/specs/2026-07-27-library-import-onboarding-product-spec.md)
 - Sheet Library 原始设计规格：
   [`2026-07-12-sheet-library-design.md`](../../superpowers/specs/2026-07-12-sheet-library-design.md)
 - Current ADR：0040–0051

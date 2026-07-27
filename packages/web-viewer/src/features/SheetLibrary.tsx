@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, MoreHorizontal, PenLine, Star, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { ImportItemResult, LibraryScoreSummary } from "@zupulse/web-core";
+import type { ImportItemResult, LibraryScoreSummary, ScoreImportSource } from "@zupulse/web-core";
 import type { ViewerApplication } from "../app/ViewerApplication";
 import pageStyles from "../app/pages/PageShell.module.css";
 import {
@@ -13,6 +13,7 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
+  DialogTrigger,
   DialogViewport,
   IconButton,
   MenuItem,
@@ -24,6 +25,7 @@ import {
   Select,
   TextField,
 } from "../components/ui";
+import { ImportScoreDialog } from "./ImportScoreDialog";
 import styles from "./SheetLibrary.module.css";
 
 function formatDuration(ms: number): string {
@@ -53,7 +55,8 @@ export function SheetLibrary({
   error,
   importing,
   importSummary,
-  onImport,
+  onSelectImportFiles,
+  onImportSources,
   onOpen,
 }: {
   application: ViewerApplication;
@@ -67,7 +70,8 @@ export function SheetLibrary({
     cancelled: number;
     running: boolean;
   };
-  onImport(multiple: boolean): Promise<void>;
+  onSelectImportFiles(): Promise<readonly ScoreImportSource[]>;
+  onImportSources(sources: readonly ScoreImportSource[]): Promise<void>;
   onOpen(id: string): void;
 }) {
   const { t, i18n } = useTranslation("library");
@@ -78,6 +82,7 @@ export function SheetLibrary({
   const [editing, setEditing] = useState<LibraryScoreSummary | undefined>();
   const [deleting, setDeleting] = useState<LibraryScoreSummary | undefined>();
   const deleteReturnFocusRef = useRef<HTMLButtonElement>(null);
+  const [importDialogGeneration, setImportDialogGeneration] = useState(0);
   const normalizedQuery = query.trim();
   const visible = useMemo(
     () =>
@@ -118,20 +123,16 @@ export function SheetLibrary({
       </section>
     );
   return (
-    <main className={`${pageStyles.appShell} ${styles.libraryShell} scrollable`}>
+    <DialogRoot onOpenChange={(open) => !open && setImportDialogGeneration((generation) => generation + 1)}>
+      <main className={`${pageStyles.appShell} ${styles.libraryShell} scrollable`}>
       <div className={`${pageStyles.contextBar} ${styles.libraryContextBar}`}>
         <div className={`${pageStyles.contextMain} ${styles.libraryContextMain}`}>
           <h1 className={`${pageStyles.contextTitle} ${styles.libraryTitle}`}>{t("title")}</h1>
           <p className={pageStyles.contextSubtitle}>{t("subtitle")}</p>
         </div>
-        <div className={`${pageStyles.contextActions} ${styles.libraryContextActions}`}>
-          <button className="primary-button" disabled={loading || importing} onClick={() => void onImport(false)}>
-            {t("import")}
-          </button>
-          <button className="secondary-button" disabled={loading || importing} onClick={() => void onImport(true)}>
-            {t("importMany")}
-          </button>
-        </div>
+          <div className={`${pageStyles.contextActions} ${styles.libraryContextActions}`}>
+            <DialogTrigger render={<Button disabled={loading || importing} />}>{t("import")}</DialogTrigger>
+          </div>
       </div>
       <section className={styles.libraryControls} aria-label={t("filtersLabel")}>
         <TextField
@@ -345,9 +346,7 @@ export function SheetLibrary({
         <section className="score-empty-state">
           <p className="empty-title">{t("emptyTitle")}</p>
           <p className="empty-copy">{t("emptyCopy")}</p>
-          <button className="primary-button" onClick={() => void onImport(false)}>
-            {t("importFirst")}
-          </button>
+          <DialogTrigger render={<Button />}>{t("importOwn")}</DialogTrigger>
         </section>
       )}
       {editing && (
@@ -409,7 +408,13 @@ export function SheetLibrary({
           </DialogViewport>
         </DialogPortal>
       </DialogRoot>
-    </main>
+      </main>
+      <ImportScoreDialog
+        key={importDialogGeneration}
+        onSelectFiles={onSelectImportFiles}
+        onImport={onImportSources}
+      />
+    </DialogRoot>
   );
 }
 

@@ -24,7 +24,8 @@ export function LibraryPage({ application }: { application: ViewerApplication })
       application={application}
       {...libraryProps}
       {...(error === undefined ? {} : { error: t("unavailableMessage") })}
-      onImport={(multiple) => application.importScores(multiple)}
+      onSelectImportFiles={() => application.selectImportSources()}
+      onImportSources={(sources) => application.importScoreSources(sources)}
       onOpen={(id) => void navigate(`/viewer/${id}`)}
     />
   );

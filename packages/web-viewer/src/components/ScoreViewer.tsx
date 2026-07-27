@@ -175,6 +175,7 @@ export function ScoreViewer({
             id={domId}
             className={`${styles.viewer} score-viewer`}
             aria-label={t("score.preview")}
+            tabIndex={-1}
             data-score-zoom={scoreZoom}
           >
             <div className="score-empty-state">

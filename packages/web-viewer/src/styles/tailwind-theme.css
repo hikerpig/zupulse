@@ -40,6 +40,7 @@
   --text-title-md: var(--font-size-title-md);
   --text-title-lg: var(--font-size-title-lg);
 
+  --spacing-0: 0px;
   --spacing-1: var(--space-1);
   --spacing-2: var(--space-2);
   --spacing-3: var(--space-3);

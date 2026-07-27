@@ -272,6 +272,7 @@ describe("alphaTab playback cursor styles", () => {
     expect(tokensCss).toMatch(/--z-index-library-editor:\s*40;/);
     expect(tokensCss).toMatch(/--z-index-library-dialog:\s*50;/);
     expect(tokensCss).toMatch(/--layer-overlay:\s*var\(--z-index-library-dialog\);/);
+    expect(tailwindThemeCss).toMatch(/--spacing-0:\s*0px;/);
     expect(tailwindThemeCss).toMatch(/--z-index-overlay:\s*var\(--layer-overlay\);/);
     expect(scoreCss).toMatch(/\.stage\s*{[^}]*position:\s*relative;[^}]*z-index:\s*var\(--z-index-score\);/s);
     expect(workspaceCss).toMatch(/\.transportBar\s*{[^}]*z-index:\s*var\(--z-index-transport\);/s);

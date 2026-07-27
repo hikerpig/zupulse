@@ -227,6 +227,91 @@ describe("SheetLibrary score actions", () => {
   });
 });
 
+describe("SheetLibrary current score indicator", () => {
+  it("marks the currently open score with aria-current", () => {
+    const fresh = libraryScore();
+    const current: LibraryScore = {
+      ...libraryScore(),
+      id: "00000000-0000-4000-8000-000000000002",
+      title: "Current",
+    };
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[fresh, current]}
+        loading={false}
+        {...emptyImportProps()}
+        onOpen={() => undefined}
+        currentScoreId="00000000-0000-4000-8000-000000000002"
+      />,
+    );
+
+    const items = screen.getAllByRole("listitem");
+    const currentItem = items.find((item) => item.getAttribute("aria-current") === "true");
+    const freshItem = items.find((item) => item.getAttribute("aria-current") !== "true");
+    expect(currentItem).toBeTruthy();
+    expect(freshItem).toBeTruthy();
+    expect(currentItem?.getAttribute("aria-current")).toBe("true");
+    expect(freshItem?.getAttribute("aria-current")).toBeNull();
+  });
+});
+
+describe("SheetLibrary edit dialog", () => {
+  it("opens edit dialog and restores focus on cancel", async () => {
+    const application = libraryApplication();
+    const user = userEvent.setup();
+
+    render(
+      <SheetLibrary
+        application={application}
+        scores={[libraryScore()]}
+        loading={false}
+        {...emptyImportProps()}
+        onOpen={() => undefined}
+      />,
+    );
+
+    const actionsTrigger = screen.getByRole("button", { name: "Created 的更多操作" });
+    await user.click(actionsTrigger);
+    await user.click(await screen.findByRole("menuitem", { name: "编辑 Created" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "编辑曲谱信息" });
+    expect(within(dialog).getByLabelText("标题")).toBeTruthy();
+    expect(within(dialog).getByLabelText("艺术家")).toBeTruthy();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+describe("SheetLibrary stats summary", () => {
+  it("shows total scores, loops count and last practiced time", () => {
+    const scoreWithLoop: LibraryScore = {
+      ...libraryScore(),
+      id: "00000000-0000-4000-8000-000000000002",
+      title: "WithLoop",
+      practice: {
+        hasLoop: true,
+        lastPracticedAt: "2026-07-26T10:00:00.000Z",
+      },
+    };
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[libraryScore(), scoreWithLoop]}
+        loading={false}
+        {...emptyImportProps()}
+        onOpen={() => undefined}
+      />,
+    );
+
+    const statsSummary = screen.getByText(/2 份曲谱 · 1 个 Loop · 最近练习/);
+    expect(statsSummary).toBeTruthy();
+  });
+});
+
 describe("SheetLibrary no-results state", () => {
   it("exposes the sort control with its visible label", () => {
     render(

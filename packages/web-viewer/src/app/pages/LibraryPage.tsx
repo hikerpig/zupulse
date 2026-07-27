@@ -1,5 +1,5 @@
 import { useEffect, useSyncExternalStore } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import type { ViewerApplication } from "../ViewerApplication";
 import { SheetLibrary } from "../../features/SheetLibrary";
@@ -9,6 +9,8 @@ export function LibraryPage({ application }: { application: ViewerApplication })
   const { t } = useTranslation("library");
   const snapshot = useSyncExternalStore(application.subscribe, application.getSnapshot);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const currentScoreId = pathname.match(/^\/(?:viewer|studio)\/([^/]+)$/)?.[1];
 
   useEffect(() => {
     const refresh = () => void application.refreshLibrary();
@@ -32,6 +34,7 @@ export function LibraryPage({ application }: { application: ViewerApplication })
       onSelectSample={(id) => application.createBundledSampleSource(id)}
       onImportSources={(sources) => application.importScoreSources(sources)}
       onOpen={(id) => void navigate(`/viewer/${id}`)}
+      {...(currentScoreId !== undefined ? { currentScoreId } : {})}
     />
   );
 }

@@ -2,8 +2,8 @@
   /* ── Shell ─────────────────────────────────────────────── */
   .libraryShell {
     display: block;
-    overflow: auto;
-    padding-bottom: env(safe-area-inset-bottom);
+    overflow: hidden;
+    height: 100%;
     background:
       radial-gradient(circle, rgb(0 0 0 / 0.06) 1px, transparent 1px) 0 0 / 20px 20px,
       var(--bg-glow),
@@ -15,6 +15,15 @@
       radial-gradient(circle, rgb(255 255 255 / 0.1) 1px, transparent 1px) 0 0 / 20px 20px,
       var(--bg-glow),
       var(--bg-app);
+  }
+
+  /* ── Sticky Header ────────────────────────────────────── */
+  .libraryHeaderSticky {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-index-surface-raised);
+    background: linear-gradient(180deg, var(--bg-shell) 96%, var(--bg-app));
+    backdrop-filter: blur(12px);
   }
 
   /* ── Context Bar ──────────────────────────────────────── */
@@ -78,6 +87,14 @@
   }
   .libraryCount strong {
     color: var(--text-secondary);
+  }
+  .libraryStatsSummary {
+    margin: 0;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-family: "IBM Plex Mono", monospace;
+    letter-spacing: 0.03em;
+    text-align: right;
   }
 
   .importSummary {
@@ -183,14 +200,16 @@
     background: var(--border-default);
     list-style: none;
     overflow: hidden;
+    max-height: calc(100vh - 320px);
+    overflow-y: auto;
   }
 
   .libraryRow {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(190px, 0.55fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: stretch;
-    min-height: 78px;
+    min-height: 60px;
     background: var(--bg-panel);
     transition: background-color 140ms ease;
   }
@@ -208,6 +227,9 @@
   .libraryRow:focus-within {
     z-index: var(--z-index-surface-raised);
     box-shadow: inset 0 0 0 2px var(--accent-primary);
+  }
+  .libraryRowCurrent {
+    border-left: 2px solid var(--accent-primary);
   }
 
   .libraryOpenAction {
@@ -238,10 +260,27 @@
   }
   .libraryIdentity {
     min-width: 0;
-    display: grid;
-    gap: 3px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
   }
-  .libraryIdentity strong {
+  .libraryFormatBar {
+    flex: 0 0 4px;
+    align-self: stretch;
+    border-radius: 2px;
+    background: var(--border-strong);
+  }
+  .libraryFormatBar.libraryFormatMusicxml {
+    background: var(--status-ready-text);
+  }
+  .libraryTitleRow {
+    min-width: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .libraryTitleRow strong {
     font-size: 15px;
     font-weight: 600;
     line-height: 1.3;
@@ -279,57 +318,40 @@
     color: var(--status-ready-text);
     border-color: var(--status-ready-text);
   }
-  .libraryPrimaryAction {
-    color: var(--accent-primary);
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  .libraryPractice {
-    min-width: 0;
-    display: grid;
-    align-content: center;
-    gap: 4px;
-    padding: 12px 16px;
-    border-inline: 1px solid var(--border-default);
-    color: var(--text-secondary);
-    font-size: 12px;
-  }
-  .libraryPracticeStatus {
+  .libraryPracticeChip {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    min-width: 0;
-  }
-  .libraryPracticeStatus > span:last-child {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-  .libraryPracticeStatusDot {
-    flex: 0 0 auto;
-    width: 6px;
-    height: 6px;
-    border-radius: 999px;
-    background: var(--text-tertiary);
-  }
-  .libraryPracticeStatusActive .libraryPracticeStatusDot {
-    background: var(--accent-primary);
-  }
-  .libraryPracticeStatusLoop .libraryPracticeStatusDot {
-    background: var(--signal-purple);
-  }
-  .libraryPracticeDate {
-    padding-left: 12px;
-    color: var(--text-tertiary);
-    font-family: "IBM Plex Mono", monospace;
+    gap: 4px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--bg-panel) 80%, var(--text-tertiary));
     font-size: 10px;
+    font-weight: 500;
   }
-  .libraryPractice:empty {
-    visibility: hidden;
+  .libraryPracticeDot {
+    flex: 0 0 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--status-active);
+  }
+  .libraryPracticeChipLoop .libraryPracticeDot {
+    background: var(--status-ready);
+  }
+  .libraryActionIndicator {
+    flex: 0 0 auto;
+    opacity: 0.3;
+    color: var(--accent-primary);
+    transition:
+      opacity 140ms ease,
+      transform 140ms ease;
+  }
+  .libraryOpenAction:hover .libraryActionIndicator,
+  .libraryOpenAction:focus-visible .libraryActionIndicator {
+    opacity: 1;
+    transform: translateX(4px);
   }
   .libraryRowActions {
-    grid-column: 3;
+    grid-column: 2;
     display: flex;
     align-items: center;
     gap: 2px;
@@ -340,26 +362,6 @@
     justify-content: center;
     gap: 8px;
     flex-wrap: wrap;
-  }
-
-  /* ── Editor ────────────────────────────────────────────── */
-  .libraryEditor {
-    position: fixed;
-    z-index: var(--z-index-library-editor);
-    right: 20px;
-    bottom: 20px;
-    display: grid;
-    gap: 10px;
-    padding: 16px;
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-lg);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-shell) 96%, white) 0%, var(--bg-panel) 100%);
-    box-shadow: var(--shadow-panel);
-    backdrop-filter: blur(16px);
-  }
-  .libraryEditor label {
-    display: grid;
-    gap: 4px;
   }
 
   /* ── Responsive ────────────────────────────────────────── */
@@ -392,18 +394,9 @@
       grid-column: 1 / -1;
       padding-bottom: 10px;
     }
-    .libraryPractice {
-      min-height: 44px;
-      padding: 8px 16px 10px;
-      border-inline: 0;
-      border-top: 1px solid var(--border-default);
-    }
     .libraryRowActions {
       grid-column: 2;
       border-top: 1px solid var(--border-default);
-    }
-    .libraryPractice:empty {
-      display: none;
     }
     .libraryControls {
       margin: 12px max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));

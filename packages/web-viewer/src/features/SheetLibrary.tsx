@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, MoreHorizontal, PenLine, Star, Trash2 } from "lucide-react";
+import { ArrowRight, Download, MoreHorizontal, PenLine, Star, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ImportItemResult, LibraryScoreSummary, ScoreImportSource } from "@zupulse/web-core";
 import type { ViewerApplication } from "../app/ViewerApplication";
@@ -62,6 +62,7 @@ export function SheetLibrary({
   onSelectSample,
   onImportSources,
   onOpen,
+  currentScoreId,
 }: {
   application: ViewerApplication;
   scores: readonly LibraryScoreSummary[];
@@ -80,6 +81,7 @@ export function SheetLibrary({
   onSelectSample?(id: BundledSampleScore["id"]): ScoreImportSource | undefined;
   onImportSources(sources: readonly ScoreImportSource[]): Promise<void>;
   onOpen(id: string): void;
+  currentScoreId?: string;
 }) {
   const { t, i18n } = useTranslation("library");
   const locale = i18n.resolvedLanguage ?? i18n.language;
@@ -89,6 +91,7 @@ export function SheetLibrary({
   const [editing, setEditing] = useState<LibraryScoreSummary | undefined>();
   const [deleting, setDeleting] = useState<LibraryScoreSummary | undefined>();
   const deleteReturnFocusRef = useRef<HTMLButtonElement>(null);
+  const editReturnFocusRef = useRef<HTMLButtonElement>(null);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const normalizedQuery = query.trim();
   const visible = useMemo(
@@ -119,6 +122,15 @@ export function SheetLibrary({
         .reverse(),
     [scores, normalizedQuery, favoritesOnly, sort, locale],
   );
+  const libraryStats = useMemo(() => {
+    const total = scores.length;
+    const withLoop = scores.filter((s) => s.practice.hasLoop).length;
+    const lastPracticedAt = scores
+      .map((s) => s.practice.lastPracticedAt)
+      .filter(Boolean)
+      .sort((a, b) => (a && b ? Date.parse(b) - Date.parse(a) : 0))[0];
+    return { total, withLoop, lastPracticedAt };
+  }, [scores]);
   if (error)
     return (
       <section className="score-empty-state" role="alert">
@@ -131,50 +143,52 @@ export function SheetLibrary({
     );
   return (
     <DialogRoot open={importDialogOpen} onOpenChange={setImportDialogOpen}>
-      <main className={`${pageStyles.appShell} ${styles.libraryShell} scrollable`}>
-        <div className={`${pageStyles.contextBar} ${styles.libraryContextBar}`}>
-          <div className={`${pageStyles.contextMain} ${styles.libraryContextMain}`}>
-            <h1 className={`${pageStyles.contextTitle} ${styles.libraryTitle}`}>{t("title")}</h1>
-            <p className={pageStyles.contextSubtitle}>{t("subtitle")}</p>
+      <main className={`${pageStyles.appShell} ${styles.libraryShell}`}>
+        <div className={styles.libraryHeaderSticky}>
+          <div className={`${pageStyles.contextBar} ${styles.libraryContextBar}`}>
+            <div className={`${pageStyles.contextMain} ${styles.libraryContextMain}`}>
+              <h1 className={`${pageStyles.contextTitle} ${styles.libraryTitle}`}>{t("title")}</h1>
+              <p className={pageStyles.contextSubtitle}>{t("subtitle")}</p>
+            </div>
+            <div className={`${pageStyles.contextActions} ${styles.libraryContextActions}`}>
+              <DialogTrigger render={<Button tone="primary" disabled={loading || importing} />}>
+                {t("import")}
+              </DialogTrigger>
+            </div>
           </div>
-          <div className={`${pageStyles.contextActions} ${styles.libraryContextActions}`}>
-            <DialogTrigger render={<Button tone="primary" disabled={loading || importing} />}>
-              {t("import")}
-            </DialogTrigger>
-          </div>
-        </div>
-        <section className={styles.libraryControls} aria-label={t("filtersLabel")}>
-          <TextField
-            className={`${styles.librarySearch} tw:min-w-0 tw:flex-1`}
-            type="text"
-            aria-label={t("searchLabel")}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("searchPlaceholder")}
-          />
-          <button
-            type="button"
-            className={styles.libraryFilterButton}
-            aria-pressed={favoritesOnly}
-            onClick={() => setFavoritesOnly(!favoritesOnly)}
-          >
-            <Star size={13} strokeWidth={1.8} aria-hidden="true" />
-            {t("favorites")}
-          </button>
-          <label className={`${styles.librarySort} tw:inline-flex tw:shrink-0 tw:items-center tw:gap-2`}>
-            <span className="tw:text-caption tw:whitespace-nowrap tw:text-muted">{t("sortLabel")}</span>
-            <Select
-              className="tw:w-auto tw:min-w-0 tw:text-caption"
-              value={sort}
-              onChange={(event) => setSort(event.target.value as typeof sort)}
+          <section className={styles.libraryControls} aria-label={t("filtersLabel")}>
+            <TextField
+              className={`${styles.librarySearch} tw:min-w-0 tw:flex-1`}
+              type="text"
+              aria-label={t("searchLabel")}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("searchPlaceholder")}
+            />
+            <button
+              type="button"
+              className={styles.libraryFilterButton}
+              aria-pressed={favoritesOnly}
+              onClick={() => setFavoritesOnly(!favoritesOnly)}
             >
-              <option value="activity">{t("sort.activity")}</option>
-              <option value="imported">{t("sort.imported")}</option>
-              <option value="practiced">{t("sort.practiced")}</option>
-              <option value="title">{t("sort.title")}</option>
-            </Select>
-          </label>
-        </section>
+              <Star size={13} strokeWidth={1.8} aria-hidden="true" />
+              {t("favorites")}
+            </button>
+            <label className={`${styles.librarySort} tw:inline-flex tw:shrink-0 tw:items-center tw:gap-2`}>
+              <span className="tw:text-caption tw:whitespace-nowrap tw:text-muted">{t("sortLabel")}</span>
+              <Select
+                className="tw:w-auto tw:min-w-0 tw:text-caption"
+                value={sort}
+                onChange={(event) => setSort(event.target.value as typeof sort)}
+              >
+                <option value="activity">{t("sort.activity")}</option>
+                <option value="imported">{t("sort.imported")}</option>
+                <option value="practiced">{t("sort.practiced")}</option>
+                <option value="title">{t("sort.title")}</option>
+              </Select>
+            </label>
+          </section>
+        </div>
         {importSummary ? (
           <ImportSummary
             summary={importSummary}
@@ -192,137 +206,144 @@ export function SheetLibrary({
               <p className={styles.libraryCount}>
                 {t("visibleCount", { visible: visible.length, total: scores.length })}
               </p>
+              <p className={styles.libraryStatsSummary}>
+                {t("statsSummary", {
+                  total: libraryStats.total,
+                  loops: libraryStats.withLoop,
+                  lastPracticed: libraryStats.lastPracticedAt
+                    ? formatRelativeDate(libraryStats.lastPracticedAt, locale, {
+                        today: t("relative.today"),
+                        yesterday: t("relative.yesterday"),
+                      })
+                    : t("neverPracticed"),
+                })}
+              </p>
             </div>
             <ul className={`${styles.libraryList} scrollable`}>
-              {visible.map((score) => (
-                <li key={score.id} className={styles.libraryRow}>
-                  <button
-                    type="button"
-                    className={styles.libraryOpenAction}
-                    aria-label={t(score.practice.lastPosition ? "continueScore" : "openScore", {
-                      title: score.title,
-                    })}
-                    onClick={() => onOpen(score.id)}
+              {visible.map((score) => {
+                const isCurrent = score.id === currentScoreId;
+                return (
+                  <li
+                    key={score.id}
+                    className={`${styles.libraryRow} ${isCurrent ? styles.libraryRowCurrent : ""}`}
+                    aria-current={isCurrent ? "true" : undefined}
                   >
-                    <span className={styles.libraryIdentity}>
-                      <strong>{score.title}</strong>
-                      {score.artist ? <span className={styles.libraryArtist}>{score.artist}</span> : null}
-                      <span className={styles.libraryMeta}>
-                        <span
-                          className={`${styles.libraryFormat} ${score.format === "musicxml" ? styles.libraryFormatMusicxml : ""}`}
-                        >
-                          {score.format.toUpperCase()}
-                        </span>
-                        <span>
-                          {formatRelativeDate(score.importedAt, locale, {
-                            today: t("relative.today"),
-                            yesterday: t("relative.yesterday"),
-                          })}
-                        </span>
-                        {score.durationMs ? <span>{formatDuration(score.durationMs)}</span> : null}
-                      </span>
-                    </span>
-                    <span className={styles.libraryPrimaryAction}>
-                      {t(score.practice.lastPosition ? "continue" : "open")}
-                    </span>
-                  </button>
-
-                  <div className={styles.libraryPractice}>
-                    {score.practice.lastPosition ? (
-                      <span
-                        className={`${styles.libraryPracticeStatus} ${score.practice.hasLoop ? styles.libraryPracticeStatusLoop : styles.libraryPracticeStatusActive}`}
-                      >
-                        <span className={styles.libraryPracticeStatusDot} aria-hidden="true" />
-                        <span>
-                          {t("practicePosition", {
-                            measure: score.practice.lastPosition.measureIndex + 1,
-                          })}
-                          {score.practice.hasLoop ? t("loopSuffix") : ""}
-                        </span>
-                      </span>
-                    ) : score.practice.lastPracticedAt || score.practice.hasLoop ? (
-                      <span
-                        className={`${styles.libraryPracticeStatus} ${score.practice.hasLoop ? styles.libraryPracticeStatusLoop : styles.libraryPracticeStatusActive}`}
-                      >
-                        <span className={styles.libraryPracticeStatusDot} aria-hidden="true" />
-                        <span>
-                          {score.practice.lastPracticedAt ? t("practiced") : t("savedLoop")}
-                          {score.practice.hasLoop && score.practice.lastPracticedAt ? t("loopSuffix") : ""}
-                        </span>
-                      </span>
-                    ) : null}
-                    {score.practice.lastPracticedAt ? (
-                      <span className={styles.libraryPracticeDate}>
-                        {formatRelativeDate(score.practice.lastPracticedAt, locale, {
-                          today: t("relative.today"),
-                          yesterday: t("relative.yesterday"),
-                        })}
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <div className={styles.libraryRowActions}>
-                    <IconButton
-                      size="sm"
-                      tone="ghost"
-                      aria-label={t(score.isFavorite ? "unfavoriteScore" : "favoriteScore", {
+                    <button
+                      type="button"
+                      className={styles.libraryOpenAction}
+                      aria-label={t(score.practice.lastPosition ? "continueScore" : "openScore", {
                         title: score.title,
                       })}
-                      pressed={score.isFavorite}
-                      onClick={() => {
-                        void application
-                          .setFavorite(score.id, !score.isFavorite)
-                          .then(() => application.refreshLibrary());
-                      }}
+                      onClick={() => onOpen(score.id)}
                     >
-                      <Star
-                        className="tw:shrink-0"
-                        size={16}
-                        strokeWidth={1.8}
-                        fill={score.isFavorite ? "currentColor" : "none"}
-                        aria-hidden="true"
-                      />
-                    </IconButton>
-                    <MenuRoot>
-                      <MenuTrigger
-                        render={
-                          <IconButton
-                            size="sm"
-                            tone="ghost"
-                            aria-label={t("scoreActions", { title: score.title })}
-                            onClick={(event) => {
-                              deleteReturnFocusRef.current = event.currentTarget;
-                            }}
-                          />
-                        }
-                      >
-                        <MoreHorizontal className="tw:size-4 tw:shrink-0" aria-hidden="true" />
-                      </MenuTrigger>
-                      <MenuPortal>
-                        <MenuPositioner sideOffset={6} align="end">
-                          <MenuPopup>
-                            <MenuItem onClick={() => void application.exportLibraryScore(score.id)}>
-                              <Download className="tw:size-4 tw:shrink-0" aria-hidden="true" />
-                              {t("exportScore", { title: score.title })}
-                            </MenuItem>
-                            <MenuItem onClick={() => setEditing(score)}>
-                              <PenLine className="tw:size-4 tw:shrink-0" aria-hidden="true" />
-                              {t("editScore", { title: score.title })}
-                            </MenuItem>
-                            <MenuItem
-                              className="tw:text-danger tw:data-highlighted:bg-danger-surface tw:data-highlighted:text-danger"
-                              onClick={() => setDeleting(score)}
+                      <span className={styles.libraryIdentity}>
+                        <span
+                          className={`${styles.libraryFormatBar} ${score.format === "musicxml" ? styles.libraryFormatMusicxml : ""}`}
+                          aria-hidden="true"
+                        />
+                        <div className={styles.libraryTitleRow}>
+                          <strong>{score.title}</strong>
+                          {score.artist ? <span className={styles.libraryArtist}>{score.artist}</span> : null}
+                        </div>
+                        <span className={styles.libraryMeta}>
+                          {score.practice.lastPosition || score.practice.hasLoop ? (
+                            <span
+                              className={`${styles.libraryPracticeChip} ${score.practice.hasLoop ? styles.libraryPracticeChipLoop : styles.libraryPracticeChipActive}`}
                             >
-                              <Trash2 className="tw:size-4 tw:shrink-0" aria-hidden="true" />
-                              {t("deleteScore", { title: score.title })}
-                            </MenuItem>
-                          </MenuPopup>
-                        </MenuPositioner>
-                      </MenuPortal>
-                    </MenuRoot>
-                  </div>
-                </li>
-              ))}
+                              <span className={styles.libraryPracticeDot} aria-hidden="true" />
+                              {score.practice.lastPosition
+                                ? t("practicePosition", { measure: score.practice.lastPosition.measureIndex + 1 })
+                                : score.practice.hasLoop
+                                  ? t("savedLoop")
+                                  : null}
+                              {score.practice.hasLoop && score.practice.lastPosition ? t("loopSuffix") : ""}
+                            </span>
+                          ) : null}
+                          <span
+                            className={`${styles.libraryFormat} ${score.format === "musicxml" ? styles.libraryFormatMusicxml : ""}`}
+                          >
+                            {score.format.toUpperCase()}
+                          </span>
+                          <span>
+                            {formatRelativeDate(score.importedAt, locale, {
+                              today: t("relative.today"),
+                              yesterday: t("relative.yesterday"),
+                            })}
+                          </span>
+                          {score.durationMs ? <span>{formatDuration(score.durationMs)}</span> : null}
+                        </span>
+                      </span>
+                      <ArrowRight className={styles.libraryActionIndicator} aria-hidden="true" size={16} />
+                    </button>
+
+                    <div className={styles.libraryRowActions}>
+                      <IconButton
+                        size="sm"
+                        tone="ghost"
+                        aria-label={t(score.isFavorite ? "unfavoriteScore" : "favoriteScore", {
+                          title: score.title,
+                        })}
+                        pressed={score.isFavorite}
+                        onClick={() => {
+                          void application
+                            .setFavorite(score.id, !score.isFavorite)
+                            .then(() => application.refreshLibrary());
+                        }}
+                      >
+                        <Star
+                          className="tw:shrink-0"
+                          size={16}
+                          strokeWidth={1.8}
+                          fill={score.isFavorite ? "currentColor" : "none"}
+                          aria-hidden="true"
+                        />
+                      </IconButton>
+                      <MenuRoot>
+                        <MenuTrigger
+                          render={
+                            <IconButton
+                              size="sm"
+                              tone="ghost"
+                              aria-label={t("scoreActions", { title: score.title })}
+                              onClick={(event) => {
+                                deleteReturnFocusRef.current = event.currentTarget;
+                              }}
+                            />
+                          }
+                        >
+                          <MoreHorizontal className="tw:size-4 tw:shrink-0" aria-hidden="true" />
+                        </MenuTrigger>
+                        <MenuPortal>
+                          <MenuPositioner sideOffset={6} align="end">
+                            <MenuPopup>
+                              <MenuItem onClick={() => void application.exportLibraryScore(score.id)}>
+                                <Download className="tw:size-4 tw:shrink-0" aria-hidden="true" />
+                                {t("exportScore", { title: score.title })}
+                              </MenuItem>
+                              <MenuItem
+                                onClick={(event) => {
+                                  editReturnFocusRef.current = event.currentTarget;
+                                  setEditing(score);
+                                }}
+                              >
+                                <PenLine className="tw:size-4 tw:shrink-0" aria-hidden="true" />
+                                {t("editScore", { title: score.title })}
+                              </MenuItem>
+                              <MenuItem
+                                className="tw:text-danger tw:data-highlighted:bg-danger-surface tw:data-highlighted:text-danger"
+                                onClick={() => setDeleting(score)}
+                              >
+                                <Trash2 className="tw:size-4 tw:shrink-0" aria-hidden="true" />
+                                {t("deleteScore", { title: score.title })}
+                              </MenuItem>
+                            </MenuPopup>
+                          </MenuPositioner>
+                        </MenuPortal>
+                      </MenuRoot>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </>
         ) : scores.length > 0 ? (
@@ -358,36 +379,49 @@ export function SheetLibrary({
             <DialogTrigger render={<Button tone="primary" />}>{t("importOwn")}</DialogTrigger>
           </section>
         )}
-        {editing && (
-          <form
-            className={styles.libraryEditor}
-            aria-label={t("editDialogLabel")}
-            onSubmit={(event) => {
-              event.preventDefault();
-              const form = new FormData(event.currentTarget);
-              void application
-                .updateLibraryMetadata(editing.id, {
-                  titleOverride: String(form.get("title") ?? "").trim() || undefined,
-                  artistOverride: String(form.get("artist") ?? "").trim() || undefined,
-                })
-                .then(() => application.refreshLibrary())
-                .then(() => setEditing(undefined));
-            }}
-          >
-            <label>
-              {t("fieldTitle")} <input name="title" defaultValue={editing.title} autoFocus />
-            </label>
-            <label>
-              {t("fieldArtist")} <input name="artist" defaultValue={editing.artist ?? ""} />
-            </label>
-            <button type="submit" className="primary-button">
-              {t("save")}
-            </button>
-            <button type="button" onClick={() => setEditing(undefined)}>
-              {t("cancel")}
-            </button>
-          </form>
-        )}
+        <DialogRoot
+          open={Boolean(editing)}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setEditing(undefined);
+          }}
+        >
+          <DialogPortal>
+            <DialogBackdrop />
+            <DialogViewport>
+              <DialogPopup finalFocus={editReturnFocusRef} className="tw:grid tw:gap-3">
+                <DialogTitle>{t("editDialogLabel")}</DialogTitle>
+                <form
+                  aria-label={t("editDialogLabel")}
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (!editing) return;
+                    const form = new FormData(event.currentTarget);
+                    void application
+                      .updateLibraryMetadata(editing.id, {
+                        titleOverride: String(form.get("title") ?? "").trim() || undefined,
+                        artistOverride: String(form.get("artist") ?? "").trim() || undefined,
+                      })
+                      .then(() => application.refreshLibrary())
+                      .then(() => setEditing(undefined));
+                  }}
+                >
+                  <label className="tw:block">
+                    {t("fieldTitle")} <TextField name="title" defaultValue={editing?.title ?? ""} autoFocus />
+                  </label>
+                  <label className="tw:block">
+                    {t("fieldArtist")} <TextField name="artist" defaultValue={editing?.artist ?? ""} />
+                  </label>
+                  <div className="tw:flex tw:flex-wrap tw:justify-end tw:gap-2">
+                    <DialogClose render={<Button tone="ghost" />}>{t("cancel")}</DialogClose>
+                    <Button type="submit" tone="primary">
+                      {t("save")}
+                    </Button>
+                  </div>
+                </form>
+              </DialogPopup>
+            </DialogViewport>
+          </DialogPortal>
+        </DialogRoot>
         <DialogRoot
           open={Boolean(deleting)}
           disablePointerDismissal

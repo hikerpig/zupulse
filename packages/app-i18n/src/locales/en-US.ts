@@ -72,6 +72,8 @@ export const enUS = {
     visibleCount: "{{visible}} / {{total}} scores",
     scoreCount_one: "{{count}} score",
     scoreCount_other: "{{count}} scores",
+    statsSummary: "{{total}} scores · {{loops}} loops · last practiced {{lastPracticed}}",
+    neverPracticed: "Never practiced",
     practiced: "Practiced",
     practicePosition: "Last practiced at measure {{measure}}",
     savedLoop: "Saved loop",

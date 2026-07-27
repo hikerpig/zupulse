@@ -5,6 +5,9 @@ import { basename, extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const shellRoot = new URL("..", import.meta.url);
+const expectedSampleBase64 = (
+  await readFile(new URL("../../../product-assets/samples/first-light-practice.mxl", import.meta.url))
+).toString("base64");
 const outRoot = new URL("./out/", shellRoot);
 const asar = await findFile(outRoot, "app.asar");
 if (!asar) throw new Error("Missing packaged app.asar");
@@ -34,6 +37,7 @@ try {
     throw new Error("Packaged renderer is missing its CSP");
   }
 
+  let bundledSampleFound = false;
   for (const file of await listFiles(extracted)) {
     const path = relative(extracted, file);
     if (path.includes("test-fixtures") || extname(path) === ".map") {
@@ -44,8 +48,10 @@ try {
       if (source.includes("MockNativeBridge")) {
         throw new Error(`MockNativeBridge leaked into package: ${path}`);
       }
+      if (source.includes(expectedSampleBase64)) bundledSampleFound = true;
     }
   }
+  if (!bundledSampleFound) throw new Error("Packaged renderer is missing the verified bundled sample");
 } finally {
   await rm(extracted, { recursive: true, force: true });
 }

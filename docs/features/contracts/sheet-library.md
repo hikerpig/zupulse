@@ -69,6 +69,9 @@ Browser import modal 提供用户主动选择的 `First Light Practice` MXL bund
 candidate/import pipeline，创建普通 Library Score；重复、导出、删除和重新添加不使用 sample-only
 持久化语义。
 
+Desktop 提供同一 sample catalog，并在 build 时把已验证字节内联进 Renderer bundle；运行时不读取
+外部路径，也不新增通用 Bridge 文件能力。
+
 每份候选文件独立执行以下流程：
 
 1. 读取字节；单文件不得超过 64 MiB。
@@ -178,7 +181,7 @@ stateDiagram-v2
 | 内容唯一性            | `scoreIdentity` unique index | `score_identity` UNIQUE                          | 语义一致                            |
 | 导入文件选择          | Browser File API             | Main 一次性 token + Bridge                       | 共享 Viewer 只见 `ScoreFileGateway` |
 | 导入文件拖放          | Web `File`                   | 未提供                                           | Desktop 不绕过 Main/token 边界      |
-| Bundled sample        | 已打包并校验 MXL             | 未提供                                           | Browser 当前先交付一份样例          |
+| Bundled sample        | 已打包并校验 MXL             | 已内联并通过 package 校验                        | 同一 catalog、manifest 与内容 hash  |
 | 原始文件导出          | Browser download             | 原生保存 Dialog                                  | 都导出 Managed Score Copy           |
 | 删除联动              | 单 IndexedDB transaction     | 文件状态机 + SQLite transaction + reconciliation | 最终语义一致                        |
 | Library 练习摘要      | 已汇总 sidecar/resume        | 已汇总当前 JsonStore sidecar/resume              | 语义一致，数据仍各自本地            |
@@ -208,7 +211,7 @@ stateDiagram-v2
 以下内容不得被 AI 当作已经实现的行为：
 
 - `importing` 状态会禁用新的导入入口并显示现有汇总，但尚未在 modal 内提供提交后的独立进度面。
-- 尚未落地：Desktop bundled sample onboarding。
+- Desktop 尚未提供 dropped-file capability；用户仍可用原生多选和 bundled sample。
   目标问题、最小范围和目标契约见
   [`2026-07-27-library-import-onboarding-product-spec.md`](../../superpowers/specs/2026-07-27-library-import-onboarding-product-spec.md)；
   该 approved product spec 不描述当前运行时行为。

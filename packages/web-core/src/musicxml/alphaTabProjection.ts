@@ -50,6 +50,8 @@ type RuntimeBeat = {
   }>;
 };
 
+export const ALPHA_TAB_TICKS_PER_QUARTER = 960;
+
 const naturalPitchClasses = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 } as const;
 const sharpPitchClasses: readonly ChordSymbolInput["root"][] = [
   { step: "C", alter: 0 },
@@ -100,7 +102,7 @@ export function projectAlphaTabScore(score: RuntimeScore): Omit<AdapterOutput, "
       schemaVersion: "0.3.0",
       summary: { title: score.title || "Untitled", trackCount: tracks.length },
       tracks,
-      timeline: { ticksPerQuarter: 960, durationTicks },
+      timeline: { ticksPerQuarter: ALPHA_TAB_TICKS_PER_QUARTER, durationTicks },
       sections: [],
       extensions: { musicxml: { masterBarCount: masterBars.length, tempo: score.tempo ?? null } },
     },
@@ -129,7 +131,7 @@ export function projectAlphaTabHarmonyInput(score: HarmonyRuntimeScore): Harmony
     };
   });
   return createHarmonyAnalysisInput({
-    ticksPerQuarter: 960,
+    ticksPerQuarter: ALPHA_TAB_TICKS_PER_QUARTER,
     measures,
     tracks: (score.tracks ?? []).map((track, trackIndex) => ({
       id: `track-${trackIndex + 1}`,

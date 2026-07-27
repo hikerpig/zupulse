@@ -32,6 +32,13 @@ Sidecar、Local Playback Resume 或练习摘要。
 divisions 通过安全 LCM 精确投影；不可整除或超过安全整数的位置明确失败。Range 左闭右开，不绑定
 playback occurrence。
 
+导出时，downbeat harmony 仍直接写在 measure 内容起点；小节内 harmony 使用目标 part 当前
+measure 的有效 `divisions`，把 alphaTab 的 960 ticks-per-quarter 换算成 MusicXML `<offset>`。
+MusicXML `offset` 是 decimal divisions，因此装饰音产生的 sub-division 边界保留为小数，不会阻断
+整份 MusicXML/MXL 下载。重新导入时，source harmony parser 使用逐小节继承的有效 `divisions`
+恢复 960 ticks-per-quarter written moment；省略 `<divisions>` 的兼容输入使用 timebase 1，同小节
+事件按恢复后的 written moment 排序。MXL 只替换 root score entry，其他容器 entry 保持不变。
+
 默认 scope 包含有音高的非打击乐轨道。投影保留 sounding pitch、spelling、voice、tie/grace 与来源
 位置。
 
@@ -75,8 +82,22 @@ token。
 User Correction > supported source <harmony> > active Analysis Revision
 ```
 
-Correction 锚定 Score Written Range，因此可以重新叠加到新 Revision。来源冲突、微分音、不支持的
-kind 与低 confidence 保持 unresolved。N.C. 只能来自 source 或 User Correction。
+Correction 锚定 Score Written Range，因此可以重新叠加到新 Revision。来源冲突与低 confidence
+保持 unresolved。MusicXML `<numeral>`、不支持的 kind 等无法表达为产品 Chord Symbol 的来源
+`<harmony>` 由 parser 保留为诊断，但在 boundary union 前从权威来源集合排除，既不切分也不覆盖
+active Revision。N.C. 只能来自 supported source 或 User Correction。
+
+## Studio preview
+
+Studio preview 不修改 Managed Score Copy。`studio-score-runtime` 把固化的 Effective Projection 交给
+alphaTab adapter，adapter 临时设置目标 beat 的 `chordId` 后重新渲染 tracks，并在下一次 preview 或
+Session dispose 时恢复原值。
+
+Chord preview 优先使用与 range start 精确相同的 beat。Semi-CRF boundary 可能来自 note offset 或
+grace event 等不可直接挂载 Chord 的细分事件；这时 adapter 在所有 track、staff 与 voice 中选择
+该 range 内 written moment 最早的实际 beat。只有 range 内没有任何 beat、score runtime 不存在或
+alphaTab 不提供所需能力时，preview 才降级为 unrepresentable / unavailable，不能因单个非 beat
+boundary 拒绝整批结果。
 
 ## 保存、重分析与并发
 

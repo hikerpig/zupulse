@@ -252,6 +252,21 @@ test("keeps K331 responsive and terminates a cancelled analysis", async ({ page 
   await page.getByRole("link", { name: "和弦分析" }).click();
   const documentStatus = page.getByRole("status", { name: "分析文档状态" });
   await expect(documentStatus).toContainText("已保存", { timeout: 30_000 });
+  await expect(page.getByText("预览不可用：无法在当前乐谱上显示和弦预览")).toHaveCount(0);
+  const ranges = page.getByRole("list", { name: "分析片段" });
+  await expect(page.getByRole("button", { name: "全部 123" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "未解决 21" })).toBeVisible();
+  await expect(ranges.locator('[data-type="chord"]')).toHaveCount(100);
+  await expect(ranges.locator('[data-type="unresolved"]')).toHaveCount(21);
+  await expect(ranges.locator('[data-type="no-chord"]')).toHaveCount(2);
+  await expect(ranges.locator('button[data-origin="source"]')).toHaveCount(2);
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "导出标注曲谱" }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("K331-3_reviewed-chords.mxl");
+  expect(await download.failure()).toBeNull();
+  await expect(page.getByText("已导出标注曲谱")).toBeVisible();
 
   await page.getByRole("button", { name: "重新分析" }).click();
   const cancel = page.getByRole("button", { name: "取消分析" });

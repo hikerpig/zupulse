@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { TextDecoder, TextEncoder } from "node:util";
 import { unzipSync } from "fflate";
 import { describe, expect, it } from "vitest";
-import { insertMusicXmlHarmony, listMusicXmlPartIds } from "../musicXmlRoundTrip";
+import { insertMusicXmlHarmony, listMusicXmlMeasureDivisions, listMusicXmlPartIds } from "../musicXmlRoundTrip";
 import { createMusicXmlAdapter } from "../../musicxml/musicXmlAdapter";
 
 const decode = (bytes: Uint8Array) => new TextDecoder().decode(bytes);
@@ -53,6 +53,12 @@ describe("insertMusicXmlHarmony", () => {
 
     expect(result).toContain(`<part id="P2">${harmony}<note><pitch><step>D</step>`);
     expect(result).toContain('<part id="P1"><note><rest/><duration>1</duration></note></part>');
+  });
+
+  it("uses one division per quarter when an accepted score omits divisions", async () => {
+    const source = new Uint8Array(await readFile(resolve("test-fixtures/musicxml/generated/timewise.musicxml")));
+
+    expect(listMusicXmlMeasureDivisions(source, "P1")).toEqual([1]);
   });
 
   it("rejects a missing part or measure instead of writing at a nearby location", () => {

@@ -36,6 +36,23 @@ export function listMusicXmlPartIds(bytes: Uint8Array): string[] {
     .filter((id): id is string => id !== undefined && id.length > 0);
 }
 
+/** Returns the effective MusicXML divisions for each measure in a part. */
+export function listMusicXmlMeasureDivisions(bytes: Uint8Array, partId: string): number[] {
+  const sourceBytes = isZip(bytes) ? preflightMxlEntries(unzipMxlEntries(bytes)).rootBytes : bytes;
+  const { root } = preflightMusicXml(sourceBytes);
+  const source = new TextDecoder("utf-8", { fatal: true }).decode(sourceBytes);
+  const tags = readXmlTags(source);
+  const targets =
+    root === "score-partwise" ? partwiseMeasureTargets(tags, partId) : timewiseMeasureTargets(tags, partId);
+  let effective = 1;
+  return targets.map((target) => {
+    const attributes = findDirectChild(tags, target, "attributes", () => true);
+    const divisions = attributes === undefined ? undefined : findDirectChild(tags, attributes, "divisions", () => true);
+    if (divisions !== undefined) effective = positiveIntegerElementValue(source, tags, divisions);
+    return effective;
+  });
+}
+
 /** Returns the score XML contained by a plain MusicXML or MXL file. */
 export function readMusicXmlRootXml(bytes: Uint8Array): string {
   const source = isZip(bytes) ? preflightMxlEntries(unzipMxlEntries(bytes)).rootBytes : bytes;
@@ -136,6 +153,28 @@ function findTimewiseTarget(tags: readonly XmlTag[], insertion: MusicXmlHarmonyI
   return measure === undefined
     ? undefined
     : findDirectChild(tags, measure, "part", (tag) => attribute(tag.value, "id") === insertion.partId);
+}
+
+function partwiseMeasureTargets(tags: readonly XmlTag[], partId: string): number[] {
+  const part = findDirectChild(tags, 0, "part", (tag) => attribute(tag.value, "id") === partId);
+  if (part === undefined) throw new Error("part-not-found");
+  return findDirectChildren(tags, part, "measure");
+}
+
+function timewiseMeasureTargets(tags: readonly XmlTag[], partId: string): number[] {
+  return findDirectChildren(tags, 0, "measure").map((measure) => {
+    const part = findDirectChild(tags, measure, "part", (tag) => attribute(tag.value, "id") === partId);
+    if (part === undefined) throw new Error("part-not-found");
+    return part;
+  });
+}
+
+function positiveIntegerElementValue(source: string, tags: readonly XmlTag[], index: number): number {
+  const tag = tags[index]!;
+  if (tag.type !== "open") throw new Error("invalid-divisions");
+  const value = Number(source.slice(tag.end, tags[matchingClose(tags, index)]!.start).trim());
+  if (!Number.isSafeInteger(value) || value <= 0) throw new Error("invalid-divisions");
+  return value;
 }
 
 function findContentStart(tags: readonly XmlTag[], parent: number): number {

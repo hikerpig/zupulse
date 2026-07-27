@@ -23,6 +23,73 @@ describe("effective harmony projection", () => {
     expect(result[2]?.origin).toBe("correction");
   });
 
+  it("keeps unsupported source harmony diagnostic-only without splitting a resolved revision", () => {
+    const result = effectiveHarmonyProjection({
+      revision: [{ status: "resolved", range: range(0, 8), chord, confidence: 0.9, alternatives: [] }],
+      source: [
+        {
+          type: "unresolved",
+          range: range(2, 6),
+          reason: "unsupported-source-harmony",
+          alternatives: [],
+        },
+      ],
+      corrections: [],
+    });
+
+    expect(result).toEqual([
+      {
+        type: "chord",
+        range: range(0, 8),
+        chord,
+        origin: "analysis",
+      },
+    ]);
+  });
+
+  it("keeps low-confidence revision evidence under unsupported source harmony", () => {
+    const alternatives = [{ chord, localScore: 1, sequenceScore: 1, confidence: 0.5 }];
+    const result = effectiveHarmonyProjection({
+      revision: [{ status: "unresolved", range: range(0, 8), reason: "low-confidence", alternatives }],
+      source: [
+        {
+          type: "unresolved",
+          range: range(2, 6),
+          reason: "unsupported-source-harmony",
+          alternatives: [],
+        },
+      ],
+      corrections: [],
+    });
+
+    expect(result).toEqual([
+      {
+        type: "unresolved",
+        range: range(0, 8),
+        reason: "low-confidence",
+        alternatives,
+        origin: "analysis",
+      },
+    ]);
+  });
+
+  it("keeps supported source chords and N.C. authoritative over revision", () => {
+    const result = effectiveHarmonyProjection({
+      revision: [{ status: "resolved", range: range(0, 8), chord, confidence: 0.9, alternatives: [] }],
+      source: [
+        { type: "chord", range: range(2, 4), chord, origin: "source" },
+        { type: "no-chord", range: range(4, 6), origin: "source" },
+      ],
+      corrections: [],
+    });
+
+    expect(
+      result.map((entry) => `${entry.range.start.offsetTicks}-${entry.range.end.offsetTicks}:${entry.type}`),
+    ).toEqual(["0-2:chord", "2-4:chord", "4-6:no-chord", "6-8:chord"]);
+    expect(result[1]?.origin).toBe("source");
+    expect(result[2]?.origin).toBe("source");
+  });
+
   it("keeps unresolved and source conflict distinct", () => {
     const result = effectiveHarmonyProjection({
       revision: [{ status: "unresolved", range: range(0, 4), reason: "low-confidence", alternatives: [] }],

@@ -1,5 +1,7 @@
 import {
+  ALPHA_TAB_TICKS_PER_QUARTER,
   applyMusicXmlHarmonyPlan,
+  listMusicXmlMeasureDivisions,
   planAnnotatedMusicXmlExport,
   type EffectiveHarmonyEntry,
   type ScoreFileGateway,
@@ -20,9 +22,20 @@ export async function exportHarmonyStudioDocument(input: {
   const flushed = await input.session.flush();
   if (flushed.status !== "ready" || flushed.document === null) throw new Error("STUDIO_DOCUMENT_NOT_SAVED");
   const source = await input.readScore();
+  const needsOffsets = input.projection.some(
+    (entry) => entry.origin !== "source" && entry.type !== "unresolved" && entry.range.start.offsetTicks !== 0,
+  );
   const bytes = applyMusicXmlHarmonyPlan(
     source.bytes,
-    planAnnotatedMusicXmlExport(input.projection, { partId: input.partId }),
+    planAnnotatedMusicXmlExport(input.projection, {
+      partId: input.partId,
+      ...(needsOffsets
+        ? {
+            ticksPerQuarter: ALPHA_TAB_TICKS_PER_QUARTER,
+            divisionsByMeasure: listMusicXmlMeasureDivisions(source.bytes, input.partId),
+          }
+        : {}),
+    }),
   );
   return input.gateway.saveExport({ fileName: withChordSuffix(source.fileName), bytes });
 }

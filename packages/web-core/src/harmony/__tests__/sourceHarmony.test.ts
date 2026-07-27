@@ -36,4 +36,14 @@ describe("source harmony", () => {
       chord: { root: { step: "D" }, kind: "minor" },
     });
   });
+
+  it("converts source harmony offsets from effective divisions to alphaTab ticks", () => {
+    const xml = `<score-partwise><part id="P1"><measure><attributes><divisions>8</divisions></attributes><harmony><root><root-step>C</root-step></root><kind>major</kind><offset>8</offset></harmony><harmony><root><root-step>D</root-step></root><kind>minor</kind><offset>4</offset></harmony></measure><measure><harmony><root><root-step>E</root-step></root><kind>minor</kind><offset>0.008333333333333333</offset></harmony></measure></part></score-partwise>`;
+
+    expect(parseSourceHarmonyEvents(xml, "P1").map((event) => event.moment)).toEqual([
+      { measureIndex: 0, offsetTicks: 480 },
+      { measureIndex: 0, offsetTicks: 960 },
+      { measureIndex: 1, offsetTicks: 1 },
+    ]);
+  });
 });

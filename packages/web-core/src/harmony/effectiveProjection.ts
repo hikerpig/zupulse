@@ -38,9 +38,12 @@ export function effectiveHarmonyProjection(input: {
   source: readonly SourceHarmonyEntry[];
   corrections: readonly HarmonyCorrection[];
 }): EffectiveHarmonyEntry[] {
+  const authoritativeSource = input.source.filter(
+    (entry) => entry.type !== "unresolved" || entry.reason !== "unsupported-source-harmony",
+  );
   const boundaries = [
     ...input.revision.flatMap((item) => [item.range.start, item.range.end]),
-    ...input.source.flatMap((item) => [item.range.start, item.range.end]),
+    ...authoritativeSource.flatMap((item) => [item.range.start, item.range.end]),
     ...input.corrections.flatMap((item) => [item.range.start, item.range.end]),
   ].sort(compareMoments);
   const unique = boundaries.filter(
@@ -50,7 +53,7 @@ export function effectiveHarmonyProjection(input: {
   for (let index = 0; index < unique.length - 1; index += 1) {
     const range = { start: unique[index]!, end: unique[index + 1]! };
     const correction = input.corrections.find((item) => covers(item.range, range));
-    const source = input.source.filter((item) => covers(item.range, range));
+    const source = authoritativeSource.filter((item) => covers(item.range, range));
     const revision = input.revision.find((item) => covers(item.range, range));
     const entry = correction
       ? correctionEntry(correction, range)

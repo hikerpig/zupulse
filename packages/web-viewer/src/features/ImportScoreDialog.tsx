@@ -63,7 +63,7 @@ export function ImportScoreDialog({
             <DialogTitle>{t("importDialog.title")}</DialogTitle>
             <DialogDescription>{t("importDialog.description")}</DialogDescription>
           </div>
-          <p className="tw:m-0 tw:rounded-control tw:border tw:border-solid tw:border-border tw:bg-elevated tw:p-3 tw:text-caption tw:leading-relaxed tw:text-muted">
+          <p className="tw:leading-relaxed tw:m-0 tw:rounded-control tw:border tw:border-solid tw:border-border tw:bg-elevated tw:p-3 tw:text-caption tw:text-muted">
             {t("importDialog.hint")}
           </p>
           <Button
@@ -112,17 +112,15 @@ export function ImportScoreDialog({
           ) : null}
           {candidates.length ? (
             <ul
-              className="tw:m-0 tw:grid tw:max-h-56 tw:list-none tw:gap-px tw:overflow-y-auto tw:rounded-control tw:border tw:border-solid tw:border-border tw:bg-border tw:p-0"
+              className="tw:max-h-56 tw:m-0 tw:grid tw:list-none tw:gap-px tw:overflow-y-auto tw:rounded-control tw:border tw:border-solid tw:border-border tw:bg-border tw:p-0"
               aria-label={t("importDialog.candidates")}
             >
               {candidates.map((candidate, index) => (
                 <li
-                  className="tw:flex tw:min-h-control tw:min-w-0 tw:items-center tw:justify-between tw:gap-3 tw:bg-elevated tw:py-1.5 tw:pr-2 tw:pl-3 tw:text-caption"
+                  className="tw:py-1.5 tw:flex tw:min-h-control tw:min-w-0 tw:items-center tw:justify-between tw:gap-3 tw:bg-elevated tw:pr-2 tw:pl-3 tw:text-caption"
                   key={`${candidate.fileName}-${index}`}
                 >
-                  <span className="tw:overflow-hidden tw:text-ellipsis tw:whitespace-nowrap">
-                    {candidate.fileName}
-                  </span>
+                  <span className="tw:overflow-hidden tw:text-ellipsis tw:whitespace-nowrap">{candidate.fileName}</span>
                   <IconButton
                     size="sm"
                     tone="ghost"
@@ -139,11 +137,11 @@ export function ImportScoreDialog({
           ) : null}
           {sampleScores.length && onSelectSample ? (
             <section
-              className="tw:grid tw:gap-2 tw:border-t tw:border-solid tw:border-x-0 tw:border-b-0 tw:border-border tw:pt-3"
+              className="tw:grid tw:gap-2 tw:border-x-0 tw:border-t tw:border-b-0 tw:border-solid tw:border-border tw:pt-3"
               aria-labelledby="import-sample-title"
             >
               <div className="tw:grid tw:gap-1">
-                <h3 id="import-sample-title" className="tw:m-0 tw:text-body tw:font-semibold">
+                <h3 id="import-sample-title" className="tw:font-semibold tw:m-0 tw:text-body">
                   {t("importDialog.sampleTitle")}
                 </h3>
                 <p className="tw:m-0 tw:text-caption tw:text-muted">{t("importDialog.sampleDescription")}</p>
@@ -161,11 +159,11 @@ export function ImportScoreDialog({
                       if (source) setCandidates((current) => [...current, source]);
                     }}
                   >
-                    <span className="tw:grid tw:min-w-0 tw:gap-0.5">
+                    <span className="tw:gap-0.5 tw:grid tw:min-w-0">
                       <strong className="tw:overflow-hidden tw:text-ellipsis tw:whitespace-nowrap">
                         {sample.title}
                       </strong>
-                      <small className="tw:text-caption tw:font-normal tw:text-muted">
+                      <small className="tw:font-normal tw:text-caption tw:text-muted">
                         {t("importDialog.sampleAttribution", { attribution: sample.attribution })}
                       </small>
                     </span>
@@ -181,11 +179,7 @@ export function ImportScoreDialog({
             <DialogClose render={<Button tone="ghost" />}>{t("cancel")}</DialogClose>
             <DialogClose
               render={
-                <Button
-                  tone="primary"
-                  disabled={candidates.length === 0}
-                  onClick={() => void onImport(candidates)}
-                />
+                <Button tone="primary" disabled={candidates.length === 0} onClick={() => void onImport(candidates)} />
               }
             >
               {t("importDialog.submit", { count: candidates.length })}

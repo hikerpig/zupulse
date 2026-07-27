@@ -46,7 +46,7 @@ test("imports, reuses, exports, deletes, and re-adds the bundled sample as a nor
   await importBundledSample(page, "导入自己的曲谱");
   const firstId = page.url().split("/viewer/")[1];
   expect(firstId).toBeTruthy();
-  await expect(page.locator("#summary")).toContainText("First");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("First");
 
   await page.getByRole("navigation", { name: "主要页面" }).getByRole("link", { name: "曲谱库" }).click();
   await importBundledSample(page, "导入曲谱");
@@ -113,7 +113,7 @@ test("switches locale during playback without losing workspace state and keeps c
 
 test("keeps the Library to Viewer transition on a loading surface until the score renders", async ({ page }) => {
   await page.goto("/");
-  await importFixture(page, "导入第一份曲谱");
+  await importFixture(page, "导入自己的曲谱");
   await expect(page.locator(".score-viewer .at-surface").first()).toBeVisible();
   await page.getByRole("navigation", { name: "主要页面" }).getByRole("link", { name: "曲谱库" }).click();
 
@@ -302,7 +302,7 @@ test("reanalyses a multi-part Studio scope and allows a track to be added back",
 test("keeps K331 responsive and terminates a cancelled analysis", async ({ page }) => {
   test.setTimeout(60_000);
   await page.goto("/");
-  await importFixture(page, "导入第一份曲谱", reviewedFixture);
+  await importFixture(page, "导入自己的曲谱", reviewedFixture);
   await page.getByRole("link", { name: "和弦分析" }).click();
   const documentStatus = page.getByRole("status", { name: "分析文档状态" });
   await expect(documentStatus).toContainText("已保存", { timeout: 30_000 });

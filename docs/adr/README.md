@@ -26,6 +26,7 @@
 - `0064`：在单一 alphaTab 纵向布局上协调连续跟随、屏幕翻页、谱面点击与播放进度。
 - `0065`：共享 Viewer UI 使用受约束的 Tailwind utility layer；运行时 semantic token 与 Base UI
   所有权保持不变。
+- `0066`：延期 Desktop dropped-file capability，保持 Preload 与一次性 token trust boundary。
 
 ## Proposed
 

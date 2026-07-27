@@ -1,6 +1,7 @@
 import { DefinePlugin } from "@rspack/core";
 import { createTypeScriptRule, createWebRspackConfig } from "../../tools/builder/rspack.mjs";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -11,6 +12,9 @@ const buildDefinitions = {
   __APP_VERSION__: JSON.stringify(appVersion),
   __RENDERER_BUILD_HASH__: JSON.stringify(rendererBuildHash),
 };
+const bundledSampleBase64 = readFileSync(
+  fileURLToPath(new URL("../../product-assets/samples/first-light-practice.mxl", import.meta.url)),
+).toString("base64");
 
 const createConfig = (_env, argv) => {
   const mode = argv.mode ?? "production";
@@ -57,7 +61,12 @@ const createConfig = (_env, argv) => {
       path: join(shellRoot, "dist/renderer"),
     },
     htmlOptions: { template: "./index.html" },
-    plugins: [new DefinePlugin(buildDefinitions)],
+    plugins: [
+      new DefinePlugin({
+        ...buildDefinitions,
+        __BUNDLED_SAMPLE_BASE64__: JSON.stringify(bundledSampleBase64),
+      }),
+    ],
   });
 
   return [main, preload, { ...renderer, name: "renderer", target: "web" }];

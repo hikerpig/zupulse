@@ -33,6 +33,12 @@ async function chooseFixture(app: ElectronApplication, filePath = fixture): Prom
   }, filePath);
 }
 
+async function importSelectedFixture(window: import("@playwright/test").Page): Promise<void> {
+  await window.getByRole("button", { name: "Import score", exact: true }).click();
+  await window.getByRole("button", { name: "Choose files" }).click();
+  await window.getByRole("button", { name: "Import 1" }).click();
+}
+
 async function openPracticeSettings(window: import("@playwright/test").Page): Promise<void> {
   await window.getByRole("button", { name: "Practice settings" }).click();
   await expect(window.getByRole("complementary", { name: "Practice settings" })).toBeVisible();
@@ -120,7 +126,7 @@ test("opens a GP file and restores persisted practice state", async () => {
   try {
     await chooseFixture(app);
     let window = await app.firstWindow();
-    await window.getByRole("button", { name: "Import score" }).first().click();
+    await importSelectedFixture(window);
     await expect(window.getByRole("heading", { level: 1 })).toContainText("桌面验收谱");
     await expect(window.getByRole("button", { name: "Play" })).toBeEnabled();
 
@@ -162,13 +168,49 @@ test("opens MusicXML and MXL through the unified score entry", async () => {
     const window = await app.firstWindow();
     await expect(window.getByRole("button", { name: "Import score" })).toBeVisible();
     await chooseFixture(app, musicXmlFixture);
-    await window.getByRole("button", { name: "Import score" }).first().click();
+    await importSelectedFixture(window);
     await expect(window.getByRole("heading", { level: 1 })).toContainText("Single Voice");
 
     await window.getByRole("link", { name: "Library" }).click();
     await chooseFixture(app, mxlFixture);
-    await window.getByRole("button", { name: "Import score" }).first().click();
+    await importSelectedFixture(window);
     await expect(window.getByRole("heading", { level: 1 })).toContainText("Single Voice");
+  } finally {
+    await app.close();
+    await rm(userData, { recursive: true, force: true });
+  }
+});
+
+test("uses the bundled sample as a normal Desktop Library Score", async () => {
+  const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-sample-"));
+  const exportPath = join(userData, "first-light-practice.mxl");
+  const app = await launch(userData);
+  try {
+    const window = await app.firstWindow();
+    await importBundledSample(window, "Import your own scores");
+    const firstId = window.url().split("/viewer/")[1];
+    expect(firstId).toBeTruthy();
+    await expect(window.getByRole("heading", { level: 1 })).toContainText("First");
+
+    await window.getByRole("link", { name: "Library" }).click();
+    await importBundledSample(window, "Import score");
+    expect(window.url()).toContain(firstId);
+
+    await window.getByRole("link", { name: "Library" }).click();
+    await app.evaluate(({ dialog }, path) => {
+      dialog.showSaveDialog = async () => ({ canceled: false, filePath: path });
+    }, exportPath);
+    await window.getByRole("button", { name: "More actions for First Light Practice" }).click();
+    await window.getByRole("menuitem", { name: "Export First Light Practice", exact: true }).click();
+    await expect.poll(async () => (await readFile(exportPath)).byteLength > 0).toBe(true);
+
+    await window.getByRole("button", { name: "More actions for First Light Practice" }).click();
+    await window.getByRole("menuitem", { name: "Delete First Light Practice", exact: true }).click();
+    await window.getByRole("button", { name: "Delete permanently" }).click();
+    await importBundledSample(window, "Import your own scores");
+    const secondId = window.url().split("/viewer/")[1];
+    expect(secondId).toBeTruthy();
+    expect(secondId).not.toBe(firstId);
   } finally {
     await app.close();
     await rm(userData, { recursive: true, force: true });
@@ -182,7 +224,7 @@ test("opens a saved MusicXML Studio document", async () => {
   try {
     const window = await app.firstWindow();
     await chooseFixture(app, musicXmlFixture);
-    await window.getByRole("button", { name: "Import score" }).first().click();
+    await importSelectedFixture(window);
     await expect(window.getByRole("link", { name: "Harmony analysis" })).toBeVisible();
     await window.getByRole("link", { name: "Harmony analysis" }).click();
     await expect(window.getByRole("heading", { level: 1, name: "Harmony analysis" })).toBeVisible();
@@ -224,7 +266,7 @@ test("keeps K331 responsive and terminates a cancelled Desktop analysis", async 
   try {
     const window = await app.firstWindow();
     await chooseFixture(app, reviewedFixture);
-    await window.getByRole("button", { name: "Import score" }).first().click();
+    await importSelectedFixture(window);
     await window.getByRole("link", { name: "Harmony analysis" }).click();
     const documentStatus = window.getByRole("status", { name: "Analysis document status" });
     await expect(documentStatus).toContainText("Saved", { timeout: 30_000 });
@@ -272,13 +314,20 @@ test("keeps K331 responsive and terminates a cancelled Desktop analysis", async 
   }
 });
 
+async function importBundledSample(window: import("@playwright/test").Page, buttonName: string): Promise<void> {
+  await window.getByRole("button", { name: buttonName, exact: true }).click();
+  await window.getByRole("button", { name: "Use sample First Light Practice" }).click();
+  await window.getByRole("button", { name: "Import 1" }).click();
+  await expect.poll(() => window.url()).toContain("#/viewer/");
+}
+
 test("synchronizes a Studio selection and closes its runtime", async () => {
   const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-selection-studio-"));
   const app = await launch(userData);
   try {
     const window = await app.firstWindow();
     await chooseFixture(app, harmonySelectionFixture);
-    await window.getByRole("button", { name: "Import score" }).first().click();
+    await importSelectedFixture(window);
     await window.getByRole("link", { name: "Harmony analysis" }).click();
     await expect(window.getByRole("status", { name: "Analysis document status" })).toContainText("Saved", {
       timeout: 30_000,

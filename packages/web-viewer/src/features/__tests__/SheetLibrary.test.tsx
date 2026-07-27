@@ -29,7 +29,7 @@ describe("SheetLibrary import summary", () => {
           cancelled: 0,
           running: false,
         }}
-        onImport={async () => undefined}
+        {...emptyImportProps()}
         onOpen={() => undefined}
       />,
     );
@@ -61,7 +61,7 @@ describe("SheetLibrary import summary", () => {
           cancelled: 0,
           running: false,
         }}
-        onImport={async () => undefined}
+        {...emptyImportProps()}
         onOpen={() => undefined}
       />,
     );
@@ -93,7 +93,7 @@ describe("SheetLibrary import summary", () => {
         loading={false}
         importing
         importSummary={{ total: 4, results, cancelled: 0, running: true }}
-        onImport={async () => undefined}
+        {...emptyImportProps()}
         onOpen={() => undefined}
       />,
     );
@@ -117,7 +117,7 @@ describe("SheetLibrary import summary", () => {
         loading={false}
         importing={false}
         importSummary={{ total: 4, results, cancelled: 1, running: false }}
-        onImport={async () => undefined}
+        {...emptyImportProps()}
         onOpen={() => undefined}
       />,
     );
@@ -138,7 +138,7 @@ describe("SheetLibrary score actions", () => {
         application={application}
         scores={[libraryScore()]}
         loading={false}
-        onImport={async () => undefined}
+        {...emptyImportProps()}
         onOpen={onOpen}
       />,
     );
@@ -182,7 +182,7 @@ describe("SheetLibrary score actions", () => {
         application={libraryApplication()}
         scores={[fresh, practiced]}
         loading={false}
-        onImport={async () => undefined}
+        {...emptyImportProps()}
         onOpen={onOpen}
       />,
     );
@@ -250,7 +250,7 @@ describe("SheetLibrary no-results state", () => {
         application={libraryApplication()}
         scores={[libraryScore()]}
         loading={false}
-        onImport={async () => undefined}
+        {...emptyImportProps()}
         onOpen={() => undefined}
       />,
     );
@@ -273,7 +273,7 @@ describe("SheetLibrary no-results state", () => {
         application={libraryApplication()}
         scores={[libraryScore()]}
         loading={false}
-        onImport={async () => undefined}
+        {...emptyImportProps()}
         onOpen={() => undefined}
       />,
     );
@@ -286,6 +286,135 @@ describe("SheetLibrary no-results state", () => {
   });
 });
 
+describe("SheetLibrary import dialog", () => {
+  it("adds a bundled sample to the normal candidate list before submission", async () => {
+    const sample = {
+      id: "first-light-practice",
+      title: "First Light Practice",
+      fileName: "first-light-practice.mxl",
+      format: "musicxml",
+      attribution: "Zupulse",
+      license: "CC0-1.0",
+      sha256: "ec1a465e7a0796637122f8c74b0fe16c798c4cb8d82121eb850152d1d3c177ec",
+    } as const;
+    const source = { fileName: sample.fileName, readBytes: async () => new Uint8Array([1]) };
+    const onImportSources = vi.fn(async () => undefined);
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[]}
+        loading={false}
+        onSelectImportFiles={async () => []}
+        sampleScores={[sample]}
+        onSelectSample={() => source}
+        onImportSources={onImportSources}
+        onOpen={() => undefined}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "导入自己的曲谱" }));
+    await userEvent.click(screen.getByRole("button", { name: "使用样例 First Light Practice" }));
+    expect(screen.getByText("first-light-practice.mxl")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "导入 1 份" }));
+    expect(onImportSources).toHaveBeenCalledWith([source]);
+  });
+
+  it("adds Browser-dropped files to the same candidate list", async () => {
+    const droppedFile = new File([new Uint8Array([7, 8, 9])], "dropped.mxl");
+    const onImportSources = vi.fn(async () => undefined);
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[]}
+        loading={false}
+        onSelectImportFiles={async () => []}
+        onDropImportFiles={(files) =>
+          files.map((file) => ({
+            fileName: file.name,
+            readBytes: async () => new Uint8Array([7, 8, 9]),
+          }))
+        }
+        onImportSources={onImportSources}
+        onOpen={() => undefined}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "导入自己的曲谱" }));
+    const dropZone = screen.getByRole("button", { name: "选择文件或拖放文件" });
+    fireEvent.dragEnter(dropZone, { dataTransfer: { files: [droppedFile] } });
+    expect(screen.getByText("释放后添加文件")).toBeTruthy();
+    fireEvent.drop(dropZone, { dataTransfer: { files: [droppedFile] } });
+
+    expect(screen.getByText("dropped.mxl")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "导入 1 份" }));
+    const submitted = onImportSources.mock.calls[0]?.[0]?.[0];
+    expect(submitted?.fileName).toBe("dropped.mxl");
+    await expect(submitted?.readBytes()).resolves.toEqual(new Uint8Array([7, 8, 9]));
+  });
+
+  it("reviews selected files before submitting the remaining candidates", async () => {
+    const user = userEvent.setup();
+    const first = { fileName: "first.gp5", readBytes: async () => new Uint8Array([1]) };
+    const second = { fileName: "second.mxl", readBytes: async () => new Uint8Array([2]) };
+    const onImportSources = vi.fn(async () => undefined);
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[]}
+        loading={false}
+        onSelectImportFiles={async () => [first, second]}
+        onImportSources={onImportSources}
+        onOpen={() => undefined}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "导入自己的曲谱" }));
+    expect(screen.getByRole("dialog", { name: "导入曲谱" })).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "选择文件" }));
+    expect(screen.getByText("first.gp5")).toBeTruthy();
+    expect(screen.getByText("second.mxl")).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "移除 first.gp5" }));
+    await user.click(screen.getByRole("button", { name: "导入 1 份" }));
+
+    expect(onImportSources).toHaveBeenCalledWith([second]);
+    expect(screen.getByRole("dialog", { name: "导入曲谱" }).getAttribute("data-closed")).not.toBeNull();
+  });
+
+  it("cancels without submitting and restores focus to the trigger", async () => {
+    const user = userEvent.setup();
+    const candidate = { fileName: "cancelled.gp", readBytes: async () => new Uint8Array([1]) };
+    const onImportSources = vi.fn(async () => undefined);
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[]}
+        loading={false}
+        onSelectImportFiles={async () => [candidate]}
+        onImportSources={onImportSources}
+        onOpen={() => undefined}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "导入自己的曲谱" });
+    await user.click(trigger);
+    await user.click(screen.getByRole("button", { name: "选择文件" }));
+    expect(screen.getByText("cancelled.gp")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "取消" }));
+
+    expect(onImportSources).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(trigger);
+
+    await user.click(trigger);
+    expect(screen.queryByText("cancelled.gp")).toBeNull();
+  });
+});
+
 function libraryApplication(): ViewerApplication {
   return {
     setFavorite: vi.fn(async () => undefined),
@@ -293,6 +422,13 @@ function libraryApplication(): ViewerApplication {
     exportLibraryScore: vi.fn(async () => undefined),
     deleteLibraryScore: vi.fn(async () => undefined),
   } as unknown as ViewerApplication;
+}
+
+function emptyImportProps() {
+  return {
+    onSelectImportFiles: async () => [],
+    onImportSources: async () => undefined,
+  };
 }
 
 function libraryScore(): LibraryScore {

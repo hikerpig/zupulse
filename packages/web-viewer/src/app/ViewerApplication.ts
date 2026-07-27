@@ -44,6 +44,7 @@ import {
 } from "../harmony-analysis-worker-client";
 import { exportHarmonyStudioDocument } from "../harmonyStudioExport";
 import type { StudioScoreRuntime, StudioScoreRuntimeSnapshot } from "../studio-score-runtime";
+import type { BundledSampleScore, BundledSampleSource } from "../sample-scores";
 import { ApplicationFailure, applicationIssue, type ApplicationIssue } from "./applicationIssue";
 import {
   createHarmonyRangeViewItems,
@@ -136,6 +137,8 @@ export class ViewerApplication implements ViewerAppHandle {
       repository: SheetLibraryRepository;
       gateway: ScoreFileGateway;
       adapters: readonly ScoreFormatAdapter[];
+      createDroppedImportSources?(files: readonly File[]): readonly ScoreImportSource[];
+      sampleSources?: readonly BundledSampleSource[];
     },
     private readonly openStudioRuntime?: (file: ViewerFile) => Promise<StudioScoreRuntime>,
     private readonly harmonyAnalysisRunner: HarmonyAnalysisRunner = createDefaultHarmonyAnalysisRunner(),
@@ -618,24 +621,41 @@ export class ViewerApplication implements ViewerAppHandle {
     if (!this.library) return this.scheduleOpen(false);
     let sources: readonly ScoreImportSource[];
     try {
-      sources = await this.library.gateway.selectForImport({ multiple });
-    } catch (error) {
-      this.reportDiagnostic(error, "library.import.select");
-      this.setSnapshot({
-        ...this.snapshot,
-        library: {
-          scores: this.snapshot.library?.scores ?? [],
-          loading: false,
-          error: applicationIssue("library-unavailable"),
-        },
-      });
+      sources = await this.selectImportSources(multiple);
+    } catch {
       return;
     }
     if (!sources.length) return;
-    await this.importScoreSources(sources, multiple);
+    await this.importScoreSources(sources);
   }
 
-  async importScoreSources(sources: readonly ScoreImportSource[], multiple: boolean): Promise<void> {
+  async selectImportSources(multiple = true): Promise<readonly ScoreImportSource[]> {
+    if (!this.library) return [];
+    try {
+      return await this.library.gateway.selectForImport({ multiple });
+    } catch (error) {
+      this.reportDiagnostic(error, "library.import.select");
+      throw error;
+    }
+  }
+
+  supportsDroppedFileImport(): boolean {
+    return this.library?.createDroppedImportSources !== undefined;
+  }
+
+  createDroppedImportSources(files: readonly File[]): readonly ScoreImportSource[] {
+    return this.library?.createDroppedImportSources?.(files) ?? [];
+  }
+
+  getBundledSampleScores(): readonly BundledSampleScore[] {
+    return this.library?.sampleSources?.map(({ sample }) => sample) ?? [];
+  }
+
+  createBundledSampleSource(id: BundledSampleScore["id"]): ScoreImportSource | undefined {
+    return this.library?.sampleSources?.find(({ sample }) => sample.id === id)?.createSource();
+  }
+
+  async importScoreSources(sources: readonly ScoreImportSource[]): Promise<void> {
     if (!this.library || !sources.length || this.importAbortController) return;
     const controller = new AbortController();
     this.importAbortController = controller;
@@ -664,21 +684,8 @@ export class ViewerApplication implements ViewerAppHandle {
     await this.refreshLibrary();
     this.setImportSummary(sources.length, results, controller.signal.aborted, false);
     const successful = results.some((item) => item.status === "created" || item.status === "existing");
-    if (!successful) {
-      const failure = results.find((item) => item.status === "failed");
-      if (multiple || controller.signal.aborted) return;
-      this.reportDiagnostic(failure?.error, "library.import");
-      this.setSnapshot({
-        ...this.snapshot,
-        library: {
-          scores: this.snapshot.library?.scores ?? [],
-          loading: false,
-          error: applicationIssue("library-unavailable"),
-        },
-      });
-      return;
-    }
-    if (!multiple) {
+    if (!successful) return;
+    if (sources.length === 1) {
       const result = results.find((item) => item.status === "created" || item.status === "existing");
       if (result && result.status !== "failed")
         for (const listener of this.navigationListeners) listener(result.score.id);

@@ -30,7 +30,7 @@ export function attachExternalOpen(options: {
     chain = chain.then(async () => {
       if (detached) return;
       const source = createExternalOpenSource(detail, options.fetchBytes);
-      await options.application.importScoreSources?.([source], false);
+      await options.application.importScoreSources?.([source]);
     });
   };
   options.target.addEventListener(externalOpenEventName, listener);

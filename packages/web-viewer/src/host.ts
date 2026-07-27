@@ -48,6 +48,6 @@ export type ViewerSessionHandle = {
 };
 export type ViewerAppHandle = ViewerSessionHandle & {
   openScore(): Promise<void>;
-  importScoreSources?(sources: readonly ScoreImportSource[], multiple: boolean): Promise<void>;
+  importScoreSources?(sources: readonly ScoreImportSource[]): Promise<void>;
 };
 import type { PlaybackCommand, PlaybackState, PlaybackTimelineMap, ScoreImportSource } from "@zupulse/web-core";

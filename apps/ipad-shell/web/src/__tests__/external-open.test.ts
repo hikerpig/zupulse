@@ -31,6 +31,7 @@ describe("external open", () => {
     expect(readyHandler.postMessage).toHaveBeenCalledOnce();
     expect(calls).toEqual(["first.gp", "second.musicxml"]);
     expect(fetchBytes.mock.calls.map(([url]) => url)).toEqual(["/__data/token-1", "/__data/token-2"]);
+    expect(application.importScoreSources.mock.calls.every((call) => call.length === 1)).toBe(true);
 
     detach();
     dispatch("event-3", "ignored.gp", "token-3", 1);

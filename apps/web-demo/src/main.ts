@@ -1,8 +1,8 @@
 import "@zupulse/web-viewer/styles.css";
 import { IndexedDbSheetLibraryRepository } from "@zupulse/web-storage";
-import { mountViewerApp } from "@zupulse/web-viewer";
+import { bundledSampleScores, createSampleImportSource, mountViewerApp } from "@zupulse/web-viewer";
 import { createBrowserHost, createBrowserLocaleHost } from "./browserHost";
-import { BrowserScoreFileGateway } from "./library/BrowserScoreFileGateway";
+import { BrowserScoreFileGateway, createBrowserImportSources } from "./library/BrowserScoreFileGateway";
 import { BrowserLibraryPlaybackPersistence } from "./library/BrowserLibraryPlaybackPersistence";
 
 export const DEMO_APP_NAME = "Zupulse";
@@ -28,6 +28,16 @@ if (typeof document !== "undefined") {
     library: {
       repository,
       gateway: new BrowserScoreFileGateway(document),
+      createDroppedImportSources: createBrowserImportSources,
+      sampleSources: bundledSampleScores.map((sample) => ({
+        sample,
+        createSource: () =>
+          createSampleImportSource(sample, async () => {
+            const response = await fetch(`/samples/${sample.fileName}`);
+            if (!response.ok) throw new Error("SAMPLE_ASSET_UNAVAILABLE");
+            return new Uint8Array(await response.arrayBuffer());
+          }),
+      })),
       adapters: [
         {
           format: "gp",

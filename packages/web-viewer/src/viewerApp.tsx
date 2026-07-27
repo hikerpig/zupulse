@@ -361,18 +361,64 @@ export function attachScoreZoomCommit(
   scrollElement: HTMLElement,
   schedule: (callback: () => void) => void = (callback) => requestAnimationFrame(callback),
 ): () => void {
+  let detachPendingRestore: (() => void) | undefined;
   const commit = (event: Event) => {
     const zoom = (event as CustomEvent<ScoreZoomCommitDetail>).detail?.zoom;
     if (!Number.isFinite(zoom) || !api.settings?.display) return;
+    detachPendingRestore?.();
+    detachPendingRestore = undefined;
+    const scoreAnchor = captureScoreAnchor(api, scrollElement);
     const scrollRange = Math.max(0, scrollElement.scrollHeight - scrollElement.clientHeight);
     const scrollRatio = scrollRange === 0 ? 0 : scrollElement.scrollTop / scrollRange;
     api.settings.display.scale = zoom;
     api.updateSettings?.();
-    schedule(() => {
+    let restored = false;
+    const restore = () => {
+      if (restored) return;
+      restored = true;
+      detachPendingRestore?.();
+      detachPendingRestore = undefined;
       const nextRange = Math.max(0, scrollElement.scrollHeight - scrollElement.clientHeight);
-      scrollElement.scrollTop = scrollRatio * nextRange;
-    });
+      const anchorSystemIndex = scoreAnchor?.systemIndex;
+      const nextSystem =
+        anchorSystemIndex === undefined
+          ? undefined
+          : readAlphaTabStaffSystems(api)?.find((system) => system.systemIndex === anchorSystemIndex);
+      const nextScrollTop =
+        nextSystem && scoreAnchor
+          ? nextSystem.y + scoreAnchor.centerOffset - scrollElement.clientHeight / 2
+          : undefined;
+      scrollElement.scrollTop = Math.min(nextRange, Math.max(0, nextScrollTop ?? scrollRatio * nextRange));
+    };
+    if (api.postRenderFinished) {
+      detachPendingRestore = api.postRenderFinished.on(restore) ?? (() => {});
+    } else {
+      schedule(restore);
+    }
   };
   ownerDocument.addEventListener(SCORE_ZOOM_COMMIT_EVENT, commit);
-  return () => ownerDocument.removeEventListener(SCORE_ZOOM_COMMIT_EVENT, commit);
+  return () => {
+    detachPendingRestore?.();
+    detachPendingRestore = undefined;
+    ownerDocument.removeEventListener(SCORE_ZOOM_COMMIT_EVENT, commit);
+  };
+}
+
+function captureScoreAnchor(
+  api: AlphaTabApiLike,
+  scrollElement: HTMLElement,
+): { systemIndex: number; centerOffset: number } | undefined {
+  const systems = readAlphaTabStaffSystems(api);
+  if (!systems?.length) return undefined;
+  const viewportCenter = scrollElement.scrollTop + scrollElement.clientHeight / 2;
+  const system = systems.reduce((closest, candidate) =>
+    Math.abs(candidate.y + candidate.height / 2 - viewportCenter) <
+    Math.abs(closest.y + closest.height / 2 - viewportCenter)
+      ? candidate
+      : closest,
+  );
+  return {
+    systemIndex: system.systemIndex,
+    centerOffset: viewportCenter - system.y,
+  };
 }

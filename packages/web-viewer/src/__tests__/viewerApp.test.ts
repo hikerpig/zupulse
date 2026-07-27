@@ -452,7 +452,7 @@ describe("createDefaultOpenSession cleanup", () => {
     expect(detached).toBe(true);
   });
 
-  it("commits alphaTab scale once and restores the written scroll anchor after layout", () => {
+  it("commits alphaTab scale once and falls back to the relative scroll position without score bounds", () => {
     const scrollElement = document.createElement("div");
     Object.defineProperties(scrollElement, {
       clientHeight: { configurable: true, value: 400 },
@@ -485,6 +485,48 @@ describe("createDefaultOpenSession cleanup", () => {
     detach();
     document.dispatchEvent(new CustomEvent(SCORE_ZOOM_COMMIT_EVENT, { detail: { zoom: 1.5 } }));
     expect(updateSettings).toHaveBeenCalledOnce();
+  });
+
+  it("restores the centered staff system after alphaTab finishes the zoom layout", () => {
+    const scrollElement = document.createElement("div");
+    Object.defineProperties(scrollElement, {
+      clientHeight: { configurable: true, value: 400 },
+      scrollHeight: { configurable: true, value: 1000 },
+    });
+    scrollElement.scrollTop = 100;
+    const renderHandlers = new Set<() => void>();
+    const api = {
+      settings: { display: { scale: 1 } },
+      updateSettings: vi.fn(),
+      postRenderFinished: {
+        on(handler: () => void) {
+          renderHandlers.add(handler);
+          return () => renderHandlers.delete(handler);
+        },
+      },
+      boundsLookup: {
+        staffSystems: [
+          {
+            index: 2,
+            bars: [{ index: 4 }],
+            realBounds: { x: 0, y: 200, w: 800, h: 100 },
+          },
+        ],
+      },
+    };
+    const detach = attachScoreZoomCommit(document, api, scrollElement);
+
+    document.dispatchEvent(new CustomEvent(SCORE_ZOOM_COMMIT_EVENT, { detail: { zoom: 1.4 } }));
+    expect(scrollElement.scrollTop).toBe(100);
+    expect(renderHandlers.size).toBe(1);
+
+    Object.defineProperty(scrollElement, "scrollHeight", { configurable: true, value: 1400 });
+    api.boundsLookup.staffSystems[0]!.realBounds.y = 500;
+    for (const handler of renderHandlers) handler();
+
+    expect(scrollElement.scrollTop).toBe(400);
+    expect(renderHandlers.size).toBe(0);
+    detach();
   });
 
   it("clears the empty state before alphaTab establishes its cursor coordinate system", async () => {

@@ -23,19 +23,54 @@ export function applyMusicXmlHarmonyPlan(
 
 export function planAnnotatedMusicXmlExport(
   entries: readonly EffectiveHarmonyEntry[],
-  target: { partId: string },
+  target: {
+    partId: string;
+    ticksPerQuarter?: number;
+    divisionsByMeasure?: readonly number[];
+  },
 ): MusicXmlHarmonyInsertion[] {
   return entries.flatMap((entry) => {
     if (entry.origin === "source" || entry.type === "unresolved") return [];
-    if (entry.range.start.offsetTicks !== 0) throw new Error("unrepresentable-harmony-position");
+    const offset = musicXmlOffset(entry.range.start.measureIndex, entry.range.start.offsetTicks, target);
+    const harmonyXml =
+      entry.type === "no-chord" ? "<harmony><kind>none</kind></harmony>" : chordToMusicXml(entry.chord);
     return [
       {
         partId: target.partId,
         measureIndex: entry.range.start.measureIndex,
-        harmonyXml: entry.type === "no-chord" ? "<harmony><kind>none</kind></harmony>" : chordToMusicXml(entry.chord),
+        harmonyXml:
+          offset === 0 ? harmonyXml : harmonyXml.replace("</harmony>", `<offset>${offset}</offset></harmony>`),
       },
     ];
   });
+}
+
+function musicXmlOffset(
+  measureIndex: number,
+  offsetTicks: number,
+  target: {
+    ticksPerQuarter?: number;
+    divisionsByMeasure?: readonly number[];
+  },
+): number {
+  if (offsetTicks === 0) return 0;
+  const ticksPerQuarter = target.ticksPerQuarter;
+  const divisions = target.divisionsByMeasure?.[measureIndex];
+  if (
+    ticksPerQuarter === undefined ||
+    divisions === undefined ||
+    !Number.isSafeInteger(ticksPerQuarter) ||
+    ticksPerQuarter <= 0 ||
+    !Number.isSafeInteger(divisions) ||
+    divisions <= 0
+  ) {
+    throw new Error("unrepresentable-harmony-position");
+  }
+  const numerator = offsetTicks * divisions;
+  if (!Number.isSafeInteger(numerator)) {
+    throw new Error("unrepresentable-harmony-position");
+  }
+  return numerator / ticksPerQuarter;
 }
 
 export function chordToMusicXml(input: unknown): string {

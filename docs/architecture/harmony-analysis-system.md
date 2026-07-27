@@ -32,6 +32,11 @@ Sidecar、Local Playback Resume 或练习摘要。
 divisions 通过安全 LCM 精确投影；不可整除或超过安全整数的位置明确失败。Range 左闭右开，不绑定
 playback occurrence。
 
+导出时，downbeat harmony 仍直接写在 measure 内容起点；小节内 harmony 使用目标 part 当前
+measure 的有效 `divisions`，把 alphaTab 的 960 ticks-per-quarter 换算成 MusicXML `<offset>`。
+MusicXML `offset` 是 decimal divisions，因此装饰音产生的 sub-division 边界保留为小数，不会阻断
+整份 MusicXML/MXL 下载。MXL 只替换 root score entry，其他容器 entry 保持不变。
+
 默认 scope 包含有音高的非打击乐轨道。投影保留 sounding pitch、spelling、voice、tie/grace 与来源
 位置。
 

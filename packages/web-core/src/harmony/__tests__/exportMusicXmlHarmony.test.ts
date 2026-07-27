@@ -19,7 +19,7 @@ describe("annotated MusicXML export", () => {
     expect(new TextDecoder().decode(score)).not.toContain("<harmony>");
   });
 
-  it("plans only non-source resolved entries and rejects unsupported positions", () => {
+  it("plans only non-source resolved entries", () => {
     const range = { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 1, offsetTicks: 0 } };
     const entries = [
       {
@@ -41,17 +41,36 @@ describe("annotated MusicXML export", () => {
       expect.stringContaining("<kind>major</kind>"),
       "<harmony><kind>none</kind></harmony>",
     ]);
-    expect(() =>
-      planAnnotatedMusicXmlExport(
-        [
-          {
-            ...entries[0]!,
-            range: { start: { measureIndex: 0, offsetTicks: 1 }, end: { measureIndex: 1, offsetTicks: 0 } },
-          },
-        ],
-        { partId: "P1" },
-      ),
-    ).toThrow("unrepresentable-harmony-position");
+  });
+
+  it("writes measure-relative offsets using the source MusicXML divisions", () => {
+    const range = { start: { measureIndex: 0, offsetTicks: 960 }, end: { measureIndex: 1, offsetTicks: 0 } };
+    const plan = planAnnotatedMusicXmlExport(
+      [
+        {
+          type: "chord",
+          range,
+          chord: { root: { step: "C", alter: 0 }, kind: "major", degrees: [] },
+          origin: "analysis",
+        },
+      ],
+      { partId: "P1", ticksPerQuarter: 960, divisionsByMeasure: [8] },
+    );
+    expect(plan[0]?.harmonyXml).toContain("<offset>8</offset>");
+  });
+
+  it("uses decimal divisions for sub-division written positions", () => {
+    const plan = planAnnotatedMusicXmlExport(
+      [
+        {
+          type: "no-chord",
+          range: { start: { measureIndex: 0, offsetTicks: 1 }, end: { measureIndex: 1, offsetTicks: 0 } },
+          origin: "analysis",
+        },
+      ],
+      { partId: "P1", ticksPerQuarter: 960, divisionsByMeasure: [8] },
+    );
+    expect(plan[0]?.harmonyXml).toContain("<offset>0.008333333333333333</offset>");
   });
 
   it.each(["timewise.musicxml", "simple.mxl"])("uses the shared writer for %s", async (fileName) => {

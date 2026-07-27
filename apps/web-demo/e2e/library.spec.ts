@@ -220,6 +220,13 @@ test("keeps K331 responsive and terminates a cancelled analysis", async ({ page 
   await expect(ranges.locator('[data-type="no-chord"]')).toHaveCount(2);
   await expect(ranges.locator('button[data-origin="source"]')).toHaveCount(2);
 
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "导出标注曲谱" }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("K331-3_reviewed-chords.mxl");
+  expect(await download.failure()).toBeNull();
+  await expect(page.getByText("已导出标注曲谱")).toBeVisible();
+
   await page.getByRole("button", { name: "重新分析" }).click();
   const cancel = page.getByRole("button", { name: "取消分析" });
   await expect(cancel).toBeVisible({ timeout: 1_000 });

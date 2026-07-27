@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ReactElement } from "react";
 import type { PlaybackState } from "@zupulse/web-core";
-import { AppStoreProvider } from "../../app/appStore";
+import { AppStoreProvider, createAppStore } from "../../app/appStore";
 import { ScoreViewer } from "../ScoreViewer";
 
 afterEach(() => {
@@ -44,6 +44,48 @@ describe("ScoreViewer", () => {
     expect(commits).toHaveBeenCalledTimes(1);
     expect((commits.mock.calls[0]?.[0] as CustomEvent).detail).toEqual({ zoom: 1.1 });
     document.removeEventListener("zupulse:score-zoom-commit", commits);
+  });
+
+  it("announces the current zoom level to assistive technology", async () => {
+    renderScoreViewer(<ScoreViewer />);
+
+    expect(screen.getByRole("status").textContent).toBe("谱面缩放 100%");
+    await userEvent.setup().click(screen.getByRole("button", { name: "放大谱面" }));
+    expect(screen.getByRole("status").textContent).toBe("谱面缩放 110%");
+  });
+
+  it("resets zoom from the percentage button and keyboard shortcut", async () => {
+    const commits = vi.fn();
+    document.addEventListener("zupulse:score-zoom-commit", commits);
+    renderScoreViewer(<ScoreViewer />, 1.2);
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "重置谱面缩放" }));
+    expect(screen.getByText("100%")).toBeTruthy();
+    expect((commits.mock.calls[0]?.[0] as CustomEvent).detail).toEqual({ zoom: 1 });
+
+    fireEvent.keyDown(window, { key: "+", ctrlKey: true });
+    expect(screen.getByText("110%")).toBeTruthy();
+    fireEvent.keyDown(window, { key: "0", ctrlKey: true });
+    expect(screen.getByText("100%")).toBeTruthy();
+    expect(commits).toHaveBeenCalledTimes(3);
+    document.removeEventListener("zupulse:score-zoom-commit", commits);
+  });
+
+  it("switches between comfortable and full score width", async () => {
+    const relayouts = vi.fn();
+    document.addEventListener("zupulse:score-layout-commit", relayouts);
+    renderScoreViewer(<ScoreViewer />);
+
+    const expand = screen.getByRole("button", { name: "切换为全宽" });
+    expect(expand.getAttribute("aria-pressed")).toBe("false");
+    await userEvent.setup().click(expand);
+
+    const restore = screen.getByRole("button", { name: "恢复舒适宽度" });
+    expect(restore.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("region", { name: "乐谱工作区" }).getAttribute("data-score-width")).toBe("full");
+    expect(relayouts).toHaveBeenCalledOnce();
+    expect((relayouts.mock.calls[0]?.[0] as CustomEvent).detail).toEqual({ reason: "width" });
+    document.removeEventListener("zupulse:score-layout-commit", relayouts);
   });
 
   it("offers the same zoom actions from the compact Popover and restores focus on Escape", async () => {
@@ -226,8 +268,9 @@ describe("ScoreViewer", () => {
   });
 });
 
-function renderScoreViewer(viewer: ReactElement) {
-  return render(<AppStoreProvider>{viewer}</AppStoreProvider>);
+function renderScoreViewer(viewer: ReactElement, scoreZoom = 1) {
+  const store = createAppStore("dark", { preference: "zh-CN", effectiveLocale: "zh-CN" }, scoreZoom);
+  return render(<AppStoreProvider store={store}>{viewer}</AppStoreProvider>);
 }
 
 function touch(clientX: number, clientY: number) {

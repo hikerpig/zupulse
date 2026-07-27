@@ -23,7 +23,12 @@ import {
 import { ALPHATAB_ASSETS } from "./playbackAssets";
 import { type DemoState } from "./gpDemoPresenter";
 import { presentScoreFile } from "./importPresenter";
-import { SCORE_ZOOM_COMMIT_EVENT, type ScoreZoomCommitDetail } from "./scoreZoom";
+import {
+  SCORE_LAYOUT_COMMIT_EVENT,
+  SCORE_ZOOM_COMMIT_EVENT,
+  type ScoreLayoutCommitDetail,
+  type ScoreZoomCommitDetail,
+} from "./scoreZoom";
 import { ScoreNavigationCoordinator } from "./score-navigation/score-navigation-coordinator";
 import { readAlphaTabMeasureBounds, readAlphaTabStaffSystems } from "./score-navigation/alpha-tab-navigation";
 import { attachScoreNavigationInputs } from "./score-navigation/score-navigation-inputs";
@@ -337,19 +342,19 @@ export function createViewerAlphaTabSettings(scrollElement: HTMLElement, scoreZo
       scale: scoreZoom,
       resources: {
         secondaryGlyphColor: "#000000",
-        titleFont: `32px ${chineseSerifFonts}`,
-        subTitleFont: `20px ${chineseSerifFonts}`,
-        wordsFont: `15px ${chineseSansFonts}`,
-        tablatureFont: `13px ${chineseSansFonts}`,
-        graceFont: `11px ${chineseSansFonts}`,
-        barNumberFont: `11px ${chineseSansFonts}`,
-        copyrightFont: `bold 12px ${chineseSansFonts}`,
-        markerFont: `bold 14px ${chineseSerifFonts}`,
-        directionsFont: `14px ${chineseSerifFonts}`,
-        timerFont: `12px ${chineseSerifFonts}`,
-        fretboardNumberFont: `11px ${chineseSansFonts}`,
-        numberedNotationFont: `14px ${chineseSansFonts}`,
-        numberedNotationGraceFont: `16px ${chineseSansFonts}`,
+        titleFont: `28px ${chineseSerifFonts}`,
+        subTitleFont: `18px ${chineseSerifFonts}`,
+        wordsFont: `14px ${chineseSansFonts}`,
+        tablatureFont: `12px ${chineseSansFonts}`,
+        graceFont: `10px ${chineseSansFonts}`,
+        barNumberFont: `10px ${chineseSansFonts}`,
+        copyrightFont: `bold 11px ${chineseSansFonts}`,
+        markerFont: `bold 13px ${chineseSerifFonts}`,
+        directionsFont: `13px ${chineseSerifFonts}`,
+        timerFont: `11px ${chineseSerifFonts}`,
+        fretboardNumberFont: `10px ${chineseSansFonts}`,
+        numberedNotationFont: `13px ${chineseSansFonts}`,
+        numberedNotationGraceFont: `14px ${chineseSansFonts}`,
       },
     },
   };
@@ -361,18 +366,106 @@ export function attachScoreZoomCommit(
   scrollElement: HTMLElement,
   schedule: (callback: () => void) => void = (callback) => requestAnimationFrame(callback),
 ): () => void {
-  const commit = (event: Event) => {
-    const zoom = (event as CustomEvent<ScoreZoomCommitDetail>).detail?.zoom;
-    if (!Number.isFinite(zoom) || !api.settings?.display) return;
-    const scrollRange = Math.max(0, scrollElement.scrollHeight - scrollElement.clientHeight);
-    const scrollRatio = scrollRange === 0 ? 0 : scrollElement.scrollTop / scrollRange;
+  type PendingRestore = {
+    scoreAnchor: ReturnType<typeof captureScoreAnchor>;
+    scrollRatio: number;
+    requestedZoom?: number;
+    renderingZoom?: number;
+  };
+
+  let pendingRestore: PendingRestore | undefined;
+  let detachPendingRestore: (() => void) | undefined;
+
+  const clearPendingRestore = () => {
+    detachPendingRestore?.();
+    detachPendingRestore = undefined;
+    pendingRestore = undefined;
+  };
+  const restore = () => {
+    const pending = pendingRestore;
+    if (!pending) return;
+    if (pending.requestedZoom !== undefined && pending.renderingZoom !== pending.requestedZoom) {
+      startZoomRender(pending.requestedZoom);
+      return;
+    }
+    const nextRange = Math.max(0, scrollElement.scrollHeight - scrollElement.clientHeight);
+    const anchorSystemIndex = pending.scoreAnchor?.systemIndex;
+    const nextSystem =
+      anchorSystemIndex === undefined
+        ? undefined
+        : readAlphaTabStaffSystems(api)?.find((system) => system.systemIndex === anchorSystemIndex);
+    const nextScrollTop =
+      nextSystem && pending.scoreAnchor
+        ? nextSystem.y + pending.scoreAnchor.centerOffset - scrollElement.clientHeight / 2
+        : undefined;
+    scrollElement.scrollTop = Math.min(nextRange, Math.max(0, nextScrollTop ?? pending.scrollRatio * nextRange));
+    clearPendingRestore();
+  };
+  const listenForRender = () => {
+    if (detachPendingRestore) return;
+    if (api.postRenderFinished) {
+      detachPendingRestore = api.postRenderFinished.on(restore) ?? (() => {});
+    } else {
+      schedule(restore);
+    }
+  };
+  const startZoomRender = (zoom: number) => {
+    const pending = pendingRestore;
+    if (!pending || !api.settings?.display) return;
+    pending.renderingZoom = zoom;
     api.settings.display.scale = zoom;
     api.updateSettings?.();
-    schedule(() => {
-      const nextRange = Math.max(0, scrollElement.scrollHeight - scrollElement.clientHeight);
-      scrollElement.scrollTop = scrollRatio * nextRange;
-    });
+    api.render?.();
+    listenForRender();
   };
-  ownerDocument.addEventListener(SCORE_ZOOM_COMMIT_EVENT, commit);
-  return () => ownerDocument.removeEventListener(SCORE_ZOOM_COMMIT_EVENT, commit);
+  const capturePendingRestore = (): PendingRestore => {
+    const scoreAnchor = captureScoreAnchor(api, scrollElement);
+    const scrollRange = Math.max(0, scrollElement.scrollHeight - scrollElement.clientHeight);
+    const scrollRatio = scrollRange === 0 ? 0 : scrollElement.scrollTop / scrollRange;
+    return { scoreAnchor, scrollRatio };
+  };
+  const commitZoom = (event: Event) => {
+    const zoom = (event as CustomEvent<ScoreZoomCommitDetail>).detail?.zoom;
+    if (!Number.isFinite(zoom) || !api.settings?.display) return;
+    if (!pendingRestore) {
+      pendingRestore = capturePendingRestore();
+    }
+    pendingRestore.requestedZoom = zoom;
+    if (pendingRestore.renderingZoom === undefined) {
+      startZoomRender(zoom);
+    }
+  };
+  const commitLayout = (event: Event) => {
+    const reason = (event as CustomEvent<ScoreLayoutCommitDetail>).detail?.reason;
+    if (reason !== "width") return;
+    clearPendingRestore();
+    pendingRestore = capturePendingRestore();
+    listenForRender();
+  };
+  ownerDocument.addEventListener(SCORE_ZOOM_COMMIT_EVENT, commitZoom);
+  ownerDocument.addEventListener(SCORE_LAYOUT_COMMIT_EVENT, commitLayout);
+  return () => {
+    clearPendingRestore();
+    ownerDocument.removeEventListener(SCORE_ZOOM_COMMIT_EVENT, commitZoom);
+    ownerDocument.removeEventListener(SCORE_LAYOUT_COMMIT_EVENT, commitLayout);
+  };
+}
+
+function captureScoreAnchor(
+  api: AlphaTabApiLike,
+  scrollElement: HTMLElement,
+): { systemIndex: number; centerOffset: number } | undefined {
+  const systems = readAlphaTabStaffSystems(api);
+  if (!systems?.length) return undefined;
+  const viewportCenter = scrollElement.scrollTop + scrollElement.clientHeight / 2;
+  const system = systems.reduce((closest, candidate) =>
+    Math.abs(candidate.y + candidate.height / 2 - viewportCenter) <
+    Math.abs(closest.y + closest.height / 2 - viewportCenter)
+      ? candidate
+      : closest,
+  );
+  return {
+    systemIndex: system.systemIndex,
+    centerOffset: viewportCenter - system.y,
+  };
 }

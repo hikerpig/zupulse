@@ -20,7 +20,7 @@ import {
 } from "@zupulse/web-core";
 import type { ViewerFile } from "./host";
 import { presentScoreFile } from "./importPresenter";
-import { createViewerAlphaTabSettings } from "./viewerApp";
+import { attachScoreZoomCommit, createViewerAlphaTabSettings } from "./viewerApp";
 
 export type StudioScoreRuntimeSnapshot = {
   status: "ready" | "error";
@@ -65,7 +65,9 @@ export async function createStudioScoreRuntime(
   const scrollElement = host.parentElement;
   if (!scrollElement) throw new Error("Studio DOM is missing the score scroll container");
   host.replaceChildren();
-  const api = dependencies.createApi(host, createViewerAlphaTabSettings(scrollElement));
+  const initialScoreZoom = Number(host.dataset.scoreZoom) || 1;
+  const api = dependencies.createApi(host, createViewerAlphaTabSettings(scrollElement, initialScoreZoom));
+  const detachScoreZoom = attachScoreZoomCommit(ownerDocument, api, scrollElement);
   try {
     const result = await dependencies.presentFile({
       file: { name: file.fileName, arrayBuffer: async () => file.bytes.slice().buffer },
@@ -75,6 +77,7 @@ export async function createStudioScoreRuntime(
     await dependencies.waitForScore(api);
   } catch (error) {
     try {
+      detachScoreZoom();
       api.destroy?.();
     } catch (cleanupError) {
       throw new AggregateError([error, cleanupError], "Studio runtime initialization and cleanup both failed");
@@ -164,6 +167,7 @@ export async function createStudioScoreRuntime(
       return result;
     },
     destroy: async () => {
+      detachScoreZoom();
       detachPlayerState?.();
       detachPlayerPosition?.();
       detachSoundFontLoad?.();

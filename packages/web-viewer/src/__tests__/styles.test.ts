@@ -236,6 +236,14 @@ describe("alphaTab playback cursor styles", () => {
     expect(scoreCss).toMatch(
       /\.viewer :global\(\.at-surface\)\s*{[^}]*display:\s*block;[^}]*background:\s*var\(--bg-score\);/s,
     );
+    expect(scoreCss).toMatch(
+      /\.stage\[data-score-width="comfortable"\] \.frame\s*{[^}]*max-width:\s*960px;[^}]*margin-inline:\s*auto;/s,
+    );
+    expect(scoreCss).toMatch(/\.stage\[data-score-width="full"\] \.frame\s*{[^}]*max-width:\s*none;/s);
+    expect(scoreCss).toMatch(/\.viewControls\s*{[^}]*position:\s*sticky;[^}]*gap:\s*4px;/s);
+    expect(scoreCss).toMatch(/\.zoomControls button\s*{[^}]*width:\s*32px;[^}]*min-height:\s*32px;/s);
+    expect(scoreCss).toMatch(/@container \(max-width:\s*620px\)\s*{[^}]*\.widthModeButton\s*{[^}]*display:\s*none;/s);
+    expect(workspaceCss).toMatch(/\.transportBar\s*{[^}]*min-height:\s*44px;/s);
   });
 
   it("keeps playback progress on the toolbar top edge until it is interactive", async () => {

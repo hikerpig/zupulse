@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
 import type { AlphaTabApiLike } from "@zupulse/web-core";
+import { SCORE_ZOOM_COMMIT_EVENT } from "../scoreZoom";
 import { createStudioScoreRuntime, type StudioScoreRuntimeDependencies } from "../studio-score-runtime";
 
 function testEvent<T>() {
@@ -94,6 +95,36 @@ describe("createStudioScoreRuntime", () => {
     expect(soundFontLoaded.size()).toBe(0);
     expect(error.size()).toBe(0);
     expect(destroy).toHaveBeenCalledOnce();
+  });
+
+  it("applies the persisted zoom and stops consuming zoom commits after destroy", async () => {
+    document.body.innerHTML = '<div><section id="alpha-tab" data-score-zoom="1.25"></section></div>';
+    const updateSettings = vi.fn();
+    const api = {
+      settings: { display: { scale: 1.25 } },
+      updateSettings,
+      destroy: vi.fn(),
+    } as unknown as AlphaTabApiLike;
+    const createApi = vi.fn((_host: HTMLElement, _settings: unknown) => api);
+    const runtime = await createStudioScoreRuntime(
+      document,
+      { fileName: "score.musicxml", bytes: new Uint8Array([1]) },
+      {
+        createApi,
+        presentFile: async () => ({ status: "ready", identity: {} as never, summary: {} as never }),
+        waitForScore: async () => undefined,
+      },
+    );
+
+    expect(createApi.mock.calls[0]?.[1]).toMatchObject({ display: { scale: 1.25 } });
+
+    document.dispatchEvent(new CustomEvent(SCORE_ZOOM_COMMIT_EVENT, { detail: { zoom: 1.4 } }));
+    expect(api.settings?.display?.scale).toBe(1.4);
+    expect(updateSettings).toHaveBeenCalledOnce();
+
+    await runtime.destroy();
+    document.dispatchEvent(new CustomEvent(SCORE_ZOOM_COMMIT_EVENT, { detail: { zoom: 1.5 } }));
+    expect(updateSettings).toHaveBeenCalledOnce();
   });
 
   it("waits for alphaTab to confirm playback before reporting a playing transport", async () => {

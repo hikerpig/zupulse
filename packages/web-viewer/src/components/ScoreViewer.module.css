@@ -8,7 +8,7 @@
     overflow: scroll;
   }
 
-  .zoomControls {
+  .viewControls {
     position: sticky;
     z-index: var(--z-index-transport);
     top: 8px;
@@ -16,8 +16,42 @@
     width: max-content;
     display: flex;
     align-items: center;
+    gap: 4px;
+    margin: 8px 8px -46px auto;
+  }
+
+  .widthModeButton,
+  .zoomControls button {
+    width: 32px;
+    min-height: 32px;
+    padding: 0;
+  }
+
+  .widthModeButton {
+    display: grid;
+    place-items: center;
+    border-color: var(--border-default);
+    background: color-mix(in srgb, var(--bg-shell) 94%, transparent);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(12px);
+  }
+
+  .widthModeButton[aria-pressed="true"] {
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+    background: var(--accent-soft);
+  }
+
+  .widthModeButton svg,
+  .zoomControls button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .zoomControls {
+    display: flex;
+    align-items: center;
     gap: 2px;
-    margin: 8px 8px -52px auto;
     padding: 3px;
     border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
@@ -27,23 +61,19 @@
   }
 
   .zoomControls button {
-    width: 44px;
-    min-height: 44px;
-    padding: 0;
+    border-color: transparent;
+    background: transparent;
   }
 
-  .zoomControls button svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .zoomControls output {
+  .zoomControls .zoomReset {
+    width: auto;
     min-width: 50px;
     color: var(--text-secondary);
     font-family: "IBM Plex Mono", monospace;
     font-size: 12px;
     text-align: center;
   }
+
   .compactZoomTrigger {
     position: sticky;
     z-index: var(--z-index-transport);
@@ -88,7 +118,8 @@
     width: 16px;
     height: 16px;
   }
-  .compactZoomPopup output {
+  .compactZoomPopup .zoomReset {
+    width: auto;
     min-width: 50px;
     color: var(--text-secondary);
     font-family: "IBM Plex Mono", monospace;
@@ -105,6 +136,7 @@
   }
 
   .frame {
+    width: 100%;
     min-height: 0;
     overflow: auto;
     padding: 8px;
@@ -113,6 +145,15 @@
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.2),
       0 4px 14px rgb(24 24 24 / 0.08);
+  }
+
+  .stage[data-score-width="comfortable"] .frame {
+    max-width: 960px;
+    margin-inline: auto;
+  }
+
+  .stage[data-score-width="full"] .frame {
+    max-width: none;
   }
 
   .scoreCanvas {
@@ -212,6 +253,12 @@
   }
 
   @container (max-width: 620px) {
+    .widthModeButton {
+      display: none;
+    }
+    .viewControls {
+      display: none;
+    }
     .zoomControls {
       display: none;
     }
@@ -236,6 +283,14 @@
       inset: 6px;
       padding: 4px;
       border-radius: var(--radius-lg);
+    }
+  }
+
+  @media (pointer: coarse) {
+    .widthModeButton,
+    .zoomControls button {
+      width: 44px;
+      min-height: 44px;
     }
   }
 }

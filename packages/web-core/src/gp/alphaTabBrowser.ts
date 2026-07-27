@@ -80,6 +80,7 @@ export type AlphaTabApiLike = {
     };
   };
   updateSettings?: () => void;
+  render?: () => void;
   playPause?: () => void;
   stop?: () => void;
   tickPosition?: number;

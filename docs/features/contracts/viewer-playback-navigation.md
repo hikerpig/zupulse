@@ -51,6 +51,19 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 - 已启用 Loop 跨越普通页边界且相关谱表行能放入一屏时，Viewer 临时合并 Loop 页面；放不下时保持
   普通分页。
 
+### 谱面宽度与缩放
+
+- 宽屏默认使用居中的 Comfortable 阅读宽度，谱面框最大宽度为 `960px`；用户可切换 Full width，
+  该偏好保存在设备本地，并由 Viewer 与 Studio 共用。
+- Viewer 与 Studio 共用紧凑的 alphaTab 字体资源：标题 28px、副标题 18px，其余常用谱面标注相对
+  原默认值下调 1–2px；宿主不得单独覆盖出不同的谱面密度。
+- 缩放范围为 50%–200%，以 10% 为步长。工具栏百分比可直接复位为 100%，并支持
+  `Ctrl/Cmd +`、`Ctrl/Cmd -` 与 `Ctrl/Cmd 0`。
+- 缩放提交先更新 alphaTab settings，再显式触发 render；宽度切换也进入同一阅读锚点恢复生命周期。
+  重排完成后优先恢复视口中心的书面谱表行，bounds 暂不可用时按相对滚动位置降级。连续缩放只在
+  最新 render 完成后恢复位置；播放位置与 Loop 状态不因缩放或宽度切换改变。
+- 窄屏隐藏宽度切换，使用全宽谱面；缩放控件保持可触达且不得造成横向溢出。
+
 ### 谱面点击与 Transport
 
 - beat/note 命中先形成 Written Position，再通过 alphaTab 展开的 `tickCache.masterBars` 解析唯一
@@ -99,6 +112,7 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 | Continuous Follow / Detached         | 支持    | 支持    | 无       |
 | Page Turn 与设备本地偏好             | 支持    | 支持    | 无       |
 | PageUp/PageDown、wheel、swipe        | 支持    | 支持    | 输入设备 |
+| Comfortable / Full width 与缩放      | 支持    | 支持    | 无       |
 | 精确 Playback Occurrence 谱面定位    | 支持    | 支持    | 无       |
 | Transport latest-only 游标与视口预览 | 支持    | 支持    | 无       |
 | Loop-aware 临时页面                  | 支持    | 支持    | 无       |
@@ -127,6 +141,8 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 - 播放跨谱表行或页面只移动谱面滚动容器，文档根节点不滚动。
 - 手动浏览保持 Detached；正式定位、stop 或恢复动作回到 Following。
 - Page Turn 的每个离散输入最多移动一页；resize 和 zoom 后保留书面锚点。
+- 宽屏默认居中且不超过 960px；Full width 偏好刷新后保留。缩放与宽度切换会实际重排谱面并保持
+  当前书面位置，连续缩放只提交最新布局；100% 复位和键盘快捷键可用，窄屏不产生横向溢出。
 - 谱面点击只提交一次正式 seek，且不改变 playing/paused transport。
 - Scrub 每帧最多发送一个最新预览，松手只提交一次正式 seek。
 - playing position snapshot 最多约 10Hz；pause、stop、seek 和 Loop 语义立即可观察。
@@ -143,6 +159,7 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 | occurrence 精确解析       | `packages/web-core/src/score/positions.ts`、`packages/web-core/src/playback/writtenSelection.ts` | 相邻 `__tests__`                                             |
 | Follow State 与页面协调   | `packages/web-viewer/src/score-navigation`                                                       | `packages/web-viewer/src/score-navigation/__tests__`         |
 | 模式、页码与恢复 UI       | `packages/web-viewer/src/features/PlaybackWorkspace.tsx`                                         | `PlaybackWorkspace.test.tsx`                                 |
+| 谱面宽度、缩放与位置恢复  | `packages/web-viewer/src/components/ScoreViewer.tsx`、`packages/web-viewer/src/viewerApp.tsx`    | `ScoreViewer.test.tsx`、`viewerApp.test.ts`、Playwright      |
 | 练习设置任务、降级与焦点  | `packages/web-viewer/src/features/PlaybackWorkspace.tsx`                                         | `PlaybackWorkspace.test.tsx`                                 |
 | 谱面 Loop 区间与 A/B 手柄 | `packages/web-viewer/src/practice-loop`、`packages/web-viewer/src/components/ScoreViewer.tsx`    | `loop-range-geometry.test.ts`、`ScoreViewer.test.tsx`        |
 | position 发布预算         | `packages/web-core/src/playback/playbackController.ts`                                           | `playbackController.test.ts`                                 |
@@ -161,4 +178,5 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 - alphaTab player、bounds、cursor、tick cache 或 user interaction API 变化。
 - occurrence 回退、谱面手势、Scrub Preview 或正式 seek 语义变化。
 - Screen Score Page、Loop 重组、输入去重、Follow State 或模式持久化变化。
+- 谱面宽度模式、缩放范围、alphaTab 重绘或缩放后位置恢复变化。
 - position 发布预算、resume flush 或 Session 清理变化。

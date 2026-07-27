@@ -571,7 +571,11 @@ describe("StudioPage", () => {
     // jsdom does not apply the container CSS that hides the narrow-only Zoom trigger.
     screen.getByRole("button", { name: "调整谱面缩放" }).tabIndex = -1;
     await user.tab();
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("切换为全宽");
+    await user.tab();
     expect(document.activeElement?.getAttribute("aria-label")).toBe("缩小谱面");
+    await user.tab();
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("重置谱面缩放");
     await user.tab();
     expect(document.activeElement?.getAttribute("aria-label")).toBe("放大谱面");
     await user.tab();

@@ -108,6 +108,41 @@ test("follows playback and supports stable score page navigation", async ({ page
   expect(consoleErrors).toEqual([]);
 });
 
+test("keeps a comfortable wide score and applies visible zoom layouts", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.goto("/");
+  await importFixture(page, "导入第一份曲谱", reviewedFixture);
+  const scoreHost = page.locator(".score-viewer");
+  const surface = scoreHost.locator(".at-surface").first();
+  await expect(surface).toBeVisible();
+
+  const comfortable = await scoreFrameMetrics(scoreHost);
+  expect(comfortable.frameWidth).toBeLessThanOrEqual(960);
+  expect(Math.abs(comfortable.leftGutter - comfortable.rightGutter)).toBeLessThanOrEqual(2);
+
+  await page.getByRole("button", { name: "切换为全宽" }).click();
+  await expect(page.getByRole("button", { name: "恢复舒适宽度" })).toBeVisible();
+  await expect.poll(async () => (await scoreFrameMetrics(scoreHost)).frameWidth).toBeGreaterThan(960);
+
+  await page.reload();
+  await expect(page.getByRole("button", { name: "恢复舒适宽度" })).toBeVisible();
+  await expect.poll(async () => (await scoreFrameMetrics(scoreHost)).frameWidth).toBeGreaterThan(960);
+  await page.getByRole("button", { name: "恢复舒适宽度" }).click();
+
+  const initialSurfaceHeight = (await surface.boundingBox())!.height;
+  await page.getByRole("button", { name: "放大谱面" }).click();
+  await expect(page.getByRole("button", { name: "重置谱面缩放" })).toHaveText("110%");
+  await expect.poll(async () => (await surface.boundingBox())!.height).toBeGreaterThan(initialSurfaceHeight);
+
+  await page.keyboard.press("Control+0");
+  await expect(page.getByRole("button", { name: "重置谱面缩放" })).toHaveText("100%");
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("button", { name: "切换为全宽" })).toBeHidden();
+  await expect(page.getByRole("button", { name: "调整谱面缩放" })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
 test("persists a Browser Library Score and gives a re-import a fresh ID after deletion", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "曲谱库" })).toBeVisible();
@@ -144,6 +179,12 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await expect(page.getByRole("heading", { level: 1, name: "和弦分析" })).toBeVisible();
   await expect(page.getByRole("button", { name: "分析设置" })).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  const studioSurface = page.locator("#alpha-tab .at-surface").first();
+  await expect(studioSurface).toBeVisible();
+  const initialStudioHeight = (await studioSurface.boundingBox())!.height;
+  await page.getByRole("button", { name: "放大谱面" }).click();
+  await expect(page.getByRole("button", { name: "重置谱面缩放" })).toHaveText("110%");
+  await expect.poll(async () => (await studioSurface.boundingBox())!.height).toBeGreaterThan(initialStudioHeight);
   const splitter = page.getByRole("separator", { name: "调整乐谱与分析面板宽度" });
   await splitter.focus();
   await page.keyboard.press("ArrowRight");
@@ -383,4 +424,23 @@ async function expectInsideViewport(page: Page, locator: Locator): Promise<void>
     box!.x + box!.width,
     `${(await locator.getAttribute("aria-label")) ?? (await locator.textContent())} stays within ${viewport!.width}px`,
   ).toBeLessThanOrEqual(viewport!.width);
+}
+
+async function scoreFrameMetrics(scoreHost: Locator): Promise<{
+  frameWidth: number;
+  leftGutter: number;
+  rightGutter: number;
+}> {
+  return scoreHost.evaluate((host) => {
+    const frame = host.parentElement?.parentElement;
+    const stage = frame?.parentElement;
+    if (!frame || !stage) throw new Error("Score frame is missing");
+    const frameBounds = frame.getBoundingClientRect();
+    const stageBounds = stage.getBoundingClientRect();
+    return {
+      frameWidth: frameBounds.width,
+      leftGutter: frameBounds.left - stageBounds.left,
+      rightGutter: stageBounds.right - frameBounds.right,
+    };
+  });
 }

@@ -1,6 +1,6 @@
 ---
 status: current
-last-reviewed: 2026-07-26
+last-reviewed: 2026-07-27
 theme-library: .design_library/zupulse-te-braun-theme
 runtime-tokens: packages/web-viewer/src/styles/tokens.css
 ---
@@ -101,6 +101,12 @@ Zupulse 是面向长期练习、乐谱查看与和声分析的桌面级数字音
 ### Viewer
 
 - 乐谱是绝对视觉中心，Transport 与练习控制仓形成连续工作台。
+- 宽屏乐谱默认使用居中的 Comfortable 阅读框，最大宽度 960px；Full width 是显式且持久的用户
+  选择。窄屏直接使用全宽并隐藏宽度切换，不能为了保留低频控件造成横向溢出。
+- Viewer 与 Studio 的 alphaTab 字体资源共用紧凑规格：标题 28px、副标题 18px，其余常用标注在
+  保持辨识度的前提下相对原默认值下调 1–2px；不得由宿主各自形成不同密度。
+- 缩放是读谱工具而非装饰：50%–200%、10% 步进、百分比复位为 100%，支持标准
+  `Ctrl/Cmd +/-/0`。重排后保持当前书面谱表行，不能跳回页首或改变播放与 Loop 状态。
 - 练习设置首层按“调整速度、设置循环区间、选择主轨道”等用户任务组织；Loop 和 Track 的领域
   控件进入二级工作区，不在首层平铺内部对象或单独堆叠 Session facts。
 - Transport 快捷入口可以直达对应练习任务；二级工作区返回首层时不关闭控制仓。
@@ -122,6 +128,7 @@ Zupulse 是面向长期练习、乐谱查看与和声分析的桌面级数字音
 - 编辑、预览与分析状态使用稳定区域，避免依赖临时 toast 传递关键事实。
 - 专业密度不能牺牲键盘操作、可读性或错误恢复。
 - 桌面 Studio 使用可调分栏同时呈现乐谱与分析工作区；窄屏回退为上下结构。
+- Studio 乐谱预览复用 Viewer 的宽度模式、缩放范围、快捷键和位置保持契约，不建立第二套读谱行为。
 - 乐谱预览表达 Effective Harmony Projection 的当前音乐结果，来源与置信度留在分析详情中，不用多色和弦污染读谱面。
 - 谱面与 Effective Harmony Range 双向定位，但 Harmony Selection 本身不得隐式创建或修改 User Correction。
 - 命令栏低频操作（设置、试听、撤销、重做、导出）使用图标按钮 + 浮层，让出垂直空间给分析内容；主操作（保存、重新分析）保留文字按钮。

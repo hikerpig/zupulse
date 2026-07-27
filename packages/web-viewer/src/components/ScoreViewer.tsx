@@ -1,8 +1,15 @@
-import { useEffect, useRef, useState, type Ref, type TouchEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type Ref, type TouchEvent } from "react";
 import { Popover } from "@base-ui/react/popover";
-import { Maximize2, Minimize2, Minus, Plus, ZoomIn } from "lucide-react";
-import { clampScoreZoom, MAX_SCORE_ZOOM, MIN_SCORE_ZOOM, persistScoreZoom, useAppStore } from "../app/appStore";
-import { SCORE_ZOOM_COMMIT_EVENT } from "../scoreZoom";
+import { Maximize2, Minimize2, Minus, Plus, Shrink, StretchHorizontal, ZoomIn } from "lucide-react";
+import {
+  clampScoreZoom,
+  commitScoreZoom,
+  MAX_SCORE_ZOOM,
+  MIN_SCORE_ZOOM,
+  persistScoreWidthMode,
+  useAppStore,
+} from "../app/appStore";
+import { SCORE_LAYOUT_COMMIT_EVENT, SCORE_ZOOM_COMMIT_EVENT } from "../scoreZoom";
 import { useTranslation } from "react-i18next";
 import type { ViewerSessionHandle } from "../host";
 import { LoopRangeOverlay } from "../practice-loop/LoopRangeOverlay";
@@ -31,6 +38,8 @@ export function ScoreViewer({
   const [expanded, setExpanded] = useState(false);
   const scoreZoom = useAppStore((state) => state.scoreZoom);
   const setScoreZoom = useAppStore((state) => state.setScoreZoom);
+  const scoreWidthMode = useAppStore((state) => state.scoreWidthMode);
+  const setScoreWidthMode = useAppStore((state) => state.setScoreWidthMode);
   const viewerRef = useRef<HTMLElement>(null);
   const pinchRef = useRef<{ distance: number; zoom: number; preview: number } | undefined>(undefined);
 
@@ -43,12 +52,41 @@ export function ScoreViewer({
     return () => window.removeEventListener("keydown", collapse);
   }, [expanded]);
 
-  const commitZoom = (zoom: number) => {
-    const committed = clampScoreZoom(zoom);
-    setScoreZoom(committed);
-    persistScoreZoom(committed);
-    viewerRef.current?.setAttribute("data-score-zoom", String(committed));
-    document.dispatchEvent(new CustomEvent(SCORE_ZOOM_COMMIT_EVENT, { detail: { zoom: committed } }));
+  const commitZoom = useCallback(
+    (zoom: number) => {
+      const committed = commitScoreZoom(zoom);
+      setScoreZoom(committed);
+      viewerRef.current?.setAttribute("data-score-zoom", String(committed));
+      document.dispatchEvent(new CustomEvent(SCORE_ZOOM_COMMIT_EVENT, { detail: { zoom: committed } }));
+    },
+    [setScoreZoom],
+  );
+
+  useEffect(() => {
+    const applyShortcut = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.altKey || isEditableTarget(event.target)) return;
+      const key = event.key.toLowerCase();
+      const nextZoom =
+        key === "+" || key === "="
+          ? scoreZoom + SCORE_ZOOM_STEP
+          : key === "-" || key === "_"
+            ? scoreZoom - SCORE_ZOOM_STEP
+            : key === "0"
+              ? 1
+              : undefined;
+      if (nextZoom === undefined) return;
+      event.preventDefault();
+      commitZoom(nextZoom);
+    };
+    window.addEventListener("keydown", applyShortcut);
+    return () => window.removeEventListener("keydown", applyShortcut);
+  }, [commitZoom, scoreZoom]);
+
+  const toggleScoreWidth = () => {
+    const nextMode = scoreWidthMode === "full" ? "comfortable" : "full";
+    document.dispatchEvent(new CustomEvent(SCORE_LAYOUT_COMMIT_EVENT, { detail: { reason: "width" } }));
+    setScoreWidthMode(nextMode);
+    persistScoreWidthMode(nextMode);
   };
   const startPinch = (event: TouchEvent<HTMLElement>) => {
     if (event.touches.length !== 2) return;
@@ -78,33 +116,55 @@ export function ScoreViewer({
       ref={scoreScrollRef}
       className={`scrollable ${styles.stage} ${compact ? styles.compact : ""} ${expanded ? styles.expanded : ""}`}
       aria-label={t("score.workspace")}
+      data-score-width={scoreWidthMode}
       onTouchStart={startPinch}
       onTouchMove={previewPinch}
       onTouchEnd={finishPinch}
       onTouchCancel={finishPinch}
     >
+      <output className="sr-only" role="status" aria-live="polite">
+        {t("score.zoomLevel", { percent: Math.round(scoreZoom * 100) })}
+      </output>
       {!compact ? (
         <>
-          <div className={styles.zoomControls} aria-label={t("score.zoomControls")}>
+          <div className={styles.viewControls}>
             <button
+              className={styles.widthModeButton}
               type="button"
-              aria-label={t("score.zoomOut")}
-              disabled={scoreZoom <= MIN_SCORE_ZOOM}
-              onClick={() => commitZoom(scoreZoom - SCORE_ZOOM_STEP)}
+              aria-label={t(scoreWidthMode === "full" ? "score.useComfortableWidth" : "score.useFullWidth")}
+              aria-pressed={scoreWidthMode === "full"}
+              title={t(scoreWidthMode === "full" ? "score.useComfortableWidth" : "score.useFullWidth")}
+              onClick={toggleScoreWidth}
             >
-              <Minus aria-hidden="true" />
+              {scoreWidthMode === "full" ? <Shrink aria-hidden="true" /> : <StretchHorizontal aria-hidden="true" />}
             </button>
-            <output aria-label={t("score.zoomLevel", { percent: Math.round(scoreZoom * 100) })} aria-live="polite">
-              {Math.round(scoreZoom * 100)}%
-            </output>
-            <button
-              type="button"
-              aria-label={t("score.zoomIn")}
-              disabled={scoreZoom >= MAX_SCORE_ZOOM}
-              onClick={() => commitZoom(scoreZoom + SCORE_ZOOM_STEP)}
-            >
-              <Plus aria-hidden="true" />
-            </button>
+            <div className={styles.zoomControls} aria-label={t("score.zoomControls")}>
+              <button
+                type="button"
+                aria-label={t("score.zoomOut")}
+                disabled={scoreZoom <= MIN_SCORE_ZOOM}
+                onClick={() => commitZoom(scoreZoom - SCORE_ZOOM_STEP)}
+              >
+                <Minus aria-hidden="true" />
+              </button>
+              <button
+                className={styles.zoomReset}
+                type="button"
+                aria-label={t("score.resetZoom")}
+                title={t("score.resetZoom")}
+                onClick={() => commitZoom(1)}
+              >
+                {Math.round(scoreZoom * 100)}%
+              </button>
+              <button
+                type="button"
+                aria-label={t("score.zoomIn")}
+                disabled={scoreZoom >= MAX_SCORE_ZOOM}
+                onClick={() => commitZoom(scoreZoom + SCORE_ZOOM_STEP)}
+              >
+                <Plus aria-hidden="true" />
+              </button>
+            </div>
           </div>
           <Popover.Root>
             <Popover.Trigger className={styles.compactZoomTrigger} aria-label={t("score.adjustZoom")}>
@@ -126,12 +186,15 @@ export function ScoreViewer({
                   >
                     <Minus aria-hidden="true" />
                   </button>
-                  <output
-                    aria-label={t("score.zoomLevel", { percent: Math.round(scoreZoom * 100) })}
-                    aria-live="polite"
+                  <button
+                    className={styles.zoomReset}
+                    type="button"
+                    aria-label={t("score.resetZoom")}
+                    title={t("score.resetZoom")}
+                    onClick={() => commitZoom(1)}
                   >
                     {Math.round(scoreZoom * 100)}%
-                  </output>
+                  </button>
                   <button
                     type="button"
                     aria-label={t("score.zoomIn")}
@@ -200,4 +263,11 @@ function touchDistance(event: TouchEvent<HTMLElement>): number {
   const second = event.touches[1];
   if (!first || !second) return 0;
   return Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY);
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable || target.matches("input, textarea, select, [data-shortcuts-disabled] *"))
+  );
 }

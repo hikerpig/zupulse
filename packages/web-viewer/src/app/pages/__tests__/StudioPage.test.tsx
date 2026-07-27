@@ -273,18 +273,20 @@ describe("StudioPage", () => {
     await user.click(within(view.container).getByRole("button", { name: "分析设置" }));
     expect(screen.getByRole("option", { name: "track-2" })).toBeTruthy();
     const segments = within(view.container).getByRole("list", { name: "分析片段" });
-    await user.click(within(segments).getByRole("button", { name: "片段 1" }));
+    await user.click(within(segments).getByRole("button", { name: "片段 1，算法结果" }));
     await user.keyboard("{ArrowDown}");
     expect(selectStudioRange).toHaveBeenLastCalledWith("score-1", {
       start: { measureIndex: 1, offsetTicks: 0 },
       end: { measureIndex: 1, offsetTicks: 1 },
     });
-    await user.click(within(segments).getByRole("button", { name: "片段 2" }));
-    expect(within(segments).getByRole("button", { name: "片段 2" }).getAttribute("aria-pressed")).toBe("true");
+    await user.click(within(segments).getByRole("button", { name: "片段 2，算法结果" }));
+    expect(within(segments).getByRole("button", { name: "片段 2，算法结果" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
     await user.keyboard("{Enter}");
     expect(document.activeElement).toBe(within(view.container).getByRole("region", { name: "和弦编辑器" }));
     await user.keyboard("{Escape}");
-    expect(document.activeElement).toBe(within(segments).getByRole("button", { name: "片段 2" }));
+    expect(document.activeElement).toBe(within(segments).getByRole("button", { name: "片段 2，算法结果" }));
     await user.click(within(view.container).getByRole("button", { name: "已修正" }));
     expect(within(view.container).getByRole("status", { name: "筛选选择说明" }).textContent).toContain(
       "当前选择不符合筛选条件，已临时显示",

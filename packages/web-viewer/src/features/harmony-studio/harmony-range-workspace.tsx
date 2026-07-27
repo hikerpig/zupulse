@@ -92,77 +92,96 @@ export function HarmonyRangeWorkspace({
           </p>
         ) : null}
         <div ref={listRef} className={`${styles.list} scrollable`} role="list" aria-label={t("range.list")}>
-          {displayedRanges.map((item, index) => (
-            <button
-              key={item.key}
-              type="button"
-              aria-label={t("range.segment", { number: index + 1 })}
-              aria-pressed={selectedKey === item.key}
-              data-range-key={item.key}
-              data-origin={item.origin}
-              data-confidence={item.confidence}
-              data-type={item.effective.type}
-              onClick={() => onSelect(item)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
+          {displayedRanges.map((item, index) => {
+            const originLabel = t(
+              item.origin === "source"
+                ? "range.originSource"
+                : item.origin === "correction"
+                  ? "range.originCorrection"
+                  : "range.originAnalysis",
+            );
+            return (
+              <button
+                key={item.key}
+                type="button"
+                aria-label={t("range.segment", { number: index + 1, origin: originLabel })}
+                aria-pressed={selectedKey === item.key}
+                data-range-key={item.key}
+                data-origin={item.origin}
+                data-confidence={item.confidence}
+                data-type={item.effective.type}
+                onClick={() => onSelect(item)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    onSelect(item);
+                    editorRef.current?.focus();
+                    return;
+                  }
+                  const currentIndex = displayedRanges.findIndex((candidate) => candidate.key === item.key);
+                  const pageSize = 5;
+                  const nextIndex =
+                    event.key === "ArrowUp"
+                      ? currentIndex - 1
+                      : event.key === "ArrowDown"
+                        ? currentIndex + 1
+                        : event.key === "Home"
+                          ? 0
+                          : event.key === "End"
+                            ? displayedRanges.length - 1
+                            : event.key === "PageUp"
+                              ? currentIndex - pageSize
+                              : event.key === "PageDown"
+                                ? currentIndex + pageSize
+                                : undefined;
+                  if (nextIndex === undefined) return;
                   event.preventDefault();
-                  onSelect(item);
-                  editorRef.current?.focus();
-                  return;
-                }
-                const currentIndex = displayedRanges.findIndex((candidate) => candidate.key === item.key);
-                const pageSize = 5;
-                const nextIndex =
-                  event.key === "ArrowUp"
-                    ? currentIndex - 1
-                    : event.key === "ArrowDown"
-                      ? currentIndex + 1
-                      : event.key === "Home"
-                        ? 0
-                        : event.key === "End"
-                          ? displayedRanges.length - 1
-                          : event.key === "PageUp"
-                            ? currentIndex - pageSize
-                            : event.key === "PageDown"
-                              ? currentIndex + pageSize
-                              : undefined;
-                if (nextIndex === undefined) return;
-                event.preventDefault();
-                const boundedIndex = Math.max(0, Math.min(displayedRanges.length - 1, nextIndex));
-                const destination = displayedRanges[boundedIndex];
-                if (!destination) return;
-                onSelect(destination);
-                event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("button")[boundedIndex]?.focus();
-              }}
-            >
-              <span className={styles.chordName}>
-                {item.effective.type === "chord"
-                  ? formatChordSymbol(item.effective.chord)
-                  : item.effective.type === "no-chord"
-                    ? "N.C."
-                    : t("range.unresolved")}
-              </span>
-              <span className={styles.metadata}>
-                <span className={styles.measure}>
-                  {t("range.measure", { number: item.effective.range.start.measureIndex + 1 })}
-                </span>
-                {item.confidence ? (
+                  const boundedIndex = Math.max(0, Math.min(displayedRanges.length - 1, nextIndex));
+                  const destination = displayedRanges[boundedIndex];
+                  if (!destination) return;
+                  onSelect(destination);
+                  event.currentTarget.parentElement
+                    ?.querySelectorAll<HTMLButtonElement>("button")
+                    [boundedIndex]?.focus();
+                }}
+              >
+                <span className={styles.identity}>
                   <span
-                    className={styles.confidence}
-                    aria-label={t(
-                      item.confidence === "high"
-                        ? "range.confidenceHigh"
-                        : item.confidence === "medium"
-                          ? "range.confidenceMedium"
-                          : "range.confidenceLow",
-                    )}
-                  >
-                    <span className={styles.confidenceDot}></span>
+                    className={styles.originMarker}
+                    data-origin={item.origin}
+                    title={originLabel}
+                    aria-hidden="true"
+                  />
+                  <span className={styles.chordName}>
+                    {item.effective.type === "chord"
+                      ? formatChordSymbol(item.effective.chord)
+                      : item.effective.type === "no-chord"
+                        ? "N.C."
+                        : t("range.unresolved")}
                   </span>
-                ) : null}
-              </span>
-            </button>
-          ))}
+                </span>
+                <span className={styles.metadata}>
+                  <span className={styles.measure}>
+                    {t("range.measure", { number: item.effective.range.start.measureIndex + 1 })}
+                  </span>
+                  {item.confidence ? (
+                    <span
+                      className={styles.confidence}
+                      aria-label={t(
+                        item.confidence === "high"
+                          ? "range.confidenceHigh"
+                          : item.confidence === "medium"
+                            ? "range.confidenceMedium"
+                            : "range.confidenceLow",
+                      )}
+                    >
+                      <span className={styles.confidenceDot}></span>
+                    </span>
+                  ) : null}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </aside>
       <div

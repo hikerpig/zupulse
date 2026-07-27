@@ -48,6 +48,13 @@ describe("alphaTab playback cursor styles", () => {
     expect(css).toMatch(
       /\.list button\s*{[^}]*align-items:\s*center;[^}]*justify-content:\s*space-between;[^}]*gap:\s*10px;/s,
     );
+    expect(css).not.toMatch(/\.list button::before\s*{/);
+    expect(css).not.toMatch(/\.list button\[aria-pressed="true"\]::after\s*{/);
+    expect(css).toMatch(/\.originMarker\s*{[^}]*width:\s*8px;[^}]*height:\s*8px;/s);
+    expect(css).toMatch(/\.originMarker\[data-origin="source"\]\s*{[^}]*background:\s*var\(--signal-blue\);/s);
+    expect(css).toMatch(
+      /\.originMarker\[data-origin="correction"\]\s*{[^}]*background:\s*var\(--accent-primary\);[^}]*transform:\s*rotate\(45deg\);/s,
+    );
     expect(css).toMatch(/\.chordName\s*{[^}]*font-size:\s*15px;[^}]*font-weight:\s*700;/s);
     expect(css).toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.workspace\s*{[^}]*grid-template-columns:\s*1fr;/s);
   });

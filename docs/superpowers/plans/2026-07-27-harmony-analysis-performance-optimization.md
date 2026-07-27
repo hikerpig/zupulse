@@ -72,6 +72,27 @@ Rust/WASM。
 - Verification completed: all 112 `packages/web-core/src/harmony` tests, all 60 Harmony CLI tests, web-core and
   Harmony CLI typechecks, Prettier and `git diff --check`.
 
+### 2026-07-27: Tasks 3–4 and Checkpoint A
+
+- Task 3 added label-independent range evidence and bounded its cache to the decoder's current `endEvent`;
+  at most 20 ranges remain live while all 62 labels reuse them.
+- Task 4 added numeric figuration evidence plus `(event, chordMask, boundaryContext)` retained-note caching.
+  Singleton bass evidence is shared across every containing range; event-local retained notes use a compact
+  bitmask for ordinary polyphony.
+- Five isolated, one-warm-up K331 samples were:
+  `10,361.32 / 9,434.84 / 9,355.62 / 10,692.32 / 10,153.46 ms`. Median was `10,153.46 ms`; maximum RSS was
+  `491,470,848 bytes`.
+- All five samples produced 121 segments and canonical checksum
+  `9b0d56e25913116c1a44b460432280a681dc6dcfc2ed9812ab3c3178bb927ff0`.
+- Compared with the original `27.87 s` baseline, Checkpoint A is approximately `2.75×` faster, but it does not
+  meet the `5,000 ms` required gate.
+- The latest CPU profile attributes approximately `0.05 s` self time to the factorized decoder. Task 5 is
+  therefore skipped: compacting decoder state cannot provide meaningful end-to-end speedup under its measured-need
+  gate.
+- The root benchmark uses isolated sample processes because repeated high-RSS V8 runs were terminated in the Codex
+  execution environment even after explicit GC. Each reported sample has an independent RSS lifecycle and performs
+  its own configured warm-up.
+
 ## 2. Non-negotiable constraints
 
 - Production 必须继续在完整 62-label inventory 和最长 20 events span 上运行 exact

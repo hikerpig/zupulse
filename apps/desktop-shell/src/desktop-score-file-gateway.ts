@@ -15,13 +15,16 @@ export class DesktopScoreFileGateway implements ScoreFileGateway {
     const request = createBridgeRequest("file.select", crypto.randomUUID(), options);
     const selection = parseBridgeResponse(request.type, await this.bridge.request(request));
     if (selection.status === "cancelled") return [];
-    return selection.files.map((opened) => ({
-      fileName: opened.fileName,
-      readBytes: async () => {
+    return Promise.all(
+      selection.files.map(async (opened) => {
         const read = createBridgeRequest("file.readBytes", crypto.randomUUID(), { fileToken: opened.fileToken });
-        return (await parseBridgeResponse(read.type, await this.bridge.request(read))).bytes;
-      },
-    }));
+        const file = parseBridgeResponse(read.type, await this.bridge.request(read));
+        return {
+          fileName: file.fileName,
+          readBytes: async () => new Uint8Array(file.bytes),
+        };
+      }),
+    );
   }
 
   async saveExport(file: StoredScoreFile): Promise<"saved" | "cancelled"> {

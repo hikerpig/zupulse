@@ -117,16 +117,16 @@ test("keeps a comfortable wide score and applies visible zoom layouts", async ({
   await expect(surface).toBeVisible();
 
   const comfortable = await scoreFrameMetrics(scoreHost);
-  expect(comfortable.frameWidth).toBeLessThanOrEqual(1280);
+  expect(comfortable.frameWidth).toBeLessThanOrEqual(960);
   expect(Math.abs(comfortable.leftGutter - comfortable.rightGutter)).toBeLessThanOrEqual(2);
 
   await page.getByRole("button", { name: "切换为全宽" }).click();
   await expect(page.getByRole("button", { name: "恢复舒适宽度" })).toBeVisible();
-  await expect.poll(async () => (await scoreFrameMetrics(scoreHost)).frameWidth).toBeGreaterThan(1280);
+  await expect.poll(async () => (await scoreFrameMetrics(scoreHost)).frameWidth).toBeGreaterThan(960);
 
   await page.reload();
   await expect(page.getByRole("button", { name: "恢复舒适宽度" })).toBeVisible();
-  await expect.poll(async () => (await scoreFrameMetrics(scoreHost)).frameWidth).toBeGreaterThan(1280);
+  await expect.poll(async () => (await scoreFrameMetrics(scoreHost)).frameWidth).toBeGreaterThan(960);
   await page.getByRole("button", { name: "恢复舒适宽度" }).click();
 
   const initialSurfaceHeight = (await surface.boundingBox())!.height;

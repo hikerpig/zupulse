@@ -583,7 +583,25 @@ describe("createDefaultOpenSession cleanup", () => {
       {
         core: { includeNoteBounds: boolean };
         player: { scrollElement: HTMLElement };
-        display: { scale: number; resources: { secondaryGlyphColor: string } };
+        display: {
+          scale: number;
+          resources: {
+            secondaryGlyphColor: string;
+            titleFont: string;
+            subTitleFont: string;
+            wordsFont: string;
+            tablatureFont: string;
+            graceFont: string;
+            barNumberFont: string;
+            copyrightFont: string;
+            markerFont: string;
+            directionsFont: string;
+            timerFont: string;
+            fretboardNumberFont: string;
+            numberedNotationFont: string;
+            numberedNotationGraceFont: string;
+          };
+        };
       },
     ];
     expect(settings.player).toEqual(
@@ -599,6 +617,23 @@ describe("createDefaultOpenSession cleanup", () => {
     expect(settings.player.scrollElement).toBe(alphaTabHost.parentElement);
     expect(settings.display.scale).toBe(1.25);
     expect(settings.display.resources.secondaryGlyphColor).toBe("#000000");
+    expect(settings.display.resources).toEqual(
+      expect.objectContaining({
+        titleFont: expect.stringMatching(/^28px /),
+        subTitleFont: expect.stringMatching(/^18px /),
+        wordsFont: expect.stringMatching(/^14px /),
+        tablatureFont: expect.stringMatching(/^12px /),
+        graceFont: expect.stringMatching(/^10px /),
+        barNumberFont: expect.stringMatching(/^10px /),
+        copyrightFont: expect.stringMatching(/^bold 11px /),
+        markerFont: expect.stringMatching(/^bold 13px /),
+        directionsFont: expect.stringMatching(/^13px /),
+        timerFont: expect.stringMatching(/^11px /),
+        fretboardNumberFont: expect.stringMatching(/^10px /),
+        numberedNotationFont: expect.stringMatching(/^13px /),
+        numberedNotationGraceFont: expect.stringMatching(/^14px /),
+      }),
+    );
   });
 
   it("pauses and flushes the active playback controller", async () => {

@@ -148,7 +148,7 @@
   }
 
   .stage[data-score-width="comfortable"] .frame {
-    max-width: 1280px;
+    max-width: 960px;
     margin-inline: auto;
   }
 

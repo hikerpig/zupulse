@@ -237,7 +237,7 @@ describe("alphaTab playback cursor styles", () => {
       /\.viewer :global\(\.at-surface\)\s*{[^}]*display:\s*block;[^}]*background:\s*var\(--bg-score\);/s,
     );
     expect(scoreCss).toMatch(
-      /\.stage\[data-score-width="comfortable"\] \.frame\s*{[^}]*max-width:\s*1280px;[^}]*margin-inline:\s*auto;/s,
+      /\.stage\[data-score-width="comfortable"\] \.frame\s*{[^}]*max-width:\s*960px;[^}]*margin-inline:\s*auto;/s,
     );
     expect(scoreCss).toMatch(/\.stage\[data-score-width="full"\] \.frame\s*{[^}]*max-width:\s*none;/s);
     expect(scoreCss).toMatch(/\.viewControls\s*{[^}]*position:\s*sticky;[^}]*gap:\s*4px;/s);

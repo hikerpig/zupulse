@@ -75,8 +75,21 @@ token。
 User Correction > supported source <harmony> > active Analysis Revision
 ```
 
-Correction 锚定 Score Written Range，因此可以重新叠加到新 Revision。来源冲突、微分音、不支持的
-kind 与低 confidence 保持 unresolved。N.C. 只能来自 source 或 User Correction。
+Correction 锚定 Score Written Range，因此可以重新叠加到新 Revision。来源冲突与低 confidence
+保持 unresolved。MusicXML `<numeral>`、不支持的 kind 等无法表达为产品 Chord Symbol 的来源
+`<harmony>` 由 parser 保留为诊断，但在 boundary union 前从权威来源集合排除，既不切分也不覆盖
+active Revision。N.C. 只能来自 supported source 或 User Correction。
+
+## Studio preview
+
+Studio preview 不修改 Managed Score Copy。`studio-score-runtime` 把固化的 Effective Projection 交给
+alphaTab adapter，adapter 临时设置目标 beat 的 `chordId` 后重新渲染 tracks，并在下一次 preview 或
+Session dispose 时恢复原值。
+
+Chord preview 优先使用与 range start 精确相同的 beat。Semi-CRF boundary 可能来自 note offset 或
+grace event 等不可直接挂载 Chord 的细分事件；这时 adapter 选择该 range 内第一个实际 beat。只有
+range 内没有任何 beat、score runtime 不存在或 alphaTab 不提供所需能力时，preview 才降级为
+unrepresentable / unavailable，不能因单个非 beat boundary 拒绝整批结果。
 
 ## 保存、重分析与并发
 

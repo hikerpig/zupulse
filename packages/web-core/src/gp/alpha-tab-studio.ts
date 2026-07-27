@@ -162,7 +162,8 @@ export function applyAlphaTabHarmonyPreview(
 ): AlphaTabHarmonyPreviewResult {
   const score = api.score;
   if (!score || !api.renderTracks) return { status: "unavailable" };
-  const pending = entries.map((entry) => ({ entry, beat: findBeat(score, entry.range.start) }));
+  const beats = allBeats(score);
+  const pending = entries.map((entry) => ({ entry, beat: findPreviewBeat(beats, entry.range) }));
   if (pending.some(({ beat }) => beat === undefined)) return { status: "unrepresentable" };
   if (pending.some(({ beat }) => beat?.voice.bar.staff === undefined)) return { status: "unavailable" };
 
@@ -204,8 +205,14 @@ function allBeats(score: AlphaTabStudioScore): AlphaTabStudioBeat[] {
   );
 }
 
-function findBeat(score: AlphaTabStudioScore, moment: ScoreWrittenMoment): AlphaTabStudioBeat | undefined {
-  return allBeats(score).find((beat) => compareMoments(toScoreWrittenMoment(beat), moment) === 0);
+function findPreviewBeat(
+  beats: readonly AlphaTabStudioBeat[],
+  range: ScoreWrittenRange,
+): AlphaTabStudioBeat | undefined {
+  return (
+    beats.find((beat) => compareMoments(toScoreWrittenMoment(beat), range.start) === 0) ??
+    beats.find((beat) => contains(range, toScoreWrittenMoment(beat)))
+  );
 }
 
 function contains(range: ScoreWrittenRange, moment: ScoreWrittenMoment): boolean {

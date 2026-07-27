@@ -241,6 +241,32 @@ describe("applyAlphaTabHarmonyPreview", () => {
     expect(renders).toBe(1);
     expect(bytes).toEqual(source);
   });
+
+  it("uses the first beat inside a range when its exact start is not attachable", () => {
+    const chords = new Map<string, { name?: string }>();
+    const staff = {
+      addChord: (id: string, chord: { name?: string }) => chords.set(id, chord),
+    };
+    const grace = { ...beat(0, 0), voice: { bar: { index: 0, staff } } };
+    const firstAttachable = { ...beat(0, 4), voice: { bar: { index: 0, staff } } };
+    const previewScore = {
+      masterBars: [{ start: 0 }],
+      tracks: [{ staves: [{ bars: [{ voices: [{ beats: [grace, firstAttachable] }] }] }] }],
+    };
+
+    const result = applyAlphaTabHarmonyPreview({ score: previewScore, renderTracks: () => undefined }, [
+      {
+        type: "chord",
+        range: { start: { measureIndex: 0, offsetTicks: 1 }, end: { measureIndex: 0, offsetTicks: 8 } },
+        chord: { root: { step: "B", alter: 0 }, kind: "minor", degrees: [] },
+        origin: "analysis",
+      },
+    ]);
+
+    expect(result.status).toBe("applied");
+    expect(grace.chordId).toBeUndefined();
+    expect(chords.get(firstAttachable.chordId!)?.name).toBe("Bm");
+  });
 });
 
 describe("Studio alphaTab preview transport", () => {

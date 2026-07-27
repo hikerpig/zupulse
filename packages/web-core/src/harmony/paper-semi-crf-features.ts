@@ -57,6 +57,7 @@ type RoleEntry = {
 type LabelFeatureContext = {
   roles: ChordRoles;
   chordPitchClasses: ReadonlySet<number>;
+  chordPitchClassList: readonly number[];
   roleEntries: readonly RoleEntry[];
 };
 
@@ -74,11 +75,12 @@ export function createPaperSemiCrfNamedFeatureProvider(input: {
   events: readonly PaperSemiCrfEvent[];
   labels: readonly PaperSemiCrfSupportedLabel[];
 }): PaperSemiCrfNamedFeatureProvider {
-  const labelsById = new Map(input.labels.map((label) => [label.id, label]));
+  const labelsById: Array<PaperSemiCrfSupportedLabel | undefined> = [];
+  for (const label of input.labels) labelsById[label.id] = label;
   const evidenceCache = createPaperSemiCrfRangeEvidenceCache(input.events);
   const figurationCache = createPaperSemiCrfFigurationEvidenceCache(input.events);
   return (localInput) => {
-    const label = labelsById.get(localInput.segment.labelId);
+    const label = labelsById[localInput.segment.labelId];
     if (!label) throw new Error("missing paper semi-CRF label");
     const segmentFeatures = extractPaperSemiCrfSegmentFeaturesWithEvidence(
       { events: input.events, segment: localInput.segment, label },
@@ -86,7 +88,7 @@ export function createPaperSemiCrfNamedFeatureProvider(input: {
       figurationCache,
     );
     if (localInput.previousLabelId === undefined) return segmentFeatures;
-    const previousLabel = labelsById.get(localInput.previousLabelId);
+    const previousLabel = labelsById[localInput.previousLabelId];
     if (!previousLabel) throw new Error("missing paper semi-CRF previous label");
     return [...segmentFeatures, extractPaperSemiCrfTransitionFeature(label, previousLabel)];
   };
@@ -160,12 +162,13 @@ export function createPaperSemiCrfFactorizedLinearScorers(input: {
     featureNames: input.dictionary.featureNames,
     weights: input.weights,
   });
-  const labelsById = new Map(input.labels.map((label) => [label.id, label]));
+  const labelsById: Array<PaperSemiCrfSupportedLabel | undefined> = [];
+  for (const label of input.labels) labelsById[label.id] = label;
   const accumulator = new CompiledFeatureAccumulator(compiledWeights);
   const evidenceCache = createPaperSemiCrfRangeEvidenceCache(input.events);
   const figurationCache = createPaperSemiCrfFigurationEvidenceCache(input.events);
   const segmentPotential = (segment: PaperSemiCrfSegment) => {
-    const label = labelsById.get(segment.labelId);
+    const label = labelsById[segment.labelId];
     if (!label) throw new Error("missing paper semi-CRF label");
     accumulator.reset();
     collectPaperSemiCrfSegmentFeatures(
@@ -179,8 +182,8 @@ export function createPaperSemiCrfFactorizedLinearScorers(input: {
   const transitionScores = Float64Array.from({ length: input.labels.length * input.labels.length }, (_, index) => {
     const currentLabelId = Math.floor(index / input.labels.length);
     const previousLabelId = index % input.labels.length;
-    const current = labelsById.get(currentLabelId);
-    const previous = labelsById.get(previousLabelId);
+    const current = labelsById[currentLabelId];
+    const previous = labelsById[previousLabelId];
     if (!current || !previous) throw new Error("missing paper semi-CRF transition label");
     const featureIndex = input.dictionary.featureNames.indexOf(extractPaperSemiCrfTransitionFeature(current, previous));
     return featureIndex < 0 ? 0 : input.weights[featureIndex]!;
@@ -255,26 +258,29 @@ function collectPaperSemiCrfSegmentFeatures(
     throw new Error("invalid paper semi-CRF feature segment");
   }
   const labelContext = labelFeatureContext(input.label);
-  const { roles, chordPitchClasses, roleEntries } = labelContext;
+  const { roles, chordPitchClasses, chordPitchClassList, roleEntries } = labelContext;
   const figurationEvidence = figurationCache.forRange(
     input.segment.startEvent,
     input.segment.endEvent,
     chordPitchClasses,
   );
-  sink.binned(PaperSemiCrfBinnedFeature.Purity, purityBinFromEvidence(evidence, chordPitchClasses, "count"));
-  sink.binned(PaperSemiCrfBinnedFeature.AccentedPurity, purityBinFromEvidence(evidence, chordPitchClasses, "accent"));
-  sink.binned(PaperSemiCrfBinnedFeature.DurationPurity, purityBinFromEvidence(evidence, chordPitchClasses, "duration"));
+  sink.binned(PaperSemiCrfBinnedFeature.Purity, purityBinFromEvidence(evidence, chordPitchClassList, "count"));
+  sink.binned(PaperSemiCrfBinnedFeature.AccentedPurity, purityBinFromEvidence(evidence, chordPitchClassList, "accent"));
+  sink.binned(
+    PaperSemiCrfBinnedFeature.DurationPurity,
+    purityBinFromEvidence(evidence, chordPitchClassList, "duration"),
+  );
   sink.binned(
     PaperSemiCrfBinnedFeature.FigPurity,
-    purityBinFromEvidence(figurationEvidence, chordPitchClasses, "count"),
+    purityBinFromEvidence(figurationEvidence, chordPitchClassList, "count"),
   );
   sink.binned(
     PaperSemiCrfBinnedFeature.FigAccentedPurity,
-    purityBinFromEvidence(figurationEvidence, chordPitchClasses, "accent"),
+    purityBinFromEvidence(figurationEvidence, chordPitchClassList, "accent"),
   );
   sink.binned(
     PaperSemiCrfBinnedFeature.FigDurationPurity,
-    purityBinFromEvidence(figurationEvidence, chordPitchClasses, "duration"),
+    purityBinFromEvidence(figurationEvidence, chordPitchClassList, "duration"),
   );
   const rootCovered = coversRoleFromEvidence(evidence, roles.root);
   const thirdCovered = coversRoleFromEvidence(evidence, roles.third);
@@ -488,19 +494,29 @@ export function paperSemiCrfConsistencyBin(input: {
   matchedCount: number;
   noteCount: number;
 }): number {
-  if (input.matchedCount === 0) return 0;
-  if (input.matchedCount === input.noteCount) return 101;
-  const percentage = input.matching / input.total;
-  const bins = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
-  for (const bin of bins) {
-    if (percentage <= bin) return bin * 100;
-  }
+  return consistencyBin(input.matching, input.total, input.matchedCount, input.noteCount);
+}
+
+function consistencyBin(matching: number, total: number, matchedCount: number, noteCount: number): number {
+  if (matchedCount === 0) return 0;
+  if (matchedCount === noteCount) return 101;
+  const percentage = matching / total;
+  if (percentage <= 0.1) return 10;
+  if (percentage <= 0.2) return 20;
+  if (percentage <= 0.3) return 30;
+  if (percentage <= 0.4) return 40;
+  if (percentage <= 0.5) return 50;
+  if (percentage <= 0.6) return 60;
+  if (percentage <= 0.7) return 70;
+  if (percentage <= 0.8) return 80;
+  if (percentage <= 0.9) return 90;
+  if (percentage <= 1) return 100;
   return 0;
 }
 
 function purityBinFromEvidence(
   evidence: NoteEvidence,
-  chordPitchClasses: ReadonlySet<number>,
+  chordPitchClasses: readonly number[],
   weight: FeatureWeight,
 ): number {
   const values =
@@ -511,12 +527,12 @@ function purityBinFromEvidence(
         : evidence.durationByPitchClass;
   const total =
     weight === "count" ? evidence.noteCount : weight === "accent" ? evidence.accentTotal : evidence.durationTotal;
-  return paperSemiCrfConsistencyBin({
-    matching: sumPitchClasses(values, chordPitchClasses),
+  return consistencyBin(
+    sumPitchClasses(values, chordPitchClasses),
     total,
-    matchedCount: sumPitchClasses(evidence.noteCountByPitchClass, chordPitchClasses),
-    noteCount: evidence.noteCount,
-  });
+    sumPitchClasses(evidence.noteCountByPitchClass, chordPitchClasses),
+    evidence.noteCount,
+  );
 }
 
 function coversRoleFromEvidence(evidence: PaperSemiCrfRangeEvidence, role: readonly number[]): boolean {
@@ -531,23 +547,18 @@ function weightedCoverageBinFromEvidence(
   if (role.length === 0) return 0;
   const values = weight === "duration" ? evidence.durationByPitchClass : evidence.accentByPitchClass;
   const total = weight === "duration" ? evidence.durationTotal : evidence.accentTotal;
-  return paperSemiCrfConsistencyBin({
-    matching: sumPitchClasses(values, role),
+  return consistencyBin(
+    sumPitchClasses(values, role),
     total,
-    matchedCount: sumPitchClasses(evidence.noteCountByPitchClass, role),
-    noteCount: evidence.noteCount,
-  });
+    sumPitchClasses(evidence.noteCountByPitchClass, role),
+    evidence.noteCount,
+  );
 }
 
 function segmentDurationCoverageBinFromEvidence(evidence: PaperSemiCrfRangeEvidence, role: readonly number[]): number {
   if (role.length === 0) return 0;
   const coverage = evidence.segmentDurationCoverage(role);
-  return paperSemiCrfConsistencyBin({
-    matching: coverage.matching,
-    total: coverage.total,
-    matchedCount: coverage.matchedCount,
-    noteCount: coverage.eventCount,
-  });
+  return consistencyBin(coverage.matching, coverage.total, coverage.matchedCount, coverage.eventCount);
 }
 
 function addedDurationExceedsRootEvidence(evidence: PaperSemiCrfRangeEvidence, roles: ChordRoles): boolean {
@@ -563,21 +574,37 @@ function weightedBassBinFromEvidence(
   weight: Exclude<FeatureWeight, "count">,
 ): number {
   if (role.length === 0) return 0;
-  return paperSemiCrfConsistencyBin({
-    matching: sumPitchClasses(
-      weight === "duration" ? evidence.durationBassByPitchClass : evidence.accentBassByPitchClass,
-      role,
-    ),
-    total: weight === "duration" ? evidence.eventDurationTotal : evidence.eventAccentTotal,
-    matchedCount: sumPitchClasses(evidence.bassEventCountByPitchClass, role),
-    noteCount: evidence.eventCount,
-  });
+  return consistencyBin(
+    sumPitchClasses(weight === "duration" ? evidence.durationBassByPitchClass : evidence.accentBassByPitchClass, role),
+    weight === "duration" ? evidence.eventDurationTotal : evidence.eventAccentTotal,
+    sumPitchClasses(evidence.bassEventCountByPitchClass, role),
+    evidence.eventCount,
+  );
 }
 
-function sumPitchClasses(values: ArrayLike<number>, pitchClasses: Iterable<number>): number {
-  let total = 0;
-  for (const pitchClass of pitchClasses) total += values[pitchClass] ?? 0;
-  return total;
+function sumPitchClasses(values: ArrayLike<number>, pitchClasses: readonly number[]): number {
+  switch (pitchClasses.length) {
+    case 0:
+      return 0;
+    case 1:
+      return values[pitchClasses[0]!] ?? 0;
+    case 2:
+      return (values[pitchClasses[0]!] ?? 0) + (values[pitchClasses[1]!] ?? 0);
+    case 3:
+      return (values[pitchClasses[0]!] ?? 0) + (values[pitchClasses[1]!] ?? 0) + (values[pitchClasses[2]!] ?? 0);
+    case 4:
+      return (
+        (values[pitchClasses[0]!] ?? 0) +
+        (values[pitchClasses[1]!] ?? 0) +
+        (values[pitchClasses[2]!] ?? 0) +
+        (values[pitchClasses[3]!] ?? 0)
+      );
+    default: {
+      let total = 0;
+      for (const pitchClass of pitchClasses) total += values[pitchClass] ?? 0;
+      return total;
+    }
+  }
 }
 
 function notesInSegment(events: readonly PaperSemiCrfEvent[]): PaperSemiCrfEventNote[] {
@@ -783,9 +810,11 @@ function labelFeatureContext(label: PaperSemiCrfSupportedLabel): LabelFeatureCon
   const cached = labelFeatureContexts.get(label);
   if (cached) return cached;
   const roles = chordRoles(label);
+  const chordPitchClassList = [...new Set([...roles.root, ...roles.third, ...roles.fifth, ...roles.added])];
   const context = {
     roles,
-    chordPitchClasses: new Set([...roles.root, ...roles.third, ...roles.fifth, ...roles.added]),
+    chordPitchClasses: new Set(chordPitchClassList),
+    chordPitchClassList,
     roleEntries: [
       { role: PaperSemiCrfRole.Root, pitchClasses: roles.root },
       { role: PaperSemiCrfRole.Third, pitchClasses: roles.third },

@@ -108,6 +108,10 @@ function buildRangeEvidence(
   }
   const firstEventBass = lowestNote(firstEvent.notes);
   const segmentBass = lowestNote(notes);
+  const durationCoverageByRoleMask = new Map<
+    number,
+    { matching: number; total: number; matchedCount: number; eventCount: number }
+  >();
 
   return {
     noteCount: notes.length,
@@ -128,6 +132,8 @@ function buildRangeEvidence(
     segmentDurationCoverage(role) {
       let roleMask = 0;
       for (const pitchClass of role) roleMask |= 1 << pitchClass;
+      const cached = durationCoverageByRoleMask.get(roleMask);
+      if (cached) return cached;
       let matching = 0;
       let matchedCount = 0;
       for (const [index, event] of events.entries()) {
@@ -135,7 +141,9 @@ function buildRangeEvidence(
         matching += event.durationTicks;
         matchedCount += 1;
       }
-      return { matching, total: eventDurationTotal, matchedCount, eventCount: events.length };
+      const coverage = { matching, total: eventDurationTotal, matchedCount, eventCount: events.length };
+      durationCoverageByRoleMask.set(roleMask, coverage);
+      return coverage;
     },
   };
 }

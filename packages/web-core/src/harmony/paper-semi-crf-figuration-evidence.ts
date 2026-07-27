@@ -42,8 +42,12 @@ const EMPTY_EVENT: PaperSemiCrfEvent = {
 export function createPaperSemiCrfFigurationEvidenceCache(
   events: readonly PaperSemiCrfEvent[],
 ): PaperSemiCrfFigurationEvidenceCache {
+  const useCompactDurationPrefixes = canUseCompactDurationPrefixes(events);
   const retainedNotes = createRetainedNotesCache(events);
-  const computedSingletonKeys = new Set<number>();
+  const prefixComputedMasks = new Set<number>();
+  const directlyComputedEventsByMask = new Map<number, Set<number>>();
+  let computedSingletonCount = 0;
+  const prefixByChordMask = new Map<number, FigurationPrefixEvidence>();
   const rangeEvidence: PaperSemiCrfFigurationRangeEvidence = {
     noteCount: 0,
     noteCountByPitchClass: new Float64Array(12),
@@ -65,13 +69,35 @@ export function createPaperSemiCrfFigurationEvidenceCache(
     if (!Number.isSafeInteger(eventIndex) || eventIndex < 0 || eventIndex >= events.length) {
       throw new Error("invalid paper Semi-CRF figuration event");
     }
-    const key = eventIndex * 4096 + pitchClassMask(chordPitchClasses);
-    computedSingletonKeys.add(key);
+    const mask = pitchClassMask(chordPitchClasses);
+    if (!prefixComputedMasks.has(mask)) {
+      let directlyComputedEvents = directlyComputedEventsByMask.get(mask);
+      if (!directlyComputedEvents) {
+        directlyComputedEvents = new Set<number>();
+        directlyComputedEventsByMask.set(mask, directlyComputedEvents);
+      }
+      if (!directlyComputedEvents.has(eventIndex)) {
+        directlyComputedEvents.add(eventIndex);
+        computedSingletonCount += 1;
+      }
+    }
     return lowestRetainedNote(events[eventIndex]!, retainedNotes.forEvent(eventIndex, true, true, chordPitchClasses));
+  };
+  const prefixFor = (chordPitchClasses: ReadonlySet<number>, mask: number) => {
+    const cached = prefixByChordMask.get(mask);
+    if (cached) return cached;
+    const prefix = buildFigurationPrefixEvidence(events, retainedNotes, chordPitchClasses, useCompactDurationPrefixes);
+    prefixByChordMask.set(mask, prefix);
+    computedSingletonCount += events.length - (directlyComputedEventsByMask.get(mask)?.size ?? 0);
+    directlyComputedEventsByMask.delete(mask);
+    prefixComputedMasks.add(mask);
+    return prefix;
   };
   return {
     forRange(startEvent, endEvent, chordPitchClasses) {
       const firstEvent = events[startEvent]!;
+      const chordMask = pitchClassMask(chordPitchClasses);
+      const prefix = prefixFor(chordPitchClasses, chordMask);
       rangeEvidence.noteCount = 0;
       rangeEvidence.noteCountByPitchClass.fill(0);
       rangeEvidence.durationTotal = 0;
@@ -83,49 +109,225 @@ export function createPaperSemiCrfFigurationEvidenceCache(
       rangeEvidence.bassEventCountByPitchClass.fill(0);
       delete rangeEvidence.segmentBass;
       rangeEvidence.eventCount = endEvent - startEvent;
-      rangeEvidence.eventDurationTotal = 0;
-      rangeEvidence.eventAccentTotal = 0;
-      for (let eventIndex = startEvent; eventIndex < endEvent; eventIndex += 1) {
-        const event = events[eventIndex]!;
-        const retained = retainedNotes.forEvent(
-          eventIndex,
-          eventIndex === startEvent,
-          eventIndex === endEvent - 1,
-          chordPitchClasses,
+      rangeEvidence.eventDurationTotal = prefix.eventDuration[endEvent]! - prefix.eventDuration[startEvent]!;
+      rangeEvidence.eventAccentTotal = prefix.eventAccent[endEvent]! - prefix.eventAccent[startEvent]!;
+      addBassPrefixRange(prefix, startEvent, endEvent, rangeEvidence);
+      if (endEvent - startEvent === 1) {
+        addRetainedEventEvidence(
+          events[startEvent]!,
+          retainedNotes.forEvent(startEvent, true, true, chordPitchClasses),
+          firstEvent.startTick,
+          rangeEvidence,
         );
-        forEachRetainedNote(event, retained, (note) => {
-          const pitchClass = note.soundingPitchClass;
-          const duration = note.heldFromPrevious
-            ? note.sourceDurationTicks - (firstEvent.startTick - note.onsetTick)
-            : note.sourceDurationTicks;
-          const accent = note.heldFromPrevious ? 0 : note.metricAccent;
-          rangeEvidence.noteCount += 1;
-          rangeEvidence.noteCountByPitchClass[pitchClass] = rangeEvidence.noteCountByPitchClass[pitchClass]! + 1;
-          rangeEvidence.durationByPitchClass[pitchClass] = rangeEvidence.durationByPitchClass[pitchClass]! + duration;
-          rangeEvidence.accentByPitchClass[pitchClass] = rangeEvidence.accentByPitchClass[pitchClass]! + accent;
-          rangeEvidence.durationTotal += duration;
-          rangeEvidence.accentTotal += accent;
-          const bass = rangeEvidence.segmentBass;
-          if (!bass || lowerThan(note, bass)) rangeEvidence.segmentBass = note;
-        });
-        rangeEvidence.eventDurationTotal += event.durationTicks;
-        rangeEvidence.eventAccentTotal += event.metricAccent;
-        const bass = singleEventBass(eventIndex, chordPitchClasses);
-        if (!bass) continue;
-        rangeEvidence.durationBassByPitchClass[bass.soundingPitchClass] =
-          rangeEvidence.durationBassByPitchClass[bass.soundingPitchClass]! + event.durationTicks;
-        rangeEvidence.accentBassByPitchClass[bass.soundingPitchClass] =
-          rangeEvidence.accentBassByPitchClass[bass.soundingPitchClass]! + event.metricAccent;
-        rangeEvidence.bassEventCountByPitchClass[bass.soundingPitchClass] =
-          rangeEvidence.bassEventCountByPitchClass[bass.soundingPitchClass]! + 1;
+      } else {
+        addRetainedEventEvidence(
+          events[startEvent]!,
+          retainedNotes.forEvent(startEvent, true, false, chordPitchClasses),
+          firstEvent.startTick,
+          rangeEvidence,
+        );
+        addPrefixRange(prefix, startEvent + 1, endEvent - 1, firstEvent.startTick, rangeEvidence);
+        addRetainedEventEvidence(
+          events[endEvent - 1]!,
+          retainedNotes.forEvent(endEvent - 1, false, true, chordPitchClasses),
+          firstEvent.startTick,
+          rangeEvidence,
+        );
       }
       return rangeEvidence;
     },
     singleEventBass,
     computedSingletons() {
-      return computedSingletonKeys.size;
+      return computedSingletonCount;
     },
   };
+}
+
+type FigurationPrefixEvidence = {
+  noteCount: Uint32Array;
+  durationBase: Float64Array | Uint32Array;
+  heldCount: Uint32Array;
+  accent: Float32Array;
+  noteCountByPitchClass: Uint32Array;
+  durationBaseByPitchClass: Float64Array | Uint32Array;
+  heldCountByPitchClass: Uint32Array;
+  accentByPitchClass: Float32Array;
+  eventDuration: Float64Array | Uint32Array;
+  eventAccent: Float32Array;
+  durationBassByPitchClass: Float64Array | Uint32Array;
+  accentBassByPitchClass: Float32Array;
+  bassEventCountByPitchClass: Uint32Array;
+  interiorBass: Array<PaperSemiCrfEventNote | undefined>;
+};
+
+function buildFigurationPrefixEvidence(
+  events: readonly PaperSemiCrfEvent[],
+  retainedNotes: ReturnType<typeof createRetainedNotesCache>,
+  chordPitchClasses: ReadonlySet<number>,
+  useCompactDurations: boolean,
+): FigurationPrefixEvidence {
+  const length = events.length + 1;
+  const durations = (size: number) => (useCompactDurations ? new Uint32Array(size) : new Float64Array(size));
+  const prefix: FigurationPrefixEvidence = {
+    noteCount: new Uint32Array(length),
+    durationBase: durations(length),
+    heldCount: new Uint32Array(length),
+    accent: new Float32Array(length),
+    noteCountByPitchClass: new Uint32Array(length * 12),
+    durationBaseByPitchClass: durations(length * 12),
+    heldCountByPitchClass: new Uint32Array(length * 12),
+    accentByPitchClass: new Float32Array(length * 12),
+    eventDuration: durations(length),
+    eventAccent: new Float32Array(length),
+    durationBassByPitchClass: durations(length * 12),
+    accentBassByPitchClass: new Float32Array(length * 12),
+    bassEventCountByPitchClass: new Uint32Array(length * 12),
+    interiorBass: Array.from({ length: events.length }),
+  };
+  for (let eventIndex = 0; eventIndex < events.length; eventIndex += 1) {
+    const event = events[eventIndex]!;
+    const current = eventIndex + 1;
+    prefix.noteCount[current] = prefix.noteCount[eventIndex]!;
+    prefix.durationBase[current] = prefix.durationBase[eventIndex]!;
+    prefix.heldCount[current] = prefix.heldCount[eventIndex]!;
+    prefix.accent[current] = prefix.accent[eventIndex]!;
+    prefix.eventDuration[current] = prefix.eventDuration[eventIndex]! + event.durationTicks;
+    prefix.eventAccent[current] = prefix.eventAccent[eventIndex]! + event.metricAccent;
+    copyPitchClassPrefix(prefix, eventIndex, current);
+    const interior = retainedNotes.forEvent(eventIndex, false, false, chordPitchClasses);
+    forEachRetainedNote(event, interior, (note) => {
+      const pitchClass = note.soundingPitchClass;
+      const offset = current * 12 + pitchClass;
+      prefix.noteCount[current] = prefix.noteCount[current]! + 1;
+      prefix.noteCountByPitchClass[offset] = prefix.noteCountByPitchClass[offset]! + 1;
+      const durationBase = note.sourceDurationTicks + (note.heldFromPrevious ? note.onsetTick : 0);
+      prefix.durationBase[current] = prefix.durationBase[current]! + durationBase;
+      prefix.durationBaseByPitchClass[offset] = prefix.durationBaseByPitchClass[offset]! + durationBase;
+      if (note.heldFromPrevious) {
+        prefix.heldCount[current] = prefix.heldCount[current]! + 1;
+        prefix.heldCountByPitchClass[offset] = prefix.heldCountByPitchClass[offset]! + 1;
+      } else {
+        prefix.accent[current] = prefix.accent[current]! + note.metricAccent;
+        prefix.accentByPitchClass[offset] = prefix.accentByPitchClass[offset]! + note.metricAccent;
+      }
+    });
+    prefix.interiorBass[eventIndex] = lowestRetainedNote(event, interior);
+    const singletonBass = lowestRetainedNote(event, retainedNotes.forEvent(eventIndex, true, true, chordPitchClasses));
+    if (singletonBass) {
+      const offset = current * 12 + singletonBass.soundingPitchClass;
+      prefix.durationBassByPitchClass[offset] = prefix.durationBassByPitchClass[offset]! + event.durationTicks;
+      prefix.accentBassByPitchClass[offset] = prefix.accentBassByPitchClass[offset]! + event.metricAccent;
+      prefix.bassEventCountByPitchClass[offset] = prefix.bassEventCountByPitchClass[offset]! + 1;
+    }
+  }
+  return prefix;
+}
+
+function canUseCompactDurationPrefixes(events: readonly PaperSemiCrfEvent[]): boolean {
+  const maximum = 0xffffffff;
+  let eventDurationTotal = 0;
+  let noteDurationUpperBound = 0;
+  for (const event of events) {
+    eventDurationTotal += event.durationTicks;
+    if (eventDurationTotal > maximum) return false;
+    for (const note of event.notes) {
+      noteDurationUpperBound += note.sourceDurationTicks + note.onsetTick;
+      if (noteDurationUpperBound > maximum) return false;
+    }
+  }
+  return true;
+}
+
+function copyPitchClassPrefix(prefix: FigurationPrefixEvidence, previous: number, current: number): void {
+  for (let pitchClass = 0; pitchClass < 12; pitchClass += 1) {
+    const previousOffset = previous * 12 + pitchClass;
+    const currentOffset = current * 12 + pitchClass;
+    prefix.noteCountByPitchClass[currentOffset] = prefix.noteCountByPitchClass[previousOffset]!;
+    prefix.durationBaseByPitchClass[currentOffset] = prefix.durationBaseByPitchClass[previousOffset]!;
+    prefix.heldCountByPitchClass[currentOffset] = prefix.heldCountByPitchClass[previousOffset]!;
+    prefix.accentByPitchClass[currentOffset] = prefix.accentByPitchClass[previousOffset]!;
+    prefix.durationBassByPitchClass[currentOffset] = prefix.durationBassByPitchClass[previousOffset]!;
+    prefix.accentBassByPitchClass[currentOffset] = prefix.accentBassByPitchClass[previousOffset]!;
+    prefix.bassEventCountByPitchClass[currentOffset] = prefix.bassEventCountByPitchClass[previousOffset]!;
+  }
+}
+
+function addPrefixRange(
+  prefix: FigurationPrefixEvidence,
+  startEvent: number,
+  endEvent: number,
+  firstStartTick: number,
+  evidence: PaperSemiCrfFigurationRangeEvidence,
+): void {
+  if (startEvent >= endEvent) return;
+  const noteCount = prefix.noteCount[endEvent]! - prefix.noteCount[startEvent]!;
+  const heldCount = prefix.heldCount[endEvent]! - prefix.heldCount[startEvent]!;
+  evidence.noteCount += noteCount;
+  evidence.durationTotal +=
+    prefix.durationBase[endEvent]! - prefix.durationBase[startEvent]! - heldCount * firstStartTick;
+  evidence.accentTotal += prefix.accent[endEvent]! - prefix.accent[startEvent]!;
+  for (let pitchClass = 0; pitchClass < 12; pitchClass += 1) {
+    const startOffset = startEvent * 12 + pitchClass;
+    const endOffset = endEvent * 12 + pitchClass;
+    const pitchHeldCount = prefix.heldCountByPitchClass[endOffset]! - prefix.heldCountByPitchClass[startOffset]!;
+    evidence.noteCountByPitchClass[pitchClass] =
+      evidence.noteCountByPitchClass[pitchClass]! +
+      prefix.noteCountByPitchClass[endOffset]! -
+      prefix.noteCountByPitchClass[startOffset]!;
+    evidence.durationByPitchClass[pitchClass] =
+      evidence.durationByPitchClass[pitchClass]! +
+      prefix.durationBaseByPitchClass[endOffset]! -
+      prefix.durationBaseByPitchClass[startOffset]! -
+      pitchHeldCount * firstStartTick;
+    evidence.accentByPitchClass[pitchClass] =
+      evidence.accentByPitchClass[pitchClass]! +
+      prefix.accentByPitchClass[endOffset]! -
+      prefix.accentByPitchClass[startOffset]!;
+  }
+  for (let eventIndex = startEvent; eventIndex < endEvent; eventIndex += 1) {
+    const bass = prefix.interiorBass[eventIndex];
+    if (bass && (!evidence.segmentBass || lowerThan(bass, evidence.segmentBass))) evidence.segmentBass = bass;
+  }
+}
+
+function addBassPrefixRange(
+  prefix: FigurationPrefixEvidence,
+  startEvent: number,
+  endEvent: number,
+  evidence: PaperSemiCrfFigurationRangeEvidence,
+): void {
+  for (let pitchClass = 0; pitchClass < 12; pitchClass += 1) {
+    const startOffset = startEvent * 12 + pitchClass;
+    const endOffset = endEvent * 12 + pitchClass;
+    evidence.durationBassByPitchClass[pitchClass] =
+      prefix.durationBassByPitchClass[endOffset]! - prefix.durationBassByPitchClass[startOffset]!;
+    evidence.accentBassByPitchClass[pitchClass] =
+      prefix.accentBassByPitchClass[endOffset]! - prefix.accentBassByPitchClass[startOffset]!;
+    evidence.bassEventCountByPitchClass[pitchClass] =
+      prefix.bassEventCountByPitchClass[endOffset]! - prefix.bassEventCountByPitchClass[startOffset]!;
+  }
+}
+
+function addRetainedEventEvidence(
+  event: PaperSemiCrfEvent,
+  retained: RetainedEventNotes,
+  firstStartTick: number,
+  evidence: PaperSemiCrfFigurationRangeEvidence,
+): void {
+  forEachRetainedNote(event, retained, (note) => {
+    const pitchClass = note.soundingPitchClass;
+    const duration = note.heldFromPrevious
+      ? note.sourceDurationTicks - (firstStartTick - note.onsetTick)
+      : note.sourceDurationTicks;
+    const accent = note.heldFromPrevious ? 0 : note.metricAccent;
+    evidence.noteCount += 1;
+    evidence.noteCountByPitchClass[pitchClass] = evidence.noteCountByPitchClass[pitchClass]! + 1;
+    evidence.durationByPitchClass[pitchClass] = evidence.durationByPitchClass[pitchClass]! + duration;
+    evidence.accentByPitchClass[pitchClass] = evidence.accentByPitchClass[pitchClass]! + accent;
+    evidence.durationTotal += duration;
+    evidence.accentTotal += accent;
+    if (!evidence.segmentBass || lowerThan(note, evidence.segmentBass)) evidence.segmentBass = note;
+  });
 }
 
 function createRetainedNotesCache(events: readonly PaperSemiCrfEvent[]): {
@@ -136,21 +338,42 @@ function createRetainedNotesCache(events: readonly PaperSemiCrfEvent[]): {
     chordPitchClasses: ReadonlySet<number>,
   ): RetainedEventNotes;
 } {
-  const retainedByContext = new Map<number, RetainedEventNotes>();
+  const compactRetainedByChordMask = new Map<number, Int32Array>();
+  const overflowRetainedByContext = new Map<number, readonly PaperSemiCrfEventNote[]>();
   return {
     forEvent(eventIndex, isRangeStart, isRangeEnd, chordPitchClasses) {
       const mask = pitchClassMask(chordPitchClasses);
       const context = (Number(isRangeStart) << 1) | Number(isRangeEnd);
+      const compactIndex = eventIndex * 4 + context;
+      if (events[eventIndex]!.notes.length <= 31) {
+        let retainedByContext = compactRetainedByChordMask.get(mask);
+        if (!retainedByContext) {
+          retainedByContext = new Int32Array(events.length * 4);
+          retainedByContext.fill(-1);
+          compactRetainedByChordMask.set(mask, retainedByContext);
+        }
+        const cached = retainedByContext[compactIndex]!;
+        if (cached !== -1) return cached;
+        const retainedNotes = computeRetainedEventNotes(
+          events,
+          eventIndex,
+          isRangeStart,
+          isRangeEnd,
+          chordPitchClasses,
+        );
+        const retained = retainedNotes.reduce(
+          (noteMask, note) => noteMask | (1 << events[eventIndex]!.notes.indexOf(note)),
+          0,
+        );
+        retainedByContext[compactIndex] = retained;
+        return retained;
+      }
       const key = (eventIndex * 4096 + mask) * 4 + context;
-      const cached = retainedByContext.get(key);
-      if (cached !== undefined) return cached;
+      const cached = overflowRetainedByContext.get(key);
+      if (cached) return cached;
       const retainedNotes = computeRetainedEventNotes(events, eventIndex, isRangeStart, isRangeEnd, chordPitchClasses);
-      const retained =
-        eventIndex < events.length && events[eventIndex]!.notes.length <= 31
-          ? retainedNotes.reduce((mask, note) => mask | (1 << events[eventIndex]!.notes.indexOf(note)), 0)
-          : retainedNotes;
-      retainedByContext.set(key, retained);
-      return retained;
+      overflowRetainedByContext.set(key, retainedNotes);
+      return retainedNotes;
     },
   };
 }

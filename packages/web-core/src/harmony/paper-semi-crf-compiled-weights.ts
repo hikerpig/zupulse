@@ -127,7 +127,7 @@ export function compilePaperSemiCrfFeatureWeights(input: {
 }
 
 export function paperSemiCrfConsistencyBinIndex(bin: number): number {
-  const index = CONSISTENCY_BINS.indexOf(bin as (typeof CONSISTENCY_BINS)[number]);
-  if (index < 0) throw new Error(`unsupported paper Semi-CRF consistency bin: ${bin}`);
-  return index;
+  if (bin === 101) return 11;
+  if (Number.isInteger(bin) && bin >= 0 && bin <= 100 && bin % 10 === 0) return bin / 10;
+  throw new Error(`unsupported paper Semi-CRF consistency bin: ${bin}`);
 }

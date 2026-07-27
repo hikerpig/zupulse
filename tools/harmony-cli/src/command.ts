@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { benchmarkHarmonyAnalysisFile } from "./benchmarkHarmonyAnalysis";
 import { evaluateHarmonyManifest } from "./evaluateManifest";
 import { inspectHarmonyScore, type InspectView } from "./inspectScore";
 import { evaluatePaperSemiCrfFile, trainPaperSemiCrfFile } from "./paperSemiCrfFiles";
@@ -21,7 +22,8 @@ type HarmonyCommandReport =
   | Awaited<ReturnType<typeof evaluatePaperSemiCrfFile>>
   | Awaited<ReturnType<typeof exportPaperSemiCrfAuthorRecordsFile>>
   | Awaited<ReturnType<typeof importPaperSemiCrfAuthorModelFile>>
-  | Awaited<ReturnType<typeof exportPaperSemiCrfDcmlRecordsFile>>;
+  | Awaited<ReturnType<typeof exportPaperSemiCrfDcmlRecordsFile>>
+  | Awaited<ReturnType<typeof benchmarkHarmonyAnalysisFile>>;
 
 export async function runHarmonyCommand(args: string[], context: { cwd?: string } = {}): Promise<HarmonyCommandReport> {
   const normalized = args[0] === "--" ? args.slice(1) : args;
@@ -178,6 +180,23 @@ export async function runHarmonyCommand(args: string[], context: { cwd?: string 
       ...(caseId === undefined ? {} : { caseId }),
       ...(reportSplit === undefined ? {} : { reportSplit: reportSplit as DatasetSplit }),
       ...(decisionThreshold === undefined ? {} : { decisionThreshold }),
+    });
+  }
+  if (normalized[0] === "benchmark") {
+    const path = normalized[1];
+    const runs = numberOption(normalized, "--runs", 5);
+    const warmupRuns = numberOption(normalized, "--warmup-runs", 1);
+    const expectedResultSha256 = optionValue(normalized, "--expected-result-sha256");
+    if (!path) {
+      throw new Error(
+        "usage: harmony:cli benchmark <score.musicxml|score.mxl> [--runs <n>] [--warmup-runs <n>] [--expected-result-sha256 <sha256>]",
+      );
+    }
+    return benchmarkHarmonyAnalysisFile({
+      scorePath: resolve(cwd, path),
+      runs,
+      warmupRuns,
+      ...(expectedResultSha256 === undefined ? {} : { expectedResultSha256 }),
     });
   }
   const positional = normalized[0] === "inspect" ? normalized.slice(1) : normalized;

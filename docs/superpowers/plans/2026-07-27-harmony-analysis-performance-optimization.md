@@ -53,6 +53,25 @@ Rust/WASM。
 `extractPaperSemiCrfSegmentFeatures`、`notesInSegment`、`weightedBassBin` 和 `isHarmonic`。因此，
 只把 decoder 搬到 WASM 的理论收益不到 1%，不能作为第一步。
 
+## Implementation progress
+
+### 2026-07-27: Tasks 1–2 complete
+
+- Task 1 delivered the explicit `pnpm benchmark:harmony` performance gate, versioned JSON report, K331 golden
+  checksum and CLI/unit coverage. The harness runs with exposed GC between untimed samples so repeated lattice
+  allocations do not invalidate later measurements.
+- Task 2 replaced production feature-name construction and string weight lookup with compiled numeric tables.
+  The named provider remains the strict reference oracle.
+- K331 cold analysis improved from `27,567.80 ms` to `19,662.81 ms` (`28.7%` faster in the recorded single-run
+  comparison). Maximum RSS changed from approximately `456.9 MB` to `391.8 MB`.
+- The canonical K331 result remains
+  `9b0d56e25913116c1a44b460432280a681dc6dcfc2ed9812ab3c3178bb927ff0`.
+- The former `scoreNamedFeatures` hotspot disappeared. Current hotspots are `notesWithoutFiguration`,
+  `collectPaperSemiCrfSegmentFeatures`, `weightedBassBin`, `notesInSegment` and `isHarmonic`, supporting the
+  planned Task 3/4 range-evidence work.
+- Verification completed: all 112 `packages/web-core/src/harmony` tests, all 60 Harmony CLI tests, web-core and
+  Harmony CLI typechecks, Prettier and `git diff --check`.
+
 ## 2. Non-negotiable constraints
 
 - Production 必须继续在完整 62-label inventory 和最长 20 events span 上运行 exact

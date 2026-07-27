@@ -165,7 +165,7 @@ test("follows playback and supports stable score page navigation", async ({ page
 test("keeps a comfortable wide score and applies visible zoom layouts", async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto("/");
-  await importFixture(page, "导入第一份曲谱", reviewedFixture);
+  await importFixture(page, "导入自己的曲谱", reviewedFixture);
   const scoreHost = page.locator(".score-viewer");
   const surface = scoreHost.locator(".at-surface").first();
   await expect(surface).toBeVisible();

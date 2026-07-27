@@ -6,8 +6,6 @@ import {
   createMusicXmlAdapter,
   createBridgeRequest,
   parseBridgeResponse,
-  type ScoreFileGateway,
-  type ScoreImportSource,
   type SheetLibraryRepository,
   type LibraryScoreId,
   type LibraryScoreIdentity,
@@ -29,6 +27,7 @@ import {
   type ViewerAppHandle,
   type ViewerHost,
 } from "@zupulse/web-viewer";
+import { DesktopScoreFileGateway } from "./desktop-score-file-gateway";
 
 document.documentElement.classList.add("desktop-shell");
 
@@ -136,29 +135,6 @@ class DesktopLibraryRepository implements SheetLibraryRepository, HarmonyAnalysi
   private async request(type: any, payload: any): Promise<any> {
     const request = createBridgeRequest(type as never, crypto.randomUUID(), payload as never);
     return parseBridgeResponse(type as never, await this.bridge.request(request));
-  }
-}
-
-class DesktopScoreFileGateway implements ScoreFileGateway {
-  constructor(private readonly bridge: NonNullable<Window["zupulseBridge"]>) {}
-  async selectForImport(options: { multiple: boolean }): Promise<readonly ScoreImportSource[]> {
-    const request = createBridgeRequest("file.select", crypto.randomUUID(), options);
-    const selection = parseBridgeResponse(request.type, await this.bridge.request(request));
-    if (selection.status === "cancelled") return [];
-    return selection.files.map((opened) => ({
-      fileName: opened.fileName,
-      readBytes: async () => {
-        const read = createBridgeRequest("file.readBytes", crypto.randomUUID(), { fileToken: opened.fileToken });
-        return (await parseBridgeResponse(read.type, await this.bridge.request(read))).bytes;
-      },
-    }));
-  }
-  async saveExport(file: StoredScoreFile): Promise<"saved" | "cancelled"> {
-    const request = createBridgeRequest("file.save", crypto.randomUUID(), {
-      fileName: file.fileName,
-      bytes: new Uint8Array(file.bytes),
-    });
-    return (await parseBridgeResponse(request.type, await this.bridge.request(request))).status;
   }
 }
 

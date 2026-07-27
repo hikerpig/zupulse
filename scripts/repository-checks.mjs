@@ -31,7 +31,21 @@ const DEFAULT_DESIGN = {
   sourceCssPath: ".design_library/zupulse-te-braun-theme/colors_and_type.css",
   runtimeCssPath: "packages/web-viewer/src/styles/tokens.css",
   mapPath: ".design_library/zupulse-te-braun-theme/runtime-token-map.json",
+  stylesDir: "packages/web-viewer/src",
 };
+
+const EXTERNAL_CSS_VARIABLES = new Set(["--transform-origin"]);
+const TAILWIND_PALETTE_NAMES =
+  "slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose";
+const FORBIDDEN_TAILWIND_PATTERNS = [
+  /^tw:(?:\[|[^\s"'[]*-\[)/,
+  new RegExp(
+    `^tw:(?:bg|text|border|ring|outline|decoration|accent|caret|fill|stroke|from|via|to|shadow)-(?:${TAILWIND_PALETTE_NAMES})(?:-|$)`,
+  ),
+  /^tw:font-(?:sans|serif|mono)$/,
+  /^tw:rounded-(?:none|xs|sm|md|lg|xl|2xl|3xl|full)$/,
+  /^tw:shadow-(?:2xs|xs|sm|md|lg|xl|2xl|inner|none)$/,
+];
 
 const DEFAULT_DOCUMENTATION = {
   contractsDir: "docs/features/contracts",
@@ -234,7 +248,47 @@ export async function checkDesign(root, options = DEFAULT_DESIGN) {
       );
     }
   }
+  if (options.stylesDir !== undefined) {
+    errors.push(...(await checkStyleContract(root, options.stylesDir, runtimeCss)));
+  }
   return errors.sort();
+}
+
+async function checkStyleContract(root, stylesDir, runtimeCss) {
+  const errors = [];
+  const files = [];
+  await walkMatching(join(root, stylesDir), files, /\.(?:css|ts|tsx)$/);
+  const contentsByFile = await Promise.all(
+    files.map(async (absolute) => ({
+      absolute,
+      path: relative(root, absolute).replaceAll("\\", "/"),
+      contents: await readFile(absolute, "utf8"),
+    })),
+  );
+  const definedVariables = new Set([...runtimeCss.matchAll(/(--[\w-]+)\s*:/g)].map((match) => match[1]));
+  for (const file of contentsByFile) {
+    if (!file.path.endsWith(".css")) continue;
+    for (const match of file.contents.matchAll(/(--[\w-]+)\s*:/g)) definedVariables.add(match[1]);
+  }
+  for (const file of contentsByFile) {
+    for (const [index, line] of file.contents.split(/\r?\n/).entries()) {
+      if (file.path.endsWith(".css")) {
+        for (const match of line.matchAll(/var\(\s*(--[\w-]+)\s*(,|\))/g)) {
+          const [, variable, terminator] = match;
+          if (terminator === ")" && !definedVariables.has(variable) && !EXTERNAL_CSS_VARIABLES.has(variable)) {
+            errors.push(`${file.path}:${index + 1}: undefined CSS variable ${variable}`);
+          }
+        }
+      }
+      for (const utility of line.match(/\btw:[^\s"'`<>]+/g) ?? []) {
+        const normalized = utility.replace(/[),;]+$/, "");
+        if (FORBIDDEN_TAILWIND_PATTERNS.some((pattern) => pattern.test(normalized))) {
+          errors.push(`${file.path}:${index + 1}: forbidden Tailwind utility "${normalized}"`);
+        }
+      }
+    }
+  }
+  return [...new Set(errors)];
 }
 
 function validateFeatureContract(contract, now) {
@@ -584,6 +638,10 @@ async function sourceFiles(root) {
 }
 
 async function walk(directory, files) {
+  await walkMatching(directory, files, /\.(?:ts|tsx)$/);
+}
+
+async function walkMatching(directory, files, pattern) {
   let entries;
   try {
     entries = await readdir(directory, { withFileTypes: true });
@@ -593,8 +651,8 @@ async function walk(directory, files) {
   }
   for (const entry of entries) {
     const path = join(directory, entry.name);
-    if (entry.isDirectory()) await walk(path, files);
-    else if (/\.(?:ts|tsx)$/.test(entry.name)) files.push(path);
+    if (entry.isDirectory()) await walkMatching(path, files, pattern);
+    else if (pattern.test(entry.name)) files.push(path);
   }
 }
 

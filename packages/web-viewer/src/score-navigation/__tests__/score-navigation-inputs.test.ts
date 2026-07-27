@@ -55,4 +55,27 @@ describe("attachScoreNavigationInputs", () => {
     expect(movePage).toHaveBeenCalledTimes(1);
     detach();
   });
+
+  it("moves focus from a toolbar control to the score before handling PageDown", () => {
+    const toolbarButton = document.createElement("button");
+    const element = document.createElement("div");
+    const scoreChild = document.createElement("div");
+    element.tabIndex = -1;
+    element.append(scoreChild);
+    document.body.append(toolbarButton, element);
+    toolbarButton.focus();
+    const movePage = vi.fn();
+    const detach = attachScoreNavigationInputs(element, {
+      mode: () => "page-turn",
+      manualNavigation: vi.fn(),
+      movePage,
+    });
+
+    fireEvent.pointerDown(scoreChild);
+    expect(document.activeElement).toBe(element);
+    fireEvent.keyDown(document, { key: "PageDown" });
+    expect(movePage).toHaveBeenCalledWith(1);
+
+    detach();
+  });
 });

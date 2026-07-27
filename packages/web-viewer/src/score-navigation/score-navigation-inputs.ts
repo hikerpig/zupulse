@@ -56,6 +56,7 @@ export function attachScoreNavigationInputs(
     navigation.movePage(deltaX < 0 ? 1 : -1);
   };
   const onPointerDown = (event: PointerEvent) => {
+    if (!isInteractive(event.target)) element.focus({ preventScroll: true });
     if (event.target === element) navigation.manualNavigation();
   };
 

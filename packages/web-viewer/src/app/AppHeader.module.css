@@ -21,8 +21,7 @@
 
   :global(:root.desktop-shell) .brand,
   :global(:root.desktop-shell) .navigation,
-  :global(:root.desktop-shell) .headerActions,
-  :global(:root.desktop-shell) .themeButton {
+  :global(:root.desktop-shell) .headerActions {
     -webkit-app-region: no-drag;
   }
 
@@ -30,10 +29,7 @@
   .wordmark,
   .navigation,
   .navLink,
-  .activeLink,
-  .headerActions,
-  .localeButton,
-  .themeButton {
+  .activeLink {
     display: flex;
     align-items: center;
   }
@@ -97,54 +93,13 @@
 
   .brand:focus-visible,
   .navLink:focus-visible,
-  .activeLink:focus-visible,
-  .themeButton:focus-visible {
+  .activeLink:focus-visible {
     outline: none;
     box-shadow: var(--focus-ring);
   }
 
-  .headerActions {
-    justify-self: end;
-    gap: 8px;
-  }
-
-  .localeButton,
-  .themeButton {
-    justify-self: end;
-    gap: 7px;
-    min-height: 34px;
-    padding: 0 10px;
-    color: var(--text-secondary);
-    border-color: var(--border-default);
-    background: var(--bg-control);
-    box-shadow: none;
-    font-size: 12px;
-  }
-
-  .localeButton:hover,
-  .themeButton:hover {
-    color: var(--text-primary);
-    border-color: var(--border-strong);
-    transform: none;
-  }
-
   .localePopup {
-    display: grid;
     min-width: 180px;
-    gap: 4px;
-  }
-
-  .localePopup button {
-    justify-content: flex-start;
-    min-height: 34px;
-    color: var(--text-primary);
-    background: transparent;
-    box-shadow: none;
-    text-align: left;
-  }
-
-  .localePopup button[aria-checked="true"] {
-    background: var(--bg-control);
   }
 
   .localePopup p {
@@ -161,8 +116,7 @@
     }
 
     .wordmark span,
-    .localeButton span,
-    .themeButton span,
+    .headerActionButton span,
     .navLink svg,
     .activeLink svg {
       display: none;
@@ -171,6 +125,7 @@
     .navigation {
       justify-content: center;
       overflow-x: auto;
+      overflow-y: hidden;
     }
 
     .navLink,

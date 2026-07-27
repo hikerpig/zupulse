@@ -8,10 +8,10 @@
 
   .segment {
     position: absolute;
-    left: var(--loop-x);
-    top: var(--loop-y);
-    width: var(--loop-width);
-    height: var(--loop-height);
+    left: var(--loop-x, 0px);
+    top: var(--loop-y, 0px);
+    width: var(--loop-width, 0px);
+    height: var(--loop-height, 0px);
     border-block: 1px solid color-mix(in srgb, var(--accent-primary) 52%, transparent);
     background: color-mix(in srgb, var(--accent-soft) 52%, transparent);
     box-shadow: inset 0 0 0 999px rgb(255 255 255 / 0.04);
@@ -19,10 +19,10 @@
 
   .handle {
     position: absolute;
-    left: calc(var(--loop-x) - 22px);
-    top: calc(var(--loop-y) - 20px);
+    left: calc(var(--loop-x, 0px) - 22px);
+    top: calc(var(--loop-y, 0px) - 20px);
     width: 44px;
-    height: calc(var(--loop-height) + 40px);
+    height: calc(var(--loop-height, 0px) + 40px);
     min-height: 44px;
     display: block;
     padding: 0;
@@ -52,7 +52,7 @@
     left: 21px;
     top: 20px;
     width: 2px;
-    height: var(--loop-height);
+    height: var(--loop-height, 0px);
     background: currentColor;
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--bg-score) 72%, transparent);
   }

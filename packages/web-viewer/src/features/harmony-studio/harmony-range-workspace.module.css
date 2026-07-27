@@ -106,7 +106,7 @@
   }
 
   .statDot[data-origin="source"] {
-    background: var(--accent-secondary);
+    background: var(--signal-blue);
   }
 
   .statDot[data-origin="analysis"] {
@@ -138,29 +138,6 @@
     border-radius: var(--radius-sm);
   }
 
-  .list button::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    transition: width 140ms ease;
-  }
-
-  .list button[data-origin="correction"]::before {
-    background: var(--accent-primary);
-  }
-
-  .list button[data-origin="source"]::before {
-    background: var(--accent-secondary);
-  }
-
-  .list button[data-origin="analysis"]::before {
-    background: var(--border-strong);
-  }
-
   .list button[data-type="unresolved"] {
     background: var(--status-warning-bg);
   }
@@ -175,19 +152,33 @@
     background: var(--accent-soft);
   }
 
-  .list button[aria-pressed="true"]::before {
-    width: 3px;
+  .identity {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
   }
 
-  .list button[aria-pressed="true"]::after {
-    content: "";
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 2px;
+  .originMarker {
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+  }
+
+  .originMarker[data-origin="source"] {
+    border-radius: 2px;
+    background: var(--signal-blue);
+  }
+
+  .originMarker[data-origin="analysis"] {
+    border-radius: 999px;
+    background: var(--border-strong);
+  }
+
+  .originMarker[data-origin="correction"] {
+    border-radius: 1px;
     background: var(--accent-primary);
-    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+    transform: rotate(45deg);
   }
 
   .chordName {

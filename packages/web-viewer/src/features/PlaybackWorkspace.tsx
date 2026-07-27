@@ -19,6 +19,7 @@ import type { ViewerSessionHandle } from "../host";
 import { presentPlayback, type PlaybackViewModel } from "../playbackPresenter";
 import { Slider } from "../components/Slider";
 import { ContextPopup } from "../components/ContextPopup";
+import { Button, IconButton } from "../components/ui";
 import { persistScoreNavigationMode, useAppStore } from "../app/appStore";
 import styles from "./PlaybackWorkspace.module.css";
 
@@ -126,36 +127,40 @@ function PlaybackLayout({
     <>
       <section className={styles.transportBar} aria-label={t("playback.controls")}>
         <div className={styles.transportActions}>
-          <button
-            className={`primary-button ${styles.transportPlayButton}`}
-            type="button"
+          <Button
+            className="tw:size-field tw:p-0"
+            tone="primary"
             aria-label={playLabel}
             title={t("playback.shortcutTitle", { action: playLabel })}
             disabled={view.playDisabled}
             onClick={() => dispatch({ type: "toggle-playback" })}
           >
-            {view.isPlaying ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
-          </button>
-          <button
-            className={styles.transportIconButton}
-            type="button"
+            {view.isPlaying ? (
+              <Pause className="tw:size-4" aria-hidden="true" />
+            ) : (
+              <Play className="tw:size-4" aria-hidden="true" />
+            )}
+          </Button>
+          <IconButton
+            size="sm"
+            tone="ghost"
             aria-label={t("playback.stop")}
             title={t("playback.stopTitle")}
             disabled={view.stopDisabled}
             onClick={() => dispatch({ type: "stop" })}
           >
-            <Square aria-hidden="true" />
-          </button>
-          <button
-            className={styles.transportIconButton}
-            type="button"
+            <Square className="tw:size-4" aria-hidden="true" />
+          </IconButton>
+          <IconButton
+            size="sm"
+            tone="ghost"
             aria-label={t("playback.loopMode")}
             title={view.looping ? t("playback.closeLoopMode") : t("playback.openLoopMode")}
-            aria-pressed={view.looping}
+            pressed={view.looping}
             onClick={() => setLoopMode(!view.looping)}
           >
-            <Repeat2 aria-hidden="true" />
-          </button>
+            <Repeat2 className="tw:size-4" aria-hidden="true" />
+          </IconButton>
           <span className={styles.timeReadout}>
             {view.currentTime} / {view.duration}
           </span>
@@ -641,27 +646,21 @@ function disabledPlaybackWorkspace(
     <>
       <section className={styles.transportBar} aria-label={t("playback.controls")}>
         <div className={styles.transportActions}>
-          <button
-            className="primary-button transport-play-button"
-            type="button"
+          <Button
+            className="tw:size-field tw:p-0"
+            tone="primary"
             aria-label={t("playback.play")}
             title={t("playback.shortcutTitle", { action: t("playback.play") })}
             disabled
           >
-            <Play aria-hidden="true" />
-          </button>
-          <button
-            className={styles.transportIconButton}
-            type="button"
-            aria-label={t("playback.stop")}
-            title={t("playback.stopTitle")}
-            disabled
-          >
-            <Square aria-hidden="true" />
-          </button>
-          <button className={styles.transportIconButton} type="button" aria-label={t("playback.loopMode")} disabled>
-            <Repeat2 aria-hidden="true" />
-          </button>
+            <Play className="tw:size-4" aria-hidden="true" />
+          </Button>
+          <IconButton size="sm" tone="ghost" aria-label={t("playback.stop")} title={t("playback.stopTitle")} disabled>
+            <Square className="tw:size-4" aria-hidden="true" />
+          </IconButton>
+          <IconButton size="sm" tone="ghost" aria-label={t("playback.loopMode")} disabled>
+            <Repeat2 className="tw:size-4" aria-hidden="true" />
+          </IconButton>
           <span className={styles.timeReadout}>0:00 / 0:00</span>
         </div>
         <div className={styles.transportDivider} aria-hidden="true" />

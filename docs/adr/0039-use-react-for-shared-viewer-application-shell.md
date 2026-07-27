@@ -35,6 +35,9 @@ Base UI 只拥有通用交互行为，不拥有产品视觉或领域语义。应
 
 Tailwind 可以在组件数量、响应式变体和重复 utility 样式显著增长后重新评估。即使届时引入，alphaTab 生成的 DOM、piano-roll/Canvas、数据驱动坐标和高频播放光标仍保留普通 CSS、CSS variable 或命令式渲染边界。
 
+上述 Tailwind 暂缓决定已由 ADR 0065 局部取代。React、Base UI、应用生命周期和状态所有权的其余
+决定继续有效。
+
 ## 参考
 
 - [React Router 模式选择](https://reactrouter.com/start/modes)

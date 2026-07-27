@@ -1,6 +1,6 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from "react";
 import { Music } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import type { ViewerApplication } from "../ViewerApplication";
 import type { ViewerProductCapabilities } from "../App";
@@ -20,16 +20,31 @@ export function ViewerPage({
   const { t } = useTranslation("viewer");
   const snapshot = useSyncExternalStore(application.subscribe, application.getSnapshot);
   const { libraryScoreId } = useParams();
-  const navigate = useNavigate();
-  const invalidSession = Boolean(libraryScoreId && !application.hasSession(libraryScoreId));
   const session = application.getCurrentSession();
   const currentScore = snapshot.library?.scores.find((score) => score.id === libraryScoreId);
-  const statusMessage = notFound ? t("page.notFound") : invalidSession ? t("page.sessionEnded") : undefined;
+  const summaryRef = useRef<HTMLHeadingElement>(null);
+  const statusRef = useRef<HTMLParagraphElement>(null);
+  const scoreHostRef = useRef<HTMLElement>(null);
+  const scoreScrollRef = useRef<HTMLElement>(null);
+  const viewerState = snapshot.viewer?.libraryScoreId === libraryScoreId ? snapshot.viewer : undefined;
+  const openingSession = Boolean(libraryScoreId && !notFound && viewerState?.status !== "ready" && !viewerState?.error);
+  const viewerError = viewerState?.error;
+  const statusMessage = notFound ? t("page.notFound") : undefined;
+
+  useLayoutEffect(() => {
+    const alphaTabHost = scoreHostRef.current;
+    const scoreScrollElement = scoreScrollRef.current;
+    const status = statusRef.current;
+    const summary = summaryRef.current;
+    if (!alphaTabHost || !scoreScrollElement || !status || !summary) return;
+    application.bindViewerDom({ alphaTabHost, scoreScrollElement, status, summary });
+    return () => application.bindViewerDom(undefined);
+  }, [application, libraryScoreId]);
 
   useEffect(() => {
     if (application.hasLibrary() && libraryScoreId && !application.hasSession(libraryScoreId))
-      void application.openLibraryScore(libraryScoreId).catch(() => navigate("/", { replace: true }));
-  }, [application, libraryScoreId, navigate, snapshot.currentLibraryScoreId]);
+      void application.openLibraryScore(libraryScoreId).catch(() => undefined);
+  }, [application, libraryScoreId, snapshot.currentLibraryScoreId]);
 
   useEffect(() => {
     if (!libraryScoreId) return;
@@ -42,7 +57,7 @@ export function ViewerPage({
     <main className={styles.appShell}>
       <div className={styles.contextBar}>
         <div className={styles.contextMain}>
-          <h1 id="summary" className={styles.contextTitle} aria-live="polite">
+          <h1 ref={summaryRef} className={styles.contextTitle} aria-live="polite">
             {currentScore?.title ?? t("page.title")}
           </h1>
         </div>
@@ -57,11 +72,9 @@ export function ViewerPage({
               <span>{t("page.harmony")}</span>
             </Link>
           ) : null}
-          {statusMessage ? (
-            <p id="status" className={styles.statusChip} role="status">
-              {statusMessage}
-            </p>
-          ) : null}
+          <p ref={statusRef} className={statusMessage ? styles.statusChip : "sr-only"} role="status">
+            {statusMessage}
+          </p>
           {!application.hasLibrary() ? (
             <button
               id="open-score"
@@ -75,8 +88,32 @@ export function ViewerPage({
         </div>
       </div>
       <PlaybackWorkspace session={session}>
-        <ScoreViewer playback={session?.playback} loopEditor={session?.loopEditor} />
+        <ScoreViewer
+          playback={session?.playback}
+          loopEditor={session?.loopEditor}
+          scoreHostRef={scoreHostRef}
+          scoreScrollRef={scoreScrollRef}
+        />
       </PlaybackWorkspace>
+      {openingSession ? (
+        <div className={styles.viewerLoading} role="status" aria-label={t("page.loading")}>
+          {t("page.loading")}
+        </div>
+      ) : null}
+      {viewerError ? (
+        <div className={styles.viewerLoading} role="alert">
+          <p>
+            {viewerError.code === "viewer-library-failed"
+              ? t("page.libraryFailed")
+              : viewerError.code === "viewer-render-failed"
+                ? t("page.renderFailed")
+                : t("page.sessionFailed")}
+          </p>
+          <button type="button" onClick={() => libraryScoreId && void application.openLibraryScore(libraryScoreId)}>
+            {t("page.retry")}
+          </button>
+        </div>
+      ) : null}
     </main>
   );
 }

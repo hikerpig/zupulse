@@ -171,6 +171,73 @@ describe("App", () => {
     await application.destroy();
   });
 
+  it("keeps the incomplete viewer hidden until the requested session is ready", async () => {
+    const id = "8f14e45f-ea42-4c2e-a9f4-6f1f8f60d88a";
+    let resolveOpenSession:
+      | ((session: {
+          togglePlayback(): Promise<void>;
+          pauseAndFlush(): Promise<void>;
+          destroy(): Promise<void>;
+        }) => void)
+      | undefined;
+    const pendingSession = new Promise<{
+      togglePlayback(): Promise<void>;
+      pauseAndFlush(): Promise<void>;
+      destroy(): Promise<void>;
+    }>((resolve) => {
+      resolveOpenSession = resolve;
+    });
+    const repository: SheetLibraryRepository = {
+      initialize: async () => undefined,
+      list: async () => [
+        {
+          id,
+          title: "Score A",
+          fileName: "score-a.gp",
+          scoreIdentity: "a".repeat(64),
+          format: "gp",
+          importedAt: "2026-07-13T00:00:00.000Z",
+          isFavorite: false,
+          practice: { hasLoop: false },
+        },
+      ],
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async () => ({ fileName: "score-a.gp", bytes: new Uint8Array([1]) }),
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+    };
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      async () => pendingSession,
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+    );
+    const user = userEvent.setup();
+    render(<App application={application} />);
+
+    await user.click(await screen.findByRole("button", { name: "打开 Score A" }));
+
+    expect(window.location.hash).toBe(`#/viewer/${id}`);
+    expect(screen.getByRole("status", { name: "正在加载文件" }).getAttribute("id")).toBeNull();
+    expect(screen.queryByText("会话已结束，请重新打开乐谱")).toBeNull();
+
+    resolveOpenSession?.({
+      togglePlayback: async () => undefined,
+      pauseAndFlush: async () => undefined,
+      destroy: async () => undefined,
+    });
+    await waitFor(() => expect(window.location.hash).toBe(`#/viewer/${id}`));
+    expect(screen.getByRole("heading", { name: "Score A" })).toBeTruthy();
+    await application.destroy();
+  });
+
   it("offers library navigation from a viewer route", async () => {
     const id = "8f14e45f-ea42-4c2e-a9f4-6f1f8f60d88a";
     window.history.replaceState(null, "", `#/viewer/${id}`);
@@ -252,7 +319,7 @@ describe("App", () => {
     );
 
     render(<App application={application} />);
-    await screen.findByText("会话已结束，请重新打开乐谱");
+    await screen.findByRole("status", { name: "正在加载文件" });
     expect(screen.queryByRole("link", { name: "和弦分析" })).toBeNull();
 
     resolveOpenSession?.({

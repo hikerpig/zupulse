@@ -1,10 +1,12 @@
 import { CopyRspackPlugin, HtmlRspackPlugin } from "@rspack/core";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const requireFromWebCore = createRequire(new URL("../../packages/web-core/package.json", import.meta.url));
 
 export const alphaTabDist = dirname(requireFromWebCore.resolve("@coderline/alphatab"));
+const viewerStylesEntry = fileURLToPath(new URL("../../packages/web-viewer/src/styles.css", import.meta.url));
 
 export function createTypeScriptRule() {
   return {
@@ -40,7 +42,19 @@ export function createWebRspackConfig({ context, entry, output, mode, htmlOption
     },
     resolve: { extensions: [".tsx", ".ts", ".js"] },
     module: {
-      rules: [createTypeScriptRule(), { test: /\.css$/, type: "css/auto" }],
+      rules: [
+        createTypeScriptRule(),
+        {
+          oneOf: [
+            {
+              include: viewerStylesEntry,
+              use: ["@tailwindcss/webpack"],
+              type: "css/auto",
+            },
+            { test: /\.css$/, type: "css/auto" },
+          ],
+        },
+      ],
       parser: {
         "css/auto": { namedExports: false },
       },

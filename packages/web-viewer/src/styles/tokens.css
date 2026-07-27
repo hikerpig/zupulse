@@ -1,19 +1,38 @@
 :root {
-  font-family:
-    "Space Grotesk",
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  --font-family-ui:
+    "Space Grotesk", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-family-technical: "IBM Plex Mono", ui-monospace, monospace;
+  --font-size-eyebrow: 11px;
+  --font-size-caption: 12px;
+  --font-size-technical: 14px;
+  --font-size-body: 16px;
+  --font-size-lead: 18px;
+  --font-size-title-sm: 20px;
+  --font-size-title-md: 24px;
+  --font-size-title-lg: 32px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --control-height-sm: 36px;
+  --control-height-field: 40px;
+  --control-height-md: 44px;
+  --control-height-lg: 48px;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-xl: 20px;
+  --radius-round: 9999px;
   --shadow-soft: 0 6px 18px rgb(24 24 24 / 0.08);
   --shadow-panel: 0 14px 30px -10px rgb(24 24 24 / 0.18);
+  --shadow-elevated: 0 20px 44px -14px rgb(24 24 24 / 0.22);
   --focus-ring: 0 0 0 3px rgb(242 107 79 / 0.18);
+  --duration-fast: 160ms;
+  --motion-ease-standard: ease-out;
   --z-index-surface-raised: 1;
   --z-index-score: 0;
   --z-index-score-cursor: 10;
@@ -21,6 +40,13 @@
   --z-index-practice-panel: 30;
   --z-index-library-editor: 40;
   --z-index-library-dialog: 50;
+  --layer-overlay: var(--z-index-library-dialog);
+  --dialog-max-width: 512px;
+  --menu-min-width: 178px;
+  --context-popup-min-width: min(320px, calc(100vw - var(--space-8)));
+  --context-popup-max-width: min(480px, calc(100vw - var(--space-8)));
+  --context-popup-max-height: calc(100vh - var(--space-12));
+  font-family: var(--font-family-ui);
 }
 
 :root[data-theme="light"] {
@@ -34,6 +60,7 @@
   --bg-score-shell: linear-gradient(180deg, #eae6e0 0%, #d8d2cc 100%);
   --bg-score: #f5f2ed;
   --bg-glow: radial-gradient(circle at top left, rgb(242 107 79 / 0.08), transparent 24%);
+  --bg-scrim: rgb(24 24 24 / 0.46);
   --text-primary: #1a1a1a;
   --text-secondary: #5a5a5a;
   --text-tertiary: #9e9a95;
@@ -73,6 +100,7 @@
   --bg-score-shell: linear-gradient(180deg, #2e2e2d 0%, #222222 100%);
   --bg-score: #f0ede8;
   --bg-glow: radial-gradient(ellipse at top left, rgb(242 107 79 / 0.04), transparent 40%);
+  --bg-scrim: rgb(0 0 0 / 0.62);
   --text-primary: #eae6e0;
   --text-secondary: #bfb9b3;
   --text-tertiary: #7a7a7a;

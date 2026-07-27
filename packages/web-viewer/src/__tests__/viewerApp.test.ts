@@ -9,10 +9,21 @@ import {
 } from "../viewerApp";
 import { SCORE_ZOOM_COMMIT_EVENT } from "../scoreZoom";
 import { mountViewerApp } from "../mountViewerApp";
+import type { ViewerDomBindings } from "../host";
 
 function renderSessionFixture(ownerDocument: Document): void {
   ownerDocument.body.innerHTML =
     '<h1 id="summary">未打开乐谱</h1><p id="status"></p><div><section id="alpha-tab"></section></div>';
+}
+
+function sessionBindings(ownerDocument: Document): ViewerDomBindings {
+  const alphaTabHost = ownerDocument.querySelector<HTMLElement>("#alpha-tab")!;
+  return {
+    alphaTabHost,
+    scoreScrollElement: alphaTabHost.parentElement!,
+    status: ownerDocument.querySelector<HTMLElement>("#status")!,
+    summary: ownerDocument.querySelector<HTMLElement>("#summary")!,
+  };
 }
 
 function testRoot(): HTMLElement {
@@ -406,7 +417,11 @@ describe("createDefaultOpenSession cleanup", () => {
           destroy: async () => undefined,
         }) as never,
     });
-    const session = await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
+    const session = await openSession(
+      { fileName: "song.gp5", bytes: new Uint8Array([1]) },
+      undefined,
+      sessionBindings(document),
+    );
     const previewPosition = {
       measureId: "measure-0",
       measureIndex: 0,
@@ -492,7 +507,7 @@ describe("createDefaultOpenSession cleanup", () => {
       createController: () => ({}) as never,
     });
 
-    await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
+    await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) }, undefined, sessionBindings(document));
 
     expect(createApi).toHaveBeenCalledOnce();
   });
@@ -515,7 +530,7 @@ describe("createDefaultOpenSession cleanup", () => {
       createController: () => ({}) as never,
     });
 
-    await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
+    await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) }, undefined, sessionBindings(document));
 
     const [alphaTabHost, settings] = createApi.mock.calls[0] as [
       HTMLElement,
@@ -569,7 +584,11 @@ describe("createDefaultOpenSession cleanup", () => {
         }) as never,
     };
     const openSession = createDefaultOpenSession(document, {} as never, dependencies);
-    const session = await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
+    const session = await openSession(
+      { fileName: "song.gp5", bytes: new Uint8Array([1]) },
+      undefined,
+      sessionBindings(document),
+    );
 
     await session.pauseAndFlush();
 
@@ -580,6 +599,7 @@ describe("createDefaultOpenSession cleanup", () => {
 
   it.each(["initialize"] as const)("destroys the controller when %s fails", async (failurePoint) => {
     renderSessionFixture(document);
+    const getById = vi.spyOn(document, "getElementById");
     const adapterDestroy = vi.fn();
     const controllerDestroy = vi.fn(async () => undefined);
     const failure = new Error(`${failurePoint} failed`);
@@ -614,12 +634,13 @@ describe("createDefaultOpenSession cleanup", () => {
     };
     const openSession = createDefaultOpenSession(document, {} as never, dependencies);
 
-    await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) });
+    await openSession({ fileName: "song.gp5", bytes: new Uint8Array([1]) }, undefined, sessionBindings(document));
 
     expect(controllerDestroy).toHaveBeenCalledOnce();
     expect(adapterDestroy).not.toHaveBeenCalled();
     expect(document.querySelector("#status")?.textContent).toBe("无法加载乐谱");
     expect(document.body.textContent).not.toContain(failure.message);
+    expect(getById).not.toHaveBeenCalled();
   });
 
   it("preserves initialization and controller cleanup failures", async () => {
@@ -653,10 +674,14 @@ describe("createDefaultOpenSession cleanup", () => {
     const openSession = createDefaultOpenSession(document, {} as never, dependencies);
 
     const error = (await rejectionOf(
-      openSession({
-        fileName: "song.gp5",
-        bytes: new Uint8Array([1]),
-      }),
+      openSession(
+        {
+          fileName: "song.gp5",
+          bytes: new Uint8Array([1]),
+        },
+        undefined,
+        sessionBindings(document),
+      ),
     )) as AggregateError;
 
     expect(error).toBeInstanceOf(AggregateError);

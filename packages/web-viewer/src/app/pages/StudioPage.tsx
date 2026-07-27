@@ -169,7 +169,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
                 {t("noScore")}
               </h2>
             ) : null}
-            <ScoreViewer expandable />
+            <ScoreViewer expandable domId="alpha-tab" />
           </>
         }
         analysis={

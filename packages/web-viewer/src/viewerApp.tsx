@@ -13,7 +13,13 @@ import {
   type PlaybackPersistence,
 } from "@zupulse/web-core";
 import { createAppI18n, resolveLocale } from "@zupulse/app-i18n";
-import type { ViewerFile, ViewerSessionHandle } from "./host";
+import {
+  ViewerOpenFailure,
+  type ViewerDomBindings,
+  type ViewerFile,
+  type ViewerOpenFailureStage,
+  type ViewerSessionHandle,
+} from "./host";
 import { ALPHATAB_ASSETS } from "./playbackAssets";
 import { type DemoState } from "./gpDemoPresenter";
 import { presentScoreFile } from "./importPresenter";
@@ -44,14 +50,10 @@ export function createDefaultOpenSession(
   ownerDocument: Document,
   persistence: PlaybackPersistence & { forLibraryScore(libraryScoreId: string): PlaybackPersistence },
   dependencies: DefaultOpenSessionDependencies = defaultOpenSessionDependencies,
-): (file: ViewerFile, libraryScoreId?: string) => Promise<ViewerSessionHandle> {
-  return async (file, libraryScoreId) => {
-    const alphaTabHost = required<HTMLElement>(ownerDocument, "alpha-tab");
-    const scoreScrollElement =
-      (alphaTabHost.closest(".scrollable") as HTMLElement | null) ?? alphaTabHost.parentElement;
-    if (!scoreScrollElement) throw new Error("Viewer DOM is missing the score scroll container");
-    const status = required<HTMLElement>(ownerDocument, "status");
-    const summary = required<HTMLElement>(ownerDocument, "summary");
+): (file: ViewerFile, libraryScoreId?: string, domBindings?: ViewerDomBindings) => Promise<ViewerSessionHandle> {
+  return async (file, libraryScoreId, domBindings?: ViewerDomBindings) => {
+    if (!domBindings) throw new ViewerOpenFailure("session");
+    const { alphaTabHost, scoreScrollElement, status, summary } = domBindings;
     renderViewerState(status, summary, { status: "loading" });
     alphaTabHost.replaceChildren();
     const initialScoreZoom = Number(alphaTabHost.dataset.scoreZoom) || 1;
@@ -117,6 +119,7 @@ export function createDefaultOpenSession(
     };
     let detachScoreSelection = () => {};
     let controller: PlaybackController | undefined;
+    let failureStage: ViewerOpenFailureStage = "render";
     try {
       const state = await dependencies.presentFile({
         file: {
@@ -132,11 +135,13 @@ export function createDefaultOpenSession(
         detachScoreZoom();
         adapter.destroy();
         renderViewerState(status, summary, state);
+        if (libraryScoreId !== undefined) throw new ViewerOpenFailure("render");
         return emptySession();
       }
 
       await dependencies.waitForScore(api);
       const model = dependencies.extractModel(api);
+      failureStage = "session";
       const sessionController = dependencies.createController({
         sessionId: crypto.randomUUID(),
         identity: state.identity,
@@ -263,6 +268,10 @@ export function createDefaultOpenSession(
         status: "error",
         issueCode: "viewer-load-failed",
       });
+      if (libraryScoreId !== undefined) {
+        if (error instanceof ViewerOpenFailure) throw error;
+        throw new ViewerOpenFailure(failureStage, { cause: error });
+      }
       return emptySession();
     }
   };
@@ -303,12 +312,6 @@ function emptySession(): ViewerSessionHandle {
     pauseAndFlush: async () => undefined,
     destroy: async () => undefined,
   };
-}
-
-function required<T extends HTMLElement>(ownerDocument: Document, id: string): T {
-  const element = ownerDocument.getElementById(id);
-  if (!element) throw new Error(`Viewer DOM is missing #${id}`);
-  return element as T;
 }
 
 export function createViewerAlphaTabSettings(scrollElement: HTMLElement, scoreZoom = 1): unknown {

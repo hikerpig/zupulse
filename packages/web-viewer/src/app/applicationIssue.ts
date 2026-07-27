@@ -1,5 +1,8 @@
 export type ApplicationIssueCode =
   | "library-unavailable"
+  | "viewer-library-failed"
+  | "viewer-session-failed"
+  | "viewer-render-failed"
   | "score-not-found"
   | "studio-storage-unavailable"
   | "studio-format-unsupported"
@@ -23,8 +26,11 @@ export function applicationIssue(code: ApplicationIssueCode, recoverable = true)
 }
 
 export class ApplicationFailure extends Error {
-  constructor(public readonly issue: ApplicationIssue) {
-    super(issue.code);
+  constructor(
+    public readonly issue: ApplicationIssue,
+    options?: ErrorOptions,
+  ) {
+    super(issue.code, options);
     this.name = "ApplicationFailure";
   }
 }

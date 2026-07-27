@@ -1,10 +1,29 @@
-import { useEffect, useMemo, useState } from "react";
-import { Menu } from "@base-ui/react/menu";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, MoreHorizontal, PenLine, Star, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ImportItemResult, LibraryScoreSummary } from "@zupulse/web-core";
 import type { ViewerApplication } from "../app/ViewerApplication";
 import pageStyles from "../app/pages/PageShell.module.css";
+import {
+  Button,
+  DialogBackdrop,
+  DialogClose,
+  DialogDescription,
+  DialogPopup,
+  DialogPortal,
+  DialogRoot,
+  DialogTitle,
+  DialogViewport,
+  IconButton,
+  MenuItem,
+  MenuPopup,
+  MenuPortal,
+  MenuPositioner,
+  MenuRoot,
+  MenuTrigger,
+  Select,
+  TextField,
+} from "../components/ui";
 import styles from "./SheetLibrary.module.css";
 
 function formatDuration(ms: number): string {
@@ -58,6 +77,7 @@ export function SheetLibrary({
   const [sort, setSort] = useState<"activity" | "imported" | "practiced" | "title">("activity");
   const [editing, setEditing] = useState<LibraryScoreSummary | undefined>();
   const [deleting, setDeleting] = useState<LibraryScoreSummary | undefined>();
+  const deleteReturnFocusRef = useRef<HTMLButtonElement>(null);
   const normalizedQuery = query.trim();
   const visible = useMemo(
     () =>
@@ -114,7 +134,8 @@ export function SheetLibrary({
         </div>
       </div>
       <section className={styles.libraryControls} aria-label={t("filtersLabel")}>
-        <input
+        <TextField
+          className={`${styles.librarySearch} tw:min-w-0 tw:flex-1`}
           type="text"
           aria-label={t("searchLabel")}
           value={query}
@@ -130,15 +151,19 @@ export function SheetLibrary({
           <Star size={13} strokeWidth={1.8} aria-hidden="true" />
           {t("favorites")}
         </button>
-        <div className={styles.librarySort}>
-          <span>{t("sortLabel")}</span>
-          <select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>
+        <label className={`${styles.librarySort} tw:inline-flex tw:shrink-0 tw:items-center tw:gap-2`}>
+          <span className="tw:text-caption tw:whitespace-nowrap tw:text-muted">{t("sortLabel")}</span>
+          <Select
+            className="tw:w-auto tw:min-w-0 tw:text-caption"
+            value={sort}
+            onChange={(event) => setSort(event.target.value as typeof sort)}
+          >
             <option value="activity">{t("sort.activity")}</option>
             <option value="imported">{t("sort.imported")}</option>
             <option value="practiced">{t("sort.practiced")}</option>
             <option value="title">{t("sort.title")}</option>
-          </select>
-        </div>
+          </Select>
+        </label>
       </section>
       {importSummary ? (
         <ImportSummary
@@ -227,13 +252,13 @@ export function SheetLibrary({
                 </div>
 
                 <div className={styles.libraryRowActions}>
-                  <button
-                    type="button"
-                    className={styles.libraryFavoriteButton}
+                  <IconButton
+                    size="sm"
+                    tone="ghost"
                     aria-label={t(score.isFavorite ? "unfavoriteScore" : "favoriteScore", {
                       title: score.title,
                     })}
-                    aria-pressed={score.isFavorite}
+                    pressed={score.isFavorite}
                     onClick={() => {
                       void application
                         .setFavorite(score.id, !score.isFavorite)
@@ -241,44 +266,50 @@ export function SheetLibrary({
                     }}
                   >
                     <Star
+                      className="tw:shrink-0"
                       size={16}
                       strokeWidth={1.8}
                       fill={score.isFavorite ? "currentColor" : "none"}
                       aria-hidden="true"
                     />
-                  </button>
-                  <Menu.Root>
-                    <Menu.Trigger
-                      className={styles.libraryMenuTrigger}
-                      aria-label={t("scoreActions", { title: score.title })}
+                  </IconButton>
+                  <MenuRoot>
+                    <MenuTrigger
+                      render={
+                        <IconButton
+                          size="sm"
+                          tone="ghost"
+                          aria-label={t("scoreActions", { title: score.title })}
+                          onClick={(event) => {
+                            deleteReturnFocusRef.current = event.currentTarget;
+                          }}
+                        />
+                      }
                     >
-                      <MoreHorizontal aria-hidden="true" />
-                    </Menu.Trigger>
-                    <Menu.Portal>
-                      <Menu.Positioner className={styles.libraryMenuPositioner} sideOffset={6} align="end">
-                        <Menu.Popup className={styles.libraryMenuPopup}>
-                          <Menu.Item
-                            className={styles.libraryMenuItem}
-                            onClick={() => void application.exportLibraryScore(score.id)}
-                          >
-                            <Download aria-hidden="true" />
+                      <MoreHorizontal className="tw:size-4 tw:shrink-0" aria-hidden="true" />
+                    </MenuTrigger>
+                    <MenuPortal>
+                      <MenuPositioner sideOffset={6} align="end">
+                        <MenuPopup>
+                          <MenuItem onClick={() => void application.exportLibraryScore(score.id)}>
+                            <Download className="tw:size-4 tw:shrink-0" aria-hidden="true" />
                             {t("exportScore", { title: score.title })}
-                          </Menu.Item>
-                          <Menu.Item className={styles.libraryMenuItem} onClick={() => setEditing(score)}>
-                            <PenLine aria-hidden="true" />
+                          </MenuItem>
+                          <MenuItem onClick={() => setEditing(score)}>
+                            <PenLine className="tw:size-4 tw:shrink-0" aria-hidden="true" />
                             {t("editScore", { title: score.title })}
-                          </Menu.Item>
-                          <Menu.Item
-                            className={`${styles.libraryMenuItem} ${styles.libraryMenuItemDanger}`}
+                          </MenuItem>
+                          <MenuItem
+                            className="tw:text-danger tw:data-highlighted:bg-danger-surface tw:data-highlighted:text-danger"
                             onClick={() => setDeleting(score)}
                           >
-                            <Trash2 aria-hidden="true" />
+                            <Trash2 className="tw:size-4 tw:shrink-0" aria-hidden="true" />
                             {t("deleteScore", { title: score.title })}
-                          </Menu.Item>
-                        </Menu.Popup>
-                      </Menu.Positioner>
-                    </Menu.Portal>
-                  </Menu.Root>
+                          </MenuItem>
+                        </MenuPopup>
+                      </MenuPositioner>
+                    </MenuPortal>
+                  </MenuRoot>
                 </div>
               </li>
             ))}
@@ -349,20 +380,35 @@ export function SheetLibrary({
           </button>
         </form>
       )}
-      {deleting && (
-        <section className={styles.libraryDialog} role="alertdialog" aria-modal="true" aria-labelledby="delete-title">
-          <h2 id="delete-title">{t("deleteTitle", { title: deleting.title })}</h2>
-          <p>{t("deleteWarning")}</p>
-          <button
-            className="primary-button"
-            autoFocus
-            onClick={() => void application.deleteLibraryScore(deleting.id).then(() => setDeleting(undefined))}
-          >
-            {t("deleteForever")}
-          </button>
-          <button onClick={() => setDeleting(undefined)}>{t("cancel")}</button>
-        </section>
-      )}
+      <DialogRoot
+        open={Boolean(deleting)}
+        disablePointerDismissal
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setDeleting(undefined);
+        }}
+      >
+        <DialogPortal>
+          <DialogBackdrop />
+          <DialogViewport>
+            <DialogPopup role="alertdialog" finalFocus={deleteReturnFocusRef} className="tw:grid tw:gap-3">
+              <DialogTitle>{deleting ? t("deleteTitle", { title: deleting.title }) : ""}</DialogTitle>
+              <DialogDescription>{t("deleteWarning")}</DialogDescription>
+              <div className="tw:flex tw:flex-wrap tw:justify-end tw:gap-2">
+                <DialogClose render={<Button tone="ghost" />}>{t("cancel")}</DialogClose>
+                <Button
+                  tone="danger"
+                  onClick={() => {
+                    if (!deleting) return;
+                    void application.deleteLibraryScore(deleting.id).then(() => setDeleting(undefined));
+                  }}
+                >
+                  {t("deleteForever")}
+                </Button>
+              </div>
+            </DialogPopup>
+          </DialogViewport>
+        </DialogPortal>
+      </DialogRoot>
     </main>
   );
 }

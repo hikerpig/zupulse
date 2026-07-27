@@ -34,7 +34,9 @@ describe("HarmonyRangeWorkspace", () => {
       <HarmonyRangeWorkspace ranges={ranges} selectedKey={ranges[0]!.key} onSelect={onSelect} editor={<input />} />,
     );
     const list = screen.getByRole("list", { name: "分析片段" });
-    const first = within(list).getByRole("button", { name: "片段 1" });
+    const first = within(list).getByRole("button", { name: "片段 1，算法结果" });
+    expect(within(first).getByTitle("算法结果").dataset.origin).toBe("analysis");
+    expect(within(list).getByTitle("用户修正").dataset.origin).toBe("correction");
 
     fireEvent.keyDown(first, { key: "ArrowDown" });
     expect(onSelect).toHaveBeenLastCalledWith(ranges[1]);

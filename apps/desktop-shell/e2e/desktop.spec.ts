@@ -121,7 +121,7 @@ test("opens a GP file and restores persisted practice state", async () => {
     await chooseFixture(app);
     let window = await app.firstWindow();
     await window.getByRole("button", { name: "Import score" }).first().click();
-    await expect(window.locator("#summary")).toContainText("桌面验收谱");
+    await expect(window.getByRole("heading", { level: 1 })).toContainText("桌面验收谱");
     await expect(window.getByRole("button", { name: "Play" })).toBeEnabled();
 
     await window.getByRole("button", { name: /^Speed \d+ BPM, \d+%$/ }).click();
@@ -144,7 +144,7 @@ test("opens a GP file and restores persisted practice state", async () => {
     await expect(window.getByRole("heading", { name: "Score Library" })).toBeVisible();
     await expect(window.getByText("Last practiced at measure 1")).toBeVisible();
     await window.getByRole("button", { name: "Continue practicing 桌面验收谱" }).click();
-    await expect(window.locator("#summary")).toContainText("桌面验收谱");
+    await expect(window.getByRole("heading", { level: 1 })).toContainText("桌面验收谱");
     await window.getByRole("button", { name: `Speed ${reducedTempo} BPM` }).click();
     await expect(window.getByRole("spinbutton", { name: "Speed BPM" })).toHaveValue(reducedTempo);
     await openLoopSettings(window);
@@ -163,12 +163,12 @@ test("opens MusicXML and MXL through the unified score entry", async () => {
     await expect(window.getByRole("button", { name: "Import score" })).toBeVisible();
     await chooseFixture(app, musicXmlFixture);
     await window.getByRole("button", { name: "Import score" }).first().click();
-    await expect(window.locator("#summary")).toContainText("Single Voice");
+    await expect(window.getByRole("heading", { level: 1 })).toContainText("Single Voice");
 
     await window.getByRole("link", { name: "Library" }).click();
     await chooseFixture(app, mxlFixture);
     await window.getByRole("button", { name: "Import score" }).first().click();
-    await expect(window.locator("#summary")).toContainText("Single Voice");
+    await expect(window.getByRole("heading", { level: 1 })).toContainText("Single Voice");
   } finally {
     await app.close();
     await rm(userData, { recursive: true, force: true });

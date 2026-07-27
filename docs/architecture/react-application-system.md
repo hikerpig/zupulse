@@ -91,17 +91,24 @@ Radix Primitives 与 React Aria 都是可行备选。Radix 的历史和社区示
 
 组件只能消费语义 token，不直接散落颜色值。暗色主题通过根节点 `data-theme` 覆盖 token。
 
-### 为什么暂不引入 Tailwind
+### 受约束的 Tailwind utility layer
 
-- 仓库已有普通 CSS，React 迁移第一阶段的基础组件数量有限，尚未出现足够重复的 utility 样式。
-- Tailwind 会给当前 Rspack monorepo 增加构建集成、源码扫描和编辑器约定；此时不能减少同等规模的复杂度。
-- alphaTab 生成的第三方 DOM 仍需要作用域普通 CSS；Preflight 和全局样式变化还需要额外视觉回归。
-- piano-roll 音符坐标、力度颜色和播放光标是运行时数据或高频更新，适合 Canvas、inline style 或 CSS variable，而不是动态拼接 utility class。
-- Base UI 本身不依赖 Tailwind，`className`、data attribute 和 CSS variable 都可直接使用现有 CSS。
+随着共享 UI、响应式组合和 feature CSS 明显增长，ADR 0065 取代首轮 React 迁移时暂缓 Tailwind 的
+决定。Tailwind 只管理应用壳、基础控件和 feature 中适合组合的 layout、spacing、typography、
+responsive 与 visual state：
 
-当共享 UI 达到数十个组件、响应式/容器状态组合大量重复，或多个开发者因命名和样式共置持续产生明显维护成本时，再用一个代表性的 Toolbar、Dialog 和 TrackPanel 验证 Tailwind。届时 Tailwind 也只管理应用壳与控件；alphaTab、Canvas/SVG 和高频音乐可视化保持专用渲染方式。
+- 不加载 Preflight；现有 common 与 vendor base styles 保持所有权。
+- Tailwind theme 只投影 `tokens.css` 中已经批准的 runtime semantic token，不保存第二份产品色值。
+- 默认 color、font、radius 和 shadow vocabulary 不向产品代码开放；raw colors 和静态 arbitrary
+  aesthetic values 由 `check:design` 阻断。
+- Base UI 继续拥有可访问性交互、Portal、定位和 component state；UI primitives 集中组合 Base UI
+  parts 与 Tailwind classes。
+- alphaTab、Score surface、splitter/slider geometry、scrollbar、keyframes、Canvas/SVG 和高频音乐
+  可视化保持专用 CSS、CSS variable 或命令式渲染。
+- 组件按垂直切片迁移；同一 property/state 不同时由 CSS Module 和 utility class 拥有。
 
-当前阶段也不引入 styled-components 或 Storybook；当基础组件需要被仓库外团队独立消费、发布和视觉回归时再增加独立组件包与 Storybook。
+当前仍不引入 styled-components 或 Storybook；当基础组件需要被仓库外团队独立消费、发布和视觉
+回归时再增加独立组件包与 Storybook。
 
 ## 状态管理
 
@@ -285,7 +292,7 @@ Electron 在 React 外完成 preload Bridge 检查、`app.handshake` 和版本/h
 ## 明确暂缓
 
 - 不引入 Next.js、React Router Framework Mode 或 SSR：应用是本地优先的离线 Viewer，没有服务端渲染需求。
-- 不引入 Tailwind：等组件规模和重复样式证明它能减少净复杂度后再评估。
+- Tailwind 按 ADR 0065 作为受约束 utility layer；不使用默认视觉主题替代 Zupulse runtime tokens。
 - 不引入 Redux Toolkit：当前全局客户端状态很少，领域状态已有 controller。
 - 不同时引入 Zustand、Jotai 或 MobX；状态形态发生变化时以替换方式重新决策。
 - 不把 `web-core` React 化，也不让 package 依赖 DOM。

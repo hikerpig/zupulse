@@ -48,6 +48,13 @@ describe("alphaTab playback cursor styles", () => {
     expect(css).toMatch(
       /\.list button\s*{[^}]*align-items:\s*center;[^}]*justify-content:\s*space-between;[^}]*gap:\s*10px;/s,
     );
+    expect(css).not.toMatch(/\.list button::before\s*{/);
+    expect(css).not.toMatch(/\.list button\[aria-pressed="true"\]::after\s*{/);
+    expect(css).toMatch(/\.originMarker\s*{[^}]*width:\s*8px;[^}]*height:\s*8px;/s);
+    expect(css).toMatch(/\.originMarker\[data-origin="source"\]\s*{[^}]*background:\s*var\(--signal-blue\);/s);
+    expect(css).toMatch(
+      /\.originMarker\[data-origin="correction"\]\s*{[^}]*background:\s*var\(--accent-primary\);[^}]*transform:\s*rotate\(45deg\);/s,
+    );
     expect(css).toMatch(/\.chordName\s*{[^}]*font-size:\s*15px;[^}]*font-weight:\s*700;/s);
     expect(css).toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.workspace\s*{[^}]*grid-template-columns:\s*1fr;/s);
   });
@@ -130,19 +137,33 @@ describe("alphaTab playback cursor styles", () => {
     expect(scoreCss).not.toMatch(/@media \(max-width:/);
     expect(libraryCss).toMatch(/@container \(max-width:\s*620px\)/);
     expect(libraryCss).not.toMatch(/@media \(max-width:/);
+    expect(libraryCss).toMatch(/\.libraryRow:first-child\s*{[^}]*border-start-start-radius:/s);
+    expect(libraryCss).toMatch(/\.libraryRow:last-child\s*{[^}]*border-end-start-radius:/s);
     expect(`${appCss}\n${workspaceCss}\n${libraryCss}`).toContain("env(safe-area-inset-bottom)");
   });
 
-  it("keeps the public stylesheet limited to common and vendor styles", async () => {
-    const [entryCss, viewerSource, librarySource, workspaceSource, sliderSource] = await Promise.all([
+  it("keeps the public stylesheet layered with constrained Tailwind utilities and no Preflight", async () => {
+    const [entryCss, themeCss, viewerSource, librarySource, workspaceSource, sliderSource] = await Promise.all([
       source("../styles.css"),
+      source("../styles/tailwind-theme.css"),
       source("../app/pages/ViewerPage.tsx"),
       source("../features/SheetLibrary.tsx"),
       source("../features/PlaybackWorkspace.tsx"),
       source("../components/Slider.tsx"),
     ]);
 
-    expect(entryCss).toMatch(/@layer tokens, base, vendor, components;/);
+    expect(entryCss).toMatch(/@layer tokens, base, vendor, components, utilities;/);
+    expect(entryCss).toMatch(/@import "tailwindcss\/utilities\.css" layer\(utilities\) source\(none\) prefix\(tw\);/);
+    expect(entryCss).toMatch(/@import "\.\/styles\/tailwind-theme\.css" layer\(tokens\);/);
+    expect(entryCss).not.toContain("tailwindcss/preflight.css");
+    expect(entryCss).not.toContain('@import "tailwindcss";');
+    expect(entryCss).toContain('@source "./";');
+    expect(entryCss).toContain('@source inline("tw:hidden tw:bg-surface tw:text-foreground");');
+    expect(themeCss).toContain("--color-surface: var(--bg-panel);");
+    expect(themeCss).toContain("--color-foreground: var(--text-primary);");
+    expect(themeCss).toContain("--radius-control: var(--radius-sm);");
+    expect(themeCss).toContain("--shadow-overlay: var(--shadow-elevated);");
+    expect(themeCss).not.toMatch(/#[\da-f]{3,8}/i);
     expect(entryCss).toMatch(/@import "\.\/styles\/tokens\.css" layer\(tokens\);/);
     expect(entryCss).toMatch(/@import "\.\/styles\/common\.css" layer\(base\);/);
     expect(entryCss).toMatch(/@import "\.\/styles\/vendors\/alphaTab\.css" layer\(vendor\);/);
@@ -163,6 +184,28 @@ describe("alphaTab playback cursor styles", () => {
         entry.indexOf('from "@zupulse/web-viewer"'),
       );
     }
+  });
+
+  it("keeps the narrow header navigation horizontally scrollable without a vertical scrollbar", async () => {
+    const css = await source("../app/AppHeader.module.css");
+
+    expect(css).toMatch(
+      /@media \(max-width:\s*680px\)[\s\S]*?\.navigation\s*{[^}]*overflow-x:\s*auto;[^}]*overflow-y:\s*hidden;/s,
+    );
+  });
+
+  it("keeps anchored buttons stationary on hover", async () => {
+    const css = await source("../styles/common.css");
+    const hoverRule = css.match(/button:hover:not\(:disabled\)\s*{([^}]*)}/)?.[1] ?? "";
+
+    expect(hoverRule).not.toContain("transform:");
+  });
+
+  it("keeps the Library sort label on one line beside its select", async () => {
+    const sourceCode = await source("../features/SheetLibrary.tsx");
+
+    expect(sourceCode).toMatch(/className=\{`[^`]*styles\.librarySort[^`]*tw:shrink-0[^`]*`\}/);
+    expect(sourceCode).toMatch(/<span className="[^"]*tw:whitespace-nowrap[^"]*">/);
   });
 
   it("keeps the library page out of the viewer grid regardless of stylesheet order", async () => {
@@ -211,13 +254,16 @@ describe("alphaTab playback cursor styles", () => {
   });
 
   it("keeps third-party score layers below viewer controls through shared stacking tokens", async () => {
-    const [tokensCss, scoreCss, workspaceCss, libraryCss, alphaTabCss] = await Promise.all([
-      source("../styles/tokens.css"),
-      source("../components/ScoreViewer.module.css"),
-      source("../features/PlaybackWorkspace.module.css"),
-      source("../features/SheetLibrary.module.css"),
-      source("../styles/vendors/alphaTab.css"),
-    ]);
+    const [tokensCss, tailwindThemeCss, overlaySource, scoreCss, workspaceCss, libraryCss, alphaTabCss] =
+      await Promise.all([
+        source("../styles/tokens.css"),
+        source("../styles/tailwind-theme.css"),
+        source("../components/ui/overlay.tsx"),
+        source("../components/ScoreViewer.module.css"),
+        source("../features/PlaybackWorkspace.module.css"),
+        source("../features/SheetLibrary.module.css"),
+        source("../styles/vendors/alphaTab.css"),
+      ]);
 
     expect(tokensCss).toMatch(/--z-index-score:\s*0;/);
     expect(tokensCss).toMatch(/--z-index-score-cursor:\s*10;/);
@@ -225,11 +271,15 @@ describe("alphaTab playback cursor styles", () => {
     expect(tokensCss).toMatch(/--z-index-practice-panel:\s*30;/);
     expect(tokensCss).toMatch(/--z-index-library-editor:\s*40;/);
     expect(tokensCss).toMatch(/--z-index-library-dialog:\s*50;/);
+    expect(tokensCss).toMatch(/--layer-overlay:\s*var\(--z-index-library-dialog\);/);
+    expect(tailwindThemeCss).toMatch(/--spacing-0:\s*0px;/);
+    expect(tailwindThemeCss).toMatch(/--z-index-overlay:\s*var\(--layer-overlay\);/);
     expect(scoreCss).toMatch(/\.stage\s*{[^}]*position:\s*relative;[^}]*z-index:\s*var\(--z-index-score\);/s);
     expect(workspaceCss).toMatch(/\.transportBar\s*{[^}]*z-index:\s*var\(--z-index-transport\);/s);
     expect(workspaceCss).toMatch(/\.practicePanel\s*{[^}]*z-index:\s*var\(--z-index-practice-panel\);/s);
     expect(libraryCss).toMatch(/\.libraryEditor\s*{[^}]*z-index:\s*var\(--z-index-library-editor\);/s);
-    expect(libraryCss).toMatch(/\.libraryDialog\s*{[^}]*z-index:\s*var\(--z-index-library-dialog\);/s);
+    expect(overlaySource).toMatch(/DialogBackdrop[\s\S]*?"[^"]*tw:z-overlay/);
+    expect(overlaySource).toMatch(/DialogViewport[\s\S]*?"[^"]*tw:z-overlay/);
     expect(alphaTabCss).toMatch(
       /\.score-viewer \.at-cursors\s*{[^}]*z-index:\s*var\(--z-index-score-cursor\)\s*!important;/s,
     );

@@ -1,9 +1,12 @@
 # Neural OMR engine 选型
 
-## 结论
+## 阶段结论
 
 首轮第二引擎唯一选择 **Transcoda 59M zero-shot v1**。这里的“选择”只表示把它接入 CLI
 并进入统一 development benchmark，不表示质量、许可证或产品分发已经通过。
+
+截至 2026-07-29，产品引擎选型仍为 `INVESTIGATE`。不得把首轮 benchmark 选择解释为
+Desktop、Browser、服务端或其他消费级产品已经决定采用 Transcoda。
 
 锁定项如下：
 
@@ -27,6 +30,59 @@
 
 许可证结论只允许在隔离的 CLI benchmark 中继续验证。`AGPL-3.0-only` 是未来分发风险，
 本阶段不得据此批准 Desktop、Browser、服务端或任何 App 集成。
+
+## LEGATO follow-up
+
+2026-07-28 的后续验证重新打开 LEGATO 1。官方 `guangyangmusic/legato-demo` 已提供可锁定的
+三页 PDF → ABC → MusicXML 链路，且同一份 `Dive-in-D.pdf` 在官方 Space 上得到比 Audiveris 和
+Transcoda 更完整的可读结果。因此 CLI 增加 `legato` adapter 进入 development benchmark，但这不
+推翻“首轮第二引擎选择 Transcoda”的历史结论，也不批准任何 App 集成。
+
+当前状态：
+
+- adapter、registry、artifact contract 和 fake-process tests 已实现；
+- `guangyangmusic/legato` revision、model hash、Demo revision 和 Python dependencies 已锁定；
+- 本地 LEGATO 权重与 runtime 已安装并校验；
+- `meta-llama/Llama-3.2-11B-Vision` gated access 尚未对评测机 CLI token 生效，因此本地真实
+  inference 未通过，不得标记 runtime acceptance；
+- 官方 Space 结果只能作为质量线索，不能替代本地可复现 benchmark。
+
+完整锁定项见 `../engines/legato-environment.json`。在 vision encoder 下载、本地 smoke 和统一
+development corpus 完成前，LEGATO 状态为 `INVESTIGATE`。
+
+## 消费级产品 follow-up
+
+2026-07-29 复盘了本轮安装与运行成本。目标从“能否作为 development benchmark 运行”收紧为
+“能否在普通消费级设备本地分发和推理”。当前记录如下：
+
+| 候选         | 实际产品负担                                                                 | 当前判断                                                                |
+| ------------ | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| LEGATO       | adapter 权重约 410 MB，但仍依赖 Llama 3.2 11B Vision；基座下载约 21 GB       | 端侧安装体积和内存成本过高，只保留研究或可选云端路径                    |
+| LEGATO-Small | 自身为 10.9M parameters / 43.7 MB，仍加载同一个 Llama 3.2 11B Vision encoder | 不能按小模型看待；官方还标注约 15 GB+ full-precision GPU memory         |
+| Transcoda    | 58.8M parameters；F32 checkpoint 约 240 MB，且不依赖十亿级外部基座           | 当前最接近端侧候选，但尚未完成量化、性能、质量和许可证的产品 acceptance |
+| Audiveris    | 不依赖大型神经基座，但需要 Java runtime                                      | 已对 `Dive-in-D.pdf` 实测；结果质量未达到本轮主观预期                   |
+| HOMR/Oemer   | 小模型加分割、规则或 Transformer pipeline，可本地输出 MusicXML               | 仅列为后续调查项；尚未在统一 corpus 实测，且需单独审查 AGPL 与符号覆盖  |
+
+本轮可复现事实：
+
+- 官方 LEGATO Space 对 `Dive-in-D.pdf` 生成了 ABC 和 MusicXML，主观可读性优于本轮 Audiveris 与
+  Transcoda 输出；artifact 保存在 `tmp/legato/`，但远端 Demo 结果不能算本地 runtime acceptance。
+- LEGATO adapter、registry、运行环境检查和 fake-process tests 已接入 CLI；LEGATO 自身权重和隔离
+  Python runtime 已安装。
+- Meta gated access 在 CLI 上持续返回 `requires approval`，因此没有下载 11B vision encoder，也
+  没有完成本地 `Dive-in-D.pdf` 端到端推理。
+- Transcoda 已在 Apple Silicon / MPS 完成 smoke；模型可运行并生成 `**kern`，但该 smoke 输出存在
+  repeated clef tokens，不能据此宣称质量通过。
+- Audiveris 已完成真实文件运行，但主观效果不佳；仍可作为 benchmark baseline 或结构型 fallback，
+  不能据此自动进入产品。
+
+后续决策前必须补齐：
+
+1. 用同一批真实 PDF 对 Transcoda、Audiveris 和候选小模型执行统一 benchmark。
+2. 对 Transcoda 验证 ONNX/Core ML 可行性、8-bit/4-bit 量化、安装体积、峰值内存和 CPU/MPS 延迟。
+3. 单独评估整页输入与 system/staff segmentation 的质量和复杂度。
+4. 审查 Transcoda `AGPL-3.0-only` code 与 `CC-BY-4.0` weights 对预期分发方式的影响。
+5. 在质量、性能、许可证和维护成本都有数据前，不作最终产品引擎决策。
 
 ## 实际 smoke
 

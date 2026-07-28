@@ -16,9 +16,9 @@ Canonical plan: `tasks/pdf-omr-cli/plan.md`
 
 ## Phase 1：PDF inspect 与 Audiveris
 
-- [ ] T04 选择 PDF inspect/render backend
-- [ ] T05 实现 cancellable external process runner
-- [ ] T06 交付 `inspect` vertical slice
+- [x] T04 选择 PDF inspect/render backend
+- [x] T05 实现 cancellable external process runner
+- [x] T06 交付 `inspect` vertical slice
 - [ ] T07 实现 Audiveris process adapter
 - [ ] T08 实现 Audiveris MusicXML normalizer
 - [ ] T09 交付 `recognize --engine audiveris`

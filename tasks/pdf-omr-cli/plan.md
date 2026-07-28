@@ -189,6 +189,10 @@ git diff --check
 
 ### Task 04：选择 PDF inspect/render backend
 
+**Progress:** Completed on 2026-07-28. 选择 `pdfjs-dist@6.1.200`；以 Poppler 作为开发期独立对照，
+因许可证风险排除 PyMuPDF/MuPDF。spike 覆盖 vector、raster、mixed、protected 与 malformed 输入，
+并记录渲染结果、hash、体积和运行环境。
+
 **Goal:** 用一次性 spike 比较 Node PDF backend 与外部 process 方案，记录功能、许可证、安装体积、
 vector metadata、raster render 和 cancellation 结果。
 
@@ -217,6 +221,9 @@ git diff --check
 
 ### Task 05：实现 cancellable external process runner
 
+**Progress:** Completed on 2026-07-28. 共用 runner 已覆盖成功、缺失 executable、非零退出、timeout、
+bounded output、AbortSignal 与忽略 SIGTERM 后的强制终止；canonical error 不包含 raw stderr。
+
 **Goal:** 提供所有 OMR adapter 共用的 spawn、timeout、bounded capture、AbortSignal 和 process-tree
 termination。
 
@@ -244,6 +251,10 @@ pnpm vitest run --root . tools/pdf-omr-cli/src/__tests__/engine-runner.test.ts
 **Scope:** M
 
 ### Task 06：交付 `inspect` vertical slice
+
+**Progress:** Completed on 2026-07-28. `inspect` 延迟加载 PDF.js，写入 canonical `input.json`，记录
+basename、SHA-256、page dimensions 和 vector/raster operator signals；malformed/encrypted 输入映射为
+稳定 `INVALID_INPUT` reason。
 
 **Goal:** 让 CLI 对单个 PDF 输出 hash、page count、encryption、renderability 与 page-level
 vector/raster signals。

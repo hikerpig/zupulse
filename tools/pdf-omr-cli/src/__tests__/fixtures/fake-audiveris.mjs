@@ -2,6 +2,9 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 
+const exitCode = Number(process.env.FAKE_AUDIVERIS_EXIT_CODE ?? 0);
+if (exitCode > 0) process.exit(exitCode);
+
 if (process.argv.includes("-version")) {
   process.stdout.write("Audiveris 5.5.3\n");
   process.exit(0);
@@ -17,6 +20,13 @@ const stem = basename(inputPath, extname(inputPath));
 await mkdir(outputDirectory, { recursive: true });
 await writeFile(
   join(outputDirectory, `${stem}.mxl`),
-  '<?xml version="1.0"?><score-partwise version="4.0"></score-partwise>',
+  `<?xml version="1.0"?>
+<score-partwise version="4.0">
+  <part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list>
+  <part id="P1"><measure number="1">
+    <attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+    <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><staff>1</staff></note>
+  </measure></part>
+</score-partwise>`,
 );
 await writeFile(join(outputDirectory, `${stem}.omr`), "fake-omr");

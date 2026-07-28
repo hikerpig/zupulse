@@ -4,15 +4,15 @@ Canonical plan: `tasks/pdf-omr-cli/plan.md`
 
 ## Phase 0：CLI foundation
 
-- [ ] T01 建立 `@zupulse/pdf-omr-cli` workspace package
-- [ ] T02 冻结 CLI result、error 与 artifact schemas
-- [ ] T03 实现 canonical artifact writer
+- [x] T01 建立 `@zupulse/pdf-omr-cli` workspace package
+- [x] T02 冻结 CLI result、error 与 artifact schemas
+- [x] T03 实现 canonical artifact writer
 
 ### Checkpoint A
 
-- [ ] CLI help、typecheck、tests 通过
-- [ ] canonical hashes 稳定
-- [ ] 人工批准进入 PDF/engine spike
+- [x] CLI help、typecheck、tests 通过
+- [x] canonical hashes 稳定
+- [x] 人工批准进入 PDF/engine spike
 
 ## Phase 1：PDF inspect 与 Audiveris
 

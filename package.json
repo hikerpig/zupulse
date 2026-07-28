@@ -27,6 +27,8 @@
     "benchmark:musicxml": "node scripts/benchmark-musicxml-import.mjs",
     "benchmark:harmony": "node scripts/benchmark-harmony-analysis.mjs",
     "harmony:cli": "vite-node tools/harmony-cli/src/cli.ts",
+    "pdf-omr": "vite-node tools/pdf-omr-cli/src/cli.ts",
+    "benchmark:pdf-omr": "vite-node tools/pdf-omr-cli/src/cli.ts benchmark",
     "demo:dev": "pnpm --filter @zupulse/web-demo dev",
     "demo:build": "pnpm --filter @zupulse/web-demo build",
     "demo:test:e2e": "pnpm --filter @zupulse/web-demo test:e2e",

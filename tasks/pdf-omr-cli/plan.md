@@ -2,7 +2,7 @@
 
 ## 状态
 
-- Status: draft
+- Status: in_progress
 - Date: 2026-07-28
 - Approved scope:
   `docs/superpowers/specs/2026-07-28-pdf-omr-cli-benchmark-spec.md`
@@ -76,6 +76,9 @@ flowchart TD
 
 ### Task 01：建立 `pdf-omr-cli` workspace package
 
+**Progress:** Completed on 2026-07-28. 实际按 workspace/config 与 help command 两个 TDD 小步完成；
+root `tsconfig.json` 和 `pnpm-lock.yaml` 作为 workspace integration 同步更新。
+
 **Goal:** 建立可以 typecheck、test 和显示 help 的最小工具包，不加载 PDF 或模型。
 
 **Acceptance criteria:**
@@ -106,6 +109,9 @@ pnpm pdf-omr -- --help
 
 ### Task 02：冻结 CLI result、error 与 artifact schemas
 
+**Progress:** Completed on 2026-07-28. 23 个 Phase 0 tests 中覆盖 strict schemas、exit-code mapping 与
+敏感 cause 不进入 canonical error JSON。
+
 **Goal:** 用 strict Zod schema 定义 command envelope、exit code、run manifest、engine environment、
 artifact hashes 与 `OmrScoreDraft v1`。
 
@@ -134,6 +140,9 @@ pnpm --filter @zupulse/pdf-omr-cli typecheck
 **Scope:** M
 
 ### Task 03：实现 canonical artifact writer
+
+**Progress:** Completed on 2026-07-28. canonical JSON、SHA-256、路径逃逸、重复 artifact、已有目录和
+hash verification 均有测试。
 
 **Goal:** 原子创建 run directory、写 canonical JSON、计算 SHA-256，并区分 partial 与 completed run。
 
@@ -898,4 +907,4 @@ git diff --check
 - [x] 依赖顺序已明确。
 - [x] 大任务已标记必须拆分。
 - [x] 每 2–5 个任务有 checkpoint。
-- [ ] 人工审阅并批准本实施计划。
+- [x] 用户已授权执行完整计划并允许阶段性 commit。

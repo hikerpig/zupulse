@@ -13,6 +13,37 @@ export const pdfOmrHelpReportSchema = z
   .strict();
 export type PdfOmrHelpReport = z.infer<typeof pdfOmrHelpReportSchema>;
 
+export const pdfOmrInspectReportSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    command: z.literal("inspect"),
+    source: z
+      .object({
+        fileName: z.string().min(1),
+        sha256: sha256Schema,
+        sizeBytes: z.number().int().nonnegative(),
+      })
+      .strict(),
+    pageCount: z.number().int().nonnegative(),
+    pages: z.array(
+      z
+        .object({
+          index: z.number().int().nonnegative(),
+          width: z.number().nonnegative(),
+          height: z.number().nonnegative(),
+          vectorOperators: z.number().int().nonnegative(),
+          rasterOperators: z.number().int().nonnegative(),
+        })
+        .strict(),
+    ),
+  })
+  .strict()
+  .refine((report) => report.pageCount === report.pages.length, {
+    message: "pageCount must match pages length",
+    path: ["pageCount"],
+  });
+export type PdfOmrInspectReport = z.infer<typeof pdfOmrInspectReportSchema>;
+
 export const pdfOmrErrorReportSchema = z
   .object({
     schemaVersion: z.literal("1.0.0"),

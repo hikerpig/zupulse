@@ -285,6 +285,10 @@ pnpm pdf-omr -- inspect <smoke.pdf> --output <temp-dir>
 
 ### Task 07：实现 Audiveris process adapter
 
+**Progress:** Completed on 2026-07-28. adapter 通过共用 runner 执行 environment inspection 与 batch
+recognition，记录版本、command template 和许可证 metadata，并读取 raw MXL/OMR artifacts。fake
+executable 测试覆盖成功、缺失 executable 和 cancel；本任务不要求本机安装 Audiveris。
+
 **Goal:** 完成 environment inspection 与 Audiveris batch invocation，保存原始 MXL/OMR artifact 和
 可复现参数，不做 Draft normalization。
 

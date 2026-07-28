@@ -805,6 +805,11 @@ git diff --check
 
 ### Task 21：选择 neural engine 和锁定环境
 
+**Progress:** Completed on 2026-07-28. 三个候选均记录 code、weights、license 与 runtime
+availability；Transcoda 59M 是唯一公开、非 gated、可锁 hash 且在评测机 MPS 实际运行的候选。
+真实 smoke 成功完成推理，但重复 token 导致 native syntax 无效，因此选型只批准进入统一
+development benchmark，不构成质量或 App 分发批准。
+
 **Goal:** 依据可运行性、权重、许可证、输出能力和 smoke quality，从 LEGATO 1、LEGATO 2、Transcoda
 中选择一个首轮 neural candidate。
 
@@ -833,6 +838,13 @@ git diff --check
 
 ### Task 22：实现 neural adapter 与 normalizer
 
+**Progress:** Completed on 2026-07-28. engine contract 已改为 engine-neutral normalization bytes、
+native artifacts、diagnostics 与 adapter-owned normalize；Audiveris 随同迁移。Transcoda adapter
+锁定 repository/checkpoint，使用共用 runner 串联 PDF rasterize、MPS inference 与隔离 kern
+converter。normalizer 只允许补齐无歧义 terminator；spine mismatch、multi-page 和 invalid
+conversion 均为稳定失败。完整 package 26 test files / 91 tests 通过，真实 CLI 也验证了
+`inconsistent-spine-count` 会返回 exit code 6。
+
 **Goal:** 让所选 engine 通过共用 runner 输出相同 `OmrScoreDraft`，使用同一 validator 和 metrics。
 
 **Acceptance criteria:**
@@ -855,6 +867,11 @@ pnpm vitest run --root . tools/pdf-omr-cli/src/__tests__/<engine>-normalizer.tes
 **Scope:** 2 × M
 
 ### Task 23：运行 development benchmark
+
+**Progress:** Completed on 2026-07-28. 建立 work-level 隔离的 CC0 evaluation corpus，并用同一
+manifest 实际运行 Audiveris 5.10.2 与锁定 Transcoda。Audiveris 3/3 process 成功且 Draft hash
+可复现，但 joint F1/valid-measure 均为 0；Transcoda 3/3 在 native spine validation 稳定失败。
+参数决策、被拒绝 variant 与 canonical aggregate reports 已记录。
 
 **Goal:** 在 development split 比较 Audiveris、neural engine 与 preprocessing variants，定位主要失败
 类别，但不读取 holdout item details。

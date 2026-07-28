@@ -61,10 +61,10 @@ Canonical plan: `tasks/pdf-omr-cli/plan.md`
 
 ## Phase 4：第二引擎与冻结评测
 
-- [ ] T21 选择 neural engine 和锁定环境
-- [ ] T22a 实现 neural process adapter
-- [ ] T22b 实现 neural output normalizer
-- [ ] T23 运行 development benchmark
+- [x] T21 选择 neural engine 和锁定环境
+- [x] T22a 实现 neural process adapter
+- [x] T22b 实现 neural output normalizer
+- [x] T23 运行 development benchmark
 - [ ] T24 冻结 holdout protocol
 - [ ] T25 运行 holdout 并形成唯一决策
 

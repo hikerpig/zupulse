@@ -34,8 +34,13 @@ describe("Audiveris adapter", () => {
 
     const result = await adapter.recognize({ inputPath, outputDirectory });
 
-    expect(new TextDecoder().decode(result.musicXmlBytes)).toContain("<score-partwise");
-    expect(new TextDecoder().decode(result.omrBytes)).toBe("fake-omr");
+    expect(new TextDecoder().decode(result.normalizationBytes)).toContain("<score-partwise");
+    expect(result.nativeArtifacts.map((artifact) => artifact.relativePath)).toEqual([
+      "raw-output.mxl",
+      "raw-output.omr",
+    ]);
+    expect(new TextDecoder().decode(result.nativeArtifacts[1]?.bytes)).toBe("fake-omr");
+    expect(adapter.normalize(result).parts).toHaveLength(1);
     expect(result.durationMs).toBeGreaterThanOrEqual(0);
   });
 

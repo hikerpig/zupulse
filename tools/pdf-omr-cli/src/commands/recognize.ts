@@ -5,7 +5,6 @@ import { createArtifactWriter } from "../artifact-writer";
 import type { EngineRegistry } from "../engine-registry";
 import { PdfOmrError } from "../errors";
 import { inspectPdfBytes } from "../inspect-pdf";
-import { normalizeAudiverisMusicXml } from "../normalizers/audiveris";
 import {
   omrRunManifestSchema,
   omrScoreDraftSchema,
@@ -43,7 +42,7 @@ export async function recognizeCommand(
       outputDirectory: workDirectory,
       ...(context.signal === undefined ? {} : { signal: context.signal }),
     });
-    const normalizedDraft = normalizeAudiverisMusicXml(raw.musicXmlBytes);
+    const normalizedDraft = adapter.normalize(raw);
     const draft = omrScoreDraftSchema.parse({
       ...normalizedDraft,
       provenance: {
@@ -57,16 +56,21 @@ export async function recognizeCommand(
     });
     await writer.writeJson("input.json", inputReport);
     await writer.writeJson("engine/environment.json", environment);
-    await writer.writeBytes("engine/raw-output.mxl", raw.musicXmlBytes);
-    await writer.writeBytes("engine/raw-output.omr", raw.omrBytes);
+    for (const artifact of raw.nativeArtifacts) {
+      await writer.writeBytes(`engine/${artifact.relativePath}`, artifact.bytes);
+    }
     const draftSha256 = await writer.writeJson("draft.json", draft);
     await writer.writeJson("diagnostics.json", draft.diagnostics);
     const manifest = omrRunManifestSchema.parse({
       schemaVersion: "1.0.0",
       runId,
       inputSha256: inputReport.source.sha256,
-      engine: { id: environment.id, version: environment.version },
-      parameters: {},
+      engine: {
+        id: environment.id,
+        version: environment.version,
+        ...(environment.modelSha256 === undefined ? {} : { modelSha256: environment.modelSha256 }),
+      },
+      parameters: environment.parameters ?? {},
       preprocess: { id: "none", version: "1.0.0" },
       startedAt,
       completedAt: new Date().toISOString(),

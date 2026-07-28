@@ -1,0 +1,38 @@
+{
+  "categories": {},
+  "failures": [
+    {
+      "category": "synthetic-clean",
+      "code": "ENGINE_OUTPUT_INVALID",
+      "itemId": "melody-clean"
+    },
+    {
+      "category": "synthetic-low-contrast",
+      "code": "ENGINE_OUTPUT_INVALID",
+      "itemId": "melody-low-contrast"
+    },
+    {
+      "category": "synthetic-blur",
+      "code": "ENGINE_OUTPUT_INVALID",
+      "itemId": "melody-blur"
+    }
+  ],
+  "gate": {
+    "decision": "NOT_EVALUATED",
+    "evaluated": false
+  },
+  "items": {
+    "failed": 3,
+    "succeeded": 0,
+    "total": 3
+  },
+  "metadata": {
+    "corpusId": "zupulse-pdf-omr-evaluation-v1",
+    "engineId": "transcoda",
+    "manifestSha256": "598406d48e2bbb25a935003b2ad3450399f0831471df86111cb070c0dcc645bb",
+    "mode": "development",
+    "preprocess": "none",
+    "protocolVersion": "1.0.0"
+  },
+  "schemaVersion": "1.0.0"
+}

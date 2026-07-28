@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "engine": {
+    "id": "transcoda",
+    "repository": "https://github.com/btrkeks/transcoda",
+    "revision": "d4e2e687d5679ae96ca4aa6f01e06a5b338cd488",
+    "license": "AGPL-3.0-only"
+  },
+  "model": {
+    "id": "btrkeks/transcoda-59M-zeroshot-v1",
+    "revision": "b529f8aa5d996d9224df3395b5b92d0867343c91",
+    "file": "transcoda-59M-zeroshot-v1.ckpt",
+    "sha256": "3ce7387b94776cd0edc4e5b70fbc2e28ac0f4c812d5f978d1ef26e236dccdafc",
+    "license": "CC-BY-4.0"
+  },
+  "runtime": {
+    "python": "3.11.9",
+    "packageManager": "uv",
+    "platform": "macOS arm64",
+    "device": "mps",
+    "torch": "2.9.1"
+  },
+  "decoder": {
+    "strategy": "greedy",
+    "grammarConstrained": true,
+    "layoutNormalization": true,
+    "maxLength": 512,
+    "repetitionPenalty": 1.1
+  },
+  "conversion": {
+    "nativeFormat": "kern",
+    "script": "engines/transcoda-kern-to-musicxml.py",
+    "dependencies": ["converter21==3.5.0", "music21==9.9.1"]
+  }
+}

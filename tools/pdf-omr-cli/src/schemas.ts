@@ -121,6 +121,8 @@ export const omrEngineEnvironmentSchema = z
     version: z.string().min(1),
     executable: z.string().min(1),
     modelSha256: sha256Schema.optional(),
+    parameters: z.record(z.string(), parameterValueSchema).optional(),
+    commandTemplate: z.array(z.string()).readonly(),
     license: z
       .object({
         id: z.string().min(1),

@@ -66,6 +66,28 @@ export const pdfOmrAnalyzeReportSchema = z
   .strict();
 export type PdfOmrAnalyzeReport = z.infer<typeof pdfOmrAnalyzeReportSchema>;
 
+const readinessSchema = z.enum(["blocked", "ready-with-warnings", "ready"]);
+export const pdfOmrValidateReportSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    command: z.literal("validate"),
+    readiness: z.object({ harmony: readinessSchema, musicXml: readinessSchema }).strict(),
+    outputSha256: sha256Schema,
+  })
+  .strict();
+export type PdfOmrValidateReport = z.infer<typeof pdfOmrValidateReportSchema>;
+
+export const pdfOmrExportReportSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    command: z.literal("export-musicxml"),
+    status: z.literal("succeeded"),
+    outputSha256: sha256Schema,
+    structural: z.literal(true),
+  })
+  .strict();
+export type PdfOmrExportReport = z.infer<typeof pdfOmrExportReportSchema>;
+
 export const pdfOmrErrorReportSchema = z
   .object({
     schemaVersion: z.literal("1.0.0"),

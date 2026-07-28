@@ -502,6 +502,10 @@ pnpm pdf-omr -- analyze <draft.json> --output <harmony.json>
 
 ### Task 13：实现首轮 MusicXML generator
 
+**Progress:** Completed on 2026-07-28. generator 只接受 MusicXML-ready Draft，按 measure 计算 exact
+`divisions`，支持 part/staff/measure/voice、notes/rests、chords、ties、tuplet ratios 与 repeats，并生成
+deterministic plain MusicXML 或 MXL。缺失 required facts 和超出 divisions bound 时明确失败。
+
 **Goal:** 从 MusicXML-ready Draft 生成 deterministic MusicXML，支持规格确定的最小 notation subset。
 
 **Acceptance criteria:**
@@ -528,6 +532,10 @@ pnpm vitest run --root . tools/pdf-omr-cli/src/__tests__/generate-musicxml.test.
 **Scope:** M
 
 ### Task 14：实现 Draft/MusicXML structural comparator
+
+**Progress:** Completed on 2026-07-28. comparator 先通过 current `createMusicXmlAdapter` 独立记录
+parse/view/playback，再回读为 Draft 比较 part/staff/measure/voice、pitch、onset、duration、tie、
+tuplet 与 repeat。simultaneous event 顺序不影响结果，语义 drift 输出带 path 的 difference code。
 
 **Goal:** 用当前 `createMusicXmlAdapter` 回读生成 bytes，并分别判断 parse、view、playback 和 structural
 agreement。
@@ -557,6 +565,11 @@ pnpm vitest run --root . tools/pdf-omr-cli/src/__tests__/round-trip-musicxml.tes
 **Scope:** M
 
 ### Task 15：交付 `validate` 与 `export-musicxml`
+
+**Progress:** Completed on 2026-07-28. `validate` 总是先写 canonical diagnostics/readiness artifact，
+blocked Draft 随后返回 exit code 7；`export-musicxml` 生成 MXL 后必须通过 current adapter 与
+structural comparator，mismatch 保存 report 并返回 exit code 8，且不会覆盖已有文件。Checkpoint C
+的 `pnpm verify:fast` 已通过。
 
 **Goal:** 暴露稳定 CLI commands，写 diagnostics、MXL 和 round-trip report。
 

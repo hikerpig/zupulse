@@ -341,13 +341,16 @@ describe("SheetLibrary no-results state", () => {
     );
 
     await user.type(screen.getByRole("textbox", { name: "搜索曲名或艺术家" }), "不存在");
-
-    expect(screen.getByText("没有匹配“不存在”的曲谱")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText("没有匹配“不存在”的曲谱")).toBeTruthy();
+    });
     expect(screen.getByText("0 / 1 份曲谱")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "导入第一份曲谱" })).toBeNull();
 
     await user.click(screen.getByRole("button", { name: "清除搜索" }));
-    expect(screen.getByRole("button", { name: "打开 Created" })).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "打开 Created" })).toBeTruthy();
+    });
   });
 
   it("explains an empty favorites filter and clears all filters", async () => {

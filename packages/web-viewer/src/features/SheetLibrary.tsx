@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { ArrowRight, Download, MoreHorizontal, PenLine, Star, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ImportItemResult, LibraryScoreSummary, ScoreImportSource } from "@zupulse/web-core";
@@ -49,6 +49,80 @@ function formatRelativeDate(iso: string, locale: string, labels: { today: string
   return formatter.format(-Math.floor(diffDays / 30), "month");
 }
 
+function HighlightText({ text, query }: { text: string; query: string }): ReactNode {
+  if (!query.trim()) return text;
+  const lowerQuery = query.toLocaleLowerCase();
+  const lowerText = text.toLocaleLowerCase();
+  const parts: ReactNode[] = [];
+  let lastIndex = 0;
+  let index = lowerText.indexOf(lowerQuery);
+  while (index !== -1) {
+    if (index > lastIndex) {
+      parts.push(text.slice(lastIndex, index));
+    }
+    parts.push(
+      <mark key={`${index}-${lastIndex}`} className={styles.highlightMark}>
+        {text.slice(index, index + query.length)}
+      </mark>,
+    );
+    lastIndex = index + query.length;
+    index = lowerText.indexOf(lowerQuery, lastIndex);
+  }
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+  return parts.length > 0 ? parts : text;
+}
+
+function useDebouncedQuery(query: string, delay = 200) {
+  const [debounced, setDebounced] = useState(query);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebounced(query), delay);
+    return () => window.clearTimeout(timer);
+  }, [query, delay]);
+  return debounced;
+}
+
+function useRovingTabIndex(itemCount: number) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLUListElement>) => {
+    if (itemCount === 0) return;
+    switch (event.key) {
+      case "ArrowDown": {
+        event.preventDefault();
+        const next = (activeIndex + 1) % itemCount;
+        setActiveIndex(next);
+        itemRefs.current[next]?.focus();
+        break;
+      }
+      case "ArrowUp": {
+        event.preventDefault();
+        const prev = (activeIndex - 1 + itemCount) % itemCount;
+        setActiveIndex(prev);
+        itemRefs.current[prev]?.focus();
+        break;
+      }
+      case "Home": {
+        event.preventDefault();
+        setActiveIndex(0);
+        itemRefs.current[0]?.focus();
+        break;
+      }
+      case "End": {
+        event.preventDefault();
+        const last = itemCount - 1;
+        setActiveIndex(last);
+        itemRefs.current[last]?.focus();
+        break;
+      }
+    }
+  };
+
+  return { activeIndex, setActiveIndex, handleKeyDown, itemRefs };
+}
+
 export function SheetLibrary({
   application,
   scores,
@@ -86,14 +160,17 @@ export function SheetLibrary({
   const { t, i18n } = useTranslation("library");
   const locale = i18n.resolvedLanguage ?? i18n.language;
   const [query, setQuery] = useState("");
+  const deferredQuery = useDebouncedQuery(query);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [sort, setSort] = useState<"activity" | "imported" | "practiced" | "title">("activity");
   const [editing, setEditing] = useState<LibraryScoreSummary | undefined>();
   const [deleting, setDeleting] = useState<LibraryScoreSummary | undefined>();
   const deleteReturnFocusRef = useRef<HTMLButtonElement>(null);
-  const editReturnFocusRef = useRef<HTMLButtonElement>(null);
+  const editReturnFocusRef = useRef<HTMLElement>(null);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
-  const normalizedQuery = query.trim();
+  const normalizedQuery = deferredQuery.trim();
+  const isFiltering = normalizedQuery.length > 0 || favoritesOnly;
+
   const visible = useMemo(
     () =>
       scores
@@ -122,6 +199,7 @@ export function SheetLibrary({
         .reverse(),
     [scores, normalizedQuery, favoritesOnly, sort, locale],
   );
+
   const libraryStats = useMemo(() => {
     const total = scores.length;
     const withLoop = scores.filter((s) => s.practice.hasLoop).length;
@@ -131,6 +209,9 @@ export function SheetLibrary({
       .sort((a, b) => (a && b ? Date.parse(b) - Date.parse(a) : 0))[0];
     return { total, withLoop, lastPracticedAt };
   }, [scores]);
+
+  const roving = useRovingTabIndex(visible.length);
+
   if (error)
     return (
       <section className="score-empty-state" role="alert">
@@ -141,6 +222,7 @@ export function SheetLibrary({
         </button>
       </section>
     );
+
   return (
     <DialogRoot open={importDialogOpen} onOpenChange={setImportDialogOpen}>
       <main className={`${pageStyles.appShell} ${styles.libraryShell}`}>
@@ -197,36 +279,55 @@ export function SheetLibrary({
           />
         ) : null}
         {loading ? (
-          <p role="status" style={{ padding: "24px 24px", color: "var(--text-secondary)" }}>
-            {t("loading")}
-          </p>
+          <LibrarySkeleton />
         ) : visible.length ? (
           <>
             <div className={styles.libraryStats}>
-              <p className={styles.libraryCount}>
-                {t("visibleCount", { visible: visible.length, total: scores.length })}
-              </p>
               <p className={styles.libraryStatsSummary}>
-                {t("statsSummary", {
-                  total: libraryStats.total,
-                  loops: libraryStats.withLoop,
-                  lastPracticed: libraryStats.lastPracticedAt
-                    ? formatRelativeDate(libraryStats.lastPracticedAt, locale, {
-                        today: t("relative.today"),
-                        yesterday: t("relative.yesterday"),
-                      })
-                    : t("neverPracticed"),
-                })}
+                {isFiltering
+                  ? t("statsSummaryFiltered", {
+                      total: libraryStats.total,
+                      loops: libraryStats.withLoop,
+                      lastPracticed: libraryStats.lastPracticedAt
+                        ? formatRelativeDate(libraryStats.lastPracticedAt, locale, {
+                            today: t("relative.today"),
+                            yesterday: t("relative.yesterday"),
+                          })
+                        : t("neverPracticed"),
+                      visible: visible.length,
+                    })
+                  : t("statsSummary", {
+                      total: libraryStats.total,
+                      loops: libraryStats.withLoop,
+                      lastPracticed: libraryStats.lastPracticedAt
+                        ? formatRelativeDate(libraryStats.lastPracticedAt, locale, {
+                            today: t("relative.today"),
+                            yesterday: t("relative.yesterday"),
+                          })
+                        : t("neverPracticed"),
+                    })}
               </p>
             </div>
-            <ul className={`${styles.libraryList} scrollable`}>
-              {visible.map((score) => {
+            <ul
+              className={`${styles.libraryList} scrollable`}
+              role="listbox"
+              aria-label={t("scoreListLabel")}
+              onKeyDown={roving.handleKeyDown}
+            >
+              {visible.map((score, index) => {
                 const isCurrent = score.id === currentScoreId;
+                const hasPractice = score.practice.lastPosition || score.practice.hasLoop;
                 return (
                   <li
                     key={score.id}
-                    className={`${styles.libraryRow} ${isCurrent ? styles.libraryRowCurrent : ""}`}
+                    ref={(el) => {
+                      roving.itemRefs.current[index] = el;
+                    }}
+                    className={`${styles.libraryRow} ${isCurrent ? styles.libraryRowCurrent : ""} ${hasPractice ? "" : styles.libraryRowCompact}`}
                     aria-current={isCurrent ? "true" : undefined}
+                    tabIndex={index === roving.activeIndex ? 0 : -1}
+                    onFocus={() => roving.setActiveIndex(index)}
+                    data-score-id={score.id}
                   >
                     <button
                       type="button"
@@ -237,40 +338,49 @@ export function SheetLibrary({
                       onClick={() => onOpen(score.id)}
                     >
                       <span className={styles.libraryIdentity}>
-                        <span
-                          className={`${styles.libraryFormatBar} ${score.format === "musicxml" ? styles.libraryFormatMusicxml : ""}`}
-                          aria-hidden="true"
-                        />
                         <div className={styles.libraryTitleRow}>
-                          <strong>{score.title}</strong>
-                          {score.artist ? <span className={styles.libraryArtist}>{score.artist}</span> : null}
+                          <strong>
+                            <HighlightText text={score.title} query={normalizedQuery} />
+                          </strong>
+                          {score.artist ? (
+                            <span className={styles.libraryArtist}>
+                              <HighlightText text={score.artist} query={normalizedQuery} />
+                            </span>
+                          ) : null}
                         </div>
                         <span className={styles.libraryMeta}>
-                          {score.practice.lastPosition || score.practice.hasLoop ? (
+                          {hasPractice ? (
                             <span
                               className={`${styles.libraryPracticeChip} ${score.practice.hasLoop ? styles.libraryPracticeChipLoop : styles.libraryPracticeChipActive}`}
                             >
                               <span className={styles.libraryPracticeDot} aria-hidden="true" />
                               {score.practice.lastPosition
                                 ? t("practicePosition", { measure: score.practice.lastPosition.measureIndex + 1 })
-                                : score.practice.hasLoop
-                                  ? t("savedLoop")
-                                  : null}
-                              {score.practice.hasLoop && score.practice.lastPosition ? t("loopSuffix") : ""}
+                                : null}
+                              {score.practice.hasLoop && !score.practice.lastPosition ? (
+                                <span className={styles.libraryLoopOnlyBadge} aria-label={t("savedLoop")} />
+                              ) : null}
                             </span>
                           ) : null}
+                          <span className={styles.libraryMetaDivider} aria-hidden="true" />
                           <span
                             className={`${styles.libraryFormat} ${score.format === "musicxml" ? styles.libraryFormatMusicxml : ""}`}
                           >
                             {score.format.toUpperCase()}
                           </span>
+                          <span className={styles.libraryMetaDivider} aria-hidden="true" />
                           <span>
                             {formatRelativeDate(score.importedAt, locale, {
                               today: t("relative.today"),
                               yesterday: t("relative.yesterday"),
                             })}
                           </span>
-                          {score.durationMs ? <span>{formatDuration(score.durationMs)}</span> : null}
+                          {score.durationMs ? (
+                            <>
+                              <span className={styles.libraryMetaDivider} aria-hidden="true" />
+                              <span>{formatDuration(score.durationMs)}</span>
+                            </>
+                          ) : null}
                         </span>
                       </span>
                       <ArrowRight className={styles.libraryActionIndicator} aria-hidden="true" size={16} />
@@ -280,6 +390,7 @@ export function SheetLibrary({
                       <IconButton
                         size="sm"
                         tone="ghost"
+                        className={styles.libraryFavoriteButton}
                         aria-label={t(score.isFavorite ? "unfavoriteScore" : "favoriteScore", {
                           title: score.title,
                         })}
@@ -291,7 +402,7 @@ export function SheetLibrary({
                         }}
                       >
                         <Star
-                          className="tw:shrink-0"
+                          className={`tw:shrink-0 ${score.isFavorite ? "" : styles.favoriteIconInactive}`}
                           size={16}
                           strokeWidth={1.8}
                           fill={score.isFavorite ? "currentColor" : "none"}
@@ -381,6 +492,7 @@ export function SheetLibrary({
         )}
         <DialogRoot
           open={Boolean(editing)}
+          disablePointerDismissal
           onOpenChange={(nextOpen) => {
             if (!nextOpen) setEditing(undefined);
           }}
@@ -461,6 +573,27 @@ export function SheetLibrary({
         onImport={onImportSources}
       />
     </DialogRoot>
+  );
+}
+
+function LibrarySkeleton() {
+  return (
+    <div className={styles.librarySkeleton} role="status" aria-busy="true">
+      <div className={styles.librarySkeletonHeader}>
+        <div className={styles.skeletonLine} style={{ width: "40%" }} />
+      </div>
+      <ul className={styles.librarySkeletonList}>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <li key={i} className={styles.librarySkeletonRow}>
+            <div className={styles.skeletonTitle} />
+            <div className={styles.skeletonMeta}>
+              <div className={styles.skeletonChip} />
+              <div className={styles.skeletonDate} />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

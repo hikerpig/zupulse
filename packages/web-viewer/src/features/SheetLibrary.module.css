@@ -4,17 +4,7 @@
     display: block;
     overflow: hidden;
     height: 100%;
-    background:
-      radial-gradient(circle, rgb(0 0 0 / 0.06) 1px, transparent 1px) 0 0 / 20px 20px,
-      var(--bg-glow),
-      var(--bg-app);
-  }
-
-  :global(:root[data-theme="dark"]) .libraryShell {
-    background:
-      radial-gradient(circle, rgb(255 255 255 / 0.1) 1px, transparent 1px) 0 0 / 20px 20px,
-      var(--bg-glow),
-      var(--bg-app);
+    background: var(--bg-app);
   }
 
   /* ── Sticky Header ────────────────────────────────────── */
@@ -29,13 +19,9 @@
   /* ── Context Bar ──────────────────────────────────────── */
   .libraryContextBar {
     min-height: var(--nav-height, 72px);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-shell) 96%, white) 0%, var(--bg-shell) 100%);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.28),
-      inset 0 -1px 0 rgb(24 24 24 / 0.05);
-    backdrop-filter: blur(12px);
+    background: var(--bg-shell);
+    border-bottom: 1px solid var(--border-default);
     position: relative;
-    composes: noiseOverlay from "../styles/noise.module.css";
   }
   .libraryTitle {
     letter-spacing: -0.055em;
@@ -78,15 +64,6 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-  }
-  .libraryCount {
-    color: var(--text-tertiary);
-    font-size: 12px;
-    font-family: "IBM Plex Mono", monospace;
-    letter-spacing: 0.04em;
-  }
-  .libraryCount strong {
-    color: var(--text-secondary);
   }
   .libraryStatsSummary {
     margin: 0;
@@ -174,6 +151,7 @@
   .importSummaryDetails ul {
     display: grid;
     gap: 6px;
+
     margin: 10px 0 0;
     padding: 0;
     list-style: none;
@@ -212,6 +190,7 @@
     min-height: 60px;
     background: var(--bg-panel);
     transition: background-color 140ms ease;
+    outline: none;
   }
   .libraryRow:first-child {
     border-start-start-radius: calc(var(--radius-sm) - 1px);
@@ -224,12 +203,15 @@
   .libraryRow:hover {
     background: color-mix(in srgb, var(--bg-panel) 92%, var(--accent-soft));
   }
-  .libraryRow:focus-within {
+  .libraryRow:focus-visible {
     z-index: var(--z-index-surface-raised);
     box-shadow: inset 0 0 0 2px var(--accent-primary);
   }
   .libraryRowCurrent {
     border-left: 2px solid var(--accent-primary);
+  }
+  .libraryRowCompact {
+    min-height: 52px;
   }
 
   .libraryOpenAction {
@@ -260,18 +242,8 @@
   }
   .libraryIdentity {
     min-width: 0;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  .libraryFormatBar {
-    flex: 0 0 4px;
-    align-self: stretch;
-    border-radius: 2px;
-    background: var(--border-strong);
-  }
-  .libraryFormatBar.libraryFormatMusicxml {
-    background: var(--status-ready-text);
+    display: grid;
+    gap: 3px;
   }
   .libraryTitleRow {
     min-width: 0;
@@ -288,12 +260,26 @@
     white-space: nowrap;
     text-overflow: ellipsis;
   }
+  .libraryTitleRow strong mark {
+    background: rgb(242 107 79 / 0.18);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+    font-weight: 700;
+  }
   .libraryArtist {
     color: var(--text-secondary);
     font-size: 13px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+  }
+  .libraryArtist mark {
+    background: rgb(242 107 79 / 0.18);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+    font-weight: 700;
   }
   .libraryMeta {
     display: flex;
@@ -303,6 +289,14 @@
     font-size: 11px;
     font-family: "IBM Plex Mono", monospace;
     letter-spacing: 0.03em;
+  }
+  .libraryMetaDivider {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--border-strong);
+    opacity: 0.6;
+    flex-shrink: 0;
   }
   .libraryFormat {
     padding: 1px 5px;
@@ -321,21 +315,38 @@
   .libraryPracticeChip {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 1px 6px;
-    border-radius: 4px;
-    background: color-mix(in srgb, var(--bg-panel) 80%, var(--text-tertiary));
-    font-size: 10px;
-    font-weight: 500;
+    gap: 6px;
+    padding-inline: 2px;
+
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-family: "IBM Plex Mono", monospace;
+    letter-spacing: 0.02em;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .libraryPracticeDot {
-    flex: 0 0 6px;
-    height: 6px;
+    flex: 0 0 7px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: var(--status-active);
+    background: var(--accent-primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 24%, transparent);
   }
   .libraryPracticeChipLoop .libraryPracticeDot {
-    background: var(--status-ready);
+    background: var(--status-ready-text);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--status-ready-text) 24%, transparent);
+  }
+  .libraryLoopOnlyBadge {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--status-ready-text);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--status-ready-text) 24%, transparent);
   }
   .libraryActionIndicator {
     flex: 0 0 auto;
@@ -357,11 +368,100 @@
     gap: 2px;
     padding: 0 10px;
   }
+  .libraryFavoriteButton {
+    opacity: 0.5;
+    transition: opacity 140ms ease;
+  }
+  .libraryRow:hover .libraryFavoriteButton,
+  .libraryRow:focus-visible .libraryFavoriteButton {
+    opacity: 1;
+  }
+  .favoriteIconInactive {
+    color: var(--text-tertiary);
+    transition: color 140ms ease;
+  }
+  .libraryRow:hover .favoriteIconInactive,
+  .libraryRow:focus-visible .favoriteIconInactive {
+    color: var(--text-secondary);
+  }
   .libraryEmptyActions {
     display: flex;
     justify-content: center;
     gap: 8px;
     flex-wrap: wrap;
+  }
+
+  /* ── Skeleton ─────────────────────────────────────────── */
+  .librarySkeleton {
+    width: min(1180px, calc(100% - 48px));
+    margin: 16px auto 32px;
+  }
+  .librarySkeletonHeader {
+    margin-bottom: 12px;
+  }
+  .skeletonLine {
+    height: 14px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-control) 50%, var(--bg-elevated) 75%);
+    background-size: 200% 100%;
+    animation: skeletonPulse 1.6s ease-in-out infinite;
+  }
+  .librarySkeletonList {
+    display: grid;
+    gap: 1px;
+    padding: 0;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--border-default);
+    list-style: none;
+    overflow: hidden;
+  }
+  .librarySkeletonRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    min-height: 52px;
+    padding: 12px 16px;
+    background: var(--bg-panel);
+    gap: 16px;
+  }
+  .skeletonTitle {
+    height: 15px;
+    width: 45%;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-control) 50%, var(--bg-elevated) 75%);
+    background-size: 200% 100%;
+    animation: skeletonPulse 1.6s ease-in-out infinite;
+  }
+  .skeletonMeta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .skeletonChip {
+    height: 14px;
+    width: 60px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-control) 50%, var(--bg-elevated) 75%);
+    background-size: 200% 100%;
+    animation: skeletonPulse 1.6s ease-in-out infinite;
+  }
+  .skeletonDate {
+    height: 11px;
+    width: 80px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-control) 50%, var(--bg-elevated) 75%);
+    background-size: 200% 100%;
+    animation: skeletonPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes skeletonPulse {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
   }
 
   /* ── Responsive ────────────────────────────────────────── */
@@ -390,6 +490,9 @@
       grid-template-columns: minmax(0, 1fr) auto;
       min-height: 0;
     }
+    .libraryRowCompact {
+      min-height: 0;
+    }
     .libraryOpenAction {
       grid-column: 1 / -1;
       padding-bottom: 10px;
@@ -397,6 +500,9 @@
     .libraryRowActions {
       grid-column: 2;
       border-top: 1px solid var(--border-default);
+    }
+    .libraryFavoriteButton {
+      opacity: 1;
     }
     .libraryControls {
       margin: 12px max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
@@ -416,18 +522,25 @@
       overflow: hidden;
     }
     .libraryControls .librarySort select {
-      width: 112px;
       min-width: 0;
       max-width: 100%;
+      width: auto;
     }
     .libraryStats {
       margin: 12px max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
       width: auto;
     }
+    .libraryStatsSummary {
+      text-align: left;
+    }
     .importSummary,
     .importSummaryCompact {
       width: auto;
       margin-inline: max(16px, env(safe-area-inset-left));
+    }
+    .librarySkeleton {
+      width: auto;
+      margin: 12px max(16px, env(safe-area-inset-right)) 32px max(16px, env(safe-area-inset-left));
     }
   }
 }

@@ -73,6 +73,9 @@ export const enUS = {
     scoreCount_one: "{{count}} score",
     scoreCount_other: "{{count}} scores",
     statsSummary: "{{total}} scores · {{loops}} loops · last practiced {{lastPracticed}}",
+    statsSummaryFiltered:
+      "{{total}} scores · {{loops}} loops · last practiced {{lastPracticed}} · {{visible}} filtered",
+    scoreListLabel: "Score list",
     neverPracticed: "Never practiced",
     practiced: "Practiced",
     practicePosition: "Last practiced at measure {{measure}}",

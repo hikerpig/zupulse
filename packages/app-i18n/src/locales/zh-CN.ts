@@ -70,6 +70,8 @@ export const zhCN = {
     scoreCount_one: "{{count}} 份曲谱",
     scoreCount_other: "{{count}} 份曲谱",
     statsSummary: "{{total}} 份曲谱 · {{loops}} 个 Loop · 最近练习 {{lastPracticed}}",
+    statsSummaryFiltered: "{{total}} 份曲谱 · {{loops}} 个 Loop · 最近练习 {{lastPracticed}} · 筛选后 {{visible}} 份",
+    scoreListLabel: "曲谱列表",
     neverPracticed: "尚未练习",
     practiced: "已练习",
     practicePosition: "上次练到第 {{measure}} 小节",

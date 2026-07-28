@@ -2,6 +2,7 @@ export type OmrEngineEnvironment = {
   id: string;
   version: string;
   executable: string;
+  modelSha256?: string;
   commandTemplate: readonly string[];
   license: {
     id: string;

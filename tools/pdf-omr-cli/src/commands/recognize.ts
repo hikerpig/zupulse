@@ -6,7 +6,12 @@ import type { EngineRegistry } from "../engine-registry";
 import { PdfOmrError } from "../errors";
 import { inspectPdfBytes } from "../inspect-pdf";
 import { normalizeAudiverisMusicXml } from "../normalizers/audiveris";
-import { omrRunManifestSchema, pdfOmrRecognizeReportSchema, type PdfOmrRecognizeReport } from "../schemas";
+import {
+  omrRunManifestSchema,
+  omrScoreDraftSchema,
+  pdfOmrRecognizeReportSchema,
+  type PdfOmrRecognizeReport,
+} from "../schemas";
 
 export async function recognizeCommand(
   input: string,
@@ -38,7 +43,18 @@ export async function recognizeCommand(
       outputDirectory: workDirectory,
       ...(context.signal === undefined ? {} : { signal: context.signal }),
     });
-    const draft = normalizeAudiverisMusicXml(raw.musicXmlBytes);
+    const normalizedDraft = normalizeAudiverisMusicXml(raw.musicXmlBytes);
+    const draft = omrScoreDraftSchema.parse({
+      ...normalizedDraft,
+      provenance: {
+        engine: {
+          id: environment.id,
+          version: environment.version,
+          ...(environment.modelSha256 === undefined ? {} : { modelSha256: environment.modelSha256 }),
+        },
+        inputSha256: inputReport.source.sha256,
+      },
+    });
     await writer.writeJson("input.json", inputReport);
     await writer.writeJson("engine/environment.json", environment);
     await writer.writeBytes("engine/raw-output.mxl", raw.musicXmlBytes);

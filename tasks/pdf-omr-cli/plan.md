@@ -404,6 +404,10 @@ git diff --check
 
 ### Task 10：实现 exact rational time 与 Draft validator
 
+**Progress:** Completed on 2026-07-28. exact rational arithmetic 使用 safe integer/BigInt cross-product，
+拒绝 zero denominator、overflow 与过大的 ticks LCM。validator 覆盖 meter/duration、voice overlap/gap、
+chord duration、ties、staff alignment、source bounds，并分别计算 Harmony 与 MusicXML readiness。
+
 **Goal:** 校验 measure duration、voice overlap、rests、ties、staff alignment 和 source bounds，并独立
 计算 Harmony/MusicXML readiness。
 
@@ -433,6 +437,11 @@ pnpm vitest run --root . tools/pdf-omr-cli/src/__tests__/validate-draft.test.ts
 
 ### Task 11：实现 Draft → `HarmonyAnalysisInput`
 
+**Progress:** Completed on 2026-07-28. projection 以 AlphaTab 的 960 TPQ 为基线，只在 exact LCM
+可安全表达时扩大 ticks，保留 measure、track、staff、voice、spelling、sounding pitch 与 tie。
+与 current MusicXML projection 的核心 written-time/pitch facts 有对照测试，OMR confidence/diagnostics
+不会变成 Harmony certainty。
+
 **Goal:** 精确投影 measures、tracks、staves、voice、spelling、sounding pitch、tie 和 written time。
 
 **Acceptance criteria:**
@@ -458,6 +467,10 @@ pnpm vitest run --root . tools/pdf-omr-cli/src/__tests__/project-harmony.test.ts
 **Scope:** M
 
 ### Task 12：交付 `analyze` command
+
+**Progress:** Completed on 2026-07-28. `analyze` 读取 strict Draft，先执行 Harmony readiness，再调用
+production `analyzeHarmony`。artifact 分开记录 OMR engine provenance 与 bundled Harmony algorithm
+version，并区分 invalid threshold、blocked Draft 和 analyzer failure。
 
 **Goal:** 使用当前生产 `analyzeHarmony` 输出 versioned harmony artifact，同时保留 OMR readiness 和
 diagnostics。

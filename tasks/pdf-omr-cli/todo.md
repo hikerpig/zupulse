@@ -31,9 +31,9 @@ Canonical plan: `tasks/pdf-omr-cli/plan.md`
 
 ## Phase 2：Validation、Harmony 与 MusicXML
 
-- [ ] T10 实现 exact rational time 与 Draft validator
-- [ ] T11 实现 Draft → `HarmonyAnalysisInput`
-- [ ] T12 交付 `analyze` command
+- [x] T10 实现 exact rational time 与 Draft validator
+- [x] T11 实现 Draft → `HarmonyAnalysisInput`
+- [x] T12 交付 `analyze` command
 - [ ] T13 实现首轮 MusicXML generator
 - [ ] T14 实现 Draft/MusicXML structural comparator
 - [ ] T15 交付 `validate` 与 `export-musicxml`

@@ -56,6 +56,16 @@ export const pdfOmrRecognizeReportSchema = z
   .strict();
 export type PdfOmrRecognizeReport = z.infer<typeof pdfOmrRecognizeReportSchema>;
 
+export const pdfOmrAnalyzeReportSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    command: z.literal("analyze"),
+    status: z.literal("succeeded"),
+    outputSha256: sha256Schema,
+  })
+  .strict();
+export type PdfOmrAnalyzeReport = z.infer<typeof pdfOmrAnalyzeReportSchema>;
+
 export const pdfOmrErrorReportSchema = z
   .object({
     schemaVersion: z.literal("1.0.0"),
@@ -191,6 +201,19 @@ const diagnosticSchema = z
 export const omrScoreDraftSchema = z
   .object({
     schemaVersion: z.literal("1.0.0"),
+    provenance: z
+      .object({
+        engine: z
+          .object({
+            id: z.string().min(1),
+            version: z.string().min(1),
+            modelSha256: sha256Schema.optional(),
+          })
+          .strict(),
+        inputSha256: sha256Schema.optional(),
+      })
+      .strict()
+      .optional(),
     parts: z
       .array(
         z

@@ -2,6 +2,7 @@ import { PdfOmrError } from "./errors";
 import { createEngineRegistry, type EngineRegistry } from "./engine-registry";
 import {
   pdfOmrHelpReportSchema,
+  type PdfOmrAnalyzeReport,
   type PdfOmrHelpReport,
   type PdfOmrInspectReport,
   type PdfOmrRecognizeReport,
@@ -22,7 +23,7 @@ const usage = [
 export async function runPdfOmrCommand(
   args: readonly string[],
   context: { cwd?: string; engineRegistry?: EngineRegistry; signal?: AbortSignal } = {},
-): Promise<PdfOmrHelpReport | PdfOmrInspectReport | PdfOmrRecognizeReport> {
+): Promise<PdfOmrHelpReport | PdfOmrInspectReport | PdfOmrRecognizeReport | PdfOmrAnalyzeReport> {
   const normalized = args[0] === "--" ? args.slice(1) : args;
   if (normalized.length === 0 || normalized[0] === "--help" || normalized[0] === "-h") {
     return pdfOmrHelpReportSchema.parse({ schemaVersion: "1.0.0", command: "help", usage });
@@ -65,6 +66,34 @@ export async function runPdfOmrCommand(
       engineRegistry: context.engineRegistry ?? createEngineRegistry(),
       ...(context.signal === undefined ? {} : { signal: context.signal }),
     });
+  }
+  if (normalized[0] === "analyze") {
+    const input = normalized[1];
+    const outputFlag = normalized[2];
+    const output = normalized[3];
+    const thresholdFlag = normalized[4];
+    const thresholdValue = normalized[5];
+    if (
+      input === undefined ||
+      outputFlag !== "--output" ||
+      output === undefined ||
+      normalized.length > 6 ||
+      (normalized.length > 4 && (thresholdFlag !== "--decision-threshold" || thresholdValue === undefined))
+    ) {
+      throw new PdfOmrError(
+        "INVALID_CLI_ARGUMENT",
+        "analyze requires <draft.json> --output <harmony.json> [--decision-threshold <0..1>]",
+        { context: { command: "analyze" } },
+      );
+    }
+    const decisionThreshold = thresholdValue === undefined ? 0.6 : Number(thresholdValue);
+    if (!Number.isFinite(decisionThreshold) || decisionThreshold < 0 || decisionThreshold > 1) {
+      throw new PdfOmrError("INVALID_CLI_ARGUMENT", "decision threshold must be between 0 and 1", {
+        context: { decisionThreshold: thresholdValue },
+      });
+    }
+    const { analyzeCommand } = await import("./commands/analyze");
+    return analyzeCommand(input, output, decisionThreshold, context.cwd ?? process.cwd());
   }
   throw new PdfOmrError("INVALID_CLI_ARGUMENT", `unknown command: ${normalized[0]}`, {
     context: { command: normalized[0] },

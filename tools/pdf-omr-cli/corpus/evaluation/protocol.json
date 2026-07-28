@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "frozen",
+  "frozenAt": "2026-07-28T11:59:14.000Z",
+  "manifestSha256": "598406d48e2bbb25a935003b2ad3450399f0831471df86111cb070c0dcc645bb",
+  "benchmarkCommit": "98410a85953e2682e0444dd354334130bb7f28ce",
+  "engines": [
+    {
+      "id": "audiveris",
+      "version": "5.10.2",
+      "parameters": {}
+    },
+    {
+      "id": "transcoda",
+      "version": "d4e2e687d5679ae96ca4aa6f01e06a5b338cd488",
+      "modelSha256": "3ce7387b94776cd0edc4e5b70fbc2e28ac0f4c812d5f978d1ef26e236dccdafc",
+      "parameters": {
+        "grammarConstrained": true,
+        "layoutNormalization": true,
+        "maxLength": 512,
+        "rasterDpi": 150,
+        "repetitionPenalty": 1.1
+      }
+    }
+  ],
+  "preprocessVariants": ["none"],
+  "gates": {
+    "jointF1": 0.9,
+    "validMeasureRate": 0.95,
+    "parseRate": 0.95,
+    "structuralAgreementRate": 0.9,
+    "harmonyPrecisionDelta": -0.05,
+    "falseConfidentChordRate": 0.03,
+    "reproducibilityAgreementRate": 1,
+    "cancelLatencyP95Ms": 2000
+  }
+}

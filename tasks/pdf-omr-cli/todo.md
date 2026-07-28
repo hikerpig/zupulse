@@ -65,15 +65,15 @@ Canonical plan: `tasks/pdf-omr-cli/plan.md`
 - [x] T22a 实现 neural process adapter
 - [x] T22b 实现 neural output normalizer
 - [x] T23 运行 development benchmark
-- [ ] T24 冻结 holdout protocol
-- [ ] T25 运行 holdout 并形成唯一决策
+- [x] T24 冻结 holdout protocol
+- [x] T25 运行 holdout 并形成唯一决策
 
 ### Checkpoint E
 
-- [ ] 两个 engine 完成冻结 holdout
-- [ ] 结果可复现并可追溯
-- [ ] 结论为 `CONTINUE_TO_APP_DISCOVERY`、`INVESTIGATE` 或 `STOP`
-- [ ] 没有修改 `apps/*`
+- [x] 两个 engine 完成冻结 holdout
+- [x] 结果可复现并可追溯
+- [x] 结论为 `CONTINUE_TO_APP_DISCOVERY`、`INVESTIGATE` 或 `STOP`
+- [x] 没有修改 `apps/*`
 
 ## 每个任务的完成门槛
 

@@ -1,6 +1,13 @@
 import { PdfOmrError } from "../errors";
 import { omrScoreDraftSchema, type OmrScoreDraft } from "../schemas";
-import { childElement, childElements, childText, integerText, parseMusicXmlDocument } from "./musicxml-source";
+import {
+  childElement,
+  childElements,
+  childText,
+  integerText,
+  parseMusicXmlDocument,
+  type XmlElement,
+} from "./musicxml-source";
 
 type Rational = { numerator: number; denominator: number };
 type Diagnostic = OmrScoreDraft["diagnostics"][number];
@@ -10,6 +17,7 @@ export function normalizeAudiverisMusicXml(bytes: Uint8Array): OmrScoreDraft {
   try {
     const document = parseMusicXmlDocument(bytes);
     const root = document.documentElement;
+    if (root === null) throw new Error("document-element-required");
     if (root.nodeName !== "score-partwise") throw new Error("score-partwise-required");
     const names = readPartNames(root);
     const diagnostics: Diagnostic[] = [];
@@ -24,7 +32,7 @@ export function normalizeAudiverisMusicXml(bytes: Uint8Array): OmrScoreDraft {
   }
 }
 
-function normalizePart(part: Element, names: ReadonlyMap<string, string>, diagnostics: Diagnostic[]) {
+function normalizePart(part: XmlElement, names: ReadonlyMap<string, string>, diagnostics: Diagnostic[]) {
   const id = part.getAttribute("id") ?? "";
   const name = names.get(id) ?? id;
   let divisions: number | undefined;
@@ -179,7 +187,7 @@ function normalizePart(part: Element, names: ReadonlyMap<string, string>, diagno
   return { id, name: name.length > 0 ? name : id, staves };
 }
 
-function readPartNames(root: Element): Map<string, string> {
+function readPartNames(root: XmlElement): Map<string, string> {
   const names = new Map<string, string>();
   const partList = childElement(root, "part-list");
   if (partList === undefined) return names;

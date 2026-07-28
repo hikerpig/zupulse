@@ -65,7 +65,7 @@ export function projectDraftHarmony(draft: OmrScoreDraft): HarmonyAnalysisInput 
                       : {
                           spelling: {
                             step: event.writtenPitch.step,
-                            alter: event.writtenPitch.alter,
+                            alter: harmonyAlter(event.writtenPitch.alter),
                           },
                         }),
                     voice: voice.index,
@@ -85,6 +85,11 @@ export function projectDraftHarmony(draft: OmrScoreDraft): HarmonyAnalysisInput 
       cause: error,
     });
   }
+}
+
+function harmonyAlter(value: number): -2 | -1 | 0 | 1 | 2 {
+  if (value === -2 || value === -1 || value === 0 || value === 1 || value === 2) return value;
+  throw new Error("unsupported-written-alter");
 }
 
 function collectWholeNoteTicks(draft: OmrScoreDraft): number {

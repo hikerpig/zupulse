@@ -216,6 +216,9 @@ importers:
 
   tools/pdf-omr-cli:
     dependencies:
+      '@xmldom/xmldom':
+        specifier: 0.9.10
+        version: 0.9.10
       '@zupulse/web-core':
         specifier: workspace:*
         version: link:../../packages/web-core

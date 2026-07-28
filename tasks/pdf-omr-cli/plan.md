@@ -317,6 +317,11 @@ pnpm vitest run --root . tools/pdf-omr-cli/src/__tests__/audiveris-adapter.test.
 
 ### Task 08：实现 Audiveris MusicXML normalizer
 
+**Progress:** Completed on 2026-07-28. normalizer 通过 current `web-core` MXL preflight 解包 score root，
+再解析 part/staff/measure/voice/note/rest/tie/tuplet/repeat。缺失 divisions、time、timing 或 pitch 产生
+blocking diagnostic；没有 geometry 时不伪造 `SourceAnchor`。plain MusicXML 与真实 MXL container
+均有测试。
+
 **Goal:** 把 Audiveris 生成的 MusicXML/MXL 转成 `OmrScoreDraft`，不把 parser 默认值冒充识别事实。
 
 **Acceptance criteria:**
@@ -343,6 +348,12 @@ pnpm vitest run --root . tools/pdf-omr-cli/src/__tests__/audiveris-normalizer.te
 **Scope:** M
 
 ### Task 09：交付 `recognize --engine audiveris`
+
+**Progress:** Completed on 2026-07-28. `recognize` 已串联 inspect、engine registry、Audiveris、
+normalizer 和 artifact writer，成功 run 写入 input、environment、raw MXL/OMR、Draft、diagnostics 与
+manifest hashes。重复 run 的 Draft hash 稳定，engine crash 不提交 succeeded manifest。使用 fake
+Audiveris 完成 CLI smoke；Checkpoint B 的三份真实 Audiveris Draft 人工抽查仍待准备实际 engine 与
+corpus。
 
 **Goal:** 串联 inspect、artifact writer、Audiveris adapter 和 normalizer，形成第一条 PDF → Draft
 端到端命令。

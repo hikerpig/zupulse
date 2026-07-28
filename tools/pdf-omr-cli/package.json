@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.test.json"
   },
   "dependencies": {
+    "@xmldom/xmldom": "0.9.10",
     "@zupulse/web-core": "workspace:*",
     "pdfjs-dist": "6.1.200",
     "zod": "4.4.3"

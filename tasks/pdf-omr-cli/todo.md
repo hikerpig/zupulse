@@ -20,13 +20,13 @@ Canonical plan: `tasks/pdf-omr-cli/plan.md`
 - [x] T05 实现 cancellable external process runner
 - [x] T06 交付 `inspect` vertical slice
 - [x] T07 实现 Audiveris process adapter
-- [ ] T08 实现 Audiveris MusicXML normalizer
-- [ ] T09 交付 `recognize --engine audiveris`
+- [x] T08 实现 Audiveris MusicXML normalizer
+- [x] T09 交付 `recognize --engine audiveris`
 
 ### Checkpoint B
 
-- [ ] PDF → Draft 单命令可运行
-- [ ] cancel/crash/invalid output tests 通过
+- [x] PDF → Draft 单命令可运行
+- [x] cancel/crash/invalid output tests 通过
 - [ ] 三份 smoke Draft 完成人工抽查
 
 ## Phase 2：Validation、Harmony 与 MusicXML

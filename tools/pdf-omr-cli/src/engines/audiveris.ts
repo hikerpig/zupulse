@@ -4,7 +4,15 @@ import { PdfOmrError } from "../errors";
 import { runEngineProcess } from "../engine-runner";
 import type { OmrEngineAdapter, OmrRawRecognition } from "./types";
 
-const commandTemplate = ["-batch", "-export", "-output", "<output-dir>", "<input.pdf>"] as const;
+const commandTemplate = [
+  "-batch",
+  "-transcribe",
+  "-export",
+  "-save",
+  "-output",
+  "<output-dir>",
+  "<input.pdf>",
+] as const;
 
 export function createAudiverisAdapter(options: {
   executable?: string;
@@ -43,7 +51,7 @@ export function createAudiverisAdapter(options: {
       const result = await runEngineProcess(
         {
           command: executable,
-          args: ["-batch", "-export", "-output", request.outputDirectory, request.inputPath],
+          args: ["-batch", "-transcribe", "-export", "-save", "-output", request.outputDirectory, request.inputPath],
           ...processOptions,
         },
         request.signal,

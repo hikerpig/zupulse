@@ -44,6 +44,18 @@ export const pdfOmrInspectReportSchema = z
   });
 export type PdfOmrInspectReport = z.infer<typeof pdfOmrInspectReportSchema>;
 
+export const pdfOmrRecognizeReportSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    command: z.literal("recognize"),
+    status: z.literal("succeeded"),
+    runId: z.string().min(1),
+    inputSha256: sha256Schema,
+    draftSha256: sha256Schema,
+  })
+  .strict();
+export type PdfOmrRecognizeReport = z.infer<typeof pdfOmrRecognizeReportSchema>;
+
 export const pdfOmrErrorReportSchema = z
   .object({
     schemaVersion: z.literal("1.0.0"),
@@ -150,12 +162,15 @@ const noteSchema = z
     writtenPitch: writtenPitchSchema.optional(),
     soundingMidi: z.number().int().min(0).max(127).optional(),
     tie: z.enum(["start", "continue", "end"]).optional(),
+    tuplet: z
+      .object({
+        actualNotes: z.number().int().positive(),
+        normalNotes: z.number().int().positive(),
+      })
+      .strict()
+      .optional(),
   })
-  .strict()
-  .refine(
-    (note) => note.writtenPitch !== undefined || note.soundingMidi !== undefined,
-    "note requires writtenPitch or soundingMidi",
-  );
+  .strict();
 
 const restSchema = z
   .object({
@@ -197,21 +212,37 @@ export const omrScoreDraftSchema = z
                                 numerator: z.number().int().positive(),
                                 denominator: z.number().int().positive(),
                               })
-                              .strict(),
-                            duration: rationalSchema.refine(
-                              (value) => value.numerator > 0,
-                              "measure duration must be positive",
+                              .strict()
+                              .optional(),
+                            duration: rationalSchema
+                              .refine((value) => value.numerator > 0, "measure duration must be positive")
+                              .optional(),
+                            keySignature: z
+                              .object({ fifths: z.number().int().min(-7).max(7) })
+                              .strict()
+                              .optional(),
+                            clef: z
+                              .object({
+                                sign: z.enum(["G", "F", "C", "percussion", "TAB", "none"]),
+                                line: z.number().int().positive().optional(),
+                              })
+                              .strict()
+                              .optional(),
+                            repeat: z
+                              .object({
+                                forward: z.boolean(),
+                                backward: z.boolean(),
+                              })
+                              .strict()
+                              .optional(),
+                            voices: z.array(
+                              z
+                                .object({
+                                  index: z.number().int().positive(),
+                                  events: z.array(z.union([noteSchema, restSchema])),
+                                })
+                                .strict(),
                             ),
-                            voices: z
-                              .array(
-                                z
-                                  .object({
-                                    index: z.number().int().positive(),
-                                    events: z.array(z.union([noteSchema, restSchema])),
-                                  })
-                                  .strict(),
-                              )
-                              .min(1),
                           })
                           .strict(),
                       )

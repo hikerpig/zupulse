@@ -1,5 +1,11 @@
 import { PdfOmrError } from "./errors";
-import { pdfOmrHelpReportSchema, type PdfOmrHelpReport, type PdfOmrInspectReport } from "./schemas";
+import { createEngineRegistry, type EngineRegistry } from "./engine-registry";
+import {
+  pdfOmrHelpReportSchema,
+  type PdfOmrHelpReport,
+  type PdfOmrInspectReport,
+  type PdfOmrRecognizeReport,
+} from "./schemas";
 
 const usage = [
   "pdf-omr <command>",
@@ -15,8 +21,8 @@ const usage = [
 
 export async function runPdfOmrCommand(
   args: readonly string[],
-  context: { cwd?: string } = {},
-): Promise<PdfOmrHelpReport | PdfOmrInspectReport> {
+  context: { cwd?: string; engineRegistry?: EngineRegistry; signal?: AbortSignal } = {},
+): Promise<PdfOmrHelpReport | PdfOmrInspectReport | PdfOmrRecognizeReport> {
   const normalized = args[0] === "--" ? args.slice(1) : args;
   if (normalized.length === 0 || normalized[0] === "--help" || normalized[0] === "-h") {
     return pdfOmrHelpReportSchema.parse({ schemaVersion: "1.0.0", command: "help", usage });
@@ -32,6 +38,33 @@ export async function runPdfOmrCommand(
     }
     const { inspectCommand } = await import("./commands/inspect");
     return inspectCommand(input, output, context.cwd ?? process.cwd());
+  }
+  if (normalized[0] === "recognize") {
+    const input = normalized[1];
+    const engineFlag = normalized[2];
+    const engineId = normalized[3];
+    const outputFlag = normalized[4];
+    const output = normalized[5];
+    if (
+      input === undefined ||
+      engineFlag !== "--engine" ||
+      engineId === undefined ||
+      outputFlag !== "--output" ||
+      output === undefined ||
+      normalized.length !== 6
+    ) {
+      throw new PdfOmrError(
+        "INVALID_CLI_ARGUMENT",
+        "recognize requires <input.pdf> --engine <engine-id> --output <run-dir>",
+        { context: { command: "recognize" } },
+      );
+    }
+    const { recognizeCommand } = await import("./commands/recognize");
+    return recognizeCommand(input, engineId, output, {
+      cwd: context.cwd ?? process.cwd(),
+      engineRegistry: context.engineRegistry ?? createEngineRegistry(),
+      ...(context.signal === undefined ? {} : { signal: context.signal }),
+    });
   }
   throw new PdfOmrError("INVALID_CLI_ARGUMENT", `unknown command: ${normalized[0]}`, {
     context: { command: normalized[0] },

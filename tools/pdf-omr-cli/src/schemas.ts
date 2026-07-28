@@ -88,6 +88,18 @@ export const pdfOmrExportReportSchema = z
   .strict();
 export type PdfOmrExportReport = z.infer<typeof pdfOmrExportReportSchema>;
 
+export const pdfOmrBenchmarkReportSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    command: z.literal("benchmark"),
+    status: z.literal("succeeded"),
+    reportSha256: sha256Schema,
+    gateEvaluated: z.boolean(),
+    gatePassed: z.boolean().optional(),
+  })
+  .strict();
+export type PdfOmrBenchmarkReport = z.infer<typeof pdfOmrBenchmarkReportSchema>;
+
 export const pdfOmrErrorReportSchema = z
   .object({
     schemaVersion: z.literal("1.0.0"),

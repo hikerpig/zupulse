@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "corpusId": "pdf-omr-smoke-v1",
+  "protocolVersion": "1.0.0",
+  "items": [
+    {
+      "id": "example-work-render",
+      "workId": "example-work",
+      "variantId": "render",
+      "split": "development",
+      "category": "digital-vector",
+      "input": {
+        "path": "inputs/example-work.pdf",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "groundTruth": {
+        "path": "ground-truth/example-work.mxl",
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "format": "mxl"
+      },
+      "license": {
+        "id": "CC0-1.0",
+        "source": "https://example.test/license"
+      }
+    }
+  ]
+}

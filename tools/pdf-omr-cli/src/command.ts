@@ -1,6 +1,8 @@
 import { PdfOmrError } from "./errors";
 import { createEngineRegistry, type EngineRegistry } from "./engine-registry";
+import type { RunBenchmarkDependencies } from "./benchmark/run-benchmark";
 import {
+  type PdfOmrBenchmarkReport,
   pdfOmrHelpReportSchema,
   type PdfOmrAnalyzeReport,
   type PdfOmrExportReport,
@@ -24,7 +26,12 @@ const usage = [
 
 export async function runPdfOmrCommand(
   args: readonly string[],
-  context: { cwd?: string; engineRegistry?: EngineRegistry; signal?: AbortSignal } = {},
+  context: {
+    cwd?: string;
+    engineRegistry?: EngineRegistry;
+    signal?: AbortSignal;
+    benchmarkDependencies?: RunBenchmarkDependencies;
+  } = {},
 ): Promise<
   | PdfOmrHelpReport
   | PdfOmrInspectReport
@@ -32,6 +39,7 @@ export async function runPdfOmrCommand(
   | PdfOmrAnalyzeReport
   | PdfOmrValidateReport
   | PdfOmrExportReport
+  | PdfOmrBenchmarkReport
 > {
   const normalized = args[0] === "--" ? args.slice(1) : args;
   if (normalized.length === 0 || normalized[0] === "--help" || normalized[0] === "-h") {
@@ -138,7 +146,54 @@ export async function runPdfOmrCommand(
     const { exportMusicXmlCommand } = await import("./commands/export-musicxml");
     return exportMusicXmlCommand(input, output, roundTripOutput, context.cwd ?? process.cwd());
   }
+  if (normalized[0] === "benchmark") {
+    const benchmarkArgs = normalized[1] === "--" ? normalized.slice(2) : normalized.slice(1);
+    const flags = parseBenchmarkFlags(benchmarkArgs);
+    const manifest = flags.get("--manifest");
+    const engineId = flags.get("--engine");
+    const output = flags.get("--output");
+    if (manifest === undefined || engineId === undefined || output === undefined) {
+      throw new PdfOmrError(
+        "INVALID_CLI_ARGUMENT",
+        "benchmark requires --manifest <manifest.json> --engine <engine-id> --output <result-dir>",
+        { context: { command: "benchmark" } },
+      );
+    }
+    const mode = flags.get("--mode") ?? "development";
+    if (mode !== "development" && mode !== "holdout") {
+      throw new PdfOmrError("INVALID_CLI_ARGUMENT", "benchmark mode must be development or holdout");
+    }
+    const protocolSha256 = flags.get("--protocol-sha");
+    const { benchmarkCommand } = await import("./commands/benchmark");
+    return benchmarkCommand(
+      manifest,
+      engineId,
+      output,
+      {
+        mode,
+        preprocess: flags.get("--preprocess") ?? "none",
+        ...(protocolSha256 === undefined ? {} : { protocolSha256 }),
+      },
+      context.benchmarkDependencies ?? {},
+    );
+  }
   throw new PdfOmrError("INVALID_CLI_ARGUMENT", `unknown command: ${normalized[0]}`, {
     context: { command: normalized[0] },
   });
+}
+
+function parseBenchmarkFlags(args: readonly string[]): Map<string, string> {
+  const allowed = new Set(["--manifest", "--engine", "--output", "--preprocess", "--mode", "--protocol-sha"]);
+  const result = new Map<string, string>();
+  for (let index = 0; index < args.length; index += 2) {
+    const flag = args[index];
+    const value = args[index + 1];
+    if (flag === undefined || value === undefined || !allowed.has(flag) || result.has(flag)) {
+      throw new PdfOmrError("INVALID_CLI_ARGUMENT", "invalid benchmark arguments", {
+        context: { flag },
+      });
+    }
+    result.set(flag, value);
+  }
+  return result;
 }

@@ -47,17 +47,17 @@ Canonical plan: `tasks/pdf-omr-cli/plan.md`
 
 ## Phase 3：Corpus 与 metrics
 
-- [ ] T16 定义 corpus protocol 与 manifest verifier
-- [ ] T17 实现 symbolic alignment 与 metrics
-- [ ] T18 实现 Harmony impact metrics
-- [ ] T19 实现 MusicXML、runtime 与 reproducibility metrics
-- [ ] T20 交付 benchmark orchestrator 与 report
+- [x] T16 定义 corpus protocol 与 manifest verifier
+- [x] T17 实现 symbolic alignment 与 metrics
+- [x] T18 实现 Harmony impact metrics
+- [x] T19 实现 MusicXML、runtime 与 reproducibility metrics
+- [x] T20 交付 benchmark orchestrator 与 report
 
 ### Checkpoint D
 
-- [ ] smoke benchmark 产生 item/category/overall metrics
-- [ ] aggregates 可从 artifacts 重算
-- [ ] development/holdout policy 自动执行
+- [x] smoke benchmark 产生 item/category/overall metrics
+- [x] aggregates 可从 artifacts 重算
+- [x] development/holdout policy 自动执行
 
 ## Phase 4：第二引擎与冻结评测
 

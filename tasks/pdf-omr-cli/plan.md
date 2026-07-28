@@ -621,6 +621,10 @@ pnpm verify:fast
 
 ### Task 16：定义 corpus protocol 与 manifest verifier
 
+**Progress:** Completed on 2026-07-28. strict manifest 固定 item/work/variant、split、category、input/ground
+truth hashes 与 license metadata；work variants 跨 split 会机械失败。development view 只暴露 development
+items 和 holdout count，holdout details 必须提供 frozen protocol SHA。
+
 **Goal:** 定义 item、work ID、development/holdout、category、ground truth、hash 和 license schema，
 机械阻止 work-level leakage。
 
@@ -648,6 +652,10 @@ pnpm vitest run --root . tools/pdf-omr-cli/src/__tests__/corpus.test.ts
 **Scope:** M
 
 ### Task 17：实现 symbolic alignment 与 metrics
+
+**Progress:** Completed on 2026-07-28. multiset exact alignment 正确处理 chord、rests 和 duplicate
+candidates；metrics 分开计算 pitch/onset/duration/joint、rest、staff、voice、tie、tuplet、repeat 与
+valid-measure counts。aggregate 只累加 TP/FP/FN 后重算比例，不平均 item percentages。
 
 **Goal:** 在 measure-local exact rational timeline 上匹配 notes，计算 pitch/onset/duration/joint F1、
 valid measure 与 voice/staff/tie/tuplet/repeat 指标。
@@ -678,6 +686,10 @@ pnpm vitest run --root . tools/pdf-omr-cli/src/__tests__/symbolic-metrics.test.t
 
 ### Task 18：实现 Harmony impact metrics
 
+**Progress:** Completed on 2026-07-28. gold Draft 与 OMR Draft 使用同一 production analyzer 和 algorithm
+version。interval overlap/boundary 直接复用 `@zupulse/harmony-cli` 既有 semantics；OMR blocked、
+Harmony unresolved、unsupported gold 和 high-confidence wrong chord 分开统计。
+
 **Goal:** 比较 OMR Draft 与 ground-truth MusicXML 进入同一生产 analyzer 后的 resolved precision、
 coverage、boundary F1 与 false confident chord rate。
 
@@ -707,6 +719,10 @@ pnpm --filter @zupulse/harmony-cli test
 
 ### Task 19：实现 MusicXML、runtime 与 reproducibility metrics
 
+**Progress:** Completed on 2026-07-28. capability rates 与 structural agreement 独立聚合，wall time/RSS
+记录 p50/p95/max；GPU/cancel 数据不可用时省略。reproducibility 以 baseline 重复 run 计算 agreement，
+mismatch 保留双方 run IDs 与 Draft hashes。
+
 **Goal:** 计算 generation/parse/view/playback/structural rates、wall time、RSS、GPU memory when available、
 cancel latency 和 repeated Draft hash agreement。
 
@@ -735,6 +751,11 @@ pnpm vitest run --root . tools/pdf-omr-cli/src/__tests__/reproducibility-metrics
 **Scope:** M
 
 ### Task 20：交付 benchmark orchestrator 与 report
+
+**Progress:** Completed on 2026-07-28. 按计划拆为 runner 与 report 两个 workstreams。orchestrator
+验证 corpus bytes、隔离 item failure、保存 engine/Draft/item artifacts，并按 category/overall 聚合。
+frozen holdout 使用规格中的八项 gate，先写完整 report 再返回 exit code 9；development 不评估 gate。
+内置 synthetic smoke corpus 已通过实际 CLI benchmark，且 aggregate 可从 item artifacts 重建。
 
 **Goal:** 对 manifest × engine × preprocess 运行 item jobs，保存 item artifacts，生成 overall/category
 aggregates 并评估 gate。

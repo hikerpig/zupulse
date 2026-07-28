@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@xmldom/xmldom": "0.9.10",
+    "@zupulse/harmony-cli": "workspace:^",
     "@zupulse/web-core": "workspace:*",
     "fflate": "0.8.3",
     "pdfjs-dist": "6.1.200",

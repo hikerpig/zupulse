@@ -12,6 +12,7 @@ pnpm pdf-omr -- recognize <input.pdf> --engine audiveris --output <run-dir>
 pnpm pdf-omr -- validate <draft.json> --output <diagnostics.json>
 pnpm pdf-omr -- analyze <draft.json> --output <harmony.json>
 pnpm pdf-omr -- export-musicxml <draft.json> --output <score.mxl>
+pnpm benchmark:pdf-omr -- --manifest <manifest.json> --engine audiveris --output <result-dir>
 ```
 
 `inspect` 使用 PDF.js，输出 page count、page dimensions 和 vector/raster operator signals。

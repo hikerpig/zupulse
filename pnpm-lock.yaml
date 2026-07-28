@@ -219,6 +219,9 @@ importers:
       '@xmldom/xmldom':
         specifier: 0.9.10
         version: 0.9.10
+      '@zupulse/harmony-cli':
+        specifier: workspace:^
+        version: link:../harmony-cli
       '@zupulse/web-core':
         specifier: workspace:*
         version: link:../../packages/web-core

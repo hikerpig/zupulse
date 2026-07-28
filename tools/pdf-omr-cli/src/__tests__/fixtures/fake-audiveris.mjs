@@ -6,7 +6,7 @@ const exitCode = Number(process.env.FAKE_AUDIVERIS_EXIT_CODE ?? 0);
 if (exitCode > 0) process.exit(exitCode);
 
 if (process.argv.includes("-version")) {
-  process.stdout.write("Audiveris 5.5.3\n");
+  process.stdout.write("Audiveris\n- Version:      5.5.3\n- Commit:       fake\n");
   process.exit(0);
 }
 

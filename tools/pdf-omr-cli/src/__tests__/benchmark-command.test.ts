@@ -46,7 +46,7 @@ describe("benchmark orchestrator", () => {
         setup.outputDirectory,
         {
           mode: "holdout",
-          protocolSha256: "c".repeat(64),
+          protocolSha256: setup.protocolSha256,
           preprocess: "none",
         },
         { runItem: async (item) => itemResult(item.id, item.category, false) },
@@ -103,8 +103,35 @@ async function corpusSetup(split: "development" | "holdout", count: number) {
     })),
   };
   const manifestPath = join(directory, "manifest.json");
-  await writeFile(manifestPath, JSON.stringify(manifest));
-  return { manifestPath, outputDirectory: join(directory, "result") };
+  const manifestBytes = new TextEncoder().encode(JSON.stringify(manifest));
+  await writeFile(manifestPath, manifestBytes);
+  const protocolBytes = new TextEncoder().encode(
+    JSON.stringify({
+      schemaVersion: "1.0.0",
+      status: "frozen",
+      frozenAt: "2026-07-28T12:00:00.000Z",
+      manifestSha256: sha256Bytes(manifestBytes),
+      benchmarkCommit: "9bbff5b",
+      engines: [{ id: "audiveris", version: "5.10.2", parameters: {} }],
+      preprocessVariants: ["none"],
+      gates: {
+        jointF1: 0.9,
+        validMeasureRate: 0.95,
+        parseRate: 0.95,
+        structuralAgreementRate: 0.9,
+        harmonyPrecisionDelta: -0.05,
+        falseConfidentChordRate: 0.03,
+        reproducibilityAgreementRate: 1,
+        cancelLatencyP95Ms: 2000,
+      },
+    }),
+  );
+  await writeFile(join(directory, "protocol.json"), protocolBytes);
+  return {
+    manifestPath,
+    outputDirectory: join(directory, "result"),
+    protocolSha256: sha256Bytes(protocolBytes),
+  };
 }
 
 function itemResult(itemId: string, category: string, passing: boolean): BenchmarkItemResult {

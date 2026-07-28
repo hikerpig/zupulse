@@ -23,6 +23,7 @@ import {
   type BenchmarkReport,
 } from "./report";
 import { computeSymbolicMetrics } from "./symbolic-metrics";
+import { verifyFrozenProtocol } from "./verify-protocol";
 
 export type { BenchmarkItemResult } from "./report";
 
@@ -64,6 +65,26 @@ export async function runBenchmark(
     throw new PdfOmrError("INVALID_INPUT", "benchmark manifest JSON is invalid", { cause: error });
   }
   const manifest = verifyCorpusManifest(manifestInput);
+  const manifestSha256 = sha256Bytes(manifestBytes);
+  if (request.mode === "holdout") {
+    if (request.protocolSha256 === undefined) {
+      throw new PdfOmrError("INVALID_INPUT", "holdout benchmark requires a frozen protocol hash", {
+        context: { reason: "missing-protocol-hash" },
+      });
+    }
+    const protocolBytes = await readFile(resolve(dirname(manifestPath), "protocol.json")).catch((error: unknown) => {
+      throw new PdfOmrError("INVALID_INPUT", "frozen benchmark protocol cannot be read", {
+        context: { reason: "protocol-unreadable" },
+        cause: error,
+      });
+    });
+    verifyFrozenProtocol(protocolBytes, {
+      protocolSha256: request.protocolSha256,
+      manifestSha256,
+      engineId: request.engineId,
+      preprocess: request.preprocess,
+    });
+  }
   const view = createCorpusView(
     manifest,
     request.mode === "holdout"
@@ -119,7 +140,7 @@ export async function runBenchmark(
   const metadata: BenchmarkMetadata = {
     corpusId: manifest.corpusId,
     protocolVersion: manifest.protocolVersion,
-    manifestSha256: sha256Bytes(manifestBytes),
+    manifestSha256,
     mode: request.mode,
     engineId: request.engineId,
     preprocess: request.preprocess,
@@ -156,7 +177,7 @@ async function runBenchmarkItem(
     const workDirectory = await mkdtemp(join(tmpdir(), "pdf-omr-benchmark-engine-"));
     try {
       const raw = await adapter.recognize({ inputPath, outputDirectory: workDirectory });
-      const normalized = normalizeAudiverisMusicXml(raw.musicXmlBytes);
+      const normalized = adapter.normalize(raw);
       const draft = omrScoreDraftSchema.parse({
         ...normalized,
         provenance: {
@@ -170,8 +191,9 @@ async function runBenchmarkItem(
       });
       predictedDrafts.push(draft);
       if (repetition === 0) {
-        await writeBytesNew("engine/raw-output.mxl", raw.musicXmlBytes, context.itemOutputDirectory);
-        await writeBytesNew("engine/raw-output.omr", raw.omrBytes, context.itemOutputDirectory);
+        for (const artifact of raw.nativeArtifacts) {
+          await writeBytesNew(`engine/${artifact.relativePath}`, artifact.bytes, context.itemOutputDirectory);
+        }
         await writeCanonicalNew("engine/environment.json", environment, context.itemOutputDirectory);
         await writeCanonicalNew("predicted-draft.json", draft, context.itemOutputDirectory);
         await writeCanonicalNew("ground-truth-draft.json", expected, context.itemOutputDirectory);

@@ -3,7 +3,7 @@ feature: sheet-library
 title: Sheet Library
 status: current
 delivery: partial
-last_verified: 2026-07-27
+last_verified: 2026-07-29
 hosts:
   - browser
   - desktop
@@ -45,7 +45,8 @@ Session ID。
 
 - Repository 必须先完成初始化，应用随后读取 Library Score 摘要列表。
 - 初始化或读取失败时，Library 显示可重试的不可用状态，不主动清空已有数据。
-- 页面获得窗口焦点时会刷新列表。
+- 页面获得窗口焦点时会刷新列表；已有列表的焦点刷新在后台进行，保留当前列表 DOM，只有首次
+  加载（尚无列表数据）才显示骨架屏。
 - Library 提供标题/艺术家搜索、收藏筛选，以及按最近活动、导入时间、最近练习或标题排序。
 - “最近活动”当前按 `lastOpenedAt ?? importedAt` 排序；编辑元数据和切换收藏不会更新它。
 - 已有馆藏在搜索或收藏筛选无结果时显示当前条件、`0 / N` 数量和清除条件动作；只有空馆藏显示

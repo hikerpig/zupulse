@@ -1,4 +1,4 @@
-import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import { PdfOmrError } from "./errors";
 import { startMonotonicTimer } from "./resource-metrics";
 
@@ -138,7 +138,7 @@ export function runEngineProcess(request: EngineProcessRequest, signal?: AbortSi
   });
 }
 
-function terminateProcessTree(child: ChildProcessWithoutNullStreams, signal: NodeJS.Signals): void {
+function terminateProcessTree(child: ChildProcess, signal: NodeJS.Signals): void {
   if (child.pid === undefined || child.exitCode !== null || child.killed) return;
   try {
     if (process.platform === "win32") child.kill(signal);

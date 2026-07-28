@@ -10,7 +10,6 @@ export async function validateCommand(input: string, output: string, cwd: string
   const outputSha256 = await writeCanonicalNew(
     output,
     {
-      schemaVersion: "1.0.0",
       draftSha256: sha256Bytes(bytes),
       ...validation,
     },

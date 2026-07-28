@@ -1,6 +1,8 @@
-import { DOMParser } from "@xmldom/xmldom";
+import { DOMParser, type Document, type Element } from "@xmldom/xmldom";
 import { readMusicXmlRootXml } from "@zupulse/web-core";
 import { PdfOmrError } from "../errors";
+
+export type XmlElement = Element;
 
 export function parseMusicXmlDocument(bytes: Uint8Array): Document {
   try {

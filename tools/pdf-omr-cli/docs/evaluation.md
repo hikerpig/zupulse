@@ -3,7 +3,7 @@
 ## 当前状态
 
 - Development protocol: completed
-- Holdout protocol: not frozen
+- Holdout protocol: frozen
 - App decision: not evaluated
 
 本评测只覆盖 CLI 技术链路，不设计或批准任何 `apps/*` 集成。
@@ -67,3 +67,23 @@ Transcoda：
 Development 结论是不调低 validator 或 gate。两个引擎目前都没有证明能生成可用 Draft；
 Transcoda 的 native invalid output 也不能用语法猜测修复。Holdout 仍应按原 gate 运行，用于验证
 冻结机制和确认失败结论，而不是继续针对 holdout 调参。
+
+## Frozen holdout protocol
+
+`corpus/evaluation/protocol.json` 在 benchmark commit
+`98410a85953e2682e0444dd354334130bb7f28ce` 上冻结。它锁定 manifest SHA、两个 engine version、
+Transcoda model SHA/decoder parameters、`none` preprocessing 和八项 gate。Holdout runner 会读取
+同目录 protocol，拒绝 hash、manifest、engine 或 preprocessing 不匹配的请求。
+
+## Holdout result
+
+两个冻结组合都完成运行、写出完整 report，并返回 exit code 9：
+
+- Audiveris report SHA-256:
+  `81f0f7902abb0587987ea8c70f0cd85626d1f84f9933a833899deca8fb61e45a`
+- Transcoda report SHA-256:
+  `ffa4b4b91ac90fa8251f13fd8325e37d835bd0e9e7fb2bba9d62a3e19f196c17`
+
+两份 aggregate 均已从 item artifacts 重算并得到相同 hash。冻结 gate 的唯一结论为 `STOP`；
+完整解释见 `docs/evaluation/pdf-omr.md`。该结论停止当前 engine 进入 App discovery，不禁止未来以
+新 engine、更大真实 corpus 和新 protocol 重新立项。

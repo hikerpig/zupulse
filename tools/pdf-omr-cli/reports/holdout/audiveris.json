@@ -1,0 +1,490 @@
+{
+  "categories": {
+    "synthetic-grand-staff-clean": {
+      "harmony": {
+        "boundaries": {
+          "expected": 0,
+          "f1": 0,
+          "overSegmented": 0,
+          "predicted": 0,
+          "truePositive": 0,
+          "underSegmented": 0
+        },
+        "falseConfidentChord": {
+          "rate": 0,
+          "resolved": 0,
+          "wrong": 0
+        },
+        "overlap": {
+          "accuracy": 0,
+          "correctDurationTicks": 0,
+          "mappedDurationTicks": 0,
+          "resolvedCoverage": 0,
+          "resolvedPrecision": 0,
+          "unresolvedDurationTicks": 0,
+          "wrongDurationTicks": 0
+        },
+        "status": {
+          "harmonyUnresolved": 0,
+          "omrBlocked": 1,
+          "unsupportedGold": 5
+        }
+      },
+      "reproducibility": {
+        "agreementRate": 1,
+        "agreements": 1,
+        "comparisons": 1,
+        "mismatches": []
+      },
+      "runtime": {
+        "capabilities": {
+          "generationRate": 0,
+          "parseRate": 0,
+          "playbackRate": 0,
+          "structuralAgreementRate": 0,
+          "viewRate": 0
+        },
+        "cases": 1,
+        "peakRssBytes": {
+          "max": 171016192,
+          "p50": 171016192,
+          "p95": 171016192
+        },
+        "wallTimeMs": {
+          "max": 14235.720874999999,
+          "p50": 14235.720874999999,
+          "p95": 14235.720874999999
+        }
+      },
+      "symbolic": {
+        "duration": {
+          "f1": 0,
+          "falseNegative": 16,
+          "falsePositive": 0,
+          "precision": 0,
+          "recall": 0,
+          "truePositive": 0
+        },
+        "joint": {
+          "f1": 0,
+          "falseNegative": 16,
+          "falsePositive": 0,
+          "precision": 0,
+          "recall": 0,
+          "truePositive": 0
+        },
+        "onset": {
+          "f1": 0,
+          "falseNegative": 16,
+          "falsePositive": 0,
+          "precision": 0,
+          "recall": 0,
+          "truePositive": 0
+        },
+        "pitch": {
+          "f1": 0,
+          "falseNegative": 16,
+          "falsePositive": 0,
+          "precision": 0,
+          "recall": 0,
+          "truePositive": 0
+        },
+        "repeat": {
+          "f1": 1,
+          "falseNegative": 0,
+          "falsePositive": 0,
+          "precision": 1,
+          "recall": 1,
+          "truePositive": 0
+        },
+        "rest": {
+          "f1": 1,
+          "falseNegative": 0,
+          "falsePositive": 0,
+          "precision": 1,
+          "recall": 1,
+          "truePositive": 0
+        },
+        "staff": {
+          "f1": 0,
+          "falseNegative": 16,
+          "falsePositive": 0,
+          "precision": 0,
+          "recall": 0,
+          "truePositive": 0
+        },
+        "tie": {
+          "f1": 0,
+          "falseNegative": 16,
+          "falsePositive": 0,
+          "precision": 0,
+          "recall": 0,
+          "truePositive": 0
+        },
+        "tuplet": {
+          "f1": 0,
+          "falseNegative": 16,
+          "falsePositive": 0,
+          "precision": 0,
+          "recall": 0,
+          "truePositive": 0
+        },
+        "validMeasure": {
+          "rate": 0,
+          "total": 16,
+          "valid": 0
+        },
+        "voice": {
+          "f1": 0,
+          "falseNegative": 16,
+          "falsePositive": 0,
+          "precision": 0,
+          "recall": 0,
+          "truePositive": 0
+        }
+      }
+    },
+    "synthetic-grand-staff-low-contrast": {
+      "harmony": {
+        "boundaries": {
+          "expected": 0,
+          "f1": 0,
+          "overSegmented": 0,
+          "predicted": 0,
+          "truePositive": 0,
+          "underSegmented": 0
+        },
+        "falseConfidentChord": {
+          "rate": 0,
+          "resolved": 0,
+          "wrong": 0
+        },
+        "overlap": {
+          "accuracy": 0,
+          "correctDurationTicks": 0,
+          "mappedDurationTicks": 0,
+          "resolvedCoverage": 0,
+          "resolvedPrecision": 0,
+          "unresolvedDurationTicks": 0,
+          "wrongDurationTicks": 0
+        },
+        "status": {
+          "harmonyUnresolved": 0,
+          "omrBlocked": 1,
+          "unsupportedGold": 5
+        }
+      },
+      "reproducibility": {
+        "agreementRate": 1,
+        "agreements": 1,
+        "comparisons": 1,
+        "mismatches": []
+      },
+      "runtime": {
+        "capabilities": {
+          "generationRate": 0,
+          "parseRate": 0,
+          "playbackRate": 0,
+          "structuralAgreementRate": 0,
+          "viewRate": 0
+        },
+        "cases": 1,
+        "peakRssBytes": {
+          "max": 172572672,
+          "p50": 172572672,
+          "p95": 172572672
+        },
+        "wallTimeMs": {
+          "max": 14791.032708,
+          "p50": 14791.032708,
+          "p95": 14791.032708
+        }
+      },
+      "symbolic": {
+        "duration": {
+          "f1": 0,
+          "falseNegative": 16,
+          "falsePositive": 0,
+          "precision": 0,
+          "recall": 0,
+          "truePositive": 0
+        },
+        "joint": {
+          "f1": 0,
+          "falseNegative": 16,
+          "falsePositive": 0,
+          "precision": 0,
+          "recall": 0,
+          "truePositive": 0
+        },
+        "onset": {
+          "f1": 0,
+          "falseNegative": 16,
+          "falsePositive": 0,
+          "precision": 0,
+          "recall": 0,
+          "truePositive": 0
+        },
+        "pitch": {
+          "f1": 0,
+          "falseNegative": 16,
+          "falsePositive": 0,
+          "precision": 0,
+          "recall": 0,
+          "truePositive": 0
+        },
+        "repeat": {
+          "f1": 1,
+          "falseNegative": 0,
+          "falsePositive": 0,
+          "precision": 1,
+          "recall": 1,
+          "truePositive": 0
+        },
+        "rest": {
+          "f1": 1,
+          "falseNegative": 0,
+          "falsePositive": 0,
+          "precision": 1,
+          "recall": 1,
+          "truePositive": 0
+        },
+        "staff": {
+          "f1": 0,
+          "falseNegative": 16,
+          "falsePositive": 0,
+          "precision": 0,
+          "recall": 0,
+          "truePositive": 0
+        },
+        "tie": {
+          "f1": 0,
+          "falseNegative": 16,
+          "falsePositive": 0,
+          "precision": 0,
+          "recall": 0,
+          "truePositive": 0
+        },
+        "tuplet": {
+          "f1": 0,
+          "falseNegative": 16,
+          "falsePositive": 0,
+          "precision": 0,
+          "recall": 0,
+          "truePositive": 0
+        },
+        "validMeasure": {
+          "rate": 0,
+          "total": 16,
+          "valid": 0
+        },
+        "voice": {
+          "f1": 0,
+          "falseNegative": 16,
+          "falsePositive": 0,
+          "precision": 0,
+          "recall": 0,
+          "truePositive": 0
+        }
+      }
+    }
+  },
+  "failures": [],
+  "gate": {
+    "checks": {
+      "cancelLatencyP95Seconds": {
+        "passed": false
+      },
+      "falseConfidentChordRate": {
+        "passed": true,
+        "value": 0
+      },
+      "generatedMxlParseRate": {
+        "passed": false,
+        "value": 0
+      },
+      "harmonyResolvedPrecisionDelta": {
+        "passed": false,
+        "value": -1
+      },
+      "noteJointF1": {
+        "passed": false,
+        "value": 0
+      },
+      "repeatedRunDraftHashAgreement": {
+        "passed": true,
+        "value": 1
+      },
+      "roundTripStructuralAgreementRate": {
+        "passed": false,
+        "value": 0
+      },
+      "validMeasureRate": {
+        "passed": false,
+        "value": 0
+      }
+    },
+    "decision": "STOP",
+    "evaluated": true,
+    "passed": false
+  },
+  "items": {
+    "failed": 0,
+    "succeeded": 2,
+    "total": 2
+  },
+  "metadata": {
+    "corpusId": "zupulse-pdf-omr-evaluation-v1",
+    "engineId": "audiveris",
+    "manifestSha256": "598406d48e2bbb25a935003b2ad3450399f0831471df86111cb070c0dcc645bb",
+    "mode": "holdout",
+    "preprocess": "none",
+    "protocolSha256": "4febcd2566f8602326480f74a414d48fc1c5a7dabd6459e5844a2391d20585c7",
+    "protocolVersion": "1.0.0"
+  },
+  "overall": {
+    "harmony": {
+      "boundaries": {
+        "expected": 0,
+        "f1": 0,
+        "overSegmented": 0,
+        "predicted": 0,
+        "truePositive": 0,
+        "underSegmented": 0
+      },
+      "falseConfidentChord": {
+        "rate": 0,
+        "resolved": 0,
+        "wrong": 0
+      },
+      "overlap": {
+        "accuracy": 0,
+        "correctDurationTicks": 0,
+        "mappedDurationTicks": 0,
+        "resolvedCoverage": 0,
+        "resolvedPrecision": 0,
+        "unresolvedDurationTicks": 0,
+        "wrongDurationTicks": 0
+      },
+      "status": {
+        "harmonyUnresolved": 0,
+        "omrBlocked": 2,
+        "unsupportedGold": 10
+      }
+    },
+    "reproducibility": {
+      "agreementRate": 1,
+      "agreements": 2,
+      "comparisons": 2,
+      "mismatches": []
+    },
+    "runtime": {
+      "capabilities": {
+        "generationRate": 0,
+        "parseRate": 0,
+        "playbackRate": 0,
+        "structuralAgreementRate": 0,
+        "viewRate": 0
+      },
+      "cases": 2,
+      "peakRssBytes": {
+        "max": 172572672,
+        "p50": 171016192,
+        "p95": 172572672
+      },
+      "wallTimeMs": {
+        "max": 14791.032708,
+        "p50": 14235.720874999999,
+        "p95": 14791.032708
+      }
+    },
+    "symbolic": {
+      "duration": {
+        "f1": 0,
+        "falseNegative": 32,
+        "falsePositive": 0,
+        "precision": 0,
+        "recall": 0,
+        "truePositive": 0
+      },
+      "joint": {
+        "f1": 0,
+        "falseNegative": 32,
+        "falsePositive": 0,
+        "precision": 0,
+        "recall": 0,
+        "truePositive": 0
+      },
+      "onset": {
+        "f1": 0,
+        "falseNegative": 32,
+        "falsePositive": 0,
+        "precision": 0,
+        "recall": 0,
+        "truePositive": 0
+      },
+      "pitch": {
+        "f1": 0,
+        "falseNegative": 32,
+        "falsePositive": 0,
+        "precision": 0,
+        "recall": 0,
+        "truePositive": 0
+      },
+      "repeat": {
+        "f1": 1,
+        "falseNegative": 0,
+        "falsePositive": 0,
+        "precision": 1,
+        "recall": 1,
+        "truePositive": 0
+      },
+      "rest": {
+        "f1": 1,
+        "falseNegative": 0,
+        "falsePositive": 0,
+        "precision": 1,
+        "recall": 1,
+        "truePositive": 0
+      },
+      "staff": {
+        "f1": 0,
+        "falseNegative": 32,
+        "falsePositive": 0,
+        "precision": 0,
+        "recall": 0,
+        "truePositive": 0
+      },
+      "tie": {
+        "f1": 0,
+        "falseNegative": 32,
+        "falsePositive": 0,
+        "precision": 0,
+        "recall": 0,
+        "truePositive": 0
+      },
+      "tuplet": {
+        "f1": 0,
+        "falseNegative": 32,
+        "falsePositive": 0,
+        "precision": 0,
+        "recall": 0,
+        "truePositive": 0
+      },
+      "validMeasure": {
+        "rate": 0,
+        "total": 32,
+        "valid": 0
+      },
+      "voice": {
+        "f1": 0,
+        "falseNegative": 32,
+        "falsePositive": 0,
+        "precision": 0,
+        "recall": 0,
+        "truePositive": 0
+      }
+    }
+  },
+  "schemaVersion": "1.0.0"
+}

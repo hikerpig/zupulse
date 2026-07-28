@@ -2,7 +2,7 @@
 
 ## 状态
 
-- Status: in_progress
+- Status: completed_pending_human_review
 - Date: 2026-07-28
 - Approved scope:
   `docs/superpowers/specs/2026-07-28-pdf-omr-cli-benchmark-spec.md`
@@ -901,6 +901,10 @@ pnpm benchmark:pdf-omr -- --manifest <manifest> --engine <neural> --output <dev-
 
 ### Task 24：冻结 holdout protocol
 
+**Progress:** Completed on 2026-07-28. protocol 锁定 manifest SHA、benchmark commit、Audiveris
+version、Transcoda code/model/parameters、preprocess 和八项 gate。holdout runner 读取 manifest
+同目录 protocol，并机械拒绝 protocol hash、manifest hash、engine 或 preprocess mismatch。
+
 **Goal:** 固定 corpus hashes、engine versions、model hashes、preprocess variants、parameters、gate 和
 benchmark commit，不再按 holdout 结果调参。
 
@@ -929,6 +933,11 @@ pnpm exec prettier --check tools/pdf-omr-cli/docs/evaluation.md
 **Scope:** M
 
 ### Task 25：运行 holdout 并形成唯一决策
+
+**Progress:** Completed on 2026-07-28. Audiveris 与 Transcoda 均用 frozen protocol 完成两个
+holdout variants；两者先保存完整 canonical report，再因 gate failure 返回 exit code 9。actual
+item artifacts 重算得到相同 report hashes。两份 report 的唯一 machine decision 均为 `STOP`：
+当前路线不得进入 App discovery。人工签字仍保留为 Checkpoint E 的最后一步。
 
 **Goal:** 运行冻结组合，生成可复现报告，并严格输出 `CONTINUE_TO_APP_DISCOVERY`、`INVESTIGATE` 或
 `STOP`。
@@ -963,10 +972,10 @@ pnpm verify:fast
 
 ### Checkpoint E：CLI phase complete
 
-- [ ] 两个 engine 在冻结 holdout 上完成评测。
-- [ ] 所有结果可追溯到 input、environment、model、parameters 和 artifacts。
+- [x] 两个 engine 在冻结 holdout 上完成评测。
+- [x] 所有结果可追溯到 input、environment、model、parameters 和 artifacts。
 - [ ] 唯一决策经过人工评审。
-- [ ] 没有修改 `apps/*`。
+- [x] 没有修改 `apps/*`。
 - [ ] 将耐久约束移入 CLI README/evaluation 后，删除本任务目录和完成的一次性 roadmap。
 
 ## 推荐阶段性提交

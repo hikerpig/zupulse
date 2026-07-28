@@ -34,16 +34,16 @@ Canonical plan: `tasks/pdf-omr-cli/plan.md`
 - [x] T10 实现 exact rational time 与 Draft validator
 - [x] T11 实现 Draft → `HarmonyAnalysisInput`
 - [x] T12 交付 `analyze` command
-- [ ] T13 实现首轮 MusicXML generator
-- [ ] T14 实现 Draft/MusicXML structural comparator
-- [ ] T15 交付 `validate` 与 `export-musicxml`
+- [x] T13 实现首轮 MusicXML generator
+- [x] T14 实现 Draft/MusicXML structural comparator
+- [x] T15 交付 `validate` 与 `export-musicxml`
 
 ### Checkpoint C
 
-- [ ] PDF → Draft → Harmony 可运行
-- [ ] Draft → MXL → current adapter round-trip 可运行
-- [ ] `pnpm verify:fast` 通过
-- [ ] 人工批准进入 benchmark 建设
+- [x] PDF → Draft → Harmony 可运行
+- [x] Draft → MXL → current adapter round-trip 可运行
+- [x] `pnpm verify:fast` 通过
+- [x] 人工批准进入 benchmark 建设
 
 ## Phase 3：Corpus 与 metrics
 

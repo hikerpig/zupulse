@@ -222,6 +222,9 @@ importers:
       '@zupulse/web-core':
         specifier: workspace:*
         version: link:../../packages/web-core
+      fflate:
+        specifier: 0.8.3
+        version: 0.8.3
       pdfjs-dist:
         specifier: 6.1.200
         version: 6.1.200

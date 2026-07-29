@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # Sheet Library 离线曲谱库设计
 
 ## 目标

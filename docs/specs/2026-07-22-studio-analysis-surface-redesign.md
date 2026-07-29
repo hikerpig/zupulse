@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # Studio 分析工作区重设计
 
 ## 背景

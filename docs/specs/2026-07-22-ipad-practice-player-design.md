@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # iPad Practice Player 设计规格
 
 ## 目标

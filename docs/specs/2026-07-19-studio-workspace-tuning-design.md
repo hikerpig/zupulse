@@ -1,8 +1,11 @@
+---
+status: implemented
+---
+
 # Studio 工作区调优设计规格
 
-## 状态
+## 实施记录
 
-- 状态：已实现并验收。
 - 日期：2026-07-19。
 - 范围：Studio 布局、Harmony Selection、有效和弦预览与 Preview Transport。
 - 事实边界：运行时代码、Zod schema、测试、Current ADR、`docs/architecture/harmony-analysis-system.md` 和根 `DESIGN.md` 高于本文。

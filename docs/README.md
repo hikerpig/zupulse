@@ -18,8 +18,8 @@
 ## Spec
 
 - 使用 `docs/specs/YYYY-MM-DD-<slug>.md`，一个文件描述一项有明确边界的变更。
-- 记录目标、非目标、约束、验收标准和需要批准的设计决策；在开头声明 `draft`、`approved`、
-  `implemented` 或 `superseded` 状态。
+- 记录目标、非目标、约束、验收标准和需要批准的设计决策；文件必须以 YAML frontmatter 开头，
+  并使用 `status: draft | approved | implemented | superseded`。
 - Spec 描述变更意图，不证明功能已经实现。实现后的当前行为必须回写 Feature Contract、架构文档、
   ADR 或 `DESIGN.md`，并由代码和测试验证。
 - 不在 Spec 中维护逐步 checkbox、每日进展或临时命令输出。若 Spec 被取代，链接替代 Spec 或当前

@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # pnpm Workspace 迁移设计
 
 ## 目标

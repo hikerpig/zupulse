@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # 应用国际化（i18n）设计
 
 ## 背景

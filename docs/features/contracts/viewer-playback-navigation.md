@@ -193,7 +193,7 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 - 当前架构：[`viewer-score-navigation.md`](../../architecture/viewer-score-navigation.md)
 - 决策：[`ADR 0064`](../../adr/0064-coordinate-score-navigation-with-playback.md)
 - 初步 Spec：
-  [`2026-07-25-viewer-score-navigation-playback-sync-design.md`](../../superpowers/specs/2026-07-25-viewer-score-navigation-playback-sync-design.md)
+  [`2026-07-25-viewer-score-navigation-playback-sync-design.md`](../../specs/2026-07-25-viewer-score-navigation-playback-sync-design.md)
 - UI 契约：[`DESIGN.md`](../../../DESIGN.md)
 
 ## 维护触发器

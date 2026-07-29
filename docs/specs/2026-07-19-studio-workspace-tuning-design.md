@@ -170,7 +170,7 @@ pnpm format:check
 - `packages/web-viewer/src`：独立 Studio runtime、会话编排与可复用展示逻辑。
 - `packages/web-viewer/src/app/pages`：Studio 页面、CSS Modules 与用户视角测试。
 - `apps/web-demo`、`apps/desktop-shell`：只负责把共享 runtime factory 接入各宿主。
-- `docs/superpowers/specs`：本规格；`tasks`：获批计划和任务清单。
+- `docs/specs`：本规格；`tasks`：获批计划和任务清单。
 
 ### 代码风格
 

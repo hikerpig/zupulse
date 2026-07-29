@@ -3,7 +3,7 @@
 - 状态：Implemented；作为初步需求与设计记录保留，当前行为以 Feature Contract、accepted ADR 0064、
   运行时代码和测试为准。
 - 当前行为：
-  [`Viewer Playback Navigation Feature Contract`](../../features/contracts/viewer-playback-navigation.md)。
+  [`Viewer Playback Navigation Feature Contract`](../features/contracts/viewer-playback-navigation.md)。
 - Proposed 决策：ADR 0064。
 - 事实边界：本 Spec 描述本次变更意图，不是当前运行时或实施进度的事实源。
 

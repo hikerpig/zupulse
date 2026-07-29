@@ -29,6 +29,20 @@ Start navigation at `docs/architecture/README.md`. Use `CONTEXT.md` and
 or in-progress Feature, read `docs/features/README.md` and its Contract. Never treat an in-progress target gap as
 current behavior.
 
+## Working Document Lifecycle
+
+- Put change intent, requirements, and acceptance criteria in `docs/specs/`. A Spec must not be used as a live
+  progress tracker or as evidence of current runtime behavior.
+- Put only active execution state in `tasks/`: implementation steps, checkboxes, checkpoints, and temporary
+  verification notes. Use one task bundle per active initiative and delete it after completion.
+- Before deleting a completed task bundle, promote durable outcomes to the appropriate Current Feature Contract,
+  architecture document, ADR, `DESIGN.md`, or repository check.
+- Put historical material in `docs/archive/<category>/<year>/` only when it remains useful for traceability.
+  Archived documents must identify their historical status and current replacement, and must never guide current
+  implementation.
+- Keep Feature Contract history in `docs/features/archive/`; do not duplicate it under the general archive.
+- See `docs/README.md` for the document map and naming guidance.
+
 ## Read Before Editing
 
 - Domain, schemas, import, or playback: `packages/web-core/AGENTS.md`
@@ -65,8 +79,7 @@ current behavior.
   the corresponding Feature Contract.
 - Check platform APIs and existing dependencies before adding a dependency. Prefer the smallest sufficient
   implementation, diagnose root causes, and keep changes scoped.
-- Delete completed one-time plans and task records. Move durable constraints into Current architecture, an ADR,
-  or this file.
+- Delete completed one-time plans and task records according to the Working Document Lifecycle.
 
 ## Verification
 

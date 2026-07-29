@@ -277,6 +277,9 @@ describe("SheetLibrary edit dialog", () => {
 
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).toBeNull();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(actionsTrigger);
+    });
   });
 });
 

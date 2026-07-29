@@ -123,8 +123,7 @@ export function SheetLibrary({
   const [sort, setSort] = useState<"activity" | "imported" | "practiced" | "title">("activity");
   const [editing, setEditing] = useState<LibraryScoreSummary | undefined>();
   const [deleting, setDeleting] = useState<LibraryScoreSummary | undefined>();
-  const deleteReturnFocusRef = useRef<HTMLButtonElement>(null);
-  const editReturnFocusRef = useRef<HTMLElement>(null);
+  const actionsReturnFocusRef = useRef<HTMLButtonElement>(null);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const normalizedQuery = deferredQuery.trim();
   const isFiltering = normalizedQuery.length > 0 || favoritesOnly;
@@ -352,7 +351,7 @@ export function SheetLibrary({
                               tone="ghost"
                               aria-label={t("scoreActions", { title: score.title })}
                               onClick={(event) => {
-                                deleteReturnFocusRef.current = event.currentTarget;
+                                actionsReturnFocusRef.current = event.currentTarget;
                               }}
                             />
                           }
@@ -366,12 +365,7 @@ export function SheetLibrary({
                                 <Download className="tw:size-4 tw:shrink-0" aria-hidden="true" />
                                 {t("exportScore", { title: score.title })}
                               </MenuItem>
-                              <MenuItem
-                                onClick={(event) => {
-                                  editReturnFocusRef.current = event.currentTarget;
-                                  setEditing(score);
-                                }}
-                              >
+                              <MenuItem onClick={() => setEditing(score)}>
                                 <PenLine className="tw:size-4 tw:shrink-0" aria-hidden="true" />
                                 {t("editScore", { title: score.title })}
                               </MenuItem>
@@ -435,7 +429,7 @@ export function SheetLibrary({
           <DialogPortal>
             <DialogBackdrop />
             <DialogViewport>
-              <DialogPopup finalFocus={editReturnFocusRef} className="tw:grid tw:gap-3">
+              <DialogPopup finalFocus={actionsReturnFocusRef} className="tw:grid tw:gap-3">
                 <DialogTitle>{t("editDialogLabel")}</DialogTitle>
                 <form
                   aria-label={t("editDialogLabel")}
@@ -479,7 +473,7 @@ export function SheetLibrary({
           <DialogPortal>
             <DialogBackdrop />
             <DialogViewport>
-              <DialogPopup role="alertdialog" finalFocus={deleteReturnFocusRef} className="tw:grid tw:gap-3">
+              <DialogPopup role="alertdialog" finalFocus={actionsReturnFocusRef} className="tw:grid tw:gap-3">
                 <DialogTitle>{deleting ? t("deleteTitle", { title: deleting.title }) : ""}</DialogTitle>
                 <DialogDescription>{t("deleteWarning")}</DialogDescription>
                 <div className="tw:flex tw:flex-wrap tw:justify-end tw:gap-2">

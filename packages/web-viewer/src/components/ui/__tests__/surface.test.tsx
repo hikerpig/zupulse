@@ -21,17 +21,29 @@ describe("Panel", () => {
 });
 
 describe("Status", () => {
-  it.each([
-    ["ready", "Ready"],
-    ["warning", "Needs review"],
-    ["danger", "Failed"],
-    ["neutral", "Not analyzed"],
-  ] as const)("renders %s state with text and a non-textual marker", (tone, label) => {
-    render(<Status tone={tone}>{label}</Status>);
+  it("renders every tone with text and a non-textual marker", () => {
+    const variants = [
+      ["ready", "Ready"],
+      ["warning", "Needs review"],
+      ["danger", "Failed"],
+      ["neutral", "Not analyzed"],
+    ] as const;
+    render(
+      <>
+        {variants.map(([tone, label]) => (
+          <Status key={tone} tone={tone}>
+            {label}
+          </Status>
+        ))}
+      </>,
+    );
 
-    const status = screen.getByText(label);
-    expect(status.textContent).toBe(label);
-    expect(status.parentElement?.querySelector('[aria-hidden="true"]')).not.toBeNull();
+    for (const [tone, label] of variants) {
+      const status = screen.getByText(label);
+      expect(status.textContent).toBe(label);
+      expect(status.getAttribute("data-tone")).toBe(tone);
+      expect(status.querySelector('[aria-hidden="true"]')).not.toBeNull();
+    }
   });
 
   it("can announce a changing status when requested", () => {

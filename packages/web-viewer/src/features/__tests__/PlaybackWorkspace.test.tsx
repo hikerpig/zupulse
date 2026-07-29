@@ -75,15 +75,19 @@ describe("PlaybackWorkspace transport bar", () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ["playing", "暂停", "lucide-pause"],
-    ["paused", "播放", "lucide-play"],
-  ] as const)("shows the matching icon for %s playback", (transport, label, iconClass) => {
-    render(<PlaybackWorkspace session={session(state(transport))}>乐谱</PlaybackWorkspace>);
+  it("shows the matching icons for playing and paused playback", () => {
+    const view = render(<PlaybackWorkspace session={session(state("playing"))}>乐谱</PlaybackWorkspace>);
+    const variants = [
+      ["playing", "暂停", "lucide-pause"],
+      ["paused", "播放", "lucide-play"],
+    ] as const;
 
-    const button = screen.getByRole("button", { name: label });
-    expect(button.querySelector(`svg.${iconClass}`)).toBeTruthy();
-    expect(button.title).toBe(`${label}（Space）`);
+    for (const [transport, label, iconClass] of variants) {
+      view.rerender(<PlaybackWorkspace session={session(state(transport))}>乐谱</PlaybackWorkspace>);
+      const button = screen.getByRole("button", { name: label });
+      expect(button.querySelector(`svg.${iconClass}`)).toBeTruthy();
+      expect(button.title).toBe(`${label}（Space）`);
+    }
   });
 
   it("shows compact stop and loop controls beside playback", async () => {

@@ -583,6 +583,37 @@ describe("createDefaultOpenSession cleanup", () => {
     detach();
   });
 
+  it("accepts another zoom after alphaTab finishes rendering synchronously", () => {
+    const scrollElement = document.createElement("div");
+    Object.defineProperties(scrollElement, {
+      clientHeight: { configurable: true, value: 400 },
+      scrollHeight: { configurable: true, value: 1000 },
+    });
+    const renderHandlers = new Set<() => void>();
+    const api = {
+      settings: { display: { scale: 1 } },
+      updateSettings: vi.fn(),
+      render: vi.fn(() => {
+        for (const handler of [...renderHandlers]) handler();
+      }),
+      postRenderFinished: {
+        on(handler: () => void) {
+          renderHandlers.add(handler);
+          return () => renderHandlers.delete(handler);
+        },
+      },
+    };
+    const detach = attachScoreZoomCommit(document, api, scrollElement);
+
+    document.dispatchEvent(new CustomEvent(SCORE_ZOOM_COMMIT_EVENT, { detail: { zoom: 1.1 } }));
+    document.dispatchEvent(new CustomEvent(SCORE_ZOOM_COMMIT_EVENT, { detail: { zoom: 1.2 } }));
+
+    expect(api.settings.display.scale).toBe(1.2);
+    expect(api.updateSettings).toHaveBeenCalledTimes(2);
+    expect(api.render).toHaveBeenCalledTimes(2);
+    detach();
+  });
+
   it("restores the centered staff system after a width relayout", () => {
     const scrollElement = document.createElement("div");
     Object.defineProperties(scrollElement, {

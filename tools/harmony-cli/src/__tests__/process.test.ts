@@ -25,10 +25,13 @@ describe("harmony CLI process", () => {
     try {
       const sourceManifest = resolve(root, "test-fixtures/harmony/regressions/manifest.json");
       const manifest = JSON.parse(await readFile(sourceManifest, "utf8")) as {
-        cases: Array<{ score: string; expected: { result: { segments: number } } }>;
+        cases: Array<{ score: string; sha256: string }>;
       };
-      manifest.cases[0]!.score = relative(directory, resolve(root, "test-fixtures/musicxml/K331-3_reviewed.mxl"));
-      manifest.cases[0]!.expected.result.segments = 0;
+      manifest.cases[0]!.score = relative(
+        directory,
+        resolve(root, "test-fixtures/musicxml/generated/single-voice.musicxml"),
+      );
+      manifest.cases[0]!.sha256 = "0".repeat(64);
       const path = resolve(directory, "manifest.json");
       await writeFile(path, JSON.stringify(manifest));
 

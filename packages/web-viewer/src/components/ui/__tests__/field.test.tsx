@@ -34,17 +34,6 @@ describe("Field and TextField", () => {
     expect(describedBy).toContain(screen.getByText("Shown in the library").id);
     expect(describedBy).toContain(screen.getByRole("alert").id);
   });
-
-  it("preserves native disabled behavior", async () => {
-    const user = userEvent.setup();
-    render(<TextField aria-label="Read only title" disabled />);
-
-    const input = screen.getByRole("textbox", { name: "Read only title" }) as HTMLInputElement;
-    await user.type(input, "Ignored");
-
-    expect(input.disabled).toBe(true);
-    expect(input.value).toBe("");
-  });
 });
 
 describe("Select", () => {

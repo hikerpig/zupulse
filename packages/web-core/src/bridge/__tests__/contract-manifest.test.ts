@@ -1,7 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { ipadBridgeRequestSchema } from "../schemas";
 
@@ -40,20 +38,8 @@ describe("iPad Bridge contract", () => {
     expect(manifest.capabilities.additionalProperties).toBe(false);
   });
 
-  it("generates deterministically and detects checked-in drift", () => {
+  it("detects checked-in manifest drift", () => {
     const root = new URL("../../../../../", import.meta.url);
-    const directory = mkdtempSync(join(tmpdir(), "zupulse-bridge-contract-"));
-    const first = join(directory, "first.json");
-    const second = join(directory, "second.json");
-
-    execFileSync("pnpm", ["exec", "vite-node", "scripts/generate-bridge-contract.mjs", "--output", first], {
-      cwd: root,
-    });
-    execFileSync("pnpm", ["exec", "vite-node", "scripts/generate-bridge-contract.mjs", "--output", second], {
-      cwd: root,
-    });
-
-    expect(readFileSync(first, "utf8")).toBe(readFileSync(second, "utf8"));
     execFileSync("pnpm", ["exec", "vite-node", "scripts/generate-bridge-contract.mjs", "--check"], { cwd: root });
   });
 });

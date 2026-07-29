@@ -2,22 +2,22 @@ import { describe, expect, it } from "vitest";
 import { UnsupportedScoreFormatError, detectScoreFormat, getScoreFormatHint, isSupportedScoreFile } from "../format";
 
 describe("detectScoreFormat", () => {
-  it("detects supported Guitar Pro extensions case-insensitively", () => {
-    expect(detectScoreFormat("song.gp3")).toBe("gp");
-    expect(detectScoreFormat("song.GP4")).toBe("gp");
-    expect(detectScoreFormat("song.gp5")).toBe("gp");
-    expect(detectScoreFormat("song.gpx")).toBe("gp");
-    expect(detectScoreFormat("song.gp")).toBe("gp");
-  });
+  it("detects every supported extension case-insensitively", () => {
+    const examples = [
+      ["song.gp3", "gp"],
+      ["song.GP4", "gp"],
+      ["song.gp5", "gp"],
+      ["song.gpx", "gp"],
+      ["song.gp", "gp"],
+      ["lesson.mid", "midi"],
+      ["lesson.MIDI", "midi"],
+      ["score.musicxml", "musicxml"],
+      ["score.MXL", "musicxml"],
+    ] as const;
 
-  it("detects supported MIDI extensions case-insensitively", () => {
-    expect(detectScoreFormat("lesson.mid")).toBe("midi");
-    expect(detectScoreFormat("lesson.MIDI")).toBe("midi");
-  });
-
-  it("detects MusicXML-specific extensions case-insensitively", () => {
-    expect(detectScoreFormat("score.musicxml")).toBe("musicxml");
-    expect(detectScoreFormat("score.MXL")).toBe("musicxml");
+    for (const [fileName, format] of examples) {
+      expect(detectScoreFormat(fileName), fileName).toBe(format);
+    }
   });
 
   it("keeps generic XML, disguised, and extensionless files unconfirmed", () => {

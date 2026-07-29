@@ -28,7 +28,7 @@ describe("createAppStore", () => {
     expect(second.getState().scoreZoom).toBe(1);
   });
 
-  it("keeps score width mode device-local and defaults to comfortable", () => {
+  it("keeps viewer preferences device-local and persists both modes", () => {
     const values = new Map<string, string>();
     vi.stubGlobal("localStorage", {
       getItem: (key: string) => values.get(key) ?? null,
@@ -36,26 +36,14 @@ describe("createAppStore", () => {
     });
     const store = createAppStore("dark");
     expect(store.getState().scoreWidthMode).toBe("comfortable");
-
-    store.getState().setScoreWidthMode("full");
-    persistScoreWidthMode(store.getState().scoreWidthMode);
-
-    expect(localStorage.getItem("zupulse-score-width-mode")).toBe("full");
-    vi.unstubAllGlobals();
-  });
-
-  it("keeps score navigation mode device-local and defaults to continuous", () => {
-    const values = new Map<string, string>();
-    vi.stubGlobal("localStorage", {
-      getItem: (key: string) => values.get(key) ?? null,
-      setItem: (key: string, value: string) => values.set(key, value),
-    });
-    const store = createAppStore("dark");
     expect(store.getState().scoreNavigationMode).toBe("continuous");
 
+    store.getState().setScoreWidthMode("full");
     store.getState().setScoreNavigationMode("page-turn");
+    persistScoreWidthMode(store.getState().scoreWidthMode);
     persistScoreNavigationMode(store.getState().scoreNavigationMode);
 
+    expect(localStorage.getItem("zupulse-score-width-mode")).toBe("full");
     expect(localStorage.getItem("zupulse-score-navigation-mode")).toBe("page-turn");
     vi.unstubAllGlobals();
   });

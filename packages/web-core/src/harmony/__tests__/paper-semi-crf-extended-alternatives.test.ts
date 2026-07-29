@@ -144,32 +144,39 @@ describe("extended harmony candidates", () => {
     );
   });
 
-  it.each([
-    { kind: "major" as const, extension: 9 as const, pitches: [0, 2, 4, 7, 11] },
-    { kind: "major" as const, extension: 11 as const, pitches: [0, 2, 4, 5, 7, 11] },
-    { kind: "major" as const, extension: 13 as const, pitches: [0, 2, 4, 5, 7, 9, 11] },
-    { kind: "minor" as const, extension: 9 as const, pitches: [0, 2, 3, 7, 10] },
-    { kind: "minor" as const, extension: 11 as const, pitches: [0, 2, 3, 5, 7, 10] },
-    { kind: "minor" as const, extension: 13 as const, pitches: [0, 2, 3, 5, 7, 9, 10] },
-  ])("includes a complete $kind $extension extension", ({ kind, extension, pitches }) => {
-    const durationByPitchClass = Array.from({ length: 12 }, (_, pitchClass) =>
-      pitches.includes(pitchClass) ? 960 : 0,
-    );
-    const candidates = generateHarmonyCandidates(
-      { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 960 } },
-      {
-        durationByPitchClass,
-        onsetCountByPitchClass: durationByPitchClass.map((duration) => Number(duration > 0)),
-        bassPitchClass: 0,
-      },
-      { topK: 8 },
-    );
+  it("includes complete major and minor upper extensions", () => {
+    const variants = [
+      { kind: "major" as const, extension: 9 as const, pitches: [0, 2, 4, 7, 11] },
+      { kind: "major" as const, extension: 11 as const, pitches: [0, 2, 4, 5, 7, 11] },
+      { kind: "major" as const, extension: 13 as const, pitches: [0, 2, 4, 5, 7, 9, 11] },
+      { kind: "minor" as const, extension: 9 as const, pitches: [0, 2, 3, 7, 10] },
+      { kind: "minor" as const, extension: 11 as const, pitches: [0, 2, 3, 5, 7, 10] },
+      { kind: "minor" as const, extension: 13 as const, pitches: [0, 2, 3, 5, 7, 9, 10] },
+    ];
 
-    expect(
-      candidates.some(
-        (candidate) =>
-          candidate.chord.root.step === "C" && candidate.chord.kind === kind && candidate.chord.extension === extension,
-      ),
-    ).toBe(true);
+    for (const { kind, extension, pitches } of variants) {
+      const durationByPitchClass = Array.from({ length: 12 }, (_, pitchClass) =>
+        pitches.includes(pitchClass) ? 960 : 0,
+      );
+      const candidates = generateHarmonyCandidates(
+        { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 960 } },
+        {
+          durationByPitchClass,
+          onsetCountByPitchClass: durationByPitchClass.map((duration) => Number(duration > 0)),
+          bassPitchClass: 0,
+        },
+        { topK: 8 },
+      );
+
+      expect(
+        candidates.some(
+          (candidate) =>
+            candidate.chord.root.step === "C" &&
+            candidate.chord.kind === kind &&
+            candidate.chord.extension === extension,
+        ),
+        `complete C ${kind} ${extension} candidate`,
+      ).toBe(true);
+    }
   });
 });

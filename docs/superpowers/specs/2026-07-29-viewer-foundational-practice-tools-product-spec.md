@@ -406,3 +406,24 @@ paths exist.
 
 Questions 1–3 are blocking feasibility gates. Questions 4–5 can use the defaults in this Spec for the first
 implementation and be refined after usability testing.
+
+## Feasibility Gate Result
+
+`2026-07-29` 针对当前固定依赖 alphaTab `1.8.4` 的结果如下：
+
+1. Count-in 音频受公开的 `countInVolume` 控制。alphaTab 在 Count-in 开始前发布 `playing`，进入主播放
+   时再次发布 `playing`，Count-in 期间不发布主播放位置。当前适配层只公开可靠的
+   `count-in-started` / `count-in-ended`，不伪造当前拍序号。
+2. alphaTab 的 `play()` 在 `countInVolume > 0` 时总会重新调用 `startCountIn()`。因此 Controller
+   只在新开始时保留 Count-in；从 pause 恢复时通过显式 `skipCountIn` 操作继续当前播放，不启动新的
+   Count-in。Loop 回绕不会重新执行 Count-in。
+3. alphaTab 公共播放器 API 只提供 Track 级 mixer，无法直接隔离同一 Track 内的两个 Staff。经明确
+   批准，运行时采用内存投影：深拷贝已解析 Score，只在副本中清空非目标 Staff 的 Note，生成替换
+   MIDI 并加载到现有 player。来源 bytes、用于渲染的 Score 和 Track Mixer facts 均不改变。
+4. 播放中切换先保存 tick，暂停 player，加载投影 MIDI，恢复 tick 与 Track Mixer，再继续播放；UI
+   明确提示发生过安全暂停。投影失败时回退为语义化 `audio-unsupported`，不保留部分生效状态。
+5. 单手模式默认播放另一只手作为伴奏；“临时试听练习手”是可键盘操作的 Toggle，不写入 Sidecar。
+   谱面仅以低权重 overlay 强调目标 Staff，不改变音符颜色或内容。
+
+结论：Question 1 已解决，Sidecar 升级到 `0.3.0`；Question 2 通过经批准的 runtime MIDI projection
+解决；Question 3 采用显式安全暂停、恢复方案。Task 6–8 按上述边界交付。

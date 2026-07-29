@@ -266,6 +266,47 @@ describe("ScoreViewer", () => {
 
     expect(screen.queryByLabelText("谱面循环区间")).toBeNull();
   });
+
+  it("emphasizes only the selected practice-hand staff", () => {
+    const playbackState = loopPlaybackState();
+    playbackState.pianoPractice = {
+      mode: "right-hand",
+      requestedMode: "right-hand",
+      availability: "available",
+      mapping: {
+        trackId: "track-0",
+        rightStaffId: "track-0:staff-0",
+        leftStaffId: "track-0:staff-1",
+      },
+      previewActive: false,
+      pausedForAudioProjection: false,
+    };
+    const { container } = renderScoreViewer(
+      <ScoreViewer
+        loopEditor={{
+          getMeasureBounds: () => [],
+          getStaffBounds: () => [
+            { systemIndex: 0, staffId: "track-0:staff-0", x: 20, y: 40, width: 320, height: 60 },
+            { systemIndex: 0, staffId: "track-0:staff-1", x: 20, y: 105, width: 320, height: 60 },
+          ],
+          subscribe: () => () => undefined,
+        }}
+        playback={{
+          getState: () => playbackState,
+          subscribe: () => () => undefined,
+          dispatch: vi.fn(async () => undefined),
+          timeline: { durationTicks: 0, durationMs: 0, measures: [] },
+        }}
+      />,
+    );
+
+    const emphasis = container.querySelector('[data-piano-hand-emphasis="track-0:staff-0"]');
+    expect(emphasis?.getAttribute("style")).toContain("left: 20px");
+    expect(emphasis?.getAttribute("style")).toContain("top: 40px");
+    expect(emphasis?.getAttribute("style")).toContain("width: 320px");
+    expect(emphasis?.getAttribute("style")).toContain("height: 60px");
+    expect(container.querySelector('[data-piano-hand-emphasis="track-0:staff-1"]')).toBeNull();
+  });
 });
 
 function renderScoreViewer(viewer: ReactElement, scoreZoom = 1) {

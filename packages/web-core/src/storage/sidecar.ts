@@ -3,7 +3,8 @@ import type { ScoreIdentity, Section } from "../score/types";
 import { createDefaultPlaybackSidecar } from "../playback/playbackSidecar";
 import { sidecarPayloadSchema } from "./schemas";
 
-export const SIDECAR_SCHEMA_VERSION = "0.2.0" as const;
+export const SIDECAR_SCHEMA_VERSION = "0.3.0" as const;
+const PREVIOUS_SIDECAR_SCHEMA_VERSION = "0.2.0" as const;
 const LEGACY_SIDECAR_SCHEMA_VERSION = "0.1.0" as const;
 const LEGACY_TIMESTAMP = "1970-01-01T00:00:00.000Z";
 
@@ -38,11 +39,26 @@ export function decodeSidecar(json: string): SidecarPayload {
   if (parsed.schemaVersion === LEGACY_SIDECAR_SCHEMA_VERSION) {
     return sidecarPayloadSchema.parse(migrateLegacySidecar(parsed as LegacySidecarPayload));
   }
+  if (parsed.schemaVersion === PREVIOUS_SIDECAR_SCHEMA_VERSION) {
+    return sidecarPayloadSchema.parse(migratePreviousSidecar(parsed));
+  }
   if (parsed.schemaVersion === SIDECAR_SCHEMA_VERSION) {
     return sidecarPayloadSchema.parse(parsed);
   }
 
   throw new Error(`Unsupported sidecar schema version: ${String(parsed.schemaVersion)}`);
+}
+
+function migratePreviousSidecar(previous: unknown): SidecarPayload {
+  const value = structuredClone(previous) as {
+    schemaVersion: string;
+    practice: { playback: Record<string, unknown> };
+  };
+  value.schemaVersion = SIDECAR_SCHEMA_VERSION;
+  const defaults = createDefaultPlaybackSidecar(LEGACY_TIMESTAMP);
+  value.practice.playback.rhythm = defaults.rhythm;
+  value.practice.playback.pianoPractice = defaults.pianoPractice;
+  return value as SidecarPayload;
 }
 
 type LegacySidecarPayload = {

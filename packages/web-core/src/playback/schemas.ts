@@ -2,6 +2,16 @@ import { z } from "zod";
 
 const timestampSchema = z.iso.datetime();
 
+export const pianoHandModeSchema = z.enum(["both-hands", "right-hand", "left-hand"]);
+
+const rhythmSettingSchema = z
+  .object({
+    enabled: z.boolean(),
+    volume: z.number().int().min(0).max(100),
+    updatedAt: timestampSchema,
+  })
+  .strict();
+
 export const musicalPositionSchema = z
   .object({
     measureId: z.string(),
@@ -45,6 +55,18 @@ export const practicePlaybackSidecarSchema = z
     scoreSpeed: z
       .object({
         value: z.number().min(0.25).max(2),
+        updatedAt: timestampSchema,
+      })
+      .strict(),
+    rhythm: z
+      .object({
+        metronome: rhythmSettingSchema,
+        countIn: rhythmSettingSchema,
+      })
+      .strict(),
+    pianoPractice: z
+      .object({
+        mode: pianoHandModeSchema,
         updatedAt: timestampSchema,
       })
       .strict(),

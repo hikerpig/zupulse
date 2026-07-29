@@ -13,6 +13,7 @@ import { SCORE_LAYOUT_COMMIT_EVENT, SCORE_ZOOM_COMMIT_EVENT } from "../scoreZoom
 import { useTranslation } from "react-i18next";
 import type { ViewerSessionHandle } from "../host";
 import { LoopRangeOverlay } from "../practice-loop/LoopRangeOverlay";
+import { PianoHandEmphasisOverlay } from "../practice-hand/PianoHandEmphasisOverlay";
 import styles from "./ScoreViewer.module.css";
 
 const SCORE_ZOOM_STEP = 0.1;
@@ -247,6 +248,7 @@ export function ScoreViewer({
             </div>
           </section>
           <LoopRangeOverlay playback={playback} loopEditor={loopEditor} />
+          <PianoHandEmphasisOverlay playback={playback} loopEditor={loopEditor} />
         </div>
       </div>
     </section>

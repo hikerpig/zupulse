@@ -11,6 +11,15 @@ export type ScoreSystemBounds = {
   height: number;
 };
 
+export type ScoreStaffBounds = {
+  systemIndex: number;
+  staffId: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 export function readAlphaTabStaffSystems(api: AlphaTabApiLike): ScoreSystemBounds[] | undefined {
   const systems = api.boundsLookup?.staffSystems;
   if (!systems?.length) return undefined;
@@ -82,4 +91,42 @@ export function readAlphaTabMeasureBounds(api: AlphaTabApiLike): ScoreMeasureBou
   return measures.every((measure): measure is ScoreMeasureBounds => measure !== undefined)
     ? measures.sort((a, b) => a.measureIndex - b.measureIndex)
     : undefined;
+}
+
+export function readAlphaTabStaffBounds(api: AlphaTabApiLike): ScoreStaffBounds[] | undefined {
+  const systems = api.boundsLookup?.staffSystems;
+  if (!systems?.length) return undefined;
+  const byStaffAndSystem = new Map<string, ScoreStaffBounds>();
+  for (const system of systems) {
+    for (const masterBar of system.bars) {
+      for (const bar of masterBar.bars ?? []) {
+        const bounds = bar.realBounds;
+        const staffId = `track-${bar.bar.staff.track.index}:staff-${bar.bar.staff.index}`;
+        const key = `${system.index}:${staffId}`;
+        const existing = byStaffAndSystem.get(key);
+        if (existing) {
+          const left = Math.min(existing.x, bounds.x);
+          const top = Math.min(existing.y, bounds.y);
+          const right = Math.max(existing.x + existing.width, bounds.x + bounds.w);
+          const bottom = Math.max(existing.y + existing.height, bounds.y + bounds.h);
+          existing.x = left;
+          existing.y = top;
+          existing.width = right - left;
+          existing.height = bottom - top;
+        } else {
+          byStaffAndSystem.set(key, {
+            systemIndex: system.index,
+            staffId,
+            x: bounds.x,
+            y: bounds.y,
+            width: bounds.w,
+            height: bounds.h,
+          });
+        }
+      }
+    }
+  }
+  return [...byStaffAndSystem.values()].sort(
+    (a, b) => a.systemIndex - b.systemIndex || a.y - b.y || a.staffId.localeCompare(b.staffId),
+  );
 }

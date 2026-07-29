@@ -5,8 +5,8 @@
 Viewer 的键盘层把明确的用户意图转成已有播放命令，不维护或推断播放状态。播放事实仍由
 `PlaybackController` 和 Playback Engine 拥有，React 只订阅 snapshot 并发送 command。
 
-本设计覆盖 Viewer 页面中的全局播放快捷键、Page Turn 键盘输入和顶部播放控制栏。它不扩展
-Bridge API、持久化结构、Playback Engine 契约或领域命令集合。
+本设计覆盖 Viewer 页面中的全局播放快捷键、Page Turn 键盘输入、顶部播放控制栏和节奏练习任务。
+它不扩展 Bridge API；持久化和 Engine 行为继续由共享 `web-core` 契约定义。
 
 ## Space 播放快捷键
 
@@ -55,7 +55,7 @@ flowchart TD
 5. 播放进度继续横跨控制栏底边。
 6. 速度同时显示实际 BPM 和相对原谱百分比；精确输入与预设留在 Popover。
 7. 音频正常时不占据固定状态位；加载或失败时才显示状态与恢复操作。
-8. 练习设置保留循环边界、循环列表、轨道和 Session 详情等低频操作。
+8. 练习设置保留节拍与预备拍、循环边界、循环列表和轨道等低频操作。
 9. 谱面导航模式使用图标 + ContextPopup；Page Turn 才显示页码与上一页/下一页，Detached 显示
    “返回播放位置”。
 
@@ -70,11 +70,32 @@ route viewport 小于等于 620px 时，控制栏保留播放、停止、循环�
 Viewer 的宽屏谱面缩放保留缩小、百分比和放大三个直接控件；小于等于 620px 时改为单个“调整谱面
 缩放”Popover 入口。两种入口与双指缩放都提交同一个 `zupulse:score-zoom-commit` 事件。
 
+## 节拍与预备拍
+
+Metronome 与一小节 Count-in 位于练习设置首层任务，不增加 Transport 常驻文字控件。两个设置各自
+保留显式开关和 0–100 整数音量，不能用音量是否为零推断用户选择。音频未就绪时控件保持可发现，
+但禁用并提供就地原因。
+
+`PlaybackController` 持有设置、持久化和 `counting-in` 状态；React 只发送 command。新开始允许
+alphaTab 执行 Count-in，从 pause 恢复通过 Engine 的 `skipCountIn` 操作避免再次启动。Count-in
+期间只显示“预备拍”，因为当前公开生命周期无法可靠提供逐拍进度。
+
+## 练习手
+
+练习手只对唯一的双非打击乐 Staff Track 开放，并使用稳定的 Track / Staff source index 建立显式
+`PianoHandMapping`。单手模式默认让系统播放另一只手作为伴奏；临时试听目标手使用 Toggle，关闭后
+恢复伴奏手且不写入 Sidecar。
+
+alphaTab 没有公开 Staff mixer，因此 Engine 深拷贝运行时 Score，在副本中清空非目标 Staff 的 Note
+并生成替换 MIDI。渲染 Score、来源文件与 Track Mixer facts 不变。播放中切换执行暂停、加载、恢复
+tick 和 mixer、继续播放；失败降级为语义化 unavailable。谱面强调通过 bounds overlay 实现，不修改
+音符颜色或谱面内容。
+
 ## 明确不做
 
 - 不绑定停止快捷键。不同音乐软件没有足够一致的约定。
 - 不劫持方向键。未来必须先明确按时间、拍还是小节移动，再设计修饰键规则。
-- 不增加节拍器、预备拍或无功能占位按钮；这些能力需要独立扩展播放契约和音频行为。
+- 不在 Transport 增加节拍器或预备拍的常驻文字按钮。
 - 不在 React 中根据按键直接切换本地 `transport`；Engine 事件仍是播放状态事实源。
 
 ## Page Turn 输入
@@ -94,6 +115,7 @@ Detached。输入框、按钮、选择框、可编辑区域和 Slider 保留原�
 - 健康音频状态隐藏，非就绪状态仍然可见；
 - 速度按钮同时暴露 BPM 与百分比；
 - 练习设置与窄屏 Zoom Popover 支持 `Escape` 和焦点恢复。
+- Metronome / Count-in 开关与音量互相独立，`counting-in` 通过文字状态和暂停按钮可感知。
 
 浏览器运行时检查在 390、620、640 和 1280px 补充验证真实布局、焦点行为、控件边界和控制台错误。
 新增快捷键必须先写出与现有控件焦点冲突的场景，不能只验证页面背景上的成功路径。

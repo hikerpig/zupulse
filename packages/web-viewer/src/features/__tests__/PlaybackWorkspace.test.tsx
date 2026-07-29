@@ -248,15 +248,115 @@ describe("PlaybackWorkspace transport bar", () => {
     expect(within(practice).queryByText("Session")).toBeNull();
   });
 
+  it("controls metronome and count-in independently from the rhythm practice task", async () => {
+    const dispatch = vi.fn(async () => undefined);
+    const playbackState = state("paused");
+    playbackState.rhythm.metronome = {
+      enabled: true,
+      volume: 60,
+      updatedAt: "2026-07-13T00:00:00Z",
+    };
+    render(<PlaybackWorkspace session={session(playbackState, dispatch)}>乐谱</PlaybackWorkspace>);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "练习设置" }));
+    const practice = screen.getByRole("complementary", { name: "练习设置" });
+    await user.click(within(practice).getByRole("button", { name: /节拍与预备拍/ }));
+
+    const metronome = within(practice).getByRole("switch", { name: "节拍器" });
+    const countIn = within(practice).getByRole("switch", { name: "播放前预备一小节" });
+    expect((metronome as HTMLInputElement).checked).toBe(true);
+    expect((countIn as HTMLInputElement).checked).toBe(false);
+
+    await user.click(countIn);
+    expect(dispatch).toHaveBeenCalledWith({ type: "set-count-in", enabled: true });
+    fireEvent.change(within(practice).getByRole("slider", { name: "节拍器音量" }), {
+      target: { value: "42" },
+    });
+    expect(dispatch).toHaveBeenCalledWith({ type: "set-metronome-volume", volume: 42 });
+  });
+
+  it("presents an observable count-in state without inventing beat progress", async () => {
+    const playbackState = state("counting-in");
+    playbackState.rhythm.countIn.enabled = true;
+    render(<PlaybackWorkspace session={session(playbackState)}>乐谱</PlaybackWorkspace>);
+
+    expect(screen.getByRole("status").textContent).toBe("预备拍");
+    expect(screen.getByRole("button", { name: "暂停" })).toBeTruthy();
+    expect(screen.queryByText(/1\s*\/\s*4/)).toBeNull();
+  });
+
+  it("keeps piano hand practice discoverable with a semantic unavailable reason", async () => {
+    const playbackState = state("paused");
+    playbackState.pianoPractice = {
+      mode: "both-hands",
+      requestedMode: "right-hand",
+      availability: "audio-unsupported",
+      unavailableCode: "piano-hand-practice-audio-unsupported",
+      mapping: {
+        trackId: "track-0",
+        rightStaffId: "track-0:staff-0",
+        leftStaffId: "track-0:staff-1",
+      },
+      previewActive: false,
+      pausedForAudioProjection: false,
+    };
+    render(<PlaybackWorkspace session={session(playbackState)}>乐谱</PlaybackWorkspace>);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "练习设置" }));
+    const practice = screen.getByRole("complementary", { name: "练习设置" });
+    await user.click(within(practice).getByRole("button", { name: /练习手/ }));
+
+    expect(within(practice).getByText("当前播放引擎无法单独播放左右手")).toBeTruthy();
+    expect(within(practice).getByRole("radio", { name: "练右手" }).matches(":disabled")).toBe(true);
+  });
+
+  it("changes piano hand mode and toggles the temporary target-hand preview", async () => {
+    const playbackState = state("playing");
+    playbackState.pianoPractice = {
+      mode: "right-hand",
+      requestedMode: "right-hand",
+      availability: "available",
+      mapping: {
+        trackId: "track-0",
+        rightStaffId: "track-0:staff-0",
+        leftStaffId: "track-0:staff-1",
+      },
+      previewActive: false,
+      pausedForAudioProjection: true,
+    };
+    const viewerSession = session(playbackState);
+    render(<PlaybackWorkspace session={viewerSession}>乐谱</PlaybackWorkspace>);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "练习设置" }));
+    const practice = screen.getByRole("complementary", { name: "练习设置" });
+    await user.click(within(practice).getByRole("button", { name: /练习手/ }));
+    await user.click(within(practice).getByRole("radio", { name: "练左手" }));
+    await user.click(within(practice).getByRole("button", { name: "临时试听练习手" }));
+
+    expect(viewerSession.playback?.dispatch).toHaveBeenNthCalledWith(1, {
+      type: "set-piano-hand-mode",
+      mode: "left-hand",
+    });
+    expect(viewerSession.playback?.dispatch).toHaveBeenNthCalledWith(2, {
+      type: "preview-piano-target-hand",
+      active: true,
+    });
+    expect(within(practice).getByText("切换音频时已安全暂停并恢复播放")).toBeTruthy();
+  });
+
   it("keeps the task overview while playback is unavailable", async () => {
     render(<PlaybackWorkspace session={undefined}>乐谱</PlaybackWorkspace>);
 
     await userEvent.setup().click(screen.getByRole("button", { name: "练习设置" }));
 
     const practice = screen.getByRole("complementary", { name: "练习设置" });
+    expect((within(practice).getByRole("button", { name: "节拍与预备拍" }) as HTMLButtonElement).disabled).toBe(true);
     expect((within(practice).getByRole("button", { name: "设置循环区间" }) as HTMLButtonElement).disabled).toBe(true);
     expect((within(practice).getByRole("button", { name: "选择主轨道" }) as HTMLButtonElement).disabled).toBe(true);
-    expect(within(practice).getByText("打开乐谱后可调整循环和轨道")).toBeTruthy();
+    expect(within(practice).getByText("打开乐谱后可调整节拍、循环和轨道")).toBeTruthy();
     expect(within(practice).queryByText("Session")).toBeNull();
   });
 
@@ -411,6 +511,18 @@ function state(transport: PlaybackState["transport"]): PlaybackState {
     durationMs: 60_000,
     baseTempo: 120,
     scoreSpeed: 0.8,
+    rhythm: {
+      metronome: { enabled: false, volume: 60, updatedAt: "2026-07-13T00:00:00Z" },
+      countIn: { enabled: false, volume: 70, updatedAt: "2026-07-13T00:00:00Z" },
+    },
+    pianoPractice: {
+      mode: "both-hands",
+      requestedMode: "both-hands",
+      availability: "not-applicable",
+      unavailableCode: "piano-hand-practice-not-applicable",
+      previewActive: false,
+      pausedForAudioProjection: false,
+    },
     looping: false,
     loopDraft: { snapMode: "beat" },
     loops: [],

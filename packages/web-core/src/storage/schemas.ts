@@ -12,7 +12,7 @@ const quantizationSchema = z
 
 export const sidecarPayloadSchema = z
   .object({
-    schemaVersion: z.literal("0.2.0"),
+    schemaVersion: z.literal("0.3.0"),
     identity: scoreIdentitySchema,
     practice: z
       .object({

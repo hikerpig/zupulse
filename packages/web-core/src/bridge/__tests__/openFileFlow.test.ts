@@ -18,7 +18,7 @@ describe("openFileThroughBridge", () => {
     expect(session?.source.fileName).toBe("practice.mid");
     expect(session?.identity.format).toBe("midi");
     expect(session?.capabilities.storage.sqliteIndex).toBe(false);
-    expect(session?.sidecar.schemaVersion).toBe("0.2.0");
+    expect(session?.sidecar.schemaVersion).toBe("0.3.0");
   });
 
   it("returns undefined when native file selection is cancelled", async () => {

@@ -3,10 +3,13 @@ import type {
   PlaybackEngine,
   PlaybackEngineEvent,
   PlaybackEngineSnapshot,
+  PianoHandMapping,
   PlaybackTimelineMap,
   PlaybackTrack,
 } from "./types";
 import type { PlaybackOccurrence } from "../score/positions";
+import * as alphaTab from "@coderline/alphatab";
+import { buildAlphaTabStaffAudioProjection, type AlphaTabStaffAudioProjection } from "./alphaTabStaffAudioProjection";
 
 export function extractAlphaTabPlaybackModel(api: AlphaTabApiLike): {
   baseTempo: number;
@@ -39,6 +42,11 @@ export function extractAlphaTabPlaybackModel(api: AlphaTabApiLike): {
         id: trackId(track.index),
         sourceIndex: track.index,
         ...(name ? { name } : {}),
+        staves: (track.staves ?? []).map((staff) => ({
+          id: `${trackId(track.index)}:staff-${staff.index}`,
+          sourceIndex: staff.index,
+          isPercussion: staff.isPercussion,
+        })),
       };
     }),
     timeline: {
@@ -104,10 +112,20 @@ export class AlphaTabPlaybackAdapter implements PlaybackEngine {
     transport: "stopped",
   };
   private destroyed = false;
+  private countInVolume = 0;
+  private countInPlayingEvents = -1;
+  private readonly trackMutes = new Map<string, boolean>();
+  private readonly trackSolos = new Map<string, boolean>();
+  private readonly trackVolumes = new Map<string, number>();
 
   constructor(
     private readonly api: AlphaTabApiLike,
     private readonly soundFontUrl: string,
+    private readonly buildStaffAudioProjection: (
+      score: alphaTab.model.Score,
+      settings: alphaTab.Settings,
+      audibleStaffIds: ReadonlySet<string>,
+    ) => AlphaTabStaffAudioProjection = buildAlphaTabStaffAudioProjection,
   ) {
     if (api.score) this.refreshTracks(api.score);
     this.attachEvents();
@@ -122,8 +140,15 @@ export class AlphaTabPlaybackAdapter implements PlaybackEngine {
     return { ...this.snapshot };
   }
 
-  playPause(): void {
+  playPause(options: { skipCountIn?: boolean } = {}): void {
+    const startsCountIn = !options.skipCountIn && this.snapshot.transport !== "playing" && this.countInVolume > 0;
+    if (startsCountIn) {
+      this.countInPlayingEvents = 0;
+      this.emit({ type: "count-in-started" });
+    }
+    if (options.skipCountIn && this.countInVolume > 0) this.api.countInVolume = 0;
     this.api.playPause?.();
+    if (options.skipCountIn && this.countInVolume > 0) this.api.countInVolume = this.countInVolume;
   }
 
   stop(): void {
@@ -144,6 +169,69 @@ export class AlphaTabPlaybackAdapter implements PlaybackEngine {
     this.api.playbackSpeed = speed;
   }
 
+  setMetronomeVolume(volume: number): void {
+    this.api.metronomeVolume = normalizeVolume(volume);
+  }
+
+  setCountInVolume(volume: number): void {
+    this.countInVolume = normalizeVolume(volume);
+    this.api.countInVolume = this.countInVolume;
+  }
+
+  getPianoHandAudioCapability(_mapping: PianoHandMapping): "supported" | "unsupported" {
+    return this.api.player && this.api.score && this.api.settings ? "supported" : "unsupported";
+  }
+
+  async setPianoStaffAudio(
+    _mapping: PianoHandMapping,
+    audibleStaffIds: string[],
+  ): Promise<{ pausedForAudioProjection: boolean }> {
+    const player = this.api.player;
+    const score = this.api.score;
+    const settings = this.api.settings;
+    if (!player || !score || !settings) throw new Error("alphaTab staff audio projection is unavailable");
+    repairAlphaTabWorkerLoadedMidiInfo(player);
+
+    const projection = this.buildStaffAudioProjection(
+      score as alphaTab.model.Score,
+      settings as alphaTab.Settings,
+      new Set(audibleStaffIds),
+    );
+    const position = this.api.tickPosition ?? 0;
+    const wasPlaying = this.snapshot.transport === "playing";
+    if (wasPlaying) this.api.playPause?.();
+
+    const loaded = new Promise<void>((resolve, reject) => {
+      const handleLoaded = () => {
+        player.midiLoaded.off(handleLoaded);
+        player.midiLoadFailed.off(handleFailed);
+        resolve();
+      };
+      const handleFailed = (error: Error) => {
+        player.midiLoaded.off(handleLoaded);
+        player.midiLoadFailed.off(handleFailed);
+        reject(error);
+      };
+      player.midiLoaded.on(handleLoaded);
+      player.midiLoadFailed.on(handleFailed);
+    });
+    player.loadMidiFile(projection.midiFile);
+    player.loadBackingTrack(projection.score);
+    player.updateSyncPoints(projection.syncPoints);
+    player.applyTranspositionPitches(projection.transpositionPitches);
+    try {
+      await loaded;
+      this.api.tickPosition = position;
+      this.reapplyTrackMixer();
+      if (wasPlaying) this.api.playPause?.();
+    } catch (error) {
+      this.reapplyTrackMixer();
+      if (wasPlaying) this.api.playPause?.();
+      throw error;
+    }
+    return { pausedForAudioProjection: wasPlaying };
+  }
+
   setLoop(range: { startTick: number; endTick: number } | null, enabled: boolean): void {
     this.api.playbackRange = range;
     this.api.isLooping = enabled;
@@ -154,15 +242,18 @@ export class AlphaTabPlaybackAdapter implements PlaybackEngine {
   }
 
   setTrackMute(trackIdValue: string, muted: boolean): void {
+    this.trackMutes.set(trackIdValue, muted);
     this.api.changeTrackMute?.([this.getTrack(trackIdValue)], muted);
   }
 
   setTrackSolo(trackIdValue: string, solo: boolean): void {
+    this.trackSolos.set(trackIdValue, solo);
     this.api.changeTrackSolo?.([this.getTrack(trackIdValue)], solo);
   }
 
   setTrackVolume(trackIdValue: string, volume: number): void {
     const normalized = Math.min(1, Math.max(0, volume));
+    this.trackVolumes.set(trackIdValue, normalized);
     this.api.changeTrackVolume?.([this.getTrack(trackIdValue)], normalized);
   }
 
@@ -181,10 +272,23 @@ export class AlphaTabPlaybackAdapter implements PlaybackEngine {
       const event = value as { state?: number; stopped?: boolean };
       const state = event.state === 1 ? "playing" : event.stopped ? "stopped" : "paused";
       this.snapshot = { ...this.snapshot, transport: state };
+      if (state === "playing" && this.countInPlayingEvents >= 0) {
+        this.countInPlayingEvents += 1;
+        if (this.countInPlayingEvents === 2) {
+          this.countInPlayingEvents = -1;
+          this.emit({ type: "count-in-ended" });
+        }
+      } else if (state === "stopped") {
+        this.countInPlayingEvents = -1;
+      }
       this.emit({ type: "transport", state });
     });
     this.attach(this.api.playerPositionChanged, (value) => {
       const event = value as { currentTime?: number; endTime?: number; tickPosition?: number };
+      if (this.countInPlayingEvents >= 0) {
+        this.countInPlayingEvents = -1;
+        this.emit({ type: "count-in-ended" });
+      }
       this.emit({
         type: "position",
         positionMs: event.currentTime ?? 0,
@@ -235,10 +339,42 @@ export class AlphaTabPlaybackAdapter implements PlaybackEngine {
     return track;
   }
 
+  private reapplyTrackMixer(): void {
+    for (const [trackIdValue, muted] of this.trackMutes) {
+      this.api.changeTrackMute?.([this.getTrack(trackIdValue)], muted);
+    }
+    for (const [trackIdValue, solo] of this.trackSolos) {
+      this.api.changeTrackSolo?.([this.getTrack(trackIdValue)], solo);
+    }
+    for (const [trackIdValue, volume] of this.trackVolumes) {
+      this.api.changeTrackVolume?.([this.getTrack(trackIdValue)], volume);
+    }
+  }
+
   private emit(event: PlaybackEngineEvent): void {
     if (this.destroyed) return;
     for (const listener of this.listeners) listener(event);
   }
+}
+
+function normalizeVolume(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
+function repairAlphaTabWorkerLoadedMidiInfo(player: alphaTab.synth.IAlphaSynth): void {
+  // alphaTab 1.8.4's worker getter recursively reads itself; MIDI reload reaches it after midiLoaded.
+  const instance = (
+    player as alphaTab.synth.IAlphaSynth & {
+      _instance?: { _loadedMidiInfo?: unknown };
+    }
+  )._instance;
+  if (!instance || !("_loadedMidiInfo" in instance)) return;
+  Object.defineProperty(instance, "loadedMidiInfo", {
+    configurable: true,
+    get() {
+      return instance._loadedMidiInfo;
+    },
+  });
 }
 
 function trackId(index: number): string {

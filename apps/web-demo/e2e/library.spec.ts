@@ -111,6 +111,69 @@ test("switches locale during playback without losing workspace state and keeps c
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
 
+test("persists independent metronome and count-in practice settings", async ({ page }) => {
+  await page.goto("/");
+  await importFixture(page, "导入自己的曲谱", musicXmlFixture);
+  await page.getByRole("button", { name: "练习设置" }).click();
+  const practice = page.getByRole("complementary", { name: "练习设置" });
+  await practice.getByRole("button", { name: /节拍与预备拍/ }).click();
+
+  const metronome = practice.getByRole("switch", { name: "节拍器" });
+  const countIn = practice.getByRole("switch", { name: "播放前预备一小节" });
+  await metronome.check();
+  await countIn.check();
+  await practice.getByRole("slider", { name: "节拍器音量" }).fill("42");
+  await practice.getByRole("slider", { name: "预备拍音量" }).fill("73");
+  await expect(practice.getByText("练习设置尚未保存")).toBeVisible();
+  await expect(practice.getByText("练习设置尚未保存")).toBeHidden();
+
+  await page.reload();
+  await page.getByRole("button", { name: "练习设置" }).click();
+  const restored = page.getByRole("complementary", { name: "练习设置" });
+  await restored.getByRole("button", { name: /节拍与预备拍/ }).click();
+  await expect(restored.getByRole("switch", { name: "节拍器" })).toBeChecked();
+  await expect(restored.getByRole("switch", { name: "播放前预备一小节" })).toBeChecked();
+  await expect(restored.getByRole("slider", { name: "节拍器音量" })).toHaveValue("42");
+  await expect(restored.getByRole("slider", { name: "预备拍音量" })).toHaveValue("73");
+
+  await page.getByRole("button", { name: "关闭练习设置" }).click();
+  await page.getByRole("button", { name: "播放" }).click();
+  const countInStatus = page.getByRole("status").filter({ hasText: "预备拍" });
+  await expect(countInStatus).toBeVisible();
+  await expect(countInStatus).toBeHidden({ timeout: 5_000 });
+  await page.getByRole("button", { name: "暂停" }).click();
+  await page.getByRole("button", { name: "播放" }).click();
+  await expect(countInStatus).toBeHidden();
+  await page.waitForTimeout(750);
+  await expect(countInStatus).toBeHidden();
+});
+
+test("switches and persists piano hand accompaniment while preserving playback", async ({ page }) => {
+  await page.goto("/");
+  await importFixture(page, "导入自己的曲谱", reviewedFixture);
+  await page.getByRole("button", { name: "播放" }).click();
+  await expect(page.getByRole("button", { name: "暂停" })).toBeVisible();
+  await page.getByRole("button", { name: "练习设置" }).click();
+  const practice = page.getByRole("complementary", { name: "练习设置" });
+  await practice.getByRole("button", { name: /练习手/ }).click();
+
+  await practice.getByRole("radio", { name: "练右手" }).check();
+  await expect(practice.getByRole("radio", { name: "练右手" })).toBeChecked();
+  await expect(page.getByRole("button", { name: "暂停" })).toBeVisible();
+  const preview = practice.getByRole("button", { name: "临时试听练习手" });
+  await preview.click();
+  await expect(practice.getByRole("button", { name: "恢复伴奏手" })).toHaveAttribute("aria-pressed", "true");
+  await practice.getByRole("button", { name: "恢复伴奏手" }).click();
+  await expect(preview).toHaveAttribute("aria-pressed", "false");
+  await expect(practice.getByText("练习设置尚未保存")).toBeHidden();
+
+  await page.reload();
+  await page.getByRole("button", { name: "练习设置" }).click();
+  const restored = page.getByRole("complementary", { name: "练习设置" });
+  await restored.getByRole("button", { name: /练习手/ }).click();
+  await expect(restored.getByRole("radio", { name: "练右手" })).toBeChecked();
+});
+
 test("keeps the Library to Viewer transition on a loading surface until the score renders", async ({ page }) => {
   await page.goto("/");
   await importFixture(page, "导入自己的曲谱");

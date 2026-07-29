@@ -118,6 +118,16 @@ describe("PlaybackController", () => {
   it("restores persisted settings and resume without autoplay", async () => {
     const sidecar = createDefaultSidecar(identity, "2026-07-10T00:00:00Z");
     sidecar.practice.playback.scoreSpeed.value = 0.75;
+    sidecar.practice.playback.rhythm.metronome = {
+      enabled: true,
+      volume: 55,
+      updatedAt: "2026-07-10T01:00:00Z",
+    };
+    sidecar.practice.playback.rhythm.countIn = {
+      enabled: true,
+      volume: 65,
+      updatedAt: "2026-07-10T01:00:00Z",
+    };
     sidecar.practice.playback.visibility = {
       primaryTrackId: "track-1",
       additionalTrackIds: ["track-0", "missing"],
@@ -144,6 +154,10 @@ describe("PlaybackController", () => {
       soundFont: "ready",
       baseTempo: 120,
       scoreSpeed: 0.75,
+      rhythm: {
+        metronome: { enabled: true, volume: 55 },
+        countIn: { enabled: true, volume: 65 },
+      },
       position: { tick: 2400 },
       trackState: {
         primaryVisibleTrackId: "track-1",
@@ -154,8 +168,170 @@ describe("PlaybackController", () => {
     expect(engine.calls).toContainEqual(["mute", { trackId: "track-0", value: true }]);
     expect(engine.calls).toContainEqual(["volume", { trackId: "track-0", value: 0.5 }]);
     expect(engine.calls).toContainEqual(["speed", 0.75]);
+    expect(engine.calls).toContainEqual(["metronome", 0.55]);
+    expect(engine.calls).toContainEqual(["countIn", 0.65]);
     expect(engine.calls).toContainEqual(["seek", 2400]);
     expect(engine.calls.some(([name]) => name === "playPause")).toBe(false);
+  });
+
+  it("persists independent metronome and count-in settings without changing playback facts", async () => {
+    const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" });
+    const persistence = new FakePersistence();
+    const controller = createController(engine, persistence);
+    await controller.initialize();
+    const before = controller.getState();
+
+    await controller.dispatch({ type: "set-metronome", enabled: true });
+    await controller.dispatch({ type: "set-metronome-volume", volume: 42 });
+    await controller.dispatch({ type: "set-count-in", enabled: true });
+    await controller.dispatch({ type: "set-count-in-volume", volume: 73 });
+    await controller.flush();
+
+    expect(controller.getState()).toMatchObject({
+      position: before.position,
+      scoreSpeed: before.scoreSpeed,
+      looping: before.looping,
+      rhythm: {
+        metronome: { enabled: true, volume: 42 },
+        countIn: { enabled: true, volume: 73 },
+      },
+    });
+    expect(engine.calls).toContainEqual(["metronome", 0.42]);
+    expect(engine.calls).toContainEqual(["countIn", 0.73]);
+    expect(persistence.sidecarWrites.at(-1)?.practice.playback.rhythm).toMatchObject({
+      metronome: { enabled: true, volume: 42 },
+      countIn: { enabled: true, volume: 73 },
+    });
+  });
+
+  it("counts in on a new start but skips a new count-in when resuming from pause", async () => {
+    const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" });
+    const controller = createController(engine, new FakePersistence());
+    await controller.initialize();
+    await controller.dispatch({ type: "set-count-in", enabled: true });
+
+    await controller.dispatch({ type: "toggle-playback" });
+    expect(engine.calls.at(-1)).toEqual(["playPause", undefined]);
+    engine.emit({ type: "count-in-started" });
+    expect(controller.getState().transport).toBe("counting-in");
+    engine.emit({ type: "count-in-ended" });
+    expect(controller.getState().transport).toBe("playing");
+    engine.emit({ type: "transport", state: "paused" });
+
+    await controller.dispatch({ type: "toggle-playback" });
+    expect(engine.calls.at(-1)).toEqual(["playPause", { skipCountIn: true }]);
+  });
+
+  it("keeps a persisted hand mode but safely degrades when staff audio is unsupported", async () => {
+    const sidecar = createDefaultSidecar(identity, "2026-07-10T00:00:00Z");
+    sidecar.practice.playback.pianoPractice = {
+      mode: "right-hand",
+      updatedAt: "2026-07-10T01:00:00Z",
+    };
+    const pianoTracks: PlaybackTrack[] = [
+      {
+        id: "track-0",
+        sourceIndex: 0,
+        staves: [
+          { id: "track-0:staff-0", sourceIndex: 0, isPercussion: false },
+          { id: "track-0:staff-1", sourceIndex: 1, isPercussion: false },
+        ],
+      },
+    ];
+    const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" });
+    const controller = new PlaybackController({
+      sessionId: "session-1",
+      identity,
+      engine,
+      persistence: new FakePersistence(sidecar),
+      baseSidecar: createDefaultSidecar(identity, "2026-07-10T00:00:00Z"),
+      tracks: pianoTracks,
+      timeline,
+    });
+
+    await controller.initialize();
+
+    expect(controller.getState().pianoPractice).toEqual({
+      mode: "both-hands",
+      requestedMode: "right-hand",
+      availability: "audio-unsupported",
+      unavailableCode: "piano-hand-practice-audio-unsupported",
+      previewActive: false,
+      pausedForAudioProjection: false,
+      mapping: {
+        trackId: "track-0",
+        rightStaffId: "track-0:staff-0",
+        leftStaffId: "track-0:staff-1",
+      },
+    });
+    expect(sidecar.practice.playback.pianoPractice.mode).toBe("right-hand");
+    expect(engine.calls.filter(([name]) => name === "mute" || name === "solo" || name === "volume")).toEqual([
+      ["mute", { trackId: "track-0", value: false }],
+      ["volume", { trackId: "track-0", value: 1 }],
+    ]);
+  });
+
+  it("applies piano accompaniment modes and temporary target-hand preview without changing Track Mixer", async () => {
+    const sidecar = createDefaultSidecar(identity, "2026-07-10T00:00:00Z");
+    const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" }, true);
+    const persistence = new FakePersistence(sidecar);
+    const controller = createPianoController(engine, persistence);
+    await controller.initialize();
+    const mixerCallsBefore = engine.calls.filter(isMixerCall);
+
+    await controller.dispatch({ type: "set-piano-hand-mode", mode: "right-hand" });
+    expect(engine.calls.at(-1)).toEqual([
+      "staffAudio",
+      {
+        mapping: {
+          trackId: "track-0",
+          rightStaffId: "track-0:staff-0",
+          leftStaffId: "track-0:staff-1",
+        },
+        audibleStaffIds: ["track-0:staff-1"],
+      },
+    ]);
+    expect(controller.getState().pianoPractice).toMatchObject({
+      mode: "right-hand",
+      requestedMode: "right-hand",
+      previewActive: false,
+    });
+
+    await controller.dispatch({ type: "preview-piano-target-hand", active: true });
+    expect(engine.calls.at(-1)?.[1]).toMatchObject({ audibleStaffIds: ["track-0:staff-0"] });
+    expect(controller.getState().pianoPractice.previewActive).toBe(true);
+    await controller.dispatch({ type: "preview-piano-target-hand", active: false });
+    expect(engine.calls.at(-1)?.[1]).toMatchObject({ audibleStaffIds: ["track-0:staff-1"] });
+    expect(controller.getState().pianoPractice.previewActive).toBe(false);
+
+    await controller.flush();
+    expect(persistence.sidecarWrites.at(-1)?.practice.playback.pianoPractice.mode).toBe("right-hand");
+    expect(engine.calls.filter(isMixerCall)).toEqual(mixerCallsBefore);
+  });
+
+  it("restores a persisted piano hand mode through the runtime projection", async () => {
+    const sidecar = createDefaultSidecar(identity, "2026-07-10T00:00:00Z");
+    sidecar.practice.playback.pianoPractice = {
+      mode: "left-hand",
+      updatedAt: "2026-07-10T01:00:00Z",
+    };
+    const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" }, true);
+    const controller = createPianoController(engine, new FakePersistence(sidecar));
+
+    await controller.initialize();
+
+    expect(controller.getState().pianoPractice.mode).toBe("left-hand");
+    expect(engine.calls).toContainEqual([
+      "staffAudio",
+      {
+        mapping: {
+          trackId: "track-0",
+          rightStaffId: "track-0:staff-0",
+          leftStaffId: "track-0:staff-1",
+        },
+        audibleStaffIds: ["track-0:staff-0"],
+      },
+    ]);
   });
 
   it("uses engine events as transport truth and retries SoundFont", async () => {
@@ -421,6 +597,31 @@ function createController(
   });
 }
 
+function createPianoController(engine: FakeEngine, persistence: FakePersistence) {
+  return new PlaybackController({
+    sessionId: "session-1",
+    identity,
+    engine,
+    persistence,
+    baseSidecar: createDefaultSidecar(identity, "2026-07-10T00:00:00Z"),
+    tracks: [
+      {
+        id: "track-0",
+        sourceIndex: 0,
+        staves: [
+          { id: "track-0:staff-0", sourceIndex: 0, isPercussion: false },
+          { id: "track-0:staff-1", sourceIndex: 1, isPercussion: false },
+        ],
+      },
+    ],
+    timeline,
+  });
+}
+
+function isMixerCall([name]: [string, unknown]): boolean {
+  return name === "mute" || name === "solo" || name === "volume" || name === "visible";
+}
+
 async function flushPromises(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
@@ -473,7 +674,10 @@ class FakeEngine implements PlaybackEngine {
   listener: ((event: PlaybackEngineEvent) => void) | undefined;
   destroyed = false;
 
-  constructor(private snapshot: PlaybackEngineSnapshot) {}
+  constructor(
+    private snapshot: PlaybackEngineSnapshot,
+    private readonly staffAudioSupported = false,
+  ) {}
 
   subscribe(listener: (event: PlaybackEngineEvent) => void): () => void {
     this.listener = listener;
@@ -493,8 +697,8 @@ class FakeEngine implements PlaybackEngine {
     this.listener?.(event);
   }
 
-  playPause(): void {
-    this.calls.push(["playPause", undefined]);
+  playPause(options?: { skipCountIn?: boolean }): void {
+    this.calls.push(["playPause", options]);
   }
   stop(): void {
     this.calls.push(["stop", undefined]);
@@ -507,6 +711,19 @@ class FakeEngine implements PlaybackEngine {
   }
   setSpeed(speed: number): void {
     this.calls.push(["speed", speed]);
+  }
+  setMetronomeVolume(volume: number): void {
+    this.calls.push(["metronome", volume]);
+  }
+  setCountInVolume(volume: number): void {
+    this.calls.push(["countIn", volume]);
+  }
+  getPianoHandAudioCapability(): "supported" | "unsupported" {
+    return this.staffAudioSupported ? "supported" : "unsupported";
+  }
+  async setPianoStaffAudio(mapping: unknown, audibleStaffIds: string[]) {
+    this.calls.push(["staffAudio", { mapping, audibleStaffIds }]);
+    return { pausedForAudioProjection: false };
   }
   setLoop(range: { startTick: number; endTick: number } | null, enabled: boolean): void {
     this.calls.push(["loop", { range, enabled }]);

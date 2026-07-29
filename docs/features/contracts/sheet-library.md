@@ -3,7 +3,7 @@ feature: sheet-library
 title: Sheet Library
 status: current
 delivery: partial
-last_verified: 2026-07-27
+last_verified: 2026-07-29
 hosts:
   - browser
   - desktop
@@ -45,13 +45,16 @@ Session ID。
 
 - Repository 必须先完成初始化，应用随后读取 Library Score 摘要列表。
 - 初始化或读取失败时，Library 显示可重试的不可用状态，不主动清空已有数据。
-- 页面获得窗口焦点时会刷新列表。
+- 页面获得窗口焦点时会刷新列表；已有列表的焦点刷新在后台进行，保留当前列表 DOM，只有首次
+  加载（尚无列表数据）才显示骨架屏。
 - Library 提供标题/艺术家搜索、收藏筛选，以及按最近活动、导入时间、最近练习或标题排序。
 - “最近活动”当前按 `lastOpenedAt ?? importedAt` 排序；编辑元数据和切换收藏不会更新它。
 - 已有馆藏在搜索或收藏筛选无结果时显示当前条件、`0 / N` 数量和清除条件动作；只有空馆藏显示
   首份曲谱导入动作。
 - Library 默认使用单列紧凑排练目录；标题和艺术家为主信息，格式与时长为辅助信息。只有真实
   `lastPosition` 存在时显示“继续练习”和一基小节号，否则使用中性的“打开”。
+- Library 摘要显示曲谱总数和已有 Loop 数；只有真实 `lastPracticedAt` 存在时才追加最近练习时间，
+  不把摘要缺失解释成“尚未练习”。
 - 每份 Library Score 的打开/继续、收藏和更多菜单是同级独立控件，外层 `<li>` 没有 button
   语义；导出、编辑和删除位于 Base UI 管理菜单。
 - 390px 到 1280px 使用相同 DOM 和 route viewport 范围内的 unnamed container query 重排标题、
@@ -61,6 +64,9 @@ Session ID。
 
 未提交的候选只存在于 import modal 的 presentation state。取消文件选择、关闭弹窗或移除候选
 不会改变 Library facts、import summary 或 route。
+
+Import modal 使用适合候选审阅的宽版布局，并在窄视口内收缩。点击弹窗外部会关闭弹窗、清空候选，
+并完整释放遮罩与页面交互。
 
 Browser import modal 还接受 Web `File` 拖放，并把 picker 与 dropped files 归一为相同的
 `ScoreImportSource`。Desktop 未声明该 capability，因此不显示或接受拖放。

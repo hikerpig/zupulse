@@ -38,7 +38,6 @@
   --z-index-score-cursor: 10;
   --z-index-transport: 20;
   --z-index-practice-panel: 30;
-  --z-index-library-editor: 40;
   --z-index-library-dialog: 50;
   --layer-overlay: var(--z-index-library-dialog);
   --dialog-max-width: 512px;

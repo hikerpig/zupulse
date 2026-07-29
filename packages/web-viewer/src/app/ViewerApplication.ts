@@ -603,7 +603,9 @@ export class ViewerApplication implements ViewerAppHandle {
 
   async refreshLibrary(): Promise<void> {
     if (!this.library) return;
-    this.setSnapshot({ ...this.snapshot, library: { scores: this.snapshot.library?.scores ?? [], loading: true } });
+    if (!this.snapshot.library) {
+      this.setSnapshot({ ...this.snapshot, library: { scores: [], loading: true } });
+    }
     try {
       await this.library.repository.initialize();
       const scores = await this.library.repository.list();

@@ -2,31 +2,26 @@
   /* ── Shell ─────────────────────────────────────────────── */
   .libraryShell {
     display: block;
-    overflow: auto;
-    padding-bottom: env(safe-area-inset-bottom);
-    background:
-      radial-gradient(circle, rgb(0 0 0 / 0.06) 1px, transparent 1px) 0 0 / 20px 20px,
-      var(--bg-glow),
-      var(--bg-app);
+    overflow: hidden;
+    height: 100%;
+    background: var(--bg-app);
   }
 
-  :global(:root[data-theme="dark"]) .libraryShell {
-    background:
-      radial-gradient(circle, rgb(255 255 255 / 0.1) 1px, transparent 1px) 0 0 / 20px 20px,
-      var(--bg-glow),
-      var(--bg-app);
+  /* ── Sticky Header ────────────────────────────────────── */
+  .libraryHeaderSticky {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-index-surface-raised);
+    background: linear-gradient(180deg, var(--bg-shell) 96%, var(--bg-app));
+    backdrop-filter: blur(12px);
   }
 
   /* ── Context Bar ──────────────────────────────────────── */
   .libraryContextBar {
     min-height: var(--nav-height, 72px);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-shell) 96%, white) 0%, var(--bg-shell) 100%);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.28),
-      inset 0 -1px 0 rgb(24 24 24 / 0.05);
-    backdrop-filter: blur(12px);
+    background: var(--bg-shell);
+    border-bottom: 1px solid var(--border-default);
     position: relative;
-    composes: noiseOverlay from "../styles/noise.module.css";
   }
   .libraryTitle {
     letter-spacing: -0.055em;
@@ -61,6 +56,25 @@
     border-color: var(--accent-primary);
     background: var(--accent-soft);
   }
+  .librarySort {
+    position: relative;
+  }
+  .librarySort::after {
+    position: absolute;
+    right: 12px;
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+    content: "";
+    background: var(--text-secondary);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='2'/%3E%3C/svg%3E")
+      center / contain no-repeat;
+  }
+  /* The shared Select fills fields by default; this toolbar variant stays intrinsic. */
+  .libraryControls .librarySort select {
+    appearance: none;
+    width: auto;
+  }
   /* ── Stats Bar ─────────────────────────────────────────── */
   .libraryStats {
     width: min(1180px, calc(100% - 48px));
@@ -70,14 +84,13 @@
     justify-content: space-between;
     gap: 12px;
   }
-  .libraryCount {
+  .libraryStatsSummary {
+    margin: 0;
     color: var(--text-tertiary);
     font-size: 12px;
     font-family: "IBM Plex Mono", monospace;
-    letter-spacing: 0.04em;
-  }
-  .libraryCount strong {
-    color: var(--text-secondary);
+    letter-spacing: 0.03em;
+    text-align: right;
   }
 
   .importSummary {
@@ -157,6 +170,7 @@
   .importSummaryDetails ul {
     display: grid;
     gap: 6px;
+
     margin: 10px 0 0;
     padding: 0;
     list-style: none;
@@ -183,16 +197,19 @@
     background: var(--border-default);
     list-style: none;
     overflow: hidden;
+    max-height: calc(100vh - 320px);
+    overflow-y: auto;
   }
 
   .libraryRow {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(190px, 0.55fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: stretch;
-    min-height: 78px;
+    min-height: 60px;
     background: var(--bg-panel);
     transition: background-color 140ms ease;
+    outline: none;
   }
   .libraryRow:first-child {
     border-start-start-radius: calc(var(--radius-sm) - 1px);
@@ -208,6 +225,9 @@
   .libraryRow:focus-within {
     z-index: var(--z-index-surface-raised);
     box-shadow: inset 0 0 0 2px var(--accent-primary);
+  }
+  .libraryRowCompact {
+    min-height: 52px;
   }
 
   .libraryOpenAction {
@@ -241,7 +261,14 @@
     display: grid;
     gap: 3px;
   }
-  .libraryIdentity strong {
+  .libraryTitleRow {
+    min-width: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .libraryTitleRow strong {
     font-size: 15px;
     font-weight: 600;
     line-height: 1.3;
@@ -249,12 +276,26 @@
     white-space: nowrap;
     text-overflow: ellipsis;
   }
+  .libraryTitleRow strong mark {
+    background: rgb(242 107 79 / 0.18);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+    font-weight: 700;
+  }
   .libraryArtist {
     color: var(--text-secondary);
     font-size: 13px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+  }
+  .libraryArtist mark {
+    background: rgb(242 107 79 / 0.18);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+    font-weight: 700;
   }
   .libraryMeta {
     display: flex;
@@ -264,6 +305,14 @@
     font-size: 11px;
     font-family: "IBM Plex Mono", monospace;
     letter-spacing: 0.03em;
+  }
+  .libraryMetaDivider {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--border-strong);
+    opacity: 0.6;
+    flex-shrink: 0;
   }
   .libraryFormat {
     padding: 1px 5px;
@@ -279,61 +328,77 @@
     color: var(--status-ready-text);
     border-color: var(--status-ready-text);
   }
-  .libraryPrimaryAction {
-    color: var(--accent-primary);
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  .libraryPractice {
-    min-width: 0;
-    display: grid;
-    align-content: center;
-    gap: 4px;
-    padding: 12px 16px;
-    border-inline: 1px solid var(--border-default);
-    color: var(--text-secondary);
-    font-size: 12px;
-  }
-  .libraryPracticeStatus {
+  .libraryPracticeChip {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    min-width: 0;
-  }
-  .libraryPracticeStatus > span:last-child {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-  .libraryPracticeStatusDot {
-    flex: 0 0 auto;
-    width: 6px;
-    height: 6px;
-    border-radius: 999px;
-    background: var(--text-tertiary);
-  }
-  .libraryPracticeStatusActive .libraryPracticeStatusDot {
-    background: var(--accent-primary);
-  }
-  .libraryPracticeStatusLoop .libraryPracticeStatusDot {
-    background: var(--signal-purple);
-  }
-  .libraryPracticeDate {
-    padding-left: 12px;
-    color: var(--text-tertiary);
+    padding-inline: 2px;
+
+    color: var(--text-secondary);
+    font-size: 11px;
     font-family: "IBM Plex Mono", monospace;
-    font-size: 10px;
+    letter-spacing: 0.02em;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
-  .libraryPractice:empty {
-    visibility: hidden;
+  .libraryPracticeDot {
+    flex: 0 0 7px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 24%, transparent);
+  }
+  .libraryPracticeChipLoop .libraryPracticeDot {
+    background: var(--status-ready-text);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--status-ready-text) 24%, transparent);
+  }
+  .libraryLoopOnlyBadge {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--status-ready-text);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--status-ready-text) 24%, transparent);
+  }
+  .libraryActionIndicator {
+    flex: 0 0 auto;
+    opacity: 0.3;
+    color: var(--accent-primary);
+    transition:
+      opacity 140ms ease,
+      transform 140ms ease;
+  }
+  .libraryOpenAction:hover .libraryActionIndicator,
+  .libraryOpenAction:focus-visible .libraryActionIndicator {
+    opacity: 1;
+    transform: translateX(4px);
   }
   .libraryRowActions {
-    grid-column: 3;
+    grid-column: 2;
     display: flex;
     align-items: center;
     gap: 2px;
     padding: 0 10px;
+  }
+  .libraryFavoriteButton {
+    opacity: 0.5;
+    transition: opacity 140ms ease;
+  }
+  .libraryRow:hover .libraryFavoriteButton,
+  .libraryRow:focus-within .libraryFavoriteButton {
+    opacity: 1;
+  }
+  .favoriteIconInactive {
+    color: var(--text-tertiary);
+    transition: color 140ms ease;
+  }
+  .libraryRow:hover .favoriteIconInactive,
+  .libraryRow:focus-within .favoriteIconInactive {
+    color: var(--text-secondary);
   }
   .libraryEmptyActions {
     display: flex;
@@ -342,24 +407,77 @@
     flex-wrap: wrap;
   }
 
-  /* ── Editor ────────────────────────────────────────────── */
-  .libraryEditor {
-    position: fixed;
-    z-index: var(--z-index-library-editor);
-    right: 20px;
-    bottom: 20px;
-    display: grid;
-    gap: 10px;
-    padding: 16px;
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-lg);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-shell) 96%, white) 0%, var(--bg-panel) 100%);
-    box-shadow: var(--shadow-panel);
-    backdrop-filter: blur(16px);
+  /* ── Skeleton ─────────────────────────────────────────── */
+  .librarySkeleton {
+    width: min(1180px, calc(100% - 48px));
+    margin: 16px auto 32px;
   }
-  .libraryEditor label {
+  .librarySkeletonHeader {
+    margin-bottom: 12px;
+  }
+  .skeletonLine {
+    height: 14px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-control) 50%, var(--bg-elevated) 75%);
+    background-size: 200% 100%;
+    animation: skeletonPulse 1.6s ease-in-out infinite;
+  }
+  .librarySkeletonList {
     display: grid;
-    gap: 4px;
+    gap: 1px;
+    padding: 0;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--border-default);
+    list-style: none;
+    overflow: hidden;
+  }
+  .librarySkeletonRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    min-height: 52px;
+    padding: 12px 16px;
+    background: var(--bg-panel);
+    gap: 16px;
+  }
+  .skeletonTitle {
+    height: 15px;
+    width: 45%;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-control) 50%, var(--bg-elevated) 75%);
+    background-size: 200% 100%;
+    animation: skeletonPulse 1.6s ease-in-out infinite;
+  }
+  .skeletonMeta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .skeletonChip {
+    height: 14px;
+    width: 60px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-control) 50%, var(--bg-elevated) 75%);
+    background-size: 200% 100%;
+    animation: skeletonPulse 1.6s ease-in-out infinite;
+  }
+  .skeletonDate {
+    height: 11px;
+    width: 80px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-control) 50%, var(--bg-elevated) 75%);
+    background-size: 200% 100%;
+    animation: skeletonPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes skeletonPulse {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
   }
 
   /* ── Responsive ────────────────────────────────────────── */
@@ -388,22 +506,19 @@
       grid-template-columns: minmax(0, 1fr) auto;
       min-height: 0;
     }
+    .libraryRowCompact {
+      min-height: 0;
+    }
     .libraryOpenAction {
       grid-column: 1 / -1;
       padding-bottom: 10px;
-    }
-    .libraryPractice {
-      min-height: 44px;
-      padding: 8px 16px 10px;
-      border-inline: 0;
-      border-top: 1px solid var(--border-default);
     }
     .libraryRowActions {
       grid-column: 2;
       border-top: 1px solid var(--border-default);
     }
-    .libraryPractice:empty {
-      display: none;
+    .libraryFavoriteButton {
+      opacity: 1;
     }
     .libraryControls {
       margin: 12px max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
@@ -423,18 +538,31 @@
       overflow: hidden;
     }
     .libraryControls .librarySort select {
-      width: 112px;
       min-width: 0;
       max-width: 100%;
+      width: auto;
     }
     .libraryStats {
       margin: 12px max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
       width: auto;
+    }
+    .libraryStatsSummary {
+      text-align: left;
     }
     .importSummary,
     .importSummaryCompact {
       width: auto;
       margin-inline: max(16px, env(safe-area-inset-left));
     }
+    .librarySkeleton {
+      width: auto;
+      margin: 12px max(16px, env(safe-area-inset-right)) 32px max(16px, env(safe-area-inset-left));
+    }
+  }
+}
+
+@layer utilities {
+  .libraryControls .librarySort select {
+    padding-right: 34px;
   }
 }

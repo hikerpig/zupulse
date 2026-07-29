@@ -156,6 +156,31 @@ describe("SheetLibrary score actions", () => {
     expect(screen.getByRole("menuitem", { name: "删除 Created" })).toBeTruthy();
   });
 
+  it("uses native list semantics without hijacking arrow keys from row controls", () => {
+    const first = libraryScore();
+    const second: LibraryScore = {
+      ...libraryScore(),
+      id: "00000000-0000-4000-8000-000000000002",
+      title: "Second",
+    };
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[first, second]}
+        loading={false}
+        {...emptyImportProps()}
+        onOpen={() => undefined}
+      />,
+    );
+
+    expect(screen.queryByRole("listbox")).toBeNull();
+    const open = screen.getByRole("button", { name: "打开 Created" });
+    open.focus();
+    fireEvent.keyDown(open, { key: "ArrowDown" });
+    expect(document.activeElement).toBe(open);
+  });
+
   it("offers a truthful continue action with a one-based measure number", async () => {
     const onOpen = vi.fn();
     const fresh = libraryScore();
@@ -227,6 +252,79 @@ describe("SheetLibrary score actions", () => {
   });
 });
 
+describe("SheetLibrary edit dialog", () => {
+  it("opens edit dialog and restores focus on cancel", async () => {
+    const application = libraryApplication();
+    const user = userEvent.setup();
+
+    render(
+      <SheetLibrary
+        application={application}
+        scores={[libraryScore()]}
+        loading={false}
+        {...emptyImportProps()}
+        onOpen={() => undefined}
+      />,
+    );
+
+    const actionsTrigger = screen.getByRole("button", { name: "Created 的更多操作" });
+    await user.click(actionsTrigger);
+    await user.click(await screen.findByRole("menuitem", { name: "编辑 Created" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "编辑曲谱信息" });
+    expect(within(dialog).getByLabelText("标题")).toBeTruthy();
+    expect(within(dialog).getByLabelText("艺术家")).toBeTruthy();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(actionsTrigger);
+    });
+  });
+});
+
+describe("SheetLibrary stats summary", () => {
+  it("does not describe a missing practice summary as never practiced", () => {
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[libraryScore()]}
+        loading={false}
+        {...emptyImportProps()}
+        onOpen={() => undefined}
+      />,
+    );
+
+    expect(screen.getByText("1 份曲谱 · 0 个 Loop")).toBeTruthy();
+    expect(screen.queryByText("尚未练习")).toBeNull();
+  });
+
+  it("shows total scores, loops count and last practiced time", () => {
+    const scoreWithLoop: LibraryScore = {
+      ...libraryScore(),
+      id: "00000000-0000-4000-8000-000000000002",
+      title: "WithLoop",
+      practice: {
+        hasLoop: true,
+        lastPracticedAt: "2026-07-26T10:00:00.000Z",
+      },
+    };
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[libraryScore(), scoreWithLoop]}
+        loading={false}
+        {...emptyImportProps()}
+        onOpen={() => undefined}
+      />,
+    );
+
+    const statsSummary = screen.getByText(/2 份曲谱 · 1 个 Loop · 最近练习/);
+    expect(statsSummary).toBeTruthy();
+  });
+});
+
 describe("SheetLibrary no-results state", () => {
   it("exposes the sort control with its visible label", () => {
     render(
@@ -256,13 +354,16 @@ describe("SheetLibrary no-results state", () => {
     );
 
     await user.type(screen.getByRole("textbox", { name: "搜索曲名或艺术家" }), "不存在");
-
-    expect(screen.getByText("没有匹配“不存在”的曲谱")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText("没有匹配“不存在”的曲谱")).toBeTruthy();
+    });
     expect(screen.getByText("0 / 1 份曲谱")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "导入第一份曲谱" })).toBeNull();
 
     await user.click(screen.getByRole("button", { name: "清除搜索" }));
-    expect(screen.getByRole("button", { name: "打开 Created" })).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "打开 Created" })).toBeTruthy();
+    });
   });
 
   it("explains an empty favorites filter and clears all filters", async () => {
@@ -287,6 +388,65 @@ describe("SheetLibrary no-results state", () => {
 });
 
 describe("SheetLibrary import dialog", () => {
+  it("uses the primary accent treatment for Library import actions", () => {
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[]}
+        loading={false}
+        {...emptyImportProps()}
+        onOpen={() => undefined}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "导入曲谱" }).className).toContain("tw:bg-accent");
+    expect(screen.getByRole("button", { name: "导入自己的曲谱" }).className).toContain("tw:bg-accent");
+  });
+
+  it("fully removes the modal layer after pointer dismissal", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[]}
+        loading={false}
+        {...emptyImportProps()}
+        onOpen={() => undefined}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "导入自己的曲谱" });
+    await user.click(trigger);
+    expect(screen.getByRole("dialog", { name: "导入曲谱" })).toBeTruthy();
+
+    await user.click(document.body);
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "导入曲谱" })).toBeNull();
+      expect(document.querySelector("[data-base-ui-portal]")).toBeNull();
+    });
+    const favorites = screen.getByRole("button", { name: "收藏" });
+    await user.click(favorites);
+    expect(favorites.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("uses the wider import-specific dialog width", async () => {
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[]}
+        loading={false}
+        {...emptyImportProps()}
+        onOpen={() => undefined}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "导入自己的曲谱" }));
+
+    expect(screen.getByRole("dialog", { name: "导入曲谱" }).className).toContain("tw:max-w-2xl");
+  });
+
   it("adds a bundled sample to the normal candidate list before submission", async () => {
     const sample = {
       id: "first-light-practice",
@@ -382,7 +542,9 @@ describe("SheetLibrary import dialog", () => {
     await user.click(screen.getByRole("button", { name: "导入 1 份" }));
 
     expect(onImportSources).toHaveBeenCalledWith([second]);
-    expect(screen.getByRole("dialog", { name: "导入曲谱" }).getAttribute("data-closed")).not.toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "导入曲谱" })).toBeNull();
+    });
   });
 
   it("cancels without submitting and restores focus to the trigger", async () => {

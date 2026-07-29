@@ -1,29 +1,45 @@
-# web-viewer context
+# Web Viewer Context
 
-## 职责与禁止项
+## Responsibilities and Boundaries
 
-- 负责共享 React 路由、页面、展示状态和用户交互编排。
-- 只通过 `SheetLibraryRepository`、`ScoreFileGateway` 和 Viewer host 端口访问宿主能力。
-- 不得直接使用 IndexedDB、Node、Electron、绝对路径或平台文件 API。
-- 领域判断、格式解析、播放算法和跨边界校验留在 `web-core`。
+- Own shared React routes, presentation state, and user interaction orchestration.
+- Access host capabilities only through `SheetLibraryRepository`, `ScoreFileGateway`, and Viewer host ports.
+- Do not access IndexedDB, Node, Electron, absolute paths, or platform file APIs directly.
+- Keep domain decisions, format parsing, playback algorithms, and cross-boundary validation in `web-core`.
 
-## 实现约定
+## Implementation Conventions
 
-- 修改 UI、CSS、主题、布局或交互状态前先读根 `DESIGN.md`；只有修改主题、token 或基础组件时，
-  才继续读取 `.design_library/zupulse-te-braun-theme` 的相关文件。
-- 路由使用持久 `libraryScoreId`，刷新时从 Repository 重建临时 Viewer Session。
-- 优先使用语义 HTML；交互变化覆盖键盘、焦点、loading、empty 和 error 状态。
-- 命令式 alphaTab 生命周期集中在 Viewer adapter/工作区边界，不散入普通组件。
-- UI 测试优先按 role/name 观察用户结果，不断言实现细节。
-- 组件只消费 `src/styles/tokens.css` 中的运行时语义 token，不直接消费 theme library 的原始色阶；
-  长期设计决策同步回根 `DESIGN.md`，不得只留在局部 CSS 或任务讨论中。
-- 滚动容器使用 `src/styles/common.css` 中的 `.scrollable` 工具类：默认隐藏滚动条，hover 时淡入；
-  自身可滚动的组件（如 `ScoreViewer`）直接加类，外层布局容器不重复加滚动行为。
-- 嵌套高度布局（flex/grid 内需要占满高度）每层都要显式声明：外层 `height: 100%` + `min-height: 0`，
-- 图标统一用 `lucide-react`，不用 emoji 或 Unicode 符号；尺寸 16px 起。
-- 低频设置/试听操作用 `ContextPopup` 组件，命令栏只留图标入口，完整面板在浮层展开。
-- 片段/列表项使用视觉编码（色条、圆点、底色）替代文字元信息，颜色取自现有语义 token。
+- Before changing UI, CSS, themes, layout, or interaction states, read the root `DESIGN.md`. Read the relevant
+  files under `.design_library/zupulse-te-braun-theme` only when changing themes, tokens, or foundational
+  components.
+- Routes MUST use persistent `libraryScoreId` values. Rebuild temporary Viewer Sessions from the Repository after
+  refresh.
+- Prefer semantic HTML and cover keyboard, focus, loading, empty, and error states. UI tests SHOULD observe
+  user-visible outcomes by role and accessible name instead of implementation details.
+- Keep imperative alphaTab lifecycle management inside Viewer adapters or workspace boundaries, not ordinary
+  presentation components.
+- Components MUST consume runtime semantic tokens from `src/styles/tokens.css`, never raw color scales from the
+  theme library. Record durable design decisions in the root `DESIGN.md`, not only in local CSS or task
+  discussions.
+- Static presentation styles MUST live in the relevant CSS Module or an approved semantic utility. Inline styles
+  are reserved for values calculated from runtime state, geometry, or external APIs. Resolve Tailwind and CSS
+  Module conflicts through the appropriate cascade layer; MUST NOT use inline styles merely to increase
+  specificity, and avoid `!important`.
+- Use the `.scrollable` utility from `src/styles/common.css` for scroll containers. It hides scrollbars by default
+  and reveals them on hover. Apply it directly to the element that scrolls, such as `ScoreViewer`; do not add
+  duplicate scrolling behavior to outer layout containers.
+- For nested flex or grid layouts that must fill available height, every level MUST declare the required sizing
+  contract: outer containers use `height: 100%` and nested shrinking containers use `min-height: 0`.
+- Use `lucide-react` for icons; do not use emoji or Unicode symbols. Icons MUST be at least 16px.
+- Use `ContextPopup` for low-frequency settings and preview actions. Command bars keep only the icon trigger while
+  the complete panel opens in the popup.
+- Encode fragment and list-item distinctions visually with existing semantic tokens, such as side bars, dots, or
+  surface colors, instead of adding verbose metadata.
 
-参考：`src/app/App.tsx` 展示路由组合；`src/app/ViewerApplication.ts` 展示端口编排；
-`src/app/__tests__/App.test.tsx` 展示用户视角测试。最小验证：
-`pnpm vitest run packages/web-viewer/src/<area>`。
+## Navigation and Verification
+
+- `src/app/App.tsx` is the route-composition reference.
+- `src/app/ViewerApplication.ts` is the host-port orchestration reference.
+- `src/app/__tests__/App.test.tsx` is the user-perspective UI testing reference.
+- Start verification with the smallest relevant command:
+  `pnpm vitest run packages/web-viewer/src/<area>`.

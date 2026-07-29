@@ -9,7 +9,6 @@ export function LibraryPage({ application }: { application: ViewerApplication })
   const { t } = useTranslation("library");
   const snapshot = useSyncExternalStore(application.subscribe, application.getSnapshot);
   const navigate = useNavigate();
-
   useEffect(() => {
     const refresh = () => void application.refreshLibrary();
     window.addEventListener("focus", refresh);

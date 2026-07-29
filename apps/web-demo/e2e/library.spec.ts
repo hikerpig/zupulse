@@ -14,6 +14,17 @@ const harmonySelectionFixture = fileURLToPath(
 );
 const reviewedFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/K331-3_reviewed.mxl", import.meta.url));
 
+test("keeps the Library sort select compact on desktop", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("/");
+
+  const sort = page.getByRole("combobox", { name: "排序" });
+  await expect(sort).toBeVisible();
+  await expect(sort).toHaveCSS("appearance", "none");
+  await expect(sort).toHaveCSS("padding-right", "34px");
+  await expect.poll(async () => (await sort.boundingBox())?.width).toBeLessThanOrEqual(140);
+});
+
 test("adds single and multiple Browser drops to the import review without importing on outside drops", async ({
   page,
 }) => {

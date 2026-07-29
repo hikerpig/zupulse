@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { createDefaultSidecar, parseSidecar } from "@zupulse/web-core";
 import { JsonStore } from "../storage";
 
 const hash = "a".repeat(64);
@@ -65,5 +66,22 @@ describe("JsonStore", () => {
     await expect(store.write(hash, { value: "bad" } as never)).rejects.toThrow();
     await expect(store.write(hash, { value: 2 })).resolves.toBeUndefined();
     expect(await store.read(hash)).toEqual({ value: 2 });
+  });
+
+  it("migrates persisted sidecars instead of quarantining them", async () => {
+    const root = await tempRoot();
+    const sidecar = createDefaultSidecar({ contentHash: hash, format: "gp" });
+    const playback = sidecar.practice.playback as unknown as Record<string, unknown>;
+    delete playback.rhythm;
+    delete playback.pianoPractice;
+    await mkdir(join(root, "sidecars"), { recursive: true });
+    await writeFile(join(root, "sidecars", `${hash}.json`), JSON.stringify({ ...sidecar, schemaVersion: "0.2.0" }));
+    const store = new JsonStore(root, "sidecars", { parse: parseSidecar }, () => undefined);
+
+    await expect(store.read(hash)).resolves.toMatchObject({
+      schemaVersion: "0.3.0",
+      practice: { playback: { pianoPractice: { mode: "both-hands" } } },
+    });
+    expect(await readdir(join(root, "sidecars"))).toEqual([`${hash}.json`]);
   });
 });

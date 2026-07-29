@@ -222,12 +222,9 @@ export class AlphaTabPlaybackAdapter implements PlaybackEngine {
     try {
       await loaded;
       this.api.tickPosition = position;
+    } finally {
       this.reapplyTrackMixer();
-      if (wasPlaying) this.api.playPause?.();
-    } catch (error) {
-      this.reapplyTrackMixer();
-      if (wasPlaying) this.api.playPause?.();
-      throw error;
+      if (wasPlaying) this.playPause({ skipCountIn: true });
     }
     return { pausedForAudioProjection: wasPlaying };
   }

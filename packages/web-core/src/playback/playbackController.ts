@@ -140,7 +140,9 @@ export class PlaybackController {
         }
         return;
       case "pause":
-        if (this.state.transport === "playing") this.options.engine.playPause();
+        if (this.state.transport === "playing" || this.state.transport === "counting-in") {
+          this.options.engine.playPause();
+        }
         this.resumeDirty = true;
         await this.queueResumeWrite();
         return;

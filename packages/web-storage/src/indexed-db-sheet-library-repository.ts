@@ -13,7 +13,7 @@ import type {
   HarmonyAnalysisRepository,
   HarmonyAnalysisSaveResult,
 } from "@zupulse/web-core";
-import { harmonyAnalysisDocumentSchema } from "@zupulse/web-core";
+import { harmonyAnalysisDocumentSchema, parseSidecar } from "@zupulse/web-core";
 
 const DATABASE = "zupulse-library";
 const VERSION = 2;
@@ -51,7 +51,7 @@ export class IndexedDbSheetLibraryRepository implements SheetLibraryRepository, 
       transaction.objectStore(RESUMES).getAll(),
     );
     await complete(transaction);
-    const sidecarById = new Map(sidecars.map((item) => [item.id, item.payload]));
+    const sidecarById = new Map(sidecars.map((item) => [item.id, parseSidecar(item.payload)]));
     const resumeById = new Map(resumes.map((item) => [item.id, item.resume]));
     return records.map((record) => toSummary(record, sidecarById.get(record.id), resumeById.get(record.id)));
   }
@@ -153,7 +153,8 @@ export class IndexedDbSheetLibraryRepository implements SheetLibraryRepository, 
   }
 
   async readSidecar(id: LibraryScoreId): Promise<SidecarPayload | undefined> {
-    return this.readPractice(SIDECARS, id, "payload");
+    const sidecar = await this.readPractice(SIDECARS, id, "payload");
+    return sidecar === undefined ? undefined : parseSidecar(sidecar);
   }
   async writeSidecar(id: LibraryScoreId, payload: SidecarPayload): Promise<void> {
     await this.writePractice(SIDECARS, id, "payload", payload);

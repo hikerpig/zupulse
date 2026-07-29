@@ -222,6 +222,17 @@ describe("PlaybackController", () => {
     expect(engine.calls.at(-1)).toEqual(["playPause", { skipCountIn: true }]);
   });
 
+  it("pauses the engine while count-in is active", async () => {
+    const engine = new FakeEngine({ soundFont: "ready", transport: "stopped" });
+    const controller = createController(engine, new FakePersistence());
+    await controller.initialize();
+    engine.emit({ type: "count-in-started" });
+
+    await controller.dispatch({ type: "pause" });
+
+    expect(engine.calls.at(-1)).toEqual(["playPause", undefined]);
+  });
+
   it("keeps a persisted hand mode but safely degrades when staff audio is unsupported", async () => {
     const sidecar = createDefaultSidecar(identity, "2026-07-10T00:00:00Z");
     sidecar.practice.playback.pianoPractice = {

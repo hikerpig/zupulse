@@ -34,19 +34,22 @@ export function encodeSidecar(payload: SidecarPayload): string {
 }
 
 export function decodeSidecar(json: string): SidecarPayload {
-  const parsed = JSON.parse(json) as { schemaVersion?: unknown };
+  return parseSidecar(JSON.parse(json));
+}
 
-  if (parsed.schemaVersion === LEGACY_SIDECAR_SCHEMA_VERSION) {
+export function parseSidecar(parsed: unknown): SidecarPayload {
+  const versioned = parsed as { schemaVersion?: unknown };
+  if (versioned.schemaVersion === LEGACY_SIDECAR_SCHEMA_VERSION) {
     return sidecarPayloadSchema.parse(migrateLegacySidecar(parsed as LegacySidecarPayload));
   }
-  if (parsed.schemaVersion === PREVIOUS_SIDECAR_SCHEMA_VERSION) {
+  if (versioned.schemaVersion === PREVIOUS_SIDECAR_SCHEMA_VERSION) {
     return sidecarPayloadSchema.parse(migratePreviousSidecar(parsed));
   }
-  if (parsed.schemaVersion === SIDECAR_SCHEMA_VERSION) {
+  if (versioned.schemaVersion === SIDECAR_SCHEMA_VERSION) {
     return sidecarPayloadSchema.parse(parsed);
   }
 
-  throw new Error(`Unsupported sidecar schema version: ${String(parsed.schemaVersion)}`);
+  throw new Error(`Unsupported sidecar schema version: ${String(versioned.schemaVersion)}`);
 }
 
 function migratePreviousSidecar(previous: unknown): SidecarPayload {

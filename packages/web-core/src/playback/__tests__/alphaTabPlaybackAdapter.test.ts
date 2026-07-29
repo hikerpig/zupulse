@@ -152,6 +152,8 @@ describe("AlphaTabPlaybackAdapter", () => {
       transpositionPitches: new Map(),
     })) as never;
     const adapter = new AlphaTabPlaybackAdapter(api, "/soundfont.sf3", buildProjection);
+    adapter.setCountInVolume(0.7);
+    api.playPause = () => calls.push(["playPause", api.countInVolume]);
     adapter.setTrackMute("track-0", true);
     adapter.setTrackSolo("track-0", false);
     adapter.setTrackVolume("track-0", 0.5);
@@ -165,7 +167,7 @@ describe("AlphaTabPlaybackAdapter", () => {
       },
       ["track-0:staff-1"],
     );
-    expect(calls).toContainEqual(["playPause", undefined]);
+    expect(calls).toContainEqual(["playPause", 0.7]);
     expect(calls).toContainEqual(["loadMidiFile", { kind: "projected-midi" }]);
     player.midiLoaded.emit({});
     await expect(pending).resolves.toEqual({ pausedForAudioProjection: true });
@@ -176,8 +178,9 @@ describe("AlphaTabPlaybackAdapter", () => {
       ["mute", { tracks: [0], value: true }],
       ["solo", { tracks: [0], value: false }],
       ["volume", { tracks: [0], value: 0.5 }],
-      ["playPause", undefined],
+      ["playPause", 0],
     ]);
+    expect(api.countInVolume).toBe(0.7);
   });
 
   it("maps alphaTab events and keeps an observable snapshot", () => {

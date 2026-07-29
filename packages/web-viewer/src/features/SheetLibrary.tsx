@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Download, MoreHorizontal, PenLine, Star, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ImportItemResult, LibraryScoreSummary, ScoreImportSource } from "@zupulse/web-core";
@@ -83,46 +83,6 @@ function useDebouncedQuery(query: string, delay = 200) {
   return debounced;
 }
 
-function useRovingTabIndex(itemCount: number) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLUListElement>) => {
-    if (itemCount === 0) return;
-    switch (event.key) {
-      case "ArrowDown": {
-        event.preventDefault();
-        const next = (activeIndex + 1) % itemCount;
-        setActiveIndex(next);
-        itemRefs.current[next]?.focus();
-        break;
-      }
-      case "ArrowUp": {
-        event.preventDefault();
-        const prev = (activeIndex - 1 + itemCount) % itemCount;
-        setActiveIndex(prev);
-        itemRefs.current[prev]?.focus();
-        break;
-      }
-      case "Home": {
-        event.preventDefault();
-        setActiveIndex(0);
-        itemRefs.current[0]?.focus();
-        break;
-      }
-      case "End": {
-        event.preventDefault();
-        const last = itemCount - 1;
-        setActiveIndex(last);
-        itemRefs.current[last]?.focus();
-        break;
-      }
-    }
-  };
-
-  return { activeIndex, setActiveIndex, handleKeyDown, itemRefs };
-}
-
 export function SheetLibrary({
   application,
   scores,
@@ -136,7 +96,6 @@ export function SheetLibrary({
   onSelectSample,
   onImportSources,
   onOpen,
-  currentScoreId,
 }: {
   application: ViewerApplication;
   scores: readonly LibraryScoreSummary[];
@@ -155,7 +114,6 @@ export function SheetLibrary({
   onSelectSample?(id: BundledSampleScore["id"]): ScoreImportSource | undefined;
   onImportSources(sources: readonly ScoreImportSource[]): Promise<void>;
   onOpen(id: string): void;
-  currentScoreId?: string;
 }) {
   const { t, i18n } = useTranslation("library");
   const locale = i18n.resolvedLanguage ?? i18n.language;
@@ -209,8 +167,6 @@ export function SheetLibrary({
       .sort((a, b) => (a && b ? Date.parse(b) - Date.parse(a) : 0))[0];
     return { total, withLoop, lastPracticedAt };
   }, [scores]);
-
-  const roving = useRovingTabIndex(visible.length);
 
   if (error)
     return (
@@ -284,49 +240,28 @@ export function SheetLibrary({
           <>
             <div className={styles.libraryStats}>
               <p className={styles.libraryStatsSummary}>
-                {isFiltering
-                  ? t("statsSummaryFiltered", {
-                      total: libraryStats.total,
-                      loops: libraryStats.withLoop,
-                      lastPracticed: libraryStats.lastPracticedAt
-                        ? formatRelativeDate(libraryStats.lastPracticedAt, locale, {
-                            today: t("relative.today"),
-                            yesterday: t("relative.yesterday"),
-                          })
-                        : t("neverPracticed"),
-                      visible: visible.length,
+                {t(isFiltering ? "statsSummaryFiltered" : "statsSummary", {
+                  total: libraryStats.total,
+                  loops: libraryStats.withLoop,
+                  visible: visible.length,
+                })}
+                {libraryStats.lastPracticedAt
+                  ? t("statsLastPracticed", {
+                      lastPracticed: formatRelativeDate(libraryStats.lastPracticedAt, locale, {
+                        today: t("relative.today"),
+                        yesterday: t("relative.yesterday"),
+                      }),
                     })
-                  : t("statsSummary", {
-                      total: libraryStats.total,
-                      loops: libraryStats.withLoop,
-                      lastPracticed: libraryStats.lastPracticedAt
-                        ? formatRelativeDate(libraryStats.lastPracticedAt, locale, {
-                            today: t("relative.today"),
-                            yesterday: t("relative.yesterday"),
-                          })
-                        : t("neverPracticed"),
-                    })}
+                  : null}
               </p>
             </div>
-            <ul
-              className={`${styles.libraryList} scrollable`}
-              role="listbox"
-              aria-label={t("scoreListLabel")}
-              onKeyDown={roving.handleKeyDown}
-            >
-              {visible.map((score, index) => {
-                const isCurrent = score.id === currentScoreId;
+            <ul className={`${styles.libraryList} scrollable`} aria-label={t("scoreListLabel")}>
+              {visible.map((score) => {
                 const hasPractice = score.practice.lastPosition || score.practice.hasLoop;
                 return (
                   <li
                     key={score.id}
-                    ref={(el) => {
-                      roving.itemRefs.current[index] = el;
-                    }}
-                    className={`${styles.libraryRow} ${isCurrent ? styles.libraryRowCurrent : ""} ${hasPractice ? "" : styles.libraryRowCompact}`}
-                    aria-current={isCurrent ? "true" : undefined}
-                    tabIndex={index === roving.activeIndex ? 0 : -1}
-                    onFocus={() => roving.setActiveIndex(index)}
+                    className={`${styles.libraryRow} ${hasPractice ? "" : styles.libraryRowCompact}`}
                     data-score-id={score.id}
                   >
                     <button

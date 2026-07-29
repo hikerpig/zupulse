@@ -53,6 +53,8 @@ Session ID。
   首份曲谱导入动作。
 - Library 默认使用单列紧凑排练目录；标题和艺术家为主信息，格式与时长为辅助信息。只有真实
   `lastPosition` 存在时显示“继续练习”和一基小节号，否则使用中性的“打开”。
+- Library 摘要显示曲谱总数和已有 Loop 数；只有真实 `lastPracticedAt` 存在时才追加最近练习时间，
+  不把摘要缺失解释成“尚未练习”。
 - 每份 Library Score 的打开/继续、收藏和更多菜单是同级独立控件，外层 `<li>` 没有 button
   语义；导出、编辑和删除位于 Base UI 管理菜单。
 - 390px 到 1280px 使用相同 DOM 和 route viewport 范围内的 unnamed container query 重排标题、

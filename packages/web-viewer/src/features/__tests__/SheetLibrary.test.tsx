@@ -156,6 +156,31 @@ describe("SheetLibrary score actions", () => {
     expect(screen.getByRole("menuitem", { name: "删除 Created" })).toBeTruthy();
   });
 
+  it("uses native list semantics without hijacking arrow keys from row controls", () => {
+    const first = libraryScore();
+    const second: LibraryScore = {
+      ...libraryScore(),
+      id: "00000000-0000-4000-8000-000000000002",
+      title: "Second",
+    };
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[first, second]}
+        loading={false}
+        {...emptyImportProps()}
+        onOpen={() => undefined}
+      />,
+    );
+
+    expect(screen.queryByRole("listbox")).toBeNull();
+    const open = screen.getByRole("button", { name: "打开 Created" });
+    open.focus();
+    fireEvent.keyDown(open, { key: "ArrowDown" });
+    expect(document.activeElement).toBe(open);
+  });
+
   it("offers a truthful continue action with a one-based measure number", async () => {
     const onOpen = vi.fn();
     const fresh = libraryScore();
@@ -227,36 +252,6 @@ describe("SheetLibrary score actions", () => {
   });
 });
 
-describe("SheetLibrary current score indicator", () => {
-  it("marks the currently open score with aria-current", () => {
-    const fresh = libraryScore();
-    const current: LibraryScore = {
-      ...libraryScore(),
-      id: "00000000-0000-4000-8000-000000000002",
-      title: "Current",
-    };
-
-    render(
-      <SheetLibrary
-        application={libraryApplication()}
-        scores={[fresh, current]}
-        loading={false}
-        {...emptyImportProps()}
-        onOpen={() => undefined}
-        currentScoreId="00000000-0000-4000-8000-000000000002"
-      />,
-    );
-
-    const items = screen.getAllByRole("listitem");
-    const currentItem = items.find((item) => item.getAttribute("aria-current") === "true");
-    const freshItem = items.find((item) => item.getAttribute("aria-current") !== "true");
-    expect(currentItem).toBeTruthy();
-    expect(freshItem).toBeTruthy();
-    expect(currentItem?.getAttribute("aria-current")).toBe("true");
-    expect(freshItem?.getAttribute("aria-current")).toBeNull();
-  });
-});
-
 describe("SheetLibrary edit dialog", () => {
   it("opens edit dialog and restores focus on cancel", async () => {
     const application = libraryApplication();
@@ -286,6 +281,21 @@ describe("SheetLibrary edit dialog", () => {
 });
 
 describe("SheetLibrary stats summary", () => {
+  it("does not describe a missing practice summary as never practiced", () => {
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[libraryScore()]}
+        loading={false}
+        {...emptyImportProps()}
+        onOpen={() => undefined}
+      />,
+    );
+
+    expect(screen.getByText("1 份曲谱 · 0 个 Loop")).toBeTruthy();
+    expect(screen.queryByText("尚未练习")).toBeNull();
+  });
+
   it("shows total scores, loops count and last practiced time", () => {
     const scoreWithLoop: LibraryScore = {
       ...libraryScore(),

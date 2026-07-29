@@ -30,7 +30,11 @@ import {
   type ScoreZoomCommitDetail,
 } from "./scoreZoom";
 import { ScoreNavigationCoordinator } from "./score-navigation/score-navigation-coordinator";
-import { readAlphaTabMeasureBounds, readAlphaTabStaffSystems } from "./score-navigation/alpha-tab-navigation";
+import {
+  readAlphaTabMeasureBounds,
+  readAlphaTabStaffBounds,
+  readAlphaTabStaffSystems,
+} from "./score-navigation/alpha-tab-navigation";
 import { attachScoreNavigationInputs } from "./score-navigation/score-navigation-inputs";
 
 export type DefaultOpenSessionDependencies = {
@@ -83,9 +87,11 @@ export function createDefaultOpenSession(
       },
     });
     let loopMeasureBounds = readAlphaTabMeasureBounds(api) ?? [];
+    let staffBounds = readAlphaTabStaffBounds(api) ?? [];
     const loopEditorListeners = new Set<() => void>();
     const refreshLoopMeasureBounds = () => {
       loopMeasureBounds = readAlphaTabMeasureBounds(api) ?? [];
+      staffBounds = readAlphaTabStaffBounds(api) ?? [];
       for (const listener of loopEditorListeners) listener();
     };
     const detachNavigationInputs = attachScoreNavigationInputs(scoreScrollElement, {
@@ -208,6 +214,7 @@ export function createDefaultOpenSession(
       return {
         loopEditor: {
           getMeasureBounds: () => loopMeasureBounds,
+          getStaffBounds: () => staffBounds,
           subscribe(listener) {
             loopEditorListeners.add(listener);
             return () => loopEditorListeners.delete(listener);

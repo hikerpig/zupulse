@@ -1,5 +1,5 @@
 import path from "node:path";
-import { createBridgeEvent, localPlaybackResumeSchema, sidecarPayloadSchema } from "@zupulse/web-core";
+import { createBridgeEvent, localPlaybackResumeSchema, parseSidecar } from "@zupulse/web-core";
 import { createAppI18n, resolveLocale, type LocaleState, type SupportedLocale } from "@zupulse/app-i18n";
 import { randomUUID } from "node:crypto";
 import {
@@ -100,7 +100,7 @@ async function startDesktopApp(): Promise<void> {
       createBridgeEvent("storage.warning", randomUUID(), { code, category }),
     );
   };
-  const sidecarStore = new JsonStore(userData, "sidecars", sidecarPayloadSchema, sendStorageWarning("sidecar"));
+  const sidecarStore = new JsonStore(userData, "sidecars", { parse: parseSidecar }, sendStorageWarning("sidecar"));
   const resumeStore = new JsonStore(userData, "resume", localPlaybackResumeSchema, sendStorageWarning("resume"));
   const library = new DesktopLibraryStore(path.join(userData, "library.sqlite"), path.join(userData, "library"), {
     readSidecar: (libraryScoreId) => sidecarStore.read(libraryScoreId),

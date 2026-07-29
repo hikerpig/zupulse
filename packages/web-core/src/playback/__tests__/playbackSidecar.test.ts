@@ -8,6 +8,14 @@ describe("playback sidecar", () => {
     const sidecar = createDefaultPlaybackSidecar("2026-07-10T00:00:00Z");
 
     expect(sidecar.scoreSpeed.value).toBe(1);
+    expect(sidecar.rhythm).toEqual({
+      metronome: { enabled: false, volume: 60, updatedAt: "2026-07-10T00:00:00Z" },
+      countIn: { enabled: false, volume: 70, updatedAt: "2026-07-10T00:00:00Z" },
+    });
+    expect(sidecar.pianoPractice).toEqual({
+      mode: "both-hands",
+      updatedAt: "2026-07-10T00:00:00Z",
+    });
     expect(sidecar.loops).toEqual([]);
     expect(JSON.stringify(sidecar)).not.toContain("transport");
     expect(JSON.stringify(sidecar)).not.toContain("resume");
@@ -52,11 +60,50 @@ describe("playback sidecar", () => {
     });
   });
 
+  it("merges rhythm and piano practice settings by independent timestamps", () => {
+    const local = createDefaultPlaybackSidecar("2026-07-10T00:00:00Z");
+    const remote = createDefaultPlaybackSidecar("2026-07-10T00:00:00Z");
+    local.rhythm.metronome = { enabled: true, volume: 45, updatedAt: "2026-07-10T04:00:00Z" };
+    local.rhythm.countIn = { enabled: false, volume: 65, updatedAt: "2026-07-10T01:00:00Z" };
+    local.pianoPractice = { mode: "right-hand", updatedAt: "2026-07-10T03:00:00Z" };
+    remote.rhythm.metronome = { enabled: false, volume: 80, updatedAt: "2026-07-10T02:00:00Z" };
+    remote.rhythm.countIn = { enabled: true, volume: 75, updatedAt: "2026-07-10T05:00:00Z" };
+    remote.pianoPractice = { mode: "left-hand", updatedAt: "2026-07-10T02:00:00Z" };
+
+    expect(mergePlaybackSidecar(local, remote)).toMatchObject({
+      rhythm: {
+        metronome: { enabled: true, volume: 45, updatedAt: "2026-07-10T04:00:00Z" },
+        countIn: { enabled: true, volume: 75, updatedAt: "2026-07-10T05:00:00Z" },
+      },
+      pianoPractice: { mode: "right-hand", updatedAt: "2026-07-10T03:00:00Z" },
+    });
+  });
+
   it("rejects playback settings outside persisted ranges", () => {
     const sidecar = createDefaultPlaybackSidecar("2026-07-10T00:00:00Z");
     sidecar.scoreSpeed.value = 3;
 
     expect(() => practicePlaybackSidecarSchema.parse(sidecar)).toThrow();
+  });
+
+  it("rejects invalid rhythm volumes and piano hand modes", () => {
+    const sidecar = createDefaultPlaybackSidecar("2026-07-10T00:00:00Z");
+
+    expect(() =>
+      practicePlaybackSidecarSchema.parse({
+        ...sidecar,
+        rhythm: {
+          ...sidecar.rhythm,
+          metronome: { ...sidecar.rhythm.metronome, volume: 101 },
+        },
+      }),
+    ).toThrow();
+    expect(() =>
+      practicePlaybackSidecarSchema.parse({
+        ...sidecar,
+        pianoPractice: { ...sidecar.pianoPractice, mode: "middle-hand" },
+      }),
+    ).toThrow();
   });
 });
 

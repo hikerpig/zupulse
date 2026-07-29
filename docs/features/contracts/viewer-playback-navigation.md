@@ -3,7 +3,7 @@ feature: viewer-playback-navigation
 title: Viewer Playback Navigation
 status: current
 delivery: available
-last_verified: 2026-07-27
+last_verified: 2026-07-29
 hosts:
   - browser
   - desktop
@@ -79,8 +79,19 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 
 ### 练习设置
 
-- 常规“练习设置”入口打开任务概览，展示速度入口以及“设置循环区间”“选择主轨道”两项任务；
+- 常规“练习设置”入口打开任务概览，展示速度入口以及“节拍与预备拍”“练习手”“设置循环区间”
+  “选择主轨道”四项任务；
   当前轨道、速度与 Loop 状态不再作为单独的 Session section。
+- “节拍与预备拍”分别保存显式开关与整数百分比音量，默认关闭，首次音量分别为 60% 和 70%。
+  两项设置按 Library Score 写入 Practice Sidecar，并在 Browser 与 Desktop 共用的 Controller
+  初始化路径恢复。Metronome 在播放期间持续生效；一小节 Count-in 只用于新的播放开始，从 pause
+  恢复不会重新启动。
+- Count-in 期间 Transport 显示可感知的“预备拍”状态并提供暂停操作。alphaTab 没有可靠公开当前拍
+  序号，因此界面不显示推测的拍进度。音频 loading 或 error 时控制保持可发现但禁用，并显示就地原因。
+- 对唯一双非打击乐 Staff Track，练习手支持双手示范、练右手和练左手。单手模式使用内存 Score
+  副本生成 Staff 级 MIDI 投影，默认仅播放另一只手作为伴奏；临时试听目标手不持久化。切换不改变
+  来源谱、渲染 Score 或 Track Mixer facts，播放中采用暂停、加载、恢复 tick 和继续播放的安全路径。
+  目标 Staff 只使用低权重谱面 overlay 强调。
 - Transport 的“循环模式”按钮直接打开或关闭模式，不打开练习设置。首次打开且没有可用区间时，
   以播放头所在小节建立默认 A/B；再次打开恢复保留的草稿或已选 Loop。
 - Loop 草稿在 alphaTab 谱面上显示跨谱表行区间与 A/B 手柄；指针或触摸拖动按当前吸附规则更新
@@ -117,6 +128,7 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 | Transport latest-only 游标与视口预览 | 支持    | 支持    | 无       |
 | Loop-aware 临时页面                  | 支持    | 支持    | 无       |
 | 任务式练习设置                       | 支持    | 支持    | 无       |
+| Metronome / 一小节 Count-in          | 支持    | 支持    | 无       |
 
 本轮自动化验收平台是 Chromium Browser Demo；iOS WebView 和实体 iPad 不属于本 Contract 的已验证宿主。
 
@@ -128,6 +140,8 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 4. React 只消费低频 transport 与导航 snapshot；逐帧游标几何和 `scrollTop` 不进入 React。
 5. Scrub Preview 是唯一可绕过正式 state 的临时 engine 路径，松手必须正式提交。
 6. Score Navigation Mode 是设备偏好；Following / Detached 和页码只属于当前 Session。
+7. Metronome 与 Count-in 是独立的 Practice Sidecar 设置；React 只派发领域命令，alphaTab 音量和
+   Count-in 生命周期由 Playback Engine / Controller 边界管理。
 
 ## 明确非目标
 
@@ -135,6 +149,8 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 - 持久化 Screen Score Page 页码或把导航模式写入 Practice Sidecar。
 - 通过 Scrub Preview 写入 resume、Loop 或练习进度。
 - 本轮 iOS、Xcode、实体 iPad 验收。
+- 不通过 Track Mixer 状态模拟 Staff 音频隔离；运行时投影失败或结构无法唯一判定时必须显示语义化
+  unavailable 原因，并保持普通播放可用。
 
 ## 验收契约
 
@@ -147,23 +163,30 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 - Scrub 每帧最多发送一个最新预览，松手只提交一次正式 seek。
 - playing position snapshot 最多约 10Hz；pause、stop、seek 和 Loop 语义立即可观察。
 - 常规练习入口进入任务概览；Transport Loop 按钮直接切换模式且不打开抽屉，返回与 Escape 焦点稳定。
+- 节拍器和预备拍可独立开启、调整音量并在刷新后恢复；新开始执行预备拍，pause 后恢复不重复执行，
+  设置变化不改变 tempo、Loop、position 或 Track Mixer facts。
+- eligible 钢琴谱可切换练习手并刷新恢复；临时试听不持久化。切换前后 tempo、Loop、position 和
+  Track Mixer facts 保持不变，播放中切换不会停留在暂停状态。
 - 进入空 Loop 草稿时按当前小节建立 A/B；谱面手柄与 Controller 草稿保持一致，A/B 手柄可用键盘
   按拍调整；提交完整草稿后立即进入临时 Loop。关闭模式隐藏编辑层并保留 A/B，再次打开恢复；
   抽屉 Switch 与 Transport 同步，抽屉不显示 Set A/B 或 A/B Slider。
 
 ## 证据地图
 
-| 契约                      | 代码                                                                                             | 测试                                                         |
-| ------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
-| alphaTab 公开导航边界     | `packages/web-core/src/gp/alphaTabBrowser.ts`                                                    | `packages/web-core/src/gp/__tests__/alphaTabBrowser.test.ts` |
-| occurrence 精确解析       | `packages/web-core/src/score/positions.ts`、`packages/web-core/src/playback/writtenSelection.ts` | 相邻 `__tests__`                                             |
-| Follow State 与页面协调   | `packages/web-viewer/src/score-navigation`                                                       | `packages/web-viewer/src/score-navigation/__tests__`         |
-| 模式、页码与恢复 UI       | `packages/web-viewer/src/features/PlaybackWorkspace.tsx`                                         | `PlaybackWorkspace.test.tsx`                                 |
-| 谱面宽度、缩放与位置恢复  | `packages/web-viewer/src/components/ScoreViewer.tsx`、`packages/web-viewer/src/viewerApp.tsx`    | `ScoreViewer.test.tsx`、`viewerApp.test.ts`、Playwright      |
-| 练习设置任务、降级与焦点  | `packages/web-viewer/src/features/PlaybackWorkspace.tsx`                                         | `PlaybackWorkspace.test.tsx`                                 |
-| 谱面 Loop 区间与 A/B 手柄 | `packages/web-viewer/src/practice-loop`、`packages/web-viewer/src/components/ScoreViewer.tsx`    | `loop-range-geometry.test.ts`、`ScoreViewer.test.tsx`        |
-| position 发布预算         | `packages/web-core/src/playback/playbackController.ts`                                           | `playbackController.test.ts`                                 |
-| Browser 长谱与响应式流程  | `apps/web-demo/e2e/library.spec.ts`                                                              | Playwright Chromium                                          |
+| 契约                        | 代码                                                                                             | 测试                                                            |
+| --------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| alphaTab 公开导航边界       | `packages/web-core/src/gp/alphaTabBrowser.ts`                                                    | `packages/web-core/src/gp/__tests__/alphaTabBrowser.test.ts`    |
+| occurrence 精确解析         | `packages/web-core/src/score/positions.ts`、`packages/web-core/src/playback/writtenSelection.ts` | 相邻 `__tests__`                                                |
+| Follow State 与页面协调     | `packages/web-viewer/src/score-navigation`                                                       | `packages/web-viewer/src/score-navigation/__tests__`            |
+| 模式、页码与恢复 UI         | `packages/web-viewer/src/features/PlaybackWorkspace.tsx`                                         | `PlaybackWorkspace.test.tsx`                                    |
+| 谱面宽度、缩放与位置恢复    | `packages/web-viewer/src/components/ScoreViewer.tsx`、`packages/web-viewer/src/viewerApp.tsx`    | `ScoreViewer.test.tsx`、`viewerApp.test.ts`、Playwright         |
+| 练习设置任务、降级与焦点    | `packages/web-viewer/src/features/PlaybackWorkspace.tsx`                                         | `PlaybackWorkspace.test.tsx`                                    |
+| 谱面 Loop 区间与 A/B 手柄   | `packages/web-viewer/src/practice-loop`、`packages/web-viewer/src/components/ScoreViewer.tsx`    | `loop-range-geometry.test.ts`、`ScoreViewer.test.tsx`           |
+| position 发布预算           | `packages/web-core/src/playback/playbackController.ts`                                           | `playbackController.test.ts`                                    |
+| 节拍、预备拍与 Sidecar 迁移 | `packages/web-core/src/playback`、`packages/web-core/src/storage/sidecar.ts`                     | `playbackSidecar.test.ts`、`sidecar.test.ts`、`library.spec.ts` |
+| Piano Hand 结构 eligibility | `packages/web-core/src/playback/pianoHandMapping.ts`                                             | `pianoHandMapping.test.ts`                                      |
+| Staff 音频投影与谱面强调    | `alphaTabStaffAudioProjection.ts`、`packages/web-viewer/src/practice-hand`                       | 相邻单元测试、`ScoreViewer.test.tsx`、`library.spec.ts`         |
+| Browser 长谱与响应式流程    | `apps/web-demo/e2e/library.spec.ts`                                                              | Playwright Chromium                                             |
 
 ## 相关资料
 

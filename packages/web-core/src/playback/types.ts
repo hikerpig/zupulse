@@ -1,4 +1,4 @@
-export type TransportState = "idle" | "loading" | "ready" | "playing" | "paused" | "stopped" | "error";
+export type TransportState = "idle" | "loading" | "ready" | "counting-in" | "playing" | "paused" | "stopped" | "error";
 
 export type LoopSnapMode = "off" | "beat" | "measure";
 
@@ -33,7 +33,30 @@ export type PlaybackTrack = {
   id: string;
   sourceIndex: number;
   name?: string;
+  staves?: PlaybackStaff[];
 };
+
+export type PlaybackStaff = {
+  id: string;
+  sourceIndex: number;
+  isPercussion: boolean;
+};
+
+export type PianoHandMapping = {
+  trackId: string;
+  rightStaffId: string;
+  leftStaffId: string;
+};
+
+export type PianoHandMappingResult =
+  | { availability: "available"; mapping: PianoHandMapping }
+  | {
+      availability: "not-applicable" | "ambiguous" | "audio-unsupported";
+      code:
+        | "piano-hand-practice-not-applicable"
+        | "piano-hand-practice-ambiguous"
+        | "piano-hand-practice-audio-unsupported";
+    };
 
 export type TrackMixState = {
   muted: boolean;
@@ -57,6 +80,8 @@ export type PlaybackState = {
   durationMs: number;
   baseTempo: number;
   scoreSpeed: number;
+  rhythm: RhythmPracticeSettings;
+  pianoPractice: PianoHandPracticeState;
   looping: boolean;
   activeLoopId?: string;
   loopDraft: LoopDraft;
@@ -68,6 +93,29 @@ export type PlaybackState = {
   errorCode?: string;
 };
 
+export type RhythmPracticeSetting = {
+  enabled: boolean;
+  volume: number;
+  updatedAt: string;
+};
+
+export type RhythmPracticeSettings = {
+  metronome: RhythmPracticeSetting;
+  countIn: RhythmPracticeSetting;
+};
+
+export type PianoHandMode = "both-hands" | "right-hand" | "left-hand";
+
+export type PianoHandPracticeState = {
+  mode: PianoHandMode;
+  requestedMode: PianoHandMode;
+  availability: PianoHandMappingResult["availability"];
+  unavailableCode?: Exclude<PianoHandMappingResult, { availability: "available" }>["code"];
+  mapping?: PianoHandMapping;
+  previewActive: boolean;
+  pausedForAudioProjection: boolean;
+};
+
 export type PlaybackCommand =
   | { type: "toggle-playback" }
   | { type: "pause" }
@@ -75,6 +123,12 @@ export type PlaybackCommand =
   | { type: "retry-soundfont" }
   | { type: "seek"; position: MusicalPosition }
   | { type: "set-score-speed"; speed: number }
+  | { type: "set-metronome"; enabled: boolean }
+  | { type: "set-metronome-volume"; volume: number }
+  | { type: "set-count-in"; enabled: boolean }
+  | { type: "set-count-in-volume"; volume: number }
+  | { type: "set-piano-hand-mode"; mode: PianoHandMode }
+  | { type: "preview-piano-target-hand"; active: boolean }
   | { type: "set-loop-enabled"; enabled: boolean }
   | { type: "set-loop-snap"; mode: LoopSnapMode }
   | { type: "set-loop-boundary"; boundary: "start" | "end"; position: MusicalPosition }
@@ -96,6 +150,8 @@ export type PlaybackEngineEvent =
   | { type: "soundfont-ready" }
   | { type: "soundfont-error"; error: Error }
   | { type: "transport"; state: "playing" | "paused" | "stopped" }
+  | { type: "count-in-started" }
+  | { type: "count-in-ended" }
   | { type: "position"; positionMs: number; endMs: number; tick: number }
   | { type: "error"; error: Error };
 
@@ -107,11 +163,18 @@ export type PlaybackEngineSnapshot = {
 export interface PlaybackEngine {
   subscribe(listener: (event: PlaybackEngineEvent) => void): () => void;
   getSnapshot(): PlaybackEngineSnapshot;
-  playPause(): void;
+  playPause(options?: { skipCountIn?: boolean }): void;
   stop(): void;
   retrySoundFont(): void;
   seekTick(tick: number): void;
   setSpeed(speed: number): void;
+  setMetronomeVolume(volume: number): void;
+  setCountInVolume(volume: number): void;
+  getPianoHandAudioCapability(mapping: PianoHandMapping): "supported" | "unsupported";
+  setPianoStaffAudio(
+    mapping: PianoHandMapping,
+    audibleStaffIds: string[],
+  ): Promise<{ pausedForAudioProjection: boolean }>;
   setLoop(range: { startTick: number; endTick: number } | null, enabled: boolean): void;
   setVisibleTracks(trackIds: string[]): void;
   setTrackMute(trackId: string, muted: boolean): void;

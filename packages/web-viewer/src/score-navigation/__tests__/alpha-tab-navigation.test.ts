@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readAlphaTabMeasureBounds, readAlphaTabStaffSystems } from "../alpha-tab-navigation";
+import { readAlphaTabMeasureBounds, readAlphaTabStaffBounds, readAlphaTabStaffSystems } from "../alpha-tab-navigation";
 
 describe("readAlphaTabStaffSystems", () => {
   it("normalizes ordered public staff-system bounds with written anchors", () => {
@@ -101,6 +101,52 @@ describe("readAlphaTabMeasureBounds", () => {
         systemY: 20,
         systemWidth: 800,
         systemHeight: 160,
+      },
+    ]);
+  });
+});
+
+describe("readAlphaTabStaffBounds", () => {
+  it("merges each staff's bar bounds into one emphasis region per system", () => {
+    expect(
+      readAlphaTabStaffBounds({
+        boundsLookup: {
+          staffSystems: [
+            {
+              index: 0,
+              realBounds: { x: 0, y: 0, w: 400, h: 160 },
+              bars: [
+                {
+                  index: 0,
+                  bars: [
+                    {
+                      realBounds: { x: 20, y: 20, w: 180, h: 50 },
+                      bar: { staff: { index: 0, track: { index: 2 } } },
+                    },
+                  ],
+                },
+                {
+                  index: 1,
+                  bars: [
+                    {
+                      realBounds: { x: 200, y: 20, w: 180, h: 50 },
+                      bar: { staff: { index: 0, track: { index: 2 } } },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    ).toEqual([
+      {
+        systemIndex: 0,
+        staffId: "track-2:staff-0",
+        x: 20,
+        y: 20,
+        width: 360,
+        height: 50,
       },
     ]);
   });

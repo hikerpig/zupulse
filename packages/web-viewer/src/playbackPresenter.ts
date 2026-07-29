@@ -63,7 +63,7 @@ export function presentPlayback(state: PlaybackState): PlaybackViewModel {
   const primaryTrack = state.tracks.find((track) => state.trackState.primaryVisibleTrackId === track.id)?.name;
 
   return {
-    isPlaying: state.transport === "playing",
+    isPlaying: state.transport === "playing" || state.transport === "counting-in",
     playDisabled: state.soundFont !== "ready",
     stopDisabled: state.transport === "idle" || state.transport === "loading",
     currentTime: formatTime(currentMs),

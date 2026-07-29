@@ -17,6 +17,10 @@ export type AlphaTabVoidEvent = {
 export type AlphaTabBrowserTrackLike = {
   index: number;
   name?: string;
+  staves?: Array<{
+    index: number;
+    isPercussion: boolean;
+  }>;
 };
 
 export type AlphaTabBrowserScoreLike = {
@@ -40,7 +44,19 @@ export type AlphaTabBoundsLike = {
 export type AlphaTabStaffSystemBoundsLike = {
   index: number;
   realBounds: AlphaTabBoundsLike;
-  bars: Array<{ index: number; realBounds?: AlphaTabBoundsLike }>;
+  bars: Array<{
+    index: number;
+    realBounds?: AlphaTabBoundsLike;
+    bars?: Array<{
+      realBounds: AlphaTabBoundsLike;
+      bar: {
+        staff: {
+          index: number;
+          track: { index: number };
+        };
+      };
+    }>;
+  }>;
 };
 
 export type AlphaTabBeatBoundsLike = {
@@ -88,6 +104,9 @@ export type AlphaTabApiLike = {
   endTick?: number;
   endTime?: number;
   playbackSpeed?: number;
+  metronomeVolume?: number;
+  countInVolume?: number;
+  player?: alphaTab.synth.IAlphaSynth | null;
   playbackRange?: { startTick: number; endTick: number } | null;
   isLooping?: boolean;
   renderTracks?: (tracks: AlphaTabBrowserTrackLike[]) => void;

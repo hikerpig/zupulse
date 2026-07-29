@@ -1,5 +1,5 @@
 import { musicalPositionFromTick } from "@zupulse/web-core";
-import type { PlaybackCommand } from "@zupulse/web-core";
+import type { PlaybackCommand, PlaybackState, PianoHandMode } from "@zupulse/web-core";
 import { Popover } from "@base-ui/react/popover";
 import {
   BookOpen,
@@ -23,7 +23,7 @@ import { Button, IconButton } from "../components/ui";
 import { persistScoreNavigationMode, useAppStore } from "../app/appStore";
 import styles from "./PlaybackWorkspace.module.css";
 
-type PracticeView = "overview" | "loop" | "tracks";
+type PracticeView = "overview" | "rhythm" | "hands" | "loop" | "tracks";
 
 export function PlaybackWorkspace({
   session,
@@ -191,6 +191,11 @@ function PlaybackLayout({
               {audioStatusLabel(view.soundFont, t)}
             </p>
           )}
+          {state.transport === "counting-in" ? (
+            <p className={styles.countInStatus} role="status">
+              {t("playback.countInStatus")}
+            </p>
+          ) : null}
           {view.soundFont === "error" && (
             <button
               className={styles.transportRetry}
@@ -230,9 +235,13 @@ function PlaybackLayout({
                 <h2 className={styles.drawerTitle}>
                   {practiceView === "loop"
                     ? t("playback.loopTaskTitle")
-                    : practiceView === "tracks"
-                      ? t("playback.trackTaskTitle")
-                      : t("playback.practice")}
+                    : practiceView === "rhythm"
+                      ? t("playback.rhythmTaskTitle")
+                      : practiceView === "hands"
+                        ? t("playback.handTaskTitle")
+                        : practiceView === "tracks"
+                          ? t("playback.trackTaskTitle")
+                          : t("playback.practice")}
                 </h2>
                 {practiceView === "overview" ? (
                   <p className={styles.drawerSummary}>
@@ -276,6 +285,20 @@ function PlaybackLayout({
                     </div>
                   </section>
                   <div className={styles.taskList}>
+                    <button className={styles.taskEntry} type="button" onClick={() => setPracticeView("rhythm")}>
+                      <span>
+                        <strong>{t("playback.rhythmTaskTitle")}</strong>
+                        <small>{rhythmSummary(state.rhythm.metronome.enabled, state.rhythm.countIn.enabled, t)}</small>
+                      </span>
+                      <ChevronRight aria-hidden="true" />
+                    </button>
+                    <button className={styles.taskEntry} type="button" onClick={() => setPracticeView("hands")}>
+                      <span>
+                        <strong>{t("playback.handTaskTitle")}</strong>
+                        <small>{pianoPracticeSummary(state.pianoPractice, t)}</small>
+                      </span>
+                      <ChevronRight aria-hidden="true" />
+                    </button>
                     <button className={styles.taskEntry} type="button" onClick={openLoopEditor}>
                       <span>
                         <strong>{t("playback.loopTaskTitle")}</strong>
@@ -298,6 +321,88 @@ function PlaybackLayout({
                     </button>
                   </div>
                 </>
+              ) : null}
+              {practiceView === "rhythm" ? (
+                <section className={styles.panelSection}>
+                  <div className={styles.panelHeader}>
+                    <p className={styles.panelTitle}>{t("playback.rhythmTaskTitle")}</p>
+                  </div>
+                  <div className={styles.panelContent}>
+                    <RhythmSetting
+                      label={t("playback.metronome")}
+                      volumeLabel={t("playback.metronomeVolume")}
+                      setting={state.rhythm.metronome}
+                      disabled={state.soundFont !== "ready"}
+                      disabledReason={audioStatusLabel(state.soundFont, t)}
+                      onEnabledChange={(enabled) => dispatch({ type: "set-metronome", enabled })}
+                      onVolumeChange={(volume) => dispatch({ type: "set-metronome-volume", volume })}
+                    />
+                    <RhythmSetting
+                      label={t("playback.countIn")}
+                      volumeLabel={t("playback.countInVolume")}
+                      setting={state.rhythm.countIn}
+                      disabled={state.soundFont !== "ready"}
+                      disabledReason={audioStatusLabel(state.soundFont, t)}
+                      onEnabledChange={(enabled) => dispatch({ type: "set-count-in", enabled })}
+                      onVolumeChange={(volume) => dispatch({ type: "set-count-in-volume", volume })}
+                    />
+                    {state.transport === "counting-in" ? (
+                      <p className={styles.inlineStatus} role="status">
+                        {t("playback.countInStatus")}
+                      </p>
+                    ) : null}
+                  </div>
+                </section>
+              ) : null}
+              {practiceView === "hands" ? (
+                <section className={styles.panelSection}>
+                  <div className={styles.panelHeader}>
+                    <p className={styles.panelTitle}>{t("playback.handTaskTitle")}</p>
+                  </div>
+                  <div className={styles.panelContent}>
+                    <fieldset className={styles.handModes} disabled={state.pianoPractice.availability !== "available"}>
+                      <legend>{t("playback.handMode")}</legend>
+                      {(["both-hands", "right-hand", "left-hand"] as const).map((mode) => (
+                        <label key={mode}>
+                          <input
+                            type="radio"
+                            name="piano-hand-mode"
+                            checked={state.pianoPractice.mode === mode}
+                            onChange={() => dispatch({ type: "set-piano-hand-mode", mode })}
+                          />
+                          <span>{pianoHandModeLabel(mode, t)}</span>
+                        </label>
+                      ))}
+                    </fieldset>
+                    {state.pianoPractice.unavailableCode ? (
+                      <p className={styles.inlineStatus} role="status">
+                        {pianoUnavailableReason(state.pianoPractice.unavailableCode, t)}
+                      </p>
+                    ) : null}
+                    {state.pianoPractice.availability === "available" && state.pianoPractice.mode !== "both-hands" ? (
+                      <button
+                        className={styles.handPreview}
+                        type="button"
+                        aria-pressed={state.pianoPractice.previewActive}
+                        onClick={() =>
+                          dispatch({
+                            type: "preview-piano-target-hand",
+                            active: !state.pianoPractice.previewActive,
+                          })
+                        }
+                      >
+                        {t(
+                          state.pianoPractice.previewActive ? "playback.stopHandPreview" : "playback.previewTargetHand",
+                        )}
+                      </button>
+                    ) : null}
+                    {state.pianoPractice.pausedForAudioProjection ? (
+                      <p className={styles.inlineStatus} role="status">
+                        {t("playback.handProjectionPaused")}
+                      </p>
+                    ) : null}
+                  </div>
+                </section>
               ) : null}
               {practiceView === "loop" ? (
                 <section className={styles.panelSection}>
@@ -703,7 +808,12 @@ function disabledPlaybackWorkspace(
                 </div>
               </section>
               <div className={styles.taskList}>
-                {[t("playback.loopTaskTitle"), t("playback.trackTaskTitle")].map((title) => (
+                {[
+                  t("playback.rhythmTaskTitle"),
+                  t("playback.handTaskTitle"),
+                  t("playback.loopTaskTitle"),
+                  t("playback.trackTaskTitle"),
+                ].map((title) => (
                   <button className={styles.taskEntry} type="button" key={title} disabled>
                     <span>
                       <strong>{title}</strong>
@@ -719,6 +829,84 @@ function disabledPlaybackWorkspace(
       </section>
     </>
   );
+}
+
+function RhythmSetting({
+  label,
+  volumeLabel,
+  setting,
+  disabled,
+  disabledReason,
+  onEnabledChange,
+  onVolumeChange,
+}: {
+  label: string;
+  volumeLabel: string;
+  setting: { enabled: boolean; volume: number };
+  disabled: boolean;
+  disabledReason: string;
+  onEnabledChange(enabled: boolean): void;
+  onVolumeChange(volume: number): void;
+}) {
+  return (
+    <div className={styles.rhythmSetting}>
+      <label className={styles.loopModeRow}>
+        <span className={styles.panelTitle}>{label}</span>
+        <input
+          type="checkbox"
+          role="switch"
+          checked={setting.enabled}
+          disabled={disabled}
+          onChange={(event) => onEnabledChange(event.currentTarget.checked)}
+        />
+      </label>
+      <label className={styles.rhythmVolume}>
+        <span>{volumeLabel}</span>
+        <output>{setting.volume}%</output>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          value={setting.volume}
+          disabled={disabled}
+          aria-label={volumeLabel}
+          onChange={(event) => onVolumeChange(Number(event.currentTarget.value))}
+        />
+      </label>
+      {disabled ? <small className={styles.disabledReason}>{disabledReason}</small> : null}
+    </div>
+  );
+}
+
+function rhythmSummary(metronome: boolean, countIn: boolean, t: TFunction<"viewer">): string {
+  if (metronome && countIn) return t("playback.rhythmBothEnabled");
+  if (metronome) return t("playback.metronomeEnabled");
+  if (countIn) return t("playback.countInEnabled");
+  return t("playback.rhythmDisabled");
+}
+
+function pianoPracticeSummary(state: PlaybackState["pianoPractice"], t: TFunction<"viewer">): string {
+  if (state.availability !== "available") {
+    return state.unavailableCode ? pianoUnavailableReason(state.unavailableCode, t) : t("playback.handUnavailable");
+  }
+  return pianoHandModeLabel(state.mode, t);
+}
+
+function pianoHandModeLabel(mode: PianoHandMode, t: TFunction<"viewer">): string {
+  if (mode === "right-hand") return t("playback.practiceRightHand");
+  if (mode === "left-hand") return t("playback.practiceLeftHand");
+  return t("playback.bothHandsDemo");
+}
+
+function pianoUnavailableReason(
+  code:
+    "piano-hand-practice-not-applicable" | "piano-hand-practice-ambiguous" | "piano-hand-practice-audio-unsupported",
+  t: TFunction<"viewer">,
+): string {
+  if (code === "piano-hand-practice-ambiguous") return t("playback.handAmbiguous");
+  if (code === "piano-hand-practice-audio-unsupported") return t("playback.handAudioUnsupported");
+  return t("playback.handNotApplicable");
 }
 
 function BpmControl({

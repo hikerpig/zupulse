@@ -18,6 +18,11 @@ export type PracticePlaybackSidecar = z.infer<typeof practicePlaybackSidecarSche
 export function createDefaultPlaybackSidecar(now: string): PracticePlaybackSidecar {
   return {
     scoreSpeed: { value: 1, updatedAt: now },
+    rhythm: {
+      metronome: { enabled: false, volume: 60, updatedAt: now },
+      countIn: { enabled: false, volume: 70, updatedAt: now },
+    },
+    pianoPractice: { mode: "both-hands", updatedAt: now },
     loops: [],
     visibility: { additionalTrackIds: [], updatedAt: now },
     tracks: {},
@@ -59,6 +64,16 @@ export function mergePlaybackSidecar(
 
   return {
     scoreSpeed: remote.scoreSpeed.updatedAt > local.scoreSpeed.updatedAt ? remote.scoreSpeed : local.scoreSpeed,
+    rhythm: {
+      metronome:
+        remote.rhythm.metronome.updatedAt > local.rhythm.metronome.updatedAt
+          ? remote.rhythm.metronome
+          : local.rhythm.metronome,
+      countIn:
+        remote.rhythm.countIn.updatedAt > local.rhythm.countIn.updatedAt ? remote.rhythm.countIn : local.rhythm.countIn,
+    },
+    pianoPractice:
+      remote.pianoPractice.updatedAt > local.pianoPractice.updatedAt ? remote.pianoPractice : local.pianoPractice,
     loops: [...loopMap.values()].sort((a, b) => a.start.tick - b.start.tick),
     visibility: remote.visibility.updatedAt > local.visibility.updatedAt ? remote.visibility : local.visibility,
     tracks,

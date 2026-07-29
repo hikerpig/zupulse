@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { AlphaTabApiLike, AlphaTabBrowserScoreLike, AlphaTabBrowserTrackLike } from "../../gp/alphaTabBrowser";
 import {
   extractAlphaTabPlaybackOccurrences,
@@ -14,8 +14,16 @@ describe("extractAlphaTabPlaybackModel", () => {
     expect(extractAlphaTabPlaybackModel(api)).toEqual({
       baseTempo: 120,
       tracks: [
-        { id: "track-0", sourceIndex: 0, name: "Lead" },
-        { id: "track-1", sourceIndex: 1 },
+        {
+          id: "track-0",
+          sourceIndex: 0,
+          name: "Lead",
+          staves: [
+            { id: "track-0:staff-0", sourceIndex: 0, isPercussion: false },
+            { id: "track-0:staff-1", sourceIndex: 1, isPercussion: false },
+          ],
+        },
+        { id: "track-1", sourceIndex: 1, staves: [] },
       ],
       timeline: {
         durationTicks: 3840,
@@ -77,7 +85,7 @@ describe("extractAlphaTabPlaybackOccurrences", () => {
 });
 
 describe("AlphaTabPlaybackAdapter", () => {
-  it("maps transport, seek, speed, loop, visibility, and mixer commands", () => {
+  it("maps rhythm, transport, seek, speed, loop, visibility, and mixer commands", () => {
     const calls: Array<[string, unknown]> = [];
     const api = createApi({ calls });
     const adapter = new AlphaTabPlaybackAdapter(api, "/soundfont.sf3");
@@ -91,6 +99,8 @@ describe("AlphaTabPlaybackAdapter", () => {
     adapter.setTrackMute("track-0", true);
     adapter.setTrackSolo("track-1", true);
     adapter.setTrackVolume("track-0", 2);
+    adapter.setMetronomeVolume(0.6);
+    adapter.setCountInVolume(0.7);
 
     expect(calls).toEqual([
       ["playPause", undefined],
@@ -104,6 +114,110 @@ describe("AlphaTabPlaybackAdapter", () => {
     expect(api.playbackSpeed).toBe(0.75);
     expect(api.playbackRange).toEqual({ startTick: 480, endTick: 1440 });
     expect(api.isLooping).toBe(true);
+    expect(api.metronomeVolume).toBe(0.6);
+    expect(api.countInVolume).toBe(0.7);
+  });
+
+  it("reports count-in lifecycle and skips a new count-in when resuming", () => {
+    const events = createEvents();
+    const api = createApi({ events });
+    const adapter = new AlphaTabPlaybackAdapter(api, "/soundfont.sf3");
+    const received: unknown[] = [];
+    adapter.subscribe((event) => received.push(event));
+    adapter.setCountInVolume(0.7);
+
+    adapter.playPause();
+    expect(received).toContainEqual({ type: "count-in-started" });
+    events.playerStateChanged.emit({ state: 1, stopped: false });
+    events.playerStateChanged.emit({ state: 1, stopped: false });
+    expect(received).toContainEqual({ type: "count-in-ended" });
+
+    api.countInVolume = 0.7;
+    adapter.playPause({ skipCountIn: true });
+    expect(api.countInVolume).toBe(0.7);
+  });
+
+  it("loads a staff MIDI projection at a safe pause and restores mixer state", async () => {
+    const calls: Array<[string, unknown]> = [];
+    const events = createEvents();
+    const player = new FakeProjectionPlayer(calls);
+    const api = createApi({ calls, events, player });
+    api.settings = {} as never;
+    api.tickPosition = 960;
+    const buildProjection = vi.fn(() => ({
+      score: {},
+      midiFile: { kind: "projected-midi" },
+      tickShift: 0,
+      syncPoints: [],
+      transpositionPitches: new Map(),
+    })) as never;
+    const adapter = new AlphaTabPlaybackAdapter(api, "/soundfont.sf3", buildProjection);
+    adapter.setCountInVolume(0.7);
+    api.playPause = () => calls.push(["playPause", api.countInVolume]);
+    adapter.setTrackMute("track-0", true);
+    adapter.setTrackSolo("track-0", false);
+    adapter.setTrackVolume("track-0", 0.5);
+    events.playerStateChanged.emit({ state: 1, stopped: false });
+
+    const pending = adapter.setPianoStaffAudio(
+      {
+        trackId: "track-0",
+        rightStaffId: "track-0:staff-0",
+        leftStaffId: "track-0:staff-1",
+      },
+      ["track-0:staff-1"],
+    );
+    expect(calls).toContainEqual(["playPause", 0.7]);
+    expect(calls).toContainEqual(["loadMidiFile", { kind: "projected-midi" }]);
+    player.midiLoaded.emit({});
+    await expect(pending).resolves.toEqual({ pausedForAudioProjection: true });
+
+    expect(api.tickPosition).toBe(960);
+    expect(calls.filter(([name]) => name === "playPause")).toHaveLength(2);
+    expect(calls.slice(-4)).toEqual([
+      ["mute", { tracks: [0], value: true }],
+      ["solo", { tracks: [0], value: false }],
+      ["volume", { tracks: [0], value: 0.5 }],
+      ["playPause", 0],
+    ]);
+    expect(api.countInVolume).toBe(0.7);
+  });
+
+  it("restores the full score MIDI when a staff projection fails to load", async () => {
+    const calls: Array<[string, unknown]> = [];
+    const player = new FakeProjectionPlayer(calls);
+    const api = createApi({ calls, player });
+    api.settings = {} as never;
+    api.tickPosition = 960;
+    const buildProjection = vi.fn((_score, _settings, audibleStaffIds: ReadonlySet<string>) => ({
+      score: {},
+      midiFile: { audibleStaffIds: [...audibleStaffIds] },
+      tickShift: 0,
+      syncPoints: [],
+      transpositionPitches: new Map(),
+    })) as never;
+    const adapter = new AlphaTabPlaybackAdapter(api, "/soundfont.sf3", buildProjection);
+
+    const pending = adapter.setPianoStaffAudio(
+      {
+        trackId: "track-0",
+        rightStaffId: "track-0:staff-0",
+        leftStaffId: "track-0:staff-1",
+      },
+      ["track-0:staff-1"],
+    );
+    player.midiLoadFailed.emit(new Error("projection failed"));
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(calls.filter(([name]) => name === "loadMidiFile")).toEqual([
+      ["loadMidiFile", { audibleStaffIds: ["track-0:staff-1"] }],
+      ["loadMidiFile", { audibleStaffIds: ["track-0:staff-0", "track-0:staff-1"] }],
+    ]);
+    player.midiLoaded.emit({});
+    await expect(pending).rejects.toThrow("projection failed");
+    expect(api.tickPosition).toBe(960);
   });
 
   it("maps alphaTab events and keeps an observable snapshot", () => {
@@ -189,6 +303,10 @@ class TestEvent<T> {
     return () => this.listeners.delete(handler);
   }
 
+  off(handler: (value: T) => void): void {
+    this.listeners.delete(handler);
+  }
+
   emit(value: T): void {
     for (const listener of this.listeners) listener(value);
   }
@@ -234,7 +352,17 @@ function createEvents() {
 function createScore(): AlphaTabBrowserScoreLike {
   return {
     tempo: 120,
-    tracks: [{ index: 0, name: "Lead" }, { index: 1 }],
+    tracks: [
+      {
+        index: 0,
+        name: "Lead",
+        staves: [
+          { index: 0, isPercussion: false },
+          { index: 1, isPercussion: false },
+        ],
+      },
+      { index: 1, staves: [] },
+    ],
     masterBars: [
       { index: 0, start: 0, timeSignatureNumerator: 4, calculateDuration: () => 1920 },
       { index: 1, start: 1920, timeSignatureNumerator: 4, calculateDuration: () => 1920 },
@@ -246,6 +374,7 @@ function createApi(
   input: {
     calls?: Array<[string, unknown]>;
     events?: ReturnType<typeof createEvents>;
+    player?: FakeProjectionPlayer;
   } = {},
 ): AlphaTabApiLike {
   const calls = input.calls ?? [];
@@ -255,6 +384,8 @@ function createApi(
     score,
     endTick: 3840,
     endTime: 8000,
+    metronomeVolume: 0,
+    countInVolume: 0,
     scoreLoaded: events.scoreLoaded,
     playerReady: events.playerReady,
     playerStateChanged: events.playerStateChanged,
@@ -262,6 +393,7 @@ function createApi(
     soundFontLoaded: events.soundFontLoaded,
     soundFontLoad: events.soundFontLoad,
     error: events.error,
+    player: input.player as never,
     playPause: () => calls.push(["playPause", undefined]),
     stop: () => calls.push(["stop", undefined]),
     renderTracks: (tracks) => calls.push(["renderTracks", tracks.map((track) => track.index)]),
@@ -271,4 +403,27 @@ function createApi(
     loadSoundFontFromUrl: (url, append) => calls.push(["loadSoundFont", { url, append }]),
     destroy: () => calls.push(["destroy", undefined]),
   };
+}
+
+class FakeProjectionPlayer {
+  readonly midiLoaded = new TestEvent<unknown>();
+  readonly midiLoadFailed = new TestEvent<Error>();
+
+  constructor(private readonly calls: Array<[string, unknown]>) {}
+
+  loadMidiFile(midiFile: unknown): void {
+    this.calls.push(["loadMidiFile", midiFile]);
+  }
+
+  loadBackingTrack(score: unknown): void {
+    this.calls.push(["loadBackingTrack", score]);
+  }
+
+  updateSyncPoints(syncPoints: unknown): void {
+    this.calls.push(["updateSyncPoints", syncPoints]);
+  }
+
+  applyTranspositionPitches(pitches: unknown): void {
+    this.calls.push(["applyTranspositionPitches", pitches]);
+  }
 }

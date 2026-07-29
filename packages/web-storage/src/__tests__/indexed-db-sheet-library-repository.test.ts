@@ -1,6 +1,6 @@
 import { IDBFactory } from "fake-indexeddb";
 import { expect, it } from "vitest";
-import type { HarmonyAnalysisDocument } from "@zupulse/web-core";
+import { createDefaultSidecar, type HarmonyAnalysisDocument } from "@zupulse/web-core";
 import {
   exampleDraft,
   sheetLibraryRepositoryContract,
@@ -24,6 +24,28 @@ it("does not create practice data for a missing Library Score", async () => {
       updatedAt: "2026-07-12T00:00:00.000Z",
     }),
   ).rejects.toThrow("LIBRARY_SCORE_NOT_FOUND");
+});
+
+it("migrates persisted sidecars when reading from IndexedDB", async () => {
+  Object.defineProperty(globalThis, "indexedDB", { configurable: true, value: new IDBFactory() });
+  const repository = new IndexedDbSheetLibraryRepository();
+  const draft = exampleDraft();
+  await repository.add(draft);
+  const legacy = createDefaultSidecar({ contentHash: draft.scoreIdentity, format: draft.format });
+  const playback = legacy.practice.playback as unknown as Record<string, unknown>;
+  delete playback.rhythm;
+  delete playback.pianoPractice;
+  await repository.writeSidecar(draft.id, { ...legacy, schemaVersion: "0.2.0" } as never);
+
+  await expect(repository.readSidecar(draft.id)).resolves.toMatchObject({
+    schemaVersion: "0.3.0",
+    practice: {
+      playback: {
+        rhythm: { metronome: { enabled: false }, countIn: { enabled: false } },
+        pianoPractice: { mode: "both-hands" },
+      },
+    },
+  });
 });
 
 it("deletes only an analysis document without deleting its Library Score", async () => {

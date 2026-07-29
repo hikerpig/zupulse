@@ -20,6 +20,7 @@ import type {
   TrackMixState,
   TrackPlaybackState,
 } from "./types";
+import { resolvePianoHandMapping } from "./pianoHandMapping";
 
 type LoopRange = {
   start: LoopRegion["start"];
@@ -66,6 +67,8 @@ export class PlaybackController {
   private resumeDirty = false;
   private initialized = false;
   private destroyed = false;
+  private countInActive = false;
+  private pianoAudioProjectionChain = Promise.resolve();
   private readonly previewSeekTicks = new Set<number>();
   private sidecarWriteChain = Promise.resolve();
   private resumeWriteChain = Promise.resolve();
@@ -117,7 +120,7 @@ export class PlaybackController {
     this.sidecar = structuredClone(savedSidecar ?? this.options.baseSidecar);
     this.state = this.createState(this.sidecar);
     this.state.soundFont = this.options.engine.getSnapshot().soundFont;
-    this.applyPersistedSettings();
+    await this.applyPersistedSettings();
     if (resume) {
       this.state.position = resume.position;
       this.options.engine.seekTick(resume.position.tick);
@@ -133,10 +136,14 @@ export class PlaybackController {
 
     switch (command.type) {
       case "toggle-playback":
-        if (this.state.soundFont === "ready") this.options.engine.playPause();
+        if (this.state.soundFont === "ready") {
+          this.options.engine.playPause(this.state.transport === "paused" ? { skipCountIn: true } : undefined);
+        }
         return;
       case "pause":
-        if (this.state.transport === "playing") this.options.engine.playPause();
+        if (this.state.transport === "playing" || this.state.transport === "counting-in") {
+          this.options.engine.playPause();
+        }
         this.resumeDirty = true;
         await this.queueResumeWrite();
         return;
@@ -156,6 +163,24 @@ export class PlaybackController {
         return;
       case "set-score-speed":
         this.setScoreSpeed(command.speed);
+        return;
+      case "set-metronome":
+        this.setRhythmEnabled("metronome", command.enabled);
+        return;
+      case "set-metronome-volume":
+        this.setRhythmVolume("metronome", command.volume);
+        return;
+      case "set-count-in":
+        this.setRhythmEnabled("countIn", command.enabled);
+        return;
+      case "set-count-in-volume":
+        this.setRhythmVolume("countIn", command.volume);
+        return;
+      case "set-piano-hand-mode":
+        await this.queuePianoAudioProjection(() => this.setPianoHandMode(command.mode));
+        return;
+      case "preview-piano-target-hand":
+        await this.queuePianoAudioProjection(() => this.previewPianoTargetHand(command.active));
         return;
       case "set-loop-enabled":
         this.setLoopEnabled(command.enabled);
@@ -252,6 +277,8 @@ export class PlaybackController {
       durationMs: this.options.timeline.durationMs,
       baseTempo: this.options.baseTempo && this.options.baseTempo > 0 ? this.options.baseTempo : 120,
       scoreSpeed: normalizeScorePlaybackSpeed(playback.scoreSpeed.value),
+      rhythm: structuredClone(playback.rhythm),
+      pianoPractice: this.createPianoPracticeState(playback.pianoPractice.mode),
       looping: false,
       loopDraft: { snapMode: "beat" },
       loops: playback.loops.map((loop) => ({
@@ -271,15 +298,64 @@ export class PlaybackController {
     };
   }
 
-  private applyPersistedSettings(): void {
+  private createPianoPracticeState(
+    requestedMode: SidecarPayload["practice"]["playback"]["pianoPractice"]["mode"],
+  ): PlaybackState["pianoPractice"] {
+    const result = resolvePianoHandMapping(this.options.tracks);
+    if (result.availability !== "available") {
+      return {
+        mode: "both-hands",
+        requestedMode,
+        availability: result.availability,
+        unavailableCode: result.code,
+        previewActive: false,
+        pausedForAudioProjection: false,
+      };
+    }
+    if (this.options.engine.getPianoHandAudioCapability(result.mapping) === "unsupported") {
+      return {
+        mode: "both-hands",
+        requestedMode,
+        availability: "audio-unsupported",
+        unavailableCode: "piano-hand-practice-audio-unsupported",
+        mapping: result.mapping,
+        previewActive: false,
+        pausedForAudioProjection: false,
+      };
+    }
+    return {
+      mode: requestedMode,
+      requestedMode,
+      availability: "available",
+      mapping: result.mapping,
+      previewActive: false,
+      pausedForAudioProjection: false,
+    };
+  }
+
+  private async applyPersistedSettings(): Promise<void> {
     const visible = this.visibleTrackIds();
     if (visible.length > 0) this.options.engine.setVisibleTracks(visible);
     this.options.engine.setSpeed(this.state.scoreSpeed);
+    this.options.engine.setMetronomeVolume(
+      this.state.rhythm.metronome.enabled ? this.state.rhythm.metronome.volume / 100 : 0,
+    );
+    this.options.engine.setCountInVolume(
+      this.state.rhythm.countIn.enabled ? this.state.rhythm.countIn.volume / 100 : 0,
+    );
     for (const track of this.options.tracks) {
       const mix = this.state.trackState.settings[track.id];
       if (!mix) continue;
       this.options.engine.setTrackMute(track.id, mix.muted);
       this.options.engine.setTrackVolume(track.id, mix.volume);
+    }
+    if (this.state.pianoPractice.availability === "available" && this.state.pianoPractice.mode !== "both-hands") {
+      try {
+        const result = await this.applyPianoAudioProjection(this.state.pianoPractice.mode, false);
+        this.state.pianoPractice.pausedForAudioProjection = result.pausedForAudioProjection;
+      } catch {
+        this.markPianoAudioUnavailable(this.state.pianoPractice.requestedMode);
+      }
     }
   }
 
@@ -302,8 +378,19 @@ export class PlaybackController {
         this.updateState({ soundFont: "error", transport: "error", errorCode: "soundfont-load-failed" });
         return;
       case "transport":
-        this.updateState({ transport: event.state });
+        if (event.state === "stopped") this.countInActive = false;
+        this.updateState({
+          transport: event.state === "playing" && this.countInActive ? "counting-in" : event.state,
+        });
         if (event.state !== "playing") void this.queueResumeWrite();
+        return;
+      case "count-in-started":
+        this.countInActive = true;
+        this.updateState({ transport: "counting-in" });
+        return;
+      case "count-in-ended":
+        this.countInActive = false;
+        this.updateState({ transport: "playing" });
         return;
       case "position":
         if (this.previewSeekTicks.delete(event.tick)) return;
@@ -314,6 +401,7 @@ export class PlaybackController {
         else this.notify();
         return;
       case "error":
+        this.countInActive = false;
         this.updateState({ transport: "error", errorCode: "playback-error" });
         return;
     }
@@ -335,6 +423,115 @@ export class PlaybackController {
     this.sidecar.practice.playback.scoreSpeed = { value: normalized, updatedAt: now };
     this.options.engine.setSpeed(getEffectivePlaybackSpeed(normalized, this.activeLoop() ?? {}));
     this.markSidecarDirty();
+    this.notify();
+  }
+
+  private setRhythmEnabled(kind: "metronome" | "countIn", enabled: boolean): void {
+    const current = this.state.rhythm[kind];
+    const next = { ...current, enabled, updatedAt: this.clock.now() };
+    this.state.rhythm = { ...this.state.rhythm, [kind]: next };
+    this.sidecar.practice.playback.rhythm = structuredClone(this.state.rhythm);
+    this.applyRhythmSetting(kind);
+    this.markSidecarDirty();
+    this.notify();
+  }
+
+  private setRhythmVolume(kind: "metronome" | "countIn", volume: number): void {
+    const current = this.state.rhythm[kind];
+    const next = {
+      ...current,
+      volume: Math.min(100, Math.max(0, Math.round(volume))),
+      updatedAt: this.clock.now(),
+    };
+    this.state.rhythm = { ...this.state.rhythm, [kind]: next };
+    this.sidecar.practice.playback.rhythm = structuredClone(this.state.rhythm);
+    this.applyRhythmSetting(kind);
+    this.markSidecarDirty();
+    this.notify();
+  }
+
+  private applyRhythmSetting(kind: "metronome" | "countIn"): void {
+    const setting = this.state.rhythm[kind];
+    const volume = setting.enabled ? setting.volume / 100 : 0;
+    if (kind === "metronome") this.options.engine.setMetronomeVolume(volume);
+    else this.options.engine.setCountInVolume(volume);
+  }
+
+  private async setPianoHandMode(mode: PlaybackState["pianoPractice"]["mode"]): Promise<void> {
+    if (this.state.pianoPractice.availability !== "available") return;
+    let result: { pausedForAudioProjection: boolean };
+    try {
+      result = await this.applyPianoAudioProjection(mode, false);
+    } catch {
+      this.markPianoAudioUnavailable(mode);
+      return;
+    }
+    const now = this.clock.now();
+    this.state.pianoPractice = {
+      ...this.state.pianoPractice,
+      mode,
+      requestedMode: mode,
+      previewActive: false,
+      pausedForAudioProjection: result.pausedForAudioProjection,
+    };
+    this.sidecar.practice.playback.pianoPractice = { mode, updatedAt: now };
+    this.markSidecarDirty();
+    this.notify();
+  }
+
+  private queuePianoAudioProjection(operation: () => Promise<void>): Promise<void> {
+    const result = this.pianoAudioProjectionChain.then(operation);
+    this.pianoAudioProjectionChain = result.catch(() => undefined);
+    return result;
+  }
+
+  private async previewPianoTargetHand(active: boolean): Promise<void> {
+    const practice = this.state.pianoPractice;
+    if (practice.availability !== "available" || practice.mode === "both-hands" || practice.previewActive === active) {
+      return;
+    }
+    let result: { pausedForAudioProjection: boolean };
+    try {
+      result = await this.applyPianoAudioProjection(practice.mode, active);
+    } catch {
+      this.markPianoAudioUnavailable(practice.requestedMode);
+      return;
+    }
+    this.state.pianoPractice = {
+      ...practice,
+      previewActive: active,
+      pausedForAudioProjection: result.pausedForAudioProjection,
+    };
+    this.notify();
+  }
+
+  private applyPianoAudioProjection(
+    mode: PlaybackState["pianoPractice"]["mode"],
+    previewTargetHand: boolean,
+  ): Promise<{ pausedForAudioProjection: boolean }> {
+    const mapping = this.state.pianoPractice.mapping;
+    if (!mapping) throw new Error("Piano hand mapping is unavailable");
+    let audibleStaffIds: string[];
+    if (mode === "both-hands") {
+      audibleStaffIds = [mapping.rightStaffId, mapping.leftStaffId];
+    } else if (mode === "right-hand") {
+      audibleStaffIds = [previewTargetHand ? mapping.rightStaffId : mapping.leftStaffId];
+    } else {
+      audibleStaffIds = [previewTargetHand ? mapping.leftStaffId : mapping.rightStaffId];
+    }
+    return this.options.engine.setPianoStaffAudio(mapping, audibleStaffIds);
+  }
+
+  private markPianoAudioUnavailable(requestedMode: PlaybackState["pianoPractice"]["mode"]): void {
+    this.state.pianoPractice = {
+      ...this.state.pianoPractice,
+      mode: "both-hands",
+      requestedMode,
+      availability: "audio-unsupported",
+      unavailableCode: "piano-hand-practice-audio-unsupported",
+      previewActive: false,
+      pausedForAudioProjection: false,
+    };
     this.notify();
   }
 

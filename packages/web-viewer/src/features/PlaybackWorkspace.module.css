@@ -423,6 +423,69 @@
     font-size: 13px;
     line-height: 1.5;
   }
+  .rhythmSetting {
+    display: grid;
+    gap: 10px;
+  }
+  .rhythmSetting + .rhythmSetting {
+    padding-top: 16px;
+    border-top: 1px solid var(--border-default);
+  }
+  .rhythmVolume {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px 12px;
+    align-items: center;
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+  .rhythmVolume output {
+    font-family: var(--font-family-technical);
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+  .rhythmVolume input {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+  .disabledReason {
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+  .inlineStatus,
+  .countInStatus {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .handModes {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .handModes legend {
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+  .handModes label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: 13px;
+  }
+  .handModes:disabled {
+    color: var(--text-secondary);
+  }
+  .handPreview {
+    justify-self: start;
+  }
   .panelContent {
     min-width: 0;
     display: grid;

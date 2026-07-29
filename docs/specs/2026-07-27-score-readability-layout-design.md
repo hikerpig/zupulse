@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # Viewer / Studio 谱面可读性与宽度模式设计
 
 ## 背景

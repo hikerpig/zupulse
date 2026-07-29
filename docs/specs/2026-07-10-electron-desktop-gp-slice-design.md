@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # Electron Desktop GP Slice 设计
 
 ## 状态

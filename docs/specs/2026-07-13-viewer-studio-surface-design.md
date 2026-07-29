@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # Viewer 工作台表面重构设计
 
 ## 目标

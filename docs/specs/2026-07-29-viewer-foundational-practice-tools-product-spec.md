@@ -14,14 +14,13 @@ feature: viewer-foundational-practice-tools
 2. Piano Hand Practice。
 
 它描述目标行为，不是当前运行时事实源。当前能力仍以
-[`Viewer Playback Navigation Feature Contract`](../../features/contracts/viewer-playback-navigation.md)、
+[`Viewer Playback Navigation Feature Contract`](../features/contracts/viewer-playback-navigation.md)、
 运行时代码、schema 和测试为准。
 
 研究输入：
-[`Viewer 跟练与学习体验评审`](../../evaluation/2026-07-29-viewer-practice-learning-experience-review.md)。
+[`Viewer 跟练与学习体验评审`](../evaluation/2026-07-29-viewer-practice-learning-experience-review.md)。
 
-实现拆分：
-[`tasks/viewer-foundational-practice/plan.md`](../../../tasks/viewer-foundational-practice/plan.md)。
+实现拆分尚未进入 `tasks/`；开始实施时从 `tasks/TEMPLATE.md` 创建 active task bundle。
 
 ## Assumptions
 

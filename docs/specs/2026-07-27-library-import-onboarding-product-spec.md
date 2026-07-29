@@ -1,8 +1,11 @@
+---
+status: approved
+---
+
 # Library 导入与首次体验产品规格
 
 ## 文档状态
 
-- Status: approved
 - Owner: Product
 - Date: 2026-07-27
 - Related Feature: Sheet Library

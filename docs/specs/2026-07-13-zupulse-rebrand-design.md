@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # Zupulse 品牌更名设计
 
 ## 目标

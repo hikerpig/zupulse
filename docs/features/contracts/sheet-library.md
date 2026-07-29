@@ -222,7 +222,7 @@ stateDiagram-v2
 - `importing` 状态会禁用新的导入入口并显示现有汇总，但尚未在 modal 内提供提交后的独立进度面。
 - Desktop 尚未提供 dropped-file capability；用户仍可用原生多选和 bundled sample。
   目标问题、最小范围和目标契约见
-  [`2026-07-27-library-import-onboarding-product-spec.md`](../../superpowers/specs/2026-07-27-library-import-onboarding-product-spec.md)；
+  [`2026-07-27-library-import-onboarding-product-spec.md`](../../specs/2026-07-27-library-import-onboarding-product-spec.md)；
   该 approved product spec 不描述当前运行时行为。
 - Managed Score Copy 缺失或损坏时，Repository 会拒绝读取；UI 尚未提供规格设想的专用恢复操作。
 - 当前不提供标签、文件夹、歌单、多选、回收站、批量删除或 Library 迁移包。
@@ -273,9 +273,9 @@ stateDiagram-v2
 - 当前架构入口：[`docs/architecture/README.md`](../../architecture/README.md)
 - 当前 UI 契约：[`DESIGN.md`](../../../DESIGN.md)
 - Approved Library 导入与首次体验规格：
-  [`2026-07-27-library-import-onboarding-product-spec.md`](../../superpowers/specs/2026-07-27-library-import-onboarding-product-spec.md)
+  [`2026-07-27-library-import-onboarding-product-spec.md`](../../specs/2026-07-27-library-import-onboarding-product-spec.md)
 - Sheet Library 原始设计规格：
-  [`2026-07-12-sheet-library-design.md`](../../superpowers/specs/2026-07-12-sheet-library-design.md)
+  [`2026-07-12-sheet-library-design.md`](../../specs/2026-07-12-sheet-library-design.md)
 - Current ADR：0040–0051、0066
 - MusicXML 导入：
   [`musicxml-import-design.md`](../../architecture/musicxml-import-design.md)、

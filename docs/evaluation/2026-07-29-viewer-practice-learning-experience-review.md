@@ -116,7 +116,7 @@ Track 级控制也无法表达分手练习。
 通用 Track Mixer 推进到钢琴教学语言。
 
 详细目标规格：
-[`Viewer 基础练习能力产品 Spec`](../superpowers/specs/2026-07-29-viewer-foundational-practice-tools-product-spec.md)。
+[`Viewer 基础练习能力产品 Spec`](../specs/2026-07-29-viewer-foundational-practice-tools-product-spec.md)。
 
 ## 竞品参考
 

@@ -1,8 +1,11 @@
+---
+status: implemented
+---
+
 # Studio 工作区调优设计规格
 
-## 状态
+## 实施记录
 
-- 状态：已实现并验收。
 - 日期：2026-07-19。
 - 范围：Studio 布局、Harmony Selection、有效和弦预览与 Preview Transport。
 - 事实边界：运行时代码、Zod schema、测试、Current ADR、`docs/architecture/harmony-analysis-system.md` 和根 `DESIGN.md` 高于本文。
@@ -170,7 +173,7 @@ pnpm format:check
 - `packages/web-viewer/src`：独立 Studio runtime、会话编排与可复用展示逻辑。
 - `packages/web-viewer/src/app/pages`：Studio 页面、CSS Modules 与用户视角测试。
 - `apps/web-demo`、`apps/desktop-shell`：只负责把共享 runtime factory 接入各宿主。
-- `docs/superpowers/specs`：本规格；`tasks`：获批计划和任务清单。
+- `docs/specs`：本规格；`tasks`：获批计划和任务清单。
 
 ### 代码风格
 

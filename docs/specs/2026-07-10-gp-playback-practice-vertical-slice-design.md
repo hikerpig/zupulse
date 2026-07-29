@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # GP 播放练习竖切设计
 
 ## 目标

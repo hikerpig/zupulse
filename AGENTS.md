@@ -73,3 +73,8 @@ current behavior.
 Run the smallest relevant tests first, then escalate by risk to `pnpm verify:fast`, `pnpm verify`, and
 `pnpm verify:e2e` for Browser/Desktop journeys. Run `pnpm check:i18n` for i18n changes. Before committing, run
 `pnpm format:check` and `git diff --check`, and report the actual results.
+
+After the final change, rerun the smallest validation that covers the final changed scope. Any later edit makes
+the earlier result stale and requires another relevant validation. In the handoff, name the command, its actual
+result, and the final files or behavior it covers. If a relevant check is still failing or cannot run, stop and
+report the blocker instead of presenting the change as verified.

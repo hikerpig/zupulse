@@ -14,15 +14,10 @@
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.28),
       inset 0 -1px 0 rgb(24 24 24 / 0.05);
-    padding: 4px max(12px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom))
+    padding: 12px max(12px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom))
       max(12px, env(safe-area-inset-left));
     backdrop-filter: blur(12px);
     composes: noiseOverlay from "../styles/noise.module.css";
-  }
-  .transportDivider {
-    width: 1px;
-    align-self: stretch;
-    background: color-mix(in srgb, var(--border-default) 88%, transparent);
   }
   .transportActions,
   .transportProgress,
@@ -37,10 +32,12 @@
     align-items: center;
     justify-content: center;
   }
-  .transportActions .transportIconButton {
-    min-width: 34px;
-    width: 34px;
+  .transportIconButton {
+    min-width: 36px;
+    width: 36px;
+    min-height: 36px;
     padding: 0;
+    border-radius: var(--radius-round);
   }
   .transportIconButton[aria-pressed="true"] {
     border-color: var(--accent-primary);
@@ -48,8 +45,8 @@
     background: var(--accent-soft);
   }
   .transportIconButton svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
   .transportProgress {
     position: absolute;
@@ -70,9 +67,10 @@
     gap: 4px;
   }
   .pageControls button {
-    width: 32px;
-    min-height: 32px;
+    width: 36px;
+    min-height: 36px;
     padding: 0;
+    border-radius: var(--radius-round);
   }
   .pageControls svg,
   .navigationControls > button svg {
@@ -89,14 +87,33 @@
   .navigationModePopup {
     display: grid;
     min-width: 180px;
-    gap: 4px;
+    gap: 2px;
   }
-  .navigationModePopup button {
-    justify-content: flex-start;
+  .menuOption {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 36px;
+    padding: 6px 10px;
+    border-color: transparent;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    text-align: left;
   }
-  .navigationModePopup button[aria-pressed="true"] {
+  .menuOption:hover:not(:disabled) {
+    border-color: transparent;
+    background: var(--bg-control);
+  }
+  .menuOption[aria-pressed="true"] {
     color: var(--accent-primary);
+    border-color: var(--accent-primary);
     background: var(--accent-soft);
+  }
+  .menuOption span {
+    color: var(--text-secondary);
+    font-size: 12px;
   }
   .transportSpeedControl {
     display: contents;
@@ -104,6 +121,7 @@
   .timeReadout {
     min-width: 96px;
     color: var(--text-secondary);
+    font-size: 13px;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
@@ -111,16 +129,17 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    min-height: 34px;
+    min-height: 36px;
     padding: 4px 10px;
     border: 1px solid var(--border-default);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     background: var(--bg-control);
+    font-size: 13px;
     font-variant-numeric: tabular-nums;
   }
   .speedTrigger span {
     color: var(--text-secondary);
-    font-size: 12px;
+    font-size: 13px;
   }
   .speedPopoverPositioner {
     z-index: var(--z-index-practice-panel);
@@ -152,6 +171,14 @@
     font: inherit;
     font-variant-numeric: tabular-nums;
     padding: 10px;
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+  .speedInput input::-webkit-outer-spin-button,
+  .speedInput input::-webkit-inner-spin-button {
+    margin: 0;
+    appearance: none;
+    -webkit-appearance: none;
   }
   .speedInput > span:last-child {
     color: var(--text-secondary);
@@ -163,23 +190,6 @@
     margin-top: 12px;
     padding-top: 10px;
     border-top: 1px solid var(--border-default);
-  }
-  .speedPresets button {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 38px;
-    border-color: transparent;
-    background: transparent;
-    text-align: left;
-  }
-  .speedPresets button[aria-pressed="true"] {
-    color: var(--accent-primary);
-    background: var(--accent-soft);
-  }
-  .speedPresets button span {
-    color: var(--text-secondary);
-    font-size: 12px;
   }
   .speedPopoverArrow {
     width: 10px;
@@ -304,6 +314,7 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
+    font-size: 13px;
   }
   .drawerToggle svg {
     width: 16px;
@@ -407,11 +418,11 @@
   }
   .loopModeRow input:checked {
     border-color: var(--accent-primary);
-    background: var(--accent-primary);
+    background: var(--accent-soft);
   }
   .loopModeRow input:checked::after {
     transform: translateX(16px);
-    background: var(--bg-panel);
+    background: var(--accent-primary);
   }
   .loopModeRow input:focus-visible {
     outline: none;
@@ -591,25 +602,24 @@
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 6px;
-      padding-inline: max(8px, env(safe-area-inset-left)) max(8px, env(safe-area-inset-right));
+      padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
     }
     .transportActions {
       gap: 6px;
     }
-    .transportActions .transportIconButton {
+    .transportIconButton {
       width: 32px;
       min-width: 32px;
-    }
-    .transportDivider {
-      display: none;
+      min-height: 32px;
     }
     .transportTools {
+      min-width: 0;
       margin-left: auto;
       gap: 5px;
     }
     .timeReadout {
       min-width: 76px;
-      font-size: 11px;
+      font-size: 12px;
     }
     .transportSpeedControl,
     .transportRetry {

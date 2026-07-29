@@ -111,10 +111,10 @@
     justify-content: space-between;
     gap: 12px;
     padding: 7px 10px 7px 12px;
-    border: 1px solid var(--status-ready-text);
+    border: 1px solid var(--border-default);
     border-radius: var(--radius-sm);
-    background: var(--status-ready-bg);
-    color: var(--status-ready-text);
+    background: var(--bg-panel);
+    color: var(--text-primary);
     font-size: 12px;
   }
   .importSummaryCompact button {
@@ -277,7 +277,7 @@
     text-overflow: ellipsis;
   }
   .libraryTitleRow strong mark {
-    background: rgb(242 107 79 / 0.18);
+    background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
     color: inherit;
     border-radius: 2px;
     padding: 0 1px;
@@ -291,7 +291,7 @@
     text-overflow: ellipsis;
   }
   .libraryArtist mark {
-    background: rgb(242 107 79 / 0.18);
+    background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
     color: inherit;
     border-radius: 2px;
     padding: 0 1px;
@@ -323,10 +323,6 @@
     font-size: 9px;
     font-weight: 600;
     letter-spacing: 0.04em;
-  }
-  .libraryFormatMusicxml {
-    color: var(--status-ready-text);
-    border-color: var(--status-ready-text);
   }
   .libraryPracticeChip {
     display: inline-flex;
@@ -366,7 +362,7 @@
   }
   .libraryActionIndicator {
     flex: 0 0 auto;
-    opacity: 0.3;
+    opacity: 0.75;
     color: var(--accent-primary);
     transition:
       opacity 140ms ease,
@@ -384,21 +380,9 @@
     gap: 2px;
     padding: 0 10px;
   }
-  .libraryFavoriteButton {
-    opacity: 0.5;
-    transition: opacity 140ms ease;
-  }
-  .libraryRow:hover .libraryFavoriteButton,
-  .libraryRow:focus-within .libraryFavoriteButton {
-    opacity: 1;
-  }
   .favoriteIconInactive {
-    color: var(--text-tertiary);
-    transition: color 140ms ease;
-  }
-  .libraryRow:hover .favoriteIconInactive,
-  .libraryRow:focus-within .favoriteIconInactive {
     color: var(--text-secondary);
+    transition: color 140ms ease;
   }
   .libraryEmptyActions {
     display: flex;
@@ -517,9 +501,6 @@
       grid-column: 2;
       border-top: 1px solid var(--border-default);
     }
-    .libraryFavoriteButton {
-      opacity: 1;
-    }
     .libraryControls {
       margin: 12px max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
       display: grid;
@@ -564,5 +545,13 @@
 @layer utilities {
   .libraryControls .librarySort select {
     padding-right: 34px;
+  }
+  /* Toolbar fields share one type size; overrides the field/body utility defaults. */
+  .libraryControls .librarySearch {
+    font-size: 13px;
+  }
+  .libraryControls .librarySort select,
+  .libraryControls .librarySort > span {
+    font-size: 13px;
   }
 }

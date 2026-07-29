@@ -295,7 +295,7 @@ describe("SheetLibrary stats summary", () => {
       />,
     );
 
-    expect(screen.getByText("1 份曲谱 · 0 个 Loop")).toBeTruthy();
+    expect(screen.getByText("1 份曲谱 · 0 个循环")).toBeTruthy();
     expect(screen.queryByText("尚未练习")).toBeNull();
   });
 
@@ -320,7 +320,7 @@ describe("SheetLibrary stats summary", () => {
       />,
     );
 
-    const statsSummary = screen.getByText(/2 份曲谱 · 1 个 Loop · 最近练习/);
+    const statsSummary = screen.getByText(/2 份曲谱 · 1 个循环 · 最近练习/);
     expect(statsSummary).toBeTruthy();
   });
 });

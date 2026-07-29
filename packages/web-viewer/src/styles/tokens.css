@@ -30,7 +30,7 @@
   --shadow-soft: 0 6px 18px rgb(24 24 24 / 0.08);
   --shadow-panel: 0 14px 30px -10px rgb(24 24 24 / 0.18);
   --shadow-elevated: 0 20px 44px -14px rgb(24 24 24 / 0.22);
-  --focus-ring: 0 0 0 3px rgb(242 107 79 / 0.18);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 18%, transparent);
   --duration-fast: 160ms;
   --motion-ease-standard: ease-out;
   --z-index-surface-raised: 1;
@@ -55,10 +55,14 @@
   --bg-panel-muted: #e0dad8;
   --bg-elevated: #eae6e0;
   --bg-control: #e0dbd5;
-  --bg-control-active: rgb(242 107 79 / 0.12);
+  --bg-control-active: color-mix(in srgb, var(--accent-primary) 12%, transparent);
   --bg-score-shell: linear-gradient(180deg, #eae6e0 0%, #d8d2cc 100%);
   --bg-score: #f5f2ed;
-  --bg-glow: radial-gradient(circle at top left, rgb(242 107 79 / 0.08), transparent 24%);
+  --bg-glow: radial-gradient(
+    circle at top left,
+    color-mix(in srgb, var(--accent-primary) 8%, transparent),
+    transparent 24%
+  );
   --bg-scrim: rgb(24 24 24 / 0.46);
   --text-primary: #1a1a1a;
   --text-secondary: #5a5a5a;
@@ -68,20 +72,20 @@
   --border-strong: #bfb9b3;
   --accent-primary: #f26b4f;
   --accent-primary-hover: #d85a3f;
-  --accent-soft: rgb(242 107 79 / 0.12);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 12%, transparent);
   --accent-bright: #f89880;
   --status-ready-bg: rgb(44 159 105 / 0.12);
   --status-ready-text: #1f8254;
-  --status-warning-bg: rgb(242 107 79 / 0.12);
+  --status-warning-bg: color-mix(in srgb, var(--accent-primary) 12%, transparent);
   --status-warning-text: #b84530;
   --status-error-bg: rgb(224 46 24 / 0.12);
   --status-error-text: #c42814;
-  --transport-key-bg: #f26b4f;
+  --transport-key-bg: var(--accent-primary);
   --transport-key-text: #ffffff;
   --transport-key-secondary-bg: #e0dbd5;
   --transport-key-secondary-text: #1a1a1a;
   --meter-track: #d5d0ca;
-  --meter-fill: #f26b4f;
+  --meter-fill: var(--accent-primary);
   --signal-blue: #5dade2;
   --signal-pink: #f04a8a;
   --signal-purple: #a972ff;
@@ -95,10 +99,14 @@
   --bg-panel-muted: #272727;
   --bg-elevated: #2e2e2d;
   --bg-control: #383837;
-  --bg-control-active: rgb(242 107 79 / 0.14);
+  --bg-control-active: color-mix(in srgb, var(--accent-primary) 14%, transparent);
   --bg-score-shell: linear-gradient(180deg, #2e2e2d 0%, #222222 100%);
   --bg-score: #f0ede8;
-  --bg-glow: radial-gradient(ellipse at top left, rgb(242 107 79 / 0.04), transparent 40%);
+  --bg-glow: radial-gradient(
+    ellipse at top left,
+    color-mix(in srgb, var(--accent-primary) 4%, transparent),
+    transparent 40%
+  );
   --bg-scrim: rgb(0 0 0 / 0.62);
   --text-primary: #eae6e0;
   --text-secondary: #bfb9b3;
@@ -108,20 +116,20 @@
   --border-strong: #5a5a5a;
   --accent-primary: #f5826a;
   --accent-primary-hover: #f89880;
-  --accent-soft: rgb(242 107 79 / 0.18);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 18%, transparent);
   --accent-bright: #f89880;
   --status-ready-bg: rgb(87 185 132 / 0.18);
   --status-ready-text: #b0dfbd;
-  --status-warning-bg: rgb(242 107 79 / 0.18);
+  --status-warning-bg: color-mix(in srgb, var(--accent-primary) 18%, transparent);
   --status-warning-text: #f8a898;
   --status-error-bg: rgb(224 46 24 / 0.18);
   --status-error-text: #f09888;
-  --transport-key-bg: #f5826a;
+  --transport-key-bg: var(--accent-primary);
   --transport-key-text: #1a1a1a;
   --transport-key-secondary-bg: #272727;
   --transport-key-secondary-text: #eae6e0;
   --meter-track: #4a4a4a;
-  --meter-fill: #f5826a;
+  --meter-fill: var(--accent-primary);
   --signal-blue: #5dade2;
   --signal-pink: #f04a8a;
   --signal-purple: #a972ff;

@@ -43,6 +43,12 @@ describe("ScoreViewer", () => {
     expect(screen.getByText("110%")).toBeTruthy();
     expect(commits).toHaveBeenCalledTimes(1);
     expect((commits.mock.calls[0]?.[0] as CustomEvent).detail).toEqual({ zoom: 1.1 });
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "放大谱面" }));
+
+    expect(screen.getByText("120%")).toBeTruthy();
+    expect(commits).toHaveBeenCalledTimes(2);
+    expect((commits.mock.calls[1]?.[0] as CustomEvent).detail).toEqual({ zoom: 1.2 });
     document.removeEventListener("zupulse:score-zoom-commit", commits);
   });
 

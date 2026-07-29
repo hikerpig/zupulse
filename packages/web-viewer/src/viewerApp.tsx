@@ -347,6 +347,10 @@ export function createViewerAlphaTabSettings(scrollElement: HTMLElement, scoreZo
     },
     display: {
       scale: scoreZoom,
+      padding: [16, 16],
+      stretchForce: 0.5,
+      systemPaddingTop: 6,
+      systemPaddingBottom: 6,
       resources: {
         secondaryGlyphColor: "#000000",
         titleFont: `28px ${chineseSerifFonts}`,
@@ -422,8 +426,8 @@ export function attachScoreZoomCommit(
     pending.renderingZoom = zoom;
     api.settings.display.scale = zoom;
     api.updateSettings?.();
-    api.render?.();
     listenForRender();
+    api.render?.();
   };
   const capturePendingRestore = (): PendingRestore => {
     const scoreAnchor = captureScoreAnchor(api, scrollElement);

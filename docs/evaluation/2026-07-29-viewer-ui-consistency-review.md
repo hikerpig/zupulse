@@ -102,3 +102,22 @@ Viewer 的整体信息架构和播放体验是成立的，但控件层缺乏一�
 4. 统一弹层容器与菜单项样式；BPM 输入框替换掉原生 spin 按钮；设置类入口统一为 popover
    或 drawer 其中一种。
 5. 绿色 accent 并入主色板或替换为中性色 + 图标表达。
+
+## 修复状态（2026-07-29 更新）
+
+当日已按上述方向完成一轮修复并通过 `pnpm verify:fast`（713 测试）与浏览器复核：
+
+- P0 进度条：轨道 4px（hover/focus 6px），thumb 14px 常显，`transportDivider` 已移除。
+- P1 transportBar：工具控件统一 36px 高、6px 圆角（纯图标按钮统一圆形）、13px 字号；
+  播放按钮保持 44px 唯一 primary 层级。
+- P1 主色：coral 字面值全部收敛到 `--accent-primary` 派生（`color-mix`）；active/pressed
+  改为描边 + 软底色，实心填充仅保留主操作。
+- P2 弹层：BPM 与导航模式菜单项统一为共享 `.menuOption` 样式；BPM number input 已隐藏
+  原生 spin 按钮。
+- P2 曲谱库：筛选行字号统一 13px；成功提示条与 MUSICXML 徽章改为中性色；
+  「0 个 Loop」改为「个循环」。
+- P3：窄屏 transportBar 右缘裁切已修；曲谱卡片操作图标对比度已提升。
+
+仍未处理（留待后续）：页头按钮层级（36px/12px 与主按钮的层级关系、「语言」按钮当前值
+表达）；设置入口容器形态统一（popover vs drawer）；BPM 弹层遮挡谱面；导入卡死 0/1 的
+功能 bug 与错误反馈；窄屏 BPM 徽标隐藏后的调速路径。

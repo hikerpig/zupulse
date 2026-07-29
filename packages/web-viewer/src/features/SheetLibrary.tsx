@@ -212,9 +212,9 @@ export function SheetLibrary({
               {t("favorites")}
             </button>
             <label className={`${styles.librarySort} tw:inline-flex tw:shrink-0 tw:items-center tw:gap-2`}>
-              <span className="tw:text-caption tw:whitespace-nowrap tw:text-muted">{t("sortLabel")}</span>
+              <span className="tw:whitespace-nowrap tw:text-muted">{t("sortLabel")}</span>
               <Select
-                className="tw:min-w-0 tw:text-caption"
+                className="tw:min-w-0"
                 value={sort}
                 onChange={(event) => setSort(event.target.value as typeof sort)}
               >
@@ -297,11 +297,7 @@ export function SheetLibrary({
                             </span>
                           ) : null}
                           <span className={styles.libraryMetaDivider} aria-hidden="true" />
-                          <span
-                            className={`${styles.libraryFormat} ${score.format === "musicxml" ? styles.libraryFormatMusicxml : ""}`}
-                          >
-                            {score.format.toUpperCase()}
-                          </span>
+                          <span className={styles.libraryFormat}>{score.format.toUpperCase()}</span>
                           <span className={styles.libraryMetaDivider} aria-hidden="true" />
                           <span>
                             {formatRelativeDate(score.importedAt, locale, {

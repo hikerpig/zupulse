@@ -54,7 +54,7 @@
 
   .progress .track {
     width: calc(100% - 12px);
-    height: 2px;
+    height: 4px;
     margin-inline: 6px;
     border-radius: 0;
     background: color-mix(in srgb, var(--meter-track) 72%, transparent);
@@ -62,27 +62,11 @@
   }
 
   .progress .thumb {
-    width: 12px;
-    height: 12px;
-    opacity: 0;
-    transition: opacity 120ms ease;
+    width: 14px;
+    height: 14px;
   }
 
   .progress:is(:hover, :focus-within) .track {
     height: 6px;
-  }
-
-  .progress:is(:hover, :focus-within) .thumb {
-    opacity: 1;
-  }
-
-  @media (hover: none) {
-    .progress .track {
-      height: 4px;
-    }
-
-    .progress .thumb {
-      opacity: 1;
-    }
   }
 }

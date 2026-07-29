@@ -128,7 +128,8 @@ function PlaybackLayout({
       <section className={styles.transportBar} aria-label={t("playback.controls")}>
         <div className={styles.transportActions}>
           <Button
-            className="tw:size-field tw:p-0"
+            iconOnly
+            className="tw:w-control"
             tone="primary"
             aria-label={playLabel}
             title={t("playback.shortcutTitle", { action: playLabel })}
@@ -136,9 +137,9 @@ function PlaybackLayout({
             onClick={() => dispatch({ type: "toggle-playback" })}
           >
             {view.isPlaying ? (
-              <Pause className="tw:size-4" aria-hidden="true" />
+              <Pause className="tw:size-6" aria-hidden="true" />
             ) : (
-              <Play className="tw:size-4" aria-hidden="true" />
+              <Play className="tw:size-6" aria-hidden="true" />
             )}
           </Button>
           <IconButton
@@ -165,7 +166,6 @@ function PlaybackLayout({
             {view.currentTime} / {view.duration}
           </span>
         </div>
-        <div className={styles.transportDivider} aria-hidden="true" />
         <div className={styles.transportProgress}>
           <Slider
             label={t("playback.progress")}
@@ -656,10 +656,20 @@ function ScoreNavigationControls({ navigation }: { navigation: NonNullable<Viewe
       </button>
       <ContextPopup anchor={buttonRef.current} open={open} onOpenChange={setOpen}>
         <div className={styles.navigationModePopup} aria-label={t("score.navigationMode")}>
-          <button type="button" aria-pressed={mode === "continuous"} onClick={() => chooseMode("continuous")}>
+          <button
+            className={styles.menuOption}
+            type="button"
+            aria-pressed={mode === "continuous"}
+            onClick={() => chooseMode("continuous")}
+          >
             {t("score.continuous")}
           </button>
-          <button type="button" aria-pressed={mode === "page-turn"} onClick={() => chooseMode("page-turn")}>
+          <button
+            className={styles.menuOption}
+            type="button"
+            aria-pressed={mode === "page-turn"}
+            onClick={() => chooseMode("page-turn")}
+          >
             {t("score.pageTurn")}
           </button>
         </div>
@@ -752,13 +762,14 @@ function disabledPlaybackWorkspace(
       <section className={styles.transportBar} aria-label={t("playback.controls")}>
         <div className={styles.transportActions}>
           <Button
-            className="tw:size-field tw:p-0"
+            iconOnly
+            className="tw:w-control"
             tone="primary"
             aria-label={t("playback.play")}
             title={t("playback.shortcutTitle", { action: t("playback.play") })}
             disabled
           >
-            <Play className="tw:size-4" aria-hidden="true" />
+            <Play className="tw:size-6" aria-hidden="true" />
           </Button>
           <IconButton size="sm" tone="ghost" aria-label={t("playback.stop")} title={t("playback.stopTitle")} disabled>
             <Square className="tw:size-4" aria-hidden="true" />
@@ -768,7 +779,6 @@ function disabledPlaybackWorkspace(
           </IconButton>
           <span className={styles.timeReadout}>0:00 / 0:00</span>
         </div>
-        <div className={styles.transportDivider} aria-hidden="true" />
         <div className={styles.transportProgress}>
           <Slider label={t("playback.progress")} variant="progress" max={1000} value={0} disabled />
         </div>
@@ -966,6 +976,7 @@ function BpmControl({
                 return (
                   <button
                     key={speed}
+                    className={styles.menuOption}
                     type="button"
                     aria-label={label}
                     aria-pressed={currentTempo === tempo}

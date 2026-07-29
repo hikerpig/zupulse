@@ -183,6 +183,43 @@ describe("AlphaTabPlaybackAdapter", () => {
     expect(api.countInVolume).toBe(0.7);
   });
 
+  it("restores the full score MIDI when a staff projection fails to load", async () => {
+    const calls: Array<[string, unknown]> = [];
+    const player = new FakeProjectionPlayer(calls);
+    const api = createApi({ calls, player });
+    api.settings = {} as never;
+    api.tickPosition = 960;
+    const buildProjection = vi.fn((_score, _settings, audibleStaffIds: ReadonlySet<string>) => ({
+      score: {},
+      midiFile: { audibleStaffIds: [...audibleStaffIds] },
+      tickShift: 0,
+      syncPoints: [],
+      transpositionPitches: new Map(),
+    })) as never;
+    const adapter = new AlphaTabPlaybackAdapter(api, "/soundfont.sf3", buildProjection);
+
+    const pending = adapter.setPianoStaffAudio(
+      {
+        trackId: "track-0",
+        rightStaffId: "track-0:staff-0",
+        leftStaffId: "track-0:staff-1",
+      },
+      ["track-0:staff-1"],
+    );
+    player.midiLoadFailed.emit(new Error("projection failed"));
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(calls.filter(([name]) => name === "loadMidiFile")).toEqual([
+      ["loadMidiFile", { audibleStaffIds: ["track-0:staff-1"] }],
+      ["loadMidiFile", { audibleStaffIds: ["track-0:staff-0", "track-0:staff-1"] }],
+    ]);
+    player.midiLoaded.emit({});
+    await expect(pending).rejects.toThrow("projection failed");
+    expect(api.tickPosition).toBe(960);
+  });
+
   it("maps alphaTab events and keeps an observable snapshot", () => {
     const events = createEvents();
     const api = createApi({ events });

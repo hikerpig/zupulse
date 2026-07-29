@@ -192,36 +192,42 @@ export class AlphaTabPlaybackAdapter implements PlaybackEngine {
     if (!player || !score || !settings) throw new Error("alphaTab staff audio projection is unavailable");
     repairAlphaTabWorkerLoadedMidiInfo(player);
 
-    const projection = this.buildStaffAudioProjection(
-      score as alphaTab.model.Score,
-      settings as alphaTab.Settings,
-      new Set(audibleStaffIds),
-    );
+    const sourceScore = score as alphaTab.model.Score;
+    const alphaTabSettings = settings as alphaTab.Settings;
     const position = this.api.tickPosition ?? 0;
     const wasPlaying = this.snapshot.transport === "playing";
     if (wasPlaying) this.api.playPause?.();
 
-    const loaded = new Promise<void>((resolve, reject) => {
-      const handleLoaded = () => {
-        player.midiLoaded.off(handleLoaded);
-        player.midiLoadFailed.off(handleFailed);
-        resolve();
-      };
-      const handleFailed = (error: Error) => {
-        player.midiLoaded.off(handleLoaded);
-        player.midiLoadFailed.off(handleFailed);
-        reject(error);
-      };
-      player.midiLoaded.on(handleLoaded);
-      player.midiLoadFailed.on(handleFailed);
-    });
-    player.loadMidiFile(projection.midiFile);
-    player.loadBackingTrack(projection.score);
-    player.updateSyncPoints(projection.syncPoints);
-    player.applyTranspositionPitches(projection.transpositionPitches);
-    try {
+    const loadProjection = async (staffIds: ReadonlySet<string>) => {
+      const projection = this.buildStaffAudioProjection(sourceScore, alphaTabSettings, staffIds);
+      const loaded = new Promise<void>((resolve, reject) => {
+        const handleLoaded = () => {
+          player.midiLoaded.off(handleLoaded);
+          player.midiLoadFailed.off(handleFailed);
+          resolve();
+        };
+        const handleFailed = (error: Error) => {
+          player.midiLoaded.off(handleLoaded);
+          player.midiLoadFailed.off(handleFailed);
+          reject(error);
+        };
+        player.midiLoaded.on(handleLoaded);
+        player.midiLoadFailed.on(handleFailed);
+      });
+      player.loadMidiFile(projection.midiFile);
+      player.loadBackingTrack(projection.score);
+      player.updateSyncPoints(projection.syncPoints);
+      player.applyTranspositionPitches(projection.transpositionPitches);
       await loaded;
+    };
+
+    try {
+      await loadProjection(new Set(audibleStaffIds));
       this.api.tickPosition = position;
+    } catch (error) {
+      await loadProjection(allStaffIds(sourceScore));
+      this.api.tickPosition = position;
+      throw error;
     } finally {
       this.reapplyTrackMixer();
       if (wasPlaying) this.playPause({ skipCountIn: true });
@@ -356,6 +362,12 @@ export class AlphaTabPlaybackAdapter implements PlaybackEngine {
 
 function normalizeVolume(value: number): number {
   return Math.min(1, Math.max(0, value));
+}
+
+function allStaffIds(score: alphaTab.model.Score): Set<string> {
+  return new Set(
+    score.tracks.flatMap((track) => track.staves.map((staff) => `track-${track.index}:staff-${staff.index}`)),
+  );
 }
 
 function repairAlphaTabWorkerLoadedMidiInfo(player: alphaTab.synth.IAlphaSynth): void {

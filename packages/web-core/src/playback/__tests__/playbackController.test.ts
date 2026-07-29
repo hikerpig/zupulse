@@ -320,6 +320,26 @@ describe("PlaybackController", () => {
     expect(engine.calls.filter(isMixerCall)).toEqual(mixerCallsBefore);
   });
 
+  it("serializes rapid piano hand changes so audio and state commit in command order", async () => {
+    const engine = new DeferredPianoEngine();
+    const controller = createPianoController(engine, new FakePersistence());
+    await controller.initialize();
+
+    const rightHand = controller.dispatch({ type: "set-piano-hand-mode", mode: "right-hand" });
+    const leftHand = controller.dispatch({ type: "set-piano-hand-mode", mode: "left-hand" });
+
+    await flushPromises();
+    expect(engine.staffAudioCalls).toHaveLength(1);
+    engine.resolveNextStaffAudio();
+    await flushPromises();
+    expect(engine.staffAudioCalls).toHaveLength(2);
+    engine.resolveNextStaffAudio();
+    await Promise.all([rightHand, leftHand]);
+
+    expect(controller.getState().pianoPractice.mode).toBe("left-hand");
+    expect(engine.staffAudioCalls.at(-1)?.audibleStaffIds).toEqual(["track-0:staff-0"]);
+  });
+
   it("restores a persisted piano hand mode through the runtime projection", async () => {
     const sidecar = createDefaultSidecar(identity, "2026-07-10T00:00:00Z");
     sidecar.practice.playback.pianoPractice = {
@@ -634,8 +654,7 @@ function isMixerCall([name]: [string, unknown]): boolean {
 }
 
 async function flushPromises(): Promise<void> {
-  await Promise.resolve();
-  await Promise.resolve();
+  for (let index = 0; index < 5; index += 1) await Promise.resolve();
 }
 
 class ManualSchedule {
@@ -753,6 +772,26 @@ class FakeEngine implements PlaybackEngine {
   }
   destroy(): void {
     this.destroyed = true;
+  }
+}
+
+class DeferredPianoEngine extends FakeEngine {
+  readonly staffAudioCalls: Array<{ mapping: unknown; audibleStaffIds: string[] }> = [];
+  private readonly pendingStaffAudio: Array<(result: { pausedForAudioProjection: boolean }) => void> = [];
+
+  constructor() {
+    super({ soundFont: "ready", transport: "stopped" }, true);
+  }
+
+  override setPianoStaffAudio(mapping: unknown, audibleStaffIds: string[]) {
+    return new Promise<{ pausedForAudioProjection: boolean }>((resolve) => {
+      this.staffAudioCalls.push({ mapping, audibleStaffIds });
+      this.pendingStaffAudio.push(resolve);
+    });
+  }
+
+  resolveNextStaffAudio(): void {
+    this.pendingStaffAudio.shift()?.({ pausedForAudioProjection: false });
   }
 }
 

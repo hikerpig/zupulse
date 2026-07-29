@@ -68,6 +68,7 @@ export class PlaybackController {
   private initialized = false;
   private destroyed = false;
   private countInActive = false;
+  private pianoAudioProjectionChain = Promise.resolve();
   private readonly previewSeekTicks = new Set<number>();
   private sidecarWriteChain = Promise.resolve();
   private resumeWriteChain = Promise.resolve();
@@ -176,10 +177,10 @@ export class PlaybackController {
         this.setRhythmVolume("countIn", command.volume);
         return;
       case "set-piano-hand-mode":
-        await this.setPianoHandMode(command.mode);
+        await this.queuePianoAudioProjection(() => this.setPianoHandMode(command.mode));
         return;
       case "preview-piano-target-hand":
-        await this.previewPianoTargetHand(command.active);
+        await this.queuePianoAudioProjection(() => this.previewPianoTargetHand(command.active));
         return;
       case "set-loop-enabled":
         this.setLoopEnabled(command.enabled);
@@ -476,6 +477,12 @@ export class PlaybackController {
     this.sidecar.practice.playback.pianoPractice = { mode, updatedAt: now };
     this.markSidecarDirty();
     this.notify();
+  }
+
+  private queuePianoAudioProjection(operation: () => Promise<void>): Promise<void> {
+    const result = this.pianoAudioProjectionChain.then(operation);
+    this.pianoAudioProjectionChain = result.catch(() => undefined);
+    return result;
   }
 
   private async previewPianoTargetHand(active: boolean): Promise<void> {

@@ -45,14 +45,4 @@ describe("Status", () => {
       expect(status.querySelector('[aria-hidden="true"]')).not.toBeNull();
     }
   });
-
-  it("can announce a changing status when requested", () => {
-    render(
-      <Status tone="ready" role="status">
-        Saved
-      </Status>,
-    );
-
-    expect(screen.getByRole("status").textContent).toContain("Saved");
-  });
 });

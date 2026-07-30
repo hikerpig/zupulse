@@ -13,6 +13,7 @@
     "@zupulse/harmony-cli": "workspace:^",
     "@zupulse/web-core": "workspace:*",
     "fflate": "0.8.3",
+    "midi-file": "1.2.4",
     "pdfjs-dist": "6.1.200",
     "zod": "4.4.3"
   },

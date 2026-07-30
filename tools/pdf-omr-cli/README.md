@@ -8,6 +8,7 @@
 ```bash
 pnpm pdf-omr -- --help
 pnpm pdf-omr -- inspect <input.pdf> --output <run-dir>
+pnpm pdf-omr -- import-midi <input.mid> --output <run-dir>
 pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|transcoda|legato> --output <run-dir>
 pnpm pdf-omr -- validate <draft.json> --output <diagnostics.json>
 pnpm pdf-omr -- analyze <draft.json> --output <harmony.json>
@@ -16,6 +17,12 @@ pnpm benchmark:pdf-omr -- --manifest <manifest.json> --engine <audiveris|transco
 ```
 
 `inspect` 使用 PDF.js，输出 page count、page dimensions 和 vector/raster operator signals。
+`import-midi` 使用锁定版本的 `midi-file` 解析 SMF format 0/1 + PPQ，输出 immutable MIDI copy、
+`RawMidiDocument`、`PerformanceEvidence`、structured diagnostics 和 canonical hashes。它保留 tick、
+track、channel、velocity、tempo、meter、controls、机械松键与 CC64 调整后的 sound-off，不做量化、
+staff/voice 推断或 MusicXML alignment。Format 2、SMPTE division、冲突 tempo 和 malformed input
+稳定失败。
+
 `recognize` 通过可替换 adapter 调用 Audiveris、Transcoda 或 LEGATO，再规范化为 engine-neutral
 Draft。Audiveris 保留原始 MXL/OMR；Transcoda 保留原始 `**kern`；LEGATO 保留原始 ABC。后两者
 同时保留转换后的 MusicXML。
@@ -75,6 +82,21 @@ LEGATO 本地 engine 与官方 Demo 对齐：接受一至三页 PDF，将页面�
 `engines/legato-environment.json`。模型、Llama vision encoder 与外部 repository 不提交到仓库。
 
 ## Run artifacts
+
+成功的 `import-midi` run 包含：
+
+```text
+run.json
+input/midi.mid
+input.json
+raw-midi.json
+performance-evidence.json
+diagnostics.json
+```
+
+原始 bytes 与 raw/performance evidence 对相同输入必须 deterministic；`run.json` 含执行时间戳，不属于
+byte-for-byte deterministic evidence。MIDI import 完全运行在 Node.js/TypeScript 与 npm 生态，不引入
+Python runtime。
 
 成功的 `recognize` run 包含：
 

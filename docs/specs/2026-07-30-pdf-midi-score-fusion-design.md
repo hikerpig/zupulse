@@ -31,9 +31,11 @@ MusicXML 是 OMR 侧的首选输入。不得先降级为 ABC，因为 ABC 不适
 ## Assumptions
 
 1. PDF 与 MIDI 表示同一首乐曲和同一编曲；系统必须先验证该假设，不能仅凭文件名接受。
-2. MIDI 来源可能是 score-exported MIDI，也可能是 human-performance MIDI，两者必须分类处理。
-3. Score-exported MIDI 可以提供强音高和量化节奏证据；performance MIDI 包含 rubato、踏板、错音、
-   漏音和额外音，不能直接覆盖书面谱。
+2. 主要目标来源是制谱软件导出的 score-exported MIDI。human-performance MIDI 是次级兼容输入，
+   两者仍必须分类处理，不能共用未经区分的 confidence 和 repair policy。
+3. 首轮 alignment、quantization 和 compatibility thresholds 应优先针对 score-exported MIDI。它可以
+   提供强音高和量化节奏证据；performance MIDI 包含 rubato、踏板、错音、漏音和额外音，不能直接
+   覆盖书面谱。
 4. OMR 负责 measure、staff、voice、notation 和页面证据；MIDI 主要提供 sounding pitch、onset
    sequence 和 duration evidence。
 5. 第一阶段没有人工标注 ground truth，因此只能评估 alignment coverage、结构约束、回渲染和人工
@@ -69,6 +71,11 @@ pnpm pdf-omr -- fuse \
 and voice invariants remain valid.
 
 ## Intermediate Representations
+
+MIDI 导入、Raw MIDI 与 `PerformanceEvidence` 的详细 contract 见
+[`2026-07-30-midi-performance-evidence-import-design.md`](2026-07-30-midi-performance-evidence-import-design.md)。
+第一条实施 slice 已交付独立的 `import-midi` command；它不承担量化、score position 推断或
+alignment。
 
 中间表示应独立于 MusicXML DOM 和 MIDI tick，并使用 exact rational 表达书面音乐时间：
 
@@ -172,8 +179,21 @@ PoC 至少记录：
 - wall time and peak memory；
 - score-exported MIDI 与 performance MIDI 的分组结果。
 
-至少使用 `Flower_Day.pdf` 及其对应 MIDI 作为复杂钢琴谱样本。没有人工校订 reference
-MusicXML 时，结果只能标为 exploratory。
+至少使用两组不同用途的 corpus：
+
+- `Flower_Day.pdf` 及其对应 MIDI：复杂真实输入；没有人工校订 reference MusicXML 时，结果只能
+  标为 exploratory；
+- `test-fixtures/musicxml/K331-3_reviewed.mxl`：人工校订 ground truth，用于量化 pitch、onset、
+  duration、voice、alignment 和 repair precision/recall。
+
+K331 缺少的输入从同一 ground-truth MusicXML 用 MuseScore Studio 4.7.4 导出：
+
+- `K331-3_reviewed.mid` 是 score-exported MIDI，用于 clean upper-bound alignment；
+- `K331-3_reviewed.pdf` 是 score-rendered PDF，用于受控 OMR 与 fusion evaluation；
+- `K331-3_reviewed.provenance.json` 记录 source/derived roles、hash、generator 和结构摘要。
+
+K331 的 MIDI 与 PDF 是派生 fixture，不是独立 annotation。报告必须把这组结果标为
+`derived-controlled`，不得用它单独证明对真实世界 PDF 或真人演奏 MIDI 的泛化改善。
 
 ## Boundaries
 
@@ -202,6 +222,15 @@ MusicXML 时，结果只能标为 exploratory。
 5. Before/after MusicXML can be rendered and compared without parser or round-trip failures.
 6. Evaluation separates score-exported MIDI from human-performance MIDI.
 
+## Runtime Ecosystem Decision
+
+MIDI import 和后续产品化路径使用 Node.js/TypeScript 与 npm 生态，首选以 `midi-file` 作为底层 SMF
+parser，再投影到本项目 strict schemas。Browser、Desktop Renderer、`web-core` 与 App bundle 不得
+引入 Python runtime 或 Python package。
+
+Partitura 只允许用于隔离的离线研究或 differential evaluation；它不是产品 dependency，也不能成为
+`PerformanceEvidence` 的 canonical schema。
+
 ## Reference Approaches
 
 - Partitura symbolic music processing and score/performance representations:
@@ -217,8 +246,10 @@ MusicXML 时，结果只能标为 exploratory。
 
 ## Open Questions
 
-1. 目标 MIDI 主要来自制谱软件导出，还是来自真人演奏？
-2. repeat、D.C./D.S.、coda 和删节版本是否需要在首轮支持？
-3. 第一阶段只生成 repair proposals，还是允许应用严格白名单内的高置信度修复？
-4. 是否有至少一份人工校订 MusicXML，可用于量化 pitch、onset、duration 和 voice 改善？
-5. Partitura 的许可证、运行体积和 Python process 是否符合未来产品边界？
+已确认：
+
+- 主要目标 MIDI 来自制谱软件导出；真人演奏 MIDI 不作为首轮优化目标。
+- `K331-3_reviewed.mxl` 作为人工校订 ground truth；其 MIDI/PDF 从同一 MusicXML 派生。
+
+1. repeat、D.C./D.S.、coda 和删节版本是否需要在首轮支持？
+2. 第一阶段只生成 repair proposals，还是允许应用严格白名单内的高置信度修复？

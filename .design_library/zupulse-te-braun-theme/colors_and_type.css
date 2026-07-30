@@ -1,23 +1,23 @@
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
 /* @group-priority: primary, success, warning, info, error */
 :root {
-  /* primary — coral-based warm accent */
+  /* primary — TE signal vermilion accent */
   --zupulse-primary-50: #fff2ee; /* AI-generated */
   --zupulse-primary-100: #ffe0d6; /* AI-generated */
   --zupulse-primary-200: #ffc4ad; /* AI-generated */
   --zupulse-primary-300: #f89880; /* AI-generated */
   --zupulse-primary-400: #f5826a; /* AI-generated */
-  --zupulse-primary-500: #f26b4f; /* AI-generated */ /* @primary */
-  --zupulse-primary-600: #d85a3f; /* AI-generated */
-  --zupulse-primary-700: #b84530; /* AI-generated */
-  --zupulse-primary-800: #8c3525; /* AI-generated */
-  --zupulse-primary-900: #5e261a; /* AI-generated */
-  /* neutral — cool-warm gray */
-  --zupulse-neutral-50: #f0ede8; /* AI-generated */
-  --zupulse-neutral-100: #e5e1db; /* AI-generated */
-  --zupulse-neutral-200: #d5d0ca; /* AI-generated */
+  --zupulse-primary-500: #f0492e; /* AI-generated */ /* @primary */
+  --zupulse-primary-600: #d93820; /* AI-generated */
+  --zupulse-primary-700: #b02c18; /* AI-generated */
+  --zupulse-primary-800: #82210f; /* AI-generated */
+  --zupulse-primary-900: #57170a; /* AI-generated */
+  /* neutral — TE chassis light gray */
+  --zupulse-neutral-50: #e9e7e2; /* AI-generated */
+  --zupulse-neutral-100: #e2e0da; /* AI-generated */
+  --zupulse-neutral-200: #d0cec8; /* AI-generated */
   --zupulse-neutral-300: #bfb9b3; /* AI-generated */
-  --zupulse-neutral-400: #9e9a95; /* AI-generated */
+  --zupulse-neutral-400: #918f89; /* AI-generated */
   --zupulse-neutral-500: #7a7a7a; /* AI-generated */ /* @primary */
   --zupulse-neutral-600: #5a5a5a; /* AI-generated */
   --zupulse-neutral-700: #4a4a4a; /* AI-generated */
@@ -94,14 +94,14 @@
   --muted: var(--zupulse-neutral-500); /* AI-generated */
   --muted-foreground: var(--zupulse-neutral-600); /* AI-generated */
   --rule: var(--zupulse-neutral-200); /* AI-generated */
-  --surface: #f5f2ed; /* AI-generated */
+  --surface: #f0eee9; /* AI-generated */
   --surface-dim: var(--zupulse-neutral-100); /* AI-generated */
-  --surface-container-low: #eae6e0; /* AI-generated */
-  --surface-container: #e0dbd5; /* AI-generated */
-  --surface-container-high: #d8d2cc; /* AI-generated */
-  --surface-container-highest: #d5d0ca; /* AI-generated */
+  --surface-container-low: #e2e0da; /* AI-generated */
+  --surface-container: #dbdad4; /* AI-generated */
+  --surface-container-high: #d0cec8; /* AI-generated */
+  --surface-container-highest: #bfb9b3; /* AI-generated */
   --inverse-surface: var(--zupulse-neutral-900); /* AI-generated */
-  --inverse-on-surface: #f0ede8; /* AI-generated */
+  --inverse-on-surface: #e9e7e2; /* AI-generated */
   --secondary: var(--zupulse-neutral-200); /* AI-generated */
   --secondary-foreground: var(--zupulse-neutral-800); /* AI-generated */
   /* success */

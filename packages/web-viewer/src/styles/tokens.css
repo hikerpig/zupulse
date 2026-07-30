@@ -49,15 +49,15 @@
 }
 
 :root[data-theme="light"] {
-  --bg-app: #f0ede8;
-  --bg-shell: rgb(240 237 232 / 0.94);
-  --bg-panel: #f5f2ed;
-  --bg-panel-muted: #e0dad8;
-  --bg-elevated: #eae6e0;
-  --bg-control: #e0dbd5;
+  --bg-app: #e9e7e2;
+  --bg-shell: rgb(233 231 226 / 0.94);
+  --bg-panel: #f0eee9;
+  --bg-panel-muted: #d9d7d1;
+  --bg-elevated: #e2e0da;
+  --bg-control: #dbdad4;
   --bg-control-active: color-mix(in srgb, var(--accent-primary) 12%, transparent);
-  --bg-score-shell: linear-gradient(180deg, #eae6e0 0%, #d8d2cc 100%);
-  --bg-score: #f5f2ed;
+  --bg-score-shell: linear-gradient(180deg, #e2e0da 0%, #d0cec8 100%);
+  --bg-score: #f4f3ef;
   --bg-glow: radial-gradient(
     circle at top left,
     color-mix(in srgb, var(--accent-primary) 8%, transparent),
@@ -66,25 +66,25 @@
   --bg-scrim: rgb(24 24 24 / 0.46);
   --text-primary: #1a1a1a;
   --text-secondary: #5a5a5a;
-  --text-tertiary: #9e9a95;
+  --text-tertiary: #918f89;
   --text-on-accent: #ffffff;
-  --border-default: #d5d0ca;
+  --border-default: #d0cec8;
   --border-strong: #bfb9b3;
-  --accent-primary: #f26b4f;
-  --accent-primary-hover: #d85a3f;
+  --accent-primary: #f0492e;
+  --accent-primary-hover: #d93820;
   --accent-soft: color-mix(in srgb, var(--accent-primary) 12%, transparent);
-  --accent-bright: #f89880;
+  --accent-bright: #ff6a48;
   --status-ready-bg: rgb(44 159 105 / 0.12);
   --status-ready-text: #1f8254;
   --status-warning-bg: color-mix(in srgb, var(--accent-primary) 12%, transparent);
-  --status-warning-text: #b84530;
+  --status-warning-text: #b02e0e;
   --status-error-bg: rgb(224 46 24 / 0.12);
   --status-error-text: #c42814;
   --transport-key-bg: var(--accent-primary);
   --transport-key-text: #ffffff;
-  --transport-key-secondary-bg: #e0dbd5;
+  --transport-key-secondary-bg: #dbdad4;
   --transport-key-secondary-text: #1a1a1a;
-  --meter-track: #d5d0ca;
+  --meter-track: #d0cec8;
   --meter-fill: var(--accent-primary);
   --signal-blue: #5dade2;
   --signal-pink: #f04a8a;
@@ -101,7 +101,7 @@
   --bg-control: #383837;
   --bg-control-active: color-mix(in srgb, var(--accent-primary) 14%, transparent);
   --bg-score-shell: linear-gradient(180deg, #2e2e2d 0%, #222222 100%);
-  --bg-score: #f0ede8;
+  --bg-score: #f4f3ef;
   --bg-glow: radial-gradient(
     ellipse at top left,
     color-mix(in srgb, var(--accent-primary) 4%, transparent),

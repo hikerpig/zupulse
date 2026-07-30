@@ -217,23 +217,23 @@
     },
     "zupulse-primary": {
       "zupulse-primary-900": {
-        "hex": "#5e261a",
+        "hex": "#57170a",
         "opacity": "1"
       },
       "zupulse-primary-800": {
-        "hex": "#8c3525",
+        "hex": "#82210f",
         "opacity": "1"
       },
       "zupulse-primary-700": {
-        "hex": "#b84530",
+        "hex": "#b02c18",
         "opacity": "1"
       },
       "zupulse-primary-600": {
-        "hex": "#d85a3f",
+        "hex": "#d93820",
         "opacity": "1"
       },
       "zupulse-primary-500": {
-        "hex": "#f26b4f",
+        "hex": "#f0492e",
         "opacity": "1",
         "isPrimary": true
       },
@@ -281,7 +281,7 @@
         "isPrimary": true
       },
       "zupulse-neutral-400": {
-        "hex": "#9e9a95",
+        "hex": "#918f89",
         "opacity": "1"
       },
       "zupulse-neutral-300": {
@@ -289,21 +289,21 @@
         "opacity": "1"
       },
       "zupulse-neutral-200": {
-        "hex": "#d5d0ca",
+        "hex": "#d0cec8",
         "opacity": "1"
       },
       "zupulse-neutral-100": {
-        "hex": "#e5e1db",
+        "hex": "#e2e0da",
         "opacity": "1"
       },
       "zupulse-neutral-50": {
-        "hex": "#f0ede8",
+        "hex": "#e9e7e2",
         "opacity": "1"
       }
     },
     "primary": {
       "primary": {
-        "hex": "#f26b4f",
+        "hex": "#f0492e",
         "opacity": "1",
         "isPrimary": true
       },

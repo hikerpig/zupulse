@@ -53,13 +53,13 @@ This system is written for a dashboard-oriented practice environment with a futu
 
 ### Color
 
-主品牌色是一条完整的珊瑚色 10 阶色阶，从 `#fff3ed` 到 `#611f14`，其中主动作色落在 `--zupulse-primary-500: #f26b4f`。这比上一版更干净、更锐利，也更像屏幕里的高能操作信号，而不是偏材质化的暖工业橙。浅色主题下，它与 `--surface: #f5f2ed`、`--surface-container-low: #eae6e0`、`--surface-container: #e0dbd5` 一起工作，形成"净白工作台 + 炭黑结构件 + 珊瑚主操作"的清晰层级；深色主题中主色切换到 `--zupulse-primary-400: #f5826a`，继续保持高可见度与快速响应感。
+主品牌色是一条完整的信号橙红 10 阶色阶，从 `#fff2ee` 到 `#57170a`，其中主动作色落在 `--zupulse-primary-500: #f0492e`。它取自 Teenage Engineering 设备的橙红旋钮与按键，往珊瑚方向回拨后更明亮，仍是屏幕里的高能操作信号。浅色主题下，它与 `--surface: #f0eee9`、`--surface-container-low: #e2e0da`、`--surface-container: #dbdad4` 一起工作，形成"机身灰工作台 + 炭黑结构件 + 橙红主操作"的清晰层级；深色主题中主色切换到 `--zupulse-primary-400: #f5826a`，继续保持高可见度与快速响应感。
 
-中性色是另一条 10 阶色阶，从 `#f0ede8` 到 `#141414`。真正主导界面质感的不是纸感暖白，而是更清洁的屏幕白与更明确的炭灰结构：`#f5f2ed`、`#eae6e0`、`#e0dbd5` 负责底板与卡面，`#4a4a4a`、`#2e2e2d`、`#141414` 负责导航、轨道结构、控制框架和高密度信息区。这让工作台保留 Braun 式秩序，但整体观感从"暖金属台面"转向"低金属、先屏幕后材质"的数字设备界面，冷灰底色更克制、更沉稳，减少 AI 生成的浮夸感。
+中性色是另一条 10 阶色阶，从 `#e9e7e2` 到 `#141414`。主导界面质感的是接近 Teenage Engineering 机身的浅暖灰与明确的炭灰结构：`#f0eee9`、`#e2e0da`、`#dbdad4` 负责底板与卡面，`#4a4a4a`、`#2e2e2d`、`#141414` 负责导航、轨道结构、控制框架和高密度信息区。这让工作台保留 Braun 式秩序，同时摆脱米色纸感，转向低反光、先屏幕后材质的数字设备界面。
 
-语义色保持清晰分工，并延续系统的理性组织方式。成功色主值是 `#2c9f69`，语义别名使用 `--success: #1f8254`；警告色主值是 `#f0a000`，语义别名使用 `--warning: #c98300`；错误色主值是 `#e02e18`，语义别名使用 `--error: #c42814`；信息色主值是 `#008ff5`，语义别名使用 `--info: #0072ca`。除此之外，系统还定义了四个稀疏的 coded accents：`--color-signal-blue: #5dade2`、`--color-signal-pink: #f04a8a`、`--color-signal-purple: #a972ff`、`--color-signal-yellow: #ffbe1a`。这些颜色用于轨道编码、节奏标记、层级分组和参数提示，只负责形成节奏与分类感，不可替代主珊瑚承担主要 CTA、主要激活态或品牌识别。
+语义色保持清晰分工，并延续系统的理性组织方式。成功色主值是 `#2c9f69`，语义别名使用 `--success: #1f8254`；警告色主值是 `#f0a000`，语义别名使用 `--warning: #c98300`；错误色主值是 `#e02e18`，语义别名使用 `--error: #c42814`；信息色主值是 `#008ff5`，语义别名使用 `--info: #0072ca`。除此之外，系统还定义了四个稀疏的 coded accents：`--color-signal-blue: #5dade2`、`--color-signal-pink: #f04a8a`、`--color-signal-purple: #a972ff`、`--color-signal-yellow: #ffbe1a`。这些颜色用于轨道编码、节奏标记、层级分组和参数提示，只负责形成节奏与分类感，不可替代主信号橙红承担主要 CTA、主要激活态或品牌识别。
 
-整体色彩氛围来自"清洁离白表面 + 深炭结构块 + 珊瑚主信号 + 少量编码色点亮"的组合。它依然保留 Braun 的秩序与 Teenage Engineering 的节拍感，但不再强调器材金属感，而是把它们压缩进一个更锋利、更平面、更像数字工作站的屏幕语言里：基础层始终安静，结构层始终明确，主操作始终由珊瑚统领，辅助色只在需要编码节奏时出现。
+整体色彩氛围来自"机身灰表面 + 深炭结构块 + 橙红主信号 + 少量编码色点亮"的组合。它依然保留 Braun 的秩序与 Teenage Engineering 的节拍感，但不再强调器材金属感，而是把它们压缩进一个更锋利、更平面、更像数字工作站的屏幕语言里：基础层始终安静，结构层始终明确，主操作始终由信号橙红统领，辅助色只在需要编码节奏时出现。
 
 ### Typography
 
@@ -89,13 +89,13 @@ This system is written for a dashboard-oriented practice environment with a futu
 
 ### Borders
 
-- 轮廓线主值来自 `--rule: var(--zupulse-neutral-200)`，也就是冷灰 `#d5d0ca` 这一层。
+- 轮廓线主值来自 `--rule: var(--zupulse-neutral-200)`，也就是浅灰 `#d0cec8` 这一层。
 - 常规描边使用 `--color-outline` 与 `--color-border`，都落在这条冷中性色谱上，而不是纯黑透明线。
 - 深色主题下 outline 变为 `--zupulse-neutral-700`，保持同样的结构逻辑但提升暗底可见性。
 
 ### Backgrounds
 
-- 浅色背景以 `#f0ede8`、`#f5f2ed`、`#eae6e0`、`#e0dbd5` 为主，强调干净、低反光、接近软件工作台的离白屏幕层次。
+- 浅色背景以 `#e9e7e2`、`#f0eee9`、`#e2e0da`、`#dbdad4` 为主，强调干净、低反光、接近 TE 机身浅灰的工作台层次。
 - 深色背景以 `#181818` 为底，并配合 `#272727`、`#2e2e2d`、`#383837`、`#4a4a4a` 做层级抬升。
 - `--inverse-surface` 与 `--inverse-on-surface` 明确了浅深模式之间的反转逻辑，适合做高对比提示区。
 

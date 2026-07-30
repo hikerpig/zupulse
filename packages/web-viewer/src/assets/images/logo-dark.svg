@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Zupulse logo mark — Pulse Z Clean Dark">
   <title>Zupulse — Pulse Z Clean (G1 Dark, centered)</title>
 
-  <g stroke="#e0dbd5" stroke-width="1.6" stroke-linecap="round" fill="none">
+  <g stroke="#dbdad4" stroke-width="1.6" stroke-linecap="round" fill="none">
     <line x1="20" y1="40" x2="108" y2="40"/>
     <line x1="20" y1="52" x2="108" y2="52"/>
     <line x1="20" y1="64" x2="108" y2="64"/>
@@ -9,7 +9,7 @@
     <line x1="20" y1="88" x2="108" y2="88"/>
   </g>
 
-  <g fill="#f26b4f">
+  <g fill="#f0492e">
     <circle cx="50.1" cy="40" r="4.5"/>
     <circle cx="88.1" cy="40" r="4.5"/>
     <circle cx="64" cy="64" r="4.5"/>

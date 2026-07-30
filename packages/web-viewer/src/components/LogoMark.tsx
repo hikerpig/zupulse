@@ -29,7 +29,7 @@ export function LogoMark({ size = 32 }: { size?: number }) {
           <line x1="20" y1="76" x2="108" y2="76" />
           <line x1="20" y1="88" x2="108" y2="88" />
         </g>
-        <g fill="#f26b4f">
+        <g fill="#f0492e">
           <circle cx="50.1" cy="40" r="4.5" />
           <circle cx="88.1" cy="40" r="4.5" />
           <circle cx="64" cy="64" r="4.5" />
@@ -43,14 +43,14 @@ export function LogoMark({ size = 32 }: { size?: number }) {
         xmlns="http://www.w3.org/2000/svg"
         focusable="false"
       >
-        <g stroke="#e0dbd5" strokeWidth="1.6" strokeLinecap="round" fill="none">
+        <g stroke="#dbdad4" strokeWidth="1.6" strokeLinecap="round" fill="none">
           <line x1="20" y1="40" x2="108" y2="40" />
           <line x1="20" y1="52" x2="108" y2="52" />
           <line x1="20" y1="64" x2="108" y2="64" />
           <line x1="20" y1="76" x2="108" y2="76" />
           <line x1="20" y1="88" x2="108" y2="88" />
         </g>
-        <g fill="#f26b4f">
+        <g fill="#f0492e">
           <circle cx="50.1" cy="40" r="4.5" />
           <circle cx="88.1" cy="40" r="4.5" />
           <circle cx="64" cy="64" r="4.5" />

@@ -3,7 +3,7 @@ feature: sheet-library
 title: Sheet Library
 status: current
 delivery: partial
-last_verified: 2026-07-29
+last_verified: 2026-07-30
 hosts:
   - browser
   - desktop
@@ -27,7 +27,8 @@ Sheet Library 是当前设备持久保存和管理已导入曲谱的主页。导
 
 ## 用户入口
 
-- Browser Demo 和 Desktop Shell 启动后都以 Sheet Library 为根页面。
+- Browser Demo、Desktop Shell 和 iPad Shell 启动后默认打开 Home 产品介绍面（`/`）；Sheet Library
+  位于 `#/library` 路由，从 Home 或主导航一次点击可达。
 - 用户可选择单份或多份 Guitar Pro、MusicXML、MXL 文件导入。
 - Library 顶部和空馆藏状态共用一个“导入曲谱”意图；弹窗允许多次选择、审阅和移除候选，
   只有用户确认“导入 N 份”后才提交。

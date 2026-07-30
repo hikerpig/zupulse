@@ -22,6 +22,7 @@ beforeEach(() => {
 
 describe("App", () => {
   it("switches locale without rebuilding the application", async () => {
+    window.history.replaceState(null, "", "#/library");
     const application = new ViewerApplication(
       { openScore: async () => undefined, subscribe: () => () => undefined },
       async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() }),
@@ -72,6 +73,7 @@ describe("App", () => {
   });
 
   it("renders a compact workbench shell instead of detached cards", async () => {
+    window.history.replaceState(null, "", "#/library");
     const application = new ViewerApplication(
       { openScore: async () => undefined, subscribe: () => () => undefined },
       async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() }),
@@ -93,6 +95,7 @@ describe("App", () => {
   });
 
   it("renders an accessible idle viewer and opens through the application service", async () => {
+    window.history.replaceState(null, "", "#/library");
     const openScore = vi.fn(async () => undefined);
     const application = new ViewerApplication({ openScore, subscribe: () => () => undefined }, async () => ({
       togglePlayback: vi.fn(),
@@ -124,6 +127,7 @@ describe("App", () => {
   });
 
   it("opens a structured practice control bay instead of a loose settings drawer", async () => {
+    window.history.replaceState(null, "", "#/library");
     const application = new ViewerApplication(
       { openScore: async () => undefined, subscribe: () => () => undefined },
       async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() }),
@@ -139,6 +143,7 @@ describe("App", () => {
   });
 
   it("renders the library route when persistent library dependencies are provided", async () => {
+    window.history.replaceState(null, "", "#/library");
     const repository: SheetLibraryRepository = {
       initialize: async () => undefined,
       list: async () => [],
@@ -168,10 +173,52 @@ describe("App", () => {
     );
     render(<App application={application} />);
     expect(await screen.findByRole("heading", { name: "曲谱库" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "曲谱库" }).getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("link", { name: "首页" }).getAttribute("aria-current")).toBeNull();
+    await application.destroy();
+  });
+
+  it("renders the home product introduction at the root route", async () => {
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      async () => ({
+        togglePlayback: async () => undefined,
+        pauseAndFlush: async () => undefined,
+        destroy: async () => undefined,
+      }),
+    );
+    render(<App application={application} />);
+
+    expect(await screen.findByRole("heading", { name: "识谱与弹奏练习工作台" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "读谱练习 VIEWER" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "和声分析 STUDIO" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "曲库与文件 LIBRARY" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "打开曲库" }).getAttribute("href")).toBe("#/library");
+    expect(screen.getByRole("link", { name: "首页" }).getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("link", { name: "曲谱库" }).getAttribute("aria-current")).toBeNull();
+    await application.destroy();
+  });
+
+  it("omits the harmony analysis section when the capability is unavailable", async () => {
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      async () => ({
+        togglePlayback: async () => undefined,
+        pauseAndFlush: async () => undefined,
+        destroy: async () => undefined,
+      }),
+    );
+    render(<App application={application} capabilities={{ harmonyAnalysis: false }} />);
+
+    expect(await screen.findByRole("heading", { name: "识谱与弹奏练习工作台" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "读谱练习 VIEWER" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "和声分析 STUDIO" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "曲库与文件 LIBRARY" })).toBeTruthy();
     await application.destroy();
   });
 
   it("keeps the incomplete viewer hidden until the requested session is ready", async () => {
+    window.history.replaceState(null, "", "#/library");
     const id = "8f14e45f-ea42-4c2e-a9f4-6f1f8f60d88a";
     let resolveOpenSession:
       | ((session: {
@@ -269,7 +316,7 @@ describe("App", () => {
     render(<App application={application} />);
 
     const libraryLink = await screen.findByRole("link", { name: "曲谱库" });
-    expect(libraryLink.getAttribute("href")).toBe("#/");
+    expect(libraryLink.getAttribute("href")).toBe("#/library");
     expect(libraryLink.querySelector("svg.lucide-library-big")).toBeTruthy();
     expect(screen.getByRole("link", { name: "查看器" }).getAttribute("aria-current")).toBe("page");
     expect(screen.getByRole("link", { name: "和弦工作室" }).getAttribute("href")).toBe(`#/studio/${id}`);
@@ -385,7 +432,7 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: "和弦分析暂不可用" })).toBeTruthy();
     expect(screen.getByText("C 大调前奏曲")).toBeTruthy();
     expect(screen.getByRole("link", { name: "返回查看器" }).getAttribute("href")).toBe(`#/viewer/${id}`);
-    expect(screen.getByRole("link", { name: "返回曲谱库" }).getAttribute("href")).toBe("#/");
+    expect(screen.getByRole("link", { name: "返回曲谱库" }).getAttribute("href")).toBe("#/library");
     expect(screen.queryByRole("link", { name: "和弦工作室" })).toBeNull();
     expect(readScore).not.toHaveBeenCalled();
     expect(readAnalysis).not.toHaveBeenCalled();
@@ -484,7 +531,7 @@ describe("App", () => {
     await application.destroy();
   });
 
-  it("reopens the same score after returning to the library through the logo", async () => {
+  it("reopens the same score after returning to the library through the logo and home entry", async () => {
     const id = "00000000-0000-4000-8000-000000000001";
     window.history.replaceState(null, "", `#/viewer/${id}`);
     vi.spyOn(window.navigator, "userAgent", "get").mockReturnValue("browser");
@@ -531,6 +578,8 @@ describe("App", () => {
 
     await waitFor(() => expect(application.hasSession(id)).toBe(true));
     await user.click(screen.getByRole("link", { name: "逐拍首页" }));
+    expect(await screen.findByRole("heading", { name: "识谱与弹奏练习工作台" })).toBeTruthy();
+    await user.click(screen.getByRole("link", { name: "打开曲库" }));
     await user.click(await screen.findByRole("button", { name: "打开 Score A" }));
 
     await waitFor(() => expect(application.hasSession(id)).toBe(true));

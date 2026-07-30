@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   attachScoreZoomCommit,
   createDefaultOpenSession,
@@ -32,6 +32,11 @@ function testRoot(): HTMLElement {
 }
 
 describe("mountViewerApp", () => {
+  beforeEach(() => {
+    // Hosts without a library fall back to the demo viewer on the Library route.
+    window.history.replaceState(null, "", "#/library");
+  });
+
   it("switches between dark and light theme", async () => {
     renderSessionFixture(document);
 

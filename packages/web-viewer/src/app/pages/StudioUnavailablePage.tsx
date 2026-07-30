@@ -43,7 +43,7 @@ export function StudioUnavailablePage({ application }: { application: ViewerAppl
               {t("unavailable.viewer")}
             </Link>
           ) : null}
-          <Link className={styles.unavailableSecondaryAction} to="/">
+          <Link className={styles.unavailableSecondaryAction} to="/library">
             <LibraryBig aria-hidden="true" size={16} />
             {t("unavailable.library")}
           </Link>

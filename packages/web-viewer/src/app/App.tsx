@@ -8,6 +8,7 @@ import type { LocaleHost } from "../i18n/locale-controller";
 import { applyLocaleState } from "../i18n/locale-controller";
 import { AppStoreProvider, createPersistedAppStore, useApplyTheme, useAppStore } from "./appStore";
 import { LibraryPage } from "./pages/LibraryPage";
+import { HomePage } from "./pages/HomePage";
 import { ViewerPage } from "./pages/ViewerPage";
 import { StudioPage } from "./pages/StudioPage";
 import { StudioUnavailablePage } from "./pages/StudioUnavailablePage";
@@ -56,7 +57,8 @@ export function App({
             <ApplicationNavigation application={application} localeHost={localeHost} capabilities={capabilities} />
           ),
           children: [
-            { path: "/", element: <LibraryPage application={application} /> },
+            { path: "/", element: <HomePage capabilities={capabilities} /> },
+            { path: "/library", element: <LibraryPage application={application} /> },
             {
               path: "/viewer/:libraryScoreId",
               element: <ViewerPage application={application} capabilities={capabilities} />,

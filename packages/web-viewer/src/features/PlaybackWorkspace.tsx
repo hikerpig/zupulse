@@ -3,6 +3,7 @@ import type { PlaybackCommand, PlaybackState, PianoHandMode } from "@zupulse/web
 import { Popover } from "@base-ui/react/popover";
 import {
   BookOpen,
+  Check as CheckIcon,
   ChevronLeft,
   ChevronRight,
   LocateFixed,
@@ -750,9 +751,18 @@ function Check({
   name?: string;
 }) {
   return (
-    <label>
-      <input type={type} name={name} checked={checked} onChange={(event) => onChange(event.currentTarget.checked)} />
-      <span>{label}</span>
+    <label className={styles.trackOption} data-control-type={type}>
+      <input
+        className={styles.trackOptionInput}
+        type={type}
+        name={name}
+        checked={checked}
+        onChange={(event) => onChange(event.currentTarget.checked)}
+      />
+      <span className={styles.trackOptionIndicator} aria-hidden="true">
+        {type === "checkbox" ? <CheckIcon className={styles.trackOptionCheck} strokeWidth={3} /> : null}
+      </span>
+      <span className={styles.trackOptionLabel}>{label}</span>
     </label>
   );
 }

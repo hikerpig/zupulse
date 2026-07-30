@@ -593,7 +593,7 @@
     font-size: 12px;
   }
   .trackRow {
-    grid-template-columns: repeat(4, auto);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     align-items: center;
     margin-top: 10px;
   }
@@ -603,13 +603,93 @@
     min-width: 0;
   }
   .trackRow strong {
+    padding-inline: 2px;
     overflow-wrap: anywhere;
     color: var(--text-primary);
   }
-  .trackRow label {
+  .trackRow .trackOption {
+    position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
+    gap: 7px;
+    min-width: 0;
+    min-height: 38px;
+    padding: 7px 6px;
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    transition:
+      color var(--duration-fast),
+      opacity var(--duration-fast);
+  }
+  .trackRow .trackOption:hover {
+    color: var(--text-primary);
+  }
+  .trackRow .trackOption:has(.trackOptionInput:checked) {
+    color: var(--text-primary);
+  }
+  .trackRow .trackOption:has(.trackOptionInput:focus-visible) .trackOptionIndicator {
+    border-color: var(--accent-primary);
+    box-shadow: var(--focus-ring);
+  }
+  .trackOptionInput {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .trackOptionIndicator {
+    position: relative;
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 4px;
+    background: transparent;
+    transition:
+      border-color var(--duration-fast),
+      background-color var(--duration-fast),
+      box-shadow var(--duration-fast);
+  }
+  .trackOption[data-control-type="radio"] .trackOptionIndicator {
+    border-radius: var(--radius-round);
+  }
+  .trackOption:has(.trackOptionInput:checked) .trackOptionIndicator {
+    border-color: var(--accent-primary);
+    background: var(--accent-primary);
+  }
+  .trackOptionCheck {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    color: var(--text-on-accent);
+    opacity: 0;
+    transform: translate(-50%, -50%);
+  }
+  .trackOption:has(.trackOptionInput:checked) .trackOptionCheck {
+    opacity: 1;
+  }
+  .trackOption[data-control-type="radio"]:has(.trackOptionInput:checked) .trackOptionIndicator::after {
+    position: absolute;
+    inset: 4px;
+    border-radius: var(--radius-round);
+    background: var(--text-on-accent);
+    content: "";
+  }
+  .trackOptionLabel {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .persistenceStatus {
     margin: 0;
@@ -704,6 +784,9 @@
       clip: rect(0 0 0 0);
       clip-path: inset(50%);
       white-space: nowrap;
+    }
+    .trackRow {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
   @keyframes drawer-enter-mobile {

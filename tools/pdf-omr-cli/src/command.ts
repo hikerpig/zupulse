@@ -1,6 +1,7 @@
 import { PdfOmrError } from "./errors";
 import { createEngineRegistry, type EngineRegistry } from "./engine-registry";
 import type { RunBenchmarkDependencies } from "./benchmark/run-benchmark";
+import type { MidiImportReport } from "./midi/schemas";
 import {
   type PdfOmrBenchmarkReport,
   pdfOmrHelpReportSchema,
@@ -17,6 +18,7 @@ const usage = [
   "",
   "Commands:",
   "  inspect <input.pdf> --output <run-dir>",
+  "  import-midi <input.mid> --output <run-dir>",
   "  recognize <input.pdf> --engine <engine-id> --output <run-dir>",
   "  validate <draft.json> --output <diagnostics.json>",
   "  analyze <draft.json> --output <harmony.json>",
@@ -40,10 +42,23 @@ export async function runPdfOmrCommand(
   | PdfOmrValidateReport
   | PdfOmrExportReport
   | PdfOmrBenchmarkReport
+  | MidiImportReport
 > {
   const normalized = args[0] === "--" ? args.slice(1) : args;
   if (normalized.length === 0 || normalized[0] === "--help" || normalized[0] === "-h") {
     return pdfOmrHelpReportSchema.parse({ schemaVersion: "1.0.0", command: "help", usage });
+  }
+  if (normalized[0] === "import-midi") {
+    const input = normalized[1];
+    const outputFlag = normalized[2];
+    const output = normalized[3];
+    if (input === undefined || outputFlag !== "--output" || output === undefined || normalized.length !== 4) {
+      throw new PdfOmrError("INVALID_CLI_ARGUMENT", "import-midi requires <input.mid> --output <run-dir>", {
+        context: { command: "import-midi" },
+      });
+    }
+    const { importMidiCommand } = await import("./commands/import-midi");
+    return importMidiCommand(input, output, context.cwd ?? process.cwd());
   }
   if (normalized[0] === "inspect") {
     const input = normalized[1];

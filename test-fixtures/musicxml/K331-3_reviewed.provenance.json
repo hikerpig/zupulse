@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "groundTruth": {
+    "path": "test-fixtures/musicxml/K331-3_reviewed.mxl",
+    "role": "manually-reviewed-musicxml",
+    "sha256": "cf358b873205d72b9a67cada92cc4ac11480a35fc092a25eb181eaa305c3d3f4"
+  },
+  "generator": {
+    "name": "MuseScore Studio",
+    "version": "4.7.4",
+    "commands": [
+      "mscore -o test-fixtures/musicxml/K331-3_reviewed.mid test-fixtures/musicxml/K331-3_reviewed.mxl",
+      "mscore -o test-fixtures/musicxml/K331-3_reviewed.pdf test-fixtures/musicxml/K331-3_reviewed.mxl"
+    ]
+  },
+  "derivedArtifacts": [
+    {
+      "path": "test-fixtures/musicxml/K331-3_reviewed.mid",
+      "role": "score-exported-midi",
+      "sha256": "451f291fa8c971bedd6991cfa236083b0d178110ed623e6773137531337138ec",
+      "facts": {
+        "smfFormat": 1,
+        "trackCount": 2,
+        "ticksPerQuarter": 480,
+        "parsedNoteCount": 2487
+      }
+    },
+    {
+      "path": "test-fixtures/musicxml/K331-3_reviewed.pdf",
+      "role": "score-rendered-pdf",
+      "sha256": "22cec1f974dc4bbef64c3e8968e98dcae68d229769d70fa66a21b8c8d56ae8a7",
+      "facts": {
+        "pageCount": 6,
+        "pageSize": "A4"
+      }
+    }
+  ],
+  "invariants": [
+    "The reviewed MusicXML is the only ground-truth score.",
+    "The MIDI and PDF are derived fixtures and are not independent annotations.",
+    "Derived fixtures must be regenerated from the same MusicXML and generator version.",
+    "A regenerated PDF may have a different byte hash because MuseScore embeds generation timestamps."
+  ]
+}

@@ -37,7 +37,7 @@ export function attachIpadRoutePersistence(target: Window): () => void {
 }
 
 function routeFromHash(hash: string): PersistedRoute | undefined {
-  if (hash === "" || hash === "#" || hash === "#/") return { route: "library" };
+  if (hash === "" || hash === "#" || hash === "#/" || hash === "#/library") return { route: "library" };
   const match = hash.match(/^#\/viewer\/([^/?#]+)$/);
   if (!match || !libraryScoreIdPattern.test(match[1] ?? "")) return undefined;
   return { route: "viewer", libraryScoreId: match[1]! };

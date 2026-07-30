@@ -39,6 +39,11 @@ async function importSelectedFixture(window: import("@playwright/test").Page): P
   await window.getByRole("button", { name: "Import 1" }).click();
 }
 
+async function openLibrary(window: import("@playwright/test").Page): Promise<void> {
+  await window.getByRole("link", { name: "Library" }).click();
+  await expect(window.getByRole("heading", { name: "Score Library" })).toBeVisible();
+}
+
 async function openPracticeSettings(window: import("@playwright/test").Page): Promise<void> {
   await window.getByRole("button", { name: "Practice settings" }).click();
   await expect(window.getByRole("complementary", { name: "Practice settings" })).toBeVisible();
@@ -58,6 +63,7 @@ test("starts offline with an isolated renderer", async () => {
     const page = await app.firstWindow();
     await app.context().setOffline(true);
     await page.reload();
+    await openLibrary(page);
     await expect(page.getByRole("button", { name: "Import score" })).toBeVisible();
     expect(
       await page.evaluate(() => ({
@@ -101,10 +107,11 @@ test("persists locale and keeps renderer and application menu synchronized", asy
     let window = await app.firstWindow();
     await window.getByRole("button", { name: "Language" }).click();
     await window.getByRole("menuitemradio", { name: "简体中文" }).click();
+    await window.getByRole("link", { name: "曲谱库" }).click();
     await expect(window.getByRole("heading", { name: "曲谱库" })).toBeVisible();
     await window.getByRole("button", { name: "语言" }).click();
     await window.getByRole("menuitemradio", { name: "English" }).click();
-    await expect(window.getByRole("heading", { name: "Score Library" })).toBeVisible();
+    await openLibrary(window);
     await expect
       .poll(() => app.evaluate(({ Menu }) => Menu.getApplicationMenu()?.items.map((item) => item.label) ?? []))
       .toContain("File");
@@ -112,7 +119,7 @@ test("persists locale and keeps renderer and application menu synchronized", asy
 
     app = await launch(userData);
     window = await app.firstWindow();
-    await expect(window.getByRole("heading", { name: "Score Library" })).toBeVisible();
+    await openLibrary(window);
     await expect(window.getByRole("button", { name: "Language" })).toBeVisible();
   } finally {
     await app.close().catch(() => undefined);
@@ -147,7 +154,7 @@ test("opens a GP file and restores persisted practice state", async () => {
 
     app = await launch(userData);
     window = await app.firstWindow();
-    await expect(window.getByRole("heading", { name: "Score Library" })).toBeVisible();
+    await openLibrary(window);
     await expect(window.getByText("Last practiced at measure 1")).toBeVisible();
     await window.getByRole("button", { name: "Continue practicing 桌面验收谱" }).click();
     await expect(window.getByRole("heading", { level: 1 })).toContainText("桌面验收谱");
@@ -166,6 +173,7 @@ test("opens MusicXML and MXL through the unified score entry", async () => {
   const app = await launch(userData);
   try {
     const window = await app.firstWindow();
+    await openLibrary(window);
     await expect(window.getByRole("button", { name: "Import score" })).toBeVisible();
     await chooseFixture(app, musicXmlFixture);
     await importSelectedFixture(window);
@@ -187,6 +195,7 @@ test("uses the bundled sample as a normal Desktop Library Score", async () => {
   const app = await launch(userData);
   try {
     const window = await app.firstWindow();
+    await openLibrary(window);
     await importBundledSample(window, "Import your own scores");
     const firstId = window.url().split("/viewer/")[1];
     expect(firstId).toBeTruthy();
@@ -223,6 +232,7 @@ test("opens a saved MusicXML Studio document", async () => {
   const app = await launch(userData);
   try {
     const window = await app.firstWindow();
+    await openLibrary(window);
     await chooseFixture(app, musicXmlFixture);
     await importSelectedFixture(window);
     await expect(window.getByRole("link", { name: "Harmony analysis" })).toBeVisible();
@@ -265,6 +275,7 @@ test("keeps K331 responsive and terminates a cancelled Desktop analysis", async 
   const app = await launch(userData);
   try {
     const window = await app.firstWindow();
+    await openLibrary(window);
     await chooseFixture(app, reviewedFixture);
     await importSelectedFixture(window);
     await window.getByRole("link", { name: "Harmony analysis" }).click();
@@ -326,6 +337,7 @@ test("synchronizes a Studio selection and closes its runtime", async () => {
   const app = await launch(userData);
   try {
     const window = await app.firstWindow();
+    await openLibrary(window);
     await chooseFixture(app, harmonySelectionFixture);
     await importSelectedFixture(window);
     await window.getByRole("link", { name: "Harmony analysis" }).click();

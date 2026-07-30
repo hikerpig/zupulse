@@ -1,4 +1,4 @@
-import { Languages, LibraryBig, Moon, Sun } from "lucide-react";
+import { House, Languages, LibraryBig, Moon, Sun } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router";
@@ -61,6 +61,10 @@ export function AppHeader({
 
       <nav className={styles.navigation} aria-label={t("navigation.primary")}>
         <NavLink className={({ isActive }) => (isActive ? styles.activeLink : styles.navLink)} to="/" end>
+          <House aria-hidden="true" size={16} />
+          {t("navigation.home")}
+        </NavLink>
+        <NavLink className={({ isActive }) => (isActive ? styles.activeLink : styles.navLink)} to="/library">
           <LibraryBig aria-hidden="true" size={16} />
           {t("navigation.library")}
         </NavLink>

@@ -6,6 +6,7 @@ export const zhCN = {
     },
     navigation: {
       primary: "主要页面",
+      home: "首页",
       library: "曲谱库",
       viewer: "查看器",
       studio: "和弦工作室",
@@ -23,6 +24,37 @@ export const zhCN = {
       zhCN: "简体中文",
       enUS: "English",
       saving: "正在保存语言设置",
+    },
+  },
+  home: {
+    intro: {
+      title: "识谱与弹奏练习工作台",
+      lead: "Zupulse 在你的浏览器或桌面本地打开 Guitar Pro 与 MusicXML 曲谱，播放、循环、变速练习，并分析和声进行。曲谱留在本机，不上传。",
+      primaryAction: "打开曲库",
+    },
+    sections: {
+      viewer: {
+        title: "读谱练习",
+        tag: "VIEWER",
+        description: "谱面光标跟随播放，A/B 循环锁定难点小节，变速不改变音高。选择主轨道，只听自己练习的声部。",
+        params: ["ZOOM 50%–200%", "A/B LOOP", "PAGE TURN", "TRACK SOLO"],
+        entry: "从曲库选择一份曲谱",
+      },
+      studio: {
+        title: "和声分析",
+        tag: "STUDIO",
+        description: "从曲谱推导和声进行，区分来源与置信度。修正分析结果，试听和弦，让谱面呈现你确认后的和声。",
+        params: ["HARMONY ANALYSIS", "USER CORRECTION", "CHORD PREVIEW"],
+        entry: "从曲库选择一份曲谱",
+      },
+      library: {
+        title: "曲库与文件",
+        tag: "LIBRARY",
+        description:
+          "导入的曲谱保存为本机受管副本，原文件不被修改。支持 Guitar Pro、MusicXML 与 MXL，单文件最大 64 MiB。",
+        params: ["GP / GPX / GP5", "MUSICXML / MXL", "≤ 64 MIB", "LOCAL ONLY"],
+        entry: "导入曲谱",
+      },
     },
   },
   library: {

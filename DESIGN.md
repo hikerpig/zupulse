@@ -1,6 +1,6 @@
 ---
 status: current
-last-reviewed: 2026-07-27
+last-reviewed: 2026-07-30
 theme-library: .design_library/zupulse-te-braun-theme
 runtime-tokens: packages/web-viewer/src/styles/tokens.css
 ---
@@ -96,6 +96,17 @@ Zupulse 是面向长期练习、乐谱查看与和声分析的桌面级数字音
 
 ## 产品表面
 
+### Home
+
+- Home 是唯一承担“展示与介绍”职责的产品表面；Library / Viewer / Studio 不放介绍性内容。
+- 单栏阅读面，最大宽度 960px 与 Viewer Comfortable 阅读框对齐；分区之间用细分隔线，不用卡片堆叠。
+- Hero（产品定义）无编号、整体居中对齐；下方工作区分区从 01 开始编号，编号索引用 IBM Plex Mono。
+  编号与 mono 参数读数只写真实能力，不编造版本号或精确数字；display（56px）只用于 Hero 标题。
+- signal 色编码：Viewer = blue、Studio = purple、Library = pink；只出现在编号与指示点等小面积位置，
+  视觉权重低于珊瑚色。Home 同屏使用三种 signal 色，是“同一界面 signal 色通常不超过两种”的显式例外。
+- 全页只有“打开曲库”一个珊瑚色实心主操作；各区入口为文字链接，hover/focus 时才过渡到珊瑚色。
+- 不读取 Library 数据，无 loading / empty 分叉；`capabilities.harmonyAnalysis=false` 时不渲染和声分析一节，也不放“不可用”占位。
+
 ### Library
 
 - 像排练目录，不像专辑商店或 SaaS 后台。
@@ -177,7 +188,7 @@ Zupulse 不是营销落地页、SaaS 管理后台、赛博音乐概念图或硬�
 - 不让所有按钮具有相同权重，也不把所有可点击元素染成珊瑚色。
 - 不混用暖灰和冷灰表面体系，不为单个页面创造第二主强调色。
 - 不使用霓虹、外发光、大面积玻璃或高饱和渐变。
-- 不用动画装饰静态内容，不增加营销 Hero、口号或与练习流程无关的说明文案。
+- 不用动画装饰静态内容；Library / Viewer / Studio 工作区不增加营销 Hero、口号或与练习流程无关的说明文案。Home 的介绍内容必须真实对应已实现能力，同样禁止口号与营销修饰。
 
 ## Agent 工作协议
 

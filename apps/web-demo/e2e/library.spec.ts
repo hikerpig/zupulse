@@ -16,7 +16,7 @@ const reviewedFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/K
 
 test("keeps the Library sort select compact on desktop", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto("/");
+  await page.goto("/#/library");
 
   const sort = page.getByRole("combobox", { name: "排序" });
   await expect(sort).toBeVisible();
@@ -28,7 +28,7 @@ test("keeps the Library sort select compact on desktop", async ({ page }) => {
 test("adds single and multiple Browser drops to the import review without importing on outside drops", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#/library");
   await page.getByRole("button", { name: "导入自己的曲谱" }).click();
   const dropZone = page.getByRole("button", { name: "选择文件或拖放文件" });
 
@@ -53,7 +53,7 @@ test("adds single and multiple Browser drops to the import review without import
 test("imports, reuses, exports, deletes, and re-adds the bundled sample as a normal Library Score", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#/library");
   await importBundledSample(page, "导入自己的曲谱");
   const firstId = page.url().split("/viewer/")[1];
   expect(firstId).toBeTruthy();
@@ -79,7 +79,7 @@ test("imports, reuses, exports, deletes, and re-adds the bundled sample as a nor
 });
 
 test("persists English across representative Library, Viewer, and Studio flows", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#/library");
   await page.getByRole("button", { name: "语言" }).click();
   await page.getByRole("menuitemradio", { name: "English" }).click();
   await expect(page.getByRole("heading", { name: "Score Library" })).toBeVisible();
@@ -98,7 +98,7 @@ test("persists English across representative Library, Viewer, and Studio flows",
 test("switches locale during playback without losing workspace state and keeps controls reachable", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱");
   const viewerUrl = page.url();
   const play = page.getByRole("button", { name: "播放" });
@@ -123,7 +123,7 @@ test("switches locale during playback without losing workspace state and keeps c
 });
 
 test("persists independent metronome and count-in practice settings", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱", musicXmlFixture);
   await page.getByRole("button", { name: "练习设置" }).click();
   const practice = page.getByRole("complementary", { name: "练习设置" });
@@ -160,7 +160,7 @@ test("persists independent metronome and count-in practice settings", async ({ p
 });
 
 test("switches and persists piano hand accompaniment while preserving playback", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱", reviewedFixture);
   await page.getByRole("button", { name: "播放" }).click();
   await expect(page.getByRole("button", { name: "暂停" })).toBeVisible();
@@ -186,7 +186,7 @@ test("switches and persists piano hand accompaniment while preserving playback",
 });
 
 test("keeps the Library to Viewer transition on a loading surface until the score renders", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱");
   await expect(page.locator(".score-viewer .at-surface").first()).toBeVisible();
   await page.getByRole("navigation", { name: "主要页面" }).getByRole("link", { name: "曲谱库" }).click();
@@ -207,7 +207,7 @@ test("follows playback and supports stable score page navigation", async ({ page
   page.on("console", (message) => {
     if (message.type() === "error") consoleErrors.push(message.text());
   });
-  await page.goto("/");
+  await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱", reviewedFixture);
   await expect(page.locator(".score-viewer .at-surface").first()).toBeVisible();
 
@@ -238,7 +238,7 @@ test("follows playback and supports stable score page navigation", async ({ page
 
 test("keeps a comfortable wide score and applies visible zoom layouts", async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
-  await page.goto("/");
+  await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱", reviewedFixture);
   const scoreHost = page.locator(".score-viewer");
   const surface = scoreHost.locator(".at-surface").first();
@@ -272,7 +272,7 @@ test("keeps a comfortable wide score and applies visible zoom layouts", async ({
 });
 
 test("persists a Browser Library Score and gives a re-import a fresh ID after deletion", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#/library");
   await expect(page.getByRole("heading", { name: "曲谱库" })).toBeVisible();
 
   await importFixture(page, "导入自己的曲谱");
@@ -300,7 +300,7 @@ test("persists a Browser Library Score and gives a re-import a fresh ID after de
 });
 
 test("opens a MusicXML Library Score in Studio and restores its saved document", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱", musicXmlFixture);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Single Voice");
   await page.getByRole("link", { name: "和弦分析" }).click();
@@ -348,7 +348,7 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("已保存", { timeout: 30_000 });
   await expect(page.getByRole("separator", { name: "调整乐谱与分析面板宽度" })).toHaveAttribute("aria-valuenow", "45");
   await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("1 个修正 · 已保存");
-  await page.goto("/");
+  await page.goto("/#/library");
   await expect(page.getByRole("heading", { name: "曲谱库" })).toBeVisible();
   await page.getByRole("button", { name: "Single Voice 的更多操作" }).click();
   await page.getByRole("menuitem", { name: "删除 Single Voice", exact: true }).click();
@@ -358,7 +358,7 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
 });
 
 test("reanalyses a multi-part Studio scope and allows a track to be added back", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱", multiPartFixture);
   await page.getByRole("link", { name: "和弦分析" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "和弦分析" })).toBeVisible();
@@ -375,7 +375,7 @@ test("reanalyses a multi-part Studio scope and allows a track to be added back",
 
 test("keeps K331 responsive and terminates a cancelled analysis", async ({ page }) => {
   test.setTimeout(60_000);
-  await page.goto("/");
+  await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱", reviewedFixture);
   await page.getByRole("link", { name: "和弦分析" }).click();
   const documentStatus = page.getByRole("status", { name: "分析文档状态" });
@@ -427,7 +427,7 @@ test("keeps K331 responsive and terminates a cancelled analysis", async ({ page 
 });
 
 test("synchronizes a score selection between the range list and alphaTab", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱", harmonySelectionFixture);
   await page.getByRole("link", { name: "和弦分析" }).click();
   await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("已保存", { timeout: 30_000 });
@@ -455,7 +455,7 @@ test("synchronizes a score selection between the range list and alphaTab", async
 });
 
 test("surfaces a CAS conflict when two Browser Studio windows save the same revision", async ({ page, context }) => {
-  await page.goto("/");
+  await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱", musicXmlFixture);
   await page.getByRole("link", { name: "和弦分析" }).click();
   await expect(page.getByRole("status", { name: "分析文档状态" })).toContainText("已保存");
@@ -473,7 +473,7 @@ test("surfaces a CAS conflict when two Browser Studio windows save the same revi
 
 test("keeps the Library to Viewer practice journey usable from 390px through desktop", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
+  await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱");
   await page.getByRole("navigation", { name: "主要页面" }).getByRole("link", { name: "曲谱库" }).click();
 

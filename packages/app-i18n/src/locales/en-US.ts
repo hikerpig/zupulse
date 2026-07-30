@@ -9,6 +9,7 @@ export const enUS = {
     },
     navigation: {
       primary: "Primary navigation",
+      home: "Home",
       library: "Library",
       viewer: "Viewer",
       studio: "Harmony Studio",
@@ -26,6 +27,39 @@ export const enUS = {
       zhCN: "简体中文",
       enUS: "English",
       saving: "Saving language preference",
+    },
+  },
+  home: {
+    intro: {
+      title: "A workbench for score reading and playing practice",
+      lead: "Zupulse opens Guitar Pro and MusicXML scores locally in your browser or on your desktop. Play, loop, and practice at your own tempo, and analyze the harmony. Scores stay on this device and are never uploaded.",
+      primaryAction: "Open Library",
+    },
+    sections: {
+      viewer: {
+        title: "Reading practice",
+        tag: "VIEWER",
+        description:
+          "The on-score cursor follows playback, A/B looping locks onto tricky measures, and tempo changes never alter pitch. Pick a focus track to hear only the part you practice.",
+        params: ["ZOOM 50%–200%", "A/B LOOP", "PAGE TURN", "TRACK SOLO"],
+        entry: "Choose a score from the Library",
+      },
+      studio: {
+        title: "Harmony analysis",
+        tag: "STUDIO",
+        description:
+          "Derive the harmonic progression from the score, with source and confidence kept distinct. Correct the analysis, audition chords, and let the score reflect the harmony you confirmed.",
+        params: ["HARMONY ANALYSIS", "USER CORRECTION", "CHORD PREVIEW"],
+        entry: "Choose a score from the Library",
+      },
+      library: {
+        title: "Library and files",
+        tag: "LIBRARY",
+        description:
+          "Imported scores are kept as managed copies on this device; the original files are never modified. Supports Guitar Pro, MusicXML, and MXL up to 64 MiB per file.",
+        params: ["GP / GPX / GP5", "MUSICXML / MXL", "≤ 64 MIB", "LOCAL ONLY"],
+        entry: "Import a score",
+      },
     },
   },
   library: {

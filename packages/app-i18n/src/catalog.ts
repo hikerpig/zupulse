@@ -10,7 +10,7 @@ export type LocaleState = {
   effectiveLocale: SupportedLocale;
 };
 
-export const namespaces = ["common", "library", "viewer", "studio", "errors", "desktop", "meta"] as const;
+export const namespaces = ["common", "home", "library", "viewer", "studio", "errors", "desktop", "meta"] as const;
 export type AppNamespace = (typeof namespaces)[number];
 
 export const resources = {

@@ -162,7 +162,7 @@ test("switches and persists piano hand accompaniment while preserving playback",
   const practice = page.getByRole("complementary", { name: "练习设置" });
   await practice.getByRole("button", { name: /练习手/ }).click();
 
-  await practice.getByRole("radio", { name: "练右手" }).check();
+  await practice.getByText("练右手", { exact: true }).click();
   await expect(practice.getByRole("radio", { name: "练右手" })).toBeChecked();
   await expect(page.getByRole("button", { name: "暂停" })).toBeVisible();
   const preview = practice.getByRole("button", { name: "临时试听练习手" });

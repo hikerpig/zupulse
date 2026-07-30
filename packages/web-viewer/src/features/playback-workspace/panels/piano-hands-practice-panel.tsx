@@ -26,6 +26,7 @@ export function PianoHandsPracticePanel({ playback }: { playback: Playback }) {
                 checked={state.mode === mode}
                 onChange={() => void dispatch({ type: "set-piano-hand-mode", mode })}
               />
+              <span className={styles.ledDot} data-active={state.mode === mode || undefined} aria-hidden="true" />
               <span>{pianoHandModeLabel(mode, t)}</span>
             </label>
           ))}

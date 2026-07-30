@@ -31,32 +31,32 @@ export const enUS = {
   },
   home: {
     intro: {
-      title: "A workbench for score reading and playing practice",
-      lead: "Zupulse opens Guitar Pro and MusicXML scores locally in your browser or on your desktop. Play, loop, and practice at your own tempo, and analyze the harmony. Scores stay on this device and are never uploaded.",
+      title: "A practice workbench for reading and playing scores",
+      lead: "Zupulse opens Guitar Pro and MusicXML scores right on your device, in the browser or on the desktop. Play along, loop passages, adjust the tempo, and analyze the harmony. Your scores never leave your device.",
       primaryAction: "Open Library",
     },
     sections: {
       viewer: {
-        title: "Reading practice",
+        title: "Score reading practice",
         tag: "VIEWER",
         description:
-          "The on-score cursor follows playback, A/B looping locks onto tricky measures, and tempo changes never alter pitch. Pick a focus track to hear only the part you practice.",
+          "The on-screen cursor follows the playback, A/B looping locks onto the tricky measures, and changing the tempo never alters the pitch. Solo your track to hear only the part you're practicing.",
         params: ["ZOOM 50%–200%", "A/B LOOP", "PAGE TURN", "TRACK SOLO"],
-        entry: "Choose a score from the Library",
+        entry: "Pick a score from your Library",
       },
       studio: {
         title: "Harmony analysis",
         tag: "STUDIO",
         description:
-          "Derive the harmonic progression from the score, with source and confidence kept distinct. Correct the analysis, audition chords, and let the score reflect the harmony you confirmed.",
+          "Zupulse derives the harmonic progression from the score, keeping sources and confidence clearly distinct. Correct the results, audition the chords, and let the score reflect the harmony you've confirmed.",
         params: ["HARMONY ANALYSIS", "USER CORRECTION", "CHORD PREVIEW"],
-        entry: "Choose a score from the Library",
+        entry: "Pick a score from your Library",
       },
       library: {
-        title: "Library and files",
+        title: "Library & files",
         tag: "LIBRARY",
         description:
-          "Imported scores are kept as managed copies on this device; the original files are never modified. Supports Guitar Pro, MusicXML, and MXL up to 64 MiB per file.",
+          "Imports are kept as managed copies on your device, and the original files are never touched. Supports Guitar Pro, MusicXML, and MXL, up to 64 MiB per file.",
         params: ["GP / GPX / GP5", "MUSICXML / MXL", "≤ 64 MIB", "LOCAL ONLY"],
         entry: "Import a score",
       },

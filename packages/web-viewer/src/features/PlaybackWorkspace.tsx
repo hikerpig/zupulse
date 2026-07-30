@@ -152,16 +152,19 @@ function PlaybackLayout({
           >
             <Square className="tw:size-4" aria-hidden="true" />
           </IconButton>
-          <IconButton
-            size="sm"
-            tone="ghost"
-            aria-label={t("playback.loopMode")}
-            title={view.looping ? t("playback.closeLoopMode") : t("playback.openLoopMode")}
-            pressed={view.looping}
-            onClick={() => setLoopMode(!view.looping)}
-          >
-            <Repeat2 className="tw:size-4" aria-hidden="true" />
-          </IconButton>
+          <span className={styles.keyWithLed}>
+            <IconButton
+              size="sm"
+              tone="ghost"
+              aria-label={t("playback.loopMode")}
+              title={view.looping ? t("playback.closeLoopMode") : t("playback.openLoopMode")}
+              pressed={view.looping}
+              onClick={() => setLoopMode(!view.looping)}
+            >
+              <Repeat2 className="tw:size-4" aria-hidden="true" />
+            </IconButton>
+            <span className={styles.ledDot} data-active={view.looping || undefined} aria-hidden="true" />
+          </span>
           <span className={styles.timeReadout}>
             {view.currentTime} / {view.duration}
           </span>
@@ -369,6 +372,11 @@ function PlaybackLayout({
                             name="piano-hand-mode"
                             checked={state.pianoPractice.mode === mode}
                             onChange={() => dispatch({ type: "set-piano-hand-mode", mode })}
+                          />
+                          <span
+                            className={styles.ledDot}
+                            data-active={state.pianoPractice.mode === mode || undefined}
+                            aria-hidden="true"
                           />
                           <span>{pianoHandModeLabel(mode, t)}</span>
                         </label>
@@ -774,9 +782,12 @@ function disabledPlaybackWorkspace(
           <IconButton size="sm" tone="ghost" aria-label={t("playback.stop")} title={t("playback.stopTitle")} disabled>
             <Square className="tw:size-4" aria-hidden="true" />
           </IconButton>
-          <IconButton size="sm" tone="ghost" aria-label={t("playback.loopMode")} disabled>
-            <Repeat2 className="tw:size-4" aria-hidden="true" />
-          </IconButton>
+          <span className={styles.keyWithLed}>
+            <IconButton size="sm" tone="ghost" aria-label={t("playback.loopMode")} disabled>
+              <Repeat2 className="tw:size-4" aria-hidden="true" />
+            </IconButton>
+            <span className={styles.ledDot} aria-hidden="true" />
+          </span>
           <span className={styles.timeReadout}>0:00 / 0:00</span>
         </div>
         <div className={styles.transportProgress}>

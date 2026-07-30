@@ -194,7 +194,6 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "和声分析 STUDIO" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "曲库与文件 LIBRARY" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "打开曲库" }).getAttribute("href")).toBe("#/library");
-    expect(screen.getAllByRole("link", { name: "从曲库选择一份曲谱" })).toHaveLength(2);
     expect(screen.getByRole("link", { name: "首页" }).getAttribute("aria-current")).toBe("page");
     expect(screen.getByRole("link", { name: "曲谱库" }).getAttribute("aria-current")).toBeNull();
     await application.destroy();
@@ -215,7 +214,6 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "读谱练习 VIEWER" })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "和声分析 STUDIO" })).toBeNull();
     expect(screen.getByRole("heading", { name: "曲库与文件 LIBRARY" })).toBeTruthy();
-    expect(screen.getAllByRole("link", { name: "从曲库选择一份曲谱" })).toHaveLength(1);
     await application.destroy();
   });
 

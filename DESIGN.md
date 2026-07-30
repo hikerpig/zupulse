@@ -104,7 +104,7 @@ Zupulse 是面向长期练习、乐谱查看与和声分析的桌面级数字音
   编号与 mono 参数读数只写真实能力，不编造版本号或精确数字；display（56px）只用于 Hero 标题。
 - signal 色编码：Viewer = blue、Studio = purple、Library = pink；只出现在编号与指示点等小面积位置，
   视觉权重低于珊瑚色。Home 同屏使用三种 signal 色，是“同一界面 signal 色通常不超过两种”的显式例外。
-- 全页只有“打开曲库”一个珊瑚色实心主操作；各区入口为文字链接，hover/focus 时才过渡到珊瑚色。
+- 全页只有“打开曲库”一个珊瑚色实心主操作（位于 Hero）；工作区分区为纯介绍内容，不再各设入口链接。
 - 不读取 Library 数据，无 loading / empty 分叉；`capabilities.harmonyAnalysis=false` 时不渲染和声分析一节，也不放“不可用”占位。
 
 ### Library

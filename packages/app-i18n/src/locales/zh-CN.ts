@@ -38,14 +38,12 @@ export const zhCN = {
         tag: "VIEWER",
         description: "谱面光标跟随播放，A/B 循环锁定难点小节，变速不改变音高。选择主轨道，只听自己练习的声部。",
         params: ["ZOOM 50%–200%", "A/B LOOP", "PAGE TURN", "TRACK SOLO"],
-        entry: "从曲库选择一份曲谱",
       },
       studio: {
         title: "和声分析",
         tag: "STUDIO",
         description: "从曲谱推导和声进行，区分来源与置信度。修正分析结果，试听和弦，让谱面呈现你确认后的和声。",
         params: ["HARMONY ANALYSIS", "USER CORRECTION", "CHORD PREVIEW"],
-        entry: "从曲库选择一份曲谱",
       },
       library: {
         title: "曲库与文件",
@@ -53,7 +51,6 @@ export const zhCN = {
         description:
           "导入的曲谱保存为本机受管副本，原文件不被修改。支持 Guitar Pro、MusicXML 与 MXL，单文件最大 64 MiB。",
         params: ["GP / GPX / GP5", "MUSICXML / MXL", "≤ 64 MIB", "LOCAL ONLY"],
-        entry: "导入曲谱",
       },
     },
   },

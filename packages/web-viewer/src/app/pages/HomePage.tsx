@@ -1,4 +1,3 @@
-import { ArrowRight } from "lucide-react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import type { ViewerProductCapabilities } from "../App";
@@ -64,10 +63,6 @@ function HomeSection({
             <span key={param}>{param}</span>
           ))}
         </p>
-        <Link className={styles.entry} to="/library">
-          {t(`sections.${sectionKey}.entry`)}
-          <ArrowRight aria-hidden="true" size={16} />
-        </Link>
       </div>
     </section>
   );

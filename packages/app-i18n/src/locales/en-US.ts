@@ -42,7 +42,6 @@ export const enUS = {
         description:
           "The on-screen cursor follows the playback, A/B looping locks onto the tricky measures, and changing the tempo never alters the pitch. Solo your track to hear only the part you're practicing.",
         params: ["ZOOM 50%–200%", "A/B LOOP", "PAGE TURN", "TRACK SOLO"],
-        entry: "Pick a score from your Library",
       },
       studio: {
         title: "Harmony analysis",
@@ -50,7 +49,6 @@ export const enUS = {
         description:
           "Zupulse derives the harmonic progression from the score, keeping sources and confidence clearly distinct. Correct the results, audition the chords, and let the score reflect the harmony you've confirmed.",
         params: ["HARMONY ANALYSIS", "USER CORRECTION", "CHORD PREVIEW"],
-        entry: "Pick a score from your Library",
       },
       library: {
         title: "Library & files",
@@ -58,7 +56,6 @@ export const enUS = {
         description:
           "Imports are kept as managed copies on your device, and the original files are never touched. Supports Guitar Pro, MusicXML, and MXL, up to 64 MiB per file.",
         params: ["GP / GPX / GP5", "MUSICXML / MXL", "≤ 64 MIB", "LOCAL ONLY"],
-        entry: "Import a score",
       },
     },
   },

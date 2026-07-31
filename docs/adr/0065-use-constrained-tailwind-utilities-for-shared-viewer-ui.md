@@ -50,6 +50,20 @@ Button、IconButton、Field、Panel、Status 与 Overlay primitives。
 light/dark、desktop/narrow、keyboard、三宿主构建与净复杂度门槛都通过，才扩大到其余 Library、
 Studio 和 Viewer。迁移不承担视觉重设计；observable behavior 的改变必须独立评审。
 
+## Pilot 复核
+
+2026-07-31 的 pilot 复核决定保留 Tailwind pipeline、semantic theme projection、repository checks
+与共享 UI primitives，但不把现有页面建立为强制迁移队列。后续采用机会式迁移：新 UI 与重复的
+control state 优先消费 semantic utility 或共享 primitive；复杂几何、宿主适配和 feature-specific
+layout 继续使用专用 CSS。现有 CSS Module 本身不代表待偿还技术债，只有能删除重复规则、明确单一
+style owner 或复用已存在 primitive 时才迁移。
+
+复核时生产 TSX 从迁移前的 19 个增长到 53 个，CSS Module 从 2,928 行增长到 3,094 行，按生产
+TSX 粗略归一后从 154.1 行降至 58.4 行。三宿主主 CSS asset 约为 44.3 KB，相对 44.0 KB 基线增长
+不足 1%。并行 warm build 为 Browser 683 ms、Desktop Renderer 669 ms、iPad 663 ms，相对原并行
+基线约高 15–16%；同期产品代码和路由切片显著增长，不能归因于 Tailwind pipeline，因此保留现有
+pipeline，同时停止以 CSS LOC 或迁移覆盖率为目标的扩大迁移。
+
 ## 结果
 
 本 ADR 只取代 ADR 0039 中“暂不引入 Tailwind”的决定。ADR 0039 对 React、React Router、Base UI、

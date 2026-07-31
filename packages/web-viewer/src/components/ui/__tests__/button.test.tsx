@@ -37,6 +37,17 @@ describe("Button", () => {
 });
 
 describe("IconButton", () => {
+  it("forwards its native element ref for popup anchors", () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(
+      <IconButton ref={ref} aria-label="Navigation mode">
+        <svg aria-hidden="true" />
+      </IconButton>,
+    );
+
+    expect(ref.current).toBe(screen.getByRole("button", { name: "Navigation mode" }));
+  });
+
   it("requires and exposes an accessible name without rendering extra copy", () => {
     render(
       <IconButton aria-label="Settings">

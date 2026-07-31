@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { persistScoreNavigationMode, useAppStore } from "../../app/appStore";
 import { ContextPopup } from "../../components/ContextPopup";
+import { IconButton } from "../../components/ui";
 import type { ViewerSessionHandle } from "../../host";
 import styles from "../PlaybackWorkspace.module.css";
 
@@ -31,49 +32,51 @@ export function ScoreNavigationControls({
   return (
     <div className={styles.navigationControls}>
       {state.followState === "detached" ? (
-        <button
-          className={styles.transportIconButton}
-          type="button"
+        <IconButton
+          size="sm"
+          tone="ghost"
           aria-label={t("score.returnToPlayback")}
           title={t("score.detached")}
           onClick={() => navigation.returnToPlayback()}
         >
-          <LocateFixed aria-hidden="true" />
-        </button>
+          <LocateFixed className="tw:size-4" aria-hidden="true" />
+        </IconButton>
       ) : null}
       {mode === "page-turn" && state.pageTurnAvailable ? (
         <div className={styles.pageControls}>
-          <button
-            type="button"
+          <IconButton
+            size="sm"
+            tone="ghost"
             aria-label={t("score.previousPage")}
             disabled={state.currentPage <= 0}
             onClick={() => navigation.movePage(-1)}
           >
-            <ChevronLeft aria-hidden="true" />
-          </button>
+            <ChevronLeft className="tw:size-4" aria-hidden="true" />
+          </IconButton>
           <output aria-label={t("score.pageStatus", { current: state.currentPage + 1, total: state.pageCount })}>
             {state.currentPage + 1} / {state.pageCount}
           </output>
-          <button
-            type="button"
+          <IconButton
+            size="sm"
+            tone="ghost"
             aria-label={t("score.nextPage")}
             disabled={state.currentPage >= state.pageCount - 1}
             onClick={() => navigation.movePage(1)}
           >
-            <ChevronRight aria-hidden="true" />
-          </button>
+            <ChevronRight className="tw:size-4" aria-hidden="true" />
+          </IconButton>
         </div>
       ) : null}
-      <button
+      <IconButton
         ref={buttonRef}
-        className={styles.transportIconButton}
-        type="button"
+        size="sm"
+        tone="ghost"
         aria-label={t("score.navigationMode")}
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
-        <BookOpen aria-hidden="true" />
-      </button>
+        <BookOpen className="tw:size-4" aria-hidden="true" />
+      </IconButton>
       <ContextPopup anchor={buttonRef.current} open={open} onOpenChange={setOpen}>
         <div className={styles.navigationModePopup} aria-label={t("score.navigationMode")}>
           <button

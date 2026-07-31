@@ -86,10 +86,14 @@ export interface IconButtonProps extends Omit<ButtonProps, "children" | "iconOnl
   size?: "sm" | "md";
 }
 
-export function IconButton({ children, className, size = "md", ...props }: IconButtonProps) {
+export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
+  { children, className, size = "md", ...props },
+  ref,
+) {
   return (
     <Button
       {...props}
+      ref={ref}
       iconOnly
       size={size}
       className={classes("tw:rounded-icon", size === "sm" ? "tw:w-control-sm" : "tw:w-control", className)}
@@ -97,7 +101,7 @@ export function IconButton({ children, className, size = "md", ...props }: IconB
       {children}
     </Button>
   );
-}
+});
 
 function LoadingIndicator() {
   return (

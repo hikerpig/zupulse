@@ -65,6 +65,56 @@ packages/web-viewer/src/
 
 不建立 `utils/`、`hooks/` 之类的全局杂物目录。共享代码应按它服务的领域命名。
 
+### Feature 内部目录
+
+新增或实质拆分的 feature 采用“默认扁平、按真实职责展开”的组织方式。现有目录不需要为了形式一致
+机械迁移；只有文件数量、状态连接或用户任务已经形成清晰边界时才增加子目录：
+
+```text
+features/<feature>/
+  index.ts                         # 可选；只导出 feature public surface
+  <feature>.tsx                    # connected composition entry
+  <connected-part>.tsx             # 少量状态连接型 orchestration
+  components/                      # props-only 或仅有局部 UI state 的 leaf components
+  adapters/                        # React 到 application/session/browser port 的适配
+  model/                           # 纯 types、selector、projection 与 view model
+  runtime/                         # 非 React 的 scheduler、DOM 或命令式 runtime
+  <semantic-cluster>/              # panels 等有产品语义的内部任务集
+  __tests__/                       # 按 source stem 与用户行为组织
+  <feature>.module.css             # feature-level style owner，不机械一组件一文件
+```
+
+目录创建规则：
+
+- 小型 feature 保持扁平；不预建空的 `components/`、`adapters/`、`model/` 或 `runtime/`。
+- `components/` 只放 presentation leaf。读取 application、session external store 或 route state 的
+  connected orchestration 留在 feature root 或有产品语义的子目录。
+- `adapters/` 中的 React hooks 只连接既有状态所有者和平台生命周期，包括
+  `useSyncExternalStore` selector、application command adapter、timer、keyboard 与 window lifecycle。
+  它们不是新的数据层，不得复制 Repository、Controller、Bridge 或 persisted state。
+- 可以写成纯函数的 filter、sort、range projection、status mapping 和 view model 放在 `model/`，
+  不包装成无必要的 hook。
+- 单个组件的 local UI state 留在 owning component；非 React 的 RAF、scheduler 和命令式 DOM
+  lifecycle 放在 `runtime/`。
+- `panels/` 等目录必须对应用户可识别的任务集合；禁止使用 `misc/`、`common/`、`shared/` 作为未分类
+  内容容器。
+
+Feature 内部依赖保持单向：
+
+```text
+route
+  -> feature entry / connected orchestration
+       -> adapters -> ViewerApplication / session / host ports
+       -> model
+       -> components -> model + components/ui
+       -> runtime
+```
+
+Feature 的 `index.ts` 只定义对外 surface，内部 module 不通过自己的 barrel 回导。Feature A 不
+deep-import Feature B 的内部文件；真正跨 feature 的 UI primitive 提升到 `src/components`，领域行为
+进入 `web-core` 或 application/session port。新 source module 与目录遵循
+`docs/conventions/file-naming.md` 的 `kebab-case` 规则。
+
 ## 基础组件与组件库
 
 采用“两层组件”策略：

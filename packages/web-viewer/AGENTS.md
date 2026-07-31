@@ -12,6 +12,17 @@
 - Before changing UI, CSS, themes, layout, or interaction states, read the root `DESIGN.md`. Read the relevant
   files under `.design_library/zupulse-te-braun-theme` only when changing themes, tokens, or foundational
   components.
+- Organize new or materially expanded features under `src/features/<feature>/`. Keep small features flat; create
+  `components/`, `adapters/`, `model/`, `runtime/`, or product-semantic subdirectories only when that
+  responsibility has enough content to form a real boundary. Follow
+  `docs/architecture/react-application-system.md` for the dependency direction.
+- Treat React hooks that subscribe to `ViewerApplication`, a Viewer Session, an existing store, or a browser
+  lifecycle as feature adapters, not as a new data layer. Put them under the feature's `adapters/` boundary when
+  extracted. Keep pure projections and selectors in `model/`, non-React imperative schedulers in `runtime/`, and
+  component-local UI state in the owning component.
+- Do not create generic feature or package catch-alls such as `hooks/`, `utils/`, `types/`, `services/`, or
+  `shared/`. A feature MUST NOT access another feature through internal deep imports; promote genuinely shared UI
+  to `src/components` and domain behavior to `web-core` or an application/session port.
 - Routes MUST use persistent `libraryScoreId` values. Rebuild temporary Viewer Sessions from the Repository after
   refresh.
 - Prefer semantic HTML and cover keyboard, focus, loading, empty, and error states. UI tests SHOULD observe

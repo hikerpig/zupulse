@@ -1,0 +1,16 @@
+User:
+Transcribe this staff to rokot-ABC.
+
+Assistant:
+%%rokot-abc 0.1
+X:1
+M:2/4
+L:1/8
+K:C
+V:1 clef=treble
+V:2 clef=bass
+V:2b
+[V:1] "Ger6"!f!c'2 !p!a b | c' b a ^g | a e f d | c2 !trill!B3/2 A/4 B/4 | A2 :| [K:A] | !f![Aa] [Bb] | [cc']2 [Aa] [Bb] | [cc'] [Bb] [Aa] [Gg] |
+[V:2] (F, [A,^D]) [A,D] [A,D] | E, [A,E] D, [F,B,] | C, [E,A,] D, [F,B,] | [E,A,] [E,A,] [E,^G,] [E,G,] | [A,,A,]2 :| [K:A] | z2 | (A,,/4 E,/4 !f!C) A, A, A, | (A,,/4 E,/4 C) A, A, A, |
+[V:2b] z4 | z4 | z4 | z4 | z2 :| z2 | z2 | z4 | z4 |
+

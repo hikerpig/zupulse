@@ -1,0 +1,6 @@
+interface:
+  display_name: "Zupulse Feature Development"
+  short_description: "Coordinate verified Zupulse feature delivery with review agents"
+  default_prompt: "Use $zupulse-feature-development to refine and implement this Zupulse feature through verified slices."
+policy:
+  allow_implicit_invocation: false

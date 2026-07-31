@@ -184,14 +184,14 @@ function alignFrames(score: readonly ScoreFrame[], midi: readonly MidiFrame[], t
   while (scoreIndex > 0 || midiIndex > 0) {
     const direction = directions[scoreIndex * width + midiIndex];
     if (scoreIndex > 0 && midiIndex > 0 && direction === 0) {
-      steps.push({ score: score[scoreIndex - 1], midi: midi[midiIndex - 1] });
+      steps.push({ score: score[scoreIndex - 1]!, midi: midi[midiIndex - 1]! });
       scoreIndex -= 1;
       midiIndex -= 1;
     } else if (scoreIndex > 0 && (midiIndex === 0 || direction === 1)) {
-      steps.push({ score: score[scoreIndex - 1] });
+      steps.push({ score: score[scoreIndex - 1]! });
       scoreIndex -= 1;
     } else {
-      steps.push({ midi: midi[midiIndex - 1] });
+      steps.push({ midi: midi[midiIndex - 1]! });
       midiIndex -= 1;
     }
   }

@@ -227,7 +227,7 @@ function otsuThreshold(page: RenderedPdfPage): number {
     const luminance = Math.round(
       page.pixels[offset]! * 0.2126 + page.pixels[offset + 1]! * 0.7152 + page.pixels[offset + 2]! * 0.0722,
     );
-    histogram[luminance] += 1;
+    histogram[luminance] = histogram[luminance]! + 1;
   }
   const total = page.pixelWidth * page.pixelHeight;
   let weightedTotal = 0;

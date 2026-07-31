@@ -65,7 +65,7 @@ export const rokotSystemBundleSchema = z
 export type RokotSystemBundle = z.infer<typeof rokotSystemBundleSchema>;
 
 const allowedVoices = new Set(["1", "1b", "2", "2b"]);
-const headerPatterns = [/^X:[^\r\n]+$/, /^M:[^\r\n]+$/, /^L:[^\r\n]+$/, /^K:[^\r\n]+$/];
+const leadingHeaderPatterns = [/^X:[^\r\n]+$/, /^M:[^\r\n]+$/, /^L:[^\r\n]+$/];
 
 export function validateRokotAbc(bytes: Uint8Array): string {
   let abc: string;
@@ -76,18 +76,21 @@ export function validateRokotAbc(bytes: Uint8Array): string {
   }
 
   const lines = abc.split(/\r?\n/);
+  const hasTempoHeader = /^Q:[^\r\n]+$/.test(lines[4] ?? "");
+  const keyHeaderIndex = hasTempoHeader ? 5 : 4;
   if (
     lines[0] !== "%%rokot-abc 0.1" ||
-    headerPatterns.some((pattern, index) => !pattern.test(lines[index + 1] ?? ""))
+    leadingHeaderPatterns.some((pattern, index) => !pattern.test(lines[index + 1] ?? "")) ||
+    !/^K:[^\r\n]+$/.test(lines[keyHeaderIndex] ?? "")
   ) {
     throw invalidOutput("invalid-rokot-abc-envelope");
   }
 
-  const contentLines = lines.slice(5).filter((line) => line.length > 0);
+  const contentLines = lines.slice(keyHeaderIndex + 1).filter((line) => line.length > 0);
   const structuralLines = contentLines.every(
     (line) => /^V:[^\s]+(?:\s.*)?$/.test(line) || /^\[V:[^\]]+\](?:\s.*)?$/.test(line) || /^w:[^\r\n]*$/.test(line),
   );
-  const duplicateHeader = contentLines.some((line) => /^[XMLK]:/.test(line));
+  const duplicateHeader = contentLines.some((line) => /^[XMLKQ]:/.test(line));
   if (!structuralLines || duplicateHeader) throw invalidOutput("invalid-rokot-abc-envelope");
 
   const voices = contentLines.flatMap((line) => {

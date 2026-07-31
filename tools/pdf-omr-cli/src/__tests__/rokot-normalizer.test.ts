@@ -97,6 +97,12 @@ describe("validateRokotAbc", () => {
     expect(validateRokotAbc(new TextEncoder().encode(abc))).toBe(abc);
   });
 
+  it("preserves an optional standard tempo header between unit length and key", () => {
+    const abc = validAbc.replace("L:1/8\nK:C", "L:1/8\nQ:1/4=50\nK:C");
+
+    expect(validateRokotAbc(new TextEncoder().encode(abc))).toBe(abc);
+  });
+
   it("rejects invalid UTF-8 with a stable reason", () => {
     expectReason(() => validateRokotAbc(Uint8Array.from([0xc3, 0x28])), "invalid-abc-utf8");
   });

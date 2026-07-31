@@ -196,7 +196,8 @@ suffix prose, or additional assistant turn MUST fail rather than be heuristicall
 then undergoes UTF-8 and rokot-ABC envelope validation:
 
 - first line MUST be `%%rokot-abc 0.1`;
-- headers MUST contain one `X`, `M`, `L`, and `K` in fixed order;
+- headers MUST contain one `X`, `M`, `L`, and `K` in fixed order; one standard `Q:` tempo header MAY appear
+  between `L:` and `K:` and MUST be preserved verbatim;
 - allowed voices are `1`, `1b`, `2`, and `2b`;
 - standard lowercase `w:` lyric continuation lines MAY follow a voice body and MUST be preserved verbatim; the
   v1 Draft does not project lyrics;

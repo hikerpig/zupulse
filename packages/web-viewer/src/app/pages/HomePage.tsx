@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
+import { ArrowRight } from "lucide-react";
 import type { ViewerProductCapabilities } from "../App";
 import styles from "./HomePage.module.css";
 
@@ -24,6 +25,7 @@ export function HomePage({ capabilities }: { capabilities: ViewerProductCapabili
             <p className={styles.lead}>{t("intro.lead")}</p>
             <Link className={styles.primaryAction} to="/library">
               {t("intro.primaryAction")}
+              <ArrowRight aria-hidden="true" size={16} />
             </Link>
           </div>
         </section>

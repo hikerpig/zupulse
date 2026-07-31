@@ -80,6 +80,8 @@ export const enUS = {
       sampleAdded: "Added",
       selecting: "Choosing…",
       selectionFailed: "The selected files could not be read. Try again.",
+      unsupportedSkipped_one: "Skipped {{count}} unsupported file. Supports Guitar Pro, MusicXML, and MXL.",
+      unsupportedSkipped_other: "Skipped {{count}} unsupported files. Supports Guitar Pro, MusicXML, and MXL.",
       candidates: "Files to import",
       remove: "Remove {{fileName}}",
       submit: "Import {{count}}",

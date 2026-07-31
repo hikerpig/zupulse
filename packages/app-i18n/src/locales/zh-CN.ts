@@ -75,6 +75,8 @@ export const zhCN = {
       sampleAdded: "已添加",
       selecting: "正在选择…",
       selectionFailed: "无法读取所选文件，请重试。",
+      unsupportedSkipped_one: "已跳过 {{count}} 份不支持的文件，仅支持 Guitar Pro、MusicXML 和 MXL。",
+      unsupportedSkipped_other: "已跳过 {{count}} 份不支持的文件，仅支持 Guitar Pro、MusicXML 和 MXL。",
       candidates: "待导入文件",
       remove: "移除 {{fileName}}",
       submit: "导入 {{count}} 份",

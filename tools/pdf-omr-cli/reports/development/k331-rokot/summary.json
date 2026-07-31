@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "completed-with-blocked-evaluation",
+  "corpus": {
+    "id": "zupulse-rokot-k331-derived-controlled-v1",
+    "role": "development",
+    "category": "derived-controlled-grand-staff",
+    "manifestSha256": "688775c8bcf4c48b695cd7ea5ece6f6fe7bab16482a0655e597f1dc1caabfa3f",
+    "itemCount": 1
+  },
+  "environment": {
+    "engineId": "rokot",
+    "modelQuantization": "Q8_0",
+    "modelRevision": "7add305aade6fb3a64ad4dde77d410fa68381089",
+    "modelSha256": "df53948ada1a4a584b4c7c81cc7e3293d3457f2e5ec9688271693459eb950f25",
+    "visionProjectorSha256": "1074d47f6fd864bffa9d8843bbae30e6aa696ad0d55535ebd77053d81c699bd0",
+    "llamaCppBuild": "b10200-5f55650a7",
+    "abcConverter": "abc-xml-converter==1.0.1"
+  },
+  "benchmark": {
+    "commandStatus": "succeeded",
+    "reportSha256": "a214795403753cddf86d8c86fe6f2140cf6431bae021107328addeeec88d658b",
+    "itemStatus": "failed",
+    "itemError": {
+      "code": "PROJECTION_OR_EXPORT_FAILED",
+      "reason": "harmony-readiness-blocked"
+    },
+    "recognitionRepetitions": 2,
+    "systemInferenceCount": 54,
+    "wallTimeMs": 460000,
+    "gateEvaluated": false
+  },
+  "segmentation": {
+    "detectorVersion": "rokot-grand-staff-v1",
+    "pageCount": 6,
+    "systemCount": 27,
+    "systemsPerPage": [6, 6, 1, 6, 6, 2],
+    "uniquePageRenderHashes": 6,
+    "uniqueCropHashes": 27,
+    "uniquePngHashes": 27
+  },
+  "transcription": {
+    "predictedNoteCount": 1436,
+    "groundTruthNoteCount": 1391,
+    "predictedRestCount": 73,
+    "groundTruthRestCount": 30,
+    "predictedStaffMeasureCounts": [138, 138],
+    "groundTruthStaffMeasureCounts": [137, 137]
+  },
+  "joining": {
+    "rawDiagnosticCount": 95,
+    "diagnosticsByCode": {
+      "MISSING_EVENT_TIMING": 43,
+      "ROKOT_MEASURE_DURATION_MISMATCH": 49,
+      "ROKOT_STAFF_MEASURE_COUNT_MISMATCH": 2,
+      "ROKOT_SYSTEM_BOUNDARY_AMBIGUOUS": 1
+    },
+    "validatedDiagnosticCount": 193,
+    "readiness": {
+      "harmony": "blocked",
+      "musicXml": "blocked"
+    }
+  },
+  "groundTruthReadiness": {
+    "rawDiagnosticCount": 78,
+    "validatedDiagnosticCount": 125,
+    "diagnosticCodes": ["MISSING_EVENT_TIMING", "VOICE_DURATION_MISMATCH"],
+    "harmony": "blocked",
+    "musicXml": "blocked"
+  },
+  "canonicalSymbolic": {
+    "pitchF1": 0,
+    "jointF1": 0,
+    "validMeasureRate": 0,
+    "limitation": "part-id-mismatch:piano-vs-P1"
+  },
+  "partIdNormalizedDiagnostic": {
+    "pitchF1": 0.4916873010258224,
+    "onsetF1": 0.764505119453925,
+    "durationF1": 0.7194539249146759,
+    "jointF1": 0.15699658703071673,
+    "staffF1": 0.3440273037542662,
+    "repeatF1": 0.18750000000000003,
+    "validMeasures": 19,
+    "totalMeasures": 274,
+    "validMeasureRate": 0.06934306569343066
+  },
+  "harmony": {
+    "status": "not-computable",
+    "reason": "ground-truth-draft-harmony-readiness-blocked"
+  },
+  "reproducibility": {
+    "independentRecognitionCompared": true,
+    "pngAgreement": "27/27",
+    "abcAgreement": "27/27",
+    "musicXmlAgreement": "27/27",
+    "predictedDraftSha256": "b21a4fe84e5d014904392e378f9ada41b6685c77b19399622487a6b7e9c0ab6b",
+    "independentDraftSha256": "b21a4fe84e5d014904392e378f9ada41b6685c77b19399622487a6b7e9c0ab6b"
+  },
+  "decision": "INVESTIGATE"
+}

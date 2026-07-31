@@ -107,6 +107,26 @@ segmentation、measure alignment、跨 system joining 或完整 6 页运行。�
   `4e1d1fd07f7765edd888001115ed4e2f62ca06740daba029ef0953d57d2ae78c`
 - Draft engine design: `docs/specs/2026-07-31-rokot-pdf-omr-engine-design.md`
 
+## 2026-07-31 Rokot K331 controlled development run
+
+Rokot engine pipeline 已完成实现后的 K331 六页全谱运行：deterministic PDF render 检出 27 个
+grand-staff systems，两轮 benchmark 共执行 54 次 Q8_0 inference，总墙钟约 `460s`。第三次独立
+recognition 与 benchmark 第一轮的 27 份 PNG、ABC、MusicXML 和最终 Draft hash 全部一致。
+
+这次结果把瓶颈从“缺少整页 pipeline”推进到了 joining/readiness：Rokot Draft 有 95 条 raw
+diagnostics，validated Harmony/MusicXML readiness 均为 `blocked`。canonical benchmark item 也因
+`harmony-readiness-blocked` 失败；这里还有一个独立的 evaluation limitation——reviewed K331 MXL 经
+当前 ground-truth normalizer 后自身已经 Harmony-blocked，所以不能计算可信的 Harmony delta。
+
+canonical symbolic metric 又按 part ID 精确匹配，而 Rokot 的 `piano` 与 ground truth 的 `P1` 不同，
+导致 canonical F1 为零。仅做 part-ID 对齐、完全不改符号内容的诊断结果为 pitch F1 `0.4917`、onset F1
+`0.7645`、duration F1 `0.7195`、joint F1 `0.1570`、valid measure rate `0.0693`。这支持继续调查
+engine-neutral identity 与 joining，但不支持放宽 validator 或进入 App discovery。
+
+durable report 位于 `tools/pdf-omr-cli/reports/development/k331-rokot/`。它属于 PDF OMR evaluation，
+不放进 Harmony CLI 目录；只提交说明和小型 summary，不提交完整 run 或模型。K331 仍是
+`derived-controlled` development evidence，不进入 frozen holdout，也不改写既有 `STOP`。
+
 ## 许可证与运行约束
 
 - Audiveris code: `AGPL-3.0-only`

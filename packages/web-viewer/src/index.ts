@@ -9,7 +9,7 @@ export * from "./viewerApp";
 export * from "./mountViewerApp";
 export * from "./sample-scores";
 export * from "./app/ViewerApplication";
-export * from "./playbackPresenter";
+export * from "./features/playback-workspace/model/playback-presenter";
 export * from "./gpDemoPresenter";
 export * from "./playbackAssets";
 export * from "./features/SheetLibrary";

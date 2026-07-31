@@ -31,6 +31,15 @@ function testRoot(): HTMLElement {
   return document.getElementById("root") as HTMLElement;
 }
 
+async function openScoreButton(): Promise<HTMLButtonElement> {
+  let button: HTMLButtonElement | null = null;
+  await vi.waitFor(() => {
+    button = document.querySelector<HTMLButtonElement>("#open-score");
+    expect(button).not.toBeNull();
+  });
+  return button!;
+}
+
 describe("mountViewerApp", () => {
   beforeEach(() => {
     // Hosts without a library fall back to the demo viewer on the Library route.
@@ -104,7 +113,7 @@ describe("mountViewerApp", () => {
       }),
     });
 
-    document.querySelector<HTMLButtonElement>("#open-score")?.click();
+    (await openScoreButton()).click();
     await vi.waitFor(() => expect(openScore).toHaveBeenCalledOnce());
     await app.destroy();
     expect(destroySession).toHaveBeenCalledOnce();
@@ -214,7 +223,7 @@ describe("mountViewerApp", () => {
       },
       openSession,
     });
-    const button = document.querySelector<HTMLButtonElement>("#open-score") as HTMLButtonElement;
+    const button = await openScoreButton();
 
     button.click();
     await vi.waitFor(() => expect(openSession).toHaveBeenCalledTimes(1));
@@ -239,7 +248,7 @@ describe("mountViewerApp", () => {
       host: { openScore, subscribe: () => () => undefined },
       openSession,
     });
-    const button = document.querySelector<HTMLButtonElement>("#open-score") as HTMLButtonElement;
+    const button = await openScoreButton();
 
     button.click();
     await vi.waitFor(() => expect(openScore).toHaveBeenCalledTimes(1));
@@ -264,7 +273,7 @@ describe("mountViewerApp", () => {
       }),
     });
 
-    document.querySelector<HTMLButtonElement>("#open-score")?.click();
+    (await openScoreButton()).click();
     await vi.waitFor(() => expect(openScore).toHaveBeenCalledOnce());
     await app.openScore();
 
@@ -315,7 +324,7 @@ describe("mountViewerApp", () => {
     });
     await app.openScore();
 
-    document.querySelector<HTMLButtonElement>("#open-score")?.click();
+    (await openScoreButton()).click();
     await vi.waitFor(() => expect(openScore).toHaveBeenCalledTimes(2));
 
     await expect(app.destroy()).rejects.toBe(failure);
@@ -343,7 +352,7 @@ describe("mountViewerApp", () => {
       }),
     });
     await app.openScore();
-    document.querySelector<HTMLButtonElement>("#open-score")?.click();
+    (await openScoreButton()).click();
     await vi.waitFor(() => expect(openScore).toHaveBeenCalledTimes(2));
 
     const error = (await rejectionOf(app.destroy())) as AggregateError;

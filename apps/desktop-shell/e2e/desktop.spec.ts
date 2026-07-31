@@ -40,7 +40,7 @@ async function importSelectedFixture(window: import("@playwright/test").Page): P
 }
 
 async function openLibrary(window: import("@playwright/test").Page): Promise<void> {
-  await window.getByRole("link", { name: "Library" }).click();
+  await window.getByRole("link", { name: "Library", exact: true }).click();
   await expect(window.getByRole("heading", { name: "Score Library" })).toBeVisible();
 }
 
@@ -107,7 +107,7 @@ test("persists locale and keeps renderer and application menu synchronized", asy
     let window = await app.firstWindow();
     await window.getByRole("button", { name: "Language" }).click();
     await window.getByRole("menuitemradio", { name: "简体中文" }).click();
-    await window.getByRole("link", { name: "曲谱库" }).click();
+    await window.getByRole("link", { name: "曲谱库", exact: true }).click();
     await expect(window.getByRole("heading", { name: "曲谱库" })).toBeVisible();
     await window.getByRole("button", { name: "语言" }).click();
     await window.getByRole("menuitemradio", { name: "English" }).click();
@@ -133,6 +133,7 @@ test("opens a GP file and restores persisted practice state", async () => {
   try {
     await chooseFixture(app);
     let window = await app.firstWindow();
+    await openLibrary(window);
     await importSelectedFixture(window);
     await expect(window.getByRole("heading", { level: 1 })).toContainText("桌面验收谱");
     await expect(window.getByRole("button", { name: "Play" })).toBeEnabled();

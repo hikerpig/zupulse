@@ -2,18 +2,12 @@ import { createAppI18n } from "@zupulse/app-i18n";
 import type { i18n } from "i18next";
 import { useEffect, useMemo, type ReactNode } from "react";
 import { I18nextProvider } from "react-i18next";
-import { createHashRouter, Outlet, RouterProvider, useNavigate } from "react-router";
+import { RouterProvider } from "react-router";
 import type { ViewerApplication } from "./ViewerApplication";
 import type { LocaleHost } from "../i18n/locale-controller";
 import { applyLocaleState } from "../i18n/locale-controller";
 import { AppStoreProvider, createPersistedAppStore, useApplyTheme, useAppStore } from "./appStore";
-import { LibraryPage } from "./pages/LibraryPage";
-import { HomePage } from "./pages/HomePage";
-import { ViewerPage } from "./pages/ViewerPage";
-import { StudioPage } from "./pages/StudioPage";
-import { StudioUnavailablePage } from "./pages/StudioUnavailablePage";
-import { AppHeader } from "./AppHeader";
-import styles from "./App.module.css";
+import { createAppRouter } from "./router";
 
 const fallbackLocaleHost: LocaleHost = {
   initialState: { preference: "zh-CN", effectiveLocale: "zh-CN" },
@@ -50,31 +44,7 @@ export function App({
   );
   const store = useMemo(() => createPersistedAppStore(localeHost.initialState), [localeHost]);
   const router = useMemo(
-    () =>
-      createHashRouter([
-        {
-          element: (
-            <ApplicationNavigation application={application} localeHost={localeHost} capabilities={capabilities} />
-          ),
-          children: [
-            { path: "/", element: <HomePage capabilities={capabilities} /> },
-            { path: "/library", element: <LibraryPage application={application} /> },
-            {
-              path: "/viewer/:libraryScoreId",
-              element: <ViewerPage application={application} capabilities={capabilities} />,
-            },
-            {
-              path: "/studio/:libraryScoreId",
-              element: capabilities.harmonyAnalysis ? (
-                <StudioPage application={application} />
-              ) : (
-                <StudioUnavailablePage application={application} />
-              ),
-            },
-            { path: "*", element: <ViewerPage application={application} notFound /> },
-          ],
-        },
-      ]),
+    () => createAppRouter({ application, localeHost, capabilities }),
     [application, capabilities, localeHost],
   );
   return (
@@ -87,30 +57,6 @@ export function App({
         </ThemeApplicator>
       </AppStoreProvider>
     </I18nextProvider>
-  );
-}
-
-function ApplicationNavigation({
-  application,
-  localeHost,
-  capabilities,
-}: {
-  application: ViewerApplication;
-  localeHost: LocaleHost;
-  capabilities: ViewerProductCapabilities;
-}) {
-  const navigate = useNavigate();
-  useEffect(
-    () => application.subscribeNavigation((libraryScoreId) => void navigate(`/viewer/${libraryScoreId}`)),
-    [application, navigate],
-  );
-  return (
-    <div className={styles.appFrame}>
-      <AppHeader localeHost={localeHost} capabilities={capabilities} />
-      <div className={styles.routeViewport}>
-        <Outlet />
-      </div>
-    </div>
   );
 }
 

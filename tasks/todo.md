@@ -60,7 +60,8 @@
 
 - [x] Task 9a: App Header / Toolbar
 - [x] Task 9b: ContextPopup + Library Menu/Dialog
-- [ ] Task 9c: Playback Transport + one practice/track section
+- [ ] Task 9c: Playback Transport + one practice/track section（目标：
+      `features/playback-workspace/playback-transport.tsx` 与 `panels/`）
 - [ ] Task 10: 运行 pilot metrics 与 Go/No-Go review
 
 ### Checkpoint E: Pilot review
@@ -76,10 +77,11 @@
 ## Phase 5: Incremental migration
 
 - [ ] Task 11a: App shell 与 PageShell
-- [ ] Task 11b: Sheet Library
-- [ ] Task 11c: Studio command/forms/status
-- [ ] Task 11d: Harmony range list
-- [ ] Task 11e: Playback Workspace 剩余 controls/loop/tracks
+- [ ] Task 11b: Sheet Library（目标：`features/sheet-library/components/`）
+- [ ] Task 11c: Studio command/forms/status（目标：`features/harmony-studio/components/`）
+- [ ] Task 11d: Harmony range list（目标：`features/harmony-studio/components/studio-workspace.tsx`）
+- [ ] Task 11e: Playback Workspace 剩余 controls/loop/tracks（目标：
+      `features/playback-workspace/components/`、`panels/` 与 `practice-drawer.tsx`）
 - [ ] Task 11f: ScoreViewer chrome 中有净收益的部分
 - [ ] 每 2–3 个 slice 运行 `pnpm verify:fast`
 - [ ] 显式记录保留的专用 CSS 及理由

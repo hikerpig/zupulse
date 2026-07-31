@@ -147,8 +147,8 @@ describe("alphaTab playback cursor styles", () => {
       source("../styles.css"),
       source("../styles/tailwind-theme.css"),
       source("../app/pages/ViewerPage.tsx"),
-      source("../features/SheetLibrary.tsx"),
-      source("../features/PlaybackWorkspace.tsx"),
+      source("../features/sheet-library/sheet-library.tsx"),
+      source("../features/playback-workspace/playback-workspace.tsx"),
       source("../components/Slider.tsx"),
     ]);
 
@@ -168,8 +168,8 @@ describe("alphaTab playback cursor styles", () => {
     expect(entryCss).toMatch(/@import "\.\/styles\/common\.css" layer\(base\);/);
     expect(entryCss).toMatch(/@import "\.\/styles\/vendors\/alphaTab\.css" layer\(vendor\);/);
     expect(viewerSource).toContain('import styles from "./PageShell.module.css";');
-    expect(librarySource).toContain('import styles from "./SheetLibrary.module.css";');
-    expect(workspaceSource).toContain('import styles from "./PlaybackWorkspace.module.css";');
+    expect(librarySource).toContain('import styles from "../SheetLibrary.module.css";');
+    expect(workspaceSource).toContain('import styles from "../PlaybackWorkspace.module.css";');
     expect(sliderSource).toContain('import styles from "./Slider.module.css";');
   });
 
@@ -202,7 +202,7 @@ describe("alphaTab playback cursor styles", () => {
   });
 
   it("keeps the Library sort label on one line beside its select", async () => {
-    const sourceCode = await source("../features/SheetLibrary.tsx");
+    const sourceCode = await source("../features/sheet-library/components/library-toolbar.tsx");
 
     expect(sourceCode).toMatch(/className=\{`[^`]*styles\.librarySort[^`]*tw:shrink-0[^`]*`\}/);
     expect(sourceCode).toMatch(/<span className="[^"]*tw:whitespace-nowrap[^"]*">/);

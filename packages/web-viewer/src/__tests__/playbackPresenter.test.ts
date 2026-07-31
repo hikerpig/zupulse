@@ -1,7 +1,7 @@
 // Migrated with the shared presenter.
 import { describe, expect, it } from "vitest";
 import type { PlaybackState } from "@zupulse/web-core";
-import { presentPlayback } from "../playbackPresenter";
+import { presentPlayback } from "../features/playback-workspace/model/playback-presenter";
 
 describe("presentPlayback", () => {
   it("formats transport, time, progress, loops, and independent track state", () => {

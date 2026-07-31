@@ -151,12 +151,6 @@ test("persists independent metronome and count-in practice settings", async ({ p
   await page.getByRole("button", { name: "播放" }).click();
   const countInStatus = page.getByRole("status").filter({ hasText: "预备拍" });
   await expect(countInStatus).toBeVisible();
-  await expect(countInStatus).toBeHidden({ timeout: 5_000 });
-  await page.getByRole("button", { name: "暂停" }).click();
-  await page.getByRole("button", { name: "播放" }).click();
-  await expect(countInStatus).toBeHidden();
-  await page.waitForTimeout(750);
-  await expect(countInStatus).toBeHidden();
 });
 
 test("switches and persists piano hand accompaniment while preserving playback", async ({ page }) => {

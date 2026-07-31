@@ -21,11 +21,11 @@ const usage = [
   "  inspect <input.pdf> --output <run-dir>",
   "  import-midi <input.mid> --output <run-dir>",
   "  fuse --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --output <run-dir>",
-  "  recognize <input.pdf> --engine <engine-id> --output <run-dir>",
+  "  recognize <input.pdf> --engine <audiveris|transcoda|legato|rokot> --output <run-dir>",
   "  validate <draft.json> --output <diagnostics.json>",
   "  analyze <draft.json> --output <harmony.json>",
   "  export-musicxml <draft.json> --output <score.mxl>",
-  "  benchmark --manifest <manifest.json> --engine <engine-id> --output <result-dir>",
+  "  benchmark --manifest <manifest.json> --engine <audiveris|transcoda|legato|rokot> --output <result-dir>",
 ].join("\n");
 
 export async function runPdfOmrCommand(

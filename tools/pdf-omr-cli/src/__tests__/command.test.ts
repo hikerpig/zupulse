@@ -6,7 +6,7 @@ describe("pdf OMR CLI", () => {
     await expect(runPdfOmrCommand(["--help"])).resolves.toEqual({
       schemaVersion: "1.0.0",
       command: "help",
-      usage: expect.stringContaining("pdf-omr"),
+      usage: expect.stringMatching(/pdf-omr[\s\S]+audiveris\|transcoda\|legato\|rokot/),
     });
   });
 

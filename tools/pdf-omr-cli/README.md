@@ -10,11 +10,11 @@ pnpm pdf-omr -- --help
 pnpm pdf-omr -- inspect <input.pdf> --output <run-dir>
 pnpm pdf-omr -- import-midi <input.mid> --output <run-dir>
 pnpm pdf-omr -- fuse --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --output <run-dir>
-pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|transcoda|legato> --output <run-dir>
+pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|transcoda|legato|rokot> --output <run-dir>
 pnpm pdf-omr -- validate <draft.json> --output <diagnostics.json>
 pnpm pdf-omr -- analyze <draft.json> --output <harmony.json>
 pnpm pdf-omr -- export-musicxml <draft.json> --output <score.mxl>
-pnpm benchmark:pdf-omr -- --manifest <manifest.json> --engine <audiveris|transcoda|legato> --output <result-dir>
+pnpm benchmark:pdf-omr -- --manifest <manifest.json> --engine <audiveris|transcoda|legato|rokot> --output <result-dir>
 ```
 
 `inspect` 使用 PDF.js，输出 page count、page dimensions 和 vector/raster operator signals。
@@ -30,9 +30,11 @@ staff/voice 推断或 MusicXML alignment。Format 2、SMPTE division、冲突 te
 修复建议和 coverage/pitch agreement metrics，但所有建议均为 `autoApplicable: false`，不会生成或
 覆盖 corrected MusicXML。真人演奏 MIDI、D.C./D.S./coda、volta ending 和自动修复不在 v1 范围。
 
-`recognize` 通过可替换 adapter 调用 Audiveris、Transcoda 或 LEGATO，再规范化为 engine-neutral
-Draft。Audiveris 保留原始 MXL/OMR；Transcoda 保留原始 `**kern`；LEGATO 保留原始 ABC。后两者
-同时保留转换后的 MusicXML。
+`recognize` 通过可替换 adapter 调用 Audiveris、Transcoda、LEGATO 或 Rokot，再规范化为
+engine-neutral Draft。Audiveris 保留原始 MXL/OMR；Transcoda 保留原始 `**kern`；LEGATO 保留原始
+ABC。后两者同时保留转换后的 MusicXML。Rokot v1 仅处理印刷体钢琴 grand staff，保留逐 system
+crop、ABC、MusicXML fragment 和 segmentation metadata；它是隔离的本地研究 engine，不代表 App
+已经支持 PDF 导入。
 
 Audiveris executable 默认从 `PATH` 查找。开发或 CI 可以显式指定：
 
@@ -87,6 +89,25 @@ PDF_OMR_LEGATO_BASE_MODEL=/absolute/path/to/llama-3.2-11b-vision \
 LEGATO 本地 engine 与官方 Demo 对齐：接受一至三页 PDF，将页面纵向拼接，输出 ABC，再通过
 锁定的 `abc2xml.py` 转为 MusicXML。模型条款、revision、hash、预处理和 decoder 参数见
 `engines/legato-environment.json`。模型、Llama vision encoder 与外部 repository 不提交到仓库。
+
+Rokot 使用明确锁定的 Q8_0 GGUF、F16 vision projector、llama.cpp build 和独立 Python 3.11
+converter environment；recognize 不会自动下载模型。先准备并保留本地模型：
+
+```bash
+rokot_snapshot=$(HF_XET_HIGH_PERFORMANCE=1 hf download rokotmidi/rokot-omr-2b \
+  --revision 7add305aade6fb3a64ad4dde77d410fa68381089 \
+  --include 'rokot-omr-2b-Q8_0.gguf' \
+  --include 'mmproj-rokot-omr-2b-f16.gguf')
+
+PDF_OMR_ROKOT_LLAMA_CLI=/absolute/path/to/llama-cli \
+PDF_OMR_ROKOT_MODEL="$rokot_snapshot/rokot-omr-2b-Q8_0.gguf" \
+PDF_OMR_ROKOT_MMPROJ="$rokot_snapshot/mmproj-rokot-omr-2b-f16.gguf" \
+PDF_OMR_ROKOT_ABC2XML_PYTHON=/absolute/path/to/abc2xml-venv/bin/python \
+  pnpm pdf-omr -- recognize input.pdf --engine rokot --output result
+```
+
+converter environment 必须安装 `abc-xml-converter==1.0.1`。完整 revision、hash、decoder 参数和
+license provenance 见 `engines/rokot-environment.json`；模型和 Python environment 不提交到仓库。
 
 ## Run artifacts
 
@@ -161,7 +182,8 @@ diagnostics.json
 ```
 
 Transcoda run 的 engine artifacts 改为 `raw-output.krn` 与 `converted.musicxml`；LEGATO 改为
-`raw-output.abc` 与 `converted.musicxml`。任一 native syntax、spine、conversion 或 Draft
+`raw-output.abc` 与 `converted.musicxml`。Rokot 改为 `segmentation.json` 以及
+`systems/page-NNN-system-NNN.{png,abc,musicxml}`。任一 native syntax、spine、conversion 或 Draft
 validation 问题都必须稳定失败，不能静默猜测。
 
 `run.json` 记录 input hash、engine version、参数和所有已提交 artifact hashes。绝对输入路径、raw

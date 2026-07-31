@@ -9,6 +9,7 @@
 pnpm pdf-omr -- --help
 pnpm pdf-omr -- inspect <input.pdf> --output <run-dir>
 pnpm pdf-omr -- import-midi <input.mid> --output <run-dir>
+pnpm pdf-omr -- fuse --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --output <run-dir>
 pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|transcoda|legato> --output <run-dir>
 pnpm pdf-omr -- validate <draft.json> --output <diagnostics.json>
 pnpm pdf-omr -- analyze <draft.json> --output <harmony.json>
@@ -22,6 +23,12 @@ pnpm benchmark:pdf-omr -- --manifest <manifest.json> --engine <audiveris|transco
 track、channel、velocity、tempo、meter、controls、机械松键与 CC64 调整后的 sound-off，不做量化、
 staff/voice 推断或 MusicXML alignment。Format 2、SMPTE division、冲突 tempo 和 malformed input
 稳定失败。
+
+`fuse` 是隔离在 CLI 内的 report-only MIDI 辅助识别实验。v1 只接受制谱软件导出的
+`score-export` MIDI：它从 MusicXML/MXL 和 MIDI 构造可追溯 evidence，先检测兼容性与移调，再用
+确定性 onset-frame alignment 报告 matched、score-only、MIDI-only 和 ambiguous notes。它会生成
+修复建议和 coverage/pitch agreement metrics，但所有建议均为 `autoApplicable: false`，不会生成或
+覆盖 corrected MusicXML。真人演奏 MIDI、D.C./D.S./coda、volta ending 和自动修复不在 v1 范围。
 
 `recognize` 通过可替换 adapter 调用 Audiveris、Transcoda 或 LEGATO，再规范化为 engine-neutral
 Draft。Audiveris 保留原始 MXL/OMR；Transcoda 保留原始 `**kern`；LEGATO 保留原始 ABC。后两者
@@ -97,6 +104,49 @@ diagnostics.json
 原始 bytes 与 raw/performance evidence 对相同输入必须 deterministic；`run.json` 含执行时间戳，不属于
 byte-for-byte deterministic evidence。MIDI import 完全运行在 Node.js/TypeScript 与 npm 生态，不引入
 Python runtime。
+
+成功的 `fuse` run 包含：
+
+```text
+run.json
+input/score.<source-extension>
+input/midi.mid
+input.json
+score-evidence.json
+performance-evidence.json
+alignment.json
+repair-proposals.json
+diagnostics.json
+```
+
+本地验证一组同曲 MusicXML/MIDI：
+
+```bash
+fusion_run_dir=$(mktemp -d)/fusion-run
+
+pnpm pdf-omr -- fuse \
+  --musicxml /absolute/path/to/score.mxl \
+  --midi /absolute/path/to/score.mid \
+  --output "$fusion_run_dir"
+
+jq '{compatibility, summary}' "$fusion_run_dir/alignment.json"
+jq '{
+  proposalCount: (.proposals | length),
+  byType: (.proposals | sort_by(.type) | group_by(.type) |
+    map({type: .[0].type, count: length}))
+}' "$fusion_run_dir/repair-proposals.json"
+jq 'sort_by(.code) | group_by(.code) |
+  map({code: .[0].code, count: length})' "$fusion_run_dir/diagnostics.json"
+```
+
+先看 `compatibility.status`，只有 `compatible` / `ambiguous` 才会进入 alignment。提升效果时分别观察
+`scoreCoverage`、`midiCoverage`、`pitchAgreement` 和三类 proposal 数量，不能只优化单一 coverage。
+同一输入重复运行时，除 `run.json` 外的八个 artifacts 应 byte-for-byte 相同。
+
+仓库内 K331 是 `derived-controlled` upper-bound：reviewed MusicXML 是 ground truth，PDF 与 MIDI
+均由它导出。当前 fixture 的 report-only 结果为 score coverage `0.9988`、MIDI coverage `0.9916`、
+pitch agreement `1.0`，剩余 24 条 proposal 全部不可自动应用。这组结果用于防止 clean alignment
+回退，不能单独证明真实扫描 PDF 或真人演奏 MIDI 的泛化改善。
 
 成功的 `recognize` run 包含：
 

@@ -1,14 +1,12 @@
 import { memo, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import type { LibraryScoreSummary } from "@zupulse/web-core";
-import type { ViewerApplication } from "../../../app/ViewerApplication";
 import styles from "../../SheetLibrary.module.css";
 import type { LibraryStats } from "../model/library-view-model";
 import { formatRelativeDate } from "../model/library-view-model";
 import { LibraryScoreRow } from "./library-score-row";
 
 export const LibraryScoreList = memo(function LibraryScoreList({
-  application,
   scores,
   stats,
   isFiltering,
@@ -16,10 +14,11 @@ export const LibraryScoreList = memo(function LibraryScoreList({
   locale,
   actionsReturnFocusRef,
   onOpen,
+  onToggleFavorite,
+  onExport,
   onEdit,
   onDelete,
 }: {
-  application: ViewerApplication;
   scores: readonly LibraryScoreSummary[];
   stats: LibraryStats;
   isFiltering: boolean;
@@ -27,6 +26,8 @@ export const LibraryScoreList = memo(function LibraryScoreList({
   locale: string;
   actionsReturnFocusRef: RefObject<HTMLButtonElement | null>;
   onOpen(id: string): void;
+  onToggleFavorite(score: LibraryScoreSummary): void;
+  onExport(score: LibraryScoreSummary): void;
   onEdit(score: LibraryScoreSummary): void;
   onDelete(score: LibraryScoreSummary): void;
 }) {
@@ -55,12 +56,13 @@ export const LibraryScoreList = memo(function LibraryScoreList({
         {scores.map((score) => (
           <LibraryScoreRow
             key={score.id}
-            application={application}
             score={score}
             normalizedQuery={normalizedQuery}
             locale={locale}
             actionsReturnFocusRef={actionsReturnFocusRef}
             onOpen={onOpen}
+            onToggleFavorite={onToggleFavorite}
+            onExport={onExport}
             onEdit={onEdit}
             onDelete={onDelete}
           />

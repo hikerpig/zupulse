@@ -2,7 +2,6 @@ import { memo, type RefObject } from "react";
 import { ArrowRight, Download, MoreHorizontal, PenLine, Star, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { LibraryScoreSummary } from "@zupulse/web-core";
-import type { ViewerApplication } from "../../../app/ViewerApplication";
 import {
   IconButton,
   MenuItem,
@@ -17,21 +16,23 @@ import { formatDuration, formatRelativeDate } from "../model/library-view-model"
 import { HighlightText } from "./highlight-text";
 
 export const LibraryScoreRow = memo(function LibraryScoreRow({
-  application,
   score,
   normalizedQuery,
   locale,
   actionsReturnFocusRef,
   onOpen,
+  onToggleFavorite,
+  onExport,
   onEdit,
   onDelete,
 }: {
-  application: ViewerApplication;
   score: LibraryScoreSummary;
   normalizedQuery: string;
   locale: string;
   actionsReturnFocusRef: RefObject<HTMLButtonElement | null>;
   onOpen(id: string): void;
+  onToggleFavorite(score: LibraryScoreSummary): void;
+  onExport(score: LibraryScoreSummary): void;
   onEdit(score: LibraryScoreSummary): void;
   onDelete(score: LibraryScoreSummary): void;
 }) {
@@ -100,9 +101,7 @@ export const LibraryScoreRow = memo(function LibraryScoreRow({
           className={styles.libraryFavoriteButton}
           aria-label={t(score.isFavorite ? "unfavoriteScore" : "favoriteScore", { title: score.title })}
           pressed={score.isFavorite}
-          onClick={() => {
-            void application.setFavorite(score.id, !score.isFavorite).then(() => application.refreshLibrary());
-          }}
+          onClick={() => onToggleFavorite(score)}
         >
           <Star
             className={`tw:shrink-0 ${score.isFavorite ? "" : styles.favoriteIconInactive}`}
@@ -130,7 +129,7 @@ export const LibraryScoreRow = memo(function LibraryScoreRow({
           <MenuPortal>
             <MenuPositioner sideOffset={6} align="end">
               <MenuPopup>
-                <MenuItem onClick={() => void application.exportLibraryScore(score.id)}>
+                <MenuItem onClick={() => onExport(score)}>
                   <Download className="tw:size-4 tw:shrink-0" aria-hidden="true" />
                   {t("exportScore", { title: score.title })}
                 </MenuItem>

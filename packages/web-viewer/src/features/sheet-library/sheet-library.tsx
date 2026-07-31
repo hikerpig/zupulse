@@ -51,6 +51,18 @@ export function SheetLibrary({
   }, []);
   const editScore = useCallback((score: LibraryScoreSummary) => setEditing(score), []);
   const deleteScore = useCallback((score: LibraryScoreSummary) => setDeleting(score), []);
+  const toggleFavorite = useCallback(
+    (score: LibraryScoreSummary) => {
+      void application.setFavorite(score.id, !score.isFavorite).then(() => application.refreshLibrary());
+    },
+    [application],
+  );
+  const exportScore = useCallback(
+    (score: LibraryScoreSummary) => {
+      void application.exportLibraryScore(score.id);
+    },
+    [application],
+  );
 
   if (error) {
     return (
@@ -88,7 +100,6 @@ export function SheetLibrary({
           <LibrarySkeleton />
         ) : visible.length ? (
           <LibraryScoreList
-            application={application}
             scores={visible}
             stats={libraryStats}
             isFiltering={isFiltering}
@@ -96,6 +107,8 @@ export function SheetLibrary({
             locale={locale}
             actionsReturnFocusRef={actionsReturnFocusRef}
             onOpen={onOpen}
+            onToggleFavorite={toggleFavorite}
+            onExport={exportScore}
             onEdit={editScore}
             onDelete={deleteScore}
           />

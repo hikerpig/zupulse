@@ -181,7 +181,19 @@ llama-cli
   -o <system.abc>
 ```
 
-每个输出先经过 UTF-8 与 rokot-ABC envelope validation：
+`llama-cli` build `b10200-5f55650a7` writes the chat wrapper to `-o` even with `--no-display-prompt`. The adapter
+MUST therefore accept only either a response beginning directly with `%%rokot-abc 0.1` or this exact wrapper:
+
+```text
+User:
+Transcribe this staff to rokot-ABC.
+
+Assistant:
+```
+
+It MUST strip that wrapper before preserving the canonical `.abc` artifact. Any other preamble, repeated role,
+suffix prose, or additional assistant turn MUST fail rather than be heuristically extracted. The extracted payload
+then undergoes UTF-8 and rokot-ABC envelope validation:
 
 - first line MUST be `%%rokot-abc 0.1`;
 - headers MUST contain one `X`, `M`, `L`, and `K` in fixed order;
@@ -227,10 +239,14 @@ crop 和 segmentation metadata 分别以可复查文件保存。
 
 | rokot voice | Draft staff | Draft voice |
 | ----------- | ----------: | ----------: |
-| `1`         |           0 |           0 |
-| `1b`        |           0 |           1 |
-| `2`         |           1 |           0 |
-| `2b`        |           1 |           1 |
+| `1`         |           0 |           1 |
+| `1b`        |           0 |           2 |
+| `2`         |           1 |           1 |
+| `2b`        |           1 |           2 |
+
+Draft staff indices are zero-based, while Draft voice indices are one-based. This follows the current
+`omrScoreDraftSchema`, Audiveris normalizer, validator, and MusicXML exporter contracts; changing those shared
+contracts is outside this engine implementation.
 
 空的 secondary voice 可以省略；未知 part/voice 不得猜测映射。每个 system 的两个 staff 必须产生相同
 measure count，global measure index 按 system 顺序连续生成。只有完全无 events 的 header-only measure

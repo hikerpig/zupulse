@@ -1,3 +1,7 @@
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { corpusManifestSchema, verifyCorpusManifest } from "../benchmark/corpus";
 import { createCorpusView } from "../benchmark/protocol";
@@ -62,6 +66,32 @@ describe("PDF OMR corpus protocol", () => {
         frozenEvaluation: { protocolSha256: "b".repeat(64) },
       }).items,
     ).toHaveLength(1);
+  });
+
+  it("keeps the repository K331 fixture in a development-only derived-controlled corpus", async () => {
+    const manifestPath = fileURLToPath(
+      new URL("../../../../test-fixtures/musicxml/K331-3_rokot-development-manifest.json", import.meta.url),
+    );
+    const manifest = verifyCorpusManifest(JSON.parse(await readFile(manifestPath, "utf8")));
+
+    const view = createCorpusView(manifest, { mode: "development" });
+
+    expect(view.items).toHaveLength(1);
+    expect(view.items[0]).toMatchObject({
+      id: "mozart-k331-3-derived-render",
+      split: "development",
+      category: "derived-controlled-grand-staff",
+    });
+    expect(view.holdout).toEqual({ itemCount: 0, details: "redacted" });
+    const corpusRoot = dirname(manifestPath);
+    for (const item of view.items) {
+      const [input, groundTruth] = await Promise.all([
+        readFile(resolve(corpusRoot, item.input.path)),
+        readFile(resolve(corpusRoot, item.groundTruth.path)),
+      ]);
+      expect(createHash("sha256").update(input).digest("hex")).toBe(item.input.sha256);
+      expect(createHash("sha256").update(groundTruth).digest("hex")).toBe(item.groundTruth.sha256);
+    }
   });
 });
 

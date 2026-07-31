@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "corpusId": "zupulse-rokot-k331-derived-controlled-v1",
+  "protocolVersion": "1.0.0",
+  "items": [
+    {
+      "id": "mozart-k331-3-derived-render",
+      "workId": "mozart-k331-3",
+      "variantId": "musescore-4.7.4-render",
+      "split": "development",
+      "category": "derived-controlled-grand-staff",
+      "input": {
+        "path": "K331-3_reviewed.pdf",
+        "sha256": "22cec1f974dc4bbef64c3e8968e98dcae68d229769d70fa66a21b8c8d56ae8a7"
+      },
+      "groundTruth": {
+        "path": "K331-3_reviewed.mxl",
+        "sha256": "cf358b873205d72b9a67cada92cc4ac11480a35fc092a25eb181eaa305c3d3f4",
+        "format": "mxl"
+      },
+      "license": {
+        "id": "PDM-1.0",
+        "source": "https://creativecommons.org/publicdomain/mark/1.0/"
+      }
+    }
+  ]
+}

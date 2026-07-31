@@ -48,16 +48,16 @@
 
 ## Phase 4: Studio
 
-- [ ] Task 13：提取 `model/studio-page-model.ts` 与 `model/studio-page-presenter.ts`
-- [ ] Task 13：实现 `adapters/use-studio-snapshot.ts` 与 `adapters/use-studio-lifecycle.ts`
-- [ ] Task 13：覆盖 Studio slice stability、save shortcut、beforeunload
-- [ ] Task 14：提取 `StudioCommandBar`、`StudioSettingsPopup`、`StudioPreviewPopup`
-- [ ] Task 14：保留 history/save/export/settings/preview 行为与状态
-- [ ] Task 15：提取 `StudioAnalysisPanel`、`StudioSegmentInspector`、`StudioWorkspace`
-- [ ] Task 15：保留 selection、correction、split/merge/move/reset commands
-- [ ] Task 16：`StudioPage.tsx` 收敛为 route/lifecycle/composition
+- [x] Task 13：提取 `model/studio-page-model.ts` 与 `model/studio-page-presenter.ts`
+- [x] Task 13：实现 `adapters/use-studio-snapshot.ts` 与 `adapters/use-studio-lifecycle.ts`
+- [x] Task 13：覆盖 Studio slice stability、save shortcut、beforeunload
+- [x] Task 14：提取 `StudioCommandBar`、`StudioSettingsPopup`、`StudioPreviewPopup`
+- [x] Task 14：保留 history/save/export/settings/preview 行为与状态
+- [x] Task 15：提取 `StudioAnalysisPanel`、`StudioSegmentInspector`、`StudioWorkspace`
+- [x] Task 15：保留 selection、correction、split/merge/move/reset commands
+- [x] Task 16：`StudioPage.tsx` 收敛为 route/lifecycle/composition
 - [ ] Task 16：按 lifecycle/workspace/command/preview/inspector 拆分测试
-- [ ] Checkpoint E：Studio focused tests、App Studio journey、render probe 通过
+- [x] Checkpoint E：Studio focused tests、App Studio journey、render probe 通过
 
 ## Phase 5: Route code splitting
 

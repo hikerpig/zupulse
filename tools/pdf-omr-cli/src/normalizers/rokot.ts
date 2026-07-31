@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { PdfOmrError } from "../errors";
-import { sha256Schema } from "../schemas";
+import { addRational, compareRational, type ExactRational } from "../rational";
+import { omrScoreDraftSchema, sha256Schema, type OmrScoreDraft } from "../schemas";
+import { normalizeAudiverisMusicXml } from "./audiveris";
+import { childElements, parseMusicXmlDocument } from "./musicxml-source";
 
 const pixelBboxSchema = z
   .object({
@@ -122,6 +125,303 @@ export function parseRokotSystemBundle(bytes: Uint8Array): RokotSystemBundle {
     validateRokotAbc(new TextEncoder().encode(system.abcUtf8));
   }
   return bundle;
+}
+
+type DraftMeasure = OmrScoreDraft["parts"][number]["staves"][number]["measures"][number];
+type DraftVoice = DraftMeasure["voices"][number];
+type Diagnostic = OmrScoreDraft["diagnostics"][number];
+type RokotVoice = "1" | "1b" | "2" | "2b";
+
+const voiceMapping: Readonly<Record<RokotVoice, { staffIndex: number; voiceIndex: number }>> = {
+  "1": { staffIndex: 0, voiceIndex: 1 },
+  "1b": { staffIndex: 0, voiceIndex: 2 },
+  "2": { staffIndex: 1, voiceIndex: 1 },
+  "2b": { staffIndex: 1, voiceIndex: 2 },
+};
+
+export function normalizeRokotOutput(bytes: Uint8Array): OmrScoreDraft {
+  const bundle = parseRokotSystemBundle(bytes);
+  const diagnostics: Diagnostic[] = [];
+  const measuresByStaff: [DraftMeasure[], DraftMeasure[]] = [[], []];
+  let globalMeasureIndex = 0;
+
+  for (const system of bundle.systems) {
+    const encodedXml = new TextEncoder().encode(system.musicXmlUtf8);
+    const document = parseMusicXmlDocument(encodedXml);
+    const root = document.documentElement;
+    if (root === null || root.nodeName !== "score-partwise") {
+      throw invalidOutput("invalid-rokot-musicxml");
+    }
+    const rawParts = childElements(root, "part");
+    if (rawParts.length === 0 || rawParts.every((part) => childElements(part, "measure").length === 0)) {
+      throw invalidOutput("empty-rokot-musicxml");
+    }
+
+    const seen = new Set<RokotVoice>();
+    const measureNumbers = new Map<RokotVoice, string[]>();
+    const explicitHeaderOnly = new Map<RokotVoice, boolean[]>();
+    for (const part of rawParts) {
+      const voice = parsePartVoice(part.getAttribute("id"));
+      if (voice === undefined) {
+        addDiagnostic(diagnostics, "ROKOT_UNSUPPORTED_VOICE", "MusicXML contains an unmapped Rokot part", system);
+        continue;
+      }
+      if (seen.has(voice)) throw invalidOutput("ambiguous-rokot-voice-mapping");
+      seen.add(voice);
+      const measures = childElements(part, "measure");
+      measureNumbers.set(
+        voice,
+        measures.map((measure) => measure.getAttribute("number") ?? ""),
+      );
+      explicitHeaderOnly.set(
+        voice,
+        measures.map(
+          (measure) => childElements(measure, "attributes").length > 0 && childElements(measure, "note").length === 0,
+        ),
+      );
+      const unsupportedInnerVoice = measures
+        .flatMap((measure) => childElements(measure, "note"))
+        .some((note) => childElements(note, "voice")[0]?.textContent?.trim() !== "1");
+      if (unsupportedInnerVoice) {
+        addDiagnostic(
+          diagnostics,
+          "ROKOT_UNSUPPORTED_VOICE",
+          `Rokot part P${voice} contains an unsupported MusicXML voice`,
+          system,
+        );
+      }
+    }
+
+    if (!seen.has("1") || !seen.has("2")) {
+      addDiagnostic(
+        diagnostics,
+        "ROKOT_UNSUPPORTED_STAFF_TOPOLOGY",
+        "Rokot system does not contain both primary piano staves",
+        system,
+      );
+    }
+
+    const normalized = normalizeAudiverisMusicXml(encodedXml);
+    diagnostics.push(...normalized.diagnostics.map((diagnostic) => withSystemSource(diagnostic, system)));
+    const parts = new Map(normalized.parts.map((part) => [part.id, part]));
+    for (const [voice, mapping] of Object.entries(voiceMapping) as Array<
+      [RokotVoice, (typeof voiceMapping)[RokotVoice]]
+    >) {
+      const part = parts.get(`P${voice}`);
+      if (part !== undefined && part.staves.length !== 1) {
+        addDiagnostic(
+          diagnostics,
+          "ROKOT_UNSUPPORTED_STAFF_TOPOLOGY",
+          `Rokot part P${voice} does not contain exactly one staff`,
+          system,
+        );
+      }
+      if (mapping.voiceIndex === 2 && part !== undefined && part.staves[0]!.measures.every(isEventlessMeasure)) {
+        parts.delete(`P${voice}`);
+      }
+    }
+
+    const primaryCounts = [
+      parts.get("P1")?.staves[0]?.measures.length ?? 0,
+      parts.get("P2")?.staves[0]?.measures.length ?? 0,
+    ];
+    const systemMeasureCount = Math.max(...primaryCounts);
+    const secondaryCounts = [
+      parts.get("P1b")?.staves[0]?.measures.length,
+      parts.get("P2b")?.staves[0]?.measures.length,
+    ].filter((count): count is number => count !== undefined);
+    if (primaryCounts[0] !== primaryCounts[1] || secondaryCounts.some((count) => count !== systemMeasureCount)) {
+      addDiagnostic(
+        diagnostics,
+        "ROKOT_STAFF_MEASURE_COUNT_MISMATCH",
+        "Rokot staff measure counts do not align within the system",
+        system,
+      );
+    }
+    if (systemMeasureCount === 0) throw invalidOutput("empty-rokot-musicxml");
+
+    const numberedVoices = [...measureNumbers.entries()].filter(([voice]) => seen.has(voice));
+    for (let localIndex = 0; localIndex < systemMeasureCount; localIndex += 1) {
+      const numbers = new Set(
+        numberedVoices.map(([, values]) => values[localIndex]).filter((value): value is string => value !== undefined),
+      );
+      if (numbers.size > 1) {
+        addDiagnostic(
+          diagnostics,
+          "ROKOT_SYSTEM_BOUNDARY_AMBIGUOUS",
+          `Rokot parts disagree on measure identity at local measure ${localIndex}`,
+          system,
+        );
+      }
+    }
+
+    const removable = alignedHeaderOnlyMeasureIndexes(explicitHeaderOnly, systemMeasureCount);
+    for (let localIndex = 0; localIndex < systemMeasureCount; localIndex += 1) {
+      const headerOnlyCount = [...explicitHeaderOnly.values()].filter((values) => values[localIndex] === true).length;
+      if (headerOnlyCount > 0 && headerOnlyCount !== explicitHeaderOnly.size) {
+        addDiagnostic(
+          diagnostics,
+          "ROKOT_SYSTEM_BOUNDARY_AMBIGUOUS",
+          `Rokot header-only measure is not aligned at local measure ${localIndex}`,
+          system,
+        );
+      }
+      if (removable.has(localIndex)) continue;
+      const joined = [0, 1].map((staffIndex) =>
+        joinStaffMeasure(parts, staffIndex, localIndex, globalMeasureIndex, system),
+      ) as [DraftMeasure, DraftMeasure];
+      if (compareRational(measureExtent(joined[0]), measureExtent(joined[1])) !== 0) {
+        addDiagnostic(
+          diagnostics,
+          "ROKOT_MEASURE_DURATION_MISMATCH",
+          `Rokot staff durations disagree at global measure ${globalMeasureIndex}`,
+          system,
+        );
+      }
+      measuresByStaff[0].push(joined[0]);
+      measuresByStaff[1].push(joined[1]);
+      globalMeasureIndex += 1;
+    }
+  }
+
+  if (globalMeasureIndex === 0) throw invalidOutput("empty-rokot-musicxml");
+  return omrScoreDraftSchema.parse({
+    schemaVersion: "1.0.0",
+    parts: [
+      {
+        id: "piano",
+        name: "Piano",
+        staves: [
+          { index: 0, measures: measuresByStaff[0] },
+          { index: 1, measures: measuresByStaff[1] },
+        ],
+      },
+    ],
+    diagnostics,
+  });
+}
+
+function parsePartVoice(partId: string | null): RokotVoice | undefined {
+  const value = partId?.replace(/^P/, "");
+  return value !== undefined && value in voiceMapping ? (value as RokotVoice) : undefined;
+}
+
+function alignedHeaderOnlyMeasureIndexes(
+  explicitHeaderOnly: ReadonlyMap<RokotVoice, readonly boolean[]>,
+  measureCount: number,
+): Set<number> {
+  const removable = new Set<number>();
+  if (!explicitHeaderOnly.has("1") || !explicitHeaderOnly.has("2")) return removable;
+  for (let index = 0; index < measureCount - 1; index += 1) {
+    const values = [...explicitHeaderOnly.values()];
+    if (values.length > 0 && values.every((headers) => headers[index] === true)) removable.add(index);
+  }
+  return removable;
+}
+
+function joinStaffMeasure(
+  parts: ReadonlyMap<string, OmrScoreDraft["parts"][number]>,
+  staffIndex: number,
+  localIndex: number,
+  globalIndex: number,
+  system: RokotSystemBundle["systems"][number],
+): DraftMeasure {
+  const primaryVoice = staffIndex === 0 ? "1" : "2";
+  const secondaryVoice = staffIndex === 0 ? "1b" : "2b";
+  const primary = parts.get(`P${primaryVoice}`)?.staves[0]?.measures[localIndex];
+  const secondary = parts.get(`P${secondaryVoice}`)?.staves[0]?.measures[localIndex];
+  const basis = primary ?? secondary;
+  const voices = [
+    mapVoice(
+      primary?.voices.find((voice) => voice.index === 1),
+      1,
+      globalIndex,
+      staffIndex,
+      system,
+    ),
+    mapVoice(
+      secondary?.voices.find((voice) => voice.index === 1),
+      2,
+      globalIndex,
+      staffIndex,
+      system,
+    ),
+  ].filter((voice): voice is DraftVoice => voice !== undefined && voice.events.length > 0);
+  return {
+    index: globalIndex,
+    ...(basis?.timeSignature === undefined ? {} : { timeSignature: basis.timeSignature }),
+    ...(basis?.duration === undefined ? {} : { duration: basis.duration }),
+    ...(basis?.keySignature === undefined ? {} : { keySignature: basis.keySignature }),
+    ...(basis?.clef === undefined ? {} : { clef: basis.clef }),
+    ...(basis?.repeat === undefined ? {} : { repeat: basis.repeat }),
+    voices,
+  };
+}
+
+function mapVoice(
+  voice: DraftVoice | undefined,
+  voiceIndex: number,
+  measureIndex: number,
+  staffIndex: number,
+  system: RokotSystemBundle["systems"][number],
+): DraftVoice | undefined {
+  if (voice === undefined) return undefined;
+  return {
+    index: voiceIndex,
+    events: voice.events.map((event, eventIndex) => ({
+      ...event,
+      id: `piano-m${measureIndex}-s${staffIndex}-v${voiceIndex}-e${eventIndex}`,
+      source: {
+        pageIndex: system.pageIndex,
+        systemIndex: system.systemIndex,
+        bbox: system.source.pdfPointBbox,
+      },
+    })),
+  };
+}
+
+function isEventlessMeasure(measure: DraftMeasure): boolean {
+  return measure.voices.every((voice) => voice.events.length === 0);
+}
+
+function measureExtent(measure: DraftMeasure): ExactRational {
+  let maximum: ExactRational = { numerator: 0, denominator: 1 };
+  for (const voice of measure.voices) {
+    for (const event of voice.events) {
+      const end = addRational(event.onset, event.duration);
+      if (compareRational(end, maximum) > 0) maximum = end;
+    }
+  }
+  return maximum;
+}
+
+function withSystemSource(diagnostic: Diagnostic, system: RokotSystemBundle["systems"][number]): Diagnostic {
+  return {
+    ...diagnostic,
+    source: {
+      pageIndex: system.pageIndex,
+      systemIndex: system.systemIndex,
+      bbox: system.source.pdfPointBbox,
+    },
+  };
+}
+
+function addDiagnostic(
+  diagnostics: Diagnostic[],
+  code: string,
+  message: string,
+  system: RokotSystemBundle["systems"][number],
+): void {
+  diagnostics.push({
+    code,
+    severity: "blocking",
+    message,
+    source: {
+      pageIndex: system.pageIndex,
+      systemIndex: system.systemIndex,
+      bbox: system.source.pdfPointBbox,
+    },
+  });
 }
 
 function invalidOutput(reason: string, cause?: unknown): PdfOmrError {

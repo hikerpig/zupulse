@@ -148,7 +148,7 @@ describe("alphaTab playback cursor styles", () => {
       source("../styles/tailwind-theme.css"),
       source("../app/pages/ViewerPage.tsx"),
       source("../features/SheetLibrary.tsx"),
-      source("../features/PlaybackWorkspace.tsx"),
+      source("../features/playback-workspace/playback-workspace.tsx"),
       source("../components/Slider.tsx"),
     ]);
 
@@ -169,7 +169,7 @@ describe("alphaTab playback cursor styles", () => {
     expect(entryCss).toMatch(/@import "\.\/styles\/vendors\/alphaTab\.css" layer\(vendor\);/);
     expect(viewerSource).toContain('import styles from "./PageShell.module.css";');
     expect(librarySource).toContain('import styles from "./SheetLibrary.module.css";');
-    expect(workspaceSource).toContain('import styles from "./PlaybackWorkspace.module.css";');
+    expect(workspaceSource).toContain('import styles from "../PlaybackWorkspace.module.css";');
     expect(sliderSource).toContain('import styles from "./Slider.module.css";');
   });
 

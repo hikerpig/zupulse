@@ -12,26 +12,26 @@
 
 ## Phase 1: Playback structural split
 
-- [ ] Task 2：提取 `runtime/seek-preview-scheduler.ts` 与 `model/playback-presenter.ts`
-- [ ] Task 2：提取 `components/bpm-control.tsx` 与 `score-navigation-controls.tsx`
-- [ ] Task 3：提取 `playback-transport.tsx` 和 disabled transport presentation
-- [ ] Task 3：保留 Space shortcut、seek preview、loop toggle 和 audio retry 行为
-- [ ] Task 4：提取 `practice-drawer.tsx` 与 `panels/practice-overview.tsx`
-- [ ] Task 4：保留 open/back/close/Escape/focus restoration
-- [ ] Task 5：提取 Rhythm、Piano Hands、Loop、Tracks panels
-- [ ] Task 5：保留所有 domain command payload
-- [ ] Task 6：旧 `PlaybackWorkspace.tsx` 收敛为 compatibility re-export
+- [x] Task 2：提取 `runtime/seek-preview-scheduler.ts` 与 `model/playback-presenter.ts`
+- [x] Task 2：提取 `components/bpm-control.tsx` 与 `score-navigation-controls.tsx`
+- [x] Task 3：提取 `playback-transport.tsx` 和 disabled transport presentation
+- [x] Task 3：保留 Space shortcut、seek preview、loop toggle 和 audio retry 行为
+- [x] Task 4：提取 `practice-drawer.tsx` 与 `panels/practice-overview.tsx`
+- [x] Task 4：保留 open/back/close/Escape/focus restoration
+- [x] Task 5：提取 Rhythm、Piano Hands、Loop、Tracks panels
+- [x] Task 5：保留所有 domain command payload
+- [x] Task 6：旧 `PlaybackWorkspace.tsx` 收敛为 compatibility re-export
 - [ ] Task 6：按 transport/drawer/loop/tracks 拆分测试
-- [ ] Checkpoint B：Playback focused tests、App Viewer integration、style tests 通过
+- [x] Checkpoint B：Playback focused tests、App Viewer integration、style tests 通过
 
 ## Phase 2: Playback rendering boundary
 
-- [ ] Task 7：实现 feature-local `adapters/use-playback-selector.ts`
-- [ ] Task 7：覆盖 equality、stable reference、unsubscribe 测试
-- [ ] Task 8：从 workspace shell 移除完整 playback subscription
-- [ ] Task 8：Transport 订阅高频 slice，打开的 drawer/panel 订阅低频 slice
-- [ ] Task 8：position-only update 不重渲染非当前 panel
-- [ ] Checkpoint C：render probe 优于基线，用户行为测试无变化
+- [x] Task 7：实现 feature-local `adapters/use-playback-selector.ts`
+- [x] Task 7：覆盖 equality、stable reference、unsubscribe 测试
+- [x] Task 8：从 workspace shell 移除完整 playback subscription
+- [x] Task 8：Transport 订阅高频 slice，打开的 drawer/panel 订阅低频 slice
+- [x] Task 8：position-only update 不重渲染非当前 panel
+- [x] Checkpoint C：render probe 优于基线，用户行为测试无变化
 
 ## Phase 3: Sheet Library
 

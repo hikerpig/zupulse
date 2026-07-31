@@ -217,6 +217,8 @@ Zupulse 不是营销落地页、SaaS 管理后台、赛博音乐概念图或硬�
   theme library 与运行时 token 的事实源顺序。
 - Tailwind 默认 palette、font、radius 和 shadow 不属于 Zupulse 设计系统；产品组件只能消费批准的
   semantic utility。alphaTab、动态音乐可视化和复杂几何样式可以继续直接消费运行时 CSS variable。
+- 样式迁移不是产品目标。现有 CSS Module 只有在能够删除重复视觉状态、复用共享 primitive 或消除
+  双重 style ownership 时才迁移；不得用 Tailwind 覆盖率或 CSS LOC 作为设计质量指标。
 - `check:design` 验证入口文件和映射不漂移，不负责评价所有视觉质量。
 - 不自动生成本文件；token 差异可以自动检查，产品设计判断由人维护。
 

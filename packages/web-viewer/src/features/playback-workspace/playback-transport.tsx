@@ -3,7 +3,7 @@ import { Pause, Play, Repeat2, SlidersHorizontal, Square } from "lucide-react";
 import { useEffect, useMemo, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Slider } from "../../components/Slider";
-import { Button, IconButton } from "../../components/ui";
+import { Button, IconButton, Status } from "../../components/ui";
 import type { ViewerSessionHandle } from "../../host";
 import { usePlaybackSelector } from "./adapters/use-playback-selector";
 import { BpmControl } from "./components/bpm-control";
@@ -93,6 +93,8 @@ function ActivePlaybackTransport({
   }, [playback, state.soundFont]);
 
   const playLabel = view.isPlaying ? t("playback.pause") : t("playback.play");
+  const audioStatusTone =
+    view.audioStatusTone === "error" ? "danger" : view.audioStatusTone === "ready" ? "ready" : "neutral";
   return (
     <section className={styles.transportBar} aria-label={t("playback.controls")}>
       <div className={styles.transportActions}>
@@ -156,9 +158,7 @@ function ActivePlaybackTransport({
           />
         </div>
         {state.soundFont !== "ready" ? (
-          <p className={`${styles.statusChip} ${styles[view.audioStatusTone]}`}>
-            {audioStatusLabel(view.soundFont, t)}
-          </p>
+          <Status tone={audioStatusTone}>{audioStatusLabel(view.soundFont, t)}</Status>
         ) : null}
         {state.transport === "counting-in" ? (
           <p className={styles.countInStatus} role="status">
@@ -218,7 +218,7 @@ function DisabledPlaybackTransport({
         <div className={styles.transportSpeedControl}>
           <BpmControl baseTempo={120} currentTempo={120} speedPercent={100} disabled />
         </div>
-        <p className="status-chip subtle">{t("playback.audio.loading")}</p>
+        <Status tone="neutral">{t("playback.audio.loading")}</Status>
         <DrawerToggle buttonRef={drawerToggleRef} open={drawerOpen} onClick={onDrawerToggle} />
       </div>
     </section>

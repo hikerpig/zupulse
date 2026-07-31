@@ -260,6 +260,22 @@ describe("alphaTab playback cursor styles", () => {
     expect(sliderCss).toMatch(/\.progress:is\(:hover, :focus-within\) \.track\s*{[^}]*height:\s*6px;/s);
   });
 
+  it("keeps transport control visuals owned by shared UI primitives", async () => {
+    const [navigationSource, transportSource, workspaceCss] = await Promise.all([
+      source("../features/playback-workspace/score-navigation-controls.tsx"),
+      source("../features/playback-workspace/playback-transport.tsx"),
+      source("../features/PlaybackWorkspace.module.css"),
+    ]);
+
+    expect(navigationSource).toContain('import { IconButton } from "../../components/ui";');
+    expect(navigationSource.match(/<IconButton/g)).toHaveLength(4);
+    expect(transportSource).toContain('import { Button, IconButton, Status } from "../../components/ui";');
+    expect(transportSource.match(/<Status/g)).toHaveLength(2);
+    expect(workspaceCss).not.toMatch(/\.transportIconButton/);
+    expect(workspaceCss).not.toMatch(/\.pageControls button/);
+    expect(workspaceCss).not.toMatch(/\.statusChip/);
+  });
+
   it("keeps third-party score layers below viewer controls through shared stacking tokens", async () => {
     const [tokensCss, tailwindThemeCss, overlaySource, scoreCss, workspaceCss, libraryCss, alphaTabCss] =
       await Promise.all([

@@ -32,22 +32,6 @@
     align-items: center;
     justify-content: center;
   }
-  .transportIconButton {
-    min-width: 36px;
-    width: 36px;
-    min-height: 36px;
-    padding: 0;
-    border-radius: var(--radius-round);
-  }
-  .transportIconButton[aria-pressed="true"] {
-    border-color: var(--accent-primary);
-    color: var(--accent-primary);
-    background: var(--accent-soft);
-  }
-  .transportIconButton svg {
-    width: 16px;
-    height: 16px;
-  }
   .transportProgress {
     position: absolute;
     z-index: var(--z-index-surface-raised);
@@ -57,25 +41,11 @@
     height: 12px;
     cursor: pointer;
   }
-  .transportTools .statusChip {
-    margin: 0;
-  }
   .navigationControls,
   .pageControls {
     display: flex;
     align-items: center;
     gap: 4px;
-  }
-  .pageControls button {
-    width: 36px;
-    min-height: 36px;
-    padding: 0;
-    border-radius: var(--radius-round);
-  }
-  .pageControls svg,
-  .navigationControls > button svg {
-    width: 16px;
-    height: 16px;
   }
   .pageControls output {
     min-width: 48px;
@@ -198,40 +168,6 @@
     border-bottom: 1px solid var(--border-default);
     background: var(--bg-elevated);
     transform: rotate(45deg);
-  }
-  .statusChip {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 32px;
-    padding: 0 10px;
-    border: 1px solid var(--border-default);
-    border-radius: 999px;
-    background: var(--bg-elevated);
-    color: var(--text-primary);
-    font-size: 12px;
-    white-space: nowrap;
-  }
-  .statusChip::before {
-    content: "";
-    width: 7px;
-    height: 7px;
-    border-radius: 999px;
-    background: currentColor;
-    opacity: 0.9;
-  }
-  .statusChip.subtle {
-    color: var(--text-secondary);
-  }
-  .statusChip.ready {
-    color: var(--status-ready-text);
-    background: var(--status-ready-bg);
-    border-color: transparent;
-  }
-  .statusChip.error {
-    color: var(--status-error-text);
-    background: var(--status-error-bg);
-    border-color: transparent;
   }
   .workspace {
     position: relative;
@@ -607,11 +543,6 @@
     .transportActions {
       gap: 6px;
     }
-    .transportIconButton {
-      width: 32px;
-      min-width: 32px;
-      min-height: 32px;
-    }
     .transportTools {
       min-width: 0;
       margin-left: auto;
@@ -624,13 +555,6 @@
     .transportSpeedControl,
     .transportRetry {
       display: none;
-    }
-    .transportTools .statusChip {
-      min-height: 28px;
-      max-width: 74px;
-      overflow: hidden;
-      padding-inline: 7px;
-      text-overflow: ellipsis;
     }
     .drawerToggle {
       width: 34px;

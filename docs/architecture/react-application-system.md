@@ -157,6 +157,19 @@ responsive 与 visual state：
   可视化保持专用 CSS、CSS variable 或命令式渲染。
 - 组件按垂直切片迁移；同一 property/state 不同时由 CSS Module 和 utility class 拥有。
 
+当前 style ownership 如下：
+
+| Style category                                                       | Owner                                         |
+| -------------------------------------------------------------------- | --------------------------------------------- |
+| Runtime semantic values and theme switching                          | `styles/tokens.css`                           |
+| Shared control visuals and interaction states                        | `components/ui` + semantic Tailwind utilities |
+| Feature layout, safe areas and container-query composition           | Feature CSS Modules                           |
+| Score surface, splitter/slider geometry, animation and generated DOM | Dedicated CSS Modules or vendor CSS           |
+| Runtime coordinates and external-library values                      | Inline CSS variables or imperative adapters   |
+
+Pilot 已结束，现有 CSS Module 不再作为强制迁移 backlog。只有迁移能删除重复 selector、复用已有
+primitive 或消除双重 style ownership 时才继续；不得以 CSS LOC 归零或 Tailwind 覆盖率作为目标。
+
 当前仍不引入 styled-components 或 Storybook；当基础组件需要被仓库外团队独立消费、发布和视觉
 回归时再增加独立组件包与 Storybook。
 

@@ -328,7 +328,8 @@ export async function convertRokotAbc(
         if (level === "error" || level === "fatalError") parseError = message;
       },
     }).parseFromString(new TextDecoder("utf-8", { fatal: true }).decode(xml), "application/xml");
-    if (parseError !== undefined || document.documentElement.nodeName !== "score-partwise") {
+    const root = document.documentElement;
+    if (parseError !== undefined || root === null || root.nodeName !== "score-partwise") {
       throw new Error(parseError ?? "unexpected MusicXML root");
     }
   } catch (error) {

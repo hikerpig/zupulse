@@ -80,3 +80,23 @@ initial entry asset。
 现有组件没有可独立注入 render probe 的稳定子边界，因此不增加断言旧耦合行为的临时测试。各性能
 阶段先为新 selector/memo boundary 写失败测试，再实现边界，并以测试与 production chunk 产物证明
 目标成立。
+
+## Refactor result
+
+完成拆分后的 production build 仍由相同三条命令生成，均通过。入口与基线相比：
+
+| Host             | Baseline entry | Final entry | Reduction |
+| ---------------- | -------------: | ----------: | --------: |
+| Browser Demo     |      1,339,788 |   1,257,909 |    81,879 |
+| Desktop Renderer |      1,295,571 |   1,190,180 |   105,391 |
+| iPad Web Assets  |      1,355,845 |   1,268,987 |    86,858 |
+
+三个宿主均生成独立的 Library、Viewer、Studio 和 Studio unavailable async chunks：
+
+| Host             | Library | Viewer | Studio | Studio unavailable |
+| ---------------- | ------: | -----: | -----: | -----------------: |
+| Browser Demo     |   4,301 | 35,290 | 37,162 |              2,656 |
+| Desktop Renderer |   4,310 | 40,438 | 38,980 |              2,665 |
+| iPad Web Assets  |   4,301 | 37,996 | 37,163 |              2,656 |
+
+chunk ID 与 content hash 由构建器生成，表格记录的是本次最终验证中的字节数，不作为稳定接口。

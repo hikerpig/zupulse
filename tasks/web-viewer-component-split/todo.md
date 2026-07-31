@@ -61,13 +61,13 @@
 
 ## Phase 5: Route code splitting
 
-- [ ] Task 17：提取 `app/router.tsx`
-- [ ] Task 17：Library、Viewer、Studio 和 wildcard Viewer 使用 lazy route
-- [ ] Task 17：移除 `LibraryPage -> ViewerPage` 静态 import
-- [ ] Task 18：验证 Harmony capability unavailable 时不加载 Studio feature
+- [x] Task 17：提取 `app/router.tsx`
+- [x] Task 17：Library、Viewer、Studio 和 wildcard Viewer 使用 lazy route
+- [x] Task 17：移除 `LibraryPage -> ViewerPage` 静态 import
+- [x] Task 18：验证 Harmony capability unavailable 时不加载 Studio feature
 - [ ] Task 18：验证 direct URL、route navigation、not-found 和返回 Library
-- [ ] Task 18：比较 production initial asset 与 async chunks
-- [ ] Checkpoint F：Browser/Desktop/iPad production build 均存在预期 route chunks
+- [x] Task 18：比较 production initial asset 与 async chunks
+- [x] Checkpoint F：Browser/Desktop/iPad production build 均存在预期 route chunks
 
 ## Phase 6: Final verification and handoff
 

@@ -37,11 +37,11 @@ describe("App", () => {
     const user = userEvent.setup();
 
     render(<App application={application} localeHost={localeHost} i18n={createAppI18n("zh-CN")} />);
-    await user.click(screen.getByRole("button", { name: "语言" }));
+    await user.click(await screen.findByRole("button", { name: "语言" }));
     await user.click(screen.getByRole("menuitemradio", { name: "English" }));
 
     expect(screen.getByRole("navigation", { name: "Primary navigation" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "No score open" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "No score open" })).toBeTruthy();
     expect(screen.getByRole("region", { name: "Playback controls" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Open score" })).toBeTruthy();
     expect(localeHost.setPreference).toHaveBeenLastCalledWith("en-US");
@@ -85,7 +85,7 @@ describe("App", () => {
     expect(screen.getByRole("banner")).toBeTruthy();
     expect(screen.getByRole("navigation", { name: "主要页面" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "逐拍首页" })).toBeTruthy();
-    expect(screen.getByRole("region", { name: "乐谱工作区" })).toBeTruthy();
+    expect(await screen.findByRole("region", { name: "乐谱工作区" })).toBeTruthy();
     expect(screen.queryByText("Score Viewer")).toBeNull();
     expect(screen.queryByText("用于乐谱阅读、播放和循环训练的练习工作区。")).toBeNull();
     expect(screen.queryByText("等待选择文件")).toBeNull();
@@ -106,10 +106,10 @@ describe("App", () => {
 
     render(<App application={application} />);
     expect(screen.getByRole("main")).toBeTruthy();
-    expect(screen.getByRole("region", { name: "乐谱工作区" })).toBeTruthy();
+    expect(await screen.findByRole("region", { name: "乐谱工作区" })).toBeTruthy();
     expect(screen.queryByRole("complementary", { name: "练习设置" })).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: "练习设置" }));
+    await user.click(await screen.findByRole("button", { name: "练习设置" }));
     expect(screen.getByRole("complementary", { name: "练习设置" })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "关闭练习设置" }));
     expect(screen.queryByRole("complementary", { name: "练习设置" })).toBeNull();
@@ -134,7 +134,7 @@ describe("App", () => {
     );
     const user = userEvent.setup();
     render(<App application={application} />);
-    await user.click(screen.getByRole("button", { name: "练习设置" }));
+    await user.click(await screen.findByRole("button", { name: "练习设置" }));
     const practice = screen.getByRole("complementary", { name: "练习设置" });
     expect(within(practice).getByRole("button", { name: "设置循环区间" })).toBeTruthy();
     expect(within(practice).getByRole("button", { name: "选择主轨道" })).toBeTruthy();
@@ -271,8 +271,8 @@ describe("App", () => {
 
     await user.click(await screen.findByRole("button", { name: "打开 Score A" }));
 
-    expect(window.location.hash).toBe(`#/viewer/${id}`);
-    expect(screen.getByRole("status", { name: "正在加载文件" }).getAttribute("id")).toBeNull();
+    await waitFor(() => expect(window.location.hash).toBe(`#/viewer/${id}`));
+    expect((await screen.findByRole("status", { name: "正在加载文件" })).getAttribute("id")).toBeNull();
     expect(screen.queryByText("会话已结束，请重新打开乐谱")).toBeNull();
 
     resolveOpenSession?.({
@@ -430,7 +430,7 @@ describe("App", () => {
     render(<App application={application} capabilities={{ harmonyAnalysis: false }} />);
 
     expect(await screen.findByRole("heading", { name: "和弦分析暂不可用" })).toBeTruthy();
-    expect(screen.getByText("C 大调前奏曲")).toBeTruthy();
+    expect(await screen.findByText("C 大调前奏曲")).toBeTruthy();
     expect(screen.getByRole("link", { name: "返回查看器" }).getAttribute("href")).toBe(`#/viewer/${id}`);
     expect(screen.getByRole("link", { name: "返回曲谱库" }).getAttribute("href")).toBe("#/library");
     expect(screen.queryByRole("link", { name: "和弦工作室" })).toBeNull();

@@ -331,12 +331,34 @@ describe("Rokot recognition adapter", () => {
     controller.abort();
     await expect(pending).rejects.toMatchObject({ code: "INTERRUPTED" });
   });
+
+  it("propagates llama timeout and output limits through the shared runner", async () => {
+    const timedOut = await createContext({ llamaMode: "sleep" });
+    const timedOutInput = join(timedOut.directory, "score.pdf");
+    await writeFile(timedOutInput, grandStaffPdf());
+    await expect(
+      createRokotAdapter({ ...adapterOptions(timedOut), timeoutMs: 50 }).recognize({
+        inputPath: timedOutInput,
+        outputDirectory: join(timedOut.directory, "timeout"),
+      }),
+    ).rejects.toMatchObject({ code: "ENGINE_EXECUTION_FAILED", context: { reason: "timeout" } });
+
+    const excessive = await createContext({ llamaMode: "output-limit" });
+    const excessiveInput = join(excessive.directory, "score.pdf");
+    await writeFile(excessiveInput, grandStaffPdf());
+    await expect(
+      createRokotAdapter({ ...adapterOptions(excessive), maxOutputBytes: 64 }).recognize({
+        inputPath: excessiveInput,
+        outputDirectory: join(excessive.directory, "output-limit"),
+      }),
+    ).rejects.toMatchObject({ code: "ENGINE_EXECUTION_FAILED", context: { reason: "output-limit" } });
+  });
 });
 
 type ContextOptions = {
   converterMode?: "empty" | "invalid-xml" | "raise" | "sleep";
   converterVersion?: string;
-  llamaMode?: "canonical" | "leading-prose" | "non-zero" | "sleep" | "suffix-prose" | "wrapper";
+  llamaMode?: "canonical" | "leading-prose" | "non-zero" | "output-limit" | "sleep" | "suffix-prose" | "wrapper";
   llamaVersion?: string;
 };
 
@@ -422,6 +444,7 @@ if (args.length === 1 && args[0] === "--version") {
 fs.appendFileSync(process.env.FAKE_ROKOT_LLAMA_LOG, JSON.stringify(args) + "\\n");
 const mode = process.env.FAKE_ROKOT_LLAMA_MODE;
 if (mode === "non-zero") process.exit(17);
+if (mode === "output-limit") process.stdout.write("x".repeat(4096));
 if (mode === "sleep") setTimeout(() => process.exit(0), 10000);
 else {
   const outputIndex = args.indexOf("-o");

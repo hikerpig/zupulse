@@ -35,16 +35,16 @@
 
 ## Phase 3: Sheet Library
 
-- [ ] Task 9：提取 `model/library-view-model.ts`、`adapters/use-debounced-query.ts`、`components/library-toolbar.tsx`
-- [ ] Task 9：为 filter/sort/stats/format 增加 pure tests
-- [ ] Task 10：提取 `library-score-list.tsx`、`library-score-row.tsx`、`highlight-text.tsx`
-- [ ] Task 10：建立 stable callbacks 与 memoized list/row boundary
-- [ ] Task 11：提取 Edit/Delete dialogs、ImportSummary、Skeleton、EmptyState
-- [ ] Task 11：保留 menu-to-dialog final focus
-- [ ] Task 12：旧 `SheetLibrary.tsx` 收敛为 compatibility re-export
+- [x] Task 9：提取 `model/library-view-model.ts`、`adapters/use-debounced-query.ts`、`components/library-toolbar.tsx`
+- [x] Task 9：为 filter/sort/stats/format 增加 pure tests
+- [x] Task 10：提取 `library-score-list.tsx`、`library-score-row.tsx`、`highlight-text.tsx`
+- [x] Task 10：建立 stable callbacks 与 memoized list/row boundary
+- [x] Task 11：提取 Edit/Delete dialogs、ImportSummary、Skeleton、EmptyState
+- [x] Task 11：保留 menu-to-dialog final focus
+- [x] Task 12：旧 `SheetLibrary.tsx` 收敛为 compatibility re-export
 - [ ] Task 12：按 import/actions/dialog/filter 拆分测试
-- [ ] Task 12：更新 style test 的 Library source owner
-- [ ] Checkpoint D：Library focused tests、App Library journey、render probe 通过
+- [x] Task 12：更新 style test 的 Library source owner
+- [x] Checkpoint D：Library focused tests、App Library journey、render probe 通过
 
 ## Phase 4: Studio
 

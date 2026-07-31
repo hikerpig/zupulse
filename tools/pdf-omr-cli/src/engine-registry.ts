@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createAudiverisAdapter } from "./engines/audiveris";
 import { createLegatoAdapter, type LegatoAdapterOptions } from "./engines/legato";
+import { createRokotAdapter, type RokotAdapterOptions } from "./engines/rokot";
 import { createTranscodaAdapter, type TranscodaAdapterOptions } from "./engines/transcoda";
 import type { OmrEngineAdapter } from "./engines/types";
 import { PdfOmrError } from "./errors";
@@ -15,6 +16,7 @@ export function createEngineRegistry(
     audiverisExecutable?: string;
     audiverisEnvironment?: Readonly<Record<string, string>>;
     legato?: LegatoAdapterOptions;
+    rokot?: RokotAdapterOptions;
     transcoda?: TranscodaAdapterOptions;
   } = {},
 ): EngineRegistry {
@@ -44,6 +46,15 @@ export function createEngineRegistry(
         }
         return createLegatoAdapter(configured);
       }
+      if (engineId === "rokot") {
+        const configured = options.rokot ?? rokotOptionsFromEnvironment();
+        if (configured === undefined) {
+          throw new PdfOmrError("ENGINE_UNAVAILABLE", "Rokot environment is not configured", {
+            context: { reason: "missing-rokot-configuration" },
+          });
+        }
+        return createRokotAdapter(configured);
+      }
       {
         throw new PdfOmrError("INVALID_CLI_ARGUMENT", "unknown OMR engine", {
           context: { engineId },
@@ -51,6 +62,22 @@ export function createEngineRegistry(
       }
     },
   };
+}
+
+function rokotOptionsFromEnvironment(): RokotAdapterOptions | undefined {
+  const llamaCliPath = process.env.PDF_OMR_ROKOT_LLAMA_CLI;
+  const modelPath = process.env.PDF_OMR_ROKOT_MODEL;
+  const mmprojPath = process.env.PDF_OMR_ROKOT_MMPROJ;
+  const abc2xmlPythonPath = process.env.PDF_OMR_ROKOT_ABC2XML_PYTHON;
+  if (
+    llamaCliPath === undefined ||
+    modelPath === undefined ||
+    mmprojPath === undefined ||
+    abc2xmlPythonPath === undefined
+  ) {
+    return undefined;
+  }
+  return { llamaCliPath, modelPath, mmprojPath, abc2xmlPythonPath };
 }
 
 function legatoOptionsFromEnvironment(): LegatoAdapterOptions | undefined {

@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { zlibSync } from "fflate";
 import { sha256Bytes } from "./canonical-json";
 import { PdfOmrError } from "./errors";
 import { mapPdfLoadError } from "./inspect-pdf";
@@ -106,4 +107,60 @@ export async function renderPdfPages(
   } finally {
     await loadingTask.destroy();
   }
+}
+
+export function encodeRgbaPng(width: number, height: number, pixels: Uint8Array): Uint8Array {
+  if (!Number.isSafeInteger(width) || width <= 0 || !Number.isSafeInteger(height) || height <= 0) {
+    throw new TypeError("PNG dimensions must be positive integers");
+  }
+  if (pixels.byteLength !== width * height * 4) throw new TypeError("PNG pixels must contain complete RGBA rows");
+
+  const rowBytes = width * 4;
+  const scanlines = new Uint8Array((rowBytes + 1) * height);
+  for (let row = 0; row < height; row += 1) {
+    const targetOffset = row * (rowBytes + 1);
+    scanlines[targetOffset] = 0;
+    scanlines.set(pixels.subarray(row * rowBytes, (row + 1) * rowBytes), targetOffset + 1);
+  }
+  const header = new Uint8Array(13);
+  const view = new DataView(header.buffer);
+  view.setUint32(0, width);
+  view.setUint32(4, height);
+  header.set([8, 6, 0, 0, 0], 8);
+  return concatenate([
+    Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    pngChunk("IHDR", header),
+    pngChunk("IDAT", zlibSync(scanlines, { level: 9 })),
+    pngChunk("IEND", new Uint8Array()),
+  ]);
+}
+
+function pngChunk(name: string, data: Uint8Array): Uint8Array {
+  const type = new TextEncoder().encode(name);
+  const result = new Uint8Array(12 + data.byteLength);
+  const view = new DataView(result.buffer);
+  view.setUint32(0, data.byteLength);
+  result.set(type, 4);
+  result.set(data, 8);
+  view.setUint32(8 + data.byteLength, crc32(concatenate([type, data])));
+  return result;
+}
+
+function crc32(bytes: Uint8Array): number {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function concatenate(parts: readonly Uint8Array[]): Uint8Array {
+  const result = new Uint8Array(parts.reduce((size, part) => size + part.byteLength, 0));
+  let offset = 0;
+  for (const part of parts) {
+    result.set(part, offset);
+    offset += part.byteLength;
+  }
+  return result;
 }

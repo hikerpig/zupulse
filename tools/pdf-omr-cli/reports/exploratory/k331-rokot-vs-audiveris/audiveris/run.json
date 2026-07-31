@@ -1,0 +1,25 @@
+{
+  "artifactSha256": {
+    "diagnostics.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "draft.json": "22543d72db8f04efbff33289b1dcf016b3abcff023b439067a03486420868a4a",
+    "engine/environment.json": "3703aa6e86d5c999f9ba6dc9a3533994a82d884b922ecccb856455234c50158e",
+    "engine/raw-output.mxl": "4e1d1fd07f7765edd888001115ed4e2f62ca06740daba029ef0953d57d2ae78c",
+    "engine/raw-output.omr": "87ae5c4f2af647c548943858408b3747a5f192d77fc3a8747c8596076084f21e",
+    "input.json": "0e8b5fd62feeb6ca860747b177fb357dc4d2572dd718cb3e76aada95eac948b3"
+  },
+  "completedAt": "2026-07-31T13:31:49.577Z",
+  "engine": {
+    "id": "audiveris",
+    "version": "5.11.0"
+  },
+  "inputSha256": "22cec1f974dc4bbef64c3e8968e98dcae68d229769d70fa66a21b8c8d56ae8a7",
+  "parameters": {},
+  "preprocess": {
+    "id": "none",
+    "version": "1.0.0"
+  },
+  "runId": "22cec1f974dc4bbe-audiveris",
+  "schemaVersion": "1.0.0",
+  "startedAt": "2026-07-31T13:29:10.071Z",
+  "status": "succeeded"
+}

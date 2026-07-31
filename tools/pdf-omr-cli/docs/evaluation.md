@@ -87,3 +87,15 @@ Transcoda model SHA/decoder parameters、`none` preprocessing 和八项 gate。H
 两份 aggregate 均已从 item artifacts 重算并得到相同 hash。冻结 gate 的唯一结论为 `STOP`；
 完整解释见 `docs/evaluation/pdf-omr.md`。该结论停止当前 engine 进入 App discovery，不禁止未来以
 新 engine、更大真实 corpus 和新 protocol 重新立项。
+
+## Exploratory follow-up
+
+非冻结、未进入 development / holdout protocol 的后续证据放在 `reports/exploratory/`，不得与
+canonical aggregate reports 合并或用于改写冻结 gate。
+
+`reports/exploratory/k331-rokot-vs-audiveris/` 保存 2026-07-31 的 K331 同输入对照：
+`rokot-omr-2b` Q8_0 对三个手工裁切 system 的 transcription，以及 Audiveris 5.11.0 对完整 6 页
+PDF 的输出。该对照只支持把 Rokot 视为新 protocol 的候选 engine；方法、custom NED、artifacts
+和局限见其 `README.md`，draft engine design 见
+`docs/specs/2026-07-31-rokot-pdf-omr-engine-design.md`，当前决策解释仍以
+`docs/evaluation/pdf-omr.md` 为准。

@@ -58,12 +58,63 @@ Transcoda 在 holdout 上能形成可转换、可 round-trip 的 Draft，但符�
 Cancel latency 没有进入 item aggregate，因此按冻结 gate 失败。即使移除这一项，joint F1、valid
 measure 和 Harmony 指标仍足以得出 `STOP`；不得事后修改 gate 改写结论。
 
+## 2026-07-31 K331 同输入探索性对照
+
+本节是冻结 benchmark 之后新增的 discovery evidence，不属于上述 frozen protocol，不修改 `STOP`
+结论，也不能与冻结报告中的 Note joint F1 直接换算。它只回答一个更窄的问题：在同一份受控钢琴谱
+上，`rokot-omr-2b` 的 per-system transcription 与 Audiveris 5.11.0 的符号识别相差多少。
+
+### 输入与方法
+
+- 输入：`test-fixtures/musicxml/K331-3_reviewed.pdf`，SHA-256
+  `22cec1f974dc4bbef64c3e8968e98dcae68d229769d70fa66a21b8c8d56ae8a7`。
+- Ground truth：`test-fixtures/musicxml/K331-3_reviewed.mxl`。PDF 由该 MusicXML 经 MuseScore 4.7.4
+  导出，因此本例是 `derived-controlled` clean upper-bound，不是独立扫描语料。
+- Rokot：`rokotmidi/rokot-omr-2b` revision
+  `7add305aade6fb3a64ad4dde77d410fa68381089`，Q8_0 text model + F16 vision projector，
+  `llama.cpp 10200`，temperature `0`，每次输入一个约 1405 px 宽的 system crop。
+- Audiveris：5.11.0，`preprocessing: none`，一次处理完整 6 页 PDF 并导出 MXL。
+- 抽样：page 1 system 1（measure 0–5）、page 1 system 5（measure 20–26，含 implicit
+  measure `X2`）、page 5 system 3（measure 105–109），共 217 个 ground-truth note token。
+- 指标：分别对 pitch token 与 `(pitch, duration)` token 序列计算 Levenshtein edit distance，再除以
+  ground-truth token 数。该 custom NED 越低越好；它不是 full-MusicXML OMR-NED，也不评价 layout、
+  lyrics、dynamics 或完整 score joining。
+
+### 结果
+
+| Engine            | Pitch NED ↓ | Pitch + duration NED ↓ | Processing scope               |
+| ----------------- | ----------: | ---------------------: | ------------------------------ |
+| rokot-omr-2b Q8_0 |       0.092 |                  0.171 | 3 manually cropped systems     |
+| Audiveris 5.11.0  |       0.456 |                  0.493 | full 6-page PDF, same 3 scored |
+
+在此抽样上，Rokot 的 pitch NED 比 Audiveris 低 `79.8%`，pitch + duration NED 低 `65.3%`。
+普通旋律、双谱表分配、调号、拍号和多数和弦音高表现较好；主要错误集中在短倚音、装饰音和低音快速
+分解和弦。Audiveris 在 measure 105–109 的 treble / bass 分别只输出 4 / 8 个 token，而 ground truth
+各为 36 个。
+
+Audiveris 的完整 6 页 run 用时约 `159.5s`，能够自动完成 page/system segmentation、score joining
+并导出一份 MXL。Rokot 的单 system run（含重复加载模型）约 `15–23s`，但当前 evidence 没有覆盖自动
+segmentation、measure alignment、跨 system joining 或完整 6 页运行。因此，当前证据只支持把 Rokot
+作为新 protocol 的 engine candidate 继续 `INVESTIGATE`，不支持 App discovery 或替换冻结决策。
+
+可复查 artifacts：
+
+- `tools/pdf-omr-cli/reports/exploratory/k331-rokot-vs-audiveris/README.md`
+- `tools/pdf-omr-cli/reports/exploratory/k331-rokot-vs-audiveris/abc/`
+- `tools/pdf-omr-cli/reports/exploratory/k331-rokot-vs-audiveris/musicxml/`
+- `tools/pdf-omr-cli/reports/exploratory/k331-rokot-vs-audiveris/audiveris/raw-output.mxl`，
+  SHA-256
+  `4e1d1fd07f7765edd888001115ed4e2f62ca06740daba029ef0953d57d2ae78c`
+- Draft engine design: `docs/specs/2026-07-31-rokot-pdf-omr-engine-design.md`
+
 ## 许可证与运行约束
 
 - Audiveris code: `AGPL-3.0-only`
 - Transcoda code: `AGPL-3.0-only`
 - Transcoda weights: `CC-BY-4.0`
+- Rokot weights: `CC-BY-NC-4.0`；当前公开权重不允许未经单独授权的商业使用
 - Transcoda 是单页、固定输入几何模型；当前 adapter 对 multi-page 明确稳定失败
+- Rokot Q8_0 + F16 vision projector 下载量约 2.7 GB，模型只处理单个 system，完整 PDF 需要外层流水线
 
 这些许可证只在隔离 CLI benchmark 中被评估，没有批准 Desktop、Browser、服务端或模型分发。
 
@@ -76,5 +127,7 @@ measure 和 Harmony 指标仍足以得出 `STOP`；不得事后修改 gate 改�
 3. 将 cancel、峰值 GPU/RSS 和逐阶段 wall time 纳入实际 item metrics。
 4. 对 neural decoder 做可复现性诊断，并单独校准 confidence，禁止跨 engine 直接比较 raw score。
 5. 使用新的 protocol/version；本次 frozen report 保持不可变。
+6. 若纳入 Rokot，先实现确定性的 system segmentation 与 joining，并在 development corpus 上冻结
+   crop、decoder、metric implementation 和 model revision，再读取新 holdout。
 
 本阶段没有修改 `apps/*`，也没有定义 UI、Bridge、Repository 或持久化模型。

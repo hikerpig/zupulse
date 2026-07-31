@@ -1,0 +1,16 @@
+User:
+Transcribe this staff to rokot-ABC.
+
+Assistant:
+%%rokot-abc 0.1
+X:1
+M:2/4
+L:1/8
+K:C
+V:1 clef=treble
+V:1b
+V:2 clef=bass
+[V:1] "^Allegretto"!p!!arpeggio!{B}A ^G/2 A/2 | c z {d}c B/2 c/2 | e z {f}e ^d/2 e/2 | {b}a ^g/2 a/2 {b}a g/2 a/2 | c'2 a c' | {g}a b [^fa] g [fa] |
+[V:1b] z2 | z4 | z4 | z4 | z4 | z4 |
+[V:2] !i!z2 | !p!(A, [CE]) [CE] [CE] | (A, [CE]) [CE] [CE] | A, [CE] A, [CE] | (A, [CE]) [CE] [CE] | E, [B,E] [B,E] [B,E] |
+

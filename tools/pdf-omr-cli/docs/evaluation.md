@@ -99,3 +99,19 @@ PDF 的输出。该对照只支持把 Rokot 视为新 protocol 的候选 engine�
 和局限见其 `README.md`，draft engine design 见
 `docs/specs/2026-07-31-rokot-pdf-omr-engine-design.md`，当前决策解释仍以
 `docs/evaluation/pdf-omr.md` 为准。
+
+## Rokot K331 controlled development run
+
+Rokot engine 实现后的 K331 全谱结果放在
+`reports/development/k331-rokot/`，而不是 `tools/harmony-cli/` 或通用 `output/`。recognition、segmentation、
+joining 和 Draft readiness 属于 PDF OMR evaluation；只有 Draft 已经 Harmony-ready 后，和弦算法本身的
+评测才进入 Harmony CLI 目录。
+
+本次使用独立的 `K331-3_rokot-development-manifest.json`，只含一个
+`derived-controlled-grand-staff` development item；没有读取 frozen holdout。六页 27 systems 均完成两轮
+推理，第三次独立 recognition 的 PNG、ABC、MusicXML 和 Draft hash 与 benchmark 第一轮一致。
+
+canonical item 最终为 `PROJECTION_OR_EXPORT_FAILED / harmony-readiness-blocked`：Rokot Draft 有 blocking
+joining/timing diagnostics，同时当前 K331 ground-truth Draft 本身也不是 Harmony-ready。因此报告保留
+失败状态，不伪造 Harmony delta。小型结构化聚合见
+`reports/development/k331-rokot/summary.json`，解释见同目录 `README.md`；完整 run、模型和 cache 不进入 Git。

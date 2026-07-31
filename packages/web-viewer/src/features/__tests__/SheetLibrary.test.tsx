@@ -514,6 +514,91 @@ describe("SheetLibrary import dialog", () => {
     await expect(submitted?.readBytes()).resolves.toEqual(new Uint8Array([7, 8, 9]));
   });
 
+  it("skips unsupported dropped files before they reach the candidate list", async () => {
+    const supported = new File([new Uint8Array([1])], "song.mxl");
+    const unsupported = new File([new Uint8Array([2])], "notes.txt");
+    const onImportSources = vi.fn(async () => undefined);
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[]}
+        loading={false}
+        onSelectImportFiles={async () => []}
+        onDropImportFiles={(files) =>
+          files.map((file) => ({
+            fileName: file.name,
+            readBytes: async () => new Uint8Array([7, 8, 9]),
+          }))
+        }
+        onImportSources={onImportSources}
+        onOpen={() => undefined}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "导入自己的曲谱" }));
+    const dropZone = screen.getByRole("button", { name: "选择文件或拖放文件" });
+    fireEvent.drop(dropZone, { dataTransfer: { files: [supported, unsupported] } });
+
+    expect(screen.getByText("song.mxl")).toBeTruthy();
+    expect(screen.queryByText("notes.txt")).toBeNull();
+    expect(screen.getByText("已跳过 1 份不支持的文件，仅支持 Guitar Pro、MusicXML 和 MXL。")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "导入 1 份" }));
+    expect(onImportSources).toHaveBeenCalledWith([expect.objectContaining({ fileName: "song.mxl" })]);
+  });
+
+  it("skips unsupported selected files before they reach the candidate list", async () => {
+    const user = userEvent.setup();
+    const supported = { fileName: "song.gp5", readBytes: async () => new Uint8Array([1]) };
+    const unsupported = { fileName: "archive.zip", readBytes: async () => new Uint8Array([2]) };
+    const onImportSources = vi.fn(async () => undefined);
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[]}
+        loading={false}
+        onSelectImportFiles={async () => [supported, unsupported]}
+        onImportSources={onImportSources}
+        onOpen={() => undefined}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "导入自己的曲谱" }));
+    await user.click(screen.getByRole("button", { name: "选择文件" }));
+
+    expect(screen.getByText("song.gp5")).toBeTruthy();
+    expect(screen.queryByText("archive.zip")).toBeNull();
+    expect(screen.getByText("已跳过 1 份不支持的文件，仅支持 Guitar Pro、MusicXML 和 MXL。")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "导入 1 份" }));
+    expect(onImportSources).toHaveBeenCalledWith([supported]);
+  });
+
+  it("keeps the submit action disabled when every selected file is unsupported", async () => {
+    const user = userEvent.setup();
+    const unsupported = { fileName: "photo.png", readBytes: async () => new Uint8Array([1]) };
+    const onImportSources = vi.fn(async () => undefined);
+
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[]}
+        loading={false}
+        onSelectImportFiles={async () => [unsupported]}
+        onImportSources={onImportSources}
+        onOpen={() => undefined}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "导入自己的曲谱" }));
+    await user.click(screen.getByRole("button", { name: "选择文件" }));
+
+    expect(screen.queryByText("photo.png")).toBeNull();
+    expect(screen.getByText("已跳过 1 份不支持的文件，仅支持 Guitar Pro、MusicXML 和 MXL。")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "导入 0 份" })).toHaveProperty("disabled", true);
+    expect(onImportSources).not.toHaveBeenCalled();
+  });
+
   it("reviews selected files before submitting the remaining candidates", async () => {
     const user = userEvent.setup();
     const first = { fileName: "first.gp5", readBytes: async () => new Uint8Array([1]) };

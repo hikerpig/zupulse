@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check, FileMusic, FilePlus2, Music, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { ScoreImportSource } from "@zupulse/web-core";
+import { getScoreFormatHint, type ScoreImportSource } from "@zupulse/web-core";
 import type { BundledSampleScore } from "../sample-scores";
 import {
   Button,
@@ -45,6 +45,7 @@ export function ImportScoreDialog({
   const [candidates, setCandidates] = useState<readonly ScoreImportSource[]>([]);
   const [selecting, setSelecting] = useState(false);
   const [selectionFailed, setSelectionFailed] = useState(false);
+  const [skippedUnsupported, setSkippedUnsupported] = useState(0);
   const [dropActive, setDropActive] = useState(false);
 
   useEffect(() => {
@@ -52,15 +53,24 @@ export function ImportScoreDialog({
     setCandidates([]);
     setSelecting(false);
     setSelectionFailed(false);
+    setSkippedUnsupported(0);
     setDropActive(false);
   }, [open]);
+
+  // Files enter here from every host path (picker bypasses, drops); gate with the
+  // same extension hint the import pipeline uses so unsupported files never
+  // reach the candidate list.
+  const addCandidates = (sources: readonly ScoreImportSource[]) => {
+    const supported = sources.filter((source) => getScoreFormatHint(source.fileName) !== undefined);
+    setSkippedUnsupported(sources.length - supported.length);
+    if (supported.length) setCandidates((current) => [...current, ...supported]);
+  };
 
   const selectFiles = async () => {
     setSelecting(true);
     setSelectionFailed(false);
     try {
-      const selected = await onSelectFiles();
-      if (selected.length) setCandidates((current) => [...current, ...selected]);
+      addCandidates(await onSelectFiles());
     } catch {
       setSelectionFailed(true);
     } finally {
@@ -119,8 +129,7 @@ export function ImportScoreDialog({
                       event.preventDefault();
                       event.stopPropagation();
                       setDropActive(false);
-                      const dropped = onDropFiles(Array.from(event.dataTransfer.files));
-                      if (dropped.length) setCandidates((current) => [...current, ...dropped]);
+                      addCandidates(onDropFiles(Array.from(event.dataTransfer.files)));
                     }
                   : undefined
               }
@@ -145,6 +154,11 @@ export function ImportScoreDialog({
             {selectionFailed ? (
               <p className="tw:m-0 tw:text-caption tw:text-danger" role="alert">
                 {t("importDialog.selectionFailed")}
+              </p>
+            ) : null}
+            {skippedUnsupported ? (
+              <p className="tw:m-0 tw:text-caption tw:text-warning" role="status">
+                {t("importDialog.unsupportedSkipped", { count: skippedUnsupported })}
               </p>
             ) : null}
           </div>

@@ -1,12 +1,21 @@
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { readFile } from "node:fs/promises";
-import { basename } from "node:path";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DOMParser } from "@xmldom/xmldom";
+import { canonicalJson, sha256Bytes } from "../canonical-json";
 import { PdfOmrError } from "../errors";
 import { runEngineProcess, type EngineProcessResult } from "../engine-runner";
-import type { OmrEngineEnvironment } from "./types";
+import {
+  normalizeRokotOutput,
+  parseRokotSystemBundle,
+  validateRokotAbc,
+  type RokotSystemBundle,
+} from "../normalizers/rokot";
+import { encodeRgbaPng, renderPdfPages } from "../render-pdf-pages";
+import { GRAND_STAFF_SEGMENTATION_PARAMETERS, segmentGrandStaffSystems } from "../staff-system-segmentation";
+import type { OmrEngineAdapter } from "./types";
 
 const defaultModelRevision = "7add305aade6fb3a64ad4dde77d410fa68381089";
 const defaultModelSha256 = "df53948ada1a4a584b4c7c81cc7e3293d3457f2e5ec9688271693459eb950f25";
@@ -27,10 +36,7 @@ export type RokotAdapterOptions = {
   llamaBuild?: string;
   environment?: Readonly<Record<string, string>>;
   timeoutMs?: number;
-};
-
-export type RokotEnvironmentAdapter = {
-  inspectEnvironment(signal?: AbortSignal): Promise<OmrEngineEnvironment>;
+  maxOutputBytes?: number;
 };
 
 export type RokotAbcConversionRequest = {
@@ -40,15 +46,17 @@ export type RokotAbcConversionRequest = {
   outputPath: string;
   environment?: Readonly<Record<string, string>>;
   timeoutMs?: number;
+  maxOutputBytes?: number;
 };
 
-export function createRokotAdapter(options: RokotAdapterOptions): RokotEnvironmentAdapter {
+export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapter {
   return {
     async inspectEnvironment(signal) {
       const configuration = requireConfiguration(options);
       const processOptions = {
         ...(options.environment === undefined ? {} : { env: options.environment }),
         ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
+        ...(options.maxOutputBytes === undefined ? {} : { maxOutputBytes: options.maxOutputBytes }),
       };
       const [modelHash, mmprojHash, llamaVersion, converter] = await Promise.all([
         streamingSha256(configuration.modelPath).catch((error: unknown) => {
@@ -98,6 +106,17 @@ export function createRokotAdapter(options: RokotAdapterOptions): RokotEnvironme
           modelRevision: configuration.modelRevision,
           prompt,
           reasoning: "off",
+          segmentationCropPaddingMultiplier: GRAND_STAFF_SEGMENTATION_PARAMETERS.cropPaddingMultiplier,
+          segmentationDetectorVersion: GRAND_STAFF_SEGMENTATION_PARAMETERS.detectorVersion,
+          segmentationHorizontalRunCoverage: GRAND_STAFF_SEGMENTATION_PARAMETERS.horizontalRunCoverage,
+          segmentationMaximumGrandStaffGapMultiplier:
+            GRAND_STAFF_SEGMENTATION_PARAMETERS.maximumGrandStaffGapMultiplier,
+          segmentationMaximumStaffSpacingPx: GRAND_STAFF_SEGMENTATION_PARAMETERS.maximumStaffSpacingPx,
+          segmentationMinimumConnectorCoverage: GRAND_STAFF_SEGMENTATION_PARAMETERS.minimumConnectorCoverage,
+          segmentationMinimumGrandStaffGapMultiplier:
+            GRAND_STAFF_SEGMENTATION_PARAMETERS.minimumGrandStaffGapMultiplier,
+          segmentationMinimumStaffSpacingPx: GRAND_STAFF_SEGMENTATION_PARAMETERS.minimumStaffSpacingPx,
+          segmentationSpacingToleranceRatio: GRAND_STAFF_SEGMENTATION_PARAMETERS.spacingToleranceRatio,
           temperature: 0,
           visionProjectorSha256: mmprojHash,
         },
@@ -128,6 +147,141 @@ export function createRokotAdapter(options: RokotAdapterOptions): RokotEnvironme
         },
       };
     },
+
+    async recognize(request) {
+      const configuration = requireConfiguration(options);
+      const processOptions = {
+        ...(options.environment === undefined ? {} : { env: options.environment }),
+        ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
+        ...(options.maxOutputBytes === undefined ? {} : { maxOutputBytes: options.maxOutputBytes }),
+      };
+      const inputBytes = await readFile(request.inputPath).catch((error: unknown) => {
+        throw new PdfOmrError("INVALID_INPUT", "input PDF cannot be read", {
+          context: { reason: "unreadable-pdf" },
+          cause: error,
+        });
+      });
+      const pages = await renderPdfPages(inputBytes, { targetWidth: 1400 });
+      const segmentation = segmentGrandStaffSystems(pages);
+      const systems = [...segmentation.systems].sort(
+        (left, right) => left.pageIndex - right.pageIndex || left.systemIndex - right.systemIndex,
+      );
+      const systemsDirectory = join(request.outputDirectory, "systems");
+      await mkdir(systemsDirectory, { recursive: true });
+      const artifacts: Array<{ relativePath: string; bytes: Uint8Array }> = [];
+      const bundleSystems: RokotSystemBundle["systems"] = [];
+      const segmentationSystems: Array<Record<string, unknown>> = [];
+      let durationMs = 0;
+
+      for (const system of systems) {
+        const stem = systemStem(system.pageIndex, system.systemIndex);
+        const pngBytes = encodeRgbaPng(system.pixelBBox.width, system.pixelBBox.height, system.cropPixels);
+        const pngPath = join(systemsDirectory, `${stem}.png`);
+        const rawAbcPath = join(systemsDirectory, `${stem}.raw.abc`);
+        const canonicalAbcPath = join(systemsDirectory, `${stem}.abc`);
+        const musicXmlPath = join(systemsDirectory, `${stem}.musicxml`);
+        await writeFile(pngPath, pngBytes, { flag: "wx" });
+        const inference = await runEngineProcess(
+          {
+            command: configuration.llamaCliPath,
+            args: [
+              "-m",
+              configuration.modelPath,
+              "-mm",
+              configuration.mmprojPath,
+              "--image",
+              pngPath,
+              "-p",
+              prompt,
+              "-n",
+              "1600",
+              "--temp",
+              "0",
+              "--single-turn",
+              "--reasoning",
+              "off",
+              "--no-display-prompt",
+              "--no-show-timings",
+              "-o",
+              rawAbcPath,
+            ],
+            ...processOptions,
+          },
+          request.signal,
+        );
+        const rawAbcBytes = await readFile(rawAbcPath).catch((error: unknown) => {
+          throw invalidOutput("invalid-rokot-abc-envelope", error);
+        });
+        const abc = extractCanonicalAbc(rawAbcBytes);
+        const abcBytes = new TextEncoder().encode(abc);
+        await writeFile(canonicalAbcPath, abcBytes, { flag: "wx" });
+        const conversion = await convertRokotAbc(
+          {
+            pythonExecutable: configuration.abc2xmlPythonPath,
+            runnerPath: configuration.abc2xmlRunnerPath,
+            inputPath: canonicalAbcPath,
+            outputPath: musicXmlPath,
+            ...(options.environment === undefined ? {} : { environment: options.environment }),
+            ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
+            ...(options.maxOutputBytes === undefined ? {} : { maxOutputBytes: options.maxOutputBytes }),
+          },
+          request.signal,
+        );
+        const musicXmlBytes = await readFile(musicXmlPath);
+        const musicXml = new TextDecoder("utf-8", { fatal: true }).decode(musicXmlBytes);
+        durationMs += inference.durationMs + conversion.durationMs;
+        bundleSystems.push({
+          pageIndex: system.pageIndex,
+          systemIndex: system.systemIndex,
+          source: {
+            pixelBbox: system.pixelBBox,
+            pdfPointBbox: system.pdfPointBBox,
+            cropSha256: system.cropSha256,
+          },
+          abcUtf8: abc,
+          musicXmlUtf8: musicXml,
+        });
+        segmentationSystems.push({
+          pageIndex: system.pageIndex,
+          systemIndex: system.systemIndex,
+          pageRenderSha256: system.pageRenderSha256,
+          localStaffSpacingPx: system.localStaffSpacingPx,
+          pixelBBox: system.pixelBBox,
+          pdfPointBBox: system.pdfPointBBox,
+          cropSha256: system.cropSha256,
+          cropPngSha256: sha256Bytes(pngBytes),
+          staffLineYs: system.staffLineYs,
+        });
+        artifacts.push(
+          { relativePath: `systems/${stem}.png`, bytes: pngBytes },
+          { relativePath: `systems/${stem}.abc`, bytes: abcBytes },
+          { relativePath: `systems/${stem}.musicxml`, bytes: musicXmlBytes },
+        );
+      }
+
+      const bundleBytes = new TextEncoder().encode(
+        canonicalJson({ schemaVersion: "1.0.0", systems: bundleSystems } satisfies RokotSystemBundle),
+      );
+      parseRokotSystemBundle(bundleBytes);
+      const segmentationBytes = new TextEncoder().encode(
+        canonicalJson({
+          schemaVersion: "1.0.0",
+          detectorVersion: segmentation.detectorVersion,
+          parameters: segmentation.parameters,
+          systems: segmentationSystems,
+        }),
+      );
+      return {
+        normalizationBytes: bundleBytes,
+        nativeArtifacts: [{ relativePath: "segmentation.json", bytes: segmentationBytes }, ...artifacts],
+        diagnostics: [],
+        durationMs,
+      };
+    },
+
+    normalize(recognition) {
+      return normalizeRokotOutput(recognition.normalizationBytes);
+    },
   };
 }
 
@@ -138,6 +292,7 @@ export async function convertRokotAbc(
   const processOptions = {
     ...(request.environment === undefined ? {} : { env: request.environment }),
     ...(request.timeoutMs === undefined ? {} : { timeoutMs: request.timeoutMs }),
+    ...(request.maxOutputBytes === undefined ? {} : { maxOutputBytes: request.maxOutputBytes }),
   };
   let result: EngineProcessResult;
   try {
@@ -241,6 +396,22 @@ function parseConverterVersion(output: string): string {
     // The caller maps malformed inspection output to the stable availability reason.
   }
   return "";
+}
+
+function extractCanonicalAbc(bytes: Uint8Array): string {
+  let output: string;
+  try {
+    output = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    return validateRokotAbc(bytes);
+  }
+  const wrapper = `User:\n${prompt}\n\nAssistant:\n`;
+  const payload = output.startsWith(wrapper) ? output.slice(wrapper.length) : output;
+  return validateRokotAbc(new TextEncoder().encode(payload));
+}
+
+function systemStem(pageIndex: number, systemIndex: number): string {
+  return `page-${String(pageIndex + 1).padStart(3, "0")}-system-${String(systemIndex + 1).padStart(3, "0")}`;
 }
 
 function isInterrupted(error: unknown): error is PdfOmrError {

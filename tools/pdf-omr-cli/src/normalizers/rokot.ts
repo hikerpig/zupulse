@@ -85,7 +85,7 @@ export function validateRokotAbc(bytes: Uint8Array): string {
 
   const contentLines = lines.slice(5).filter((line) => line.length > 0);
   const structuralLines = contentLines.every(
-    (line) => /^V:[^\s]+(?:\s.*)?$/.test(line) || /^\[V:[^\]]+\](?:\s.*)?$/.test(line),
+    (line) => /^V:[^\s]+(?:\s.*)?$/.test(line) || /^\[V:[^\]]+\](?:\s.*)?$/.test(line) || /^w:[^\r\n]*$/.test(line),
   );
   const duplicateHeader = contentLines.some((line) => /^[XMLK]:/.test(line));
   if (!structuralLines || duplicateHeader) throw invalidOutput("invalid-rokot-abc-envelope");

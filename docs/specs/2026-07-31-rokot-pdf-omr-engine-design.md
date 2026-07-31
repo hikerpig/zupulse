@@ -198,6 +198,8 @@ then undergoes UTF-8 and rokot-ABC envelope validation:
 - first line MUST be `%%rokot-abc 0.1`;
 - headers MUST contain one `X`, `M`, `L`, and `K` in fixed order;
 - allowed voices are `1`, `1b`, `2`, and `2b`;
+- standard lowercase `w:` lyric continuation lines MAY follow a voice body and MUST be preserved verbatim; the
+  v1 Draft does not project lyrics;
 - output MUST contain at least one pitched note or rest;
 - prose、Markdown fence、duplicate header 或未知 voice MUST fail with `ENGINE_OUTPUT_INVALID`.
 

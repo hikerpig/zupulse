@@ -91,6 +91,12 @@ describe("validateRokotAbc", () => {
     expect(validateRokotAbc(new TextEncoder().encode(validAbc))).toBe(validAbc);
   });
 
+  it("preserves standard ABC lyric continuation lines without treating them as prose", () => {
+    const abc = validAbc.replace("[V:1] C2 z2 |", "[V:1] C2 z2 |\nw: I V");
+
+    expect(validateRokotAbc(new TextEncoder().encode(abc))).toBe(abc);
+  });
+
   it("rejects invalid UTF-8 with a stable reason", () => {
     expectReason(() => validateRokotAbc(Uint8Array.from([0xc3, 0x28])), "invalid-abc-utf8");
   });

@@ -7,6 +7,11 @@ import type { ImportItemResult, LibraryImportError, ScoreImportSource, Validated
 
 export const MAX_LIBRARY_IMPORT_BYTES = 64 * 1024 * 1024;
 
+export function isSupportedLibraryScoreFile(fileName: string): boolean {
+  const format = getScoreFormatHint(fileName);
+  return format === "gp" || format === "musicxml";
+}
+
 export async function importLibraryScores(input: {
   sources: readonly ScoreImportSource[];
   repository: SheetLibraryRepository;
@@ -32,7 +37,7 @@ async function importOne(
   try {
     const bytes = await source.readBytes();
     if (bytes.byteLength > MAX_LIBRARY_IMPORT_BYTES) return failed(source.fileName, "FILE_TOO_LARGE");
-    if (getScoreFormatHint(source.fileName) === undefined) return failed(source.fileName, "UNSUPPORTED_FORMAT");
+    if (!isSupportedLibraryScoreFile(source.fileName)) return failed(source.fileName, "UNSUPPORTED_FORMAT");
     const probe = await probeScoreFormat(source.fileName, bytes);
     if (probe.status === "unsupported") return failed(source.fileName, "UNSUPPORTED_FORMAT");
     if (probe.status !== "confirmed") return failed(source.fileName, "INVALID_SCORE");

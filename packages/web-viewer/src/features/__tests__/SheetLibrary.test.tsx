@@ -576,7 +576,7 @@ describe("SheetLibrary import dialog", () => {
 
   it("keeps the submit action disabled when every selected file is unsupported", async () => {
     const user = userEvent.setup();
-    const unsupported = { fileName: "photo.png", readBytes: async () => new Uint8Array([1]) };
+    const unsupported = { fileName: "performance.mid", readBytes: async () => new Uint8Array([1]) };
     const onImportSources = vi.fn(async () => undefined);
 
     render(
@@ -593,7 +593,7 @@ describe("SheetLibrary import dialog", () => {
     await user.click(screen.getByRole("button", { name: "导入自己的曲谱" }));
     await user.click(screen.getByRole("button", { name: "选择文件" }));
 
-    expect(screen.queryByText("photo.png")).toBeNull();
+    expect(screen.queryByText("performance.mid")).toBeNull();
     expect(screen.getByText("已跳过 1 份不支持的文件，仅支持 Guitar Pro、MusicXML 和 MXL。")).toBeTruthy();
     expect(screen.getByRole("button", { name: "导入 0 份" })).toHaveProperty("disabled", true);
     expect(onImportSources).not.toHaveBeenCalled();

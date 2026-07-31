@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ScoreFormatAdapter } from "../../import/types";
 import type { SheetLibraryRepository } from "../ports";
-import { importLibraryScores } from "../importLibraryScores";
+import { importLibraryScores, isSupportedLibraryScoreFile } from "../importLibraryScores";
 
 const bytes = new TextEncoder().encode("<score-partwise><part/><measure/></score-partwise>");
 const adapter: ScoreFormatAdapter = {
@@ -50,6 +50,15 @@ function repository(): SheetLibraryRepository {
 }
 
 describe("importLibraryScores", () => {
+  it("admits only formats supported by the Library import pipeline", () => {
+    expect(isSupportedLibraryScoreFile("song.gp5")).toBe(true);
+    expect(isSupportedLibraryScoreFile("score.musicxml")).toBe(true);
+    expect(isSupportedLibraryScoreFile("score.mxl")).toBe(true);
+    expect(isSupportedLibraryScoreFile("performance.mid")).toBe(false);
+    expect(isSupportedLibraryScoreFile("performance.midi")).toBe(false);
+    expect(isSupportedLibraryScoreFile("notes.txt")).toBe(false);
+  });
+
   it("imports independently and leaves invalid files out of the repository", async () => {
     const store = repository();
     const results = await importLibraryScores({

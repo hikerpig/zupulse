@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check, FileMusic, FilePlus2, Music, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { getScoreFormatHint, type ScoreImportSource } from "@zupulse/web-core";
+import { isSupportedLibraryScoreFile, type ScoreImportSource } from "@zupulse/web-core";
 import type { BundledSampleScore } from "../sample-scores";
 import {
   Button,
@@ -58,10 +58,10 @@ export function ImportScoreDialog({
   }, [open]);
 
   // Files enter here from every host path (picker bypasses, drops); gate with the
-  // same extension hint the import pipeline uses so unsupported files never
+  // same Library support rule as the import pipeline so unsupported files never
   // reach the candidate list.
   const addCandidates = (sources: readonly ScoreImportSource[]) => {
-    const supported = sources.filter((source) => getScoreFormatHint(source.fileName) !== undefined);
+    const supported = sources.filter((source) => isSupportedLibraryScoreFile(source.fileName));
     setSkippedUnsupported(sources.length - supported.length);
     if (supported.length) setCandidates((current) => [...current, ...supported]);
   };

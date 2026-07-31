@@ -1,6 +1,7 @@
 import { PdfOmrError } from "./errors";
 import { createEngineRegistry, type EngineRegistry } from "./engine-registry";
 import type { RunBenchmarkDependencies } from "./benchmark/run-benchmark";
+import type { FusionReport } from "./fusion/schemas";
 import type { MidiImportReport } from "./midi/schemas";
 import {
   type PdfOmrBenchmarkReport,
@@ -19,6 +20,7 @@ const usage = [
   "Commands:",
   "  inspect <input.pdf> --output <run-dir>",
   "  import-midi <input.mid> --output <run-dir>",
+  "  fuse --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --output <run-dir>",
   "  recognize <input.pdf> --engine <engine-id> --output <run-dir>",
   "  validate <draft.json> --output <diagnostics.json>",
   "  analyze <draft.json> --output <harmony.json>",
@@ -43,6 +45,7 @@ export async function runPdfOmrCommand(
   | PdfOmrExportReport
   | PdfOmrBenchmarkReport
   | MidiImportReport
+  | FusionReport
 > {
   const normalized = args[0] === "--" ? args.slice(1) : args;
   if (normalized.length === 0 || normalized[0] === "--help" || normalized[0] === "-h") {
@@ -59,6 +62,39 @@ export async function runPdfOmrCommand(
     }
     const { importMidiCommand } = await import("./commands/import-midi");
     return importMidiCommand(input, output, context.cwd ?? process.cwd());
+  }
+  if (normalized[0] === "fuse") {
+    const flags = parseFlags(
+      normalized.slice(1),
+      new Set(["--musicxml", "--midi", "--output", "--midi-kind", "--repair-mode"]),
+    );
+    const musicXml = flags.get("--musicxml");
+    const midi = flags.get("--midi");
+    const output = flags.get("--output");
+    const midiKind = flags.get("--midi-kind") ?? "score-export";
+    const repairMode = flags.get("--repair-mode") ?? "report-only";
+    if (
+      musicXml === undefined ||
+      midi === undefined ||
+      output === undefined ||
+      midiKind !== "score-export" ||
+      repairMode !== "report-only"
+    ) {
+      throw new PdfOmrError(
+        "INVALID_CLI_ARGUMENT",
+        "fuse requires --musicxml <score> --midi <score-export.mid> --output <run-dir> and supports only score-export/report-only",
+        { context: { command: "fuse" } },
+      );
+    }
+    const { fuseCommand } = await import("./commands/fuse");
+    return fuseCommand({
+      musicXml,
+      midi,
+      output,
+      midiKind,
+      repairMode,
+      cwd: context.cwd ?? process.cwd(),
+    });
   }
   if (normalized[0] === "inspect") {
     const input = normalized[1];
@@ -199,6 +235,10 @@ export async function runPdfOmrCommand(
 
 function parseBenchmarkFlags(args: readonly string[]): Map<string, string> {
   const allowed = new Set(["--manifest", "--engine", "--output", "--preprocess", "--mode", "--protocol-sha"]);
+  return parseFlags(args, allowed);
+}
+
+function parseFlags(args: readonly string[], allowed: ReadonlySet<string>): Map<string, string> {
   const result = new Map<string, string>();
   for (let index = 0; index < args.length; index += 2) {
     const flag = args[index];

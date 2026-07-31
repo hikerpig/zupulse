@@ -64,7 +64,8 @@ flowchart LR
 - Repository 管馆藏，Gateway 管用户选择的外部文件。
 - 删除联动清理馆藏、托管字节、sidecar、resume 和 Harmony Analysis Document。
 - 当前不包含云同步、OPFS、打印分页或移动端产品。Viewer Screen Score Page 是临时视口投影；
-  产品导入仍不支持 MIDI，Harmony CLI 只为 POP909 评测解析 MIDI，不改变产品格式边界。
+  产品导入仍不支持 MIDI。`pdf-omr-cli` 可在隔离的研究链路中导入 MIDI，并对 score-export MIDI 与
+  MusicXML/MXL 执行 report-only compatibility、alignment 和 repair proposal；它不改变产品格式边界。
 
 ## 历史文档
 

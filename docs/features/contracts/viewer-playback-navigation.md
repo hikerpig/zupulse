@@ -11,7 +11,7 @@ implementation_paths:
   - packages/web-core/src/gp/alphaTabBrowser.ts
   - packages/web-core/src/playback
   - packages/web-viewer/src/score-navigation
-  - packages/web-viewer/src/features/PlaybackWorkspace.tsx
+  - packages/web-viewer/src/features/playback-workspace
   - packages/web-viewer/src/viewerApp.tsx
 supersedes: []
 ---
@@ -178,9 +178,9 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 | alphaTab 公开导航边界       | `packages/web-core/src/gp/alphaTabBrowser.ts`                                                    | `packages/web-core/src/gp/__tests__/alphaTabBrowser.test.ts`    |
 | occurrence 精确解析         | `packages/web-core/src/score/positions.ts`、`packages/web-core/src/playback/writtenSelection.ts` | 相邻 `__tests__`                                                |
 | Follow State 与页面协调     | `packages/web-viewer/src/score-navigation`                                                       | `packages/web-viewer/src/score-navigation/__tests__`            |
-| 模式、页码与恢复 UI         | `packages/web-viewer/src/features/PlaybackWorkspace.tsx`                                         | `PlaybackWorkspace.test.tsx`                                    |
+| 模式、页码与恢复 UI         | `packages/web-viewer/src/features/playback-workspace`                                            | `PlaybackWorkspace.test.tsx`、feature-local tests               |
 | 谱面宽度、缩放与位置恢复    | `packages/web-viewer/src/components/ScoreViewer.tsx`、`packages/web-viewer/src/viewerApp.tsx`    | `ScoreViewer.test.tsx`、`viewerApp.test.ts`、Playwright         |
-| 练习设置任务、降级与焦点    | `packages/web-viewer/src/features/PlaybackWorkspace.tsx`                                         | `PlaybackWorkspace.test.tsx`                                    |
+| 练习设置任务、降级与焦点    | `packages/web-viewer/src/features/playback-workspace`                                            | `PlaybackWorkspace.test.tsx`、feature-local tests               |
 | 谱面 Loop 区间与 A/B 手柄   | `packages/web-viewer/src/practice-loop`、`packages/web-viewer/src/components/ScoreViewer.tsx`    | `loop-range-geometry.test.ts`、`ScoreViewer.test.tsx`           |
 | position 发布预算           | `packages/web-core/src/playback/playbackController.ts`                                           | `playbackController.test.ts`                                    |
 | 节拍、预备拍与 Sidecar 迁移 | `packages/web-core/src/playback`、`packages/web-core/src/storage/sidecar.ts`                     | `playbackSidecar.test.ts`、`sidecar.test.ts`、`library.spec.ts` |

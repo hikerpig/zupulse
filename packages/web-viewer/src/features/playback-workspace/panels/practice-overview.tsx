@@ -1,10 +1,9 @@
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ViewerSessionHandle } from "../../../host";
-import { presentPlayback } from "../../../playbackPresenter";
 import { usePlaybackSelector } from "../adapters/use-playback-selector";
 import { BpmControl } from "../components/bpm-control";
-import { loopDisplayLabel, pianoPracticeSummary, rhythmSummary } from "../model/playback-presenter";
+import { loopDisplayLabel, pianoPracticeSummary, presentPlayback, rhythmSummary } from "../model/playback-presenter";
 import { setPlaybackLoopMode } from "../runtime/loop-mode";
 import styles from "../../PlaybackWorkspace.module.css";
 

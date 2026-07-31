@@ -2,10 +2,11 @@ import { useTranslation } from "react-i18next";
 import type { ViewerApplication } from "../../../app/ViewerApplication";
 import type { StudioPreferences } from "../../../app/studio-preferences";
 import styles from "../../../app/pages/StudioPage.module.css";
+import { HarmonyRangeWorkspace } from "../harmony-range-workspace";
 import type { StudioRange, StudioSnapshot } from "../model/studio-page-model";
 import { studioIssueMessage } from "../model/studio-page-presenter";
 import { StudioCommandBar } from "./studio-command-bar";
-import { StudioWorkspace } from "./studio-workspace";
+import { StudioSegmentInspector } from "./studio-segment-inspector";
 
 export function StudioAnalysisPanel({
   application,
@@ -93,12 +94,17 @@ export function StudioAnalysisPanel({
               {t("selectionNotice")}
             </p>
           ) : null}
-          <StudioWorkspace
-            application={application}
-            libraryScoreId={libraryScoreId}
+          <HarmonyRangeWorkspace
             ranges={ranges}
-            selectedRange={selectedRange}
+            {...(selectedRange ? { selectedKey: selectedRange.key } : {})}
             onSelect={onSelectRange}
+            editor={
+              <StudioSegmentInspector
+                application={application}
+                libraryScoreId={libraryScoreId}
+                selectedRange={selectedRange}
+              />
+            }
           />
         </>
       ) : (

@@ -1,8 +1,7 @@
 import { useTranslation } from "react-i18next";
 import type { ViewerSessionHandle } from "../../../host";
-import { presentPlayback } from "../../../playbackPresenter";
 import { usePlaybackSelector } from "../adapters/use-playback-selector";
-import { trackDisplayName } from "../model/playback-presenter";
+import { presentPlayback, trackDisplayName } from "../model/playback-presenter";
 import styles from "../../PlaybackWorkspace.module.css";
 
 type Playback = NonNullable<ViewerSessionHandle["playback"]>;

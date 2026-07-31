@@ -1,8 +1,7 @@
 import { useTranslation } from "react-i18next";
 import type { ViewerSessionHandle } from "../../../host";
-import { presentPlayback } from "../../../playbackPresenter";
 import { usePlaybackSelector } from "../adapters/use-playback-selector";
-import { loopDisplayLabel, loopSpeedCommand } from "../model/playback-presenter";
+import { loopDisplayLabel, loopSpeedCommand, presentPlayback } from "../model/playback-presenter";
 import { setPlaybackLoopMode } from "../runtime/loop-mode";
 import styles from "../../PlaybackWorkspace.module.css";
 

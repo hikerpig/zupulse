@@ -1,17 +1,27 @@
 import { DOMParser, type Document, type Element } from "@xmldom/xmldom";
-import { readMusicXmlRootXml } from "@zupulse/web-core";
+import { readMusicXmlRootSource } from "@zupulse/web-core";
 import { PdfOmrError } from "../errors";
 
 export type XmlElement = Element;
 
+export type ParsedMusicXmlSource = {
+  document: Document;
+  rootFilePath: string | null;
+};
+
 export function parseMusicXmlDocument(bytes: Uint8Array): Document {
+  return parseMusicXmlSource(bytes).document;
+}
+
+export function parseMusicXmlSource(bytes: Uint8Array): ParsedMusicXmlSource {
   try {
-    const source = readMusicXmlRootXml(bytes);
-    return new DOMParser({
+    const source = readMusicXmlRootSource(bytes);
+    const document = new DOMParser({
       onError(level, message) {
         if (level === "error" || level === "fatalError") throw new Error(message);
       },
-    }).parseFromString(source, "application/xml");
+    }).parseFromString(new TextDecoder("utf-8", { fatal: true }).decode(source.rootBytes), "application/xml");
+    return { document, rootFilePath: source.rootFilePath };
   } catch (error) {
     throw new PdfOmrError("ENGINE_OUTPUT_INVALID", "Audiveris MusicXML is invalid", {
       context: { reason: "invalid-musicxml" },

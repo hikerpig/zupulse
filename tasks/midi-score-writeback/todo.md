@@ -4,7 +4,7 @@ Canonical plan: `tasks/midi-score-writeback/plan.md`
 
 ## Phase 1: Provenance and proposal contracts
 
-- [ ] T01 建立 source note index
+- [x] T01 建立 source note index
 - [ ] T02 生成 writeback-ready proposal v2
 
 ### Checkpoint A

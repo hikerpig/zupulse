@@ -1,11 +1,12 @@
 import { PdfOmrError } from "../errors";
 import { omrScoreDraftSchema, type OmrScoreDraft } from "../schemas";
+import { canonicalJson, sha256Bytes } from "../canonical-json";
 import {
   childElement,
   childElements,
   childText,
   integerText,
-  parseMusicXmlDocument,
+  parseMusicXmlSource,
   type XmlElement,
 } from "./musicxml-source";
 
@@ -13,16 +14,51 @@ type Rational = { numerator: number; denominator: number };
 type Diagnostic = OmrScoreDraft["diagnostics"][number];
 type Event = OmrScoreDraft["parts"][number]["staves"][number]["measures"][number]["voices"][number]["events"][number];
 
+export type WritableMusicXmlNoteFacts = {
+  writtenPitch: { step: "A" | "B" | "C" | "D" | "E" | "F" | "G"; alter: number; octave: number };
+  voice: number;
+  staff: number;
+  durationUnits: number;
+  chord: boolean;
+  tieTypes: string[];
+};
+
+export type MusicXmlNoteLocator = {
+  rootFilePath: string | null;
+  partId: string;
+  measureIndex: number;
+  noteIndex: number;
+  preconditionSha256: string;
+};
+
+export type MusicXmlSourceNote = {
+  locator: MusicXmlNoteLocator;
+  facts: WritableMusicXmlNoteFacts;
+};
+
+export type AudiverisMusicXmlNormalization = {
+  draft: OmrScoreDraft;
+  sourceNotesByEventId: ReadonlyMap<string, MusicXmlSourceNote>;
+};
+
 export function normalizeAudiverisMusicXml(bytes: Uint8Array): OmrScoreDraft {
+  return normalizeAudiverisMusicXmlWithSourceIndex(bytes).draft;
+}
+
+export function normalizeAudiverisMusicXmlWithSourceIndex(bytes: Uint8Array): AudiverisMusicXmlNormalization {
   try {
-    const document = parseMusicXmlDocument(bytes);
+    const { document, rootFilePath } = parseMusicXmlSource(bytes);
     const root = document.documentElement;
     if (root === null) throw new Error("document-element-required");
     if (root.nodeName !== "score-partwise") throw new Error("score-partwise-required");
     const names = readPartNames(root);
     const diagnostics: Diagnostic[] = [];
-    const parts = childElements(root, "part").map((part) => normalizePart(part, names, diagnostics));
-    return omrScoreDraftSchema.parse({ schemaVersion: "1.0.0", parts, diagnostics });
+    const sourceNotesByEventId = new Map<string, MusicXmlSourceNote>();
+    const parts = childElements(root, "part").map((part) =>
+      normalizePart(part, names, diagnostics, rootFilePath, sourceNotesByEventId),
+    );
+    const draft = omrScoreDraftSchema.parse({ schemaVersion: "1.0.0", parts, diagnostics });
+    return { draft, sourceNotesByEventId };
   } catch (error) {
     if (error instanceof PdfOmrError) throw error;
     throw new PdfOmrError("ENGINE_OUTPUT_INVALID", "Audiveris MusicXML cannot be normalized", {
@@ -32,7 +68,13 @@ export function normalizeAudiverisMusicXml(bytes: Uint8Array): OmrScoreDraft {
   }
 }
 
-function normalizePart(part: XmlElement, names: ReadonlyMap<string, string>, diagnostics: Diagnostic[]) {
+function normalizePart(
+  part: XmlElement,
+  names: ReadonlyMap<string, string>,
+  diagnostics: Diagnostic[],
+  rootFilePath: string | null,
+  sourceNotesByEventId: Map<string, MusicXmlSourceNote>,
+) {
   const id = part.getAttribute("id") ?? "";
   const name = names.get(id) ?? id;
   let divisions: number | undefined;
@@ -83,6 +125,7 @@ function normalizePart(part: XmlElement, names: ReadonlyMap<string, string>, dia
     const eventIndexes = new Map<string, number>();
     const lastOnsets = new Map<string, Rational>();
     let cursorUnits = 0;
+    let noteIndex = 0;
     for (const item of childElements(measure)) {
       if (item.nodeName === "backup" || item.nodeName === "forward") {
         const amount = integerText(item, "duration");
@@ -90,6 +133,8 @@ function normalizePart(part: XmlElement, names: ReadonlyMap<string, string>, dia
         continue;
       }
       if (item.nodeName !== "note") continue;
+      const sourceNoteIndex = noteIndex;
+      noteIndex += 1;
       const voice = integerText(item, "voice");
       const staff = integerText(item, "staff") ?? 1;
       const durationUnits = integerText(item, "duration");
@@ -148,6 +193,26 @@ function normalizePart(part: XmlElement, names: ReadonlyMap<string, string>, dia
           ...(tie === undefined ? {} : { tie }),
           ...(tuplet === undefined ? {} : { tuplet }),
         };
+        if (writtenPitch !== undefined) {
+          const facts: WritableMusicXmlNoteFacts = {
+            writtenPitch,
+            voice,
+            staff,
+            durationUnits,
+            chord,
+            tieTypes: tieTypes.filter((type): type is string => type !== null),
+          };
+          sourceNotesByEventId.set(base.id, {
+            locator: {
+              rootFilePath,
+              partId: id,
+              measureIndex,
+              noteIndex: sourceNoteIndex,
+              preconditionSha256: hashWritableNoteFacts(facts),
+            },
+            facts,
+          });
+        }
       }
       const events = eventsByStaffVoice.get(key) ?? [];
       events.push(event);
@@ -185,6 +250,10 @@ function normalizePart(part: XmlElement, names: ReadonlyMap<string, string>, dia
     measures: normalizedMeasures.map((measure) => measure[staffIndex]!).filter(Boolean),
   }));
   return { id, name: name.length > 0 ? name : id, staves };
+}
+
+function hashWritableNoteFacts(facts: WritableMusicXmlNoteFacts): string {
+  return sha256Bytes(new TextEncoder().encode(canonicalJson(facts)));
 }
 
 function readPartNames(root: XmlElement): Map<string, string> {

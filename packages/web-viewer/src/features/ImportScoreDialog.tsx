@@ -252,10 +252,16 @@ export function ImportScoreDialog({
             </section>
           ) : null}
           <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-end tw:gap-2">
-            <DialogClose render={<Button tone="ghost" />}>{t("cancel")}</DialogClose>
+            <DialogClose render={<Button tone="ghost" />} disabled={processingDrop}>
+              {t("cancel")}
+            </DialogClose>
             <DialogClose
               render={
-                <Button tone="primary" disabled={candidates.length === 0} onClick={() => void onImport(candidates)} />
+                <Button
+                  tone="primary"
+                  disabled={candidates.length === 0 || processingDrop}
+                  onClick={() => void onImport(candidates)}
+                />
               }
             >
               {t("importDialog.submit", { count: candidates.length })}

@@ -1,4 +1,5 @@
 import type { OpenFileResponse } from "@zupulse/web-core";
+import { isSupportedLibraryScoreFile } from "@zupulse/web-core";
 import { createAppI18n, type SupportedLocale } from "@zupulse/app-i18n";
 import { dialog } from "electron";
 import { readFile, stat, writeFile } from "node:fs/promises";
@@ -19,6 +20,8 @@ export function assertReadableScore(metadata: ReadableScoreMetadata): void {
   }
   if (metadata.sizeBytes > MAX_SCORE_BYTES) throw new Error("FILE_TOO_LARGE");
 }
+
+type TokenFile = { fileToken: string; fileName: string; sizeBytes: number };
 
 type FileDependencies = {
   showOpenDialog(): Promise<{ canceled: boolean; filePaths: string[] }>;
@@ -69,9 +72,7 @@ export async function selectScoreFiles(
   tokens: FileTokenStore,
   multiple: boolean,
   locale: SupportedLocale = "en-US",
-): Promise<
-  { status: "cancelled" } | { status: "selected"; files: { fileToken: string; fileName: string; sizeBytes: number }[] }
-> {
+): Promise<{ status: "cancelled" } | { status: "selected"; files: readonly TokenFile[] }> {
   const t = createAppI18n(locale).getFixedT(locale, "desktop");
   const selection = await dialog.showOpenDialog({
     title: t("dialog.openTitle"),
@@ -88,19 +89,28 @@ export async function selectScoreFiles(
 export async function acceptScorePaths(
   tokens: FileTokenStore,
   paths: readonly string[],
-): Promise<
-  { status: "cancelled" } | { status: "accepted"; files: { fileToken: string; fileName: string; sizeBytes: number }[] }
-> {
+): Promise<{ status: "cancelled" } | { status: "accepted"; files: readonly TokenFile[] }> {
   const validPaths = paths.filter((path) => typeof path === "string" && path.length > 0);
   if (validPaths.length === 0) return { status: "cancelled" };
-  const files = await Promise.all(
-    validPaths.map(async (path) => {
-      const info = await stat(path);
-      const fileName = basename(path);
-      assertReadableScore({ fileName, sizeBytes: info.size, isFile: info.isFile() });
-      return { fileToken: tokens.issue(path, { fileName, sizeBytes: info.size }), fileName, sizeBytes: info.size };
+  const results = await Promise.all(
+    validPaths.map(async (path): Promise<TokenFile | null> => {
+      try {
+        const fileName = basename(path);
+        if (!isSupportedLibraryScoreFile(fileName)) return null;
+        const info = await stat(path);
+        assertReadableScore({ fileName, sizeBytes: info.size, isFile: info.isFile() });
+        return {
+          fileToken: tokens.issue(path, { fileName, sizeBytes: info.size }),
+          fileName,
+          sizeBytes: info.size,
+        };
+      } catch {
+        return null;
+      }
     }),
   );
+  const files = results.filter((entry): entry is TokenFile => entry !== null);
+  if (files.length === 0) return { status: "cancelled" };
   return { status: "accepted", files };
 }
 

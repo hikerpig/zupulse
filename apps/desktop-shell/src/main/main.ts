@@ -1,5 +1,10 @@
 import path from "node:path";
-import { createBridgeEvent, localPlaybackResumeSchema, parseSidecar } from "@zupulse/web-core";
+import {
+  createBridgeEvent,
+  fileImportDroppedRequestSchema,
+  localPlaybackResumeSchema,
+  parseSidecar,
+} from "@zupulse/web-core";
 import { createAppI18n, resolveLocale, type LocaleState, type SupportedLocale } from "@zupulse/app-i18n";
 import { randomUUID } from "node:crypto";
 import {
@@ -13,7 +18,7 @@ import {
   shell,
   type MenuItemConstructorOptions,
 } from "electron";
-import { BridgeDispatchError, dispatchBridgeRequest } from "./bridge";
+import { assertBridgeAppSender, BridgeDispatchError, dispatchBridgeRequest } from "./bridge";
 import { DiagnosticLogger } from "./diagnostics";
 import { FileTokenStore } from "./fileTokens";
 import { acceptScorePaths, openScoreFile, readScoreFileBytes, saveScoreFile, selectScoreFiles } from "./files";
@@ -121,6 +126,20 @@ async function startDesktopApp(): Promise<void> {
     if (!mainWindow || mainWindow.isDestroyed()) return;
     mainWindow.webContents.send("zupulse:event", event);
   };
+  const DROPPED_FILES_IPC_CHANNEL = "zupulse:file:importDropped" as const;
+  ipcMain.handle(DROPPED_FILES_IPC_CHANNEL, (event, value: unknown) => {
+    assertBridgeAppSender(event.senderFrame?.url ?? event.sender.getURL());
+    const parsed = fileImportDroppedRequestSchema.safeParse(value);
+    if (!parsed.success) {
+      throw new BridgeDispatchError(
+        "INVALID_BRIDGE_MESSAGE",
+        "Dropped-file import failed schema validation",
+        false,
+        parsed.error.issues,
+      );
+    }
+    return acceptScorePaths(fileTokens, parsed.data.payload.paths);
+  });
   ipcMain.handle("zupulse:request", (event, value: unknown) =>
     dispatchBridgeRequest(
       {
@@ -152,7 +171,6 @@ async function startDesktopApp(): Promise<void> {
           "file.open": () => openScoreFile(fileTokens, undefined, currentLocaleState.effectiveLocale),
           "file.select": (request) =>
             selectScoreFiles(fileTokens, request.payload.multiple, currentLocaleState.effectiveLocale),
-          "file.importDropped": (request) => acceptScorePaths(fileTokens, request.payload.paths),
           "file.readBytes": (request) => readScoreFileBytes(fileTokens, request.payload.fileToken),
           "file.save": (request) => saveScoreFile(request.payload, currentLocaleState.effectiveLocale),
           "library.list": async () => ({ scores: await library.list() }),

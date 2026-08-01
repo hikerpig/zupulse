@@ -3,29 +3,15 @@ import {
   BRIDGE_SCHEMA_VERSION,
   bridgeEventSchema,
   bridgeRequestSchema,
-  createBridgeRequest,
-  parseBridgeResponse,
-  type BridgeRequest,
+  fileImportDroppedRequestSchema,
+  fileImportDroppedResponseSchema,
+  type FileImportDroppedRequest,
 } from "@zupulse/web-core/bridge/schemas";
-import { randomUUID } from "node:crypto";
 
 type DroppedTokenFile = { fileToken: string; fileName: string; sizeBytes: number };
 type DroppedImportResult = { ok: true; files: DroppedTokenFile[] } | { ok: false };
 
-async function requestBridge<T extends BridgeRequest["type"]>(
-  type: T,
-  payload: Extract<BridgeRequest, { type: T }>["payload"],
-): Promise<unknown> {
-  return ipcRenderer.invoke(
-    "zupulse:request",
-    bridgeRequestSchema.parse({
-      bridgeVersion: BRIDGE_SCHEMA_VERSION,
-      correlationId: randomUUID(),
-      type,
-      payload,
-    }),
-  );
-}
+const DROPPED_FILES_IPC_CHANNEL = "zupulse:file:importDropped" as const;
 
 contextBridge.exposeInMainWorld("zupulseBridge", {
   request(value: unknown): Promise<unknown> {
@@ -46,7 +32,15 @@ contextBridge.exposeInMainWorld("zupulseBridge", {
       paths.push(path);
     }
     if (paths.length === 0) return { ok: false };
-    const response = parseBridgeResponse("file.importDropped", await requestBridge("file.importDropped", { paths }));
+    const envelope = fileImportDroppedRequestSchema.parse({
+      bridgeVersion: BRIDGE_SCHEMA_VERSION,
+      correlationId: crypto.randomUUID(),
+      type: "file.importDropped",
+      payload: { paths },
+    } satisfies FileImportDroppedRequest);
+    const response = fileImportDroppedResponseSchema.parse(
+      await ipcRenderer.invoke(DROPPED_FILES_IPC_CHANNEL, envelope),
+    );
     if (response.status === "cancelled") return { ok: false };
     return { ok: true, files: response.files };
   },

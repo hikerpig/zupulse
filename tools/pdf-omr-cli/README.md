@@ -10,6 +10,7 @@ pnpm pdf-omr -- --help
 pnpm pdf-omr -- inspect <input.pdf> --output <run-dir>
 pnpm pdf-omr -- import-midi <input.mid> --output <run-dir>
 pnpm pdf-omr -- fuse --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --output <run-dir>
+pnpm pdf-omr -- apply-fusion --run <fusion-run-dir> --decisions <decisions.json> --output <run-dir>
 pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|transcoda|legato|rokot> --output <run-dir>
 pnpm pdf-omr -- validate <draft.json> --output <diagnostics.json>
 pnpm pdf-omr -- analyze <draft.json> --output <harmony.json>
@@ -27,8 +28,13 @@ staff/voice 推断或 MusicXML alignment。Format 2、SMPTE division、冲突 te
 `fuse` 是隔离在 CLI 内的 report-only MIDI 辅助识别实验。v1 只接受制谱软件导出的
 `score-export` MIDI：它从 MusicXML/MXL 和 MIDI 构造可追溯 evidence，先检测兼容性与移调，再用
 确定性 onset-frame alignment 报告 matched、score-only、MIDI-only 和 ambiguous notes。它会生成
-修复建议和 coverage/pitch agreement metrics，但所有建议均为 `autoApplicable: false`，不会生成或
-覆盖 corrected MusicXML。真人演奏 MIDI、D.C./D.S./coda、volta ending 和自动修复不在 v1 范围。
+修复建议和 coverage/pitch agreement metrics，所有建议仍为 `autoApplicable: false`。
+
+`apply-fusion` 是独立的人工审核回写阶段：它验证 fusion run 和 proposal hashes，只应用 reviewer 明确
+批准并提供 `writtenPitch` 的 writeback-ready pitch proposal，以最小 XML patch 生成新的 corrected
+MusicXML/MXL，再执行结构、runtime 与 before/after fusion 无回归门禁。它永不覆盖 source 或修改 fuse run。
+missing/extra、tie chain、非零移调、冲突 repeat evidence、真人演奏 MIDI、D.C./D.S./coda、volta ending
+和无人审核自动修复不在 v1 范围。
 
 `recognize` 通过可替换 adapter 调用 Audiveris、Transcoda、LEGATO 或 Rokot，再规范化为
 engine-neutral Draft。Audiveris 保留原始 MXL/OMR；Transcoda 保留原始 `**kern`；LEGATO 保留原始
@@ -163,6 +169,39 @@ jq 'sort_by(.code) | group_by(.code) |
 先看 `compatibility.status`，只有 `compatible` / `ambiguous` 才会进入 alignment。提升效果时分别观察
 `scoreCoverage`、`midiCoverage`、`pitchAgreement` 和三类 proposal 数量，不能只优化单一 coverage。
 同一输入重复运行时，除 `run.json` 外的八个 artifacts 应 byte-for-byte 相同。
+
+人工审核后创建 `decisions.json`：
+
+```json
+{
+  "schemaVersion": "1.0.0",
+  "fusionRun": {
+    "runId": "<run.json runId>",
+    "runManifestSha256": "<run.json SHA-256>",
+    "repairProposalsSha256": "<repair-proposals.json SHA-256>"
+  },
+  "decisions": [
+    {
+      "proposalId": "proposal-000000",
+      "action": "apply",
+      "writtenPitch": { "step": "C", "alter": 1, "octave": 4 }
+    }
+  ]
+}
+```
+
+执行回写：
+
+```bash
+pnpm pdf-omr -- apply-fusion \
+  --run /absolute/path/to/fusion-run \
+  --decisions /absolute/path/to/decisions.json \
+  --output /absolute/path/to/writeback-run
+```
+
+成功 run 包含 `corrected/score.musicxml|score.mxl`、`patch-plan.json`、拆分的 `validation/*`、
+`diagnostics.json` 和带 artifact hashes 的 `run.json`。source/proposal hash 漂移、已有 output、结构变化或
+fusion metrics 回退都会在发布 output 前失败。
 
 仓库内 K331 是 `derived-controlled` upper-bound：reviewed MusicXML 是 ground truth，PDF 与 MIDI
 均由它导出。当前 fixture 的 report-only 结果为 score coverage `0.9988`、MIDI coverage `0.9916`、

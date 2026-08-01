@@ -5,7 +5,7 @@
     height: var(--piano-key-height, 260px);
     overflow: hidden;
     display: grid;
-    grid-template-rows: 10px 34px minmax(0, 1fr);
+    grid-template-rows: 8px 36px minmax(0, 1fr);
     border-top: 1px solid var(--border-default);
     background: var(--bg-panel);
   }
@@ -14,8 +14,6 @@
     position: relative;
     cursor: row-resize;
     touch-action: none;
-    border-bottom: 1px solid var(--border-default);
-    background: var(--bg-panel-muted);
   }
 
   .resizeHandle::after {
@@ -23,8 +21,8 @@
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 48px;
-    height: 2px;
+    width: 40px;
+    height: 3px;
     border-radius: var(--radius-round);
     background: var(--border-strong);
     transform: translate(-50%, -50%);
@@ -45,17 +43,22 @@
     grid-template-columns: 1fr auto 32px;
     align-items: center;
     gap: 12px;
-    padding: 0 8px 0 12px;
+    padding: 0 6px 0 12px;
     border-bottom: 1px solid var(--border-default);
     color: var(--text-secondary);
     font-size: 12px;
   }
 
-  .header > span:first-child,
+  .title,
   .legend {
     display: flex;
     align-items: center;
     gap: 6px;
+  }
+
+  .title {
+    color: var(--text-primary);
+    font-weight: 600;
   }
 
   .header svg {
@@ -69,12 +72,18 @@
     padding: 0;
     border-color: transparent;
     background: transparent;
+    border-radius: var(--radius-sm);
+  }
+
+  .header button:hover {
+    background: var(--bg-panel-muted);
+    color: var(--text-primary);
   }
 
   .legend i {
     width: 8px;
     height: 8px;
-    border-radius: 2px;
+    border-radius: var(--radius-round);
   }
 
   .legend i[data-hand="left"],
@@ -83,76 +92,80 @@
     background: var(--signal-purple);
   }
 
-  .legend i[data-hand="left"] {
-    outline: 1px dashed var(--text-primary);
-    outline-offset: 1px;
-  }
-
-  .hints [data-hand="left"] {
-    stroke: var(--text-primary);
-    stroke-width: 0.1;
-    stroke-dasharray: 0.24 0.14;
-  }
-
   .legend i[data-hand="right"],
   .hints [data-hand="right"] {
     fill: var(--signal-blue);
     background: var(--signal-blue);
   }
 
+  .hints [data-hand="left"] {
+    stroke: color-mix(in srgb, var(--signal-purple) 60%, var(--text-primary));
+  }
+
   .hints [data-hand="right"] {
-    stroke: var(--text-primary);
-    stroke-width: 0.08;
+    stroke: color-mix(in srgb, var(--signal-blue) 60%, var(--text-primary));
+  }
+
+  .hints rect {
+    opacity: 0.9;
+    stroke-width: 0.05;
   }
 
   .keyboard {
+    --piano-key-white: #f8f5ef;
+    --piano-key-gap: #c8c2ba;
+
     width: 100%;
     height: 100%;
     display: block;
     background: var(--bg-panel-muted);
   }
 
-  .hints rect {
-    opacity: 0.78;
+  .highwayFadeStart {
+    stop-color: var(--bg-panel-muted);
+    stop-opacity: 0.85;
+  }
+
+  .highwayFadeEnd {
+    stop-color: var(--bg-panel-muted);
+    stop-opacity: 0;
   }
 
   .strikeLine {
-    stroke: var(--border-strong);
-    stroke-width: 0.35;
+    stroke: var(--accent-primary);
+    stroke-width: 0.28;
+    opacity: 0.7;
   }
 
   .whiteKey {
-    fill: var(--bg-score);
-    stroke: var(--border-strong);
-    stroke-width: 0.08;
+    fill: var(--piano-key-white);
+    stroke: var(--piano-key-gap);
+    stroke-width: 0.06;
+    transition: fill 90ms linear;
   }
 
   .blackKey {
-    fill: var(--text-primary);
-    stroke: var(--border-strong);
-    stroke-width: 0.08;
+    fill: url("#piano-black-key-gradient");
+    transition: fill 90ms linear;
   }
 
   .whiteKey[data-active],
   .blackKey[data-active] {
     fill: var(--accent-primary);
-    stroke: var(--text-primary);
-    stroke-width: 0.16;
+  }
+
+  .whiteKey[data-active] {
+    stroke: color-mix(in srgb, var(--accent-primary) 65%, var(--text-primary));
+    stroke-width: 0.08;
   }
 
   @container (max-width: 620px) {
     .visualization {
-      grid-template-rows: 10px 32px minmax(0, 1fr);
+      grid-template-rows: 8px 32px minmax(0, 1fr);
     }
 
     .legend {
       display: none;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hints rect {
-      transition: none;
     }
   }
 }

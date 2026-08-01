@@ -379,13 +379,13 @@ describe("PlaybackWorkspace transport bar", () => {
 
     await user.click(screen.getByRole("button", { name: "练习设置" }));
     const practice = screen.getByRole("complementary", { name: "练习设置" });
-    await user.click(within(practice).getByRole("button", { name: /键盘提示/ }));
+    await user.click(within(practice).getByRole("button", { name: /琴键引导/ }));
     expect(loadEvents).not.toHaveBeenCalled();
-    await user.click(within(practice).getByRole("switch", { name: "显示键盘提示" }));
+    await user.click(within(practice).getByRole("switch", { name: "显示琴键引导" }));
     expect(loadEvents).toHaveBeenCalledOnce();
 
-    const visualization = screen.getByRole("region", { name: "钢琴按键提示" });
-    const separator = within(visualization).getByRole("separator", { name: "调整钢琴按键提示高度" });
+    const visualization = screen.getByRole("region", { name: "琴键引导" });
+    const separator = within(visualization).getByRole("separator", { name: "调整琴键引导高度" });
     expect(visualization.style.getPropertyValue("--piano-key-height")).toBe("260px");
     fireEvent.keyDown(separator, { key: "ArrowUp" });
     expect(visualization.style.getPropertyValue("--piano-key-height")).toBe("276px");
@@ -393,11 +393,11 @@ describe("PlaybackWorkspace transport bar", () => {
     expect(visualization.querySelector('[data-hint-layer] [data-hand="left"]')).toBeNull();
     expect(viewerSession.playback?.dispatch).not.toHaveBeenCalled();
 
-    await user.click(within(visualization).getByRole("button", { name: "关闭键盘提示" }));
-    expect(screen.queryByRole("region", { name: "钢琴按键提示" })).toBeNull();
+    await user.click(within(visualization).getByRole("button", { name: "关闭琴键引导" }));
+    expect(screen.queryByRole("region", { name: "琴键引导" })).toBeNull();
 
-    await user.click(within(practice).getByRole("switch", { name: "显示键盘提示" }));
-    const reopenedVisualization = screen.getByRole("region", { name: "钢琴按键提示" });
+    await user.click(within(practice).getByRole("switch", { name: "显示琴键引导" }));
+    const reopenedVisualization = screen.getByRole("region", { name: "琴键引导" });
     expect(reopenedVisualization.style.getPropertyValue("--piano-key-height")).toBe("276px");
 
     expect(playbackState.transport).toBe("playing");
@@ -410,7 +410,7 @@ describe("PlaybackWorkspace transport bar", () => {
 
     await user.click(screen.getByRole("button", { name: "练习设置" }));
     const practice = screen.getByRole("complementary", { name: "练习设置" });
-    const task = within(practice).getByRole("button", { name: /键盘提示/ });
+    const task = within(practice).getByRole("button", { name: /琴键引导/ });
 
     expect((task as HTMLButtonElement).disabled).toBe(true);
     expect(task.textContent).toContain("这份曲谱不是明确的双谱表钢琴结构");

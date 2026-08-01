@@ -721,6 +721,32 @@ describe("checkDesign", () => {
       'viewer/Component.tsx:1: forbidden Tailwind utility "tw:shadow-xl"',
     ]);
   });
+
+  it("rejects shared title eyebrows and glowing active status dots", async () => {
+    const root = await fixture({
+      "DESIGN.md": "---\nstatus: current\n---\n\n# Design\n",
+      "theme.css": ":root { --brand-accent: #f26b4f; }\n",
+      "runtime.css": ":root { --accent-primary: #f26b4f; }\n",
+      "token-map.json": JSON.stringify({ mappings: [] }),
+      "viewer/component.css": [
+        ".panelTitle { letter-spacing: 0.08em; text-transform: uppercase; }",
+        ".ledDot[data-active] { box-shadow: 0 0 6px var(--accent-primary); }",
+      ].join("\n"),
+    });
+
+    expect(
+      await checkDesign(root, {
+        designPath: "DESIGN.md",
+        sourceCssPath: "theme.css",
+        runtimeCssPath: "runtime.css",
+        mapPath: "token-map.json",
+        stylesDir: "viewer",
+      }),
+    ).toEqual([
+      "viewer/component.css:1: shared panel title must not use eyebrow typography",
+      "viewer/component.css:2: active status dot must not use an outer glow",
+    ]);
+  });
 });
 
 async function fixture(files: Record<string, string>): Promise<string> {

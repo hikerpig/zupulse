@@ -376,7 +376,7 @@ async function validateFeatureIndex(root, contracts, indexPath) {
   const entries = currentSection === undefined ? [] : featureIndexEntries(currentSection, indexPath);
   const errors = [];
   const counts = new Map();
-  for (const path of entries) counts.set(path, (counts.get(path) ?? 0) + 1);
+  for (const entry of entries) counts.set(entry.path, (counts.get(entry.path) ?? 0) + 1);
   for (const [path, count] of counts) {
     if (count > 1) errors.push(`${indexPath}: duplicate current index entry ${path}`);
   }
@@ -390,6 +390,20 @@ async function validateFeatureIndex(root, contracts, indexPath) {
     }
     if (contract.location !== "contracts" || contract.frontmatter.status !== "current") {
       errors.push(`${indexPath}: indexed contract ${path} is not current`);
+    }
+  }
+  for (const entry of entries) {
+    const contract = contractsByPath.get(entry.path);
+    if (!contract) continue;
+    if (entry.status !== undefined && entry.status !== contract.frontmatter.status) {
+      errors.push(
+        `${indexPath}: index entry ${entry.path} status ${entry.status} does not match contract status ${contract.frontmatter.status}`,
+      );
+    }
+    if (entry.delivery !== undefined && entry.delivery !== contract.frontmatter.delivery) {
+      errors.push(
+        `${indexPath}: index entry ${entry.path} delivery ${entry.delivery} does not match contract delivery ${contract.frontmatter.delivery}`,
+      );
     }
   }
   for (const contract of contracts) {
@@ -409,14 +423,33 @@ function markdownSection(contents, title) {
 }
 
 function featureIndexEntries(contents, indexPath) {
-  const paths = [];
-  for (const match of withoutFencedCode(contents).matchAll(/\[[^\]]*]\(([^)]+)\)/g)) {
-    const target = localLinkTarget(match[1]);
-    if (target?.startsWith("contracts/")) {
-      paths.push(join(dirname(indexPath), target).replaceAll("\\", "/"));
+  const entries = [];
+  for (const line of withoutFencedCode(contents).split(/\r?\n/)) {
+    const isTableRow = /^\s*\|.*\|\s*$/.test(line);
+    for (const match of line.matchAll(/\[[^\]]*]\(([^)]+)\)/g)) {
+      const target = localLinkTarget(match[1]);
+      if (target?.startsWith("contracts/") !== true) continue;
+      const entry = { path: join(dirname(indexPath), target).replaceAll("\\", "/") };
+      if (isTableRow) {
+        const cells = line
+          .split("|")
+          .slice(1, -1)
+          .map((cell) => cell.trim());
+        const linkIndex = cells.findIndex((cell) => cell.includes(`](${match[1]})`));
+        if (linkIndex >= 0) {
+          entry.status = featureIndexCellValue(cells[linkIndex + 1]);
+          entry.delivery = featureIndexCellValue(cells[linkIndex + 2]);
+        }
+      }
+      entries.push(entry);
     }
   }
-  return paths;
+  return entries;
+}
+
+function featureIndexCellValue(cell) {
+  const value = cell?.replaceAll("`", "").trim();
+  return value === undefined || value === "" ? undefined : value;
 }
 
 async function validateImplementationPaths(root, contract) {

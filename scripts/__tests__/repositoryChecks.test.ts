@@ -352,6 +352,36 @@ supersedes: []
     });
   });
 
+  it("reports index entries whose status or delivery drift from the contract frontmatter", async () => {
+    const root = await fixture({
+      "docs/features/README.md": `# Feature Contracts
+
+## Current Index
+
+| Feature | Contract | Status | Delivery |
+| --- | --- | --- | --- |
+| Current | [Current](contracts/current.md) | \`current\` | \`partial\` |
+| Other | [Other](contracts/other.md) | \`draft\` | \`available\` |
+`,
+      "docs/features/contracts/current.md": completeCurrentContract({
+        feature: "current-feature",
+        title: "Current",
+      }),
+      "docs/features/contracts/other.md": completeCurrentContract({
+        feature: "other-feature",
+        title: "Other",
+      }),
+    });
+
+    await expect(checkDocumentation(root, { now: new Date("2026-07-25T00:00:00.000Z") })).resolves.toEqual({
+      errors: [
+        "docs/features/README.md: index entry docs/features/contracts/current.md delivery partial does not match contract delivery available",
+        "docs/features/README.md: index entry docs/features/contracts/other.md status draft does not match contract status current",
+      ],
+      warnings: [],
+    });
+  });
+
   it("reports a current contract missing from the feature index", async () => {
     const root = await fixture({
       "docs/features/README.md": "# Feature Contracts\n\n## Current Index\n",

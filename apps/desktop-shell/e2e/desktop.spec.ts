@@ -35,7 +35,7 @@ async function chooseFixture(app: ElectronApplication, filePath = fixture): Prom
 
 async function importSelectedFixture(window: import("@playwright/test").Page): Promise<void> {
   await window.getByRole("button", { name: "Import score", exact: true }).click();
-  await window.getByRole("button", { name: "Choose files" }).click();
+  await window.getByRole("button", { name: /choose (or drop )?files/i }).click();
   await window.getByRole("button", { name: "Import 1" }).click();
 }
 
@@ -71,7 +71,11 @@ test("starts offline with an isolated renderer", async () => {
         process: typeof (globalThis as { process?: unknown }).process,
         api: Object.keys(window.zupulseBridge ?? {}).sort(),
       })),
-    ).toEqual({ require: "undefined", process: "undefined", api: ["request", "subscribe"] });
+    ).toEqual({
+      require: "undefined",
+      process: "undefined",
+      api: ["handleDroppedFiles", "request", "subscribe"],
+    });
 
     await expect(
       page.evaluate(async () => {

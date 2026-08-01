@@ -127,6 +127,37 @@ durable report 位于 `tools/pdf-omr-cli/reports/development/k331-rokot/`。它�
 不放进 Harmony CLI 目录；只提交说明和小型 summary，不提交完整 run 或模型。K331 仍是
 `derived-controlled` development evidence，不进入 frozen holdout，也不改写既有 `STOP`。
 
+## 2026-08-01 MIDI Fusion 人工审核回写
+
+`pdf-omr-cli` 在 report-only fusion 之后增加了独立 `apply-fusion` 阶段。它只消费 hash 固定的 fusion run
+和 reviewer decisions，使用 `partId + measureIndex + noteIndex + preconditionSha256` 定位原始 MusicXML
+note，并生成新 corrected score；原文件、fusion run 和 decisions 均不修改。
+
+v1 只回写 reviewer 明确给出 `writtenPitch` 的 `pitch-disagreement`。missing-note、unsupported-score-note、
+tie chain、非零 detected transposition、repeat suggestion 冲突和 source drift 均 fail closed。回写后必须满足：
+
+- MusicXML/MXL 可 parse、view、playback；
+- 结构差异仅为 patch plan 声明的 pitch；
+- 不新增 blocking diagnostics；
+- compatibility 保持 compatible，coverage 与 pitch agreement 不下降；
+- applied source note 不再产生 pitch disagreement。
+
+development verification 结果：
+
+| Item                             | Proposals | Writeback-ready | Applied | Outcome                                                                       |
+| -------------------------------- | --------: | --------------: | ------: | ----------------------------------------------------------------------------- |
+| K331 derived-controlled          |        24 |               0 |       0 | 24 条 missing/extra 全部 reject；corrected SHA 等于 source                    |
+| Flower Day Audiveris exploratory |        83 |              76 |       0 | 无 reviewed ground truth，全部保持 unreviewed；结构/runtime/fusion gates 通过 |
+| Automated reviewed pitch fixture |         1 |               1 |       1 | pitch agreement `0.75 -> 1.0`，无结构 drift                                   |
+
+Flower Day 的 `writeback-ready: 76` 不是 accuracy 指标：这些 proposal 的 alignment confidence 仍为 `0.5`，
+且 MIDI 不能唯一决定 enharmonic spelling。视觉抽查没有形成足够证据批准具体音高，因此本次没有把 proposal
+批量当成 reviewer decision。其原始 Audiveris MXL 已有 1 条 `MISSING_EVENT_TIMING`；no-regression gate
+允许该基线诊断保留，但不允许新增。
+
+durable aggregate 位于 `tools/pdf-omr-cli/reports/development/midi-score-writeback/`。该能力仍是隔离 CLI
+研究链路，不修改 App、Library、Bridge、managed files 或产品格式边界。
+
 ## 许可证与运行约束
 
 - Audiveris code: `AGPL-3.0-only`

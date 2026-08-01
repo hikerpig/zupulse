@@ -65,7 +65,8 @@ flowchart LR
 - 删除联动清理馆藏、托管字节、sidecar、resume 和 Harmony Analysis Document。
 - 当前不包含云同步、OPFS、打印分页或移动端产品。Viewer Screen Score Page 是临时视口投影；
   产品导入仍不支持 MIDI。`pdf-omr-cli` 可在隔离的研究链路中导入 MIDI，并对 score-export MIDI 与
-  MusicXML/MXL 执行 report-only compatibility、alignment 和 repair proposal；它不改变产品格式边界。
+  MusicXML/MXL 执行 report-only compatibility、alignment 和 repair proposal；`apply-fusion` 可从显式人工
+  decisions 生成新的 corrected MusicXML/MXL，但不覆盖来源或接入 App，因此不改变产品格式边界。
 
 ## 历史文档
 

@@ -1,5 +1,5 @@
 ---
-status: approved
+status: implemented
 date: 2026-08-01
 owner: Engineering
 scope: tools/pdf-omr-cli reviewed MusicXML writeback from score-export MIDI fusion

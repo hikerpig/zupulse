@@ -110,6 +110,7 @@ export function ImportScoreDialog({
             <button
               type="button"
               aria-label={dropZoneLabel}
+              data-testid="import-score-picker"
               className={`${dropZoneBaseClasses} ${dropActive ? dropZoneActiveClasses : dropZoneIdleClasses} ${
                 onDropFiles && !dropActive ? "tw:border-dashed" : "tw:border-solid"
               }`}
@@ -252,13 +253,14 @@ export function ImportScoreDialog({
             </section>
           ) : null}
           <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-end tw:gap-2">
-            <DialogClose render={<Button tone="ghost" />} disabled={processingDrop}>
+            <DialogClose render={<Button tone="ghost" data-testid="import-score-cancel" />} disabled={processingDrop}>
               {t("cancel")}
             </DialogClose>
             <DialogClose
               render={
                 <Button
                   tone="primary"
+                  data-testid="import-score-submit"
                   disabled={candidates.length === 0 || processingDrop}
                   onClick={() => void onImport(candidates)}
                 />

@@ -73,6 +73,10 @@ sidecar；locator 覆盖 raw note ordinal、MXL root path 和 canonical writable
 
 ### Task 02: 生成 writeback-ready proposal v2
 
+**Progress:** Completed on 2026-08-01. Alignment 保留 playback-level v1 evidence；fuse artifact 升级为
+source-level proposal schema v2，一致 repeat suggestions 合并，冲突/缺失 evidence、missing/extra 和非零
+detected transposition 均 fail closed 为 review-only。
+
 **Description:** 将 playback-level alignment proposals 按 `sourceNoteId` 聚合，加入 locator、before facts 与
 reviewability reasons；冲突 repeat evidence、missing/extra 和不完整 transpose facts 保持 review-only。
 
@@ -102,8 +106,8 @@ reviewability reasons；冲突 repeat evidence、missing/extra 和不完整 tran
 
 ### Checkpoint A: Contracts
 
-- [ ] source locator 对 XML/MXL 和 repeat 稳定。
-- [ ] report-only fusion tests 与 typecheck 通过。
+- [x] source locator 对 XML/MXL 和 repeat 稳定。
+- [x] report-only fusion tests 与 typecheck 通过。
 - [x] 人工已批准新增窄 `web-core` root-entry rewrite API。
 
 ## Phase 2: Byte-preserving mutation

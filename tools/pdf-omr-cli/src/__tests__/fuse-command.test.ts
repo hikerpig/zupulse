@@ -58,7 +58,7 @@ describe("fuse command", () => {
       mode: string;
       proposals: unknown[];
     };
-    expect(proposals).toEqual({ schemaVersion: "1.0.0", mode: "report-only", proposals: [] });
+    expect(proposals).toEqual({ schemaVersion: "2.0.0", mode: "report-only", proposals: [] });
     expect(await readFile(join(outputPath, "input/score.musicxml"))).toEqual(
       Buffer.from(scoreMusicXml([60, 64, 67, 72])),
     );

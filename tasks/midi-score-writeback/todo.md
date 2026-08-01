@@ -5,12 +5,12 @@ Canonical plan: `tasks/midi-score-writeback/plan.md`
 ## Phase 1: Provenance and proposal contracts
 
 - [x] T01 建立 source note index
-- [ ] T02 生成 writeback-ready proposal v2
+- [x] T02 生成 writeback-ready proposal v2
 
 ### Checkpoint A
 
-- [ ] locator 与 proposal contracts 验证通过
-- [ ] report-only fusion 无回归
+- [x] locator 与 proposal contracts 验证通过
+- [x] report-only fusion 无回归
 - [x] 人工批准窄 `web-core` root-entry rewrite API
 
 ## Phase 2: Byte-preserving mutation

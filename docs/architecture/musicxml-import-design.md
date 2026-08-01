@@ -2,9 +2,15 @@
 
 ## 状态
 
-设计中。
+当前有效，打开与持久化工作流部分已被取代。
 
-本文记录 Desktop GP Slice 之后的 MusicXML 导入竖切。交付顺序由 ADR 0036 确定。
+本文的格式识别、兼容性契约、诊断边界、Part/Staff/Voice 映射、不可信输入预算与显示播放权威等解析
+与安全约束仍是当前实现的依据。最初“打开乐谱”式的外部文件工作流已由 Sheet Library 管线取代：所有
+外部打开统一进入 Library Import（ADR 0047），曲谱以 Managed Score Copy 持久保存（ADR 0040），
+Viewer 使用 `libraryScoreId` 路由（ADR 0046），Browser 与 Desktop 各自维护本地 Library
+（ADR 0048、ADR 0049）。工作流现状以
+[`../features/contracts/sheet-library.md`](../features/contracts/sheet-library.md) 为准；交付顺序背景见
+ADR 0036。
 
 ## 已确认决策
 
@@ -31,7 +37,7 @@
 - 文件选择器过滤器用于引导用户，不作为最终信任边界。
 - 导入流程需要区分扩展名提示、容器识别和解析结果。
 - `.mxl` 必须作为容器验证，不能仅凭扩展名按普通 XML 读取。
-- 内容不是有效 MusicXML 时，返回可恢复的“不受支持或文件损坏”错误，不创建 Viewer Session。
+- 内容不是有效 MusicXML 时，返回可恢复的“不受支持或文件损坏”错误，不创建 Library Score。
 
 ### 兼容性契约
 
@@ -58,15 +64,15 @@
 
 ### 导入结果
 
-MusicXML 导入返回显式三态结果：
+Library Import 逐项返回显式结果：
 
-- `success`：核心语义正常，未发现值得提示的问题。
-- `success-with-warnings`：允许创建 Viewer Session，同时提供非阻塞提示和可展开的导入报告。
-- `failure`：无法可靠建立音高、节奏、小节结构或播放模型，不创建新的 Viewer Session。
+- `created`：通过格式探测与最小运行时验证，写入新的 Library Score 与 Managed Score Copy。
+- `existing`：相同 Score Identity 已在馆藏中，复用现有 Library Score，不重复占用空间。
+- `failed`：附稳定语义错误代码（如 `UNSUPPORTED_FORMAT`、`INVALID_SCORE`、`FILE_TOO_LARGE`），不创建
+  Library Score。
 
-导入采用事务式 Session 切换。只有成功或带警告成功并完成最小运行时验证后，新的 Viewer Session 才替换当前 Session；失败时保留用户当前打开的乐谱和练习上下文。
-
-导入报告属于当前导入和 Viewer Session 的诊断数据，不写入 Practice Sidecar。多个警告聚合展示，不逐条弹窗。
+失败不改变用户当前打开的乐谱和练习上下文。诊断与导入汇总属于当前导入的展示数据，不写入 Practice
+Sidecar；批量导入聚合逐项结果一次展示，不逐条弹窗。
 
 ### 诊断边界
 
@@ -151,18 +157,19 @@ MusicXML 在产品中是用于查看与练习的语义乐谱，不是原制谱�
 
 ### 交付表面
 
-- Desktop Shell 提供正式用户入口，并与现有文件打开流程集成。
+- Desktop Shell 与 Browser Web Demo 都提供持久 Sheet Library 作为正式用户入口（ADR 0048），共享同一
+  React Library 与导入管线。
 - Web Core 与 Web Viewer 承载共享的格式识别、导入、映射、诊断和展示逻辑。
-- Web Demo 只提供开发与验收用 fixture 选择器，不定义为公开 Web 文件导入产品。
-- 本阶段不扩展移动端入口，也不引入浏览器持久文件权限设计。
+- Browser 每次导入通过 File API 或拖放获得字节并写入 IndexedDB Library，不引入浏览器持久文件权限。
+- 本阶段不扩展移动端入口。
 
 ### 统一打开入口
 
-- 用户统一通过“打开乐谱”选择 GP、`.musicxml` 或 `.mxl`。
-- MusicXML 不使用暗示复制、转换或写入曲库的独立“导入”入口。
-- 最近打开、文件重新定位和权限恢复沿用 Score File Reference 流程。
+- 所有外部乐谱打开统一进入 Library Import（ADR 0047）：用户从 Library 导入 GP、`.musicxml` 或
+  `.mxl`，导入完成后按 `libraryScoreId` 打开 Viewer（ADR 0046）。
+- 不存在绕过 Library 的临时预览打开，也没有“最近打开”、文件重新定位或外部文件权限恢复流程；打开
+  始终读取 Managed Score Copy。
 - 格式检测与专属 adapter 是内部职责，不分裂 Viewer 用户工作流。
-- 未来出现本地曲库复制、批量处理或格式转换时，再单独定义“导入”行为。
 
 ## 验收门槛
 
@@ -181,37 +188,27 @@ MusicXML 竖切至少覆盖：
 
 自动化断言以导入结果、结构摘要、默认显示轨道、可播放性、关键音乐位置映射和诊断代码为主，不使用全量像素截图作为权威金标。少量代表性乐谱保留视觉截图，用于端到端或人工回归。
 
-## Import Job 与原子提交
+## Import 执行与取消
 
-打开流程采用 `latest-intent-wins`：
-
-- 每次 Open Score Intent 创建独立 Import Job。
-- 新 Job 到来后，旧 Job 标记为 `superseded`，并尽可能取消未完成的读取、解析和渲染准备。
-- 候选乐谱在 Candidate Session 中完成资源检查、解析和最低运行时验证。
-- 只有仍为最新的 Job 可以原子替换当前 Viewer Session。
-- 已被替代的 Job 即使稍后完成，也不得提交 Session、覆盖最近打开记录或显示错误。
-- 用户取消文件选择不改变当前 Session，也不视为错误。
-- 应用退出时终止未完成 Job，不写入 Practice Sidecar 或最近打开。
+- 每次导入动作处理一批候选文件，逐项完成探测、解析与 Repository 提交，并流式更新导入汇总。
+- 用户可取消进行中的导入；取消后不再处理后续候选，未完成的结果不写入 Library。
+- 用户取消文件选择不改变 Library，也不视为错误。
+- 单个文件导入成功后直接打开对应 Library Score；批量导入停留在 Library 并展示汇总。
+- 应用退出时终止未完成导入，不写入 Practice Sidecar。
 
 ### 加载反馈
 
-加载 UI 展示可验证的阶段，而不伪造解析百分比：
-
-1. 正在读取文件。
-2. 正在检查乐谱。
-3. 正在解析 MusicXML。
-4. 正在准备谱面。
-5. 正在准备播放。
-
-只有底层提供真实字节进度时才展示百分比。解析等不可测阶段使用不确定进度；加载层经过短暂延迟后再显示，避免小文件产生闪烁。加载期间保留当前谱面，用户可以取消当前 Import Job。无法中断的底层操作至少必须阻止已取消或 superseded 的结果提交。
+导入进行中，Library 禁用新的导入入口并显示逐项更新的导入汇总，区分 `created`、`existing`、`failed`
+与被取消的候选。不伪造解析百分比。
 
 ## 通用 Open Score 管线
 
-MusicXML 接入时将现有 GP 专属打开流程收敛为：
+MusicXML 与 GP 共用同一条 Library Import 管线：
 
-`Open Score Intent → File Access → Format Probe → Format Adapter → Candidate Session → Atomic Commit`
+`Import Source → File Access → Format Probe → Format Adapter → Repository 提交（pending → ready）`
 
-共享管线拥有文件选择、读取、内容哈希、取消、错误展示、最近打开和 Session 提交。格式不能只按扩展名分派；Format Probe 综合扩展名提示、文件 magic、MXL 容器和解析结果。
+共享管线拥有文件选择、读取、内容哈希、取消、错误展示和 Library 提交。格式不能只按扩展名分派；
+Format Probe 综合扩展名提示、文件 magic、MXL 容器和解析结果。
 
 GP Adapter 与 MusicXML Adapter 只拥有格式专属检查、alphaTab importer 设置、解析、领域投影和诊断。首版定义满足 GP 与 MusicXML 的窄 `ScoreFormatAdapter` 契约，不建设通用第三方插件系统。接口需要为后续 MIDI adapter 允许不同的运行时产物，但不提前抽象 MIDI Analyzer 的全部阶段。
 
@@ -227,14 +224,15 @@ MusicXML 采用“所见即所练”原则：
 
 ### 可查看但不可播放
 
-如果能够建立可靠的书面谱结构，但无法建立可播放时间轴，导入以 `success-with-warnings` 创建只读查看 Session：
+如果能够建立可靠的书面谱结构，但无法建立可播放时间轴（adapter 报告 `capabilities.view` 可用而
+`capabilities.playback` 不可用），导入仍可创建 Library Score：
 
-- 保留谱面、滚动、缩放、批注和轨道显示。
-- 禁用播放、循环、节拍器等依赖可播放时间轴的能力。
+- 保留谱面、滚动、缩放和轨道显示。
+- 播放、循环、节拍器等依赖可播放时间轴的领域动作禁用并显示就地原因。
 - 明确提示当前乐谱可以查看但无法播放。
-- “无可播放音符”属于能力降级诊断，不自动等同于导入失败。
+- “无可播放音符”属于能力降级，不自动等同于导入失败。
 
-只有书面谱结构本身也无法可靠建立时，导入才返回 `failure`。
+只有书面谱结构本身也无法可靠建立（`capabilities.view` 不可用或无有效轨道）时，导入才返回 `failed`。
 
 ## 性能验收目标
 
@@ -247,7 +245,3 @@ MusicXML 采用“所见即所练”原则：
 - Windows x64 内部验收机复用同一 fixtures；具体阈值可以在首轮基准后针对设备性能校准。
 
 先通过代表性 fixtures 建立基准。只有锁定的 alphaTab 版本无法达到目标时，才引入额外 worker 隔离、分阶段解析或渲染优化。
-
-## 待确认
-
-- 错误分类、诊断信息和验收 fixtures。

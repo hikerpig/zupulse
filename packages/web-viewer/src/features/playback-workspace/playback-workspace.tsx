@@ -4,8 +4,7 @@ import type { ViewerSessionHandle } from "../../host";
 import { DisabledPracticeDrawer } from "./components/disabled-practice-drawer";
 import { PlaybackTransport } from "./playback-transport";
 import { PracticeDrawer } from "./practice-drawer";
-import { PianoKeyVisualization } from "../piano-key-visualization/components/PianoKeyVisualization";
-import { DEFAULT_PIANO_KEY_HEIGHT, clampPianoKeyHeight } from "../piano-key-visualization/model/piano-key-height";
+import { PianoKeyVisualization, DEFAULT_PIANO_KEY_HEIGHT, clampPianoKeyHeight } from "../piano-key-visualization";
 import styles from "../PlaybackWorkspace.module.css";
 
 export function PlaybackWorkspace({

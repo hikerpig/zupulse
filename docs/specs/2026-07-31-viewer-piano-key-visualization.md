@@ -1,8 +1,4 @@
----
-status: implemented
----
-
-# Viewer 钢琴按键提示 Spec
+# Viewer 琴键引导 Spec
 
 本文描述本次功能变更的目标与验收边界，不是当前运行时行为或实施进度的事实源。当前 Viewer 行为仍以
 [`Viewer Playback Navigation Feature Contract`](../features/contracts/viewer-playback-navigation.md)、
@@ -20,8 +16,8 @@ status: implemented
 ## 产品决策
 
 - 只对现有 `PianoHandMapping` 判定为 `available` 的唯一双非打击乐 Staff Track 开放。
-- 提前窗口使用四个四分音符的播放 tick，而不是固定墙钟秒数。变速与 tempo change 改变提示的实际
-  运动速度，但不改变它在音乐时间中的提前量和时值比例。
+- 提前窗口跟随当前有效速度（baseTempo × scoreSpeed），固定提前约 2 秒墙钟时间，并限制在 2–8 个
+  四分音符之间。变速与 tempo change 改变提示的运动距离，但保持下落体感速度一致。
 - 双手示范显示左右手；练右手只显示右手目标，练左手只显示左手目标。伴奏手是否发声不改变目标提示。
 - 音高表达实际发声的 MIDI key。事件采用半开区间 `[startTick, endTick)`，音符到达 `startTick` 时
   琴键按下，到达 `endTick` 时释放。
@@ -61,7 +57,8 @@ type PianoKeyHintEvent = {
 
 ## UI 与布局
 
-- 开关入口属于“练习设置”的任务列表，不与播放主操作争夺 Transport 权重。
+- 开关入口属于“练习设置”的任务列表，并在 Transport 右侧工具区提供低权重图标开关，不与播放、
+  停止等主操作争夺权重。
 - 可视化形成一个紧凑的底部工作区：提示轨道在上，钢琴键盘在下，使用边界而非卡片或明显阴影建立
   层级。
 - 音符块抵达键盘的边缘表达 onset；块长度表达 duration；当前 active key 有非颜色状态差异。
@@ -84,23 +81,24 @@ type PianoKeyHintEvent = {
 
 ## Acceptance criteria
 
-- [x] An eligible piano score exposes an opt-in piano-key visualization below the score and above Transport.
-- [x] Closing the visualization restores the score area without changing transport, position, loop, tempo,
+- [ ] An eligible piano score exposes an opt-in piano-key visualization below the score and above Transport.
+- [ ] Closing the visualization restores the score area without changing transport, position, loop, tempo,
       track mix, or piano-hand practice state.
-- [x] The timeline contains separate right/left expanded playback occurrences with exact positive durations and
+- [ ] The timeline contains separate right/left expanded playback occurrences with exact positive durations and
       does not mutate the source Score.
-- [x] A repeated written note appears once per playback occurrence; a tied note remains one continuous event.
-- [x] Hint visibility uses a four-quarter-note lookahead and half-open `[startTick, endTick)` semantics.
-- [x] Chords activate all pitches together; overlapping occurrences of the same pitch release only after the last
+- [ ] A repeated written note appears once per playback occurrence; a tied note remains one continuous event.
+- [ ] Hint visibility follows an effective-tempo-adaptive lookahead (about two seconds, clamped to two to eight
+      quarter notes) and half-open `[startTick, endTick)` semantics.
+- [ ] Chords activate all pitches together; overlapping occurrences of the same pitch release only after the last
       active occurrence ends.
-- [x] Both-hands mode shows both hands; right-hand and left-hand practice show only the corresponding target hand.
-- [x] Pause freezes the visual state; seek, stop, speed changes, and loop wrap resynchronize without stale keys or
+- [ ] Both-hands mode shows both hands; right-hand and left-hand practice show only the corresponding target hand.
+- [ ] Pause freezes the visual state; seek, stop, speed changes, and loop wrap resynchronize without stale keys or
       hint blocks.
-- [x] Ineligible and failed projections remain discoverable with semantic unavailable copy and do not block normal
+- [ ] Ineligible and failed projections remain discoverable with semantic unavailable copy and do not block normal
       score playback.
-- [x] Per-frame updates stay outside React application state and all animation/session resources are released on
+- [ ] Per-frame updates stay outside React application state and all animation/session resources are released on
       unmount or Viewer Session destroy.
-- [x] Chinese and English catalogs remain structurally identical; user-visible errors never expose raw exceptions.
-- [x] Light/Dark and `390px`/`620px`/desktop layouts keep the score primary and introduce no horizontal overflow.
-- [x] The visualization defaults to 260px when space permits, resizes between 180px and 420px by pointer or
+- [ ] Chinese and English catalogs remain structurally identical; user-visible errors never expose raw exceptions.
+- [ ] Light/Dark and `390px`/`620px`/desktop layouts keep the score primary and introduce no horizontal overflow.
+- [ ] The visualization defaults to 260px when space permits, resizes between 180px and 420px by pointer or
       keyboard, preserves at least 180px for the score, and retains height only within the current Viewer Session.

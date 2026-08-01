@@ -184,4 +184,11 @@
       display: none;
     }
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    .whiteKey,
+    .blackKey {
+      transition: none;
+    }
+  }
 }

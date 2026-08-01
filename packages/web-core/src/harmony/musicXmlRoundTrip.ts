@@ -7,6 +7,11 @@ export type MusicXmlHarmonyInsertion = {
   harmonyXml: string;
 };
 
+export type MusicXmlRootSource = {
+  rootFilePath: string | null;
+  rootBytes: Uint8Array;
+};
+
 type XmlTag = {
   end: number;
   name: string;
@@ -55,25 +60,47 @@ export function listMusicXmlMeasureDivisions(bytes: Uint8Array, partId: string):
 
 /** Returns the score XML contained by a plain MusicXML or MXL file. */
 export function readMusicXmlRootXml(bytes: Uint8Array): string {
-  const source = isZip(bytes) ? preflightMxlEntries(unzipMxlEntries(bytes)).rootBytes : bytes;
-  preflightMusicXml(source);
-  return new TextDecoder("utf-8", { fatal: true }).decode(source);
+  return new TextDecoder("utf-8", { fatal: true }).decode(readMusicXmlRootSource(bytes).rootBytes);
 }
 
-function insertMxlHarmony(bytes: Uint8Array, insertions: readonly MusicXmlHarmonyInsertion[]): Uint8Array {
+/** Returns the validated root score bytes and their MXL entry path, when present. */
+export function readMusicXmlRootSource(bytes: Uint8Array): MusicXmlRootSource {
+  if (!isZip(bytes)) {
+    preflightMusicXml(bytes);
+    return { rootFilePath: null, rootBytes: bytes };
+  }
+  const { rootFileName, rootBytes } = preflightMxlEntries(unzipMxlEntries(bytes));
+  return { rootFilePath: rootFileName, rootBytes };
+}
+
+/** Rewrites only the validated root score while preserving the surrounding MusicXML container. */
+export function rewriteMusicXmlRoot(bytes: Uint8Array, transform: (rootBytes: Uint8Array) => Uint8Array): Uint8Array {
+  if (!isZip(bytes)) {
+    preflightMusicXml(bytes);
+    const transformed = transform(bytes);
+    preflightMusicXml(transformed);
+    return transformed;
+  }
   const entries = unzipMxlEntries(bytes);
   const { rootFileName, rootBytes } = preflightMxlEntries(entries);
-  if (insertions.length === 0) return bytes;
-  const root = preflightMusicXml(rootBytes);
-  const annotatedRoot = insertIntoXml(rootBytes, root.root, insertions);
+  const transformed = transform(rootBytes);
+  preflightMusicXml(transformed);
   return zipSync(
     Object.fromEntries(
       entries.map((entry) => [
         entry.name,
-        normalize(entry.name) === normalize(rootFileName) ? annotatedRoot : entry.bytes!,
+        normalize(entry.name) === normalize(rootFileName) ? transformed : entry.bytes!,
       ]),
     ),
   );
+}
+
+function insertMxlHarmony(bytes: Uint8Array, insertions: readonly MusicXmlHarmonyInsertion[]): Uint8Array {
+  if (insertions.length === 0) return bytes;
+  return rewriteMusicXmlRoot(bytes, (rootBytes) => {
+    const root = preflightMusicXml(rootBytes);
+    return insertIntoXml(rootBytes, root.root, insertions);
+  });
 }
 
 function insertIntoXml(

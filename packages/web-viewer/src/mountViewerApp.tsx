@@ -31,7 +31,9 @@ export type ViewerAppDependencies = {
     repository: SheetLibraryRepository;
     gateway: ScoreFileGateway;
     adapters: readonly ScoreFormatAdapter[];
-    createDroppedImportSources?(files: readonly File[]): readonly ScoreImportSource[];
+    createDroppedImportSources?(
+      files: readonly File[],
+    ): readonly ScoreImportSource[] | Promise<readonly ScoreImportSource[]>;
     sampleSources?: readonly BundledSampleSource[];
   };
 };

@@ -9,6 +9,9 @@ declare global {
     zupulseBridge?: {
       request(value: unknown): Promise<unknown>;
       subscribe(listener: (event: unknown) => void): () => void;
+      handleDroppedFiles?(
+        files: ArrayLike<File>,
+      ): Promise<{ ok: true; files: { fileToken: string; fileName: string; sizeBytes: number }[] } | { ok: false }>;
     };
   }
 }

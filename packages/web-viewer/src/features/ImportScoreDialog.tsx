@@ -36,7 +36,7 @@ export function ImportScoreDialog({
 }: {
   open: boolean;
   onSelectFiles(): Promise<readonly ScoreImportSource[]>;
-  onDropFiles?(files: readonly File[]): readonly ScoreImportSource[];
+  onDropFiles?(files: readonly File[]): readonly ScoreImportSource[] | Promise<readonly ScoreImportSource[]>;
   sampleScores: readonly BundledSampleScore[];
   onSelectSample?(id: BundledSampleScore["id"]): ScoreImportSource | undefined;
   onImport(sources: readonly ScoreImportSource[]): Promise<void>;
@@ -45,6 +45,7 @@ export function ImportScoreDialog({
   const [candidates, setCandidates] = useState<readonly ScoreImportSource[]>([]);
   const [selecting, setSelecting] = useState(false);
   const [selectionFailed, setSelectionFailed] = useState(false);
+  const [processingDrop, setProcessingDrop] = useState(false);
   const [skippedUnsupported, setSkippedUnsupported] = useState(0);
   const [dropActive, setDropActive] = useState(false);
 
@@ -55,6 +56,7 @@ export function ImportScoreDialog({
     setSelectionFailed(false);
     setSkippedUnsupported(0);
     setDropActive(false);
+    setProcessingDrop(false);
   }, [open]);
 
   // Files enter here from every host path (picker bypasses, drops); gate with the
@@ -79,7 +81,7 @@ export function ImportScoreDialog({
   };
 
   const dropZoneLabel = t(
-    selecting
+    selecting || processingDrop
       ? "importDialog.selecting"
       : dropActive
         ? "importDialog.dropActive"
@@ -108,10 +110,11 @@ export function ImportScoreDialog({
             <button
               type="button"
               aria-label={dropZoneLabel}
+              data-testid="import-score-picker"
               className={`${dropZoneBaseClasses} ${dropActive ? dropZoneActiveClasses : dropZoneIdleClasses} ${
                 onDropFiles && !dropActive ? "tw:border-dashed" : "tw:border-solid"
               }`}
-              disabled={selecting}
+              disabled={selecting || processingDrop}
               onClick={() => void selectFiles()}
               onDragEnter={
                 onDropFiles
@@ -129,7 +132,12 @@ export function ImportScoreDialog({
                       event.preventDefault();
                       event.stopPropagation();
                       setDropActive(false);
-                      addCandidates(onDropFiles(Array.from(event.dataTransfer.files)));
+                      setProcessingDrop(true);
+                      setSelectionFailed(false);
+                      void Promise.resolve(onDropFiles(Array.from(event.dataTransfer.files)))
+                        .then(addCandidates)
+                        .catch(() => setSelectionFailed(true))
+                        .finally(() => setProcessingDrop(false));
                     }
                   : undefined
               }
@@ -245,10 +253,17 @@ export function ImportScoreDialog({
             </section>
           ) : null}
           <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-end tw:gap-2">
-            <DialogClose render={<Button tone="ghost" />}>{t("cancel")}</DialogClose>
+            <DialogClose render={<Button tone="ghost" data-testid="import-score-cancel" />} disabled={processingDrop}>
+              {t("cancel")}
+            </DialogClose>
             <DialogClose
               render={
-                <Button tone="primary" disabled={candidates.length === 0} onClick={() => void onImport(candidates)} />
+                <Button
+                  tone="primary"
+                  data-testid="import-score-submit"
+                  disabled={candidates.length === 0 || processingDrop}
+                  onClick={() => void onImport(candidates)}
+                />
               }
             >
               {t("importDialog.submit", { count: candidates.length })}

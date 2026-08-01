@@ -1,5 +1,10 @@
 import path from "node:path";
-import { createBridgeEvent, localPlaybackResumeSchema, parseSidecar } from "@zupulse/web-core";
+import {
+  createBridgeEvent,
+  fileImportDroppedRequestSchema,
+  localPlaybackResumeSchema,
+  parseSidecar,
+} from "@zupulse/web-core";
 import { createAppI18n, resolveLocale, type LocaleState, type SupportedLocale } from "@zupulse/app-i18n";
 import { randomUUID } from "node:crypto";
 import {
@@ -13,10 +18,10 @@ import {
   shell,
   type MenuItemConstructorOptions,
 } from "electron";
-import { BridgeDispatchError, dispatchBridgeRequest } from "./bridge";
+import { assertBridgeAppSender, BridgeDispatchError, dispatchBridgeRequest } from "./bridge";
 import { DiagnosticLogger } from "./diagnostics";
 import { FileTokenStore } from "./fileTokens";
-import { openScoreFile, readScoreFileBytes, saveScoreFile, selectScoreFiles } from "./files";
+import { acceptScorePaths, openScoreFile, readScoreFileBytes, saveScoreFile, selectScoreFiles } from "./files";
 import { registerAppProtocol } from "./protocol";
 import { JsonStore } from "./storage";
 import { DesktopLifecycleCoordinator } from "./lifecycle";
@@ -121,6 +126,20 @@ async function startDesktopApp(): Promise<void> {
     if (!mainWindow || mainWindow.isDestroyed()) return;
     mainWindow.webContents.send("zupulse:event", event);
   };
+  const DROPPED_FILES_IPC_CHANNEL = "zupulse:file:importDropped" as const;
+  ipcMain.handle(DROPPED_FILES_IPC_CHANNEL, (event, value: unknown) => {
+    assertBridgeAppSender(event.senderFrame?.url ?? event.sender.getURL());
+    const parsed = fileImportDroppedRequestSchema.safeParse(value);
+    if (!parsed.success) {
+      throw new BridgeDispatchError(
+        "INVALID_BRIDGE_MESSAGE",
+        "Dropped-file import failed schema validation",
+        false,
+        parsed.error.issues,
+      );
+    }
+    return acceptScorePaths(fileTokens, parsed.data.payload.paths);
+  });
   ipcMain.handle("zupulse:request", (event, value: unknown) =>
     dispatchBridgeRequest(
       {

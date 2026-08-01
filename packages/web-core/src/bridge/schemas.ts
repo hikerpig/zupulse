@@ -75,6 +75,7 @@ export const capabilitiesSchema = z
         openExternalFile: z.boolean(),
         persistentFileReferences: z.boolean(),
         localLibraryImport: z.boolean(),
+        droppedFileImport: z.boolean().optional(),
       })
       .strict(),
     harmonyAnalysis: z.boolean().optional(),
@@ -353,3 +354,29 @@ export function createBridgeEvent<T extends BridgeEventType>(
     payload,
   }) as EventFor<T>;
 }
+
+const droppedTokenFileSchema = z
+  .object({ fileToken: idSchema, fileName: z.string().min(1), sizeBytes: z.number().int().nonnegative() })
+  .strict();
+
+export const fileImportDroppedRequestSchema = envelope(
+  "file.importDropped",
+  z
+    .object({
+      paths: z.array(z.string().min(1)).min(1).max(128),
+    })
+    .strict(),
+);
+
+export const fileImportDroppedResponseSchema = z.discriminatedUnion("status", [
+  z.object({ status: z.literal("cancelled") }).strict(),
+  z
+    .object({
+      status: z.literal("accepted"),
+      files: z.array(droppedTokenFileSchema).min(1),
+    })
+    .strict(),
+]);
+
+export type FileImportDroppedRequest = z.infer<typeof fileImportDroppedRequestSchema>;
+export type FileImportDroppedResponse = z.infer<typeof fileImportDroppedResponseSchema>;

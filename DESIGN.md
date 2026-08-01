@@ -119,7 +119,8 @@ Zupulse 是面向长期练习、乐谱查看与和声分析的桌面级数字音
   保持常显可用对比度，不依赖 hover 才可见。
 - 顶部与空态只表达一个导入意图；modal 负责多选、候选审阅、移除和确认，不预先要求用户判断
   “单份”或“批量”。
-- Browser 可把 dropped files 加入同一候选清单；Desktop 不宣称支持 drop，继续使用原生多选。
+- Browser 与 Desktop 都可把 dropped files 加入同一候选清单；Desktop 通过 Preload `webUtils.getPathForFile`
+  和 Main 一次性 token 边界接收文件，Renderer 不获取绝对路径；原生多选与 dropped files 共享候选列表。
 - 空态告诉用户如何导入自己的乐谱，并提供一份用户主动选择的短 bundled sample；样例不得自动
   入库或产生 sample-only 馆藏语义，不使用营销式插画填充空间。
 

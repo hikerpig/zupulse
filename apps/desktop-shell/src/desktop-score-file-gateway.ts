@@ -8,6 +8,9 @@ import {
 
 type DesktopBridge = NonNullable<Window["zupulseBridge"]>;
 
+type TokenFile = { fileToken: string; fileName: string; sizeBytes: number };
+type DroppedTokenFiles = { ok: true; files: TokenFile[] } | { ok: false };
+
 export class DesktopScoreFileGateway implements ScoreFileGateway {
   constructor(private readonly bridge: DesktopBridge) {}
 
@@ -15,16 +18,7 @@ export class DesktopScoreFileGateway implements ScoreFileGateway {
     const request = createBridgeRequest("file.select", crypto.randomUUID(), options);
     const selection = parseBridgeResponse(request.type, await this.bridge.request(request));
     if (selection.status === "cancelled") return [];
-    return Promise.all(
-      selection.files.map(async (opened) => {
-        const read = createBridgeRequest("file.readBytes", crypto.randomUUID(), { fileToken: opened.fileToken });
-        const file = parseBridgeResponse(read.type, await this.bridge.request(read));
-        return {
-          fileName: file.fileName,
-          readBytes: async () => new Uint8Array(file.bytes),
-        };
-      }),
-    );
+    return readTokensAsImportSources(this.bridge, selection.files);
   }
 
   async saveExport(file: StoredScoreFile): Promise<"saved" | "cancelled"> {
@@ -34,4 +28,31 @@ export class DesktopScoreFileGateway implements ScoreFileGateway {
     });
     return (await parseBridgeResponse(request.type, await this.bridge.request(request))).status;
   }
+}
+
+async function readTokensAsImportSources(
+  bridge: DesktopBridge,
+  entries: readonly TokenFile[],
+): Promise<readonly ScoreImportSource[]> {
+  return Promise.all(
+    entries.map(async (opened) => {
+      const read = createBridgeRequest("file.readBytes", crypto.randomUUID(), { fileToken: opened.fileToken });
+      const file = parseBridgeResponse(read.type, await bridge.request(read));
+      return {
+        fileName: file.fileName,
+        readBytes: async () => new Uint8Array(file.bytes),
+      };
+    }),
+  );
+}
+
+export async function createDesktopDroppedImportSources(
+  bridge: DesktopBridge,
+  files: readonly File[],
+): Promise<readonly ScoreImportSource[]> {
+  const handle = bridge.handleDroppedFiles;
+  if (!handle || files.length === 0) return [];
+  const result: DroppedTokenFiles = await handle(files);
+  if (!result.ok) return [];
+  return readTokensAsImportSources(bridge, result.files);
 }

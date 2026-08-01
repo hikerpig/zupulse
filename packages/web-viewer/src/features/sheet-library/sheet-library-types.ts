@@ -17,7 +17,7 @@ export type SheetLibraryProps = {
   importing?: boolean;
   importSummary?: ImportSummaryState;
   onSelectImportFiles(): Promise<readonly ScoreImportSource[]>;
-  onDropImportFiles?(files: readonly File[]): readonly ScoreImportSource[];
+  onDropImportFiles?(files: readonly File[]): readonly ScoreImportSource[] | Promise<readonly ScoreImportSource[]>;
   sampleScores?: readonly BundledSampleScore[];
   onSelectSample?(id: BundledSampleScore["id"]): ScoreImportSource | undefined;
   onImportSources(sources: readonly ScoreImportSource[]): Promise<void>;

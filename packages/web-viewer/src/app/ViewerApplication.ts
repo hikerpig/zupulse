@@ -137,7 +137,9 @@ export class ViewerApplication implements ViewerAppHandle {
       repository: SheetLibraryRepository;
       gateway: ScoreFileGateway;
       adapters: readonly ScoreFormatAdapter[];
-      createDroppedImportSources?(files: readonly File[]): readonly ScoreImportSource[];
+      createDroppedImportSources?(
+        files: readonly File[],
+      ): readonly ScoreImportSource[] | Promise<readonly ScoreImportSource[]>;
       sampleSources?: readonly BundledSampleSource[];
     },
     private readonly openStudioRuntime?: (file: ViewerFile) => Promise<StudioScoreRuntime>,
@@ -645,7 +647,9 @@ export class ViewerApplication implements ViewerAppHandle {
     return this.library?.createDroppedImportSources !== undefined;
   }
 
-  createDroppedImportSources(files: readonly File[]): readonly ScoreImportSource[] {
+  createDroppedImportSources(
+    files: readonly File[],
+  ): readonly ScoreImportSource[] | Promise<readonly ScoreImportSource[]> {
     return this.library?.createDroppedImportSources?.(files) ?? [];
   }
 

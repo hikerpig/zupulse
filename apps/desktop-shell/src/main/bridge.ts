@@ -35,11 +35,16 @@ export class BridgeDispatchError extends Error {
   }
 }
 
+export function assertBridgeAppSender(senderUrl: string): void {
+  assertAppSender(senderUrl);
+}
+
 const DEFAULT_CAPABILITIES = capabilitiesSchema.parse({
   fileAccess: {
     openExternalFile: true,
     persistentFileReferences: false,
     localLibraryImport: true,
+    droppedFileImport: true,
   },
   storage: { sqliteIndex: true, sidecarPayload: true },
   harmonyAnalysis: true,

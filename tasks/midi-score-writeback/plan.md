@@ -213,6 +213,10 @@ blocking diagnostic 增量，并对 source/corrected 重新 fusion。实现同�
 
 ### Task 06: 交付 `apply-fusion` vertical slice
 
+**Progress:** Completed on 2026-08-01. CLI 验证 source run 全部 artifact hashes 以及 decisions 绑定的 run/proposal
+hashes；patch 与 no-regression gates 全部通过后，临时 run 才原子发布到 `--output`。成功 artifacts 包含 corrected
+score、patch plan、拆分 validation reports、diagnostics 和 manifest。
+
 **Description:** 接入 CLI flags、run integrity verification、reviewed patch、validation 与原子 output directory；
 成功 run 写入 corrected score、patch plan、before/after validation、diagnostics 和 manifest hashes。
 
@@ -243,9 +247,9 @@ blocking diagnostic 增量，并对 source/corrected 重新 fusion。实现同�
 
 ### Checkpoint C: CLI end-to-end
 
-- [ ] synthetic fixture 完成 fuse → decisions → apply-fusion → re-fuse。
-- [ ] corrected score 可 view/playback，目标 disagreement 消失。
-- [ ] package tests、typecheck、format 和 `git diff --check` 通过。
+- [x] synthetic fixture 完成 fuse → decisions → apply-fusion → re-fuse。
+- [x] corrected score 可 view/playback，目标 disagreement 消失。
+- [x] package tests、typecheck、format 和 `git diff --check` 通过。
 
 ## Phase 4: Corpus verification and durable documentation
 

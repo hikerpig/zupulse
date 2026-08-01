@@ -1,0 +1,4 @@
+interface:
+  display_name: "Zupulse Feature Design"
+  short_description: "基于当前产品证据设计功能、UI、UX 与可实施规格"
+  default_prompt: "Use $zupulse-feature-design to turn this Zupulse requirement into an evidence-based product, UI, and UX spec for engineering."

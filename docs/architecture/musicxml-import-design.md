@@ -28,7 +28,8 @@ ADR 0036。
 - `.musicxml`：未压缩的 MusicXML 文档。
 - `.mxl`：压缩的 MusicXML 容器。
 
-`.xml` 是通用扩展名，不直接出现在默认文件类型过滤器中。用户通过“所有文件”等入口选择 `.xml` 后，系统可以根据内容识别 MusicXML；扩展名本身不足以判定支持。
+`.xml` 是通用扩展名，不进入 Library Import：picker 与拖放候选只按 Library 扩展名规则接受 GP、
+`.musicxml` 与 `.mxl`，不提供裸 `.xml` 的内容识别入口。
 
 首版不支持包含多部作品的 MusicXML opus 容器。
 
@@ -191,10 +192,11 @@ MusicXML 竖切至少覆盖：
 ## Import 执行与取消
 
 - 每次导入动作处理一批候选文件，逐项完成探测、解析与 Repository 提交，并流式更新导入汇总。
-- 用户可取消进行中的导入；取消后不再处理后续候选，未完成的结果不写入 Library。
+- 用户可取消进行中的导入；已完成的候选保留，进行中的候选在写入 Library 前再次检查取消信号，未开始
+  的候选不再处理，已取消的结果不写入 Library。
 - 用户取消文件选择不改变 Library，也不视为错误。
 - 单个文件导入成功后直接打开对应 Library Score；批量导入停留在 Library 并展示汇总。
-- 应用退出时终止未完成导入，不写入 Practice Sidecar。
+- 应用退出时取消未完成导入，不写入 Practice Sidecar。
 
 ### 加载反馈
 

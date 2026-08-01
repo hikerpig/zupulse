@@ -4,20 +4,21 @@ import type { SheetLibraryRepository } from "../ports";
 import { importLibraryScores, isSupportedLibraryScoreFile } from "../importLibraryScores";
 
 const bytes = new TextEncoder().encode("<score-partwise><part/><measure/></score-partwise>");
+const adapterOutput = {
+  runtime: {},
+  diagnostics: [],
+  capabilities: { view: true, playback: false },
+  document: {
+    schemaVersion: "0",
+    summary: { title: "Test", trackCount: 1 },
+    tracks: [{ id: "x", name: "x", staves: [], playback: { muted: false, solo: false, volume: 1 } }],
+    timeline: { ticksPerQuarter: 1, durationTicks: 1 },
+    sections: [],
+  },
+};
 const adapter: ScoreFormatAdapter = {
   format: "musicxml",
-  parse: async () => ({
-    runtime: {},
-    diagnostics: [],
-    capabilities: { view: true, playback: false },
-    document: {
-      schemaVersion: "0",
-      summary: { title: "Test", trackCount: 1 },
-      tracks: [{ id: "x", name: "x", staves: [], playback: { muted: false, solo: false, volume: 1 } }],
-      timeline: { ticksPerQuarter: 1, durationTicks: 1 },
-      sections: [],
-    },
-  }),
+  parse: async () => adapterOutput,
 };
 
 function repository(): SheetLibraryRepository {
@@ -101,5 +102,27 @@ describe("importLibraryScores", () => {
     expect(results[0]?.status).toBe("created");
     expect(maximumActiveReads).toBe(1);
     expect(store.add).toHaveBeenCalledOnce();
+  });
+
+  it("does not persist a candidate cancelled during parsing", async () => {
+    const store = repository();
+    const controller = new AbortController();
+    const abortingAdapter: ScoreFormatAdapter = {
+      format: "musicxml",
+      parse: async () => {
+        controller.abort();
+        return adapterOutput;
+      },
+    };
+
+    const results = await importLibraryScores({
+      repository: store,
+      adapters: [abortingAdapter],
+      sources: [{ fileName: "cancelled.musicxml", readBytes: async () => bytes }],
+      signal: controller.signal,
+    });
+
+    expect(results).toEqual([]);
+    expect(store.add).not.toHaveBeenCalled();
   });
 });

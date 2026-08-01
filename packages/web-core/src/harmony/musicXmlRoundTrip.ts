@@ -12,6 +12,17 @@ export type MusicXmlRootSource = {
   rootBytes: Uint8Array;
 };
 
+export type MusicXmlNotePitchReplacement = {
+  partId: string;
+  measureIndex: number;
+  noteIndex: number;
+  writtenPitch: {
+    step: "A" | "B" | "C" | "D" | "E" | "F" | "G";
+    alter: number;
+    octave: number;
+  };
+};
+
 type XmlTag = {
   end: number;
   name: string;
@@ -93,6 +104,96 @@ export function rewriteMusicXmlRoot(bytes: Uint8Array, transform: (rootBytes: Ui
       ]),
     ),
   );
+}
+
+/** Replaces pitches at exact part/measure/note ordinals without serializing unrelated XML. */
+export function rewriteMusicXmlNotePitches(
+  bytes: Uint8Array,
+  replacements: readonly MusicXmlNotePitchReplacement[],
+): Uint8Array {
+  if (replacements.length === 0) return bytes;
+  validatePitchReplacements(replacements);
+  return rewriteMusicXmlRoot(bytes, (rootBytes) => {
+    const source = new TextDecoder("utf-8", { fatal: true }).decode(rootBytes);
+    const tags = readXmlTags(source);
+    if (tags[0]?.name !== "score-partwise") throw new Error("score-partwise-required");
+    const edits = replacements.flatMap((replacement) => pitchReplacementEdits(tags, replacement));
+    return new TextEncoder().encode(applyTextEdits(source, edits));
+  });
+}
+
+type TextEdit = { start: number; end: number; value: string };
+
+function validatePitchReplacements(replacements: readonly MusicXmlNotePitchReplacement[]): void {
+  const targets = new Set<string>();
+  for (const replacement of replacements) {
+    if (
+      replacement.partId.length === 0 ||
+      !Number.isInteger(replacement.measureIndex) ||
+      replacement.measureIndex < 0 ||
+      !Number.isInteger(replacement.noteIndex) ||
+      replacement.noteIndex < 0 ||
+      !Number.isInteger(replacement.writtenPitch.alter) ||
+      replacement.writtenPitch.alter < -2 ||
+      replacement.writtenPitch.alter > 2 ||
+      !Number.isInteger(replacement.writtenPitch.octave) ||
+      replacement.writtenPitch.octave < -1 ||
+      replacement.writtenPitch.octave > 9
+    ) {
+      throw new Error("invalid-pitch-replacement");
+    }
+    const key = `${replacement.partId}:${replacement.measureIndex}:${replacement.noteIndex}`;
+    if (targets.has(key)) throw new Error("conflicting-pitch-replacements");
+    targets.add(key);
+  }
+}
+
+function pitchReplacementEdits(tags: readonly XmlTag[], replacement: MusicXmlNotePitchReplacement): TextEdit[] {
+  const part = findDirectChild(tags, 0, "part", (tag) => attribute(tag.value, "id") === replacement.partId);
+  const measure =
+    part === undefined ? undefined : findDirectChild(tags, part, "measure", () => true, replacement.measureIndex);
+  const note =
+    measure === undefined ? undefined : findDirectChild(tags, measure, "note", () => true, replacement.noteIndex);
+  const pitch = note === undefined ? undefined : findDirectChild(tags, note, "pitch", () => true);
+  if (pitch === undefined) throw new Error("pitch-target-not-found");
+  const step = findDirectChild(tags, pitch, "step", () => true);
+  const alter = findDirectChild(tags, pitch, "alter", () => true);
+  const octave = findDirectChild(tags, pitch, "octave", () => true);
+  if (step === undefined || octave === undefined) throw new Error("pitch-target-not-found");
+  const edits = [
+    elementContentEdit(tags, step, replacement.writtenPitch.step),
+    elementContentEdit(tags, octave, String(replacement.writtenPitch.octave)),
+  ];
+  if (alter !== undefined) {
+    const close = matchingClose(tags, alter);
+    edits.push(
+      replacement.writtenPitch.alter === 0
+        ? { start: tags[alter]!.start, end: tags[close]!.end, value: "" }
+        : elementContentEdit(tags, alter, String(replacement.writtenPitch.alter)),
+    );
+  } else if (replacement.writtenPitch.alter !== 0) {
+    const stepClose = matchingClose(tags, step);
+    edits.push({
+      start: tags[stepClose]!.end,
+      end: tags[stepClose]!.end,
+      value: `<alter>${replacement.writtenPitch.alter}</alter>`,
+    });
+  }
+  return edits;
+}
+
+function elementContentEdit(tags: readonly XmlTag[], element: number, value: string): TextEdit {
+  if (tags[element]!.type !== "open") throw new Error("pitch-target-not-found");
+  const close = matchingClose(tags, element);
+  return { start: tags[element]!.end, end: tags[close]!.start, value };
+}
+
+function applyTextEdits(source: string, edits: readonly TextEdit[]): string {
+  const ordered = [...edits].sort((left, right) => right.start - left.start || right.end - left.end);
+  for (let index = 1; index < ordered.length; index += 1) {
+    if (ordered[index - 1]!.start < ordered[index]!.end) throw new Error("conflicting-pitch-replacements");
+  }
+  return ordered.reduce((result, edit) => result.slice(0, edit.start) + edit.value + result.slice(edit.end), source);
 }
 
 function insertMxlHarmony(bytes: Uint8Array, insertions: readonly MusicXmlHarmonyInsertion[]): Uint8Array {

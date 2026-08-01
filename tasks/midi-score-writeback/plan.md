@@ -143,6 +143,10 @@ plain XML 原样走 transform，MXL 的其他解压 entry bytes 保持不变，�
 
 ### Task 04: 应用 reviewed pitch patch
 
+**Progress:** Completed on 2026-08-01. Decision/patch-plan 使用 strict schemas；reviewed written pitch 必须匹配
+suggested MIDI，source locator 与 note-facts hash 在 mutation 前复核。plain XML/MXL 仅替换目标 pitch children；
+missing/extra、tie chain、stale precondition 与 duplicate target 全部 fail closed。
+
 **Description:** 定义 decision/patch-plan schemas，校验 run/proposal/precondition，并仅替换目标 note 的
 `step/alter/octave`。对 tie chain 形成原子 patch group；任何不支持或冲突操作在写出 corrected score 前失败。
 
@@ -170,9 +174,9 @@ plain XML 原样走 transform，MXL 的其他解压 entry bytes 保持不变，�
 
 ### Checkpoint B: Mutation safety
 
-- [ ] plain XML 与 MXL mutation tests 通过。
-- [ ] source、non-root entries 和未批准 XML facts 不变。
-- [ ] precondition/decision/proposal drift 全部 fail closed。
+- [x] plain XML 与 MXL mutation tests 通过。
+- [x] source、non-root entries 和未批准 XML facts 不变。
+- [x] precondition/decision/proposal drift 全部 fail closed。
 
 ## Phase 3: Validation and CLI vertical slice
 

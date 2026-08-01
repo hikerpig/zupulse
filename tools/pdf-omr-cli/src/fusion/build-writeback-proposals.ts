@@ -89,6 +89,9 @@ function buildPitchProposal(
 
   const sourceNote = group.sourceNoteId === undefined ? undefined : sourceNotesByEventId.get(group.sourceNoteId);
   if (sourceNote === undefined) reasons.push("source-note-locator-missing");
+  if (sourceNote !== undefined && sourceNote.facts.tieTypes.length > 0) {
+    reasons.push("tie-chain-writeback-unsupported");
+  }
 
   const first = group.proposals[0]!;
   return {

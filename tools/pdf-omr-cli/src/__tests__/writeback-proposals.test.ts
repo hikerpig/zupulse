@@ -111,6 +111,22 @@ describe("buildWritebackProposals", () => {
       }),
     ]);
   });
+
+  it("keeps tie-chain pitch changes review-only until an atomic chain patch is available", () => {
+    const tied = sourceNotes();
+    tied.get("source-0")!.facts.tieTypes = ["start"];
+
+    const result = buildWritebackProposals(
+      scoreEvidence([{ id: "score-0", sourceNoteId: "source-0", playbackIteration: 0 }]),
+      alignment([ambiguous("alignment-0", "score-0", "midi-0", 61)]),
+      [pitchProposal("proposal-0", "score-0", "midi-0", 61)],
+      tied,
+    );
+
+    expect(result.proposals[0]).toMatchObject({
+      reviewability: { status: "review-only", reasons: ["tie-chain-writeback-unsupported"] },
+    });
+  });
 });
 
 function scoreEvidence(notes: Array<{ id: string; sourceNoteId: string; playbackIteration: number }>) {
@@ -167,7 +183,7 @@ function alignment(entries: Array<Record<string, unknown>>) {
   };
 }
 
-function sourceNotes(): ReadonlyMap<string, MusicXmlSourceNote> {
+function sourceNotes(): Map<string, MusicXmlSourceNote> {
   return new Map([
     [
       "source-0",

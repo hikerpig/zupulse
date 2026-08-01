@@ -16,7 +16,7 @@ import {
 import { BridgeDispatchError, dispatchBridgeRequest } from "./bridge";
 import { DiagnosticLogger } from "./diagnostics";
 import { FileTokenStore } from "./fileTokens";
-import { openScoreFile, readScoreFileBytes, saveScoreFile, selectScoreFiles } from "./files";
+import { acceptScorePaths, openScoreFile, readScoreFileBytes, saveScoreFile, selectScoreFiles } from "./files";
 import { registerAppProtocol } from "./protocol";
 import { JsonStore } from "./storage";
 import { DesktopLifecycleCoordinator } from "./lifecycle";
@@ -152,6 +152,7 @@ async function startDesktopApp(): Promise<void> {
           "file.open": () => openScoreFile(fileTokens, undefined, currentLocaleState.effectiveLocale),
           "file.select": (request) =>
             selectScoreFiles(fileTokens, request.payload.multiple, currentLocaleState.effectiveLocale),
+          "file.importDropped": (request) => acceptScorePaths(fileTokens, request.payload.paths),
           "file.readBytes": (request) => readScoreFileBytes(fileTokens, request.payload.fileToken),
           "file.save": (request) => saveScoreFile(request.payload, currentLocaleState.effectiveLocale),
           "library.list": async () => ({ scores: await library.list() }),

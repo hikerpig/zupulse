@@ -507,7 +507,7 @@ describe("SheetLibrary import dialog", () => {
     expect(screen.getByText("释放后添加文件")).toBeTruthy();
     fireEvent.drop(dropZone, { dataTransfer: { files: [droppedFile] } });
 
-    expect(screen.getByText("dropped.mxl")).toBeTruthy();
+    expect(await screen.findByText("dropped.mxl")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "导入 1 份" }));
     const submitted = onImportSources.mock.calls[0]?.[0]?.[0];
     expect(submitted?.fileName).toBe("dropped.mxl");
@@ -540,7 +540,7 @@ describe("SheetLibrary import dialog", () => {
     const dropZone = screen.getByRole("button", { name: "选择文件或拖放文件" });
     fireEvent.drop(dropZone, { dataTransfer: { files: [supported, unsupported] } });
 
-    expect(screen.getByText("song.mxl")).toBeTruthy();
+    expect(await screen.findByText("song.mxl")).toBeTruthy();
     expect(screen.queryByText("notes.txt")).toBeNull();
     expect(screen.getByText("已跳过 1 份不支持的文件，仅支持 Guitar Pro、MusicXML 和 MXL。")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "导入 1 份" }));

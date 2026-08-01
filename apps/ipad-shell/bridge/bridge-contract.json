@@ -126,7 +126,8 @@
               "properties": {
                 "openExternalFile": { "type": "boolean" },
                 "persistentFileReferences": { "type": "boolean" },
-                "localLibraryImport": { "type": "boolean" }
+                "localLibraryImport": { "type": "boolean" },
+                "droppedFileImport": { "type": "boolean" }
               },
               "required": ["openExternalFile", "persistentFileReferences", "localLibraryImport"],
               "additionalProperties": false
@@ -287,7 +288,8 @@
         "properties": {
           "openExternalFile": { "type": "boolean" },
           "persistentFileReferences": { "type": "boolean" },
-          "localLibraryImport": { "type": "boolean" }
+          "localLibraryImport": { "type": "boolean" },
+          "droppedFileImport": { "type": "boolean" }
         },
         "required": ["openExternalFile", "persistentFileReferences", "localLibraryImport"],
         "additionalProperties": false

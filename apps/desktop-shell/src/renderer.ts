@@ -17,6 +17,7 @@ import {
   type HarmonyAnalysisDocument,
   type HarmonyAnalysisRepository,
   type HarmonyAnalysisSaveResult,
+  type ScoreImportSource,
 } from "@zupulse/web-core";
 import "@zupulse/web-viewer/styles.css";
 import {
@@ -27,9 +28,10 @@ import {
   type ViewerAppHandle,
   type ViewerHost,
 } from "@zupulse/web-viewer";
-import { DesktopScoreFileGateway } from "./desktop-score-file-gateway";
+import { createDesktopDroppedImportSources, DesktopScoreFileGateway } from "./desktop-score-file-gateway";
 
 document.documentElement.classList.add("desktop-shell");
+installGlobalDragAndDropGuard(document);
 
 async function start(): Promise<void> {
   const bridge = window.zupulseBridge;
@@ -64,6 +66,7 @@ async function start(): Promise<void> {
       repository: new DesktopLibraryRepository(bridge),
       gateway: new DesktopScoreFileGateway(bridge),
       adapters: [createGpFormatAdapter(), createMusicXmlAdapter()],
+      createDroppedImportSources: (files) => createDesktopDroppedImportSources(bridge, files),
       sampleSources: bundledSampleScores.map((sample) => ({
         sample,
         createSource: () =>
@@ -192,6 +195,17 @@ function renderStartupError(_error: unknown): void {
 function desktopErrorMessage(key: "openFailed" | "lifecycleFailed" | "storageCorrupt" | "startupFailed"): string {
   const locale = resolveLocale("system", [document.documentElement.lang]);
   return createAppI18n(locale).t(`errors:desktop.${key}`);
+}
+
+function installGlobalDragAndDropGuard(target: Document): void {
+  const swallowIfExternal = (event: DragEvent) => {
+    if (event.defaultPrevented) return;
+    if (!event.dataTransfer) return;
+    if (!Array.from(event.dataTransfer.types).includes("Files")) return;
+    event.preventDefault();
+  };
+  target.addEventListener("dragover", swallowIfExternal, true);
+  target.addEventListener("drop", swallowIfExternal, true);
 }
 
 void start().catch(renderStartupError);

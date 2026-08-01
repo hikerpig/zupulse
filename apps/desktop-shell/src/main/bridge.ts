@@ -40,6 +40,7 @@ const DEFAULT_CAPABILITIES = capabilitiesSchema.parse({
     openExternalFile: true,
     persistentFileReferences: false,
     localLibraryImport: true,
+    droppedFileImport: true,
   },
   storage: { sqliteIndex: true, sidecarPayload: true },
   harmonyAnalysis: true,

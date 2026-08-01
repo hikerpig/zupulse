@@ -80,15 +80,28 @@ export async function selectScoreFiles(
     filters: [{ name: t("dialog.scoreFiles"), extensions: ["gp3", "gp4", "gp5", "gpx", "gp", "musicxml", "mxl"] }],
   });
   if (selection.canceled || selection.filePaths.length === 0) return { status: "cancelled" };
+  const accepted = await acceptScorePaths(tokens, selection.filePaths);
+  if (accepted.status === "cancelled") return { status: "cancelled" };
+  return { status: "selected", files: accepted.files };
+}
+
+export async function acceptScorePaths(
+  tokens: FileTokenStore,
+  paths: readonly string[],
+): Promise<
+  { status: "cancelled" } | { status: "accepted"; files: { fileToken: string; fileName: string; sizeBytes: number }[] }
+> {
+  const validPaths = paths.filter((path) => typeof path === "string" && path.length > 0);
+  if (validPaths.length === 0) return { status: "cancelled" };
   const files = await Promise.all(
-    selection.filePaths.map(async (path) => {
+    validPaths.map(async (path) => {
       const info = await stat(path);
       const fileName = basename(path);
       assertReadableScore({ fileName, sizeBytes: info.size, isFile: info.isFile() });
       return { fileToken: tokens.issue(path, { fileName, sizeBytes: info.size }), fileName, sizeBytes: info.size };
     }),
   );
-  return { status: "selected", files };
+  return { status: "accepted", files };
 }
 
 export async function readScoreFileBytes(

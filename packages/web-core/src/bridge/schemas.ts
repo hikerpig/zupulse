@@ -75,6 +75,7 @@ export const capabilitiesSchema = z
         openExternalFile: z.boolean(),
         persistentFileReferences: z.boolean(),
         localLibraryImport: z.boolean(),
+        droppedFileImport: z.boolean().optional(),
       })
       .strict(),
     harmonyAnalysis: z.boolean().optional(),
@@ -130,6 +131,14 @@ export const bridgeRequestSchema = z.discriminatedUnion("type", [
   envelope("file.select", z.object({ multiple: z.boolean() }).strict()),
   envelope("file.readBytes", z.object({ fileToken: idSchema }).strict()),
   envelope("file.save", z.object({ fileName: z.string().min(1).max(255), bytes: z.instanceof(Uint8Array) }).strict()),
+  envelope(
+    "file.importDropped",
+    z
+      .object({
+        paths: z.array(z.string().min(1)).min(1).max(128),
+      })
+      .strict(),
+  ),
   envelope("library.list", z.object({}).strict()),
   envelope("library.get", z.object({ id: libraryScoreIdSchema }).strict()),
   envelope("library.find", z.object({ scoreIdentity: libraryScoreIdentitySchema }).strict()),
@@ -290,6 +299,21 @@ export const bridgeResponseSchemas = {
     })
     .strict(),
   "file.save": z.object({ status: z.enum(["saved", "cancelled"]) }).strict(),
+  "file.importDropped": z.discriminatedUnion("status", [
+    z.object({ status: z.literal("cancelled") }).strict(),
+    z
+      .object({
+        status: z.literal("accepted"),
+        files: z
+          .array(
+            z
+              .object({ fileToken: idSchema, fileName: z.string().min(1), sizeBytes: z.number().int().nonnegative() })
+              .strict(),
+          )
+          .min(1),
+      })
+      .strict(),
+  ]),
   "library.list": z.object({ scores: z.array(libraryScoreSummarySchema) }).strict(),
   "library.get": z.object({ score: libraryScoreSchema.optional() }).strict(),
   "library.find": z.object({ score: libraryScoreSchema.optional() }).strict(),

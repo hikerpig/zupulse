@@ -13,6 +13,7 @@ type RuntimeScore = {
     index?: number;
     start?: number;
     duration?: number;
+    calculateDuration?: () => number;
     timeSignatureNumerator?: number;
     timeSignatureDenominator?: number;
   }>;
@@ -94,7 +95,10 @@ export function projectAlphaTabScore(score: RuntimeScore): Omit<AdapterOutput, "
     })),
     playback: { muted: false, solo: false, volume: 1 },
   }));
-  const durationTicks = masterBars.reduce((max, bar) => Math.max(max, (bar.start ?? 0) + (bar.duration ?? 0)), 0);
+  const durationTicks = masterBars.reduce(
+    (max, bar) => Math.max(max, (bar.start ?? 0) + (bar.duration ?? bar.calculateDuration?.() ?? 0)),
+    0,
+  );
   const playback = durationTicks > 0;
   const diagnostics = playback ? [] : [createImportDiagnostic("no-playable-timeline")];
   return {

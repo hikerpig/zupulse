@@ -18,6 +18,8 @@ describe("MusicXML acceptance fixtures", () => {
       const output = await adapter.parse({ fileName: name, bytes });
       expect(output.document.summary.trackCount).toBeGreaterThan(0);
       expect(output.capabilities.view).toBe(true);
+      expect(output.capabilities.playback).toBe(true);
+      expect(output.document.timeline.durationTicks).toBeGreaterThan(0);
       expect(getDefaultVisibleTrackIds(output.runtime as never).length).toBeGreaterThan(0);
     });
   }

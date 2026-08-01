@@ -52,7 +52,7 @@ export async function compareDraftMusicXml(draft: OmrScoreDraft, bytes: Uint8Arr
       differences: [{ code: "NORMALIZATION_FAILED", path: "$" }],
     };
   }
-  const differences = compareDrafts(draft, actual);
+  const differences = compareOmrScoreDrafts(draft, actual);
   return {
     schemaVersion: "1.0.0",
     parse,
@@ -63,7 +63,7 @@ export async function compareDraftMusicXml(draft: OmrScoreDraft, bytes: Uint8Arr
   };
 }
 
-function compareDrafts(expected: OmrScoreDraft, actual: OmrScoreDraft): MusicXmlDifference[] {
+export function compareOmrScoreDrafts(expected: OmrScoreDraft, actual: OmrScoreDraft): MusicXmlDifference[] {
   const differences: MusicXmlDifference[] = [];
   compareValue(differences, "PART_COUNT_MISMATCH", "parts", expected.parts.length, actual.parts.length);
   for (let partIndex = 0; partIndex < Math.min(expected.parts.length, actual.parts.length); partIndex += 1) {

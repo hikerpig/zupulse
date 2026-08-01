@@ -89,6 +89,69 @@ export const patchPlanSchema = z
   })
   .strict();
 
+const fusionSummarySchema = z
+  .object({
+    matched: z.number().int().nonnegative(),
+    ambiguous: z.number().int().nonnegative(),
+    scoreOnly: z.number().int().nonnegative(),
+    midiOnly: z.number().int().nonnegative(),
+    scoreCoverage: z.number().finite().min(0).max(1),
+    midiCoverage: z.number().finite().min(0).max(1),
+    pitchAgreement: z.number().finite().min(0).max(1),
+    frameAlignmentCost: z.number().finite().nonnegative(),
+  })
+  .strict();
+
+export const writebackValidationSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    runtime: z
+      .object({
+        parse: z.boolean(),
+        view: z.boolean(),
+        playback: z.boolean(),
+      })
+      .strict(),
+    structural: z
+      .object({
+        differences: z.array(
+          z
+            .object({
+              code: z.string().min(1),
+              path: z.string().min(1),
+              expected: z.unknown().optional(),
+              actual: z.unknown().optional(),
+            })
+            .strict(),
+        ),
+      })
+      .strict(),
+    diagnostics: z
+      .object({
+        sourceBlocking: z.record(z.string(), z.number().int().nonnegative()),
+        correctedBlocking: z.record(z.string(), z.number().int().nonnegative()),
+      })
+      .strict(),
+    fusion: z
+      .object({
+        before: z
+          .object({
+            compatibilityStatus: z.enum(["compatible", "ambiguous", "incompatible"]),
+            summary: fusionSummarySchema,
+          })
+          .strict(),
+        after: z
+          .object({
+            compatibilityStatus: z.enum(["compatible", "ambiguous", "incompatible"]),
+            summary: fusionSummarySchema,
+          })
+          .strict(),
+      })
+      .strict(),
+  })
+  .strict();
+
 export type FusionDecisionSet = z.infer<typeof fusionDecisionSetSchema>;
 export type ReviewedWrittenPitch = z.infer<typeof reviewedWrittenPitchSchema>;
 export type PatchPlan = z.infer<typeof patchPlanSchema>;
+export type WritebackValidation = z.infer<typeof writebackValidationSchema>;

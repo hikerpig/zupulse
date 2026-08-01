@@ -6,6 +6,8 @@
 - 覆盖 `score-partwise`、`score-timewise`、多 part、part 内多 staff、歌词、repeat 与中文元数据的确定性 fixture。
 - Score Identity 使用原始完整字节 SHA-256；失败不会产生 Candidate Session。
 - 1–4 part 默认全部显示，超过 4 part 默认首个非打击乐 part。
+- alphaTab master bar 通过 `duration` 或 `calculateDuration()` 投影非零播放时间轴；当前 accepted fixtures
+  必须同时具备 view 与 playback capability。
 - 无可靠播放时间轴时降级为 view-only，并返回稳定 warning。
 
 ## 安全边界

@@ -3,12 +3,51 @@ import { resolve } from "node:path";
 import { TextDecoder, TextEncoder } from "node:util";
 import { unzipSync } from "fflate";
 import { describe, expect, it } from "vitest";
-import { insertMusicXmlHarmony, listMusicXmlMeasureDivisions, listMusicXmlPartIds } from "../musicXmlRoundTrip";
+import {
+  insertMusicXmlHarmony,
+  listMusicXmlMeasureDivisions,
+  listMusicXmlPartIds,
+  readMusicXmlRootSource,
+  rewriteMusicXmlRoot,
+} from "../musicXmlRoundTrip";
 import { createMusicXmlAdapter } from "../../musicxml/musicXmlAdapter";
 
 const decode = (bytes: Uint8Array) => new TextDecoder().decode(bytes);
 const encode = (source: string) => new TextEncoder().encode(source);
 const harmony = "<harmony><root><root-step>C</root-step></root><kind>major</kind></harmony>";
+
+describe("MusicXML root source", () => {
+  it("identifies plain XML and MXL root bytes without losing the container path", async () => {
+    const plain = encode('<score-partwise version="4.0"><part-list/></score-partwise>');
+    const mxl = new Uint8Array(await readFile(resolve("test-fixtures/musicxml/generated/simple.mxl")));
+
+    expect(readMusicXmlRootSource(plain)).toEqual({ rootFilePath: null, rootBytes: plain });
+    const root = readMusicXmlRootSource(mxl);
+    expect(root.rootFilePath).toBe("score.musicxml");
+    expect(decode(root.rootBytes)).toContain("<score-partwise");
+  });
+
+  it("rewrites only the MXL root entry and produces deterministic bytes", async () => {
+    const source = new Uint8Array(await readFile(resolve("test-fixtures/musicxml/generated/simple.mxl")));
+    const transform = (rootBytes: Uint8Array) => encode(decode(rootBytes).replace("<step>C</step>", "<step>D</step>"));
+
+    const first = rewriteMusicXmlRoot(source, transform);
+    const second = rewriteMusicXmlRoot(source, transform);
+    const before = unzipSync(source);
+    const after = unzipSync(first);
+
+    expect(first).toEqual(second);
+    expect(decode(after["score.musicxml"]!)).toContain("<step>D</step>");
+    expect(after["META-INF/container.xml"]).toEqual(before["META-INF/container.xml"]);
+    expect(after["attachments/layout.xml"]).toEqual(before["attachments/layout.xml"]);
+  });
+
+  it("rejects transformed root bytes that are not valid MusicXML", () => {
+    const source = encode('<score-partwise version="4.0"><part-list/></score-partwise>');
+
+    expect(() => rewriteMusicXmlRoot(source, () => encode("not musicxml"))).toThrow("unsupported-format");
+  });
+});
 
 describe("insertMusicXmlHarmony", () => {
   it("lists original part IDs in the same order as projected tracks for partwise, timewise, and MXL sources", async () => {

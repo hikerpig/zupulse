@@ -11,11 +11,11 @@ Canonical plan: `tasks/midi-score-writeback/plan.md`
 
 - [ ] locator 与 proposal contracts 验证通过
 - [ ] report-only fusion 无回归
-- [ ] 人工批准窄 `web-core` root-entry rewrite API
+- [x] 人工批准窄 `web-core` root-entry rewrite API
 
 ## Phase 2: Byte-preserving mutation
 
-- [ ] T03 提取 MusicXML root-entry rewrite primitive
+- [x] T03 提取 MusicXML root-entry rewrite primitive
 - [ ] T04 应用 reviewed pitch patch
 
 ### Checkpoint B

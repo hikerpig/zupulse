@@ -2,7 +2,7 @@
 
 ## 状态
 
-- Status: draft_pending_human_review
+- Status: approved_in_progress
 - Date: 2026-08-01
 - Approved spec: `docs/specs/2026-08-01-midi-score-reviewed-writeback-design.md`
 - Execution checklist: `tasks/midi-score-writeback/todo.md`
@@ -27,10 +27,10 @@ CLI artifact contract，最后使用 K331 development corpus 与 Flower Day comp
 
 ```mermaid
 flowchart TD
-  T01["T01 Source note index"] --> T02["T02 Proposal v2 aggregation"]
+  T03["T03 Root-entry rewrite primitive"] --> T01["T01 Source note index"]
+  T01 --> T02["T02 Proposal v2 aggregation"]
   T02 --> CKA["Checkpoint A: contracts"]
-  CKA --> T03["T03 Root-entry rewrite primitive"]
-  T03 --> T04["T04 Reviewed pitch patch"]
+  CKA --> T04["T04 Reviewed pitch patch"]
   T04 --> CKB["Checkpoint B: mutation"]
   T04 --> T05["T05 Writeback validation"]
   T05 --> T06["T06 apply-fusion vertical slice"]
@@ -57,7 +57,7 @@ flowchart TD
 - [ ] `pnpm vitest run --root . tools/pdf-omr-cli/src/__tests__/audiveris-normalizer.test.ts`
 - [ ] `pnpm --filter @zupulse/pdf-omr-cli typecheck`
 
-**Dependencies:** None
+**Dependencies:** Task 03
 
 **Files likely touched:**
 
@@ -101,11 +101,14 @@ reviewability reasons；冲突 repeat evidence、missing/extra 和不完整 tran
 
 - [ ] source locator 对 XML/MXL 和 repeat 稳定。
 - [ ] report-only fusion tests 与 typecheck 通过。
-- [ ] 人工批准新增窄 `web-core` root-entry rewrite API 后再开始 Task 03。
+- [x] 人工已批准新增窄 `web-core` root-entry rewrite API。
 
 ## Phase 2: Byte-preserving mutation
 
 ### Task 03: 提取 MusicXML root-entry rewrite primitive
+
+**Progress:** Completed on 2026-08-01. 新增 `readMusicXmlRootSource` 与 `rewriteMusicXmlRoot`；plain XML/MXL
+均执行 preflight，MXL 仅替换 root entry，非 root 解压 bytes 保持不变，输出 deterministic。
 
 **Description:** 从 `web-core` 现有 MXL preflight/unzip/zip 路径提取窄接口，使 caller 只替换 root XML bytes；
 plain XML 原样走 transform，MXL 的其他解压 entry bytes 保持不变，并继续执行资源限制与 container 校验。
@@ -121,7 +124,7 @@ plain XML 原样走 transform，MXL 的其他解压 entry bytes 保持不变，�
 - [ ] `pnpm vitest run --root . packages/web-core/src/harmony/__tests__/musicXmlRoundTrip.test.ts`
 - [ ] `pnpm --filter @zupulse/web-core typecheck`
 
-**Dependencies:** Checkpoint A approval
+**Dependencies:** None; approved by human on 2026-08-01
 
 **Files likely touched:**
 
@@ -282,5 +285,4 @@ compatible run 只验证结构安全与 fusion consistency。将可持续结论�
 
 ## Open Questions
 
-- 是否批准在 `@zupulse/web-core` 公开窄 `rewriteMusicXmlRoot(bytes, transform)` API，供 CLI 安全保留 MXL
-  container 与非 root entries？若不批准，Task 03 需要回到 spec 重新选择 patch ownership，不能复制一套分叉 parser。
+- None. The narrow `@zupulse/web-core` root-entry rewrite API was approved on 2026-08-01.

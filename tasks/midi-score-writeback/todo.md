@@ -16,12 +16,12 @@ Canonical plan: `tasks/midi-score-writeback/plan.md`
 ## Phase 2: Byte-preserving mutation
 
 - [x] T03 提取 MusicXML root-entry rewrite primitive
-- [ ] T04 应用 reviewed pitch patch
+- [x] T04 应用 reviewed pitch patch
 
 ### Checkpoint B
 
-- [ ] plain XML/MXL 只修改批准 pitch
-- [ ] hash/precondition/conflict 全部 fail closed
+- [x] plain XML/MXL 只修改批准 pitch
+- [x] hash/precondition/conflict 全部 fail closed
 
 ## Phase 3: Validation and CLI
 

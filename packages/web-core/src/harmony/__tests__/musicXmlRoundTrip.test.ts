@@ -8,6 +8,7 @@ import {
   listMusicXmlMeasureDivisions,
   listMusicXmlPartIds,
   readMusicXmlRootSource,
+  rewriteMusicXmlNotePitches,
   rewriteMusicXmlRoot,
 } from "../musicXmlRoundTrip";
 import { createMusicXmlAdapter } from "../../musicxml/musicXmlAdapter";
@@ -46,6 +47,24 @@ describe("MusicXML root source", () => {
     const source = encode('<score-partwise version="4.0"><part-list/></score-partwise>');
 
     expect(() => rewriteMusicXmlRoot(source, () => encode("not musicxml"))).toThrow("unsupported-format");
+  });
+
+  it("replaces exact note pitches without serializing sibling XML", () => {
+    const source = encode(
+      '<score-partwise version="4.0"><part id="P1"><measure><!-- keep --><note data-vendor="keep"><pitch><step>C</step><octave>4</octave></pitch></note><note><pitch><step>E</step><alter>-1</alter><octave>4</octave></pitch></note></measure></part></score-partwise>',
+    );
+
+    const result = decode(
+      rewriteMusicXmlNotePitches(source, [
+        { partId: "P1", measureIndex: 0, noteIndex: 0, writtenPitch: { step: "D", alter: 1, octave: 5 } },
+        { partId: "P1", measureIndex: 0, noteIndex: 1, writtenPitch: { step: "E", alter: 0, octave: 4 } },
+      ]),
+    );
+
+    expect(result).toContain(
+      '<!-- keep --><note data-vendor="keep"><pitch><step>D</step><alter>1</alter><octave>5</octave>',
+    );
+    expect(result).toContain("<pitch><step>E</step><octave>4</octave></pitch>");
   });
 });
 

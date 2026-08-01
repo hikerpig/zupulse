@@ -151,7 +151,53 @@ export const writebackValidationSchema = z
   })
   .strict();
 
+export const applyFusionRunManifestSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    runId: z.string().min(1),
+    command: z.literal("apply-fusion"),
+    sourceFusion: z
+      .object({
+        runId: z.string().min(1),
+        runManifestSha256: sha256Schema,
+        repairProposalsSha256: sha256Schema,
+      })
+      .strict(),
+    inputSha256: z
+      .object({
+        score: sha256Schema,
+        midi: sha256Schema,
+        decisions: sha256Schema,
+      })
+      .strict(),
+    correctedScore: z
+      .object({
+        artifactPath: z.string().min(1),
+        sha256: sha256Schema,
+      })
+      .strict(),
+    startedAt: z.iso.datetime(),
+    completedAt: z.iso.datetime(),
+    status: z.literal("succeeded"),
+    artifactSha256: z.record(z.string().min(1), sha256Schema),
+  })
+  .strict();
+
+export const applyFusionReportSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    command: z.literal("apply-fusion"),
+    status: z.literal("succeeded"),
+    runId: z.string().min(1),
+    appliedCount: z.number().int().nonnegative(),
+    correctedScoreArtifactPath: z.string().min(1),
+    correctedScoreSha256: sha256Schema,
+  })
+  .strict();
+
 export type FusionDecisionSet = z.infer<typeof fusionDecisionSetSchema>;
 export type ReviewedWrittenPitch = z.infer<typeof reviewedWrittenPitchSchema>;
 export type PatchPlan = z.infer<typeof patchPlanSchema>;
 export type WritebackValidation = z.infer<typeof writebackValidationSchema>;
+export type ApplyFusionRunManifest = z.infer<typeof applyFusionRunManifestSchema>;
+export type ApplyFusionReport = z.infer<typeof applyFusionReportSchema>;

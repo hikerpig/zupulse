@@ -26,12 +26,12 @@ Canonical plan: `tasks/midi-score-writeback/plan.md`
 ## Phase 3: Validation and CLI
 
 - [x] T05 建立 writeback no-regression validator
-- [ ] T06 交付 `apply-fusion` vertical slice
+- [x] T06 交付 `apply-fusion` vertical slice
 
 ### Checkpoint C
 
-- [ ] synthetic fuse → apply → re-fuse 通过
-- [ ] package tests/typecheck/format 通过
+- [x] synthetic fuse → apply → re-fuse 通过
+- [x] package tests/typecheck/format 通过
 
 ## Phase 4: Corpus and docs
 

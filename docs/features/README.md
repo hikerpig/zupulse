@@ -7,11 +7,11 @@ UI contract.
 
 ## Current Index
 
-| Feature                    | Contract                                                                             | Status    | Delivery  |
-| -------------------------- | ------------------------------------------------------------------------------------ | --------- | --------- |
-| Harmony Analysis           | [`contracts/harmony-analysis.md`](contracts/harmony-analysis.md)                     | `current` | `partial` |
-| Sheet Library              | [`contracts/sheet-library.md`](contracts/sheet-library.md)                           | `current` | `partial` |
-| Viewer Playback Navigation | [`contracts/viewer-playback-navigation.md`](contracts/viewer-playback-navigation.md) | `current` | `partial` |
+| Feature                    | Contract                                                                             | Status    | Delivery    |
+| -------------------------- | ------------------------------------------------------------------------------------ | --------- | ----------- |
+| Harmony Analysis           | [`contracts/harmony-analysis.md`](contracts/harmony-analysis.md)                     | `current` | `partial`   |
+| Sheet Library              | [`contracts/sheet-library.md`](contracts/sheet-library.md)                           | `current` | `partial`   |
+| Viewer Playback Navigation | [`contracts/viewer-playback-navigation.md`](contracts/viewer-playback-navigation.md) | `current` | `available` |
 
 Create a Contract from [`templates/feature-contract.md`](templates/feature-contract.md). Keep a stable
 `contracts/<feature-slug>.md` path while the Feature remains part of the product. Move a Contract to `archive/`

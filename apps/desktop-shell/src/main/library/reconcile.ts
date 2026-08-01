@@ -14,7 +14,17 @@ export async function reconcileManagedScores(database: Database, root: string): 
   for (const row of rows) {
     if (row.storage_state === "deleting") {
       await removeManagedScore(root, row.id);
-      database.prepare("DELETE FROM library_scores WHERE id = ?").run(row.id);
+      database.exec("BEGIN IMMEDIATE");
+      try {
+        database.prepare("DELETE FROM library_practice_sidecars WHERE library_score_id = ?").run(row.id);
+        database.prepare("DELETE FROM library_playback_resume WHERE library_score_id = ?").run(row.id);
+        database.prepare("DELETE FROM library_harmony_analyses WHERE library_score_id = ?").run(row.id);
+        database.prepare("DELETE FROM library_scores WHERE id = ?").run(row.id);
+        database.exec("COMMIT");
+      } catch (error) {
+        database.exec("ROLLBACK");
+        throw error;
+      }
       continue;
     }
     if (await exists(managedScorePath(root, row.id))) {

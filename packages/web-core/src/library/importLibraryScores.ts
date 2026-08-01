@@ -22,7 +22,8 @@ export async function importLibraryScores(input: {
   const results: ImportItemResult[] = [];
   for (const [index, source] of input.sources.entries()) {
     if (input.signal?.aborted) break;
-    const result = await importOne(source, input.repository, input.adapters);
+    const result = await importOne(source, input.repository, input.adapters, input.signal);
+    if (result === undefined) break;
     results.push(result);
     await input.onResult?.(result, index);
   }
@@ -33,7 +34,8 @@ async function importOne(
   source: ScoreImportSource,
   repository: SheetLibraryRepository,
   adapters: readonly ScoreFormatAdapter[],
-): Promise<ImportItemResult> {
+  signal?: AbortSignal,
+): Promise<ImportItemResult | undefined> {
   try {
     const bytes = await source.readBytes();
     if (bytes.byteLength > MAX_LIBRARY_IMPORT_BYTES) return failed(source.fileName, "FILE_TOO_LARGE");
@@ -46,10 +48,15 @@ async function importOne(
     if (present) return { status: "existing", score: present };
     const adapter = adapters.find((item) => item.format === probe.format);
     if (!adapter) return failed(source.fileName, "UNSUPPORTED_FORMAT");
-    const parsed = await adapter.parse({ fileName: source.fileName, bytes });
+    const parsed = await adapter.parse({
+      fileName: source.fileName,
+      bytes,
+      ...(signal === undefined ? {} : { signal }),
+    });
     if (!parsed.capabilities.view || parsed.document.tracks.length === 0 || parsed.document.summary.trackCount === 0) {
       return failed(source.fileName, "INVALID_SCORE");
     }
+    if (signal?.aborted) return undefined;
     const draft: ValidatedLibraryScoreDraft = {
       id: crypto.randomUUID(),
       scoreIdentity,

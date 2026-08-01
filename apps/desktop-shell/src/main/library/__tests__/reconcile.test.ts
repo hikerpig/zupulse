@@ -11,31 +11,53 @@ const roots: string[] = [];
 afterEach(async () => Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true }))));
 
 describe("reconcileManagedScores", () => {
-  it("completes pending files and removes deleting records plus staging files", async () => {
+  it("completes pending files and finishes deleting records with their dependent data plus staging files", async () => {
     const root = await mkdtemp(join(tmpdir(), "zupulse-reconcile-"));
     roots.push(root);
     const database = openSqliteDatabase(join(root, "library.sqlite"));
     migrateLibraryDatabase(database);
     const pending = crypto.randomUUID();
     const deleting = crypto.randomUUID();
+    const surviving = crypto.randomUUID();
     for (const [id, state, hash] of [
       [pending, "pending", "a".repeat(64)],
       [deleting, "deleting", "b".repeat(64)],
+      [surviving, "ready", "c".repeat(64)],
     ] as const)
       database
         .prepare(
           "INSERT INTO library_scores (id, score_identity, file_name, format, imported_at, storage_state) VALUES (?, ?, 'score.gp5', 'gp', '2026-07-12T00:00:00.000Z', ?)",
         )
         .run(id, hash, state);
+    for (const id of [deleting, surviving]) {
+      database
+        .prepare("INSERT INTO library_practice_sidecars (library_score_id, payload_json) VALUES (?, '{}')")
+        .run(id);
+      database.prepare("INSERT INTO library_playback_resume (library_score_id, payload_json) VALUES (?, '{}')").run(id);
+      database
+        .prepare(
+          "INSERT INTO library_harmony_analyses (library_score_id, document_version, payload_json, updated_at) VALUES (?, 0, '{}', '2026-07-12T00:00:00.000Z')",
+        )
+        .run(id);
+    }
     await mkdir(join(root, "scores"), { recursive: true });
     await writeFile(managedScorePath(root, pending), new Uint8Array([1]));
     await writeFile(managedScorePath(root, deleting), new Uint8Array([2]));
+    await writeFile(managedScorePath(root, surviving), new Uint8Array([4]));
     await writeFile(join(root, "scores", "orphan.staging"), new Uint8Array([3]));
     await reconcileManagedScores(database, root);
     expect(database.prepare("SELECT storage_state FROM library_scores WHERE id = ?").get(pending)).toMatchObject({
       storage_state: "ready",
     });
     expect(database.prepare("SELECT id FROM library_scores WHERE id = ?").get(deleting)).toBeUndefined();
+    for (const table of ["library_practice_sidecars", "library_playback_resume", "library_harmony_analyses"] as const) {
+      expect(
+        database.prepare(`SELECT library_score_id FROM ${table} WHERE library_score_id = ?`).get(deleting),
+      ).toBeUndefined();
+      expect(
+        database.prepare(`SELECT library_score_id FROM ${table} WHERE library_score_id = ?`).get(surviving),
+      ).toMatchObject({ library_score_id: surviving });
+    }
     await expect(rm(join(root, "scores", "orphan.staging"))).rejects.toMatchObject({ code: "ENOENT" });
     database.close();
   });

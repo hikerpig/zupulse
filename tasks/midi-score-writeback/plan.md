@@ -42,6 +42,9 @@ flowchart TD
 
 ### Task 01: 建立 source note index
 
+**Progress:** Completed on 2026-08-01. Audiveris normalizer 在同一次 traversal 返回 Draft 与 source-note
+sidecar；locator 覆盖 raw note ordinal、MXL root path 和 canonical writable-facts hash，既有 Draft 输出不变。
+
 **Description:** 在 Audiveris MusicXML 单次 traversal 中同时产生 `OmrScoreDraft` 和 source-note sidecar，
 让逻辑 event ID 可稳定定位 plain XML/MXL 中的原始 note；现有 normalizer 输出保持兼容。
 

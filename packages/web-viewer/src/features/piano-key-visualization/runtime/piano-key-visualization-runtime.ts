@@ -10,6 +10,7 @@ export function createPianoKeyVisualizationRuntime({
   events,
   readTick,
   readMode,
+  readLookaheadTicks,
   render,
   requestFrame = requestAnimationFrame,
   cancelFrame = cancelAnimationFrame,
@@ -17,6 +18,7 @@ export function createPianoKeyVisualizationRuntime({
   events: readonly PianoKeyHintEvent[];
   readTick(): number;
   readMode(): PianoHandMode;
+  readLookaheadTicks(): number;
   render(frame: PianoKeyFrame): void;
   requestFrame?(callback: FrameRequestCallback): number;
   cancelFrame?(handle: number): void;
@@ -28,10 +30,11 @@ export function createPianoKeyVisualizationRuntime({
   const update: FrameRequestCallback = () => {
     const tick = readTick();
     const mode = readMode();
-    const key = `${tick}:${mode}`;
+    const lookaheadTicks = readLookaheadTicks();
+    const key = `${tick}:${mode}:${lookaheadTicks}`;
     if (key !== previousKey) {
       previousKey = key;
-      render(projector.project(tick, mode));
+      render(projector.project(tick, mode, lookaheadTicks));
     }
     frameHandle = requestFrame(update);
   };

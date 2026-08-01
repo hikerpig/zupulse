@@ -266,7 +266,7 @@ export const enUS = {
       keyboardProjectionUnavailable: "Key guide could not be generated for this score",
       showKeyboardHints: "Show key guide",
       keyboardHintDescription:
-        "Notes for the practice hand fall toward the keyboard four quarter notes ahead; block length shows duration.",
+        "Notes for the practice hand fall toward the keyboard two seconds ahead at the current speed; block length shows duration.",
       pianoKeyboardRegion: "Key guide",
       resizeKeyboardHints: "Resize key guide",
       closeKeyboardHints: "Close key guide",

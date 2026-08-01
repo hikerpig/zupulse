@@ -123,6 +123,9 @@ function PlaybackLayout({
         drawerOpen={drawerOpen}
         drawerToggleRef={drawerToggleRef}
         onDrawerToggle={() => setDrawerOpen((open) => !open)}
+        keyGuideAvailable={Boolean(playback) && Boolean(pianoKeyVisualization) && !keyboardFailed}
+        keyGuideEnabled={keyboardEnabled}
+        onKeyGuideToggle={() => changeKeyboardEnabled(!keyboardEnabled)}
       />
       <section ref={workspaceRef} className={styles.workspace} data-piano-keys={keyboardEnabled || undefined}>
         {children}

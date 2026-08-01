@@ -29,18 +29,25 @@ async function capture(theme) {
   const chooser = page.waitForEvent("filechooser");
   await page.getByRole("button", { name: /选择文件|Choose or drop files/ }).click();
   await (await chooser).setFiles(fixture);
-  await page.waitForTimeout(800);
+  await page.getByText(/K331-3_reviewed/).waitFor({ timeout: 30000 });
   await page.getByRole("button", { name: /导入 1 份|Import 1/ }).click();
-  await page.waitForFunction(() => window.location.hash.includes("#/viewer/"), null, { timeout: 30000 });
-  await page.waitForTimeout(1200);
+  const onViewer = () => window.location.hash.includes("#/viewer/");
+  try {
+    await page.waitForFunction(onViewer, null, { timeout: 15000 });
+  } catch {
+    // Import occasionally completes without auto-navigation; open the score from the library instead.
+    await page.getByText("Piano Sonata no. 11 in A major").first().click();
+    await page.waitForFunction(onViewer, null, { timeout: 15000 });
+  }
+  await page.waitForTimeout(3000);
 
-  // Open practice settings and enable the visualization
-  await page.getByRole("button", { name: "练习设置" }).click();
-  const practice = page.getByRole("complementary", { name: "练习设置" });
-  await practice.getByRole("button", { name: /琴键引导|Key guide/ }).click();
-  await practice.getByRole("switch", { name: /琴键引导|Key guide/ }).check();
-  await page.screenshot({ path: join(outDir, `drawer-${theme}.png`) });
-  await page.getByRole("button", { name: "关闭练习设置" }).click();
+  // Toggle the key guide from the transport quick button
+  const keyGuideToggle = page.getByRole("button", { name: /^(琴键引导|Key guide)$/ });
+  await keyGuideToggle.waitFor();
+  await page
+    .screenshot({ path: join(outDir, `transport-${theme}.png`), clip: { x: 0, y: 820, width: 1440, height: 80 } })
+    .catch(() => page.screenshot({ path: join(outDir, `transport-${theme}.png`) }));
+  await keyGuideToggle.click();
 
   const visualization = page.getByRole("region", { name: /琴键引导|Key guide/ });
   await visualization.waitFor();

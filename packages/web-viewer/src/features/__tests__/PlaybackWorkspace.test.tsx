@@ -404,6 +404,49 @@ describe("PlaybackWorkspace transport bar", () => {
     expect(playbackState.position.tick).toBe(0);
   });
 
+  it("toggles the key guide from the transport without opening practice settings", async () => {
+    const playbackState = state("paused");
+    playbackState.pianoPractice = {
+      mode: "both-hands",
+      requestedMode: "both-hands",
+      availability: "available",
+      mapping: {
+        trackId: "track-0",
+        rightStaffId: "track-0:staff-0",
+        leftStaffId: "track-0:staff-1",
+      },
+      previewActive: false,
+      pausedForAudioProjection: false,
+    };
+    const viewerSession = session(playbackState);
+    const loadEvents = vi.fn(() => [{ pitch: 60, startTick: 0, endTick: 960, hand: "right" as const }]);
+    viewerSession.pianoKeyVisualization = {
+      loadEvents,
+      getTick: () => 0,
+    };
+    render(<PlaybackWorkspace session={viewerSession}>乐谱</PlaybackWorkspace>);
+    const user = userEvent.setup();
+
+    const toggle = screen.getByRole("button", { name: "琴键引导" });
+    expect((toggle as HTMLButtonElement).disabled).toBe(false);
+    expect(screen.queryByRole("complementary", { name: "练习设置" })).toBeNull();
+
+    await user.click(toggle);
+    expect(loadEvents).toHaveBeenCalledOnce();
+    expect(screen.getByRole("region", { name: "琴键引导" })).toBeTruthy();
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+
+    await user.click(toggle);
+    expect(screen.queryByRole("region", { name: "琴键引导" })).toBeNull();
+    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("disables the transport key guide toggle when no key guide is available", async () => {
+    render(<PlaybackWorkspace session={session(state("paused"))}>乐谱</PlaybackWorkspace>);
+
+    expect((screen.getByRole("button", { name: "琴键引导" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it("keeps piano key hints discoverable but unavailable for a non-piano score", async () => {
     render(<PlaybackWorkspace session={session(state("paused"))}>乐谱</PlaybackWorkspace>);
     const user = userEvent.setup();

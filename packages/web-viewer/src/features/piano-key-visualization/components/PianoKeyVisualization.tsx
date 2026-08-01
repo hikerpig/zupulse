@@ -3,7 +3,7 @@ import { Music2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { PianoKeyHintEvent } from "@zupulse/web-core";
 import type { ViewerSessionHandle } from "../../../host";
-import { projectPianoKeyFrame, type PianoKeyFrame } from "../model/piano-key-projection";
+import { projectPianoKeyFrame, pianoKeyLookaheadTicks, type PianoKeyFrame } from "../model/piano-key-projection";
 import { createPianoKeyVisualizationRuntime } from "../runtime/piano-key-visualization-runtime";
 import { PianoKeyVisualizationResizeHandle } from "./PianoKeyVisualizationResizeHandle";
 import styles from "./PianoKeyVisualization.module.css";
@@ -44,11 +44,20 @@ export function PianoKeyVisualization({
     const keyLayer = keyLayerRef.current;
     if (!hintLayer || !keyLayer) return;
     const renderer = createPianoKeySvgRenderer(hintLayer, keyLayer, geometry);
-    renderer.render(projectPianoKeyFrame(source.events, source.getTick(), playback.getState().pianoPractice.mode));
+    const readLookaheadTicks = () => {
+      const state = playback.getState();
+      return pianoKeyLookaheadTicks(state.baseTempo * state.scoreSpeed);
+    };
+    renderer.render(
+      projectPianoKeyFrame(source.events, source.getTick(), playback.getState().pianoPractice.mode, {
+        lookaheadTicks: readLookaheadTicks(),
+      }),
+    );
     const runtime = createPianoKeyVisualizationRuntime({
       events: source.events,
       readTick: source.getTick,
       readMode: () => playback.getState().pianoPractice.mode,
+      readLookaheadTicks,
       render: renderer.render,
     });
     runtime.start();
@@ -187,18 +196,24 @@ export function createPianoKeySvgRenderer(
     keysByPitch.set(Number(key.dataset.keyPitch), key);
   });
   const hintPool: SVGRectElement[] = [];
-  let activePitches = new Set<number>();
+  let activeKeys = new Map<number, PianoKeyHintEvent["hand"]>();
 
   return {
     render(frame) {
-      const nextActivePitches = new Set(frame.activePitches);
-      for (const pitch of activePitches) {
-        if (!nextActivePitches.has(pitch)) keysByPitch.get(pitch)?.removeAttribute("data-active");
+      const nextActiveKeys = new Map(frame.activeKeys.map((key) => [key.pitch, key.hand]));
+      for (const pitch of activeKeys.keys()) {
+        if (!nextActiveKeys.has(pitch)) {
+          keysByPitch.get(pitch)?.removeAttribute("data-active");
+          keysByPitch.get(pitch)?.removeAttribute("data-active-hand");
+        }
       }
-      for (const pitch of nextActivePitches) {
-        if (!activePitches.has(pitch)) keysByPitch.get(pitch)?.setAttribute("data-active", "");
+      for (const [pitch, hand] of nextActiveKeys) {
+        const key = keysByPitch.get(pitch);
+        if (!key) continue;
+        if (!activeKeys.has(pitch)) key.setAttribute("data-active", "");
+        if (activeKeys.get(pitch) !== hand) key.setAttribute("data-active-hand", hand);
       }
-      activePitches = nextActivePitches;
+      activeKeys = nextActiveKeys;
 
       let visibleHintCount = 0;
       for (const hint of frame.hints) {
@@ -214,6 +229,9 @@ export function createPianoKeySvgRenderer(
         setAttributeIfChanged(rect, "height", String(Math.max(2, onsetY - endY)));
         setAttributeIfChanged(rect, "data-pitch", String(hint.pitch));
         setAttributeIfChanged(rect, "data-hand", hint.hand);
+        // A clamped startRatio of 0 means the note has reached the strike line and is sounding.
+        if (hint.startRatio === 0) setAttributeIfChanged(rect, "data-sounding", "");
+        else rect.removeAttribute("data-sounding");
         visibleHintCount += 1;
       }
       for (let index = visibleHintCount; index < hintPool.length; index += 1) {
@@ -221,8 +239,11 @@ export function createPianoKeySvgRenderer(
       }
     },
     destroy() {
-      for (const pitch of activePitches) keysByPitch.get(pitch)?.removeAttribute("data-active");
-      activePitches.clear();
+      for (const pitch of activeKeys.keys()) {
+        keysByPitch.get(pitch)?.removeAttribute("data-active");
+        keysByPitch.get(pitch)?.removeAttribute("data-active-hand");
+      }
+      activeKeys.clear();
       for (const hint of hintPool) hint.remove();
       hintPool.length = 0;
     },

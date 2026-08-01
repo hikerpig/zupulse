@@ -95,7 +95,8 @@ tick 和 mixer、继续播放；失败降级为语义化 unavailable。谱面强
 ## 琴键引导
 
 琴键引导复用 `PianoHandMapping` 的 eligibility，只对唯一双非打击乐 Staff Track 开放。入口位于
-练习设置任务列表，默认关闭且仅属于当前 Viewer Session。可视化位于乐谱下方、Transport 上方；关闭
+练习设置任务列表和 Transport 右侧工具区的琴键引导图标按钮（`aria-pressed` 反映状态，不可用时禁用），默认关闭
+且仅属于当前 Viewer Session。可视化位于乐谱下方、Transport 上方；关闭
 后不保留空白，不改变 transport、position、tempo、Loop、Track Mixer 或练习手状态。
 
 可视化在空间允许时默认高 260px，用户可拖动顶部分隔条在 180–420px 内调整。工作区 resize 时以
@@ -112,8 +113,10 @@ runtime。
 只取决于稳定的 Staff mapping，不与单手音频隔离 capability 绑定。
 
 React 负责开关、稳定音域和无障碍结构；逐帧提示块与 active key 更新由 session-owned runtime 直接写
-入区域内的 SVG 元素，不进入 `PlaybackController` snapshot 或 React state。提前窗口固定为四个
-四分音符的 playback tick，因而随速度和 tempo change 改变墙钟运动速度，但不改变音乐时间距离。
+入区域内的 SVG 元素，不进入 `PlaybackController` snapshot 或 React state。提前窗口跟随当前有效速度
+（baseTempo × scoreSpeed）固定提前约 2 秒墙钟时间，并限制在 2–8 个四分音符之间，使音符下落速度在
+变速练习中保持体感一致。active key 按手色高亮（signal purple / signal blue），coral 只用于击打线；
+到达击打线的提示块标记为发声并加亮。
 双手示范显示双手，练右手或练左手时只显示目标手。卸载时必须取消 animation frame 并清除命令式
 引用。runtime 初始化一次按 `startTick` 排序的时间索引，逐帧只投影当前窗口附近的候选事件；SVG
 提示 rect 使用可增长节点池并按属性差异更新，active key 只切换变化的音高，不得逐帧清空提示层或

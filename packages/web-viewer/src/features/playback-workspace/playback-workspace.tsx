@@ -72,12 +72,24 @@ function PlaybackLayout({
   useEffect(() => {
     const workspace = workspaceRef.current;
     if (!keyboardEnabled || !workspace || typeof ResizeObserver === "undefined") return undefined;
+    let frameHandle: number | undefined;
     const observer = new ResizeObserver(([entry]) => {
       if (!entry) return;
-      setKeyboardHeight((current) => clampPianoKeyHeight(current, entry.contentRect.height));
+      const workspaceHeight = entry.contentRect.height;
+      // Defer the height update out of the observer callback: writing layout-affecting
+      // state synchronously here re-triggers the observation in the same frame, which
+      // the browser reports as "ResizeObserver loop completed with undelivered notifications".
+      if (frameHandle !== undefined) cancelAnimationFrame(frameHandle);
+      frameHandle = requestAnimationFrame(() => {
+        frameHandle = undefined;
+        setKeyboardHeight((current) => clampPianoKeyHeight(current, workspaceHeight));
+      });
     });
     observer.observe(workspace);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (frameHandle !== undefined) cancelAnimationFrame(frameHandle);
+    };
   }, [keyboardEnabled]);
 
   const activePianoKeyVisualization = useMemo(

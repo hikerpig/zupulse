@@ -12,11 +12,11 @@ describe("PianoKeyVisualizationResizeHandle", () => {
       <PianoKeyVisualizationResizeHandle
         containerRef={createRef()}
         height={260}
-        label="调整钢琴按键提示高度"
+        label="调整琴键引导高度"
         onHeightChange={onHeightChange}
       />,
     );
-    const separator = screen.getByRole("separator", { name: "调整钢琴按键提示高度" });
+    const separator = screen.getByRole("separator", { name: "调整琴键引导高度" });
 
     fireEvent.keyDown(separator, { key: "ArrowUp" });
     fireEvent.keyDown(separator, { key: "ArrowDown" });
@@ -37,7 +37,7 @@ describe("PianoKeyVisualizationResizeHandle", () => {
         <PianoKeyVisualizationResizeHandle
           containerRef={containerRef}
           height={260}
-          label="调整钢琴按键提示高度"
+          label="调整琴键引导高度"
           onHeightChange={onHeightChange}
         />
       </section>,

@@ -92,9 +92,9 @@ alphaTab 没有公开 Staff mixer，因此 Engine 深拷贝运行时 Score，在
 tick 和 mixer、继续播放；失败降级为语义化 unavailable。谱面强调通过 bounds overlay 实现，不修改
 音符颜色或谱面内容。
 
-## 钢琴按键提示
+## 琴键引导
 
-钢琴按键提示复用 `PianoHandMapping` 的 eligibility，只对唯一双非打击乐 Staff Track 开放。入口位于
+琴键引导复用 `PianoHandMapping` 的 eligibility，只对唯一双非打击乐 Staff Track 开放。入口位于
 练习设置任务列表，默认关闭且仅属于当前 Viewer Session。可视化位于乐谱下方、Transport 上方；关闭
 后不保留空白，不改变 transport、position、tempo、Loop、Track Mixer 或练习手状态。
 
@@ -126,7 +126,7 @@ active key，保证 Strict Mode 重挂载、Session 切换和 route teardown 不
 - 不劫持方向键。未来必须先明确按时间、拍还是小节移动，再设计修饰键规则。
 - 不在 Transport 增加节拍器或预备拍的常驻文字按钮。
 - 不在 React 中根据按键直接切换本地 `transport`；Engine 事件仍是播放状态事实源。
-- 不接收外接 MIDI、不评价演奏准确度，也不持久化钢琴按键提示开关。
+- 不接收外接 MIDI、不评价演奏准确度，也不持久化琴键引导开关。
 
 ## Page Turn 输入
 
@@ -147,7 +147,7 @@ Detached。输入框、按钮、选择框、可编辑区域和 Slider 保留原�
 - 速度按钮同时暴露 BPM 与百分比；
 - 练习设置与窄屏 Zoom Popover 支持 `Escape` 和焦点恢复。
 - Metronome / Count-in 开关与音量互相独立，`counting-in` 通过文字状态和暂停按钮可感知。
-- 钢琴按键提示覆盖反复、连音、半开边界、同音重叠、左右手过滤、逐帧清理与不可用降级。
+- 琴键引导覆盖反复、连音、半开边界、同音重叠、左右手过滤、逐帧清理与不可用降级。
 
 浏览器运行时检查在 390、620、640 和 1280px 补充验证真实布局、焦点行为、控件边界和控制台错误。
 新增快捷键必须先写出与现有控件焦点冲突的场景，不能只验证页面背景上的成功路径。

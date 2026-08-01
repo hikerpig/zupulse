@@ -72,7 +72,7 @@ export function PianoKeyVisualization({
         onHeightChange={onHeightChange}
       />
       <header className={styles.header}>
-        <span>
+        <span className={styles.title}>
           <Music2 aria-hidden="true" />
           {t("playback.keyboardTaskTitle")}
         </span>
@@ -92,13 +92,26 @@ export function PianoKeyVisualization({
         preserveAspectRatio="none"
         aria-hidden="true"
       >
+        <defs>
+          <linearGradient id="piano-black-key-gradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#4a4642" />
+            <stop offset="0.65" stopColor="#262422" />
+            <stop offset="1" stopColor="#141312" />
+          </linearGradient>
+          <linearGradient id="piano-highway-fade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" className={styles.highwayFadeStart} />
+            <stop offset="0.4" className={styles.highwayFadeEnd} />
+          </linearGradient>
+        </defs>
         <g ref={hintLayerRef} className={styles.hints} data-hint-layer />
-        <line
-          className={styles.strikeLine}
-          x1="0"
-          x2={geometry.whiteKeyCount}
-          y1={HIGHWAY_HEIGHT}
-          y2={HIGHWAY_HEIGHT}
+        <rect
+          className={styles.highwayFade}
+          x="0"
+          y="0"
+          width={geometry.whiteKeyCount}
+          height={HIGHWAY_HEIGHT}
+          fill="url(#piano-highway-fade)"
+          pointerEvents="none"
         />
         <g ref={keyLayerRef} className={styles.keys}>
           {geometry.keys
@@ -128,6 +141,13 @@ export function PianoKeyVisualization({
               />
             ))}
         </g>
+        <line
+          className={styles.strikeLine}
+          x1="0"
+          x2={geometry.whiteKeyCount}
+          y1={HIGHWAY_HEIGHT}
+          y2={HIGHWAY_HEIGHT}
+        />
       </svg>
     </section>
   );

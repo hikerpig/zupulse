@@ -11,7 +11,7 @@ Zupulse 是本地优先的乐谱查看与练习应用。当前交付面是共享
 - Browser 使用 IndexedDB；Desktop 使用 SQLite 与应用数据目录中的托管文件。
 - 当前不实现云同步、OPFS、打印分页、额外状态库、移动端产品或 MIDI 分析。
 - Viewer 已按 ADR 0064 提供 Continuous Follow、Page Turn 和临时 Screen Score Page；适用的钢琴谱
-  可在当前 Viewer Session 中打开钢琴按键提示。
+  可在当前 Viewer Session 中打开琴键引导。
 
 ## 核心语言
 

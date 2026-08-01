@@ -184,11 +184,11 @@ test("shows piano key lookahead without displacing playback controls", async ({ 
   await importFixture(page, "导入自己的曲谱", reviewedFixture);
   await page.getByRole("button", { name: "练习设置" }).click();
   const practice = page.getByRole("complementary", { name: "练习设置" });
-  await practice.getByRole("button", { name: /键盘提示/ }).click();
-  await practice.getByRole("switch", { name: "显示键盘提示" }).check();
+  await practice.getByRole("button", { name: /琴键引导/ }).click();
+  await practice.getByRole("switch", { name: "显示琴键引导" }).check();
   await page.getByRole("button", { name: "关闭练习设置" }).click();
 
-  const visualization = page.getByRole("region", { name: "钢琴按键提示" });
+  const visualization = page.getByRole("region", { name: "琴键引导" });
   await expect(visualization).toBeVisible();
   await expect(visualization.locator("[data-hint-layer] [data-hand]").first()).toBeVisible();
   await expect(page.getByRole("button", { name: "播放" })).toBeVisible();
@@ -201,16 +201,18 @@ test("shows piano key lookahead without displacing playback controls", async ({ 
       return Math.round(scoreBounds.y + scoreBounds.height - pianoBounds.y);
     })
     .toBeLessThanOrEqual(-8);
-  const heightSeparator = visualization.getByRole("separator", { name: "调整钢琴按键提示高度" });
+  const heightSeparator = visualization.getByRole("separator", { name: "调整琴键引导高度" });
   const initialVisualizationHeight = await visualization.boundingBox();
   const separatorBounds = await heightSeparator.boundingBox();
   expect(Math.round(initialVisualizationHeight?.height ?? 0)).toBe(260);
   if (!separatorBounds) throw new Error("Piano key height separator is not measurable");
-  await page.mouse.move(separatorBounds.x + separatorBounds.width / 2, separatorBounds.y + separatorBounds.height / 2);
+  const separatorCenterX = separatorBounds.x + separatorBounds.width / 2;
+  const separatorCenterY = separatorBounds.y + separatorBounds.height / 2;
+  await page.mouse.move(separatorCenterX, separatorCenterY);
   await page.mouse.down();
-  await page.mouse.move(separatorBounds.x + separatorBounds.width / 2, separatorBounds.y - 40);
+  await page.mouse.move(separatorCenterX, separatorCenterY - 40);
   await page.mouse.up();
-  await expect.poll(async () => Math.round((await visualization.boundingBox())?.height ?? 0)).toBe(305);
+  await expect.poll(async () => Math.round((await visualization.boundingBox())?.height ?? 0)).toBe(300);
   await expect
     .poll(async () => {
       const scoreBounds = await scoreWorkspace.boundingBox();
@@ -250,12 +252,12 @@ test("shows piano key lookahead without displacing playback controls", async ({ 
     await expectInsideViewport(page, page.getByRole("button", { name: "播放" }));
   }
 
-  await page.getByRole("button", { name: "关闭键盘提示" }).click();
+  await page.getByRole("button", { name: "关闭琴键引导" }).click();
   await expect(visualization).toHaveCount(0);
   await expect(page.locator(".score-viewer .at-surface").first()).toBeVisible();
 
   await page.reload();
-  await expect(page.getByRole("region", { name: "钢琴按键提示" })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "琴键引导" })).toHaveCount(0);
 });
 
 test("keeps the Library to Viewer transition on a loading surface until the score renders", async ({ page }) => {

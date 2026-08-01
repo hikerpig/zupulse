@@ -182,6 +182,10 @@ missing/extra、tie chain、stale precondition 与 duplicate target 全部 fail 
 
 ### Task 05: 建立 writeback no-regression validator
 
+**Progress:** Completed on 2026-08-01. Validator 构造只包含 approved pitch 的 expected Draft，拒绝其他结构或
+blocking diagnostic 增量，并对 source/corrected 重新 fusion。实现同时修复 MusicXML alphaTab projection 未读取
+`masterBar.calculateDuration()` 导致 accepted fixtures 被误判为 view-only 的根因。
+
 **Description:** 比较 source/corrected normalization、adapter capability 和重新 fusion metrics，仅允许 patch plan
 声明的 pitch differences；已有 blocking diagnostics 可保留但不得新增。
 

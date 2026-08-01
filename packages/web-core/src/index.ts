@@ -60,6 +60,7 @@ export * from "./playback/previewTransport";
 export * from "./playback/writtenSelection";
 export * from "./playback/pianoHandMapping";
 export * from "./playback/alphaTabStaffAudioProjection";
+export * from "./playback/alphaTabPianoKeyTimeline";
 export * from "./library/types";
 export * from "./library/schemas";
 export * from "./library/ports";

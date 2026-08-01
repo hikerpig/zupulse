@@ -6,22 +6,29 @@ import { usePlaybackSelector } from "./adapters/use-playback-selector";
 import { persistenceMessage } from "./model/playback-presenter";
 import { LoopPracticePanel } from "./panels/loop-practice-panel";
 import { PianoHandsPracticePanel } from "./panels/piano-hands-practice-panel";
+import { PianoKeyVisualizationPanel } from "./panels/piano-key-visualization-panel";
 import { PracticeOverview, PracticeSummary } from "./panels/practice-overview";
 import { RhythmPracticePanel } from "./panels/rhythm-practice-panel";
 import { TracksPracticePanel } from "./panels/tracks-practice-panel";
 import styles from "../PlaybackWorkspace.module.css";
 
-type PracticeView = "overview" | "rhythm" | "hands" | "loop" | "tracks";
+type PracticeView = "overview" | "rhythm" | "hands" | "keyboard" | "loop" | "tracks";
 type Playback = NonNullable<ViewerSessionHandle["playback"]>;
 
 export function PracticeDrawer({
   playback,
   closeButtonRef,
   onClose,
+  keyboardAvailable,
+  keyboardEnabled,
+  onKeyboardEnabledChange,
 }: {
   playback: Playback;
   closeButtonRef: RefObject<HTMLButtonElement | null>;
   onClose(): void;
+  keyboardAvailable: boolean;
+  keyboardEnabled: boolean;
+  onKeyboardEnabledChange(enabled: boolean): void;
 }) {
   const { t } = useTranslation("viewer");
   const [practiceView, setPracticeView] = useState<PracticeView>("overview");
@@ -49,9 +56,19 @@ export function PracticeDrawer({
         </button>
       </div>
       <div className={styles.panelShell}>
-        {practiceView === "overview" ? <PracticeOverview playback={playback} onSelect={setPracticeView} /> : null}
+        {practiceView === "overview" ? (
+          <PracticeOverview
+            playback={playback}
+            keyboardAvailable={keyboardAvailable}
+            keyboardEnabled={keyboardEnabled}
+            onSelect={setPracticeView}
+          />
+        ) : null}
         {practiceView === "rhythm" ? <RhythmPracticePanel playback={playback} /> : null}
         {practiceView === "hands" ? <PianoHandsPracticePanel playback={playback} /> : null}
+        {practiceView === "keyboard" ? (
+          <PianoKeyVisualizationPanel enabled={keyboardEnabled} onEnabledChange={onKeyboardEnabledChange} />
+        ) : null}
         {practiceView === "loop" ? <LoopPracticePanel playback={playback} /> : null}
         {practiceView === "tracks" ? <TracksPracticePanel playback={playback} /> : null}
       </div>
@@ -74,6 +91,7 @@ function practiceViewTitle(view: PracticeView, t: ReturnType<typeof useTranslati
   if (view === "loop") return t("playback.loopTaskTitle");
   if (view === "rhythm") return t("playback.rhythmTaskTitle");
   if (view === "hands") return t("playback.handTaskTitle");
+  if (view === "keyboard") return t("playback.keyboardTaskTitle");
   if (view === "tracks") return t("playback.trackTaskTitle");
   return t("playback.practice");
 }

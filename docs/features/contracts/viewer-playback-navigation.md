@@ -3,7 +3,7 @@ feature: viewer-playback-navigation
 title: Viewer Playback Navigation
 status: current
 delivery: available
-last_verified: 2026-07-29
+last_verified: 2026-07-31
 hosts:
   - browser
   - desktop
@@ -11,6 +11,7 @@ implementation_paths:
   - packages/web-core/src/gp/alphaTabBrowser.ts
   - packages/web-core/src/playback
   - packages/web-viewer/src/score-navigation
+  - packages/web-viewer/src/features/piano-key-visualization
   - packages/web-viewer/src/features/playback-workspace
   - packages/web-viewer/src/viewerApp.tsx
 supersedes: []
@@ -79,8 +80,8 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 
 ### 练习设置
 
-- 常规“练习设置”入口打开任务概览，展示速度入口以及“节拍与预备拍”“练习手”“设置循环区间”
-  “选择主轨道”四项任务；
+- 常规“练习设置”入口打开任务概览，展示速度入口以及“节拍与预备拍”“练习手”“钢琴按键提示”
+  “设置循环区间”“选择主轨道”五项任务；
   当前轨道、速度与 Loop 状态不再作为单独的 Session section。
 - “节拍与预备拍”分别保存显式开关与整数百分比音量，默认关闭，首次音量分别为 60% 和 70%。
   两项设置按 Library Score 写入 Practice Sidecar，并在 Browser 与 Desktop 共用的 Controller
@@ -104,6 +105,24 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 - 打开概览后焦点进入关闭按钮；进入任务后焦点进入返回按钮。Escape 关闭抽屉并恢复普通练习设置
   触发器焦点。
 - playback 尚不可用时仍显示相同任务概览，但所有领域动作禁用并显示原因。
+
+### 钢琴按键提示
+
+- 唯一双非打击乐 Staff Track 可从练习设置打开会话级钢琴按键提示；默认关闭，刷新或重新进入 Viewer
+  后保持关闭，不写入 Practice Sidecar 或设备偏好。完整时间轴在用户首次打开时惰性生成并在 Session
+  内复用；Staff mapping 合格但单手音频隔离不可用时，视觉提示仍然可用。
+- 提示区位于乐谱下方、Transport 上方，关闭后归还乐谱空间。当前发声键高亮；未来四个四分音符
+  playback tick 内的提示块以长度表达时值。双手示范显示双手，单手练习只显示目标手。
+- 空间允许时提示区默认高 260px，可从顶部分隔条在 180–420px 内拖动或用键盘调整；短窗口至少保留
+  180px 谱面。谱面滚动区与钢琴 Grid 行之间保持 8px 可见间距，钢琴不得 overlay 谱面。关闭再打开
+  保留当前 Viewer Session 高度，source 变化时复位，不写入持久化偏好。
+- 事件来自 alphaTab `MidiFileGenerator` 展开的 Staff 播放投影，使用包含 channel transposition 的
+  发声音高和半开区间 `[startTick, endTick)`；反复形成独立 occurrence，连音保持连续事件，来源 Score
+  不被修改。
+- animation frame 直接读取 alphaTab tick 并只更新可视化 SVG；逐帧数据不进入 React state 或
+  `PlaybackController` snapshot。事件按时间索引后只查询当前窗口，提示 rect 复用节点池且 active key
+  只更新变化项；卸载会取消逐帧运行时。
+- 不适用或投影失败时任务仍可发现，但显示语义化原因并保持禁用；普通乐谱播放不受影响。
 
 ### 生命周期与降级
 
@@ -129,6 +148,7 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 | Loop-aware 临时页面                  | 支持    | 支持    | 无       |
 | 任务式练习设置                       | 支持    | 支持    | 无       |
 | Metronome / 一小节 Count-in          | 支持    | 支持    | 无       |
+| 钢琴按键当前状态与四拍预提示         | 支持    | 支持    | 无       |
 
 本轮自动化验收平台是 Chromium Browser Demo；iOS WebView 和实体 iPad 不属于本 Contract 的已验证宿主。
 
@@ -142,6 +162,8 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 6. Score Navigation Mode 是设备偏好；Following / Detached 和页码只属于当前 Session。
 7. Metronome 与 Count-in 是独立的 Practice Sidecar 设置；React 只派发领域命令，alphaTab 音量和
    Count-in 生命周期由 Playback Engine / Controller 边界管理。
+8. 钢琴按键时间轴是来源 Score 的不可变派生；React 不接收 `AlphaTabApi`，逐帧 tick 与几何不进入应用
+   state 或持久化层。逐帧投影不得扫描整首事件或销毁重建完整 SVG 提示层。
 
 ## 明确非目标
 
@@ -151,6 +173,7 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 - 本轮 iOS、Xcode、实体 iPad 验收。
 - 不通过 Track Mixer 状态模拟 Staff 音频隔离；运行时投影失败或结构无法唯一判定时必须显示语义化
   unavailable 原因，并保持普通播放可用。
+- 不接收 MIDI 键盘输入、不做演奏评分或指法推荐，也不提供可调提前量、全屏瀑布模式或开关持久化。
 
 ## 验收契约
 
@@ -167,6 +190,9 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
   设置变化不改变 tempo、Loop、position 或 Track Mixer facts。
 - eligible 钢琴谱可切换练习手并刷新恢复；临时试听不持久化。切换前后 tempo、Loop、position 和
   Track Mixer facts 保持不变，播放中切换不会停留在暂停状态。
+- eligible 钢琴谱可打开按键提示并看到当前键、未来四拍内目标与时值；双手与单手过滤正确。关闭后
+  恢复乐谱空间且不改变播放和练习 facts；刷新后默认关闭。提示区默认 260px，可在 180–420px 内拖动
+  或键盘调整并在短窗口保留谱面；窄屏不产生横向溢出或遮挡 Transport。
 - 进入空 Loop 草稿时按当前小节建立 A/B；谱面手柄与 Controller 草稿保持一致，A/B 手柄可用键盘
   按拍调整；提交完整草稿后立即进入临时 Loop。关闭模式隐藏编辑层并保留 A/B，再次打开恢复；
   抽屉 Switch 与 Transport 同步，抽屉不显示 Set A/B 或 A/B Slider。
@@ -186,6 +212,7 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 | 节拍、预备拍与 Sidecar 迁移 | `packages/web-core/src/playback`、`packages/web-core/src/storage/sidecar.ts`                     | `playbackSidecar.test.ts`、`sidecar.test.ts`、`library.spec.ts` |
 | Piano Hand 结构 eligibility | `packages/web-core/src/playback/pianoHandMapping.ts`                                             | `pianoHandMapping.test.ts`                                      |
 | Staff 音频投影与谱面强调    | `alphaTabStaffAudioProjection.ts`、`packages/web-viewer/src/practice-hand`                       | 相邻单元测试、`ScoreViewer.test.tsx`、`library.spec.ts`         |
+| 钢琴按键时间轴与逐帧投影    | `alphaTabPianoKeyTimeline.ts`、`packages/web-viewer/src/features/piano-key-visualization`        | 相邻单元测试、`PlaybackWorkspace.test.tsx`、`library.spec.ts`   |
 | Browser 长谱与响应式流程    | `apps/web-demo/e2e/library.spec.ts`                                                              | Playwright Chromium                                             |
 
 ## 相关资料
@@ -203,3 +230,4 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 - Screen Score Page、Loop 重组、输入去重、Follow State 或模式持久化变化。
 - 谱面宽度模式、缩放范围、alphaTab 重绘或缩放后位置恢复变化。
 - position 发布预算、resume flush 或 Session 清理变化。
+- 钢琴按键 eligibility、事件时间轴、提前窗口、音域、手部过滤、session-only 开关或高度调整语义变化。

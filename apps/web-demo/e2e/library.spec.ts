@@ -179,6 +179,85 @@ test("switches and persists piano hand accompaniment while preserving playback",
   await expect(restored.getByRole("radio", { name: "练右手" })).toBeChecked();
 });
 
+test("shows piano key lookahead without displacing playback controls", async ({ page }) => {
+  await page.goto("/#/library");
+  await importFixture(page, "导入自己的曲谱", reviewedFixture);
+  await page.getByRole("button", { name: "练习设置" }).click();
+  const practice = page.getByRole("complementary", { name: "练习设置" });
+  await practice.getByRole("button", { name: /键盘提示/ }).click();
+  await practice.getByRole("switch", { name: "显示键盘提示" }).check();
+  await page.getByRole("button", { name: "关闭练习设置" }).click();
+
+  const visualization = page.getByRole("region", { name: "钢琴按键提示" });
+  await expect(visualization).toBeVisible();
+  await expect(visualization.locator("[data-hint-layer] [data-hand]").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "播放" })).toBeVisible();
+  const scoreWorkspace = page.getByRole("region", { name: "乐谱工作区" });
+  await expect
+    .poll(async () => {
+      const scoreBounds = await scoreWorkspace.boundingBox();
+      const pianoBounds = await visualization.boundingBox();
+      if (!scoreBounds || !pianoBounds) return Number.POSITIVE_INFINITY;
+      return Math.round(scoreBounds.y + scoreBounds.height - pianoBounds.y);
+    })
+    .toBeLessThanOrEqual(-8);
+  const heightSeparator = visualization.getByRole("separator", { name: "调整钢琴按键提示高度" });
+  const initialVisualizationHeight = await visualization.boundingBox();
+  const separatorBounds = await heightSeparator.boundingBox();
+  expect(Math.round(initialVisualizationHeight?.height ?? 0)).toBe(260);
+  if (!separatorBounds) throw new Error("Piano key height separator is not measurable");
+  await page.mouse.move(separatorBounds.x + separatorBounds.width / 2, separatorBounds.y + separatorBounds.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(separatorBounds.x + separatorBounds.width / 2, separatorBounds.y - 40);
+  await page.mouse.up();
+  await expect.poll(async () => Math.round((await visualization.boundingBox())?.height ?? 0)).toBe(305);
+  await expect
+    .poll(async () => {
+      const scoreBounds = await scoreWorkspace.boundingBox();
+      const pianoBounds = await visualization.boundingBox();
+      if (!scoreBounds || !pianoBounds) return Number.POSITIVE_INFINITY;
+      return Math.round(scoreBounds.y + scoreBounds.height - pianoBounds.y);
+    })
+    .toBeLessThanOrEqual(-8);
+
+  const visualFrame = () =>
+    visualization.evaluate((region) => ({
+      active: region.querySelectorAll("[data-key-pitch][data-active]").length,
+      hints: Array.from(region.querySelectorAll("[data-hint-layer] rect"))
+        .slice(0, 12)
+        .map((hint) => [hint.getAttribute("data-pitch"), hint.getAttribute("y"), hint.getAttribute("height")]),
+    }));
+  const initialFrame = await visualFrame();
+  await page.getByRole("button", { name: "播放" }).click();
+  await expect(page.getByRole("button", { name: "暂停" })).toBeVisible();
+  await expect.poll(visualFrame).not.toEqual(initialFrame);
+  await expect.poll(async () => (await visualFrame()).active).toBeGreaterThan(0);
+
+  await page.getByRole("button", { name: "暂停" }).click();
+  await expect(page.getByRole("button", { name: "播放" })).toBeVisible();
+  await page.waitForTimeout(100);
+  const pausedFrame = await visualFrame();
+  await page.waitForTimeout(300);
+  expect(await visualFrame()).toEqual(pausedFrame);
+
+  await page.getByRole("button", { name: "停止" }).click();
+  await expect.poll(visualFrame).toEqual(initialFrame);
+
+  for (const width of [390, 620, 1280]) {
+    await page.setViewportSize({ width, height: width === 1280 ? 720 : 844 });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await expect(visualization).toBeVisible();
+    await expectInsideViewport(page, page.getByRole("button", { name: "播放" }));
+  }
+
+  await page.getByRole("button", { name: "关闭键盘提示" }).click();
+  await expect(visualization).toHaveCount(0);
+  await expect(page.locator(".score-viewer .at-surface").first()).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByRole("region", { name: "钢琴按键提示" })).toHaveCount(0);
+});
+
 test("keeps the Library to Viewer transition on a loading surface until the score renders", async ({ page }) => {
   await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱");

@@ -378,7 +378,12 @@ describe("createDefaultOpenSession cleanup", () => {
     let detached = false;
     const dispatch = vi.fn(async () => undefined);
     const previewSeek = vi.fn();
+    const keyEvents = [{ pitch: 72, startTick: 0, endTick: 960, hand: "right" as const }];
+    const buildPianoKeyTimeline = vi.fn(() => keyEvents);
     const api = {
+      score: { tracks: [], masterBars: [] },
+      settings: {},
+      tickPosition: 240,
       beatMouseDown: {
         on(handler: typeof beatHandler) {
           beatHandler = handler;
@@ -423,6 +428,17 @@ describe("createDefaultOpenSession cleanup", () => {
             sessionId: "session",
             transport: "playing",
             position: { measureId: "measure-0", measureIndex: 0, beatIndex: 0, tick: 0, cachedTimeMs: 0 },
+            pianoPractice: {
+              mode: "right-hand",
+              requestedMode: "right-hand",
+              availability: "audio-unsupported",
+              unavailableCode: "piano-hand-practice-audio-unsupported",
+              mapping: {
+                trackId: "track-0",
+                rightStaffId: "track-0:staff-0",
+                leftStaffId: "track-0:staff-1",
+              },
+            },
           }),
           subscribe: () => () => undefined,
           dispatch,
@@ -430,6 +446,7 @@ describe("createDefaultOpenSession cleanup", () => {
           flush: async () => undefined,
           destroy: async () => undefined,
         }) as never,
+      buildPianoKeyTimeline,
     });
     const session = await openSession(
       { fileName: "song.gp5", bytes: new Uint8Array([1]) },
@@ -446,6 +463,12 @@ describe("createDefaultOpenSession cleanup", () => {
 
     session.playback?.previewSeek?.(previewPosition);
     expect(previewSeek).toHaveBeenCalledWith(previewPosition);
+    expect(buildPianoKeyTimeline).not.toHaveBeenCalled();
+    expect(session.pianoKeyVisualization?.loadEvents()).toBe(keyEvents);
+    expect(session.pianoKeyVisualization?.getTick()).toBe(240);
+    expect(buildPianoKeyTimeline).toHaveBeenCalledOnce();
+    expect(session.pianoKeyVisualization?.loadEvents()).toBe(keyEvents);
+    expect(buildPianoKeyTimeline).toHaveBeenCalledOnce();
 
     beatHandler?.({ displayStart: 480, voice: { bar: { index: 1 } } });
     await vi.waitFor(() =>

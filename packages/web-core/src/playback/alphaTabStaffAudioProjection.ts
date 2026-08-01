@@ -13,6 +13,26 @@ export function buildAlphaTabStaffAudioProjection(
   settings: alphaTab.Settings,
   audibleStaffIds: ReadonlySet<string>,
 ): AlphaTabStaffAudioProjection {
+  const score = cloneAlphaTabScoreForStaffProjection(sourceScore, settings, audibleStaffIds);
+  const midiFile = new alphaTab.midi.MidiFile();
+  const handler = new alphaTab.midi.AlphaSynthMidiFileHandler(midiFile);
+  const generator = new alphaTab.midi.MidiFileGenerator(score, settings, handler);
+  generator.applyTranspositionPitches = false;
+  generator.generate();
+  return {
+    score,
+    midiFile,
+    tickShift: handler.tickShift,
+    syncPoints: generator.syncPoints,
+    transpositionPitches: generator.transpositionPitches,
+  };
+}
+
+export function cloneAlphaTabScoreForStaffProjection(
+  sourceScore: alphaTab.model.Score,
+  settings: alphaTab.Settings,
+  audibleStaffIds: ReadonlySet<string>,
+): alphaTab.model.Score {
   const serialized = alphaTab.model.JsonConverter.scoreToJsObject(sourceScore);
   if (!serialized) throw new Error("Could not clone alphaTab score for staff audio projection");
   const score = alphaTab.model.JsonConverter.jsObjectToScore(serialized, settings);
@@ -33,17 +53,5 @@ export function buildAlphaTabStaffAudioProjection(
   for (const staffId of audibleStaffIds) {
     if (!knownStaffIds.has(staffId)) throw new Error(`Unknown alphaTab staff projection target: ${staffId}`);
   }
-
-  const midiFile = new alphaTab.midi.MidiFile();
-  const handler = new alphaTab.midi.AlphaSynthMidiFileHandler(midiFile);
-  const generator = new alphaTab.midi.MidiFileGenerator(score, settings, handler);
-  generator.applyTranspositionPitches = false;
-  generator.generate();
-  return {
-    score,
-    midiFile,
-    tickShift: handler.tickShift,
-    syncPoints: generator.syncPoints,
-    transpositionPitches: generator.transpositionPitches,
-  };
+  return score;
 }

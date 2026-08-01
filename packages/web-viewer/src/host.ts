@@ -24,6 +24,10 @@ export interface ViewerHost {
 }
 export type { LocaleHost } from "./i18n/locale-controller";
 export type ViewerSessionHandle = {
+  pianoKeyVisualization?: {
+    loadEvents(): readonly import("@zupulse/web-core").PianoKeyHintEvent[] | undefined;
+    getTick(): number;
+  };
   loopEditor?: {
     getMeasureBounds(): readonly import("./practice-loop/loop-range-geometry").ScoreMeasureBounds[];
     getStaffBounds?(): readonly import("./score-navigation/alpha-tab-navigation").ScoreStaffBounds[];

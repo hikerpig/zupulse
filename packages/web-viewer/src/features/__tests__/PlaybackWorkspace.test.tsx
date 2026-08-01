@@ -351,6 +351,71 @@ describe("PlaybackWorkspace transport bar", () => {
     expect(within(practice).getByText("切换音频时已安全暂停并恢复播放")).toBeTruthy();
   });
 
+  it("opens and closes piano key hints for an eligible score without changing playback facts", async () => {
+    const playbackState = state("playing");
+    playbackState.pianoPractice = {
+      mode: "right-hand",
+      requestedMode: "right-hand",
+      availability: "available",
+      mapping: {
+        trackId: "track-0",
+        rightStaffId: "track-0:staff-0",
+        leftStaffId: "track-0:staff-1",
+      },
+      previewActive: false,
+      pausedForAudioProjection: false,
+    };
+    const viewerSession = session(playbackState);
+    const loadEvents = vi.fn(() => [
+      { pitch: 60, startTick: 0, endTick: 960, hand: "left" as const },
+      { pitch: 72, startTick: 0, endTick: 960, hand: "right" as const },
+    ]);
+    viewerSession.pianoKeyVisualization = {
+      loadEvents,
+      getTick: () => 0,
+    };
+    render(<PlaybackWorkspace session={viewerSession}>乐谱</PlaybackWorkspace>);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "练习设置" }));
+    const practice = screen.getByRole("complementary", { name: "练习设置" });
+    await user.click(within(practice).getByRole("button", { name: /键盘提示/ }));
+    expect(loadEvents).not.toHaveBeenCalled();
+    await user.click(within(practice).getByRole("switch", { name: "显示键盘提示" }));
+    expect(loadEvents).toHaveBeenCalledOnce();
+
+    const visualization = screen.getByRole("region", { name: "钢琴按键提示" });
+    const separator = within(visualization).getByRole("separator", { name: "调整钢琴按键提示高度" });
+    expect(visualization.style.getPropertyValue("--piano-key-height")).toBe("260px");
+    fireEvent.keyDown(separator, { key: "ArrowUp" });
+    expect(visualization.style.getPropertyValue("--piano-key-height")).toBe("276px");
+    expect(visualization.querySelector('[data-hint-layer] [data-hand="right"]')).toBeTruthy();
+    expect(visualization.querySelector('[data-hint-layer] [data-hand="left"]')).toBeNull();
+    expect(viewerSession.playback?.dispatch).not.toHaveBeenCalled();
+
+    await user.click(within(visualization).getByRole("button", { name: "关闭键盘提示" }));
+    expect(screen.queryByRole("region", { name: "钢琴按键提示" })).toBeNull();
+
+    await user.click(within(practice).getByRole("switch", { name: "显示键盘提示" }));
+    const reopenedVisualization = screen.getByRole("region", { name: "钢琴按键提示" });
+    expect(reopenedVisualization.style.getPropertyValue("--piano-key-height")).toBe("276px");
+
+    expect(playbackState.transport).toBe("playing");
+    expect(playbackState.position.tick).toBe(0);
+  });
+
+  it("keeps piano key hints discoverable but unavailable for a non-piano score", async () => {
+    render(<PlaybackWorkspace session={session(state("paused"))}>乐谱</PlaybackWorkspace>);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "练习设置" }));
+    const practice = screen.getByRole("complementary", { name: "练习设置" });
+    const task = within(practice).getByRole("button", { name: /键盘提示/ });
+
+    expect((task as HTMLButtonElement).disabled).toBe(true);
+    expect(task.textContent).toContain("这份曲谱不是明确的双谱表钢琴结构");
+  });
+
   it("keeps the task overview while playback is unavailable", async () => {
     render(<PlaybackWorkspace session={undefined}>乐谱</PlaybackWorkspace>);
 

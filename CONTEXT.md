@@ -10,7 +10,8 @@ Zupulse 是本地优先的乐谱查看与练习应用。当前交付面是共享
 - 在独立 Studio 中推断、修正和预览 MusicXML 和弦符号，并按来源容器导出带和弦的新副本。
 - Browser 使用 IndexedDB；Desktop 使用 SQLite 与应用数据目录中的托管文件。
 - 当前不实现云同步、OPFS、打印分页、额外状态库、移动端产品或 MIDI 分析。
-- Viewer 已按 ADR 0064 提供 Continuous Follow、Page Turn 和临时 Screen Score Page。
+- Viewer 已按 ADR 0064 提供 Continuous Follow、Page Turn 和临时 Screen Score Page；适用的钢琴谱
+  可在当前 Viewer Session 中打开钢琴按键提示。
 
 ## 核心语言
 
@@ -38,6 +39,8 @@ Zupulse 是本地优先的乐谱查看与练习应用。当前交付面是共享
 
 ### Current session and practice language
 
+- **Piano Key Visualization**：适用钢琴谱的会话级练习投影，在乐谱下方显示当前发声琴键与未来四个
+  四分音符内的目标音和时值；默认关闭，不写入 Practice Sidecar。
 - **Studio Session**：Studio 中临时的谱面、分析编辑与预览运行时；与同一 Library Score 的 Viewer Session 不共享可变运行时对象。
 - **Preview Transport**：Studio 中用于播放、定位和区间试听的临时播放状态；关闭 Studio 后丢弃，不读写练习数据或续播位置。
 - **Practice Sidecar**：Library Score 的练习设置；删除馆藏时必须一同删除。

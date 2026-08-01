@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import type { PianoKeyHintEvent } from "@zupulse/web-core";
 import type { ViewerSessionHandle } from "../../host";
 import { DisabledPracticeDrawer } from "./components/disabled-practice-drawer";
 import { PlaybackTransport } from "./playback-transport";
 import { PracticeDrawer } from "./practice-drawer";
+import { PianoKeyVisualization } from "../piano-key-visualization/components/PianoKeyVisualization";
+import { DEFAULT_PIANO_KEY_HEIGHT, clampPianoKeyHeight } from "../piano-key-visualization/model/piano-key-height";
 import styles from "../PlaybackWorkspace.module.css";
 
 export function PlaybackWorkspace({
@@ -13,7 +16,11 @@ export function PlaybackWorkspace({
   children: ReactNode;
 }) {
   return (
-    <PlaybackLayout playback={session?.playback} navigation={session?.navigation}>
+    <PlaybackLayout
+      playback={session?.playback}
+      navigation={session?.navigation}
+      pianoKeyVisualization={session?.pianoKeyVisualization}
+    >
       {children}
     </PlaybackLayout>
   );
@@ -22,13 +29,20 @@ export function PlaybackWorkspace({
 function PlaybackLayout({
   playback,
   navigation,
+  pianoKeyVisualization,
   children,
 }: {
   playback: ViewerSessionHandle["playback"];
   navigation: ViewerSessionHandle["navigation"];
+  pianoKeyVisualization: ViewerSessionHandle["pianoKeyVisualization"];
   children: ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [keyboardEnabled, setKeyboardEnabled] = useState(false);
+  const [keyboardEvents, setKeyboardEvents] = useState<readonly PianoKeyHintEvent[]>();
+  const [keyboardFailed, setKeyboardFailed] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(DEFAULT_PIANO_KEY_HEIGHT);
+  const workspaceRef = useRef<HTMLElement>(null);
   const drawerToggleRef = useRef<HTMLButtonElement>(null);
   const drawerCloseRef = useRef<HTMLButtonElement>(null);
   const wasDrawerOpen = useRef(false);
@@ -48,6 +62,47 @@ function PlaybackLayout({
     return undefined;
   }, [drawerOpen]);
 
+  useEffect(() => {
+    setKeyboardEnabled(false);
+    setKeyboardEvents(undefined);
+    setKeyboardFailed(false);
+    setKeyboardHeight(DEFAULT_PIANO_KEY_HEIGHT);
+  }, [pianoKeyVisualization]);
+
+  useEffect(() => {
+    const workspace = workspaceRef.current;
+    if (!keyboardEnabled || !workspace || typeof ResizeObserver === "undefined") return undefined;
+    const observer = new ResizeObserver(([entry]) => {
+      if (!entry) return;
+      setKeyboardHeight((current) => clampPianoKeyHeight(current, entry.contentRect.height));
+    });
+    observer.observe(workspace);
+    return () => observer.disconnect();
+  }, [keyboardEnabled]);
+
+  const activePianoKeyVisualization = useMemo(
+    () =>
+      pianoKeyVisualization && keyboardEvents
+        ? { events: keyboardEvents, getTick: pianoKeyVisualization.getTick }
+        : undefined,
+    [keyboardEvents, pianoKeyVisualization],
+  );
+
+  const changeKeyboardEnabled = (enabled: boolean) => {
+    if (!enabled) {
+      setKeyboardEnabled(false);
+      return;
+    }
+    const events = pianoKeyVisualization?.loadEvents();
+    if (!events) {
+      setKeyboardFailed(true);
+      setKeyboardEnabled(false);
+      return;
+    }
+    setKeyboardEvents(events);
+    setKeyboardEnabled(true);
+  };
+
   return (
     <>
       <PlaybackTransport
@@ -57,11 +112,28 @@ function PlaybackLayout({
         drawerToggleRef={drawerToggleRef}
         onDrawerToggle={() => setDrawerOpen((open) => !open)}
       />
-      <section className={styles.workspace}>
+      <section ref={workspaceRef} className={styles.workspace} data-piano-keys={keyboardEnabled || undefined}>
         {children}
+        {keyboardEnabled && activePianoKeyVisualization && playback ? (
+          <PianoKeyVisualization
+            source={activePianoKeyVisualization}
+            playback={playback}
+            containerRef={workspaceRef}
+            height={keyboardHeight}
+            onHeightChange={setKeyboardHeight}
+            onClose={() => setKeyboardEnabled(false)}
+          />
+        ) : null}
         {drawerOpen ? (
           playback ? (
-            <PracticeDrawer playback={playback} closeButtonRef={drawerCloseRef} onClose={() => setDrawerOpen(false)} />
+            <PracticeDrawer
+              playback={playback}
+              closeButtonRef={drawerCloseRef}
+              keyboardAvailable={Boolean(pianoKeyVisualization) && !keyboardFailed}
+              keyboardEnabled={keyboardEnabled}
+              onKeyboardEnabledChange={changeKeyboardEnabled}
+              onClose={() => setDrawerOpen(false)}
+            />
           ) : (
             <DisabledPracticeDrawer closeButtonRef={drawerCloseRef} onClose={() => setDrawerOpen(false)} />
           )

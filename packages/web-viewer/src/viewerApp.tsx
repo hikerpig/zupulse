@@ -3,6 +3,7 @@ import {
   PlaybackController,
   attachAlphaTabGestureSelection,
   attachAlphaTabNavigationEvents,
+  buildAlphaTabPianoKeyTimeline,
   createAlphaTabApi,
   createDefaultSidecar,
   extractAlphaTabPlaybackModel,
@@ -44,6 +45,7 @@ export type DefaultOpenSessionDependencies = {
   waitForScore: typeof waitForAlphaTabScore;
   extractModel: typeof extractAlphaTabPlaybackModel;
   createController(options: ConstructorParameters<typeof PlaybackController>[0]): PlaybackController;
+  buildPianoKeyTimeline?: typeof buildAlphaTabPianoKeyTimeline;
 };
 
 const defaultOpenSessionDependencies: DefaultOpenSessionDependencies = {
@@ -53,6 +55,7 @@ const defaultOpenSessionDependencies: DefaultOpenSessionDependencies = {
   waitForScore: waitForAlphaTabScore,
   extractModel: extractAlphaTabPlaybackModel,
   createController: (options) => new PlaybackController(options),
+  buildPianoKeyTimeline: buildAlphaTabPianoKeyTimeline,
 };
 
 export function createDefaultOpenSession(
@@ -165,6 +168,7 @@ export function createDefaultOpenSession(
       });
       controller = sessionController;
       await sessionController.initialize();
+      const pianoKeyVisualization = createPianoKeyVisualizationSource(api, sessionController, dependencies);
       const playbackOccurrences = extractAlphaTabPlaybackOccurrences(api, "track-0", model.timeline);
       detachScoreSelection = attachAlphaTabGestureSelection(api, alphaTabHost, (selection) => {
         const position = playbackPositionForWrittenSelection(
@@ -212,6 +216,7 @@ export function createDefaultOpenSession(
       });
       renderViewerState(status, summary, state);
       return {
+        ...(pianoKeyVisualization ? { pianoKeyVisualization } : {}),
         loopEditor: {
           getMeasureBounds: () => loopMeasureBounds,
           getStaffBounds: () => staffBounds,
@@ -286,6 +291,33 @@ export function createDefaultOpenSession(
       }
       return emptySession();
     }
+  };
+}
+
+function createPianoKeyVisualizationSource(
+  api: AlphaTabApiLike,
+  controller: PlaybackController,
+  dependencies: DefaultOpenSessionDependencies,
+): ViewerSessionHandle["pianoKeyVisualization"] {
+  const practice = controller.getState().pianoPractice;
+  const buildTimeline = dependencies.buildPianoKeyTimeline ?? buildAlphaTabPianoKeyTimeline;
+  if (!practice?.mapping || !api.score || !api.settings) return undefined;
+  let loaded = false;
+  let events: ReturnType<typeof buildTimeline> | undefined;
+  return {
+    loadEvents: () => {
+      if (!loaded) {
+        loaded = true;
+        try {
+          const generated = buildTimeline(api.score as never, api.settings as never, practice.mapping!);
+          events = generated.length > 0 ? generated : undefined;
+        } catch {
+          events = undefined;
+        }
+      }
+      return events;
+    },
+    getTick: () => api.tickPosition ?? controller.getState().position?.tick ?? 0,
   };
 }
 

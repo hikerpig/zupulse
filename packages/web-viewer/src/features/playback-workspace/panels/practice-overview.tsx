@@ -3,7 +3,13 @@ import { useTranslation } from "react-i18next";
 import type { ViewerSessionHandle } from "../../../host";
 import { usePlaybackSelector } from "../adapters/use-playback-selector";
 import { BpmControl } from "../components/bpm-control";
-import { loopDisplayLabel, pianoPracticeSummary, presentPlayback, rhythmSummary } from "../model/playback-presenter";
+import {
+  loopDisplayLabel,
+  pianoPracticeSummary,
+  pianoUnavailableReason,
+  presentPlayback,
+  rhythmSummary,
+} from "../model/playback-presenter";
 import { setPlaybackLoopMode } from "../runtime/loop-mode";
 import styles from "../../PlaybackWorkspace.module.css";
 
@@ -29,9 +35,13 @@ export function PracticeSummary({ playback }: { playback: Playback }) {
 export function PracticeOverview({
   playback,
   onSelect,
+  keyboardAvailable,
+  keyboardEnabled,
 }: {
   playback: Playback;
-  onSelect(view: "rhythm" | "hands" | "loop" | "tracks"): void;
+  onSelect(view: "rhythm" | "hands" | "keyboard" | "loop" | "tracks"): void;
+  keyboardAvailable: boolean;
+  keyboardEnabled: boolean;
 }) {
   const { t } = useTranslation("viewer");
   usePlaybackSelector(playback, (state) => state.baseTempo);
@@ -84,6 +94,20 @@ export function PracticeOverview({
           onClick={() => onSelect("hands")}
         />
         <TaskEntry
+          title={t("playback.keyboardTaskTitle")}
+          summary={
+            keyboardAvailable
+              ? t(keyboardEnabled ? "playback.keyboardHintsOn" : "playback.keyboardHintsOff")
+              : state.pianoPractice.availability === "available"
+                ? t("playback.keyboardProjectionUnavailable")
+                : state.pianoPractice.unavailableCode
+                  ? pianoUnavailableReason(state.pianoPractice.unavailableCode, t)
+                  : t("playback.handUnavailable")
+          }
+          disabled={!keyboardAvailable}
+          onClick={() => onSelect("keyboard")}
+        />
+        <TaskEntry
           title={t("playback.loopTaskTitle")}
           summary={activeLoop ? loopDisplayLabel(activeLoop, t) : t("playback.loopTaskDescription")}
           onClick={openLoopEditor}
@@ -102,9 +126,19 @@ export function PracticeOverview({
   );
 }
 
-function TaskEntry({ title, summary, onClick }: { title: string; summary: string; onClick(): void }) {
+function TaskEntry({
+  title,
+  summary,
+  disabled = false,
+  onClick,
+}: {
+  title: string;
+  summary: string;
+  disabled?: boolean;
+  onClick(): void;
+}) {
   return (
-    <button className={styles.taskEntry} type="button" onClick={onClick}>
+    <button className={styles.taskEntry} type="button" disabled={disabled} onClick={onClick}>
       <span>
         <strong>{title}</strong>
         <small>{summary}</small>

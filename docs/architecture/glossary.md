@@ -32,6 +32,12 @@ Viewer 谱面导航相对播放头的会话态。`Following` 随播放位置自�
 
 用户拖动播放进度时对最新目标位置的临时视觉预览。它每个动画帧最多向 alphaTab 提交一次最新位置，只在目标谱表行或 Screen Score Page 改变时直接调整视口，不运行过时的滚动或翻页动画，也不写入正式播放状态；松手后才提交 seek。
 
+### Piano Key Visualization
+
+适用钢琴谱的 Viewer Session 练习投影。它在乐谱下方显示当前发声琴键，以及未来四个四分音符播放
+tick 内即将到来的目标音与时值；双手示范显示双手，单手练习只显示目标手。该投影默认关闭，不属于
+Practice Sidecar，也不接收外接 MIDI 输入或评价演奏结果。
+
 ## Studio
 
 通过 `#/studio/:libraryScoreId` 打开的分析与编辑工作区。它负责生成、修正、预览、保存和导出 Harmony Analysis Document，并与 Viewer 使用独立 Session。

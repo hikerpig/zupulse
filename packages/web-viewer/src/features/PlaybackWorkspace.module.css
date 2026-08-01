@@ -178,6 +178,12 @@
     display: block;
     padding: 12px;
   }
+  .workspace[data-piano-keys] {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    row-gap: 8px;
+    padding-bottom: 0;
+  }
   .practicePanel {
     position: absolute;
     z-index: var(--z-index-practice-panel);

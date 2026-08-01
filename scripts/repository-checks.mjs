@@ -287,8 +287,36 @@ async function checkStyleContract(root, stylesDir, runtimeCss) {
         }
       }
     }
+    if (file.path.endsWith(".css")) errors.push(...antiSlopCssErrors(file));
   }
   return [...new Set(errors)];
+}
+
+function antiSlopCssErrors(file) {
+  const errors = [];
+  for (const block of file.contents.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const selector = block[1].trim();
+    const declarations = block[2];
+    const selectorIndex = block.index + Math.max(0, block[1].search(/\S/));
+    if (
+      /\.panelTitle\b/.test(selector) &&
+      /(?:letter-spacing\s*:|text-transform\s*:\s*uppercase\b)/.test(declarations)
+    ) {
+      errors.push(
+        `${file.path}:${lineNumberAt(file.contents, selectorIndex)}: shared panel title must not use eyebrow typography`,
+      );
+    }
+    if (/\.ledDot\[data-active\]/.test(selector) && /box-shadow\s*:/.test(declarations)) {
+      errors.push(
+        `${file.path}:${lineNumberAt(file.contents, selectorIndex)}: active status dot must not use an outer glow`,
+      );
+    }
+  }
+  return errors;
+}
+
+function lineNumberAt(contents, index) {
+  return contents.slice(0, index).split(/\r?\n/).length;
 }
 
 function validateFeatureContract(contract, now) {

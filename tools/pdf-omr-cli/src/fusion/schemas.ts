@@ -110,7 +110,7 @@ export const fusionAlignmentSchema = z
   })
   .strict();
 
-const repairProposalSchema = z
+const alignmentRepairProposalSchema = z
   .object({
     id: z.string().min(1),
     type: z.enum(["pitch-disagreement", "midi-supported-missing-note", "unsupported-score-note"]),
@@ -123,9 +123,76 @@ const repairProposalSchema = z
   })
   .strict();
 
-export const repairProposalsSchema = z
+export const alignmentRepairProposalsSchema = z
   .object({
     schemaVersion: z.literal("1.0.0"),
+    mode: z.literal("report-only"),
+    proposals: z.array(alignmentRepairProposalSchema),
+  })
+  .strict();
+
+const musicXmlNoteLocatorSchema = z
+  .object({
+    rootFilePath: z.string().min(1).nullable(),
+    partId: z.string().min(1),
+    measureIndex: nonnegativeIntegerSchema,
+    noteIndex: nonnegativeIntegerSchema,
+    preconditionSha256: sha256Schema,
+  })
+  .strict();
+
+const writableMusicXmlNoteFactsSchema = z
+  .object({
+    writtenPitch: z
+      .object({
+        step: z.enum(["A", "B", "C", "D", "E", "F", "G"]),
+        alter: z.number().int().min(-2).max(2),
+        octave: z.number().int().min(-1).max(9),
+      })
+      .strict(),
+    voice: z.number().int().positive(),
+    staff: z.number().int().positive(),
+    durationUnits: z.number().int().positive(),
+    chord: z.boolean(),
+    tieTypes: z.array(z.string().min(1)),
+  })
+  .strict();
+
+const repairProposalSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.enum(["pitch-disagreement", "midi-supported-missing-note", "unsupported-score-note"]),
+    scoreNoteIds: z.array(z.string().min(1)).min(1).optional(),
+    midiNoteIds: z.array(z.string().min(1)).min(1).optional(),
+    suggestedSoundingMidi: z.number().int().min(0).max(127).optional(),
+    confidence: z.number().finite().min(0).max(1),
+    autoApplicable: z.literal(false),
+    reviewability: z
+      .object({
+        status: z.enum(["writeback-ready", "review-only"]),
+        reasons: z.array(z.string().min(1)),
+      })
+      .strict(),
+    target: musicXmlNoteLocatorSchema.optional(),
+    before: writableMusicXmlNoteFactsSchema.optional(),
+  })
+  .strict()
+  .superRefine((proposal, context) => {
+    if (proposal.reviewability.status !== "writeback-ready") return;
+    if (
+      proposal.type !== "pitch-disagreement" ||
+      proposal.reviewability.reasons.length > 0 ||
+      proposal.target === undefined ||
+      proposal.before === undefined ||
+      proposal.suggestedSoundingMidi === undefined
+    ) {
+      context.addIssue({ code: "custom", message: "writeback-ready proposal requires a complete pitch patch" });
+    }
+  });
+
+export const repairProposalsSchema = z
+  .object({
+    schemaVersion: z.literal("2.0.0"),
     mode: z.literal("report-only"),
     proposals: z.array(repairProposalSchema),
   })
@@ -204,6 +271,8 @@ export type ScoreNoteEvidence = z.infer<typeof scoreNoteEvidenceSchema>;
 export type ScoreEvidence = z.infer<typeof scoreEvidenceSchema>;
 export type FusionCompatibility = z.infer<typeof fusionCompatibilitySchema>;
 export type FusionAlignment = z.infer<typeof fusionAlignmentSchema>;
+export type AlignmentRepairProposal = z.infer<typeof alignmentRepairProposalSchema>;
+export type AlignmentRepairProposals = z.infer<typeof alignmentRepairProposalsSchema>;
 export type RepairProposal = z.infer<typeof repairProposalSchema>;
 export type RepairProposals = z.infer<typeof repairProposalsSchema>;
 export type FusionInputReport = z.infer<typeof fusionInputReportSchema>;

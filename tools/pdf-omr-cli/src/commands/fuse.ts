@@ -6,17 +6,17 @@ import { PdfOmrError } from "../errors";
 import { alignScorePerformance } from "../fusion/align-score-performance";
 import { assessFusionCompatibility } from "../fusion/assess-compatibility";
 import { buildScoreEvidence } from "../fusion/build-score-evidence";
+import { buildWritebackProposals } from "../fusion/build-writeback-proposals";
 import {
   fusionInputReportSchema,
   fusionReportSchema,
   fusionRunManifestSchema,
-  repairProposalsSchema,
   type FusionDiagnostic,
   type FusionReport,
 } from "../fusion/schemas";
 import { buildPerformanceEvidence } from "../midi/build-performance-evidence";
 import { parseStandardMidi } from "../midi/parse-standard-midi";
-import { normalizeAudiverisMusicXml } from "../normalizers/audiveris";
+import { normalizeAudiverisMusicXmlWithSourceIndex } from "../normalizers/audiveris";
 
 type FuseOptions = {
   musicXml: string;
@@ -40,7 +40,8 @@ export async function fuseCommand(options: FuseOptions): Promise<FusionReport> {
   const midiArtifactPath = "input/midi.mid";
   const startedAt = new Date().toISOString();
 
-  const draft = normalizeAudiverisMusicXml(scoreBytes);
+  const normalization = normalizeAudiverisMusicXmlWithSourceIndex(scoreBytes);
+  const draft = normalization.draft;
   const scoreEvidence = buildScoreEvidence(draft, {
     fileName: scoreFileName,
     sha256: scoreSha256,
@@ -83,11 +84,12 @@ export async function fuseCommand(options: FuseOptions): Promise<FusionReport> {
     },
     parameters: { midiKind: options.midiKind, repairMode: options.repairMode },
   });
-  const proposals = repairProposalsSchema.parse({
-    schemaVersion: "1.0.0",
-    mode: "report-only",
-    proposals: result.repairProposals,
-  });
+  const proposals = buildWritebackProposals(
+    scoreEvidence,
+    result.alignment,
+    result.repairProposals,
+    normalization.sourceNotesByEventId,
+  );
 
   const writer = await createArtifactWriter(resolve(options.cwd, options.output));
   await writer.writeBytes(scoreArtifactPath, scoreBytes);

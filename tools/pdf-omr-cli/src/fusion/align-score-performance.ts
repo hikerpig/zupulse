@@ -3,12 +3,12 @@ import type { PerformanceEvidence } from "../midi/schemas";
 import { compareRational } from "../rational";
 import {
   fusionAlignmentSchema,
-  repairProposalsSchema,
+  alignmentRepairProposalsSchema,
+  type AlignmentRepairProposal,
+  type AlignmentRepairProposals,
   type FusionAlignment,
   type FusionCompatibility,
   type FusionDiagnostic,
-  type RepairProposal,
-  type RepairProposals,
   type ScoreEvidence,
   type ScoreNoteEvidence,
 } from "./schemas";
@@ -31,7 +31,7 @@ export function alignScorePerformance(
   compatibility: FusionCompatibility,
 ): {
   alignment: FusionAlignment;
-  repairProposals: RepairProposals["proposals"];
+  repairProposals: AlignmentRepairProposals["proposals"];
   diagnostics: FusionDiagnostic[];
 } {
   if (compatibility.status === "incompatible") {
@@ -61,7 +61,7 @@ export function alignScorePerformance(
   const midiFrames = buildMidiFrames(alignableMidiNotes);
   const frameAlignment = alignFrames(scoreFrames, midiFrames, compatibility.detectedTransposition);
   const entries: FusionAlignment["entries"] = [];
-  const proposals: RepairProposal[] = [];
+  const proposals: AlignmentRepairProposal[] = [];
 
   for (const step of frameAlignment.steps) {
     appendStepEntries(entries, proposals, step, compatibility.detectedTransposition);
@@ -98,7 +98,7 @@ export function alignScorePerformance(
   });
   return {
     alignment,
-    repairProposals: repairProposalsSchema.parse({
+    repairProposals: alignmentRepairProposalsSchema.parse({
       schemaVersion: "1.0.0",
       mode: "report-only",
       proposals,
@@ -216,7 +216,7 @@ function frameCost(score: ScoreFrame, midi: MidiFrame, transposition: number): n
 
 function appendStepEntries(
   entries: FusionAlignment["entries"],
-  proposals: RepairProposal[],
+  proposals: AlignmentRepairProposal[],
   step: FrameStep,
   transposition: number,
 ): void {
@@ -281,7 +281,7 @@ function appendStepEntries(
 
 function reconcileNearbyFrameBoundaries(
   entries: FusionAlignment["entries"],
-  proposals: RepairProposal[],
+  proposals: AlignmentRepairProposal[],
   scoreFrames: readonly ScoreFrame[],
   midiFrames: readonly MidiFrame[],
   transposition: number,
@@ -325,7 +325,11 @@ function reconcileNearbyFrameBoundaries(
   }
 }
 
-function removeProposal(proposals: RepairProposal[], type: RepairProposal["type"], sourceId: string): void {
+function removeProposal(
+  proposals: AlignmentRepairProposal[],
+  type: AlignmentRepairProposal["type"],
+  sourceId: string,
+): void {
   const index = proposals.findIndex(
     (proposal) => proposal.type === type && (proposal.scoreNoteId === sourceId || proposal.midiNoteId === sourceId),
   );
@@ -334,7 +338,7 @@ function removeProposal(proposals: RepairProposal[], type: RepairProposal["type"
 
 function appendScoreOnly(
   entries: FusionAlignment["entries"],
-  proposals: RepairProposal[],
+  proposals: AlignmentRepairProposal[],
   score: ScoreNoteEvidence,
 ): void {
   entries.push({
@@ -357,7 +361,7 @@ function appendScoreOnly(
 
 function appendMidiOnly(
   entries: FusionAlignment["entries"],
-  proposals: RepairProposal[],
+  proposals: AlignmentRepairProposal[],
   midi: MidiNote,
   transposition: number,
 ): void {

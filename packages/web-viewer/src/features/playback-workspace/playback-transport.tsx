@@ -1,5 +1,5 @@
 import { musicalPositionFromTick } from "@zupulse/web-core";
-import { Pause, Play, Repeat2, SlidersHorizontal, Square } from "lucide-react";
+import { Pause, Piano, Play, Repeat2, SlidersHorizontal, Square } from "lucide-react";
 import { useEffect, useMemo, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Slider } from "../../components/Slider";
@@ -19,12 +19,18 @@ export function PlaybackTransport({
   drawerOpen,
   drawerToggleRef,
   onDrawerToggle,
+  keyGuideAvailable,
+  keyGuideEnabled,
+  onKeyGuideToggle,
 }: {
   playback: ViewerSessionHandle["playback"];
   navigation: ViewerSessionHandle["navigation"];
   drawerOpen: boolean;
   drawerToggleRef: RefObject<HTMLButtonElement | null>;
   onDrawerToggle(): void;
+  keyGuideAvailable: boolean;
+  keyGuideEnabled: boolean;
+  onKeyGuideToggle(): void;
 }) {
   if (!playback) {
     return (
@@ -42,6 +48,9 @@ export function PlaybackTransport({
       drawerOpen={drawerOpen}
       drawerToggleRef={drawerToggleRef}
       onDrawerToggle={onDrawerToggle}
+      keyGuideAvailable={keyGuideAvailable}
+      keyGuideEnabled={keyGuideEnabled}
+      onKeyGuideToggle={onKeyGuideToggle}
     />
   );
 }
@@ -52,12 +61,18 @@ function ActivePlaybackTransport({
   drawerOpen,
   drawerToggleRef,
   onDrawerToggle,
+  keyGuideAvailable,
+  keyGuideEnabled,
+  onKeyGuideToggle,
 }: {
   playback: NonNullable<ViewerSessionHandle["playback"]>;
   navigation: ViewerSessionHandle["navigation"];
   drawerOpen: boolean;
   drawerToggleRef: RefObject<HTMLButtonElement | null>;
   onDrawerToggle(): void;
+  keyGuideAvailable: boolean;
+  keyGuideEnabled: boolean;
+  onKeyGuideToggle(): void;
 }) {
   const { t } = useTranslation("viewer");
   const state = usePlaybackSelector(playback, (snapshot) => snapshot);
@@ -149,6 +164,17 @@ function ActivePlaybackTransport({
       </div>
       <div className={styles.transportTools}>
         {navigation ? <ScoreNavigationControls navigation={navigation} /> : null}
+        <IconButton
+          size="sm"
+          tone="ghost"
+          aria-label={t("playback.keyboardTaskTitle")}
+          title={keyGuideEnabled ? t("playback.closeKeyboardHints") : t("playback.showKeyboardHints")}
+          pressed={keyGuideEnabled}
+          disabled={!keyGuideAvailable}
+          onClick={onKeyGuideToggle}
+        >
+          <Piano className="tw:size-4" aria-hidden="true" />
+        </IconButton>
         <div className={styles.transportSpeedControl}>
           <BpmControl
             baseTempo={view.baseTempo}

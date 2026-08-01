@@ -107,8 +107,14 @@
   }
 
   .hints rect {
-    opacity: 0.9;
+    opacity: 0.85;
     stroke-width: 0.05;
+  }
+
+  .hints rect[data-sounding] {
+    opacity: 1;
+    filter: brightness(1.12) saturate(1.15);
+    stroke-width: 0.08;
   }
 
   .keyboard {
@@ -133,8 +139,8 @@
 
   .strikeLine {
     stroke: var(--accent-primary);
-    stroke-width: 0.28;
-    opacity: 0.7;
+    stroke-width: 1.2;
+    opacity: 0.85;
   }
 
   .whiteKey {
@@ -149,13 +155,23 @@
     transition: fill 90ms linear;
   }
 
-  .whiteKey[data-active],
-  .blackKey[data-active] {
-    fill: var(--accent-primary);
+  .whiteKey[data-active][data-active-hand="left"],
+  .blackKey[data-active][data-active-hand="left"] {
+    fill: var(--signal-purple);
   }
 
-  .whiteKey[data-active] {
-    stroke: color-mix(in srgb, var(--accent-primary) 65%, var(--text-primary));
+  .whiteKey[data-active][data-active-hand="right"],
+  .blackKey[data-active][data-active-hand="right"] {
+    fill: var(--signal-blue);
+  }
+
+  .whiteKey[data-active][data-active-hand="left"] {
+    stroke: color-mix(in srgb, var(--signal-purple) 65%, var(--text-primary));
+    stroke-width: 0.08;
+  }
+
+  .whiteKey[data-active][data-active-hand="right"] {
+    stroke: color-mix(in srgb, var(--signal-blue) 65%, var(--text-primary));
     stroke-width: 0.08;
   }
 

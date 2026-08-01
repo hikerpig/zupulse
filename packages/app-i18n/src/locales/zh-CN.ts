@@ -259,7 +259,7 @@ export const zhCN = {
       keyboardHintsOff: "显示即将弹奏的琴键和时值",
       keyboardProjectionUnavailable: "无法生成这份曲谱的琴键引导",
       showKeyboardHints: "显示琴键引导",
-      keyboardHintDescription: "目标手的音符以瀑布流形式落向琴键，提前四个四分音符时值显示，音符块长度表示时值。",
+      keyboardHintDescription: "目标手的音符以瀑布流形式落向琴键，按当前速度提前两秒预览，音符块长度表示时值。",
       pianoKeyboardRegion: "琴键引导",
       resizeKeyboardHints: "调整琴键引导高度",
       closeKeyboardHints: "关闭琴键引导",

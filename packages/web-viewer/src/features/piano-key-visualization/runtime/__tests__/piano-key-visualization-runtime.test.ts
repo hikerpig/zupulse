@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { PianoKeyHintEvent } from "@zupulse/web-core";
+import { PIANO_KEY_LOOKAHEAD_TICKS } from "../../model/piano-key-projection";
 import { createPianoKeyVisualizationRuntime } from "../piano-key-visualization-runtime";
 
 describe("createPianoKeyVisualizationRuntime", () => {
@@ -8,11 +9,13 @@ describe("createPianoKeyVisualizationRuntime", () => {
     const cancelFrame = vi.fn();
     const render = vi.fn();
     let tick = 0;
+    let lookaheadTicks = PIANO_KEY_LOOKAHEAD_TICKS;
     const events: PianoKeyHintEvent[] = [{ pitch: 60, startTick: 100, endTick: 200, hand: "right" }];
     const runtime = createPianoKeyVisualizationRuntime({
       events,
       readTick: () => tick,
       readMode: () => "both-hands",
+      readLookaheadTicks: () => lookaheadTicks,
       render,
       requestFrame(callback) {
         frames.push(callback);
@@ -32,12 +35,17 @@ describe("createPianoKeyVisualizationRuntime", () => {
     tick = 150;
     frames.shift()?.(32);
     expect(render).toHaveBeenCalledTimes(2);
-    expect(render.mock.calls[1]?.[0].activePitches).toEqual([60]);
+    expect(render.mock.calls[1]?.[0].activeKeys).toEqual([{ pitch: 60, hand: "right" }]);
 
     tick = 0;
     frames.shift()?.(48);
     expect(render).toHaveBeenCalledTimes(3);
-    expect(render.mock.calls[2]?.[0].activePitches).toEqual([]);
+    expect(render.mock.calls[2]?.[0].activeKeys).toEqual([]);
+
+    lookaheadTicks = 200;
+    frames.shift()?.(64);
+    expect(render).toHaveBeenCalledTimes(4);
+    expect(render.mock.calls[3]?.[0].hints.map((hint) => hint.startRatio)).toEqual([0.5]);
 
     runtime.stop();
     expect(cancelFrame).toHaveBeenCalledOnce();

@@ -108,14 +108,18 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
 
 ### 琴键引导
 
-- 唯一双非打击乐 Staff Track 可从练习设置打开会话级琴键引导；默认关闭，刷新或重新进入 Viewer
-  后保持关闭，不写入 Practice Sidecar 或设备偏好。完整时间轴在用户首次打开时惰性生成并在 Session
-  内复用；Staff mapping 合格但单手音频隔离不可用时，视觉提示仍然可用。
-- 提示区位于乐谱下方、Transport 上方，关闭后归还乐谱空间。当前发声键高亮；未来四个四分音符
-  playback tick 内的提示块以长度表达时值。双手示范显示双手，单手练习只显示目标手。
+- 唯一双非打击乐 Staff Track 可从练习设置或 Transport 右侧工具区的琴键引导按钮打开会话级琴键引导；默认关闭，
+  刷新或重新进入 Viewer 后保持关闭，不写入 Practice Sidecar 或设备偏好。完整时间轴在用户首次打开时
+  惰性生成并在 Session 内复用；Staff mapping 合格但单手音频隔离不可用时，视觉提示仍然可用。Transport
+  按钮以 `aria-pressed` 反映开关状态，不可用时保持禁用。
+- 提示区位于乐谱下方、Transport 上方，关闭后归还乐谱空间。当前发声键按手色高亮（左手 signal purple、
+  右手 signal blue），coral 只用于击打线；正在发声的提示块相对未到达的提示块加亮。预览窗口跟随当前
+  有效速度（baseTempo × scoreSpeed）固定提前约 2 秒，并限制在 2–8 个四分音符之间；提示块以长度表达
+  时值。双手示范显示双手，单手练习只显示目标手。
 - 空间允许时提示区默认高 260px，可从顶部分隔条在 180–420px 内拖动或用键盘调整；短窗口至少保留
   180px 谱面。谱面滚动区与钢琴 Grid 行之间保持 8px 可见间距，钢琴不得 overlay 谱面。关闭再打开
-  保留当前 Viewer Session 高度，source 变化时复位，不写入持久化偏好。
+  保留当前 Viewer Session 高度，source 变化时复位，不写入持久化偏好。ResizeObserver 的高度回写延迟到
+  下一帧，避免拖拽时触发 ResizeObserver loop 错误。
 - 事件来自 alphaTab `MidiFileGenerator` 展开的 Staff 播放投影，使用包含 channel transposition 的
   发声音高和半开区间 `[startTick, endTick)`；反复形成独立 occurrence，连音保持连续事件，来源 Score
   不被修改。

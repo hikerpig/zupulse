@@ -28,6 +28,13 @@ export default {
     process.platform === "darwin"
       ? [new MakerZIP({}, ["darwin"])]
       : process.platform === "win32"
-        ? [new MakerSquirrel({ setupIcon: windowsIcon })]
+        ? [
+            new MakerSquirrel({
+              name: "Zupulse",
+              authors: "Zupulse Contributors",
+              description: "A local-first workspace for viewing and practicing sheet music.",
+              setupIcon: windowsIcon,
+            }),
+          ]
         : [],
 };

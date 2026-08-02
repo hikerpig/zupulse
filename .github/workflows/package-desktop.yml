@@ -1,0 +1,63 @@
+name: Package Desktop
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-macos-arm64:
+    name: macOS arm64 unsigned
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.3.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm desktop:make:mac
+      - name: Upload unsigned macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zupulse-macos-arm64-unsigned
+          path: |
+            apps/desktop-shell/out/make/**/*.dmg
+            apps/desktop-shell/out/make/**/*.zip
+          if-no-files-found: error
+
+  package-windows-x64:
+    name: Windows x64 unsigned
+    runs-on: windows-2025
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.3.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm desktop:make:win
+      - name: Upload unsigned Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zupulse-windows-x64-unsigned
+          path: |
+            apps/desktop-shell/out/make/**/*Setup.exe
+            apps/desktop-shell/out/make/**/*.nupkg
+            apps/desktop-shell/out/make/**/RELEASES
+          if-no-files-found: error

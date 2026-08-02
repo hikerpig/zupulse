@@ -8,7 +8,13 @@ import { bundledSampleScores, createSampleImportSource } from "../sample-scores"
 describe("bundledSampleScores", () => {
   it("creates a normal import source matching the verified release asset", async () => {
     const sample = bundledSampleScores[0]!;
+    expect(sample).toMatchObject({
+      id: "cannon-in-d",
+      title: "Cannon in D",
+      fileName: "cannon-in-d.mxl",
+    });
     const bytes = new Uint8Array(await readFile(resolve("product-assets/samples", sample.fileName)));
+    expect(bytes.byteLength).toBeGreaterThan(10_000);
     const source = createSampleImportSource(sample, async () => bytes);
 
     expect(source.fileName).toBe(sample.fileName);
@@ -21,7 +27,7 @@ describe("bundledSampleScores", () => {
       createMusicXmlAdapter().parse({ fileName: source.fileName, bytes: await source.readBytes() }),
     ).resolves.toMatchObject({
       document: {
-        summary: { trackCount: 1 },
+        summary: { title: "Cannon\u00a0in\u00a0D", trackCount: 1 },
         tracks: [{ name: "Piano", staves: [{}, {}] }],
       },
     });

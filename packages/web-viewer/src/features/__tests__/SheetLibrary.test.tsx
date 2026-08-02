@@ -449,9 +449,9 @@ describe("SheetLibrary import dialog", () => {
 
   it("adds a bundled sample to the normal candidate list before submission", async () => {
     const sample = {
-      id: "first-light-practice",
-      title: "First Light Practice",
-      fileName: "first-light-practice.mxl",
+      id: "cannon-in-d",
+      title: "Cannon in D",
+      fileName: "cannon-in-d.mxl",
       format: "musicxml",
       attribution: "Zupulse",
       license: "CC0-1.0",
@@ -474,8 +474,8 @@ describe("SheetLibrary import dialog", () => {
     );
 
     await userEvent.click(screen.getByRole("button", { name: "导入自己的曲谱" }));
-    await userEvent.click(screen.getByRole("button", { name: "使用样例 First Light Practice" }));
-    expect(screen.getByText("first-light-practice.mxl")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "使用样例 Cannon in D" }));
+    expect(screen.getByText("cannon-in-d.mxl")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "导入 1 份" }));
     expect(onImportSources).toHaveBeenCalledWith([source]);
   });

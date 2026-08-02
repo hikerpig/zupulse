@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const shellRoot = new URL("..", import.meta.url);
 const expectedSampleBase64 = (
-  await readFile(new URL("../../../product-assets/samples/first-light-practice.mxl", import.meta.url))
+  await readFile(new URL("../../../product-assets/samples/cannon-in-d.mxl", import.meta.url))
 ).toString("base64");
 const outRoot = new URL("./out/", shellRoot);
 const asar = await findFile(outRoot, "app.asar");

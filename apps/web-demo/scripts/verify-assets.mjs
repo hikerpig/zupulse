@@ -10,7 +10,7 @@ const requiredAssets = [
   "../dist/alphatab/font/Bravura.woff2",
   "../dist/alphatab/soundfont/sonivox.sf3",
   "../dist/alphatab/soundfont/LICENSE",
-  "../dist/samples/first-light-practice.mxl",
+  "../dist/samples/cannon-in-d.mxl",
   "../dist/samples/manifest.json",
   "../dist/samples/LICENSE.md",
 ];

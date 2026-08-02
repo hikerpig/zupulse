@@ -22,7 +22,6 @@
     "verify:e2e": "pnpm demo:test:e2e && pnpm desktop:test:e2e",
     "fixtures:gp": "node scripts/generate-gp-fixtures.mjs && node scripts/verify-gp-fixtures.mjs",
     "fixtures:musicxml": "node scripts/generate-musicxml-fixtures.mjs && node scripts/verify-musicxml-fixtures.mjs",
-    "samples:generate": "node scripts/generate-sample-scores.mjs",
     "samples:verify": "node scripts/verify-sample-scores.mjs",
     "benchmark:musicxml": "node scripts/benchmark-musicxml-import.mjs",
     "benchmark:harmony": "node scripts/benchmark-harmony-analysis.mjs",

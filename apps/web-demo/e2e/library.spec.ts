@@ -57,20 +57,20 @@ test("imports, reuses, exports, deletes, and re-adds the bundled sample as a nor
   await importBundledSample(page, "导入自己的曲谱");
   const firstId = page.url().split("/viewer/")[1];
   expect(firstId).toBeTruthy();
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("First");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Cannon in D");
 
   await page.getByRole("navigation", { name: "主要页面" }).getByRole("link", { name: "曲谱库" }).click();
   await importBundledSample(page, "导入曲谱");
   expect(page.url()).toContain(firstId);
 
   await page.getByRole("navigation", { name: "主要页面" }).getByRole("link", { name: "曲谱库" }).click();
-  await page.getByRole("button", { name: "First Light Practice 的更多操作" }).click();
+  await page.getByRole("button", { name: "Cannon in D 的更多操作" }).click();
   const download = page.waitForEvent("download");
-  await page.getByRole("menuitem", { name: "导出 First Light Practice", exact: true }).click();
-  expect((await download).suggestedFilename()).toBe("first-light-practice.mxl");
+  await page.getByRole("menuitem", { name: "导出 Cannon in D", exact: true }).click();
+  expect((await download).suggestedFilename()).toBe("cannon-in-d.mxl");
 
-  await page.getByRole("button", { name: "First Light Practice 的更多操作" }).click();
-  await page.getByRole("menuitem", { name: "删除 First Light Practice", exact: true }).click();
+  await page.getByRole("button", { name: "Cannon in D 的更多操作" }).click();
+  await page.getByRole("menuitem", { name: "删除 Cannon in D", exact: true }).click();
   await page.getByRole("button", { name: "永久删除" }).click();
   await importBundledSample(page, "导入自己的曲谱");
   const secondId = page.url().split("/viewer/")[1];
@@ -635,7 +635,7 @@ async function importFixture(page: Page, buttonName: string, filePath = fixture)
 
 async function importBundledSample(page: Page, buttonName: string): Promise<void> {
   await page.getByRole("button", { name: buttonName, exact: true }).click();
-  await page.getByRole("button", { name: "使用样例 First Light Practice" }).click();
+  await page.getByRole("button", { name: "使用样例 Cannon in D" }).click();
   await page.getByRole("button", { name: "导入 1 份" }).click();
   await expect.poll(() => page.url()).toContain("#/viewer/");
 }

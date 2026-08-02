@@ -3,7 +3,7 @@ feature: sheet-library
 title: Sheet Library
 status: current
 delivery: partial
-last_verified: 2026-07-30
+last_verified: 2026-08-02
 hosts:
   - browser
   - desktop
@@ -77,7 +77,7 @@ Main 一次性 token 接受 Finder 拖放，两端都把 picker 与 dropped file
 Desktop 在原生文件选择完成后立即通过 Main 消费一次性 token 并物化候选字节，再把候选交给 modal
 审阅；用户停留时间不影响已选择文件的可读性，Renderer 仍不获得绝对路径。
 
-Browser import modal 提供用户主动选择的 `First Light Practice` MXL bundled sample。它进入相同
+Browser import modal 提供用户主动选择的 `Cannon in D` MXL bundled sample。它进入相同
 candidate/import pipeline，创建普通 Library Score；重复、导出、删除和重新添加不使用 sample-only
 持久化语义。
 

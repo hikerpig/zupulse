@@ -196,7 +196,7 @@ test("opens MusicXML and MXL through the unified score entry", async () => {
 
 test("uses the bundled sample as a normal Desktop Library Score", async () => {
   const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-sample-"));
-  const exportPath = join(userData, "first-light-practice.mxl");
+  const exportPath = join(userData, "cannon-in-d.mxl");
   const app = await launch(userData);
   try {
     const window = await app.firstWindow();
@@ -214,12 +214,12 @@ test("uses the bundled sample as a normal Desktop Library Score", async () => {
     await app.evaluate(({ dialog }, path) => {
       dialog.showSaveDialog = async () => ({ canceled: false, filePath: path });
     }, exportPath);
-    await window.getByRole("button", { name: "More actions for First Light Practice" }).click();
-    await window.getByRole("menuitem", { name: "Export First Light Practice", exact: true }).click();
+    await window.getByRole("button", { name: "More actions for Cannon in D" }).click();
+    await window.getByRole("menuitem", { name: "Export Cannon in D", exact: true }).click();
     await expect.poll(async () => (await readFile(exportPath)).byteLength > 0).toBe(true);
 
-    await window.getByRole("button", { name: "More actions for First Light Practice" }).click();
-    await window.getByRole("menuitem", { name: "Delete First Light Practice", exact: true }).click();
+    await window.getByRole("button", { name: "More actions for Cannon in D" }).click();
+    await window.getByRole("menuitem", { name: "Delete Cannon in D", exact: true }).click();
     await window.getByRole("button", { name: "Delete permanently" }).click();
     await importBundledSample(window, "Import your own scores");
     const secondId = window.url().split("/viewer/")[1];
@@ -332,7 +332,7 @@ test("keeps K331 responsive and terminates a cancelled Desktop analysis", async 
 
 async function importBundledSample(window: import("@playwright/test").Page, buttonName: string): Promise<void> {
   await window.getByRole("button", { name: buttonName, exact: true }).click();
-  await window.getByRole("button", { name: "Use sample First Light Practice" }).click();
+  await window.getByRole("button", { name: "Use sample Cannon in D" }).click();
   await window.getByRole("button", { name: "Import 1" }).click();
   await expect.poll(() => window.url()).toContain("#/viewer/");
 }

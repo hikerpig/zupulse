@@ -1,13 +1,13 @@
 import type { ScoreImportSource } from "@zupulse/web-core";
 
 export type BundledSampleScore = {
-  id: "first-light-practice";
-  title: "First Light Practice";
-  fileName: "first-light-practice.mxl";
+  id: "cannon-in-d";
+  title: "Cannon in D";
+  fileName: "cannon-in-d.mxl";
   format: "musicxml";
-  attribution: "Zupulse";
-  license: "CC0-1.0";
-  sha256: "ec1a465e7a0796637122f8c74b0fe16c798c4cb8d82121eb850152d1d3c177ec";
+  attribution: "MuseScore user 17746751";
+  license: "Unspecified";
+  sha256: "3029cedc603228153e8468633e70e0cdef8581d58dc95b9acdfaf212a66b2daa";
 };
 
 export type BundledSampleSource = {
@@ -17,13 +17,13 @@ export type BundledSampleSource = {
 
 export const bundledSampleScores: readonly BundledSampleScore[] = [
   {
-    id: "first-light-practice",
-    title: "First Light Practice",
-    fileName: "first-light-practice.mxl",
+    id: "cannon-in-d",
+    title: "Cannon in D",
+    fileName: "cannon-in-d.mxl",
     format: "musicxml",
-    attribution: "Zupulse",
-    license: "CC0-1.0",
-    sha256: "ec1a465e7a0796637122f8c74b0fe16c798c4cb8d82121eb850152d1d3c177ec",
+    attribution: "MuseScore user 17746751",
+    license: "Unspecified",
+    sha256: "3029cedc603228153e8468633e70e0cdef8581d58dc95b9acdfaf212a66b2daa",
   },
 ];
 

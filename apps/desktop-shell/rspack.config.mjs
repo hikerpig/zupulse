@@ -13,7 +13,7 @@ const buildDefinitions = {
   __RENDERER_BUILD_HASH__: JSON.stringify(rendererBuildHash),
 };
 const bundledSampleBase64 = readFileSync(
-  fileURLToPath(new URL("../../product-assets/samples/first-light-practice.mxl", import.meta.url)),
+  fileURLToPath(new URL("../../product-assets/samples/cannon-in-d.mxl", import.meta.url)),
 ).toString("base64");
 
 const createConfig = (_env, argv) => {

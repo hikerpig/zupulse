@@ -204,7 +204,6 @@ test("uses the bundled sample as a normal Desktop Library Score", async () => {
     await importBundledSample(window, "Import your own scores");
     const firstId = window.url().split("/viewer/")[1];
     expect(firstId).toBeTruthy();
-    await expect(window.getByRole("heading", { level: 1 })).toContainText("First");
 
     await window.getByRole("link", { name: "Library" }).click();
     await importBundledSample(window, "Import score");

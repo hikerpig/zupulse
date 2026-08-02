@@ -230,6 +230,8 @@ Zupulse 不是营销落地页、SaaS 管理后台、赛博音乐概念图或硬�
 - 样式迁移不是产品目标。现有 CSS Module 只有在能够删除重复视觉状态、复用共享 primitive 或消除
   双重 style ownership 时才迁移；不得用 Tailwind 覆盖率或 CSS LOC 作为设计质量指标。
 - `check:design` 验证入口文件和映射不漂移，不负责评价所有视觉质量。
+- `.design_library/tab-viewer-te-braun-theme` 是候选的可切换并行主题（Device Theme，status: candidate），
+  未采用前不影响运行时 token 与本文件的一致性锁；采用时需显式协调本文件与两个 theme library。
 - 不自动生成本文件；token 差异可以自动检查，产品设计判断由人维护。
 
 ## 深入阅读
@@ -239,6 +241,7 @@ Zupulse 不是营销落地页、SaaS 管理后台、赛博音乐概念图或硬�
 - 原始 token：`.design_library/zupulse-te-braun-theme/css.json`
 - 主题 CSS：`.design_library/zupulse-te-braun-theme/colors_and_type.css`
 - 组件语义：`.design_library/zupulse-te-braun-theme/specs/component-semantics.md`
+- 候选并行主题（Device Theme）：`.design_library/tab-viewer-te-braun-theme/README.md`
 - 运行时 token：`packages/web-viewer/src/styles/tokens.css`
 - Viewer 当前模式：`packages/web-viewer/src/features/PlaybackWorkspace.tsx`
 - UI 用户视角测试：`packages/web-viewer/src/app/__tests__/App.test.tsx`

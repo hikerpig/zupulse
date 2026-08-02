@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>机身纹理试验</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #141312;
+        font-family: "Space Grotesk", "PingFang SC", sans-serif;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;
+      }
+      h1 {
+        color: #efece6;
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      }
+      h1 span {
+        color: #8a857e;
+        font-size: 12px;
+        font-weight: 400;
+        margin-left: 12px;
+        letter-spacing: 0.1em;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px;
+      }
+
+      .panel {
+        width: 648px;
+      }
+      .panel .name {
+        color: #b9b4ad;
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      .panel .name b {
+        color: #efece6;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+      }
+      .panel .name .tag {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: #6e6963;
+      }
+
+      /* ============ 机身基底（与 v4 相同的光影结构） ============ */
+      .body {
+        border-radius: 12px;
+        padding: 26px 28px;
+        height: 300px;
+        box-shadow:
+          inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
+          inset 0 -4px 10px rgba(0, 0, 0, 0.12),
+          0 24px 48px rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        position: relative;
+      }
+
+      /* ---- 纹理候选 ---- */
+      /* A 纯净哑光：只有受光渐变，无纹理 */
+      .tex-a {
+        background:
+          radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.35), transparent 55%),
+          linear-gradient(180deg, #e0ddd8 0%, #d6d3ce 50%, #cecbc6 100%);
+      }
+      /* B 细砂噪点：SVG fractalNoise 轻颗粒 */
+      .tex-b {
+        background:
+          radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.35), transparent 55%),
+          linear-gradient(180deg, #e0ddd8 0%, #d6d3ce 50%, #cecbc6 100%);
+        position: relative;
+      }
+      .tex-b::before,
+      .tex-c::before,
+      .tex-h::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 12px;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.05 0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+      }
+      /* C 喷砂颗粒：更粗更明显 */
+      .tex-c {
+        background:
+          radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.35), transparent 55%),
+          linear-gradient(180deg, #e0ddd8 0%, #d6d3ce 50%, #cecbc6 100%);
+        position: relative;
+      }
+      .tex-c::before {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.10 0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+      }
+      /* D 横向拉丝 */
+      .tex-d {
+        background:
+          radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.3), transparent 55%),
+          repeating-linear-gradient(
+            0deg,
+            rgba(255, 255, 255, 0.05) 0 1px,
+            rgba(0, 0, 0, 0.035) 1px 2px,
+            transparent 2px 4px
+          ),
+          linear-gradient(180deg, #e0ddd8 0%, #d6d3ce 50%, #cecbc6 100%);
+      }
+      /* E 细罗纹：3px 周期的横向棱线 */
+      .tex-e {
+        background:
+          radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.3), transparent 55%),
+          repeating-linear-gradient(
+            0deg,
+            rgba(0, 0, 0, 0.06) 0 1px,
+            rgba(255, 255, 255, 0.14) 1px 2px,
+            transparent 2px 3px
+          ),
+          linear-gradient(180deg, #dfdcd7 0%, #d5d2cd 50%, #cdcac5 100%);
+      }
+      /* F 十字织纹 */
+      .tex-f {
+        background:
+          radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.3), transparent 55%),
+          repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.03) 0 1px, transparent 1px 4px),
+          repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.03) 0 1px, transparent 1px 4px),
+          linear-gradient(180deg, #e0ddd8 0%, #d6d3ce 50%, #cecbc6 100%);
+      }
+      /* G 微凹点阵：比 v3 更细更浅的圆点 */
+      .tex-g {
+        background:
+          radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.35), transparent 55%),
+          radial-gradient(rgba(0, 0, 0, 0.07) 0.8px, rgba(255, 255, 255, 0.12) 1px, transparent 1.3px),
+          linear-gradient(180deg, #e0ddd8 0%, #d6d3ce 50%, #cecbc6 100%);
+        background-size:
+          100% 100%,
+          5px 5px,
+          100% 100%;
+      }
+      /* H 暖纸纤维：偏暖底色 + 轻噪 */
+      .tex-h {
+        background:
+          radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.4), transparent 55%),
+          linear-gradient(180deg, #e6e1d6 0%, #dcd6c9 50%, #d2ccbe 100%);
+        position: relative;
+      }
+      .tex-h::before {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0.25  0 0 0 0 0.2  0 0 0 0 0.12  0 0 0 0.05 0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+      }
+
+      /* ============ 面板上的样品控件（与 v4 同规格） ============ */
+      .label {
+        font-size: 9px;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #78736c;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+      }
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+      }
+      .key {
+        border: none;
+        cursor: pointer;
+        border-radius: 6px;
+        font-family: "Space Grotesk", "PingFang SC", sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+        position: relative;
+      }
+      .key-dark {
+        background: linear-gradient(180deg, #3d3d3c, #262625);
+        color: #efece6;
+        box-shadow:
+          0 5px 0 #111110,
+          0 8px 10px rgba(0, 0, 0, 0.28),
+          inset 0 1px 0 rgba(255, 255, 255, 0.14);
+      }
+      .key-light {
+        background: linear-gradient(180deg, #faf8f5, #e4e0da);
+        color: #2e2d2b;
+        box-shadow:
+          0 5px 0 #b3aea7,
+          0 8px 10px rgba(0, 0, 0, 0.18),
+          inset 0 1px 0 #ffffff;
+      }
+      .key-orange {
+        background: linear-gradient(180deg, #ff6b35, #f2501a);
+        color: #fff;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+        box-shadow:
+          0 5px 0 #b83a10,
+          0 8px 12px rgba(242, 80, 26, 0.32),
+          inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      }
+      .k-md {
+        height: 44px;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+      }
+      .k-pad {
+        width: 72px;
+        height: 52px;
+        font-size: 17px;
+        font-weight: 700;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .fader-v {
+        position: relative;
+        width: 24px;
+        height: 120px;
+      }
+      .fader-v .rail {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 5px;
+        transform: translateX(-50%);
+        border-radius: 3px;
+        background: #a5a19b;
+        box-shadow:
+          inset 1.5px 0 3px rgba(0, 0, 0, 0.4),
+          1px 0 0 rgba(255, 255, 255, 0.5);
+      }
+      .fader-v .cap {
+        position: absolute;
+        left: 50%;
+        top: 38%;
+        width: 20px;
+        height: 13px;
+        transform: translate(-50%, -50%);
+        border-radius: 3px;
+        background: linear-gradient(180deg, #3d3d3c, #262625);
+        box-shadow:
+          0 2px 4px rgba(0, 0, 0, 0.35),
+          inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      }
+      .fader-v .cap::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 3px;
+        right: 3px;
+        height: 2px;
+        transform: translateY(-50%);
+        background: #ff6a2e;
+        border-radius: 1px;
+      }
+
+      .readout {
+        background: linear-gradient(180deg, #1c1a14, #211f18);
+        border-radius: 4px;
+        box-shadow:
+          inset 0 2px 5px rgba(0, 0, 0, 0.8),
+          0 1px 0 rgba(255, 255, 255, 0.5);
+        font-family: "IBM Plex Mono", monospace;
+        color: #ffb057;
+        text-shadow: 0 0 8px rgba(255, 140, 50, 0.5);
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        position: relative;
+        z-index: 1;
+      }
+      .grow {
+        flex: 1;
+        position: relative;
+        z-index: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>机身纹理试验<span>同一组控件 · 8 种机身表面候选</span></h1>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="name"><b>A · 纯净哑光</b><span class="tag">gradient only / no texture</span></div>
+        <div class="body tex-a">
+          <div class="col">
+            <span class="label">音量</span>
+            <div class="fader-v">
+              <div class="rail"></div>
+              <div class="cap"></div>
+            </div>
+          </div>
+          <div class="col grow">
+            <span class="label">播放</span><button class="key key-orange k-md" style="width: 100%">▶ 播放</button>
+          </div>
+          <div class="col"><span class="label">轨道</span><button class="key key-dark k-pad">A</button></div>
+          <div class="col"><span class="label">&nbsp;</span><button class="key key-light k-pad">B</button></div>
+          <div class="readout">120.0</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="name"><b>B · 细砂噪点</b><span class="tag">svg fractalNoise 0.05</span></div>
+        <div class="body tex-b">
+          <div class="col">
+            <span class="label">音量</span>
+            <div class="fader-v">
+              <div class="rail"></div>
+              <div class="cap"></div>
+            </div>
+          </div>
+          <div class="col grow">
+            <span class="label">播放</span><button class="key key-orange k-md" style="width: 100%">▶ 播放</button>
+          </div>
+          <div class="col"><span class="label">轨道</span><button class="key key-dark k-pad">A</button></div>
+          <div class="col"><span class="label">&nbsp;</span><button class="key key-light k-pad">B</button></div>
+          <div class="readout">120.0</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="name"><b>C · 喷砂颗粒</b><span class="tag">svg fractalNoise 0.10 粗</span></div>
+        <div class="body tex-c">
+          <div class="col">
+            <span class="label">音量</span>
+            <div class="fader-v">
+              <div class="rail"></div>
+              <div class="cap"></div>
+            </div>
+          </div>
+          <div class="col grow">
+            <span class="label">播放</span><button class="key key-orange k-md" style="width: 100%">▶ 播放</button>
+          </div>
+          <div class="col"><span class="label">轨道</span><button class="key key-dark k-pad">A</button></div>
+          <div class="col"><span class="label">&nbsp;</span><button class="key key-light k-pad">B</button></div>
+          <div class="readout">120.0</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="name"><b>D · 横向拉丝</b><span class="tag">brushed / 4px period</span></div>
+        <div class="body tex-d">
+          <div class="col">
+            <span class="label">音量</span>
+            <div class="fader-v">
+              <div class="rail"></div>
+              <div class="cap"></div>
+            </div>
+          </div>
+          <div class="col grow">
+            <span class="label">播放</span><button class="key key-orange k-md" style="width: 100%">▶ 播放</button>
+          </div>
+          <div class="col"><span class="label">轨道</span><button class="key key-dark k-pad">A</button></div>
+          <div class="col"><span class="label">&nbsp;</span><button class="key key-light k-pad">B</button></div>
+          <div class="readout">120.0</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="name"><b>E · 细罗纹</b><span class="tag">ribbed / 3px period</span></div>
+        <div class="body tex-e">
+          <div class="col">
+            <span class="label">音量</span>
+            <div class="fader-v">
+              <div class="rail"></div>
+              <div class="cap"></div>
+            </div>
+          </div>
+          <div class="col grow">
+            <span class="label">播放</span><button class="key key-orange k-md" style="width: 100%">▶ 播放</button>
+          </div>
+          <div class="col"><span class="label">轨道</span><button class="key key-dark k-pad">A</button></div>
+          <div class="col"><span class="label">&nbsp;</span><button class="key key-light k-pad">B</button></div>
+          <div class="readout">120.0</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="name"><b>F · 十字织纹</b><span class="tag">crosshatch / 4px</span></div>
+        <div class="body tex-f">
+          <div class="col">
+            <span class="label">音量</span>
+            <div class="fader-v">
+              <div class="rail"></div>
+              <div class="cap"></div>
+            </div>
+          </div>
+          <div class="col grow">
+            <span class="label">播放</span><button class="key key-orange k-md" style="width: 100%">▶ 播放</button>
+          </div>
+          <div class="col"><span class="label">轨道</span><button class="key key-dark k-pad">A</button></div>
+          <div class="col"><span class="label">&nbsp;</span><button class="key key-light k-pad">B</button></div>
+          <div class="readout">120.0</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="name"><b>G · 微凹点阵</b><span class="tag">dimples / 5px grid（v3 改良）</span></div>
+        <div class="body tex-g">
+          <div class="col">
+            <span class="label">音量</span>
+            <div class="fader-v">
+              <div class="rail"></div>
+              <div class="cap"></div>
+            </div>
+          </div>
+          <div class="col grow">
+            <span class="label">播放</span><button class="key key-orange k-md" style="width: 100%">▶ 播放</button>
+          </div>
+          <div class="col"><span class="label">轨道</span><button class="key key-dark k-pad">A</button></div>
+          <div class="col"><span class="label">&nbsp;</span><button class="key key-light k-pad">B</button></div>
+          <div class="readout">120.0</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="name"><b>H · 暖纸纤维</b><span class="tag">warm paper / 偏暖底色</span></div>
+        <div class="body tex-h">
+          <div class="col">
+            <span class="label">音量</span>
+            <div class="fader-v">
+              <div class="rail"></div>
+              <div class="cap"></div>
+            </div>
+          </div>
+          <div class="col grow">
+            <span class="label">播放</span><button class="key key-orange k-md" style="width: 100%">▶ 播放</button>
+          </div>
+          <div class="col"><span class="label">轨道</span><button class="key key-dark k-pad">A</button></div>
+          <div class="col"><span class="label">&nbsp;</span><button class="key key-light k-pad">B</button></div>
+          <div class="readout">120.0</div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

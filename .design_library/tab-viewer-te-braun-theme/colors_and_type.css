@@ -1,0 +1,146 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+/*
+ * Zupulse Device Theme — 候选并行主题原语
+ * 视觉基准: specs/mockups/a-ep133-device-v5.html
+ * Status: candidate, not adopted by runtime.
+ */
+:root {
+  /* ============ 机身 ============ */
+  --device-body-light: #e0ddd8; /* AI-generated */
+  --device-body-mid: #d6d3ce; /* AI-generated */
+  --device-body-dark: #cecbc6; /* AI-generated */
+  --device-body-glare: rgba(255, 255, 255, 0.35); /* 顶部受光 */
+  --device-edge-highlight: rgba(255, 255, 255, 0.8); /* 机身顶缘高光 */
+  --device-edge-shade: rgba(0, 0, 0, 0.12); /* 机身底缘内影 */
+  /* 细砂噪点: SVG feTurbulence data URI, 5% black, baseFrequency 0.9, 2 octaves */
+  --device-texture-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.05 0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+
+  /* ============ 品牌板 / 内凹面板 ============ */
+  --device-plate-light: #f5f2ed; /* AI-generated */
+  --device-plate-dark: #ede9e3; /* AI-generated */
+  --device-plate-accent: #e2492c; /* 品牌板红色小字 AI-generated */
+  --device-keybed: rgba(0, 0, 0, 0.1); /* 键井凹槽底 */
+  --device-label: #78736c; /* 刻印标签 AI-generated */
+
+  /* ============ 按键: dark ============ */
+  --device-key-dark-face-hi: #3d3d3c; /* AI-generated */
+  --device-key-dark-face-lo: #262625; /* AI-generated */
+  --device-key-dark-edge: #111110; /* 键程底边 */
+  --device-key-dark-text: #efece6; /* AI-generated */
+
+  /* ============ 按键: light ============ */
+  --device-key-light-face-hi: #faf8f5; /* AI-generated */
+  --device-key-light-face-lo: #e4e0da; /* AI-generated */
+  --device-key-light-edge: #b3aea7; /* AI-generated */
+  --device-key-light-text: #2e2d2b; /* AI-generated */
+
+  /* ============ 按键: orange (主操作) ============ */
+  --device-key-orange-face-hi: #ff6b35; /* AI-generated */
+  --device-key-orange-face-lo: #f2501a; /* AI-generated */
+  --device-key-orange-edge: #b83a10; /* AI-generated */
+  --device-key-orange-glow: rgba(242, 80, 26, 0.32);
+
+  /* ============ 按键: red (循环/记录语义) ============ */
+  --device-key-red-face-hi: #e8452e; /* AI-generated */
+  --device-key-red-face-lo: #d33420; /* AI-generated */
+  --device-key-red-edge: #972413; /* AI-generated */
+
+  /* 键程规格: rest 底边 5px, active 下沉 4px 余 1px */
+  --device-key-travel: 5px;
+  --device-key-press: 4px;
+
+  /* ============ LCD 显示 ============ */
+  --device-lcd-bg-hi: #171610; /* AI-generated */
+  --device-lcd-bg-mid: #1f1d15; /* AI-generated */
+  --device-lcd-bg-lo: #1a1812; /* AI-generated */
+  --device-lcd-amber: #ffb057; /* 发光字主色 AI-generated */
+  --device-lcd-amber-dim: #7a6a4d; /* 发光字暗态 AI-generated */
+  --device-lcd-glow: rgba(255, 140, 50, 0.5);
+  --device-lcd-glare: rgba(255, 255, 255, 0.05); /* 玻璃反光, ≤5% */
+  --device-lcd-signal-blue: #4db2e8; /* AI-generated */
+  --device-lcd-signal-pink: #f04a8a; /* AI-generated */
+  --device-lcd-signal-yellow: #ffbe1a; /* AI-generated */
+
+  /* ============ 推子 ============ */
+  --device-fader-rail: #a5a19b; /* 凹槽轨道 AI-generated */
+  --device-fader-fill: #e8561d; /* 已填充段 AI-generated */
+  --device-fader-cap-hi: #3d3d3c; /* 薄片柄 AI-generated */
+  --device-fader-cap-lo: #262625; /* AI-generated */
+  --device-fader-indicator: #ff6a2e; /* 柄上指示线 AI-generated */
+
+  /* ============ 读数窗 ============ */
+  --device-readout-bg-hi: #1c1a14; /* AI-generated */
+  --device-readout-bg-lo: #211f18; /* AI-generated */
+  --device-readout-text: var(--device-lcd-amber);
+
+  /* ============ LED ============ */
+  --device-led-on: #ff5a26; /* AI-generated */
+  --device-led-on-glow: rgba(255, 90, 38, 0.9);
+  --device-led-off: #98938c; /* AI-generated */
+
+  /* ============ 谱面纸（与当前主题同原则） ============ */
+  --device-score-paper-hi: #fdfcf9; /* AI-generated */
+  --device-score-paper-lo: #f8f6f1; /* AI-generated */
+
+  /* ============ 圆角刻度: 方正规格 ============ */
+  --device-radius-body: 14px;
+  --device-radius-panel: 8px;
+  --device-radius-lcd: 7px;
+  --device-radius-key: 6px;
+  --device-radius-inset: 4px; /* 读数窗 / 推子柄 / 轨道槽 */
+
+  /* ============ 字体（与当前主题一致） ============ */
+  --font-display: "Space Grotesk", sans-serif;
+  --font-heading: "Space Grotesk", sans-serif;
+  --font-body: "Space Grotesk", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  /* 刻印标签: 9px / 500 / letter-spacing .16em / uppercase */
+  --device-label-size: 9px;
+  --device-label-tracking: 0.16em;
+}
+
+/*
+ * device-dark：深色机身派生（2×2 模型中的 device × dark）
+ * 视觉基准: specs/mockups/a-ep133-device-dark.html
+ * 规则: 控件材质与浅色同构，只替换机身/凹槽/分离度相关色值；
+ * LCD、橙红键、LED、读数窗、谱面纸与浅色版完全一致。
+ */
+[data-mode="dark"] {
+  /* 机身 */
+  --device-body-light: #2e2e33; /* AI-generated */
+  --device-body-mid: #28282c; /* AI-generated */
+  --device-body-dark: #232327; /* AI-generated */
+  --device-body-glare: rgba(255, 255, 255, 0.07);
+  --device-edge-highlight: rgba(255, 255, 255, 0.12);
+  --device-edge-shade: rgba(0, 0, 0, 0.4);
+  /* 细砂噪点在深色机身为白颗粒 3.5%: baseFrequency 0.9, 2 octaves, white */
+  --device-texture-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.035 0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+
+  /* 品牌板 / 内凹面板 */
+  --device-plate-light: #1d1d21; /* AI-generated */
+  --device-plate-dark: #18181c; /* AI-generated */
+  --device-keybed: rgba(0, 0, 0, 0.28);
+  --device-label: #85827c; /* AI-generated */
+
+  /* 按键: dark（与机身拉开明度差） */
+  --device-key-dark-face-hi: #45454a; /* AI-generated */
+  --device-key-dark-face-lo: #303034; /* AI-generated */
+  --device-key-dark-edge: #101013; /* AI-generated */
+  --device-key-dark-text: #e8e6e1; /* AI-generated */
+
+  /* 按键: light 的键程底边在深机身上加深 */
+  --device-key-light-edge: #8f8b84; /* AI-generated */
+
+  /* 推子 */
+  --device-fader-rail: #141416; /* AI-generated */
+  --device-fader-cap-hi: #4a4a4f; /* AI-generated */
+  --device-fader-cap-lo: #323236; /* AI-generated */
+
+  /* 读数窗 */
+  --device-readout-bg-hi: #12110d; /* AI-generated */
+  --device-readout-bg-lo: #171510; /* AI-generated */
+
+  /* LED 灭态 */
+  --device-led-off: #3d3d42; /* AI-generated */
+}

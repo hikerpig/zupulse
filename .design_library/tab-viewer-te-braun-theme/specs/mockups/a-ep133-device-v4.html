@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>方向 A v4 · EP-133 设备机身（干净按键 · 薄推子）</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        background: #141312;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Space Grotesk", "PingFang SC", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ================= 机身 ================= */
+      .device {
+        width: 1360px;
+        border-radius: 14px;
+        padding: 18px 22px 22px;
+        background:
+          radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.35), transparent 55%),
+          linear-gradient(180deg, #e0ddd8 0%, #d6d3ce 50%, #cecbc6 100%);
+        box-shadow:
+          inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
+          inset 0 -4px 10px rgba(0, 0, 0, 0.12),
+          0 50px 90px rgba(0, 0, 0, 0.6),
+          0 8px 24px rgba(0, 0, 0, 0.35);
+        color: #2b2a28;
+        position: relative;
+      }
+      .device::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 14px;
+        pointer-events: none;
+        background-image: radial-gradient(rgba(0, 0, 0, 0.05) 0.6px, transparent 0.7px);
+        background-size: 3px 3px;
+        opacity: 0.5;
+      }
+
+      .label {
+        font-size: 9px;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #78736c;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+      }
+
+      .screw {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, #efece7, #a8a39c 65%, #8a857e);
+        box-shadow:
+          inset 0 -1px 2px rgba(0, 0, 0, 0.35),
+          0 1px 1px rgba(255, 255, 255, 0.6);
+      }
+      .screw::after {
+        content: "";
+        position: absolute;
+        left: 1.5px;
+        right: 1.5px;
+        top: 50%;
+        height: 1.3px;
+        background: rgba(0, 0, 0, 0.35);
+        transform: rotate(38deg);
+        border-radius: 1px;
+      }
+
+      /* ================= 顶部：品牌板 ================= */
+      .top {
+        margin-bottom: 12px;
+      }
+      .brand {
+        position: relative;
+        background: linear-gradient(180deg, #f5f2ed, #ede9e3);
+        border-radius: 8px;
+        padding: 14px 24px 12px;
+        box-shadow:
+          inset 0 2px 6px rgba(0, 0, 0, 0.12),
+          inset 0 -1px 0 rgba(255, 255, 255, 0.9),
+          0 1px 0 rgba(255, 255, 255, 0.65);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand .screw:nth-child(1) {
+        left: 7px;
+        top: 7px;
+      }
+      .brand .screw:nth-child(2) {
+        right: 7px;
+        top: 7px;
+      }
+      .brand .screw:nth-child(3) {
+        left: 7px;
+        bottom: 7px;
+      }
+      .brand .screw:nth-child(4) {
+        right: 7px;
+        bottom: 7px;
+      }
+      .brand .name {
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1;
+      }
+      .brand .name .en {
+        font-size: 11px;
+        font-weight: 500;
+        color: #8a857e;
+        letter-spacing: 0.24em;
+        margin-left: 10px;
+      }
+      .brand .sub {
+        color: #e2492c;
+        font-size: 10px;
+        font-weight: 500;
+        margin-left: 14px;
+        letter-spacing: 0.4em;
+      }
+      .brand .desc {
+        font-size: 9px;
+        letter-spacing: 0.26em;
+        color: #78736c;
+        text-transform: uppercase;
+        text-align: right;
+        line-height: 1.9;
+      }
+
+      /* ================= LCD 显示条 ================= */
+      .lcd {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(180deg, #171610 0%, #1f1d15 60%, #1a1812 100%);
+        border-radius: 7px;
+        box-shadow:
+          inset 0 3px 12px rgba(0, 0, 0, 0.9),
+          inset 0 -1px 0 rgba(255, 255, 255, 0.05),
+          0 1px 0 rgba(255, 255, 255, 0.55);
+        padding: 12px 22px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        margin-bottom: 12px;
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .lcd::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(115deg, rgba(255, 255, 255, 0.05) 0%, transparent 24%);
+      }
+      .glow-amber {
+        color: #ffb057;
+        text-shadow:
+          0 0 12px rgba(255, 140, 50, 0.5),
+          0 0 3px rgba(255, 150, 60, 0.85);
+      }
+      .glow-dim {
+        color: #7a6a4d;
+      }
+      .lcd .seg {
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        line-height: 1;
+      }
+      .lcd .seg small {
+        font-size: 15px;
+      }
+      .lcd .unit {
+        font-size: 9px;
+        letter-spacing: 0.24em;
+        margin-top: 18px;
+      }
+      .lcd .bar {
+        font-size: 12px;
+      }
+      .lcd .bar b {
+        font-size: 20px;
+        font-weight: 600;
+      }
+      .lcd .playicon {
+        font-size: 15px;
+      }
+      .lcd .meta {
+        font-size: 10px;
+        letter-spacing: 0.14em;
+      }
+      .lcd .spacer {
+        flex: 1;
+      }
+      .lcd .blocks {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+      }
+      .lcd .blk {
+        width: 12px;
+        border-radius: 2px;
+      }
+      .lcd .blk.b {
+        background: #4db2e8;
+        height: 17px;
+        box-shadow: 0 0 8px rgba(77, 178, 232, 0.75);
+      }
+      .lcd .blk.p {
+        background: #f04a8a;
+        height: 23px;
+        box-shadow: 0 0 8px rgba(240, 74, 138, 0.75);
+      }
+      .lcd .blk.y {
+        background: #ffbe1a;
+        height: 12px;
+        box-shadow: 0 0 8px rgba(255, 190, 26, 0.75);
+      }
+
+      /* ================= 推子：细槽 + 薄片柄 ================= */
+      .fader-h {
+        position: relative;
+        height: 22px;
+      }
+      .fader-h .rail {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 5px;
+        transform: translateY(-50%);
+        border-radius: 3px;
+        background: #a5a19b;
+        box-shadow:
+          inset 0 1.5px 3px rgba(0, 0, 0, 0.4),
+          0 1px 0 rgba(255, 255, 255, 0.5);
+      }
+      .fader-h .fill {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        height: 5px;
+        transform: translateY(-50%);
+        border-radius: 3px 0 0 3px;
+        background: #e8561d;
+        box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.25);
+      }
+      .fader-h .cap {
+        position: absolute;
+        top: 50%;
+        width: 14px;
+        height: 22px;
+        transform: translate(-50%, -50%);
+        border-radius: 3px;
+        background: linear-gradient(180deg, #3d3d3c, #262625);
+        box-shadow:
+          0 2px 4px rgba(0, 0, 0, 0.35),
+          inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      }
+      .fader-h .cap::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 3px;
+        bottom: 3px;
+        width: 2px;
+        transform: translateX(-50%);
+        background: #ff6a2e;
+        border-radius: 1px;
+      }
+      .ticks {
+        display: flex;
+        justify-content: space-between;
+        padding: 0 2px;
+        margin-top: 1px;
+      }
+      .ticks i {
+        width: 1px;
+        height: 4px;
+        background: rgba(0, 0, 0, 0.3);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+      }
+      .ticks i:nth-child(5n + 1) {
+        height: 7px;
+      }
+
+      .fader-v {
+        position: relative;
+        width: 28px;
+        height: 118px;
+      }
+      .fader-v .rail {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 5px;
+        transform: translateX(-50%);
+        border-radius: 3px;
+        background: #a5a19b;
+        box-shadow:
+          inset 1.5px 0 3px rgba(0, 0, 0, 0.4),
+          1px 0 0 rgba(255, 255, 255, 0.5);
+      }
+      .fader-v .cap {
+        position: absolute;
+        left: 50%;
+        width: 22px;
+        height: 14px;
+        transform: translate(-50%, -50%);
+        border-radius: 3px;
+        background: linear-gradient(180deg, #3d3d3c, #262625);
+        box-shadow:
+          0 2px 4px rgba(0, 0, 0, 0.35),
+          inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      }
+      .fader-v .cap::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 3px;
+        right: 3px;
+        height: 2px;
+        transform: translateY(-50%);
+        background: #ff6a2e;
+        border-radius: 1px;
+      }
+      .vticks {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 118px;
+        padding: 3px 0;
+      }
+      .vticks i {
+        width: 5px;
+        height: 1px;
+        background: rgba(0, 0, 0, 0.3);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+      }
+
+      /* ================= 按键：平面哑光 + 明确键程 ================= */
+      .key {
+        border: none;
+        cursor: pointer;
+        border-radius: 6px;
+        font-family: "Space Grotesk", "PingFang SC", sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          transform 0.05s,
+          box-shadow 0.05s;
+        user-select: none;
+        position: relative;
+      }
+      .key-dark {
+        background: linear-gradient(180deg, #3d3d3c, #262625);
+        color: #efece6;
+        box-shadow:
+          0 5px 0 #111110,
+          0 8px 10px rgba(0, 0, 0, 0.28),
+          inset 0 1px 0 rgba(255, 255, 255, 0.14);
+        text-shadow: 0 -1px 1px rgba(0, 0, 0, 0.5);
+      }
+      .key-dark:active {
+        transform: translateY(4px);
+        box-shadow:
+          0 1px 0 #111110,
+          0 3px 4px rgba(0, 0, 0, 0.26),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      }
+      .key-light {
+        background: linear-gradient(180deg, #faf8f5, #e4e0da);
+        color: #2e2d2b;
+        box-shadow:
+          0 5px 0 #b3aea7,
+          0 8px 10px rgba(0, 0, 0, 0.18),
+          inset 0 1px 0 #ffffff;
+      }
+      .key-light:active {
+        transform: translateY(4px);
+        box-shadow:
+          0 1px 0 #b3aea7,
+          0 3px 4px rgba(0, 0, 0, 0.16),
+          inset 0 1px 0 #fff;
+      }
+      .key-orange {
+        background: linear-gradient(180deg, #ff6b35, #f2501a);
+        color: #fff;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+        box-shadow:
+          0 5px 0 #b83a10,
+          0 8px 12px rgba(242, 80, 26, 0.32),
+          inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      }
+      .key-orange:active {
+        transform: translateY(4px);
+        box-shadow:
+          0 1px 0 #b83a10,
+          0 3px 5px rgba(242, 80, 26, 0.35),
+          inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      }
+      .key-red {
+        background: linear-gradient(180deg, #e8452e, #d33420);
+        color: #fff;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+        box-shadow:
+          0 5px 0 #972413,
+          0 8px 12px rgba(211, 52, 32, 0.32),
+          inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      }
+      .key-red:active {
+        transform: translateY(4px);
+        box-shadow:
+          0 1px 0 #972413,
+          0 3px 5px rgba(211, 52, 32, 0.35);
+      }
+
+      .k-xl {
+        height: 52px;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+      }
+      .k-md {
+        height: 40px;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+      }
+      .k-sm {
+        height: 36px;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+      }
+      .k-step {
+        width: 38px;
+        height: 38px;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .k-pad {
+        height: 50px;
+        font-size: 17px;
+        font-weight: 700;
+        font-family: "IBM Plex Mono", monospace;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .k-pad small {
+        font-size: 8.5px;
+        font-weight: 400;
+        font-family: "Space Grotesk", "PingFang SC", sans-serif;
+        opacity: 0.6;
+        letter-spacing: 0.1em;
+      }
+
+      .keybed {
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.05));
+        border-radius: 8px;
+        box-shadow:
+          inset 0 2px 5px rgba(0, 0, 0, 0.16),
+          0 1px 0 rgba(255, 255, 255, 0.5);
+        padding: 8px;
+      }
+
+      .led {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+      }
+      .led-on {
+        background: radial-gradient(circle at 35% 30%, #ffb08a, #ff5a26 60%);
+        box-shadow: 0 0 6px rgba(255, 90, 38, 0.9);
+      }
+      .led-off {
+        background: radial-gradient(circle at 35% 30%, #b5b0a9, #98938c);
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      .readout {
+        background: linear-gradient(180deg, #1c1a14, #211f18);
+        border-radius: 4px;
+        box-shadow:
+          inset 0 2px 5px rgba(0, 0, 0, 0.8),
+          0 1px 0 rgba(255, 255, 255, 0.5);
+        font-family: "IBM Plex Mono", monospace;
+        color: #ffb057;
+        text-shadow: 0 0 8px rgba(255, 140, 50, 0.5);
+        padding: 4px 10px;
+        font-size: 13px;
+        font-weight: 600;
+        min-width: 72px;
+        text-align: center;
+      }
+
+      /* ================= 布局 ================= */
+      .main {
+        display: flex;
+        gap: 18px;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+      }
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: center;
+      }
+      .grow {
+        flex: 1;
+      }
+      .divider {
+        border: none;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+        margin: 1px 0;
+      }
+
+      /* ---- 乐谱纸面 ---- */
+      .score {
+        flex: 1;
+        background: linear-gradient(180deg, #fdfcf9, #f8f6f1);
+        border-radius: 6px;
+        box-shadow:
+          inset 0 0 0 1px rgba(0, 0, 0, 0.05),
+          inset 0 2px 5px rgba(0, 0, 0, 0.07),
+          0 10px 22px rgba(0, 0, 0, 0.2);
+        padding: 24px 32px;
+        position: relative;
+        overflow: hidden;
+      }
+      .score h1 {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .score .sub {
+        font-size: 12px;
+        color: #8a857e;
+        margin: 4px 0 20px;
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .system {
+        position: relative;
+        height: 132px;
+        margin-bottom: 34px;
+      }
+      .staff {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: #3a3835;
+      }
+      .clef {
+        position: absolute;
+        left: 0;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        font-weight: 600;
+        color: #3a3835;
+      }
+      .note {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
+        font-weight: 600;
+        color: #1f1e1c;
+        background: #fdfcf9;
+        padding: 0 2px;
+      }
+      .loop-region {
+        position: absolute;
+        top: -10px;
+        bottom: -10px;
+        background: rgba(242, 107, 79, 0.1);
+        border-left: 2px solid #f26b4f;
+        border-right: 2px solid #f26b4f;
+      }
+      .loop-tag {
+        position: absolute;
+        top: -26px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        font-weight: 600;
+        color: #f26b4f;
+      }
+      .playhead {
+        position: absolute;
+        top: -12px;
+        bottom: -12px;
+        width: 2px;
+        background: #f26b4f;
+        box-shadow: 0 0 6px rgba(242, 107, 79, 0.5);
+      }
+      .playhead::before {
+        content: "";
+        position: absolute;
+        top: -6px;
+        left: -4px;
+        border: 5px solid transparent;
+        border-top-color: #f26b4f;
+      }
+
+      /* ---- 右侧控制仓 ---- */
+      .deck {
+        width: 412px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="device">
+      <!-- 顶部 -->
+      <div class="top">
+        <div class="brand">
+          <div class="screw"></div>
+          <div class="screw"></div>
+          <div class="screw"></div>
+          <div class="screw"></div>
+          <div style="display: flex; align-items: baseline">
+            <div class="name">逐拍<span class="en">ZUPULSE</span></div>
+            <div class="sub">ギター練習台</div>
+          </div>
+          <div class="desc">TAB VIEWER · PRACTICE DESK · LOCAL-FIRST</div>
+        </div>
+      </div>
+
+      <!-- LCD -->
+      <div class="lcd">
+        <div class="seg glow-amber">120<small>.0</small></div>
+        <div class="unit glow-dim">BPM</div>
+        <div class="bar glow-amber">BAR <b>12</b> <span class="glow-dim">/ 48</span></div>
+        <div class="playicon glow-amber">▶</div>
+        <div class="meta glow-dim">
+          LOOP <span class="glow-amber">A–B</span>&nbsp;&nbsp;TRACK <span class="glow-amber">主音吉他</span>
+        </div>
+        <div class="spacer"></div>
+        <div class="blocks">
+          <div class="blk b"></div>
+          <div class="blk p"></div>
+          <div class="blk y"></div>
+        </div>
+        <div class="meta glow-dim">FX <span class="glow-amber">1</span></div>
+      </div>
+
+      <!-- 播放位置推子 -->
+      <div class="row" style="margin-bottom: 14px; align-items: center">
+        <span class="label" style="width: 60px">播放位置</span>
+        <div class="grow">
+          <div class="fader-h">
+            <div class="rail"></div>
+            <div class="fill" style="width: 35%"></div>
+            <div class="cap" style="left: 35%"></div>
+          </div>
+          <div class="ticks">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i> <i></i><i></i><i></i><i></i><i></i
+            ><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+        <div class="readout">01:23<span style="color: #7a6a4d"> / 04:05</span></div>
+      </div>
+
+      <!-- 主区 -->
+      <div class="main">
+        <!-- 乐谱 -->
+        <div class="score">
+          <h1>晴天 · 主音吉他谱</h1>
+          <div class="sub">Standard Tuning · Capo 2 · 4/4</div>
+
+          <div class="system">
+            <div class="loop-region" style="left: 34%; width: 30%"></div>
+            <div class="loop-tag" style="left: 34%">A</div>
+            <div class="loop-tag" style="left: 62%">B</div>
+            <div class="playhead" style="left: 47%"></div>
+            <div class="staff" style="top: 12px"></div>
+            <div class="staff" style="top: 32px"></div>
+            <div class="staff" style="top: 52px"></div>
+            <div class="staff" style="top: 72px"></div>
+            <div class="staff" style="top: 92px"></div>
+            <div class="staff" style="top: 112px"></div>
+            <div class="clef" style="top: 8px">e</div>
+            <div class="clef" style="top: 28px">B</div>
+            <div class="clef" style="top: 48px">G</div>
+            <div class="clef" style="top: 68px">D</div>
+            <div class="clef" style="top: 88px">A</div>
+            <div class="clef" style="top: 108px">E</div>
+            <div class="note" style="left: 12%; top: 52px">0</div>
+            <div class="note" style="left: 17%; top: 32px">2</div>
+            <div class="note" style="left: 22%; top: 12px">0</div>
+            <div class="note" style="left: 27%; top: 32px">2</div>
+            <div class="note" style="left: 37%; top: 52px">2</div>
+            <div class="note" style="left: 41%; top: 32px">4</div>
+            <div class="note" style="left: 45%; top: 12px">2</div>
+            <div class="note" style="left: 52%; top: 52px">2</div>
+            <div class="note" style="left: 56%; top: 32px">4</div>
+            <div class="note" style="left: 60%; top: 12px">4</div>
+            <div class="note" style="left: 68%; top: 72px">4</div>
+            <div class="note" style="left: 72%; top: 52px">2</div>
+            <div class="note" style="left: 76%; top: 32px">2</div>
+            <div class="note" style="left: 84%; top: 92px">2</div>
+            <div class="note" style="left: 88%; top: 72px">2</div>
+          </div>
+
+          <div class="system">
+            <div class="staff" style="top: 12px"></div>
+            <div class="staff" style="top: 32px"></div>
+            <div class="staff" style="top: 52px"></div>
+            <div class="staff" style="top: 72px"></div>
+            <div class="staff" style="top: 92px"></div>
+            <div class="staff" style="top: 112px"></div>
+            <div class="note" style="left: 12%; top: 112px">3</div>
+            <div class="note" style="left: 17%; top: 92px">2</div>
+            <div class="note" style="left: 22%; top: 72px">0</div>
+            <div class="note" style="left: 27%; top: 52px">2</div>
+            <div class="note" style="left: 36%; top: 112px">2</div>
+            <div class="note" style="left: 41%; top: 92px">0</div>
+            <div class="note" style="left: 46%; top: 72px">2</div>
+            <div class="note" style="left: 55%; top: 52px">0</div>
+            <div class="note" style="left: 60%; top: 32px">0</div>
+            <div class="note" style="left: 65%; top: 12px">0</div>
+          </div>
+        </div>
+
+        <!-- 控制仓 -->
+        <div class="deck">
+          <!-- 主操作 + 音量竖推子 -->
+          <div class="row" style="align-items: stretch">
+            <div class="col" style="gap: 5px">
+              <span class="label">音量</span>
+              <div class="row" style="gap: 4px; align-items: stretch">
+                <div class="fader-v">
+                  <div class="rail"></div>
+                  <div class="cap" style="top: 38%"></div>
+                </div>
+                <div class="vticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              </div>
+            </div>
+            <div class="col grow" style="justify-content: flex-end; gap: 8px">
+              <div class="col grow" style="width: 100%">
+                <span class="label">播放 / 暂停</span>
+                <button class="key key-orange k-xl" style="width: 100%">▶ 播放</button>
+              </div>
+              <div class="row grow" style="width: 100%">
+                <div class="col grow">
+                  <span class="label">停止</span>
+                  <button class="key key-dark k-md" style="width: 100%">■</button>
+                  <div class="led led-off"></div>
+                </div>
+                <div class="col grow">
+                  <span class="label">循环 A–B</span>
+                  <button class="key key-red k-md" style="width: 100%">A–B</button>
+                  <div class="led led-on"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr class="divider" />
+
+          <!-- 速度 -->
+          <div class="col" style="align-items: stretch; gap: 6px">
+            <div class="row" style="align-items: center; justify-content: space-between">
+              <span class="label">速度</span>
+              <div class="readout">120.0 <span style="font-size: 9px; color: #7a6a4d">BPM</span></div>
+            </div>
+            <div class="row" style="align-items: center">
+              <button class="key key-dark k-step">−</button>
+              <div class="grow">
+                <div class="fader-h">
+                  <div class="rail"></div>
+                  <div class="fill" style="width: 52%"></div>
+                  <div class="cap" style="left: 52%"></div>
+                </div>
+                <div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              </div>
+              <button class="key key-dark k-step">+</button>
+            </div>
+          </div>
+
+          <hr class="divider" />
+
+          <!-- 轨道 pads -->
+          <div class="col" style="align-items: stretch; gap: 6px">
+            <span class="label">轨道选择</span>
+            <div class="keybed">
+              <div class="row" style="gap: 8px">
+                <button class="key key-light k-pad grow">A<small>主音</small></button>
+                <button class="key key-dark k-pad grow">B<small>节奏</small></button>
+                <button class="key key-dark k-pad grow">C<small>贝斯</small></button>
+                <button class="key key-dark k-pad grow">D<small>鼓</small></button>
+              </div>
+              <div class="row" style="justify-content: space-around; padding: 7px 26px 1px">
+                <div class="led led-on"></div>
+                <div class="led led-off"></div>
+                <div class="led led-off"></div>
+                <div class="led led-off"></div>
+              </div>
+            </div>
+          </div>
+
+          <hr class="divider" />
+
+          <!-- 功能键 -->
+          <div class="row">
+            <button class="key key-light k-sm grow">练习设置</button>
+            <button class="key key-light k-sm grow">谱面缩放</button>
+            <button class="key key-dark k-sm" style="width: 88px">曲谱库</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

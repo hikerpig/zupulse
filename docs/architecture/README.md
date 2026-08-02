@@ -43,6 +43,7 @@ flowchart LR
 - Viewer 播放与谱面导航当前行为：`../features/contracts/viewer-playback-navigation.md`
 - Viewer 谱面导航实现：`viewer-score-navigation.md`
 - React 应用系统：`react-application-system.md`
+- Desktop 打包与人工构建：`desktop-packaging.md`
 - 应用国际化：`application-i18n.md`
 - Viewer 键盘与播放控制：`viewer-keyboard-and-transport-controls.md`
 - Browser alphaTab DOM 边界：`browser-demo-alphatab-dom-rendering.md`

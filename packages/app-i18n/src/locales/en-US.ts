@@ -20,6 +20,12 @@ export const enUS = {
       switchToLight: "Switch to light theme",
       switchToDark: "Switch to dark theme",
     },
+    shell: {
+      classic: "Classic",
+      device: "Device",
+      switchToClassic: "Switch to classic appearance",
+      switchToDevice: "Switch to device appearance",
+    },
     locale: {
       trigger: "Language",
       dialogLabel: "Choose interface language",

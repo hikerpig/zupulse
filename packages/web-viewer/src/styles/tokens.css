@@ -135,3 +135,55 @@
   --signal-purple: #a972ff;
   --signal-yellow: #ffbe1a;
 }
+
+/*
+ * Device shell（设备外壳）语义 token 覆写。
+ * 值取自 .design_library/tab-viewer-te-braun-theme/colors_and_type.css（status: candidate），
+ * 与经典语义 token 同名同构；谱面纸在两种明暗下都保持白纸。
+ */
+:root[data-shell="device"][data-theme="light"] {
+  --bg-app: #d6d3ce;
+  --bg-shell: rgb(214 211 206 / 0.94);
+  --bg-panel: #f5f2ed;
+  --bg-panel-muted: #ede9e3;
+  --bg-elevated: #faf8f5;
+  --bg-control: #e4e0da;
+  --bg-score-shell: linear-gradient(180deg, #e0ddd8 0%, #cecbc6 100%);
+  --bg-score: #fdfcf9;
+  --text-primary: #2b2a28;
+  --text-secondary: #78736c;
+  --text-tertiary: #98938c;
+  --border-default: #cfcac4;
+  --border-strong: #b3aea7;
+  --accent-primary: #f2501a;
+  --accent-primary-hover: #d8440f;
+  --accent-bright: #ff6b35;
+  --transport-key-secondary-bg: #e4e0da;
+  --transport-key-secondary-text: #2e2d2b;
+  --meter-track: #a5a19b;
+  --signal-blue: #4db2e8;
+}
+
+:root[data-shell="device"][data-theme="dark"] {
+  --bg-app: #28282c;
+  --bg-shell: rgb(40 40 44 / 0.94);
+  --bg-panel: #1d1d21;
+  --bg-panel-muted: #18181c;
+  --bg-elevated: #45454a;
+  --bg-control: #303034;
+  --bg-score-shell: linear-gradient(180deg, #2e2e33 0%, #232327 100%);
+  --bg-score: #fdfcf9;
+  --text-primary: #e8e6e1;
+  --text-secondary: #85827c;
+  --text-tertiary: #5f5d58;
+  --text-on-accent: #ffffff;
+  --border-default: #3a3a3f;
+  --border-strong: #4a4a4f;
+  --accent-primary: #f2501a;
+  --accent-primary-hover: #ff6b35;
+  --accent-bright: #ff6b35;
+  --transport-key-secondary-bg: #303034;
+  --transport-key-secondary-text: #e8e6e1;
+  --meter-track: #141416;
+  --signal-blue: #4db2e8;
+}

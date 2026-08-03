@@ -6,7 +6,7 @@ import { RouterProvider } from "react-router";
 import type { ViewerApplication } from "./ViewerApplication";
 import type { LocaleHost } from "../i18n/locale-controller";
 import { applyLocaleState } from "../i18n/locale-controller";
-import { AppStoreProvider, createPersistedAppStore, useApplyTheme, useAppStore } from "./appStore";
+import { AppStoreProvider, createPersistedAppStore, useApplyShell, useApplyTheme, useAppStore } from "./appStore";
 import { createAppRouter } from "./router";
 
 const fallbackLocaleHost: LocaleHost = {
@@ -62,6 +62,7 @@ export function App({
 
 function ThemeApplicator({ children }: { children: ReactNode }) {
   useApplyTheme();
+  useApplyShell();
   return children;
 }
 

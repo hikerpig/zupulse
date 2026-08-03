@@ -1,4 +1,4 @@
-import { House, Languages, LibraryBig, Moon, Sun } from "lucide-react";
+import { AppWindow, Cpu, House, Languages, LibraryBig, Moon, Sun } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router";
@@ -23,12 +23,15 @@ export function AppHeader({
   const { pathname } = useLocation();
   const libraryScoreId = pathname.match(/^\/(?:viewer|studio)\/([^/]+)$/)?.[1];
   const theme = useAppStore((state) => state.theme);
+  const shell = useAppStore((state) => state.shell);
   const locale = useAppStore((state) => state.locale);
   const localeChange = useAppStore((state) => state.localeChange);
   const setTheme = useAppStore((state) => state.setTheme);
+  const setShell = useAppStore((state) => state.setShell);
   const setLocaleState = useAppStore((state) => state.setLocaleState);
   const setLocaleChange = useAppStore((state) => state.setLocaleChange);
   const nextTheme = theme === "dark" ? "light" : "dark";
+  const nextShell = shell === "device" ? "classic" : "device";
   const [localeOpen, setLocaleOpen] = useState(false);
   const localeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -135,6 +138,15 @@ export function AppHeader({
         >
           {theme === "dark" ? <Sun aria-hidden="true" size={17} /> : <Moon aria-hidden="true" size={17} />}
           <span>{theme === "dark" ? t("theme.dark") : t("theme.light")}</span>
+        </Button>
+        <Button
+          className={styles.headerActionButton}
+          size="sm"
+          aria-label={nextShell === "device" ? t("shell.switchToDevice") : t("shell.switchToClassic")}
+          onClick={() => flushSync(() => setShell(nextShell))}
+        >
+          {shell === "device" ? <Cpu aria-hidden="true" size={17} /> : <AppWindow aria-hidden="true" size={17} />}
+          <span>{shell === "device" ? t("shell.device") : t("shell.classic")}</span>
         </Button>
       </div>
     </header>

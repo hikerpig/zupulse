@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { createStore, useStore } from "zustand";
 
 export type ViewerTheme = "light" | "dark";
+export type ViewerShell = "classic" | "device";
 export type ScoreNavigationMode = "continuous" | "page-turn";
 export type ScoreWidthMode = "comfortable" | "full";
 export type LocaleChangeState = "idle" | "saving" | "error";
@@ -12,12 +13,14 @@ export const MAX_SCORE_ZOOM = 2;
 
 type AppState = {
   theme: ViewerTheme;
+  shell: ViewerShell;
   locale: LocaleState;
   localeChange: LocaleChangeState;
   scoreZoom: number;
   scoreWidthMode: ScoreWidthMode;
   scoreNavigationMode: ScoreNavigationMode;
   setTheme(theme: ViewerTheme): void;
+  setShell(shell: ViewerShell): void;
   setLocaleState(locale: LocaleState): void;
   setLocaleChange(localeChange: LocaleChangeState): void;
   setScoreZoom(zoom: number): void;
@@ -32,15 +35,18 @@ export function createAppStore(
   initialScoreZoom = DEFAULT_SCORE_ZOOM,
   initialScoreNavigationMode: ScoreNavigationMode = "continuous",
   initialScoreWidthMode: ScoreWidthMode = "comfortable",
+  initialShell: ViewerShell = "classic",
 ) {
   return createStore<AppState>()((set) => ({
     theme: initialTheme,
+    shell: initialShell,
     locale: initialLocale,
     localeChange: "idle",
     scoreZoom: clampScoreZoom(initialScoreZoom),
     scoreWidthMode: initialScoreWidthMode,
     scoreNavigationMode: initialScoreNavigationMode,
     setTheme: (theme) => set({ theme }),
+    setShell: (shell) => set({ shell }),
     setLocaleState: (locale) => set({ locale }),
     setLocaleChange: (localeChange) => set({ localeChange }),
     setScoreZoom: (scoreZoom) => set({ scoreZoom: clampScoreZoom(scoreZoom) }),
@@ -56,6 +62,7 @@ export function createPersistedAppStore(initialLocale: LocaleState): AppStore {
     readInitialScoreZoom(),
     readInitialScoreNavigationMode(),
     readInitialScoreWidthMode(),
+    readInitialShell(),
   );
 }
 
@@ -83,6 +90,15 @@ export function useApplyTheme(): ViewerTheme {
   return theme;
 }
 
+export function useApplyShell(): ViewerShell {
+  const shell = useAppStore((state) => state.shell);
+  useEffect(() => {
+    document.documentElement.dataset.shell = shell;
+    storage()?.setItem("zupulse-shell", shell);
+  }, [shell]);
+  return shell;
+}
+
 export function clampScoreZoom(zoom: number): number {
   if (!Number.isFinite(zoom)) return DEFAULT_SCORE_ZOOM;
   return Math.min(MAX_SCORE_ZOOM, Math.max(MIN_SCORE_ZOOM, Math.round(zoom * 100) / 100));
@@ -108,6 +124,10 @@ export function persistScoreNavigationMode(mode: ScoreNavigationMode): void {
 
 function readInitialTheme(): ViewerTheme {
   return storage()?.getItem("zupulse-theme") === "light" ? "light" : "dark";
+}
+
+function readInitialShell(): ViewerShell {
+  return storage()?.getItem("zupulse-shell") === "device" ? "device" : "classic";
 }
 
 function readInitialScoreZoom(): number {

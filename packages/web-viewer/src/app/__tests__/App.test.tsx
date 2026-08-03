@@ -15,6 +15,7 @@ afterEach(() => {
 
 beforeEach(() => {
   delete document.documentElement.dataset.theme;
+  delete document.documentElement.dataset.shell;
   if (!window.localStorage)
     Object.defineProperty(window, "localStorage", { configurable: true, value: memoryStorage() });
   window.localStorage?.clear();
@@ -124,6 +125,34 @@ describe("App", () => {
     expect(openScore).toHaveBeenCalledOnce();
 
     await application.destroy();
+  });
+
+  it("switches the shell between classic and device and persists the choice", async () => {
+    window.history.replaceState(null, "", "#/library");
+    const createApplication = () =>
+      new ViewerApplication({ openScore: async () => undefined, subscribe: () => () => undefined }, async () => ({
+        togglePlayback: vi.fn(),
+        pauseAndFlush: vi.fn(),
+        destroy: vi.fn(),
+      }));
+    const application = createApplication();
+    const user = userEvent.setup();
+    render(<App application={application} />);
+
+    expect(document.documentElement.dataset.shell).toBe("classic");
+    const switchToDevice = await screen.findByRole("button", { name: "切换至设备外观" });
+    expect(switchToDevice.textContent).toContain("经典");
+    await user.click(switchToDevice);
+    expect(document.documentElement.dataset.shell).toBe("device");
+    expect(window.localStorage.getItem("zupulse-shell")).toBe("device");
+    expect(screen.getByRole("button", { name: "切换至经典外观" }).textContent).toContain("设备");
+    await application.destroy();
+
+    cleanup();
+    const reopened = createApplication();
+    render(<App application={reopened} />);
+    expect(document.documentElement.dataset.shell).toBe("device");
+    await reopened.destroy();
   });
 
   it("opens a structured practice control bay instead of a loose settings drawer", async () => {

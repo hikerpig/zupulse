@@ -37,12 +37,52 @@
 
 ## Acceptance criteria
 
-- [ ] 切换外壳无需刷新，`document.documentElement.dataset.shell` 与存储值一致。
-- [ ] 重启（或重新加载）后 shell 选择保持；Browser 与 Desktop 行为一致。
-- [ ] `data-shell` 缺省 classic；现有用户无感知，classic 下视觉回归零变化。
-- [ ] 四种组合（classic/device × light/dark）token 解析正确。
-- [ ] token 消费审计清单完成，硬编码色值按"会漏色 / 不影响"分类。
-- [ ] `pnpm check:i18n` 通过；切换文案无英文装饰标题。
+- [x] 切换外壳无需刷新，`document.documentElement.dataset.shell` 与存储值一致。
+- [x] 重启（或重新加载）后 shell 选择保持；Browser 与 Desktop 行为一致。
+- [x] `data-shell` 缺省 classic；现有用户无感知，classic 下视觉回归零变化。
+- [x] 四种组合（classic/device × light/dark）token 解析正确。
+- [x] token 消费审计清单完成，硬编码色值按"会漏色 / 不影响"分类。
+- [x] `pnpm check:i18n` 通过；切换文案无英文装饰标题。
+
+## 审计结果（2026-08-03）
+
+扫描范围：`packages/web-viewer/src` 全部 `*.css` / `*.ts(x)`（排除 `tokens.css` 与 `__tests__`），
+模式为 hex 字面量与 `rgb()/rgba()` 字面量。总量很小，**无需先做 token 化清理**。
+
+会漏色（device 换肤时需在 P2 结构覆写中替换）：
+
+- `features/PlaybackWorkspace.module.css` Transport 底栏：
+  `background: linear-gradient(... var(--bg-shell) ...)` + `inset 0 1px 0 rgb(255 255 255 / 0.28)` 等
+  classic 扁平光影——device 下由机身面板 / LCD 结构覆写替代（P2）。
+- `features/PlaybackWorkspace.module.css:457` 控件 `inset 0 1px 0 rgb(255 255 255 / 0.22)` 白顶高光——
+  device 下由键程顶高光替代（P2）。
+
+不影响（中性光影 / 谱面 / 品牌资产，两种外壳下均成立）：
+
+- `components/ScoreViewer.module.css:146-147,241`：谱面纸舞台中性投影与全屏 scrim 黑。
+- `practice-loop/LoopRangeOverlay.module.css:17`：谱面 loop 覆盖层 4% 白雾。
+- `styles/vendors/alphaTab.css:7,18` 与 `viewerApp.tsx:387`：谱面内选区色与字形色——谱面不参与换肤。
+- `features/piano-key-visualization/`（css:121-122、tsx:106-108）：钢琴键中性材质色（白键/黑键），
+  device 下语义不变；若 P2 复核观感冲突再处理。
+- `components/LogoMark.tsx:25-53`：品牌图形固定色。
+
+P2/P3 实际改动面 = PlaybackWorkspace 两处光影 + P2/P3 自身结构覆写；无全库样式迁移。
+
+## 验证记录（2026-08-03）
+
+- `pnpm test -- app`（根 vitest）：36 文件 / 174 测试全部通过，含 `App.test.tsx` 新增 shell 切换与持久化断言。
+- `pnpm check:i18n` 通过；`pnpm check:design` 通过。
+- `pnpm verify:fast` 通过（163 文件 / 736 测试，全部检查项绿）。
+- 人工证据：Browser 四组合截图 `scripts/screenshots/shell-{classic,device}-{light,dark}.png`
+  （`scripts/capture-shell-screenshots.mjs`，重载后 `dataset.shell` 与存储值脚本校验一致；
+  classic 两图与现状一致，device 两图 token 生效）。Desktop 侧截图待补（与 Browser 共用
+  同一 renderer 与 `storage()` 持久化路径）。
+
+## Open decisions
+
+- 审计若发现大面积硬编码色值：是先做 token 化清理再进 P2，还是 P2 顺手改？
+  默认策略：只清理 P2/P3 涉及的组件，不做全库样式迁移（遵 DESIGN.md 维护边界）。
+  → 审计结论：硬编码色值极少，无需前置清理，按默认策略执行。
 
 ## Verification
 

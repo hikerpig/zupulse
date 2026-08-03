@@ -17,6 +17,12 @@ export const zhCN = {
       switchToLight: "切换至浅色主题",
       switchToDark: "切换至深色主题",
     },
+    shell: {
+      classic: "经典",
+      device: "设备",
+      switchToClassic: "切换至经典外观",
+      switchToDevice: "切换至设备外观",
+    },
     locale: {
       trigger: "语言",
       dialogLabel: "选择界面语言",

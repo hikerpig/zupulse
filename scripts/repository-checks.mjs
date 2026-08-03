@@ -34,6 +34,15 @@ const DEFAULT_DESIGN = {
   stylesDir: "packages/web-viewer/src",
 };
 
+const DEVICE_DESIGN = {
+  designPath: "docs/specs/2026-08-02-device-theme-switching-design.md",
+  sourceCssPath: ".design_library/tab-viewer-te-braun-theme/colors_and_type.css",
+  runtimeCssPath: "packages/web-viewer/src/styles/tokens.css",
+  mapPath: ".design_library/tab-viewer-te-braun-theme/runtime-token-map.json",
+};
+
+const DESIGNS = [DEFAULT_DESIGN, DEVICE_DESIGN];
+
 const EXTERNAL_CSS_VARIABLES = new Set(["--transform-origin"]);
 const TAILWIND_PALETTE_NAMES =
   "slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose";
@@ -197,6 +206,14 @@ export async function checkArchitecture(root) {
     if (contents === undefined) continue;
     const types = JSON.parse(contents).compilerOptions?.types ?? [];
     if (types.includes("vitest")) errors.push(`${path}: runtime compiler types must not include "vitest"`);
+  }
+  return errors.sort();
+}
+
+export async function checkDesigns(root) {
+  const errors = [];
+  for (const design of DESIGNS) {
+    errors.push(...(await checkDesign(root, design)));
   }
   return errors.sort();
 }
@@ -740,7 +757,7 @@ export async function runRepositoryCheck(command, root, options = {}) {
       : command === "arch"
         ? { errors: await checkArchitecture(root), warnings: [] }
         : command === "design"
-          ? { errors: await checkDesign(root), warnings: [] }
+          ? { errors: await checkDesigns(root), warnings: [] }
           : await checkDocumentation(root, options);
   const { errors, warnings } = result;
   if (errors.length > 0) {

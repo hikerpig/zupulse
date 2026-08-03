@@ -3,21 +3,21 @@
 一套**可切换的并行视觉主题**：把 Zupulse 界面装进一台 Teenage Engineering 风格的实体练习设备里。
 它不替代 `.design_library/zupulse-te-braun-theme`（当前运行时主题），两者通过主题切换共存。
 
-- Status: candidate（未采用，运行时无对应实现）
+- Status: adopted（P1 切换基础设施 + P2 Viewer 换肤已落地；P3 Library/Studio 材质继承进行中）
 - 视觉定稿：`specs/mockups/a-ep133-device-v5.html` / `a-ep133-device-v5.png`
 - 品牌参考：`specs/reference-teenage-engineering.png`（EP-133 K.O. II）
 - 纹理选型试验：`specs/mockups/texture-lab.html`
 
 ## 定位
 
-| 维度     | 与当前主题的关系                                         |
-| -------- | -------------------------------------------------------- |
-| 信息架构 | 完全一致，只换材质与控件形态                             |
-| 密度     | 保持 8/10，拟物不占布局空间                              |
-| 乐谱     | 同样"乐谱优先"：谱面永远是白纸，材质只出现在设备外壳上   |
-| 切换粒度 | 只换外壳（机身、控件、显示面板）；谱面渲染不参与主题切换 |
-| 切换机制 | `data-theme` 属性切换；token 与现有语义 token 同构       |
-| 明暗组合 | 2×2：外壳（classic / device）× 明暗（light / dark）      |
+| 维度     | 与当前主题的关系                                                              |
+| -------- | ----------------------------------------------------------------------------- |
+| 信息架构 | 完全一致，只换材质与控件形态                                                  |
+| 密度     | 保持 8/10，拟物不占布局空间                                                   |
+| 乐谱     | 同样"乐谱优先"：谱面永远是白纸，材质只出现在设备外壳上                        |
+| 切换粒度 | 只换外壳（机身、控件、显示面板）；谱面渲染不参与主题切换                      |
+| 切换机制 | `data-shell` 属性切换外壳；明暗沿用 `data-theme`；token 与现有语义 token 同构 |
+| 明暗组合 | 2×2：外壳（classic / device）× 明暗（light / dark）                           |
 
 ## 设计决定（经评审收敛）
 
@@ -57,11 +57,12 @@
 
 - `colors_and_type.css` — 主题原语与组件级变量（机身、按键三态、推子、LCD、LED、读数窗）。
 - `specs/component-semantics.md` — 组件语义与状态规则。
-- 运行时映射：暂无。主题被采用前不建立 `runtime-token-map.json`。
-  采用机制已定：通过根元素 `data-theme` 切换（如 `data-theme="device"` / 缺省为 classic，
-  明暗用 `[data-mode="dark"]`，见 `colors_and_type.css` 的 dark 覆写段），
-  token 投影为与现有语义 token 同构的第二套值；键程阴影、细砂噪点等结构性样式
-  需配套少量 device 专属结构样式，不能只靠换色值。
+- `runtime-token-map.json` — 已正式采用的运行时映射（P1 语义 token + P2 结构原语），
+  由 `pnpm check:design` 防漂移。
+- 采用机制：根元素 `data-shell="classic|device"` 切换外壳（缺省 classic），明暗沿用
+  `data-theme="light|dark"`；运行时 token 在 `packages/web-viewer/src/styles/tokens.css` 的
+  `:root[data-shell="device"]` 段与明暗覆写段。键程阴影、细砂噪点等结构性样式挂在各组件
+  CSS Module 的 `[data-shell="device"]` 作用域覆写（未分层，优先级高于 tailwind utilities）。
 
 ## Caveats
 

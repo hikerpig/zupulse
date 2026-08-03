@@ -3,7 +3,7 @@
 /*
  * Zupulse Device Theme — 候选并行主题原语
  * 视觉基准: specs/mockups/a-ep133-device-v5.html
- * Status: candidate, not adopted by runtime.
+ * Status: adopted（运行时映射见 runtime-token-map.json，由 pnpm check:design 防漂移）。
  */
 :root {
   /* ============ 机身 ============ */

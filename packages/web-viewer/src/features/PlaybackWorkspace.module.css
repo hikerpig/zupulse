@@ -638,3 +638,340 @@
     }
   }
 }
+
+/*
+ * Device shell 结构覆写（P2：Transport / 练习控制仓）。
+ * 键程按键四变体：orange=播放（唯一主操作）、red=循环、dark=停止/步进/未选中、light=次级操作。
+ * 未分层的覆写优先级高于 tailwind utilities 层；classic 渲染路径零变化。
+ */
+:global(:root[data-shell="device"]) .transportBar {
+  border-top-color: transparent;
+  background: linear-gradient(180deg, var(--device-plate-light), var(--device-plate-dark));
+  box-shadow:
+    inset 0 2px 6px rgb(0 0 0 / 0.12),
+    inset 0 -1px 0 rgb(255 255 255 / 0.6),
+    0 -1px 0 rgb(255 255 255 / 0.35);
+  backdrop-filter: none;
+}
+
+:global(:root[data-shell="device"]) .transportBar button {
+  border-color: transparent;
+  border-radius: var(--device-radius-key);
+  transition:
+    transform 50ms ease,
+    box-shadow 50ms ease;
+}
+
+/* 播放：唯一主操作 = orange 键 */
+:global(:root[data-shell="device"]) .transportActions :global(button.tw\:bg-accent) {
+  background: linear-gradient(180deg, var(--device-key-orange-face-hi), var(--device-key-orange-face-lo));
+  color: #ffffff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.25);
+  box-shadow:
+    0 var(--device-key-travel) 0 var(--device-key-orange-edge),
+    0 8px 12px var(--device-key-orange-glow),
+    inset 0 1px 0 rgb(255 255 255 / 0.35);
+}
+
+/* 停止 / 导航步进 / 未选中 = dark 键（排除 orange 主操作键） */
+:global(:root[data-shell="device"]) .transportActions :global(button[data-icon-button]:not(.tw\:bg-accent)),
+:global(:root[data-shell="device"]) .navigationControls :global(button[data-icon-button]) {
+  background: linear-gradient(180deg, var(--device-key-dark-face-hi), var(--device-key-dark-face-lo));
+  color: var(--device-key-dark-text);
+  box-shadow:
+    0 var(--device-key-travel) 0 var(--device-key-dark-edge),
+    0 8px 10px rgb(0 0 0 / 0.28),
+    inset 0 1px 0 rgb(255 255 255 / 0.14);
+}
+
+/* 循环激活 = red 键（记录语义）+ LED */
+:global(:root[data-shell="device"]) .keyWithLed :global(button[aria-pressed="true"]) {
+  background: linear-gradient(180deg, var(--device-key-red-face-hi), var(--device-key-red-face-lo));
+  color: #ffffff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.25);
+  box-shadow:
+    0 var(--device-key-travel) 0 var(--device-key-red-edge),
+    0 8px 12px rgb(211 52 32 / 0.32),
+    inset 0 1px 0 rgb(255 255 255 / 0.3);
+}
+
+:global(:root[data-shell="device"]) .transportActions :global(button:active:not(:disabled)),
+:global(:root[data-shell="device"]) .navigationControls :global(button:active:not(:disabled)) {
+  transform: translateY(var(--device-key-press));
+}
+
+:global(:root[data-shell="device"]) .transportActions :global(button.tw\:bg-accent:active:not(:disabled)) {
+  box-shadow:
+    0 1px 0 var(--device-key-orange-edge),
+    0 3px 5px var(--device-key-orange-glow),
+    inset 0 1px 0 rgb(255 255 255 / 0.3);
+}
+
+:global(:root[data-shell="device"]) .keyWithLed :global(button[aria-pressed="true"]:active:not(:disabled)) {
+  box-shadow:
+    0 1px 0 var(--device-key-red-edge),
+    0 3px 5px rgb(211 52 32 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.3);
+}
+
+:global(:root[data-shell="device"])
+  .transportActions
+  :global(button[data-icon-button]:not(.tw\:bg-accent):active:not(:disabled)),
+:global(:root[data-shell="device"]) .navigationControls :global(button[data-icon-button]:active:not(:disabled)) {
+  box-shadow:
+    0 1px 0 var(--device-key-dark-edge),
+    0 3px 4px rgb(0 0 0 / 0.26),
+    inset 0 1px 0 rgb(255 255 255 / 0.1);
+}
+
+:global(:root[data-shell="device"]) .transportBar button:focus-visible {
+  transform: translateY(1px);
+}
+
+:global(:root[data-shell="device"]) .transportBar button:disabled {
+  box-shadow:
+    0 2px 0 var(--device-key-dark-edge),
+    inset 0 1px 0 rgb(255 255 255 / 0.1);
+}
+
+/* LED：灭态哑光凹点常显，亮态橙点 + 光晕（drop-shadow，非外发光 box-shadow） */
+:global(:root[data-shell="device"]) .ledDot {
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in srgb, var(--device-led-off) 60%, white),
+    var(--device-led-off)
+  );
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.3);
+  opacity: 1;
+}
+
+:global(:root[data-shell="device"]) .ledDot[data-active="true"] {
+  background: radial-gradient(circle at 35% 30%, #ffb08a, var(--device-led-on) 60%);
+  filter: drop-shadow(0 0 3px var(--device-led-on-glow));
+}
+
+/* 读数窗：内凹黑窗 + 琥珀 mono 读数（时间、BPM、页码） */
+:global(:root[data-shell="device"]) .timeReadout,
+:global(:root[data-shell="device"]) .speedTrigger,
+:global(:root[data-shell="device"]) .pageControls output {
+  border-color: transparent;
+  border-radius: var(--device-radius-inset);
+  background: linear-gradient(180deg, var(--device-readout-bg-hi), var(--device-readout-bg-lo));
+  color: var(--device-readout-text);
+  font-family: var(--font-family-technical);
+  text-shadow: 0 0 8px var(--device-lcd-glow);
+  box-shadow:
+    inset 0 2px 5px rgb(0 0 0 / 0.8),
+    0 1px 0 rgb(255 255 255 / 0.45);
+  text-align: center;
+}
+
+:global(:root[data-shell="device"]) .timeReadout {
+  padding: 4px 10px;
+}
+
+:global(:root[data-shell="device"]) .pageControls output {
+  padding: 4px 8px;
+  color: var(--device-lcd-amber-dim);
+  text-shadow: none;
+}
+
+:global(:root[data-shell="device"]) .speedTrigger span {
+  color: var(--device-lcd-amber-dim);
+  text-shadow: none;
+}
+
+/* 次级操作（练习设置、重试）= light 键 */
+:global(:root[data-shell="device"]) .drawerToggle,
+:global(:root[data-shell="device"]) .transportRetry,
+:global(:root[data-shell="device"]) .taskEntry {
+  border-color: transparent;
+  border-radius: var(--device-radius-key);
+  background: linear-gradient(180deg, var(--device-key-light-face-hi), var(--device-key-light-face-lo));
+  color: var(--device-key-light-text);
+  box-shadow:
+    0 var(--device-key-travel) 0 var(--device-key-light-edge),
+    0 8px 10px rgb(0 0 0 / 0.18),
+    inset 0 1px 0 rgb(255 255 255 / 0.9);
+  transition:
+    transform 50ms ease,
+    box-shadow 50ms ease;
+}
+
+:global(:root[data-shell="device"]) .drawerToggle:active:not(:disabled),
+:global(:root[data-shell="device"]) .transportRetry:active:not(:disabled),
+:global(:root[data-shell="device"]) .taskEntry:active:not(:disabled) {
+  transform: translateY(var(--device-key-press));
+  box-shadow:
+    0 1px 0 var(--device-key-light-edge),
+    0 3px 4px rgb(0 0 0 / 0.16),
+    inset 0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+:global(:root[data-shell="device"]) .drawerToggle[aria-expanded="true"] {
+  color: var(--device-key-light-text);
+  background: linear-gradient(180deg, var(--device-key-light-face-lo), var(--device-key-light-face-hi));
+  box-shadow:
+    0 2px 0 var(--device-key-light-edge),
+    inset 0 2px 4px rgb(0 0 0 / 0.12);
+}
+
+/* 练习控制仓：内凹面板 + 键井凹槽 */
+:global(:root[data-shell="device"]) .practicePanel {
+  border-color: transparent;
+  border-radius: var(--device-radius-panel);
+  background: linear-gradient(180deg, var(--device-plate-light), var(--device-plate-dark));
+  box-shadow:
+    inset 0 2px 6px rgb(0 0 0 / 0.12),
+    inset 0 -1px 0 rgb(255 255 255 / 0.5),
+    0 8px 24px rgb(0 0 0 / 0.25);
+  backdrop-filter: none;
+}
+
+:global(:root[data-shell="device"]) .drawerHeader {
+  background: transparent;
+}
+
+:global(:root[data-shell="device"]) .loopRow,
+:global(:root[data-shell="device"]) .trackRow {
+  border-color: transparent;
+  border-radius: var(--device-radius-panel);
+  background: var(--device-keybed);
+  box-shadow:
+    inset 0 2px 5px rgb(0 0 0 / 0.16),
+    0 1px 0 rgb(255 255 255 / 0.35);
+}
+
+/* 手型模式：pad 键（dark 未选中 / light 选中 + LED） */
+:global(:root[data-shell="device"]) fieldset.handModes label {
+  border-color: transparent;
+  border-radius: var(--device-radius-key);
+  background: linear-gradient(180deg, var(--device-key-dark-face-hi), var(--device-key-dark-face-lo));
+  color: var(--device-key-dark-text);
+  box-shadow:
+    0 var(--device-key-travel) 0 var(--device-key-dark-edge),
+    0 6px 8px rgb(0 0 0 / 0.24),
+    inset 0 1px 0 rgb(255 255 255 / 0.14);
+  transition:
+    transform 50ms ease,
+    box-shadow 50ms ease;
+}
+
+:global(:root[data-shell="device"]) fieldset.handModes label:hover {
+  border-color: transparent;
+  filter: brightness(1.06);
+}
+
+:global(:root[data-shell="device"]) fieldset.handModes label:active {
+  transform: translateY(var(--device-key-press));
+  box-shadow:
+    0 1px 0 var(--device-key-dark-edge),
+    0 3px 4px rgb(0 0 0 / 0.22),
+    inset 0 1px 0 rgb(255 255 255 / 0.1);
+}
+
+:global(:root[data-shell="device"]) fieldset.handModes label:has(input:checked) {
+  border-color: transparent;
+  background: linear-gradient(180deg, var(--device-key-light-face-hi), var(--device-key-light-face-lo));
+  color: var(--device-key-light-text);
+  box-shadow:
+    0 var(--device-key-travel) 0 var(--device-key-light-edge),
+    0 6px 8px rgb(0 0 0 / 0.18),
+    inset 0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+:global(:root[data-shell="device"]) fieldset.handModes label:has(input:focus-visible) {
+  transform: translateY(1px);
+  box-shadow:
+    var(--focus-ring),
+    0 4px 0 var(--device-key-dark-edge),
+    0 6px 8px rgb(0 0 0 / 0.24),
+    inset 0 1px 0 rgb(255 255 255 / 0.14);
+}
+
+/* 开关：凹槽轨道 + 薄片滑块 */
+:global(:root[data-shell="device"]) .loopModeRow input {
+  border-color: transparent;
+  background: var(--device-fader-rail);
+  box-shadow: inset 0 1.5px 3px rgb(0 0 0 / 0.4);
+}
+
+:global(:root[data-shell="device"]) .loopModeRow input::after {
+  background: linear-gradient(180deg, var(--device-fader-cap-hi), var(--device-fader-cap-lo));
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.4),
+    inset 0 1px 0 rgb(255 255 255 / 0.15);
+}
+
+:global(:root[data-shell="device"]) .loopModeRow input:checked {
+  border-color: transparent;
+  background: var(--device-fader-fill);
+}
+
+:global(:root[data-shell="device"]) .loopModeRow input:checked::after {
+  background: linear-gradient(180deg, var(--device-fader-cap-hi), var(--device-fader-cap-lo));
+}
+
+/* 原生 range（轨道音量 / 节奏音量）：凹槽轨道 + 薄片柄，保持 22px 命中盒 */
+:global(:root[data-shell="device"]) .trackRow input[type="range"],
+:global(:root[data-shell="device"]) .rhythmVolume input[type="range"] {
+  height: 22px;
+  appearance: none;
+  background: transparent;
+}
+
+:global(:root[data-shell="device"]) .trackRow input[type="range"]::-webkit-slider-runnable-track,
+:global(:root[data-shell="device"]) .rhythmVolume input[type="range"]::-webkit-slider-runnable-track {
+  height: 5px;
+  border-radius: var(--device-radius-inset);
+  background: var(--device-fader-rail);
+  box-shadow:
+    inset 0 1.5px 3px rgb(0 0 0 / 0.4),
+    0 1px 0 rgb(255 255 255 / 0.35);
+}
+
+:global(:root[data-shell="device"]) .trackRow input[type="range"]::-webkit-slider-thumb,
+:global(:root[data-shell="device"]) .rhythmVolume input[type="range"]::-webkit-slider-thumb {
+  width: 14px;
+  height: 22px;
+  margin-top: -8.5px;
+  border: 0;
+  border-radius: 3px;
+  appearance: none;
+  background: linear-gradient(180deg, var(--device-fader-cap-hi), var(--device-fader-cap-lo));
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.15);
+}
+
+:global(:root[data-shell="device"]) .trackRow input[type="range"]::-moz-range-track,
+:global(:root[data-shell="device"]) .rhythmVolume input[type="range"]::-moz-range-track {
+  height: 5px;
+  border-radius: var(--device-radius-inset);
+  background: var(--device-fader-rail);
+  box-shadow: inset 0 1.5px 3px rgb(0 0 0 / 0.4);
+}
+
+:global(:root[data-shell="device"]) .trackRow input[type="range"]::-moz-range-thumb,
+:global(:root[data-shell="device"]) .rhythmVolume input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 22px;
+  border: 0;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--device-fader-cap-hi), var(--device-fader-cap-lo));
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.15);
+}
+
+/* 音量百分比：小型读数窗 */
+:global(:root[data-shell="device"]) .rhythmVolume output {
+  padding: 2px 8px;
+  border-radius: var(--device-radius-inset);
+  background: linear-gradient(180deg, var(--device-readout-bg-hi), var(--device-readout-bg-lo));
+  color: var(--device-readout-text);
+  text-shadow: 0 0 8px var(--device-lcd-glow);
+  box-shadow:
+    inset 0 2px 5px rgb(0 0 0 / 0.8),
+    0 1px 0 rgb(255 255 255 / 0.45);
+}

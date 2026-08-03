@@ -186,4 +186,103 @@
   --transport-key-secondary-text: #e8e6e1;
   --meter-track: #141416;
   --signal-blue: #4db2e8;
+  /* device × dark 结构原语：控件材质与浅色同构，只替换机身/凹槽/分离度相关色值 */
+  --device-body-light: #2e2e33;
+  --device-body-mid: #28282c;
+  --device-body-dark: #232327;
+  --device-body-glare: rgba(255, 255, 255, 0.07);
+  --device-edge-highlight: rgba(255, 255, 255, 0.12);
+  --device-edge-shade: rgba(0, 0, 0, 0.4);
+  --device-texture-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.035 0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+  --device-plate-light: #1d1d21;
+  --device-plate-dark: #18181c;
+  --device-keybed: rgba(0, 0, 0, 0.28);
+  --device-label: #85827c;
+  --device-key-dark-face-hi: #45454a;
+  --device-key-dark-face-lo: #303034;
+  --device-key-dark-edge: #101013;
+  --device-key-dark-text: #e8e6e1;
+  --device-key-light-edge: #8f8b84;
+  --device-fader-rail: #141416;
+  --device-fader-cap-hi: #4a4a4f;
+  --device-fader-cap-lo: #323236;
+  --device-readout-bg-hi: #12110d;
+  --device-readout-bg-lo: #171510;
+  --device-led-off: #3d3d42;
 }
+
+/*
+ * Device shell 结构原语（机身、键程、推子、LCD、读数窗、LED、噪点纹理）。
+ * 与 .design_library/tab-viewer-te-braun-theme/colors_and_type.css 的正式映射登记在
+ * 该目录 runtime-token-map.json，由 pnpm check:design 防漂移。
+ */
+:root[data-shell="device"] {
+  /* 机身 */
+  --device-body-light: #e0ddd8;
+  --device-body-mid: #d6d3ce;
+  --device-body-dark: #cecbc6;
+  --device-body-glare: rgba(255, 255, 255, 0.35);
+  --device-edge-highlight: rgba(255, 255, 255, 0.8);
+  --device-edge-shade: rgba(0, 0, 0, 0.12);
+  --device-texture-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.05 0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+  /* 品牌板 / 内凹面板 */
+  --device-plate-light: #f5f2ed;
+  --device-plate-dark: #ede9e3;
+  --device-keybed: rgba(0, 0, 0, 0.1);
+  --device-label: #78736c;
+  /* 按键: dark */
+  --device-key-dark-face-hi: #3d3d3c;
+  --device-key-dark-face-lo: #262625;
+  --device-key-dark-edge: #111110;
+  --device-key-dark-text: #efece6;
+  /* 按键: light */
+  --device-key-light-face-hi: #faf8f5;
+  --device-key-light-face-lo: #e4e0da;
+  --device-key-light-edge: #b3aea7;
+  --device-key-light-text: #2e2d2b;
+  /* 按键: orange（唯一主操作） */
+  --device-key-orange-face-hi: #ff6b35;
+  --device-key-orange-face-lo: #f2501a;
+  --device-key-orange-edge: #b83a10;
+  --device-key-orange-glow: rgba(242, 80, 26, 0.32);
+  /* 按键: red（循环/记录语义） */
+  --device-key-red-face-hi: #e8452e;
+  --device-key-red-face-lo: #d33420;
+  --device-key-red-edge: #972413;
+  /* 键程规格 */
+  --device-key-travel: 5px;
+  --device-key-press: 4px;
+  /* LCD 显示 */
+  --device-lcd-bg-hi: #171610;
+  --device-lcd-bg-mid: #1f1d15;
+  --device-lcd-bg-lo: #1a1812;
+  --device-lcd-amber: #ffb057;
+  --device-lcd-amber-dim: #7a6a4d;
+  --device-lcd-glow: rgba(255, 140, 50, 0.5);
+  --device-lcd-glare: rgba(255, 255, 255, 0.05);
+  --device-lcd-signal-blue: #4db2e8;
+  --device-lcd-signal-pink: #f04a8a;
+  --device-lcd-signal-yellow: #ffbe1a;
+  /* 推子 */
+  --device-fader-rail: #a5a19b;
+  --device-fader-fill: #e8561d;
+  --device-fader-cap-hi: #3d3d3c;
+  --device-fader-cap-lo: #262625;
+  --device-fader-indicator: #ff6a2e;
+  /* 读数窗 */
+  --device-readout-bg-hi: #1c1a14;
+  --device-readout-bg-lo: #211f18;
+  --device-readout-text: var(--device-lcd-amber);
+  /* LED */
+  --device-led-on: #ff5a26;
+  --device-led-on-glow: rgba(255, 90, 38, 0.9);
+  --device-led-off: #98938c;
+  /* 圆角刻度 */
+  --device-radius-body: 14px;
+  --device-radius-panel: 8px;
+  --device-radius-lcd: 7px;
+  --device-radius-key: 6px;
+  --device-radius-inset: 4px;
+}
+
+/* device × dark 结构原语已合并进上方 :root[data-shell="device"][data-theme="dark"] 块（checker 按选择器去重）。 */

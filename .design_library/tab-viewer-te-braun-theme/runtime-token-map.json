@@ -1,0 +1,640 @@
+{
+  "mappings": [
+    {
+      "sourceScope": ":root",
+      "source": "--device-body-light",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-body-light"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-body-mid",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-body-mid"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-body-dark",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-body-dark"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-body-glare",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-body-glare"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-edge-highlight",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-edge-highlight"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-edge-shade",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-edge-shade"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-texture-grain",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-texture-grain"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-plate-light",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-plate-light"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-plate-dark",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-plate-dark"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-keybed",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-keybed"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-label",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-label"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-dark-face-hi",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-dark-face-hi"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-dark-face-lo",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-dark-face-lo"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-dark-edge",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-dark-edge"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-dark-text",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-dark-text"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-light-face-hi",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-light-face-hi"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-light-face-lo",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-light-face-lo"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-light-edge",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-light-edge"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-light-text",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-light-text"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-orange-face-hi",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-orange-face-hi"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-orange-face-lo",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-orange-face-lo"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-orange-edge",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-orange-edge"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-orange-glow",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-orange-glow"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-red-face-hi",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-red-face-hi"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-red-face-lo",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-red-face-lo"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-red-edge",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-red-edge"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-travel",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-travel"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-press",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-key-press"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-lcd-bg-hi",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-lcd-bg-hi"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-lcd-bg-mid",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-lcd-bg-mid"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-lcd-bg-lo",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-lcd-bg-lo"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-lcd-amber",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-lcd-amber"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-lcd-amber-dim",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-lcd-amber-dim"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-lcd-glow",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-lcd-glow"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-lcd-glare",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-lcd-glare"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-lcd-signal-blue",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-lcd-signal-blue"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-lcd-signal-pink",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-lcd-signal-pink"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-lcd-signal-yellow",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-lcd-signal-yellow"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-fader-rail",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-fader-rail"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-fader-fill",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-fader-fill"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-fader-cap-hi",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-fader-cap-hi"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-fader-cap-lo",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-fader-cap-lo"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-fader-indicator",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-fader-indicator"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-readout-bg-hi",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-readout-bg-hi"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-readout-bg-lo",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-readout-bg-lo"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-readout-text",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-readout-text"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-led-on",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-led-on"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-led-on-glow",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-led-on-glow"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-led-off",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-led-off"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-radius-body",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-radius-body"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-radius-panel",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-radius-panel"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-radius-lcd",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-radius-lcd"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-radius-key",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-radius-key"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-radius-inset",
+      "runtimeScope": ":root[data-shell=\"device\"]",
+      "runtime": "--device-radius-inset"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-body-light",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-body-light"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-body-mid",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-body-mid"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-body-dark",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-body-dark"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-body-glare",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-body-glare"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-edge-highlight",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-edge-highlight"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-edge-shade",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-edge-shade"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-texture-grain",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-texture-grain"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-plate-light",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-plate-light"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-plate-dark",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-plate-dark"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-keybed",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-keybed"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-label",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-label"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-key-dark-face-hi",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-key-dark-face-hi"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-key-dark-face-lo",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-key-dark-face-lo"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-key-dark-edge",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-key-dark-edge"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-key-dark-text",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-key-dark-text"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-key-light-edge",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-key-light-edge"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-fader-rail",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-fader-rail"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-fader-cap-hi",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-fader-cap-hi"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-fader-cap-lo",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-fader-cap-lo"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-readout-bg-hi",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-readout-bg-hi"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-readout-bg-lo",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-readout-bg-lo"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-led-off",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--device-led-off"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-body-mid",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"light\"]",
+      "runtime": "--bg-app"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-plate-light",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"light\"]",
+      "runtime": "--bg-panel"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-plate-dark",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"light\"]",
+      "runtime": "--bg-panel-muted"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-light-face-hi",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"light\"]",
+      "runtime": "--bg-elevated"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-light-face-lo",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"light\"]",
+      "runtime": "--bg-control"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-score-paper-hi",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"light\"]",
+      "runtime": "--bg-score"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-label",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"light\"]",
+      "runtime": "--text-secondary"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-led-off",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"light\"]",
+      "runtime": "--text-tertiary"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-light-edge",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"light\"]",
+      "runtime": "--border-strong"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-orange-face-lo",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"light\"]",
+      "runtime": "--accent-primary"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-orange-face-hi",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"light\"]",
+      "runtime": "--accent-bright"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-fader-rail",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"light\"]",
+      "runtime": "--meter-track"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-lcd-signal-blue",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"light\"]",
+      "runtime": "--signal-blue"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-light-face-lo",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"light\"]",
+      "runtime": "--transport-key-secondary-bg"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-light-text",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"light\"]",
+      "runtime": "--transport-key-secondary-text"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-body-mid",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--bg-app"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-plate-light",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--bg-panel"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-plate-dark",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--bg-panel-muted"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-key-dark-face-hi",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--bg-elevated"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-key-dark-face-lo",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--bg-control"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-key-dark-text",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--text-primary"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-label",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--text-secondary"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-fader-cap-hi",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--border-strong"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-fader-rail",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--meter-track"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-key-dark-face-lo",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--transport-key-secondary-bg"
+    },
+    {
+      "sourceScope": "[data-mode=\"dark\"]",
+      "source": "--device-key-dark-text",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--transport-key-secondary-text"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-score-paper-hi",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--bg-score"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-orange-face-lo",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--accent-primary"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-key-orange-face-hi",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--accent-bright"
+    },
+    {
+      "sourceScope": ":root",
+      "source": "--device-lcd-signal-blue",
+      "runtimeScope": ":root[data-shell=\"device\"][data-theme=\"dark\"]",
+      "runtime": "--signal-blue"
+    }
+  ]
+}

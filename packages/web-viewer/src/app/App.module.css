@@ -18,3 +18,13 @@
     container-type: inline-size;
   }
 }
+
+/* Device shell 结构覆写：机身渐变 + 细砂噪点 + 受光边缘。classic 渲染路径零变化。 */
+:global(:root[data-shell="device"]) .appFrame {
+  background:
+    var(--device-texture-grain), radial-gradient(circle at 30% 0%, var(--device-body-glare), transparent 55%),
+    linear-gradient(180deg, var(--device-body-light) 0%, var(--device-body-mid) 50%, var(--device-body-dark) 100%);
+  box-shadow:
+    inset 0 1.5px 0 var(--device-edge-highlight),
+    inset 0 -4px 10px var(--device-edge-shade);
+}

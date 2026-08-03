@@ -3,7 +3,7 @@
 一套**可切换的并行视觉主题**：把 Zupulse 界面装进一台 Teenage Engineering 风格的实体练习设备里。
 它不替代 `.design_library/zupulse-te-braun-theme`（当前运行时主题），两者通过主题切换共存。
 
-- Status: adopted（P1 切换基础设施 + P2 Viewer 换肤已落地；P3 Library/Studio 材质继承进行中）
+- Status: adopted（已全部落地：P1 切换基础设施、P2 Viewer 换肤、P3 Library/Studio 材质继承）
 - 视觉定稿：`specs/mockups/a-ep133-device-v5.html` / `a-ep133-device-v5.png`
 - 品牌参考：`specs/reference-teenage-engineering.png`（EP-133 K.O. II）
 - 纹理选型试验：`specs/mockups/texture-lab.html`

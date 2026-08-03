@@ -525,3 +525,215 @@
     }
   }
 }
+
+/*
+ * Device shell 结构覆写（P3：Studio 控件材质继承）。
+ * 命令栏图标按钮 = dark 键；保存 / 重新分析 / 应用 / 试听 = orange 键；
+ * 候选和弦 / 片段 / 次级操作 = light 键；选中 = 下沉键面。
+ * 无 LCD、格栅等设备隐喻；读数保持普通前景。
+ */
+:global(:root[data-shell="device"]) .commandBar button,
+:global(:root[data-shell="device"]) .degreeList button {
+  border-color: transparent;
+  border-radius: var(--device-radius-key);
+  background: linear-gradient(180deg, var(--device-key-dark-face-hi), var(--device-key-dark-face-lo));
+  color: var(--device-key-dark-text);
+  box-shadow:
+    0 var(--device-key-travel) 0 var(--device-key-dark-edge),
+    0 8px 10px rgb(0 0 0 / 0.28),
+    inset 0 1px 0 rgb(255 255 255 / 0.14);
+  transition:
+    transform 50ms ease,
+    box-shadow 50ms ease;
+}
+
+:global(:root[data-shell="device"]) .commandBar button:hover:not(:disabled),
+:global(:root[data-shell="device"]) .degreeList button:hover:not(:disabled) {
+  border-color: transparent;
+  filter: brightness(1.08);
+}
+
+:global(:root[data-shell="device"]) .commandBar button:active:not(:disabled),
+:global(:root[data-shell="device"]) .degreeList button:active:not(:disabled) {
+  transform: translateY(var(--device-key-press));
+  box-shadow:
+    0 1px 0 var(--device-key-dark-edge),
+    0 3px 4px rgb(0 0 0 / 0.26),
+    inset 0 1px 0 rgb(255 255 255 / 0.1);
+}
+
+/* 主操作文字按钮（保存 / 重新分析 / 应用 / 试听）= orange 键 */
+:global(:root[data-shell="device"]) .commandBar :global(.primary-button),
+:global(:root[data-shell="device"]) .commandBar button:not([aria-label]),
+:global(:root[data-shell="device"]) .harmonyEditor :global(.primary-button),
+:global(:root[data-shell="device"]) .previewControls :global(.primary-button) {
+  border-color: transparent;
+  border-radius: var(--device-radius-key);
+  background: linear-gradient(180deg, var(--device-key-orange-face-hi), var(--device-key-orange-face-lo));
+  color: #ffffff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.25);
+  box-shadow:
+    0 var(--device-key-travel) 0 var(--device-key-orange-edge),
+    0 8px 12px var(--device-key-orange-glow),
+    inset 0 1px 0 rgb(255 255 255 / 0.35);
+}
+
+:global(:root[data-shell="device"]) .commandBar :global(.primary-button):hover:not(:disabled),
+:global(:root[data-shell="device"]) .commandBar button:not([aria-label]):hover:not(:disabled),
+:global(:root[data-shell="device"]) .harmonyEditor :global(.primary-button):hover:not(:disabled),
+:global(:root[data-shell="device"]) .previewControls :global(.primary-button):hover:not(:disabled) {
+  border-color: transparent;
+  background: linear-gradient(180deg, var(--device-key-orange-face-hi), var(--device-key-orange-face-lo));
+  filter: brightness(1.05);
+}
+
+:global(:root[data-shell="device"]) .commandBar :global(.primary-button):active:not(:disabled),
+:global(:root[data-shell="device"]) .commandBar button:not([aria-label]):active:not(:disabled),
+:global(:root[data-shell="device"]) .harmonyEditor :global(.primary-button):active:not(:disabled),
+:global(:root[data-shell="device"]) .previewControls :global(.primary-button):active:not(:disabled) {
+  transform: translateY(var(--device-key-press));
+  box-shadow:
+    0 1px 0 var(--device-key-orange-edge),
+    0 3px 5px var(--device-key-orange-glow),
+    inset 0 1px 0 rgb(255 255 255 / 0.3);
+}
+
+/* 次级操作（编辑器按钮、候选和弦、片段、筛选）= light 键 */
+:global(:root[data-shell="device"]) .editorButtons button,
+:global(:root[data-shell="device"]) .segmentActions button,
+:global(:root[data-shell="device"]) .degreeControls button,
+:global(:root[data-shell="device"]) .chordBuilder > button,
+:global(:root[data-shell="device"]) .candidateList button,
+:global(:root[data-shell="device"]) .segmentList button,
+:global(:root[data-shell="device"]) .rangeFilters button {
+  border-color: transparent;
+  border-radius: var(--device-radius-key);
+  background: linear-gradient(180deg, var(--device-key-light-face-hi), var(--device-key-light-face-lo));
+  color: var(--device-key-light-text);
+  box-shadow:
+    0 var(--device-key-travel) 0 var(--device-key-light-edge),
+    0 8px 10px rgb(0 0 0 / 0.18),
+    inset 0 1px 0 rgb(255 255 255 / 0.9);
+  transition:
+    transform 50ms ease,
+    box-shadow 50ms ease;
+}
+
+:global(:root[data-shell="device"]) .editorButtons button:hover:not(:disabled),
+:global(:root[data-shell="device"]) .segmentActions button:hover:not(:disabled),
+:global(:root[data-shell="device"]) .degreeControls button:hover:not(:disabled),
+:global(:root[data-shell="device"]) .candidateList button:hover:not(:disabled),
+:global(:root[data-shell="device"]) .segmentList button:hover:not(:disabled),
+:global(:root[data-shell="device"]) .rangeFilters button:hover:not(:disabled) {
+  border-color: transparent;
+  filter: brightness(1.03);
+}
+
+:global(:root[data-shell="device"]) .editorButtons button:active:not(:disabled),
+:global(:root[data-shell="device"]) .segmentActions button:active:not(:disabled),
+:global(:root[data-shell="device"]) .degreeControls button:active:not(:disabled),
+:global(:root[data-shell="device"]) .candidateList button:active:not(:disabled),
+:global(:root[data-shell="device"]) .segmentList button:active:not(:disabled),
+:global(:root[data-shell="device"]) .rangeFilters button:active:not(:disabled) {
+  transform: translateY(var(--device-key-press));
+  box-shadow:
+    0 1px 0 var(--device-key-light-edge),
+    0 3px 4px rgb(0 0 0 / 0.16),
+    inset 0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+/* 低优先级候选保持虚线幽灵形态（非键） */
+:global(:root[data-shell="device"]) .candidateList button[data-priority="low"],
+:global(:root[data-shell="device"]) .candidateList button[data-priority="low"]:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  border-style: dashed;
+  background: transparent;
+  color: var(--text-secondary);
+  box-shadow: none;
+  filter: none;
+}
+
+/* 选中（片段 / 筛选）= 下沉键面 */
+:global(:root[data-shell="device"]) .segmentList button[aria-pressed="true"],
+:global(:root[data-shell="device"]) .rangeFilters button[aria-pressed="true"] {
+  border-color: transparent;
+  color: var(--device-key-light-text);
+  background: linear-gradient(180deg, var(--device-key-light-face-lo), var(--device-key-light-face-hi));
+  box-shadow:
+    0 2px 0 var(--device-key-light-edge),
+    inset 0 2px 4px rgb(0 0 0 / 0.12);
+}
+
+/* 试听位置 = 凹槽轨道 + 薄片柄，保持 22px 命中盒 */
+:global(:root[data-shell="device"]) .previewControls input[type="range"] {
+  height: 22px;
+  appearance: none;
+  background: transparent;
+}
+
+:global(:root[data-shell="device"]) .previewControls input[type="range"]::-webkit-slider-runnable-track {
+  height: 5px;
+  border-radius: var(--device-radius-inset);
+  background: var(--device-fader-rail);
+  box-shadow:
+    inset 0 1.5px 3px rgb(0 0 0 / 0.4),
+    0 1px 0 rgb(255 255 255 / 0.35);
+}
+
+:global(:root[data-shell="device"]) .previewControls input[type="range"]::-webkit-slider-thumb {
+  width: 14px;
+  height: 22px;
+  margin-top: -8.5px;
+  border: 0;
+  border-radius: 3px;
+  appearance: none;
+  background: linear-gradient(180deg, var(--device-fader-cap-hi), var(--device-fader-cap-lo));
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.15);
+}
+
+:global(:root[data-shell="device"]) .previewControls input[type="range"]::-moz-range-track {
+  height: 5px;
+  border-radius: var(--device-radius-inset);
+  background: var(--device-fader-rail);
+  box-shadow: inset 0 1.5px 3px rgb(0 0 0 / 0.4);
+}
+
+:global(:root[data-shell="device"]) .previewControls input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 22px;
+  border: 0;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--device-fader-cap-hi), var(--device-fader-cap-lo));
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.15);
+}
+
+/* focus：环形焦点 + 键程位置变化；disabled：收低键程 */
+:global(:root[data-shell="device"]) .commandBar button:focus-visible,
+:global(:root[data-shell="device"]) .editorButtons button:focus-visible,
+:global(:root[data-shell="device"]) .segmentActions button:focus-visible,
+:global(:root[data-shell="device"]) .degreeControls button:focus-visible,
+:global(:root[data-shell="device"]) .candidateList button:focus-visible,
+:global(:root[data-shell="device"]) .segmentList button:focus-visible,
+:global(:root[data-shell="device"]) .rangeFilters button:focus-visible {
+  transform: translateY(1px);
+  box-shadow:
+    var(--focus-ring),
+    0 4px 0 var(--device-key-light-edge),
+    inset 0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+:global(:root[data-shell="device"]) .commandBar button:disabled,
+:global(:root[data-shell="device"]) .editorButtons button:disabled,
+:global(:root[data-shell="device"]) .segmentActions button:disabled,
+:global(:root[data-shell="device"]) .degreeControls button:disabled,
+:global(:root[data-shell="device"]) .candidateList button:disabled,
+:global(:root[data-shell="device"]) .segmentList button:disabled,
+:global(:root[data-shell="device"]) .rangeFilters button:disabled {
+  box-shadow:
+    0 2px 0 var(--device-key-light-edge),
+    inset 0 1px 0 rgb(255 255 255 / 0.5);
+}

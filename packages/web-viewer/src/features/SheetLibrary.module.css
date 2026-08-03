@@ -555,3 +555,145 @@
     font-size: 13px;
   }
 }
+
+/*
+ * Device shell 结构覆写（P3：Library 控件材质继承）。
+ * 导入主操作 = orange 键；筛选/次级 = light 键（选中 = 下沉键面）；行操作 = dark 键；
+ * 搜索框 = 键井凹槽内凹。不引入 LCD 显示条等设备隐喻；布局与 40px 高度档不变。
+ */
+:global(:root[data-shell="device"]) .libraryControls .libraryFilterButton,
+:global(:root[data-shell="device"]) .libraryControls .librarySort select,
+:global(:root[data-shell="device"]) .libraryEmptyActions :global(.secondary-button),
+:global(:root[data-shell="device"]) .importSummaryHeader button {
+  border-color: transparent;
+  border-radius: var(--device-radius-key);
+  background: linear-gradient(180deg, var(--device-key-light-face-hi), var(--device-key-light-face-lo));
+  color: var(--device-key-light-text);
+  box-shadow:
+    0 var(--device-key-travel) 0 var(--device-key-light-edge),
+    0 8px 10px rgb(0 0 0 / 0.18),
+    inset 0 1px 0 rgb(255 255 255 / 0.9);
+  transition:
+    transform 50ms ease,
+    box-shadow 50ms ease;
+}
+
+:global(:root[data-shell="device"]) .libraryControls .libraryFilterButton:hover:not(:disabled),
+:global(:root[data-shell="device"]) .libraryEmptyActions :global(.secondary-button):hover:not(:disabled),
+:global(:root[data-shell="device"]) .importSummaryHeader button:hover:not(:disabled) {
+  border-color: transparent;
+  filter: brightness(1.03);
+}
+
+:global(:root[data-shell="device"]) .libraryControls .libraryFilterButton:active:not(:disabled),
+:global(:root[data-shell="device"]) .libraryEmptyActions :global(.secondary-button):active:not(:disabled),
+:global(:root[data-shell="device"]) .importSummaryHeader button:active:not(:disabled) {
+  transform: translateY(var(--device-key-press));
+  box-shadow:
+    0 1px 0 var(--device-key-light-edge),
+    0 3px 4px rgb(0 0 0 / 0.16),
+    inset 0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+/* 筛选选中 = 下沉键面（无 LED 元件时的 selected 表达） */
+:global(:root[data-shell="device"]) .libraryControls button[aria-pressed="true"],
+:global(:root[data-shell="device"]) .libraryControls .libraryFilterButton[aria-pressed="true"] {
+  border-color: transparent;
+  color: var(--device-key-light-text);
+  background: linear-gradient(180deg, var(--device-key-light-face-lo), var(--device-key-light-face-hi));
+  box-shadow:
+    0 2px 0 var(--device-key-light-edge),
+    inset 0 2px 4px rgb(0 0 0 / 0.12);
+}
+
+/* 导入主操作 = orange 键 */
+:global(:root[data-shell="device"]) .libraryShell :global(.primary-button),
+:global(:root[data-shell="device"]) .libraryContextActions :global(button.tw\:bg-accent) {
+  border-color: transparent;
+  border-radius: var(--device-radius-key);
+  background: linear-gradient(180deg, var(--device-key-orange-face-hi), var(--device-key-orange-face-lo));
+  color: #ffffff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.25);
+  box-shadow:
+    0 var(--device-key-travel) 0 var(--device-key-orange-edge),
+    0 8px 12px var(--device-key-orange-glow),
+    inset 0 1px 0 rgb(255 255 255 / 0.35);
+  transition:
+    transform 50ms ease,
+    box-shadow 50ms ease;
+}
+
+:global(:root[data-shell="device"]) .libraryShell :global(.primary-button):hover:not(:disabled),
+:global(:root[data-shell="device"]) .libraryContextActions :global(button.tw\:bg-accent):hover:not(:disabled) {
+  border-color: transparent;
+  background: linear-gradient(180deg, var(--device-key-orange-face-hi), var(--device-key-orange-face-lo));
+  filter: brightness(1.05);
+}
+
+:global(:root[data-shell="device"]) .libraryShell :global(.primary-button):active:not(:disabled),
+:global(:root[data-shell="device"]) .libraryContextActions :global(button.tw\:bg-accent):active:not(:disabled) {
+  transform: translateY(var(--device-key-press));
+  box-shadow:
+    0 1px 0 var(--device-key-orange-edge),
+    0 3px 5px var(--device-key-orange-glow),
+    inset 0 1px 0 rgb(255 255 255 / 0.3);
+}
+
+/* 行操作图标按钮 = dark 键 */
+:global(:root[data-shell="device"]) .libraryRowActions :global(button[data-icon-button]) {
+  border-color: transparent;
+  border-radius: var(--device-radius-key);
+  background: linear-gradient(180deg, var(--device-key-dark-face-hi), var(--device-key-dark-face-lo));
+  color: var(--device-key-dark-text);
+  box-shadow:
+    0 var(--device-key-travel) 0 var(--device-key-dark-edge),
+    0 8px 10px rgb(0 0 0 / 0.28),
+    inset 0 1px 0 rgb(255 255 255 / 0.14);
+  transition:
+    transform 50ms ease,
+    box-shadow 50ms ease;
+}
+
+:global(:root[data-shell="device"]) .libraryRowActions :global(button[data-icon-button]:hover:not(:disabled)) {
+  filter: brightness(1.08);
+}
+
+:global(:root[data-shell="device"]) .libraryRowActions :global(button[data-icon-button]:active:not(:disabled)) {
+  transform: translateY(var(--device-key-press));
+  box-shadow:
+    0 1px 0 var(--device-key-dark-edge),
+    0 3px 4px rgb(0 0 0 / 0.26),
+    inset 0 1px 0 rgb(255 255 255 / 0.1);
+}
+
+/* 搜索框 = 键井凹槽内凹（普通前景，非琥珀读数） */
+:global(:root[data-shell="device"]) .libraryControls .librarySearch {
+  border-color: transparent;
+  border-radius: var(--device-radius-inset);
+  background: var(--device-keybed);
+  box-shadow:
+    inset 0 2px 5px rgb(0 0 0 / 0.16),
+    0 1px 0 rgb(255 255 255 / 0.35);
+}
+
+/* focus：环形焦点 + 键程位置变化 */
+:global(:root[data-shell="device"]) .libraryControls button:focus-visible,
+:global(:root[data-shell="device"]) .libraryControls .librarySort select:focus-visible,
+:global(:root[data-shell="device"]) .libraryShell :global(.primary-button):focus-visible,
+:global(:root[data-shell="device"]) .libraryContextActions :global(button.tw\:bg-accent):focus-visible,
+:global(:root[data-shell="device"]) .libraryRowActions :global(button[data-icon-button]):focus-visible {
+  transform: translateY(1px);
+  box-shadow:
+    var(--focus-ring),
+    0 4px 0 var(--device-key-light-edge),
+    inset 0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+:global(:root[data-shell="device"]) .libraryControls button:disabled,
+:global(:root[data-shell="device"]) .libraryShell :global(.primary-button):disabled,
+:global(:root[data-shell="device"]) .libraryContextActions :global(button.tw\:bg-accent):disabled,
+:global(:root[data-shell="device"]) .libraryRowActions :global(button[data-icon-button]):disabled {
+  box-shadow:
+    0 2px 0 var(--device-key-light-edge),
+    inset 0 1px 0 rgb(255 255 255 / 0.5);
+}

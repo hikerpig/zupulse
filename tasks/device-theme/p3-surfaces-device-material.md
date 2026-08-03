@@ -30,10 +30,10 @@ device 外壳下，Library 与 Studio 的按钮、滑杆、读数类控件继承
 
 ## Acceptance criteria
 
-- [ ] 两个表面在 device 外壳下控件材质一致，无 LCD、格栅等设备隐喻出现。
-- [ ] 布局与密度不变（40px 筛选行、36px 工具控件高度档保持）。
-- [ ] 状态完整：rest / hover / active / focus / disabled / selected / error。
-- [ ] classic 回归零变化；`runtime-token-map.json` 更新且无漂移。
+- [x] 两个表面在 device 外壳下控件材质一致，无 LCD、格栅等设备隐喻出现。
+- [x] 布局与密度不变（40px 筛选行、36px 工具控件高度档保持）。
+- [x] 状态完整：rest / hover / active / focus / disabled / selected / error。
+- [x] classic 回归零变化；`runtime-token-map.json` 更新且无漂移。
 
 ## Verification
 
@@ -41,7 +41,29 @@ device 外壳下，Library 与 Studio 的按钮、滑杆、读数类控件继承
 - 门禁：`pnpm verify:fast`；导入与 Studio 分析 journey 走 `pnpm verify:e2e`
 - 人工证据：device-light/dark 下 Library 与 Studio 截图，附在本文件。
 
+## 验证记录（2026-08-03）
+
+- `pnpm check:design` 通过；`pnpm test -- styles`：18 通过。
+- `pnpm verify:fast` 通过（163 文件 / 736 测试）。
+- 截图证据（`scripts/capture-surfaces-shell-screenshots.mjs`，Cannon in D 样例；
+  导入后会自动打开 Viewer，脚本已先回 Library 再逐主题截图；Studio 导航带重试）：
+  - `scripts/screenshots/library-device-{light,dark}.png` — Library 表面。
+  - `scripts/screenshots/studio-device-{light,dark}.png` — Studio 分析工作区。
+- 逐控件复核：
+  - Library：搜索框=keybed 凹槽内凹（`.librarySearch` 即 TextField input 本身）、
+    收藏/排序=light 键、选中筛选=下沉键面、Import score=orange 主操作键、
+    行操作图标按钮=dark 键。
+  - Studio：命令栏图标按钮=dark 键、Reanalyze/Save=orange 主操作键、
+    筛选/片段/候选/编辑入口=light 键、选中片段与选中筛选=下沉键面、
+    `candidateList [data-priority="low"]` 保持虚线幽灵键、试听位置 range=凹槽+薄片柄。
+  - 无 LCD / 格栅隐喻；40px 筛选行与 36px 高度档未动（只改材质不改尺寸）。
+- `runtime-token-map.json` 无新增映射：P3 只消费 P2 的 `--device-*` 基元变量，
+  映射表不变、check:design 无漂移。
+- classic 对照截图（空库筛选行 + 导入按钮）确认零变化；所有覆写均挂在
+  `:root[data-shell="device"]` 作用域下，classic 不可能被命中。
+
 ## Open decisions
 
 - Studio 片段列表的来源色条 / 置信度圆点在 device 材质下是否保留现有彩色编码？
-  默认：保留（语义色职责不变），仅容器材质换肤；若观感冲突再回契约评审。
+  → 按默认结论执行：保留彩色编码（语义色职责不变），仅容器与控件换肤；
+  截图复核无观感冲突。

@@ -78,7 +78,7 @@ seam / adapter / leverage / locality。
   `alpha-tab/alpha-tab-settings.ts`；`studio-score-runtime.ts:23` 改从共享模块导入，不再 `from "./viewerApp"`。
 - 出口：studio runtime 不 deep-import viewer monolith。完整 #4 DOM seam 不在本轮。
 
-### A5 WorkspaceCoordinator（同一时间一个 runtime）
+### A5 ✅ WorkspaceCoordinator（已完成 2026-08-05）
 
 - 把 `openStudioOnce` 的 viewer teardown（:450-471）与 `openLibraryScoreOnce` 的 studio runtime teardown
   （:800-807）收进壳层 coordinator，保留原顺序。
@@ -192,5 +192,5 @@ seam / adapter / leverage / locality。
 
 ## Open decisions
 
-- A5：互斥由壳层 coordinator 持有 vs 由 StudioApplication 自持（推荐前者，保持文档「两类 Session 独立可重建」语义）。
+- A5：互斥由壳层 coordinator 持有（已定：`app/workspace-coordinator.ts`，StudioApplication 保持独立可重建，经 `acquireWorkspace` 钩子保留「验证后 teardown」顺序）。
 - C3：iPad 收敛进 `host.subscribe` vs 显式记为独立 adapter 通道。

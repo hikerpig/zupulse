@@ -22,6 +22,7 @@ import type { BundledSampleScore, BundledSampleSource } from "../sample-scores";
 import { ApplicationFailure, applicationIssue, type ApplicationIssue } from "./applicationIssue";
 import { createDefaultHarmonyAnalysisRunner, StudioApplication } from "../features/harmony-studio/StudioApplication";
 import type { HarmonyAnalysisRunner } from "../harmony-analysis-worker-client";
+import { WorkspaceCoordinator } from "./workspace-coordinator";
 
 export type ViewerApplicationSnapshot = {
   currentSessionId?: string;
@@ -46,9 +47,6 @@ export type ViewerApplicationSnapshot = {
 };
 
 export class ViewerApplication implements ViewerAppHandle {
-  private active: ViewerSessionHandle | undefined;
-  private activeLibraryScoreId: string | undefined;
-  private chain = Promise.resolve();
   private destroyPromise?: Promise<void>;
   private destroying = false;
   private importAbortController: AbortController | undefined;
@@ -57,11 +55,11 @@ export class ViewerApplication implements ViewerAppHandle {
   private readonly navigationListeners = new Set<(libraryScoreId: string) => void>();
   private readonly unsubscribe: () => void;
   private readonly studioApplication: StudioApplication;
-  private viewerDomBindings: ViewerDomBindings | undefined;
+  private readonly coordinator: WorkspaceCoordinator;
 
   constructor(
     private readonly host: ViewerHost,
-    private readonly openSession: (
+    openSession: (
       file: ViewerFile,
       libraryScoreId?: string,
       domBindings?: ViewerDomBindings,
@@ -85,6 +83,18 @@ export class ViewerApplication implements ViewerAppHandle {
       reportDiagnostic: (error, operation) => this.reportDiagnostic(error, operation),
       ...(openStudioRuntime === undefined ? {} : { openStudioRuntime }),
     });
+    this.coordinator = new WorkspaceCoordinator({
+      openSession,
+      studio: this.studioApplication,
+      onViewerReleased: () => {
+        const {
+          currentSessionId: _currentSessionId,
+          currentLibraryScoreId: _currentLibraryScoreId,
+          ...snapshot
+        } = this.snapshot;
+        this.setSnapshot(snapshot);
+      },
+    });
     void this.refreshLibrary();
   }
 
@@ -101,15 +111,15 @@ export class ViewerApplication implements ViewerAppHandle {
   }
 
   hasSession(sessionId: string): boolean {
-    return this.activeLibraryScoreId === sessionId && this.active !== undefined;
+    return this.coordinator.hasSession(sessionId);
   }
 
   getCurrentSession(): ViewerSessionHandle | undefined {
-    return this.active;
+    return this.coordinator.getCurrentSession();
   }
 
   bindViewerDom(bindings: ViewerDomBindings | undefined): void {
-    this.viewerDomBindings = bindings;
+    this.coordinator.bindViewerDom(bindings);
   }
 
   getStudioApplication(): StudioApplication {
@@ -128,13 +138,8 @@ export class ViewerApplication implements ViewerAppHandle {
     return this.library.repository.get(id as LibraryScore["id"]);
   }
 
-  async openStudio(id: string): Promise<void> {
-    const operation = this.chain.then(() => this.studioApplication.open(id, () => this.releaseViewerWorkspace()));
-    this.chain = operation.then(
-      () => undefined,
-      () => undefined,
-    );
-    return operation;
+  openStudio(id: string): Promise<void> {
+    return this.coordinator.openStudio(id);
   }
 
   async refreshLibrary(): Promise<void> {
@@ -268,8 +273,16 @@ export class ViewerApplication implements ViewerAppHandle {
       ...this.snapshot,
       viewer: { libraryScoreId: id, status: "loading" },
     });
-    const operation = this.chain
-      .then(() => (this.hasSession(id) ? undefined : this.openLibraryScoreOnce(id)))
+    const operation = this.coordinator
+      .openViewer(id, () => this.readLibraryScore(id))
+      .then(() => {
+        this.setSnapshot({
+          ...this.snapshot,
+          currentSessionId: crypto.randomUUID(),
+          currentLibraryScoreId: id,
+          viewer: { libraryScoreId: id, status: "ready" },
+        });
+      })
       .catch((error: unknown) => {
         this.reportDiagnostic(error, "library.open");
         this.setSnapshot({
@@ -288,56 +301,21 @@ export class ViewerApplication implements ViewerAppHandle {
         });
         throw error;
       });
-    this.chain = operation.then(
-      () => undefined,
-      () => undefined,
-    );
     return operation;
   }
 
   releaseLibraryScore(id: string): Promise<void> {
-    const operation = this.chain.then(async () => {
-      if (this.activeLibraryScoreId !== id) return;
-      const session = this.active;
-      this.active = undefined;
-      this.activeLibraryScoreId = undefined;
-      const {
-        currentSessionId: _currentSessionId,
-        currentLibraryScoreId: _currentLibraryScoreId,
-        ...snapshot
-      } = this.snapshot;
-      this.setSnapshot(snapshot);
-      await session?.pauseAndFlush();
-      await session?.destroy();
-    });
-    this.chain = operation.then(
-      () => undefined,
-      () => undefined,
-    );
-    return operation;
+    return this.coordinator.releaseViewer(id);
   }
 
-  private async openLibraryScoreOnce(id: string): Promise<void> {
-    let file: ViewerFile;
+  private async readLibraryScore(id: string): Promise<ViewerFile> {
     try {
-      file = await this.library.repository.readScore(id);
+      const file = await this.library.repository.readScore(id);
       await this.library.repository.markOpened(id, new Date().toISOString());
+      return file;
     } catch (error) {
       throw new ApplicationFailure(applicationIssue("viewer-library-failed"), { cause: error });
     }
-    const previous = this.active;
-    this.active = undefined;
-    this.activeLibraryScoreId = undefined;
-    await previous?.destroy();
-    await this.studioApplication.releaseRuntime();
-    this.active = await this.openSession(file, id, this.viewerDomBindings);
-    this.activeLibraryScoreId = id;
-    this.setSnapshot({
-      ...this.snapshot,
-      currentSessionId: crypto.randomUUID(),
-      currentLibraryScoreId: id,
-      viewer: { libraryScoreId: id, status: "ready" },
-    });
   }
 
   async exportLibraryScore(id: string): Promise<void> {
@@ -361,20 +339,16 @@ export class ViewerApplication implements ViewerAppHandle {
   async deleteLibraryScore(id: string): Promise<void> {
     await this.studioApplication.releaseScore(id);
     await this.library.repository.delete(id);
-    if (this.snapshot.currentLibraryScoreId === id) {
-      await this.active?.destroy();
-      this.active = undefined;
-      this.activeLibraryScoreId = undefined;
-    }
+    await this.coordinator.deleteViewer(id);
     await this.refreshLibrary();
   }
 
   async togglePlayback(): Promise<void> {
-    await this.active?.togglePlayback();
+    await this.coordinator.getCurrentSession()?.togglePlayback();
   }
 
   async pauseAndFlush(): Promise<void> {
-    await this.active?.pauseAndFlush();
+    await this.coordinator.getCurrentSession()?.pauseAndFlush();
   }
 
   destroy(): Promise<void> {
@@ -400,34 +374,16 @@ export class ViewerApplication implements ViewerAppHandle {
     for (const listener of this.listeners) listener();
   }
 
-  private async releaseViewerWorkspace(): Promise<void> {
-    const previousViewer = this.active;
-    this.active = undefined;
-    this.activeLibraryScoreId = undefined;
-    const {
-      currentSessionId: _currentSessionId,
-      currentLibraryScoreId: _currentLibraryScoreId,
-      ...snapshot
-    } = this.snapshot;
-    this.setSnapshot(snapshot);
-    await previousViewer?.destroy();
-  }
-
   private async destroyOnce(): Promise<void> {
     this.unsubscribe();
     this.navigationListeners.clear();
-    await this.chain;
-    const session = this.active;
-    this.active = undefined;
-    this.activeLibraryScoreId = undefined;
-    this.setSnapshot({});
     let cleanupError: unknown;
     try {
-      await session?.destroy();
-      await this.studioApplication.destroy();
+      await this.coordinator.destroy();
     } catch (error) {
       cleanupError = error;
     }
+    this.setSnapshot({});
     if (cleanupError !== undefined) throw cleanupError;
   }
 }

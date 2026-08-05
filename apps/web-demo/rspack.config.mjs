@@ -27,7 +27,7 @@ const createConfig = (_env, argv) => ({
       }),
     ],
   }),
-  ...(isE2e ? { lazyCompilation: false } : {}),
+  lazyCompilation: false,
   experiments: { outputModule: true },
   watchOptions: {
     ignored: ["**/node_modules/**", "**/dist/**"],

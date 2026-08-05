@@ -8,3 +8,4 @@ apps/*/test-results/
 apps/*/playwright-report/
 apps/ipad-shell/Zupulse.xcodeproj/project.xcworkspace/
 apps/ipad-shell/Zupulse.xcodeproj/xcuserdata/
+.serena/

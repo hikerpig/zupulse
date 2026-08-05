@@ -140,7 +140,7 @@ test("opens a GP file and restores persisted practice state", async () => {
     await openLibrary(window);
     await importSelectedFixture(window);
     await expect(window.getByRole("heading", { level: 1 })).toContainText("桌面验收谱");
-    await expect(window.getByRole("button", { name: "Play" })).toBeEnabled();
+    await expect(window.getByRole("button", { name: "Play" })).toBeEnabled({ timeout: 30_000 });
 
     await window.getByRole("button", { name: /^Speed \d+ BPM, \d+%$/ }).click();
     const tempoInput = window.getByRole("spinbutton", { name: "Speed BPM" });

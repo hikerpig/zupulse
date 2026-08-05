@@ -1,2 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<score-partwise version="4.0"><work><work-title>Single Voice</work-title></work><part-list><score-part id="P1"><part-name>Part 1</part-name></score-part></part-list><part id="P1"><measure number="1"><attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time><staves>2</staves></attributes><note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice></note></measure></part></score-partwise>
+version https://git-lfs.github.com/spec/v1
+oid sha256:ec616f26968b8940fb6628d8923a3e11f5f12df8baae3816876dfa700e6711cf
+size 490

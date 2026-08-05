@@ -9,7 +9,6 @@ struct BridgeEnvelope: Equatable {
 
 enum BridgeRequestPayload: Equatable {
     case handshake(HandshakePayload)
-    case fileOpen
     case fileSelect(FileSelectPayload)
     case lifecycleAck(LifecycleAckPayload)
     case diagnosticsWrite(DiagnosticsWritePayload)

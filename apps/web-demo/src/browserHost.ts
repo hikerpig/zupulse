@@ -1,6 +1,6 @@
 import { isLocalePreference, resolveLocale, type LocalePreference, type LocaleState } from "@zupulse/app-i18n";
 import { MockNativeBridge } from "@zupulse/web-core";
-import type { LocaleHost, ViewerFile, ViewerHost } from "@zupulse/web-viewer";
+import type { LocaleHost, ViewerHost } from "@zupulse/web-viewer";
 
 const localeStorageKey = "zupulse-locale";
 
@@ -36,16 +36,6 @@ export function createBrowserHost(ownerDocument: Document): ViewerHost & { bridg
       const handlePageHide = () => listener({ type: "suspend" });
       ownerDocument.defaultView?.addEventListener("pagehide", handlePageHide);
       return () => ownerDocument.defaultView?.removeEventListener("pagehide", handlePageHide);
-    },
-    async openScore(): Promise<ViewerFile | undefined> {
-      const input = ownerDocument.createElement("input");
-      input.type = "file";
-      input.accept = ".gp3,.gp4,.gp5,.gpx,.gp,.musicxml,.mxl,.xml";
-      const file = await new Promise<File | undefined>((resolve) => {
-        input.addEventListener("change", () => resolve(input.files?.[0]), { once: true });
-        input.click();
-      });
-      return file ? { fileName: file.name, bytes: new Uint8Array(await file.arrayBuffer()) } : undefined;
     },
   };
 }

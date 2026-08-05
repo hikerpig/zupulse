@@ -28,30 +28,25 @@ packages/web-viewer/src/
   app/
     App.tsx                 # providers 与 RouterProvider
     router.tsx              # route objects、lazy route、error boundary
-    AppShell.tsx            # 全局布局与导航区域
     ViewerApplication.ts    # 打开串行化、Session registry 与宿主生命周期
-  routes/
-    IdleViewerRoute.tsx
-    ViewerRoute.tsx
+    workspace-coordinator.ts # Viewer/Studio runtime 互斥与 teardown 顺序
+    pages/                  # Library、Viewer、Studio route pages
   features/
-    open-score/             # 打开文件的交互与状态
-    playback/               # 播放控制 UI
-    track-mixer/            # 轨道 mute/solo/volume
-    practice-loop/          # AB 循环
-  viewer/
-    AlphaTabSurface.tsx     # 命令式 alphaTab 的 React 生命周期边界
-    useViewerSession.ts     # 创建、订阅、销毁 session
-    viewerSessionAdapter.ts # web-core -> React 的窄适配层
+    harmony-studio/         # StudioApplication 与 Harmony Analysis UI
+    playback-workspace/     # 播放、导航、practice panels
+    piano-key-visualization/
+    sheet-library/          # Sheet Library 与 import UI
+  viewer-session/
+    viewer-session.ts       # ViewerSession wiring 与 runtime 生命周期
+    viewer-session-types.ts # ViewerSessionPort、commands、snapshots
+    viewer-session-slices.ts # feature-facing session adapters
+  alpha-tab/
+    alpha-tab-settings.ts   # alphaTab settings 与 score zoom seam
   components/
     ui/                     # Button、Dialog、Slider 等基础组件
-    layout/                 # Toolbar、SplitPane、Panel 等无业务布局
-  state/
-    appStore.ts             # 少量跨树客户端状态
-  styles/
-    tokens.css
-    base.css
-    components.css
-  host.ts                   # 保留现有宿主契约
+    ScoreViewer.tsx         # alphaTab score surface
+  host.ts                   # 宿主契约：subscribe、diagnostics；library 由 application 持有
+  mountViewerApp.tsx        # 宿主 mount 与依赖组合
   index.ts                  # 公共挂载 API
 ```
 
@@ -186,18 +181,18 @@ primitive 或消除双重 style ownership 时才继续；不得以 CSS LOC 归�
 | 持久化领域状态    | Bridge / sidecar                    | 练习设置、批注、进度、文件索引         |
 | alphaTab 内部状态 | alphaTab adapter                    | score 渲染、光标、音频运行时           |
 
-`viewerSessionAdapter` 对 React 暴露不可变 snapshot，并用 `useSyncExternalStore` 订阅 controller。组件发送 domain command，不直接修改 snapshot：
+`ViewerSession` 对 React 暴露不可变 snapshot，并用 `useSyncExternalStore` 订阅 session。组件通过 `ViewerSessionCommand`
+发送 domain command，不直接修改 snapshot：
 
 ```ts
 const playback = useViewerSession(session, selectPlayback);
-await session.dispatch({ type: "toggle-playback" });
+await session.dispatch({ type: "playback", command: { type: "toggle-playback" } });
 ```
 
-统一 Session 边界为：
+当前对外的 Session seam 是：
 
 ```ts
 type ViewerSession = {
-  id: string;
   getSnapshot(): ViewerSessionSnapshot;
   subscribe(listener: () => void): () => void;
   dispatch(command: ViewerSessionCommand): Promise<void>;
@@ -205,9 +200,12 @@ type ViewerSession = {
 };
 ```
 
-`ViewerSessionSnapshot` 是只读、可序列化的 UI 视图，包含加载状态、谱面摘要、播放、循环、轨道和可恢复错误；registry 只保存该接口，不暴露具体 controller。alphaTab 的逐帧光标位置不进入 snapshot。旧 `playbackControls.ts` 迁移完成后删除。
-
-Session 初始化失败后仍保留在 registry 和当前 route，以结构化 snapshot 区分文件不支持、损坏、renderer、audio 与未知错误；只映射当前能够可靠识别的分类，其余使用 `unknown`，UI 不解析 message 猜测类型。文件/renderer 错误提供重新打开文件，只有音频错误提供原地 retry。不存在的 `sessionId` 才显示 route 级“会话已结束”空态。
+`ViewerSessionSnapshot` 是只读的 UI projection，包含 playback、navigation、loop-editor bounds 和 piano-key
+visualization 所需的运行时数据；它不包含 Session ID，URL 与 Session registry 继续由 `ViewerApplication` 持有。
+feature 组件消费 `ViewerSessionSlices`，而不是访问 `PlaybackController`、alphaTab adapter 或 session wiring。
+Session 初始化失败后仍保留在 registry 和当前 route，以结构化 snapshot 区分文件不支持、损坏、renderer、audio 与未知错误；
+只映射当前能够可靠识别的分类，其余使用 `unknown`，UI 不解析 message 猜测类型。文件/renderer 错误提供重新打开文件，
+只有音频错误提供原地 retry。不存在的 `libraryScoreId` 才显示 route 级“会话已结束”空态。
 
 ### 架构风格
 
@@ -260,7 +258,7 @@ XState（后续局部）  复杂导入工作流
 
 任何新增状态库都必须替代某个现有所有者或解决一个尚未被覆盖的问题，不能只作为 controller snapshot 的第二份副本。
 
-Zustand 不保存 `ViewerSessionHandle`、Studio Session、`PlaybackController`、文件字节、播放、循环、tempo 或轨道状态。URL、application service、controller、Bridge 与 alphaTab 继续拥有这些事实。Dialog 开关、输入草稿等组件私有状态长期保留在 `useState`；后续只对真实跨 route、跨 feature 且没有现有所有者的客户端状态逐项评估迁移。
+Zustand 不保存 `ViewerSession`、Studio Session、`PlaybackController`、文件字节、播放、循环、tempo 或轨道状态。URL、application service、controller、Bridge 与 alphaTab 继续拥有这些事实。Dialog 开关、输入草稿等组件私有状态长期保留在 `useState`；后续只对真实跨 route、跨 feature 且没有现有所有者的客户端状态逐项评估迁移。
 
 ## SPA 路由
 
@@ -279,6 +277,10 @@ Data Router 只负责 route 匹配、lazy module、错误边界和导航，不�
 
 应用 service 从现有 `ViewerApplication` / `mountViewerApp()` 演进并保持以下语义：并发打开串行、新 Workspace Session 前销毁旧 Session、destroy 后拒绝新操作、清理已接受的打开操作、聚合打开与清理失败，以及转发宿主播放/挂起/关闭命令。它以 workspace kind 区分 Viewer 与 Studio，不渲染 UI、不依赖 React/DOM，也不进入 Zustand；React 只订阅其 snapshot 并发送 application command。
 
+`mountViewerApp` 必须提供宿主 `library`（Sheet Library Repository + Score File Gateway + adapters）；不存在无
+library 的直开模式（ADR 0067）。应用命令 `openScore()` 的语义是「导入并打开」，外部打开一律经 Library Import
+（ADR 0047），不再经 `ViewerHost.openScore`。
+
 已有活动谱时，系统文件选择器打开期间保留旧 Session；用户取消不改变 route 或 Session。选定新文件后先对旧 Session 执行 pause/flush/destroy，再导航到新 Library Score 并进入 loading。初始化失败时保留新 Session 的可恢复错误态，不回滚已销毁的旧 Session，也不同时持有两个 alphaTab/audio runtime。
 
 路由约束：
@@ -296,7 +298,7 @@ Repository 和 Session 所有；两者不通过 Zustand 共享可变状态。Stu
 
 ## Provider 顺序与入口
 
-`mountViewerApp(element, dependencies)` 是 Browser Demo 与 Electron 的唯一入口。两个宿主的 HTML 模板都提供 `<div id="root"></div>`；入口接收明确的 `HTMLElement`，不再接收 `Document`，也不保留旧签名兼容层。它创建 Zustand store、`ViewerApplication`、Router 与 React root，并返回保留 `openScore`、`togglePlayback`、`pauseAndFlush`、`destroy` 的 handle，供 Electron 生命周期接入。`destroy()` 先销毁 application/session，再卸载 React root。
+`mountViewerApp(element, dependencies)` 是 Browser Demo 与 Electron 的唯一入口。两个宿主的 HTML 模板都提供 `<div id="root"></div>`；入口接收明确的 `HTMLElement`，不再接收 `Document`，也不保留旧签名兼容层。`dependencies` 必须包含 `host` 与 `library`（ADR 0067）。它创建 Zustand store、`ViewerApplication`、Router 与 React root，并返回保留 `openScore`（导入并打开）、`togglePlayback`、`pauseAndFlush`、`destroy` 的 handle，供 Electron 生命周期接入。`destroy()` 先销毁 application/session，再卸载 React root。
 
 Provider 从稳定到易变排列：
 
@@ -339,7 +341,7 @@ Electron 在 React 外完成 preload Bridge 检查、`app.handshake` 和版本/h
 - `pnpm check`、Browser Demo build、Desktop build 全部通过。
 - 运行 `pnpm desktop:test:e2e`；Browser Demo 人工打开代表性 GP/MusicXML 文件，Electron 人工覆盖打开、播放/暂停、停止、速度、Loop 和轨道控制。
 - 保留 Vitest 与 jsdom，React 组件测试新增 `@testing-library/react` 和 `@testing-library/user-event`；通过 role、accessible name、键盘和指针行为查询，不以内部 class、组件名或大规模 snapshot 为主。
-- 同一组 Viewer component tests 使用 fake `ViewerHost`，不依赖 Electron；领域、controller 和 Bridge 单元测试继续使用现有测试方式。
+- 同一组 Viewer component tests 使用 fake `ViewerHost`（只实现 `subscribe`）与 fake `library`，不依赖 Electron；领域、controller 和 Bridge 单元测试继续使用现有测试方式。
 - Base UI Slider 覆盖方向键、Home/End、disabled、accessible label 和 command dispatch；指针几何交互由真实浏览器/E2E 验证。
 - Electron E2E 继续覆盖真实 Bridge、协议、应用生命周期和打包后 smoke test，不在 jsdom 重复模拟 Electron。
 - 路由至少覆盖首页、有效 session、失效 session和错误边界。

@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Download, Redo2, Settings, Undo2, Volume2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { ViewerApplication } from "../../../app/ViewerApplication";
+import type { StudioApplication } from "../StudioApplication";
 import type { StudioPreferences } from "../../../app/studio-preferences";
 import styles from "../../../app/pages/StudioPage.module.css";
 import type { StudioRange, StudioSnapshot } from "../model/studio-page-model";
@@ -17,7 +17,7 @@ export function StudioCommandBar({
   preferences,
   onPreferencesChange,
 }: {
-  application: ViewerApplication;
+  application: StudioApplication;
   libraryScoreId: string;
   studio: StudioSnapshot;
   selectedRange: StudioRange | undefined;
@@ -50,7 +50,7 @@ export function StudioCommandBar({
           <div className={styles.buttonGroup} role="group" aria-label={t("history")}>
             <button
               type="button"
-              onClick={() => application.undoStudio(libraryScoreId)}
+              onClick={() => application.undo(libraryScoreId)}
               aria-label={t("undo")}
               title={t("undo")}
             >
@@ -58,7 +58,7 @@ export function StudioCommandBar({
             </button>
             <button
               type="button"
-              onClick={() => application.redoStudio(libraryScoreId)}
+              onClick={() => application.redo(libraryScoreId)}
               aria-label={t("redo")}
               title={t("redo")}
             >
@@ -67,26 +67,22 @@ export function StudioCommandBar({
           </div>
           <div className={styles.buttonGroup} role="group" aria-label={t("analysisControls")}>
             {studio.status === "analyzing" ? (
-              <button type="button" onClick={() => application.cancelStudioReanalysis(libraryScoreId)}>
+              <button type="button" onClick={() => application.cancelReanalysis(libraryScoreId)}>
                 {t("cancelAnalysis")}
               </button>
             ) : (
-              <button type="button" onClick={() => void application.reanalyzeStudio(libraryScoreId)}>
+              <button type="button" onClick={() => void application.reanalyze(libraryScoreId)}>
                 {t("reanalyze")}
               </button>
             )}
-            <button
-              className="primary-button"
-              type="button"
-              onClick={() => void application.flushStudio(libraryScoreId)}
-            >
+            <button className="primary-button" type="button" onClick={() => void application.flush(libraryScoreId)}>
               {t("save")}
             </button>
             <button
               type="button"
               onClick={() =>
                 void application
-                  .exportStudio(libraryScoreId)
+                  .export(libraryScoreId)
                   .then((result) => setExportStatus(result === "saved" ? t("exportSaved") : t("exportCancelled")))
                   .catch(() => setExportStatus(t("exportFailed")))
               }

@@ -1,9 +1,9 @@
 import type { TFunction } from "i18next";
-import type { ViewerApplicationSnapshot } from "../../../app/ViewerApplication";
+import type { StudioApplicationSnapshot } from "../StudioApplication";
 import type { ApplicationIssue } from "../../../app/applicationIssue";
 
 export function documentStatusLabel(
-  status: NonNullable<ViewerApplicationSnapshot["studio"]>["status"],
+  status: StudioApplicationSnapshot["status"],
   segmentCount: number,
   correctionCount: number,
   t: TFunction<"studio">,
@@ -24,7 +24,7 @@ export function previewStatusLabel(status: "playing" | "stopped" | "paused", t: 
 }
 
 export function audioStatusLabel(
-  status: NonNullable<ViewerApplicationSnapshot["studio"]>["audioStatus"],
+  status: StudioApplicationSnapshot["audioStatus"],
   t: TFunction<"studio">,
 ): string | undefined {
   if (status === "loading") return t("audioLoading");

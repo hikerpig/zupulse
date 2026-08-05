@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import type { ViewerApplication } from "../../../app/ViewerApplication";
+import type { StudioApplication } from "../StudioApplication";
 import type { StudioPreferences } from "../../../app/studio-preferences";
 import styles from "../../../app/pages/StudioPage.module.css";
 import { HarmonyRangeWorkspace } from "../harmony-range-workspace";
@@ -19,7 +19,7 @@ export function StudioAnalysisPanel({
   onPreferencesChange,
   onSelectRange,
 }: {
-  application: ViewerApplication;
+  application: StudioApplication;
   libraryScoreId: string | undefined;
   storageAvailable: boolean;
   studio: StudioSnapshot | undefined;
@@ -72,14 +72,7 @@ export function StudioAnalysisPanel({
           {studio.previewError ? (
             <p className={styles.alert} role="alert">
               {t("previewUnavailable", { message: studioIssueMessage(studio.previewError, tErrors) })}
-              <button
-                type="button"
-                onClick={() =>
-                  (application as unknown as { retryStudioPreview?: (id: string) => void }).retryStudioPreview?.(
-                    libraryScoreId,
-                  )
-                }
-              >
+              <button type="button" onClick={() => application.retryPreview(libraryScoreId)}>
                 {t("retryPreview")}
               </button>
             </p>

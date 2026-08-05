@@ -1,14 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
-import type {
-  LocaleHost,
-  ViewerAppHandle,
-  ViewerDomBindings,
-  ViewerFile,
-  ViewerHost,
-  ViewerSessionHandle,
-} from "./host";
+import type { LocaleHost, ViewerAppHandle, ViewerDomBindings, ViewerFile, ViewerHost } from "./host";
+import type { ViewerSessionPort } from "./viewer-session/viewer-session-types";
 import { App, type ViewerProductCapabilities } from "./app/App";
 import { ViewerApplication } from "./app/ViewerApplication";
 import { createStudioScoreRuntime, type StudioScoreRuntime } from "./studio-score-runtime";
@@ -24,10 +18,10 @@ import type { BundledSampleSource } from "./sample-scores";
 export type ViewerAppDependencies = {
   host: ViewerHost;
   localeHost?: LocaleHost;
-  openSession(file: ViewerFile, libraryScoreId?: string, domBindings?: ViewerDomBindings): Promise<ViewerSessionHandle>;
+  openSession(file: ViewerFile, libraryScoreId?: string, domBindings?: ViewerDomBindings): Promise<ViewerSessionPort>;
   openStudioRuntime?(file: ViewerFile): Promise<StudioScoreRuntime>;
   capabilities?: ViewerProductCapabilities;
-  library?: {
+  library: {
     repository: SheetLibraryRepository;
     gateway: ScoreFileGateway;
     adapters: readonly ScoreFormatAdapter[];

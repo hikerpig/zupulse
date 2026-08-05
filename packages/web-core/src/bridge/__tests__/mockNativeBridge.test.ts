@@ -26,26 +26,6 @@ describe("MockNativeBridge", () => {
     expect(response.locale).toEqual({ preference: "system", effectiveLocale: "en-US" });
   });
 
-  it("consumes an explicitly queued file selection", async () => {
-    const bridge = new MockNativeBridge();
-    bridge.registerFile("file-1", {
-      fileToken: "file-1",
-      fileName: "riff.gp5",
-      sizeBytes: 16,
-    });
-    const request = createBridgeRequest("file.open", "open-1", {});
-
-    const response = parseBridgeResponse(request.type, await bridge.request(request));
-
-    expect(response).toMatchObject({ status: "opened", fileName: "riff.gp5" });
-  });
-
-  it("returns cancelled when no file selection is queued", async () => {
-    const bridge = new MockNativeBridge();
-    const request = createBridgeRequest("file.open", "open-1", {});
-    await expect(bridge.request(request)).resolves.toEqual({ status: "cancelled" });
-  });
-
   it("records only schema-defined event messages", () => {
     const bridge = new MockNativeBridge();
     bridge.emit({

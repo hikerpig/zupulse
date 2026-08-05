@@ -1,13 +1,8 @@
-import { lazy, Suspense, useEffect, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import type { ViewerApplication } from "../ViewerApplication";
 import { SheetLibrary } from "../../features/SheetLibrary";
-
-const ViewerPage = lazy(async () => {
-  const module = await import("./ViewerPage");
-  return { default: module.ViewerPage };
-});
 
 export function LibraryPage({ application }: { application: ViewerApplication }) {
   const { t } = useTranslation("library");
@@ -19,12 +14,6 @@ export function LibraryPage({ application }: { application: ViewerApplication })
     return () => window.removeEventListener("focus", refresh);
   }, [application]);
 
-  if (!application.hasLibrary())
-    return (
-      <Suspense fallback={null}>
-        <ViewerPage application={application} />
-      </Suspense>
-    );
   const library = snapshot.library ?? { scores: [], loading: true };
   const { error, ...libraryProps } = library;
   return (

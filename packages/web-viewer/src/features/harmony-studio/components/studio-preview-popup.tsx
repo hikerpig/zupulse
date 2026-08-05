@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
-import type { ViewerApplication } from "../../../app/ViewerApplication";
+import type { StudioApplication } from "../StudioApplication";
 import type { StudioPreferences } from "../../../app/studio-preferences";
 import { ContextPopup } from "../../../components/ContextPopup";
 import styles from "../../../app/pages/StudioPage.module.css";
@@ -18,7 +18,7 @@ export function StudioPreviewPopup({
   onOpenChange,
   onPreferencesChange,
 }: {
-  application: ViewerApplication;
+  application: StudioApplication;
   libraryScoreId: string;
   studio: StudioSnapshot;
   selectedRange: StudioRange | undefined;
@@ -43,11 +43,7 @@ export function StudioPreviewPopup({
           {preferences.previewEnabled ? t("hideChordPreview") : t("showChordPreview")}
         </button>
         <div className={styles.previewControls}>
-          <button
-            className="primary-button"
-            type="button"
-            onClick={() => application.toggleStudioPreview(libraryScoreId)}
-          >
+          <button className="primary-button" type="button" onClick={() => application.togglePreview(libraryScoreId)}>
             {preview.status === "playing" ? t("pausePreview") : t("playPreview")}
           </button>
           <label className={`${styles.field} ${styles.positionField}`}>
@@ -58,9 +54,7 @@ export function StudioPreviewPopup({
               min="0"
               max="10000"
               value={preview.positionTicks}
-              onChange={(event) =>
-                application.setStudioPreviewPosition(libraryScoreId, Number(event.currentTarget.value))
-              }
+              onChange={(event) => application.setPreviewPosition(libraryScoreId, Number(event.currentTarget.value))}
             />
           </label>
           <label className={styles.field}>
@@ -68,7 +62,7 @@ export function StudioPreviewPopup({
             <select
               aria-label={t("previewSpeed")}
               value={preview.speed}
-              onChange={(event) => application.setStudioPreviewSpeed(libraryScoreId, Number(event.currentTarget.value))}
+              onChange={(event) => application.setPreviewSpeed(libraryScoreId, Number(event.currentTarget.value))}
             >
               {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
                 <option key={speed} value={speed}>
@@ -81,10 +75,7 @@ export function StudioPreviewPopup({
             type="button"
             disabled={!selectedRange}
             onClick={() =>
-              application.setStudioPreviewLoop(
-                libraryScoreId,
-                preview.loop ? undefined : selectedRange?.effective.range,
-              )
+              application.setPreviewLoop(libraryScoreId, preview.loop ? undefined : selectedRange?.effective.range)
             }
           >
             {preview.loop ? t("disableSelectedLoop") : t("loopSelected")}

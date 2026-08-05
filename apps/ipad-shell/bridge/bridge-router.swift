@@ -100,13 +100,7 @@ final class BridgeRouter {
         }
 
         do {
-            let multiple: Bool
-            switch envelope.payload {
-            case .fileOpen:
-                multiple = false
-            case let .fileSelect(payload):
-                multiple = payload.multiple
-            default:
+            guard case let .fileSelect(payload) = envelope.payload else {
                 return .failure(
                     BridgeValidationError(
                         code: "BRIDGE_HANDLER_UNAVAILABLE",
@@ -114,6 +108,7 @@ final class BridgeRouter {
                     )
                 )
             }
+            let multiple = payload.multiple
             guard let selectedURLs = try await fileSelector.select(multiple: multiple), !selectedURLs.isEmpty else {
                 return .success(responseEnvelope(envelope, payload: ["status": "cancelled"]))
             }
@@ -138,19 +133,6 @@ final class BridgeRouter {
                 UITestImportStage.shared.value = "TOKEN_ISSUED"
             }
             #endif
-            if case .fileOpen = envelope.payload, let file = files.first {
-                return .success(
-                    responseEnvelope(
-                        envelope,
-                        payload: [
-                            "status": "opened",
-                            "fileToken": file["fileToken"]!,
-                            "fileName": file["fileName"]!,
-                            "sizeBytes": file["sizeBytes"]!,
-                        ]
-                    )
-                )
-            }
             return .success(
                 responseEnvelope(
                     envelope,
@@ -305,7 +287,7 @@ final class BridgeMessageHandler: NSObject, WKScriptMessageHandlerWithReply {
         if
             let body = message.body as? [String: Any],
             let type = body["type"] as? String,
-            ["file.open", "file.select"].contains(type)
+            ["file.select"].contains(type)
         {
             #if DEBUG
             UITestImportStage.shared.value = "REQUEST_RECEIVED"

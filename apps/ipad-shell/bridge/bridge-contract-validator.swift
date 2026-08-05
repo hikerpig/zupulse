@@ -62,9 +62,6 @@ final class BridgeContractValidator {
                     )
                 )
             )
-        case "file.open":
-            try requireExactKeys(payload, allowed: [], context: type)
-            return .fileOpen
         case "file.select":
             try requireExactKeys(payload, allowed: ["multiple"], context: type)
             return .fileSelect(

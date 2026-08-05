@@ -147,22 +147,6 @@ function createElectronHost(
 ): ViewerHost {
   let storageWarningShown = false;
   return {
-    async openScore() {
-      try {
-        const openRequest = createBridgeRequest("file.open", crypto.randomUUID(), {});
-        const opened = parseBridgeResponse(openRequest.type, await bridge.request(openRequest));
-        if (opened.status === "cancelled") return undefined;
-        const readRequest = createBridgeRequest("file.readBytes", crypto.randomUUID(), {
-          fileToken: opened.fileToken,
-        });
-        const file = parseBridgeResponse(readRequest.type, await bridge.request(readRequest));
-        return { fileName: file.fileName, bytes: file.bytes };
-      } catch (error) {
-        const status = document.querySelector<HTMLElement>("#status");
-        if (status) status.textContent = desktopErrorMessage("openFailed");
-        throw error;
-      }
-    },
     subscribe(listener) {
       return bridge.subscribe((value) => {
         const event = bridgeEventSchema.parse(value);

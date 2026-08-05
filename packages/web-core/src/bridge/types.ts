@@ -3,8 +3,6 @@ import type { localPlaybackResumeSchema } from "../storage/schemas";
 import type { BridgeRequest, BridgeResponse } from "./schemas";
 
 export type { BridgeError, BridgeEvent, BridgeRequest, Capabilities } from "./schemas";
-export type OpenFileResponse = BridgeResponse<"file.open">;
-export type OpenScoreFileResponse = OpenFileResponse;
 export type ReadScoreFileResponse = BridgeResponse<"file.readBytes">;
 export type ReadSidecarRequest = Extract<BridgeRequest, { type: "sidecar.read" }>["payload"];
 export type WriteSidecarRequest = Extract<BridgeRequest, { type: "sidecar.write" }>["payload"];

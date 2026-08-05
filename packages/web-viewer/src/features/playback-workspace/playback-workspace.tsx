@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { PianoKeyHintEvent } from "@zupulse/web-core";
-import type { ViewerSessionHandle } from "../../host";
+import type {
+  ViewerNavigationSlice,
+  ViewerPlaybackSlice,
+  ViewerPianoKeyVisualization,
+  ViewerSessionPort,
+} from "../../viewer-session/viewer-session-types";
+import { createViewerSessionSlices } from "../../viewer-session/viewer-session-slices";
 import { DisabledPracticeDrawer } from "./components/disabled-practice-drawer";
 import { PlaybackTransport } from "./playback-transport";
 import { PracticeDrawer } from "./practice-drawer";
@@ -11,14 +17,15 @@ export function PlaybackWorkspace({
   session,
   children,
 }: {
-  session: ViewerSessionHandle | undefined;
+  session: ViewerSessionPort | undefined;
   children: ReactNode;
 }) {
+  const slices = useMemo(() => (session ? createViewerSessionSlices(session) : undefined), [session]);
   return (
     <PlaybackLayout
-      playback={session?.playback}
-      navigation={session?.navigation}
-      pianoKeyVisualization={session?.pianoKeyVisualization}
+      playback={slices?.playback}
+      navigation={slices?.navigation}
+      pianoKeyVisualization={slices?.pianoKeyVisualization}
     >
       {children}
     </PlaybackLayout>
@@ -31,9 +38,9 @@ function PlaybackLayout({
   pianoKeyVisualization,
   children,
 }: {
-  playback: ViewerSessionHandle["playback"];
-  navigation: ViewerSessionHandle["navigation"];
-  pianoKeyVisualization: ViewerSessionHandle["pianoKeyVisualization"];
+  playback: ViewerPlaybackSlice | undefined;
+  navigation: ViewerNavigationSlice | undefined;
+  pianoKeyVisualization: ViewerPianoKeyVisualization | undefined;
   children: ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);

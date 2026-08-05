@@ -1,4 +1,3 @@
-import type { OpenFileResponse } from "@zupulse/web-core";
 import { isSupportedLibraryScoreFile } from "@zupulse/web-core";
 import { createAppI18n, type SupportedLocale } from "@zupulse/app-i18n";
 import { dialog } from "electron";
@@ -22,51 +21,6 @@ export function assertReadableScore(metadata: ReadableScoreMetadata): void {
 }
 
 type TokenFile = { fileToken: string; fileName: string; sizeBytes: number };
-
-type FileDependencies = {
-  showOpenDialog(): Promise<{ canceled: boolean; filePaths: string[] }>;
-  stat(path: string): Promise<{ size: number; isFile(): boolean }>;
-};
-
-function defaultDependencies(locale: SupportedLocale): FileDependencies {
-  const t = createAppI18n(locale).getFixedT(locale, "desktop");
-  return {
-    showOpenDialog: () =>
-      dialog.showOpenDialog({
-        title: t("dialog.openTitle"),
-        buttonLabel: t("dialog.openButton"),
-        properties: ["openFile"],
-        filters: [
-          { name: t("dialog.scoreFiles"), extensions: ["gp3", "gp4", "gp5", "gpx", "gp", "musicxml", "mxl"] },
-          { name: "Guitar Pro", extensions: ["gp3", "gp4", "gp5", "gpx", "gp"] },
-          { name: "MusicXML", extensions: ["musicxml", "mxl"] },
-          { name: t("dialog.allFiles"), extensions: ["*"] },
-        ],
-      }),
-    stat,
-  };
-}
-
-export async function openScoreFile(
-  tokens: FileTokenStore,
-  dependencies?: FileDependencies,
-  locale: SupportedLocale = "en-US",
-): Promise<OpenFileResponse> {
-  const resolvedDependencies = dependencies ?? defaultDependencies(locale);
-  const selection = await resolvedDependencies.showOpenDialog();
-  const path = selection.filePaths[0];
-  if (selection.canceled || !path) return { status: "cancelled" };
-
-  const info = await resolvedDependencies.stat(path);
-  const fileName = basename(path);
-  assertReadableScore({ fileName, sizeBytes: info.size, isFile: info.isFile() });
-  return {
-    status: "opened",
-    fileToken: tokens.issue(path, { fileName, sizeBytes: info.size }),
-    fileName,
-    sizeBytes: info.size,
-  };
-}
 
 export async function selectScoreFiles(
   tokens: FileTokenStore,
@@ -142,10 +96,3 @@ export async function saveScoreFile(
   await writeFile(selection.filePath, file.bytes, { mode: 0o600 });
   return { status: "saved" };
 }
-
-/** @deprecated Use the format-neutral score APIs. */
-export const assertReadableGp = assertReadableScore;
-/** @deprecated Use the format-neutral score APIs. */
-export const openGpFile = openScoreFile;
-/** @deprecated Use the format-neutral score APIs. */
-export const readGpFileBytes = readScoreFileBytes;

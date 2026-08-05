@@ -1,7 +1,7 @@
 import { ChevronLeft } from "lucide-react";
 import { useState, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
-import type { ViewerSessionHandle } from "../../host";
+import type { ViewerPlaybackSlice } from "../../viewer-session/viewer-session-types";
 import { usePlaybackSelector } from "./adapters/use-playback-selector";
 import { persistenceMessage } from "./model/playback-presenter";
 import { LoopPracticePanel } from "./panels/loop-practice-panel";
@@ -13,7 +13,7 @@ import { TracksPracticePanel } from "./panels/tracks-practice-panel";
 import styles from "../PlaybackWorkspace.module.css";
 
 type PracticeView = "overview" | "rhythm" | "hands" | "keyboard" | "loop" | "tracks";
-type Playback = NonNullable<ViewerSessionHandle["playback"]>;
+type Playback = ViewerPlaybackSlice;
 
 export function PracticeDrawer({
   playback,

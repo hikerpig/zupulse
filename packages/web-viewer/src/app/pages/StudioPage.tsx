@@ -6,30 +6,31 @@ import { StudioSplitWorkspace } from "../../components/studio-split-workspace";
 import { useStudioLifecycle } from "../../features/harmony-studio/adapters/use-studio-lifecycle";
 import { useStudioSnapshot } from "../../features/harmony-studio/adapters/use-studio-snapshot";
 import { StudioAnalysisPanel } from "../../features/harmony-studio/components/studio-analysis-panel";
-import {
-  createStudioRanges,
-  findSelectedStudioRange,
-  type StudioRange,
-} from "../../features/harmony-studio/model/studio-page-model";
-import type { ViewerApplication } from "../ViewerApplication";
+import { findSelectedStudioRange, type StudioRange } from "../../features/harmony-studio/model/studio-page-model";
+import type { StudioApplication, StudioApplicationSnapshot } from "../../features/harmony-studio/StudioApplication";
 import { loadStudioPreferences, saveStudioPreferences, type StudioPreferences } from "../studio-preferences";
 import styles from "./StudioPage.module.css";
 
-export function StudioPage({ application }: { application: ViewerApplication }) {
+export function StudioPage({
+  application,
+  openStudio,
+}: {
+  application: StudioApplication;
+  openStudio?: (libraryScoreId: string) => Promise<void>;
+}) {
   const { t } = useTranslation("studio");
   const { libraryScoreId } = useParams();
   const selectStudio = useCallback(
-    (snapshot: ReturnType<ViewerApplication["getSnapshot"]>) =>
-      snapshot.studio?.libraryScoreId === libraryScoreId ? snapshot.studio : undefined,
+    (snapshot: StudioApplicationSnapshot | undefined) =>
+      snapshot?.libraryScoreId === libraryScoreId ? snapshot : undefined,
     [libraryScoreId],
   );
   const studio = useStudioSnapshot(application, selectStudio);
   const storageAvailable = application.hasHarmonyAnalysisStorage();
   const active =
     libraryScoreId !== undefined && studio !== undefined && application.getCurrentStudioSession?.() !== undefined;
-  const ranges = useMemo(() => createStudioRanges(studio), [studio]);
-  const [fallbackSelectedKey, setFallbackSelectedKey] = useState<string>();
-  const selectedRange = findSelectedStudioRange(studio, ranges, fallbackSelectedKey);
+  const ranges = useMemo(() => studio?.ranges ?? [], [studio]);
+  const selectedRange = findSelectedStudioRange(studio, ranges);
   const [preferences, setPreferences] = useState(() => loadStudioPreferences(browserStorage()));
   const updatePreferences = useCallback((next: Partial<StudioPreferences>) => {
     setPreferences((current) => {
@@ -41,14 +42,14 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   const selectRange = useCallback(
     (item: StudioRange) => {
       if (!libraryScoreId) return;
-      setFallbackSelectedKey(item.key);
-      application.selectStudioRange(libraryScoreId, item.effective.range);
+      application.selectRange(libraryScoreId, item.effective.range);
     },
     [application, libraryScoreId],
   );
 
   useStudioLifecycle({
     application,
+    ...(openStudio ? { openStudio } : {}),
     libraryScoreId,
     storageAvailable,
     active,

@@ -25,13 +25,7 @@ describe("iPad Bridge contract", () => {
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
 
     expect(manifest.bridgeVersion).toBe("3.0.0");
-    expect(manifest.requestTypes).toEqual([
-      "app.handshake",
-      "app.lifecycleAck",
-      "diagnostics.write",
-      "file.open",
-      "file.select",
-    ]);
+    expect(manifest.requestTypes).toEqual(["app.handshake", "app.lifecycleAck", "diagnostics.write", "file.select"]);
     expect(manifest.eventTypes).toEqual(["app.command", "app.lifecycle"]);
     expect(JSON.stringify(manifest)).not.toContain("Uint8Array");
     expect(manifest.envelope.additionalProperties).toBe(false);

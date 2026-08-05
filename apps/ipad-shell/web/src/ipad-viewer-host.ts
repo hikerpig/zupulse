@@ -76,9 +76,6 @@ export async function mountIpadViewerApplication(
 
 function createIpadViewerHost(): ViewerHost {
   return {
-    async openScore() {
-      return undefined;
-    },
     subscribe() {
       return () => undefined;
     },

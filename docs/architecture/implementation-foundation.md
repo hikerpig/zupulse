@@ -11,7 +11,7 @@
 - Bridge API typed RPC / event 合约。
 - JSON sidecar payload。
 - SQLite schema 合约。
-- mock native bridge 打开文件流程。
+- Bridge mock 与一次性文件 token 测试。
 - alphaTab GP DOM 渲染。
 - 离线 SoundFont 播放。
 - 播放状态机、定位和变速。
@@ -33,7 +33,6 @@
 - `packages/web-core/src/score/session.ts`：ViewerSession 聚合。
 - `packages/web-core/src/bridge/types.ts`：Bridge API 消息类型。
 - `packages/web-core/src/bridge/mockNativeBridge.ts`：测试用 Native Bridge。
-- `packages/web-core/src/bridge/openFileFlow.ts`：mock 打开文件流程。
 - `packages/web-core/src/storage/sidecar.ts`：sidecar payload codec。
 - `packages/web-core/src/storage/sqliteSchema.ts`：SQLite schema 合约。
 - `packages/web-core/src/playback/types.ts`：播放领域类型和引擎端口。
@@ -41,7 +40,8 @@
 - `packages/web-core/src/playback/alphaTabPlaybackAdapter.ts`：alphaTab 播放适配器。
 - `packages/web-core/src/playback/playbackSidecar.ts`：播放练习 sidecar 与合并规则。
 - `packages/web-core/src/playback/playbackPersistence.ts`：Bridge 持久化 adapter。
-- `packages/web-viewer/src/playbackControls.ts`：Browser/Desktop 共享播放控件绑定。
+- `packages/web-viewer/src/viewer-session/`：Viewer wiring、Session port 与 feature slices。
+  `packages/web-viewer/src/features/playback-workspace/`：Viewer playback controls 与 practice UI。
 - `apps/web-demo/src/main.ts`：Browser Demo 宿主入口。
 - `apps/desktop-shell/src/main/main.ts`：Electron Main 组合入口。
 - `apps/desktop-shell/src/preload.ts`：固定的 `request` / `subscribe` contextBridge 暴露面。

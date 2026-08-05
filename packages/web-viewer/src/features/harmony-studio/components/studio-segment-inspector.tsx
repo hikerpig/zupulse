@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import type { ViewerApplication } from "../../../app/ViewerApplication";
+import type { StudioApplication } from "../StudioApplication";
 import styles from "../../../app/pages/StudioPage.module.css";
 import { HarmonyStudioEditor } from "../HarmonyStudioEditor";
 import type { StudioRange } from "../model/studio-page-model";
@@ -9,7 +9,7 @@ export function StudioSegmentInspector({
   libraryScoreId,
   selectedRange,
 }: {
-  application: ViewerApplication;
+  application: StudioApplication;
   libraryScoreId: string;
   selectedRange: StudioRange | undefined;
 }) {
@@ -23,19 +23,19 @@ export function StudioSegmentInspector({
         candidates={selectedSegment?.alternatives ?? []}
         {...(selectedSegment?.status === "unresolved" ? { unresolvedReason: selectedSegment.reason } : {})}
         onSelect={(candidate) =>
-          void application.setStudioCorrection(libraryScoreId, selectedRange.effective.range, {
+          void application.setCorrection(libraryScoreId, selectedRange.effective.range, {
             type: "chord",
             chord: candidate.chord,
           })
         }
         onApply={(chord) =>
-          void application.setStudioCorrection(libraryScoreId, selectedRange.effective.range, {
+          void application.setCorrection(libraryScoreId, selectedRange.effective.range, {
             type: "chord",
             chord,
           })
         }
         onNoChord={() =>
-          void application.setStudioCorrection(libraryScoreId, selectedRange.effective.range, {
+          void application.setCorrection(libraryScoreId, selectedRange.effective.range, {
             type: "no-chord",
           })
         }
@@ -43,31 +43,31 @@ export function StudioSegmentInspector({
       <div className={styles.segmentActions} aria-label={t("segmentActions")}>
         <button
           type="button"
-          onClick={() => void application.resetStudioCorrection(libraryScoreId, selectedRange.effective.range)}
+          onClick={() => void application.resetCorrection(libraryScoreId, selectedRange.effective.range)}
         >
           {t("resetSegment")}
         </button>
         <button
           type="button"
-          onClick={() => void application.splitStudioCorrection(libraryScoreId, selectedRange.effective.range)}
+          onClick={() => void application.splitCorrection(libraryScoreId, selectedRange.effective.range)}
         >
           {t("splitCorrection")}
         </button>
         <button
           type="button"
-          onClick={() => void application.mergeStudioCorrections(libraryScoreId, selectedRange.effective.range)}
+          onClick={() => void application.mergeCorrections(libraryScoreId, selectedRange.effective.range)}
         >
           {t("mergeCorrections")}
         </button>
         <button
           type="button"
-          onClick={() => void application.moveStudioCorrection(libraryScoreId, selectedRange.effective.range, -1)}
+          onClick={() => void application.moveCorrection(libraryScoreId, selectedRange.effective.range, -1)}
         >
           {t("moveLeft")}
         </button>
         <button
           type="button"
-          onClick={() => void application.moveStudioCorrection(libraryScoreId, selectedRange.effective.range, 1)}
+          onClick={() => void application.moveCorrection(libraryScoreId, selectedRange.effective.range, 1)}
         >
           {t("moveRight")}
         </button>

@@ -4,7 +4,7 @@ import { useEffect, useMemo, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Slider } from "../../components/Slider";
 import { Button, IconButton, Status } from "../../components/ui";
-import type { ViewerSessionHandle } from "../../host";
+import type { ViewerNavigationSlice, ViewerPlaybackSlice } from "../../viewer-session/viewer-session-types";
 import { usePlaybackSelector } from "./adapters/use-playback-selector";
 import { BpmControl } from "./components/bpm-control";
 import { audioStatusLabel, presentPlayback } from "./model/playback-presenter";
@@ -12,7 +12,6 @@ import { setPlaybackLoopMode } from "./runtime/loop-mode";
 import { createSeekPreviewScheduler } from "./runtime/seek-preview-scheduler";
 import { ScoreNavigationControls } from "./score-navigation-controls";
 import styles from "../PlaybackWorkspace.module.css";
-
 export function PlaybackTransport({
   playback,
   navigation,
@@ -23,8 +22,8 @@ export function PlaybackTransport({
   keyGuideEnabled,
   onKeyGuideToggle,
 }: {
-  playback: ViewerSessionHandle["playback"];
-  navigation: ViewerSessionHandle["navigation"];
+  playback: ViewerPlaybackSlice | undefined;
+  navigation: ViewerNavigationSlice | undefined;
   drawerOpen: boolean;
   drawerToggleRef: RefObject<HTMLButtonElement | null>;
   onDrawerToggle(): void;
@@ -65,8 +64,8 @@ function ActivePlaybackTransport({
   keyGuideEnabled,
   onKeyGuideToggle,
 }: {
-  playback: NonNullable<ViewerSessionHandle["playback"]>;
-  navigation: ViewerSessionHandle["navigation"];
+  playback: ViewerPlaybackSlice;
+  navigation: ViewerNavigationSlice | undefined;
   drawerOpen: boolean;
   drawerToggleRef: RefObject<HTMLButtonElement | null>;
   onDrawerToggle(): void;

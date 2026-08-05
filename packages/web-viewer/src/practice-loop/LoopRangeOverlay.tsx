@@ -8,7 +8,7 @@ import {
   type PointerEvent,
 } from "react";
 import { useTranslation } from "react-i18next";
-import type { ViewerSessionHandle } from "../host";
+import type { ViewerLoopEditorSlice, ViewerPlaybackSlice } from "../viewer-session/viewer-session-types";
 import {
   moveLoopBoundaryByBeat,
   positionFromLoopPoint,
@@ -19,8 +19,8 @@ import {
 } from "./loop-range-geometry";
 import styles from "./LoopRangeOverlay.module.css";
 
-type Playback = NonNullable<ViewerSessionHandle["playback"]>;
-type LoopEditor = NonNullable<ViewerSessionHandle["loopEditor"]>;
+type Playback = ViewerPlaybackSlice;
+type LoopEditor = ViewerLoopEditorSlice;
 type Boundary = "start" | "end";
 
 export function LoopRangeOverlay({

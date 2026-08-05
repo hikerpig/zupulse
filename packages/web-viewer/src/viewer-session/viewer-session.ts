@@ -35,7 +35,7 @@ import {
 } from "../score-navigation/alpha-tab-navigation";
 import { attachScoreNavigationInputs } from "../score-navigation/score-navigation-inputs";
 import type { ScoreMeasureBounds } from "../practice-loop/loop-range-geometry";
-import { attachScoreZoomCommit, createViewerAlphaTabSettings } from "./alpha-tab-runtime";
+import { attachScoreZoomCommit, createViewerAlphaTabSettings } from "../alpha-tab/alpha-tab-settings";
 
 export type DefaultOpenSessionDependencies = {
   createApi: typeof createAlphaTabApi;

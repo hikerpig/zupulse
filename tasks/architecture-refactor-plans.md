@@ -72,7 +72,7 @@ seam / adapter / leverage / locality。
 - 出口：`StudioApplication.test.ts` 在无 viewer session 下跑通 open/analyze/correction/preview/export；
   `pnpm check` + `pnpm desktop:test:e2e`。
 
-### A4 使能项：alphaTab settings 去重（#4 的最小切片）
+### A4 ✅ 使能项：alphaTab settings 去重（已完成 2026-08-05）
 
 - 把 `viewerApp.tsx` 的 `createViewerAlphaTabSettings`（和 `attachScoreZoomCommit`）提到
   `alpha-tab/alpha-tab-settings.ts`；`studio-score-runtime.ts:23` 改从共享模块导入，不再 `from "./viewerApp"`。

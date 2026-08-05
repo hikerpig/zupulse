@@ -20,7 +20,7 @@ import {
 } from "@zupulse/web-core";
 import type { ViewerFile } from "./host";
 import { presentScoreFile } from "./importPresenter";
-import { attachScoreZoomCommit, createViewerAlphaTabSettings } from "./viewerApp";
+import { attachScoreZoomCommit, createViewerAlphaTabSettings } from "./alpha-tab/alpha-tab-settings";
 
 export type StudioScoreRuntimeSnapshot = {
   status: "ready" | "error";

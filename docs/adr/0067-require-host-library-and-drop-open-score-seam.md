@@ -20,6 +20,5 @@ Library 事实源不一致。
 ## 后果
 
 - 未来新增宿主必须提供 Sheet Library；「打开任意文件不进库」不再作为受支持模式。
-- Desktop bridge 的 `file.open` RPC 只被删除的 seam 方法触达，已随 ADR 0022 / 0030 删除
-  （另见 `tasks/architecture-refactor-plans.md` 计划 C2）；`file.readBytes` 是 library 导入的字节读取口，保留。
+- Desktop 与 iPad native Bridge 均不再接受 `file.open`；`file.select` / `file.readBytes` 是 Library 导入的保留通道。
 - 扩展 ADR 0047：外部打开不再有绕过 Library Import 的旁路。

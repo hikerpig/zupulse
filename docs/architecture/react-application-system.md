@@ -28,30 +28,25 @@ packages/web-viewer/src/
   app/
     App.tsx                 # providers 与 RouterProvider
     router.tsx              # route objects、lazy route、error boundary
-    AppShell.tsx            # 全局布局与导航区域
     ViewerApplication.ts    # 打开串行化、Session registry 与宿主生命周期
-  routes/
-    IdleViewerRoute.tsx
-    ViewerRoute.tsx
+    workspace-coordinator.ts # Viewer/Studio runtime 互斥与 teardown 顺序
+    pages/                  # Library、Viewer、Studio route pages
   features/
-    open-score/             # 打开文件的交互与状态
-    playback/               # 播放控制 UI
-    track-mixer/            # 轨道 mute/solo/volume
-    practice-loop/          # AB 循环
-  viewer/
-    AlphaTabSurface.tsx     # 命令式 alphaTab 的 React 生命周期边界
-    useViewerSession.ts     # 创建、订阅、销毁 session
-    viewerSessionAdapter.ts # web-core -> React 的窄适配层
+    harmony-studio/         # StudioApplication 与 Harmony Analysis UI
+    playback-workspace/     # 播放、导航、practice panels
+    piano-key-visualization/
+    sheet-library/          # Sheet Library 与 import UI
+  viewer-session/
+    viewer-session.ts       # ViewerSession wiring 与 runtime 生命周期
+    viewer-session-types.ts # ViewerSessionPort、commands、snapshots
+    viewer-session-slices.ts # feature-facing session adapters
+  alpha-tab/
+    alpha-tab-settings.ts   # alphaTab settings 与 score zoom seam
   components/
     ui/                     # Button、Dialog、Slider 等基础组件
-    layout/                 # Toolbar、SplitPane、Panel 等无业务布局
-  state/
-    appStore.ts             # 少量跨树客户端状态
-  styles/
-    tokens.css
-    base.css
-    components.css
-  host.ts                   # 宿主契约：subscribe（commands/lifecycle）；library 必选
+    ScoreViewer.tsx         # alphaTab score surface
+  host.ts                   # 宿主契约：subscribe、diagnostics；library 由 application 持有
+  mountViewerApp.tsx        # 宿主 mount 与依赖组合
   index.ts                  # 公共挂载 API
 ```
 
@@ -263,7 +258,7 @@ XState（后续局部）  复杂导入工作流
 
 任何新增状态库都必须替代某个现有所有者或解决一个尚未被覆盖的问题，不能只作为 controller snapshot 的第二份副本。
 
-Zustand 不保存 `ViewerSessionHandle`、Studio Session、`PlaybackController`、文件字节、播放、循环、tempo 或轨道状态。URL、application service、controller、Bridge 与 alphaTab 继续拥有这些事实。Dialog 开关、输入草稿等组件私有状态长期保留在 `useState`；后续只对真实跨 route、跨 feature 且没有现有所有者的客户端状态逐项评估迁移。
+Zustand 不保存 `ViewerSession`、Studio Session、`PlaybackController`、文件字节、播放、循环、tempo 或轨道状态。URL、application service、controller、Bridge 与 alphaTab 继续拥有这些事实。Dialog 开关、输入草稿等组件私有状态长期保留在 `useState`；后续只对真实跨 route、跨 feature 且没有现有所有者的客户端状态逐项评估迁移。
 
 ## SPA 路由
 

@@ -1,7 +1,7 @@
 import type { PlaybackCommand } from "@zupulse/web-core";
-import type { ViewerSessionHandle } from "../../../host";
+import type { ViewerPlaybackSlice } from "../../../viewer-session/viewer-session-types";
 
-type SeekPlayback = Pick<NonNullable<ViewerSessionHandle["playback"]>, "dispatch" | "previewSeek">;
+type SeekPlayback = Pick<ViewerPlaybackSlice, "dispatch" | "previewSeek">;
 
 export function createSeekPreviewScheduler(
   playback: SeekPlayback,

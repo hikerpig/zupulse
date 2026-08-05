@@ -4,14 +4,10 @@ import { useTranslation } from "react-i18next";
 import { persistScoreNavigationMode, useAppStore } from "../../app/appStore";
 import { ContextPopup } from "../../components/ContextPopup";
 import { IconButton } from "../../components/ui";
-import type { ViewerSessionHandle } from "../../host";
+import type { ViewerNavigationSlice } from "../../viewer-session/viewer-session-types";
 import styles from "../PlaybackWorkspace.module.css";
 
-export function ScoreNavigationControls({
-  navigation,
-}: {
-  navigation: NonNullable<ViewerSessionHandle["navigation"]>;
-}) {
+export function ScoreNavigationControls({ navigation }: { navigation: ViewerNavigationSlice }) {
   const { t } = useTranslation("viewer");
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);

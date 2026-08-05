@@ -5,8 +5,8 @@ import {
   type ViewerFile,
   type ViewerHost,
   type ViewerHostEvent,
-  type ViewerSessionHandle,
 } from "../host";
+import type { ViewerSessionPort } from "../viewer-session/viewer-session-types";
 import { importLibraryScores } from "@zupulse/web-core";
 import type {
   LibraryScore,
@@ -63,7 +63,7 @@ export class ViewerApplication implements ViewerAppHandle {
       file: ViewerFile,
       libraryScoreId?: string,
       domBindings?: ViewerDomBindings,
-    ) => Promise<ViewerSessionHandle>,
+    ) => Promise<ViewerSessionPort>,
     private readonly library: {
       repository: SheetLibraryRepository;
       gateway: ScoreFileGateway;
@@ -114,7 +114,7 @@ export class ViewerApplication implements ViewerAppHandle {
     return this.coordinator.hasSession(sessionId);
   }
 
-  getCurrentSession(): ViewerSessionHandle | undefined {
+  getCurrentSession(): ViewerSessionPort | undefined {
     return this.coordinator.getCurrentSession();
   }
 
@@ -344,11 +344,14 @@ export class ViewerApplication implements ViewerAppHandle {
   }
 
   async togglePlayback(): Promise<void> {
-    await this.coordinator.getCurrentSession()?.togglePlayback();
+    await this.coordinator.getCurrentSession()?.dispatch({
+      type: "playback",
+      command: { type: "toggle-playback" },
+    });
   }
 
   async pauseAndFlush(): Promise<void> {
-    await this.coordinator.getCurrentSession()?.pauseAndFlush();
+    await this.coordinator.getCurrentSession()?.dispatch({ type: "pause-and-flush" });
   }
 
   destroy(): Promise<void> {

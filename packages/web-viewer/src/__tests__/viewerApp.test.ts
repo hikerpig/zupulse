@@ -9,8 +9,8 @@ import {
 } from "../viewerApp";
 import { SCORE_ZOOM_COMMIT_EVENT } from "../scoreZoom";
 import { mountViewerApp } from "../mountViewerApp";
+import { createViewerSessionSlices } from "../viewer-session/viewer-session-slices";
 import type { ViewerDomBindings } from "../host";
-
 function renderSessionFixture(ownerDocument: Document): void {
   ownerDocument.body.innerHTML =
     '<h1 id="summary">未打开乐谱</h1><p id="status"></p><div><section id="alpha-tab"></section></div>';
@@ -42,9 +42,10 @@ describe("mountViewerApp", () => {
     const handle = mountViewerApp(testRoot(), {
       host: { subscribe: () => () => undefined },
       openSession: async () => ({
-        togglePlayback: vi.fn(),
-        pauseAndFlush: vi.fn(),
-        destroy: vi.fn(),
+        getSnapshot: () => ({ loopEditor: { measureBounds: [], staffBounds: [] } }),
+        subscribe: () => () => undefined,
+        dispatch: vi.fn(async () => undefined),
+        destroy: vi.fn(async () => undefined),
       }),
       library: {
         repository: {
@@ -184,14 +185,14 @@ describe("createDefaultOpenSession cleanup", () => {
       tick: 480,
       cachedTimeMs: 500,
     };
-
-    session.playback?.previewSeek?.(previewPosition);
+    const slices = createViewerSessionSlices(session);
+    slices.playback?.previewSeek(previewPosition);
     expect(previewSeek).toHaveBeenCalledWith(previewPosition);
     expect(buildPianoKeyTimeline).not.toHaveBeenCalled();
-    expect(session.pianoKeyVisualization?.loadEvents()).toBe(keyEvents);
-    expect(session.pianoKeyVisualization?.getTick()).toBe(240);
+    expect(slices.pianoKeyVisualization?.loadEvents()).toBe(keyEvents);
+    expect(slices.pianoKeyVisualization?.getTick()).toBe(240);
     expect(buildPianoKeyTimeline).toHaveBeenCalledOnce();
-    expect(session.pianoKeyVisualization?.loadEvents()).toBe(keyEvents);
+    expect(slices.pianoKeyVisualization?.loadEvents()).toBe(keyEvents);
     expect(buildPianoKeyTimeline).toHaveBeenCalledOnce();
 
     beatHandler?.({ displayStart: 480, voice: { bar: { index: 1 } } });
@@ -550,7 +551,7 @@ describe("createDefaultOpenSession cleanup", () => {
       sessionBindings(document),
     );
 
-    await session.pauseAndFlush();
+    await session.dispatch({ type: "pause-and-flush" });
 
     expect(dispatch).toHaveBeenCalledWith({ type: "pause" });
     expect(flush).toHaveBeenCalledOnce();

@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
 import { createDefaultOpenSession, type DefaultOpenSessionDependencies } from "../viewer-session";
-import type { ViewerDomBindings, ViewerSessionHandle } from "../../host";
+import { createViewerSessionSlices } from "../viewer-session-slices";
+import type { ViewerDomBindings } from "../../host";
+import type { ViewerSessionPort } from "../viewer-session-types";
 
 function renderSessionFixture(ownerDocument: Document): void {
   ownerDocument.body.innerHTML =
@@ -126,7 +128,7 @@ function playingState(measureIndex: number): Record<string, unknown> {
 }
 
 async function openReadySession(): Promise<{
-  session: ViewerSessionHandle;
+  session: ViewerSessionPort;
   emit: (state: unknown) => void;
   navigation: ReturnType<typeof makeNavigation>;
   dispatch: ReturnType<typeof makeController>["dispatch"];
@@ -197,42 +199,43 @@ describe("ViewerSession navigation policy", () => {
 
   it("routes seek, stop, and previewSeek through the controller", async () => {
     const { session, navigation, dispatch, previewSeek } = await openReadySession();
+    const slices = createViewerSessionSlices(session);
     const position = { measureId: "measure-1", measureIndex: 1, beatIndex: 0, tick: 1920, cachedTimeMs: 2000 };
 
-    await session.playback?.dispatch({ type: "seek", position });
+    await slices.playback?.dispatch({ type: "seek", position });
     expect(navigation.formalSeek).toHaveBeenCalledOnce();
     expect(dispatch).toHaveBeenCalledWith({ type: "seek", position });
 
-    await session.playback?.dispatch({ type: "stop" });
+    await slices.playback?.dispatch({ type: "stop" });
     expect(navigation.transportChanged).toHaveBeenCalledWith("stopped");
     expect(dispatch).toHaveBeenCalledWith({ type: "stop" });
 
-    session.playback?.previewSeek?.(position);
+    slices.playback?.previewSeek(position);
     expect(navigation.beginScrubPreview).toHaveBeenCalledOnce();
     expect(previewSeek).toHaveBeenCalledWith(position);
   });
-
   it("replays the current snapshot to late playback subscribers", async () => {
     const { session, emit } = await openReadySession();
+    const playback = createViewerSessionSlices(session).playback!;
     const listener = vi.fn();
 
     emit(playingState(1));
-    session.playback?.subscribe(listener);
+    playback.subscribe(listener);
 
     expect(listener).toHaveBeenCalledTimes(1);
     expect(listener).toHaveBeenCalledWith(expect.objectContaining({ transport: "playing", looping: true }));
   });
 
-  it("destroys the controller after detaching selection and event wiring", async () => {
-    const { session, controllerDestroy, adapterDestroy, detachBeatSelection } = await openReadySession();
-
-    await session.destroy();
-
-    expect(controllerDestroy).toHaveBeenCalledOnce();
-    expect(adapterDestroy).not.toHaveBeenCalled();
-    expect(detachBeatSelection).toHaveBeenCalledOnce();
-    expect(detachBeatSelection.mock.invocationCallOrder[0]).toBeLessThan(
-      controllerDestroy.mock.invocationCallOrder[0] ?? 0,
+  it("exposes a narrow external-store session and slice adapters", async () => {
+    const { session } = await openReadySession();
+    expect(session).toEqual(
+      expect.objectContaining({
+        getSnapshot: expect.any(Function),
+        subscribe: expect.any(Function),
+        dispatch: expect.any(Function),
+        destroy: expect.any(Function),
+      }),
     );
+    expect(session).not.toHaveProperty("playback");
   });
 });

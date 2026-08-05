@@ -1,14 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
-import type { ViewerFile, ViewerSessionHandle } from "../../host";
+import type { ViewerFile } from "../../host";
+import type { ViewerSessionPort } from "../../viewer-session/viewer-session-types";
 import type { StudioApplication } from "../../features/harmony-studio/StudioApplication";
 import { WorkspaceCoordinator } from "../workspace-coordinator";
 
-function viewerSession(events: string[]): ViewerSessionHandle {
+function viewerSession(events: string[]): ViewerSessionPort {
+  const dispatch = vi.fn(async (command) => {
+    if (command.type === "pause-and-flush") events.push("viewer:pauseAndFlush");
+  });
   return {
-    togglePlayback: async () => undefined,
-    pauseAndFlush: async () => {
-      events.push("viewer:pauseAndFlush");
-    },
+    getSnapshot: () => ({ loopEditor: { measureBounds: [], staffBounds: [] } }),
+    subscribe: () => () => undefined,
+    dispatch,
     destroy: async () => {
       events.push("viewer:destroy");
     },
@@ -33,7 +36,7 @@ function fakeStudio(events: string[]) {
 
 function createCoordinator(
   events: string[],
-  options: { openSession?: (file: ViewerFile, id: string) => Promise<ViewerSessionHandle> } = {},
+  options: { openSession?: (file: ViewerFile, id: string) => Promise<ViewerSessionPort> } = {},
 ) {
   const studio = fakeStudio(events);
   const onViewerReleased = vi.fn();
@@ -82,8 +85,8 @@ describe("WorkspaceCoordinator", () => {
 
   it("waits for an in-flight Viewer open before replacing it with Studio", async () => {
     const events: string[] = [];
-    let resolveViewer: ((session: ViewerSessionHandle) => void) | undefined;
-    const pendingSession = new Promise<ViewerSessionHandle>((resolve) => {
+    let resolveViewer: ((session: ViewerSessionPort) => void) | undefined;
+    const pendingSession = new Promise<ViewerSessionPort>((resolve) => {
       resolveViewer = resolve;
     });
     const { coordinator, studio } = createCoordinator(events, {

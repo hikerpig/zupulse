@@ -1,10 +1,10 @@
 import { useEffect, useState, useSyncExternalStore, type CSSProperties } from "react";
-import type { ViewerSessionHandle } from "../host";
+import type { ViewerLoopEditorSlice, ViewerPlaybackSlice } from "../viewer-session/viewer-session-types";
 import type { ScoreStaffBounds } from "../score-navigation/alpha-tab-navigation";
 import styles from "./PianoHandEmphasisOverlay.module.css";
 
-type Playback = NonNullable<ViewerSessionHandle["playback"]>;
-type LoopEditor = NonNullable<ViewerSessionHandle["loopEditor"]>;
+type Playback = ViewerPlaybackSlice;
+type LoopEditor = ViewerLoopEditorSlice;
 
 export function PianoHandEmphasisOverlay({
   playback,

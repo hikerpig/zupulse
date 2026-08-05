@@ -1,6 +1,6 @@
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { ViewerSessionHandle } from "../../../host";
+import type { ViewerPlaybackSlice } from "../../../viewer-session/viewer-session-types";
 import { usePlaybackSelector } from "../adapters/use-playback-selector";
 import { BpmControl } from "../components/bpm-control";
 import {
@@ -13,7 +13,7 @@ import {
 import { setPlaybackLoopMode } from "../runtime/loop-mode";
 import styles from "../../PlaybackWorkspace.module.css";
 
-type Playback = NonNullable<ViewerSessionHandle["playback"]>;
+type Playback = ViewerPlaybackSlice;
 
 export function PracticeSummary({ playback }: { playback: Playback }) {
   const { t } = useTranslation("viewer");

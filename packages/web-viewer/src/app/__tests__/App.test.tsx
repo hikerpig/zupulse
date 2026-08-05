@@ -12,6 +12,7 @@ import type {
 } from "@zupulse/web-core";
 import { createAppI18n } from "@zupulse/app-i18n";
 import type { LocaleHost } from "../../i18n/locale-controller";
+import type { ViewerSessionPort } from "../../viewer-session/viewer-session-types";
 
 afterEach(() => {
   cleanup();
@@ -54,13 +55,21 @@ function libraryFixture(): {
     adapters: [],
   };
 }
+function viewerSession(): ViewerSessionPort {
+  return {
+    getSnapshot: () => ({ loopEditor: { measureBounds: [], staffBounds: [] } }),
+    subscribe: () => () => undefined,
+    dispatch: async () => undefined,
+    destroy: async () => undefined,
+  };
+}
 
 describe("App", () => {
   it("switches locale without rebuilding the application", async () => {
     window.history.replaceState(null, "", "#/");
     const application = new ViewerApplication(
       { subscribe: () => () => undefined },
-      async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() }),
+      async () => viewerSession(),
       libraryFixture(),
     );
     const localeHost: LocaleHost = {
@@ -86,11 +95,7 @@ describe("App", () => {
   });
 
   it("keeps the previous locale when persistence fails", async () => {
-    const application = new ViewerApplication({ subscribe: () => () => undefined }, async () => ({
-      togglePlayback: vi.fn(),
-      pauseAndFlush: vi.fn(),
-      destroy: vi.fn(),
-    }));
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, async () => viewerSession());
     const localeHost: LocaleHost = {
       initialState: { preference: "zh-CN", effectiveLocale: "zh-CN" },
       setPreference: vi.fn(async () => {
@@ -113,7 +118,7 @@ describe("App", () => {
     window.history.replaceState(null, "", "#/library");
     const application = new ViewerApplication(
       { subscribe: () => () => undefined },
-      async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() }),
+      async () => viewerSession(),
       libraryFixture(),
     );
 
@@ -146,15 +151,11 @@ describe("App", () => {
       markOpened: async () => undefined,
       delete: async () => undefined,
     };
-    const application = new ViewerApplication(
-      { subscribe: () => () => undefined },
-      async () => ({
-        togglePlayback: async () => undefined,
-        pauseAndFlush: async () => undefined,
-        destroy: async () => undefined,
-      }),
-      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
-    );
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, async () => viewerSession(), {
+      repository,
+      gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
+      adapters: [],
+    });
     const user = userEvent.setup();
     render(<App application={application} />);
 
@@ -186,15 +187,11 @@ describe("App", () => {
       markOpened: async () => undefined,
       delete: async () => undefined,
     };
-    const application = new ViewerApplication(
-      { subscribe: () => () => undefined },
-      async () => ({
-        togglePlayback: async () => undefined,
-        pauseAndFlush: async () => undefined,
-        destroy: async () => undefined,
-      }),
-      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
-    );
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, async () => viewerSession(), {
+      repository,
+      gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
+      adapters: [],
+    });
     render(<App application={application} />);
     expect(await screen.findByRole("heading", { name: "曲谱库" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "曲谱库" }).getAttribute("aria-current")).toBe("page");
@@ -203,11 +200,7 @@ describe("App", () => {
   });
 
   it("renders the home product introduction at the root route", async () => {
-    const application = new ViewerApplication({ subscribe: () => () => undefined }, async () => ({
-      togglePlayback: async () => undefined,
-      pauseAndFlush: async () => undefined,
-      destroy: async () => undefined,
-    }));
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, async () => viewerSession());
     render(<App application={application} />);
 
     expect(await screen.findByRole("heading", { name: "识谱与弹奏练习工作台" })).toBeTruthy();
@@ -221,11 +214,7 @@ describe("App", () => {
   });
 
   it("omits the harmony analysis section when the capability is unavailable", async () => {
-    const application = new ViewerApplication({ subscribe: () => () => undefined }, async () => ({
-      togglePlayback: async () => undefined,
-      pauseAndFlush: async () => undefined,
-      destroy: async () => undefined,
-    }));
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, async () => viewerSession());
     render(<App application={application} capabilities={{ harmonyAnalysis: false }} />);
 
     expect(await screen.findByRole("heading", { name: "识谱与弹奏练习工作台" })).toBeTruthy();
@@ -238,18 +227,8 @@ describe("App", () => {
   it("keeps the incomplete viewer hidden until the requested session is ready", async () => {
     window.history.replaceState(null, "", "#/library");
     const id = "8f14e45f-ea42-4c2e-a9f4-6f1f8f60d88a";
-    let resolveOpenSession:
-      | ((session: {
-          togglePlayback(): Promise<void>;
-          pauseAndFlush(): Promise<void>;
-          destroy(): Promise<void>;
-        }) => void)
-      | undefined;
-    const pendingSession = new Promise<{
-      togglePlayback(): Promise<void>;
-      pauseAndFlush(): Promise<void>;
-      destroy(): Promise<void>;
-    }>((resolve) => {
+    let resolveOpenSession: ((session: ViewerSessionPort) => void) | undefined;
+    const pendingSession = new Promise<ViewerSessionPort>((resolve) => {
       resolveOpenSession = resolve;
     });
     const repository: SheetLibraryRepository = {
@@ -293,11 +272,7 @@ describe("App", () => {
     expect((await screen.findByRole("status", { name: "正在加载文件" })).getAttribute("id")).toBeNull();
     expect(screen.queryByText("会话已结束，请重新打开乐谱")).toBeNull();
 
-    resolveOpenSession?.({
-      togglePlayback: async () => undefined,
-      pauseAndFlush: async () => undefined,
-      destroy: async () => undefined,
-    });
+    resolveOpenSession?.(viewerSession());
     await waitFor(() => expect(window.location.hash).toBe(`#/viewer/${id}`));
     expect(screen.getByRole("heading", { name: "Score A" })).toBeTruthy();
     await application.destroy();
@@ -322,15 +297,11 @@ describe("App", () => {
       markOpened: async () => undefined,
       delete: async () => undefined,
     };
-    const application = new ViewerApplication(
-      { subscribe: () => () => undefined },
-      async () => ({
-        togglePlayback: async () => undefined,
-        pauseAndFlush: async () => undefined,
-        destroy: async () => undefined,
-      }),
-      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
-    );
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, async () => viewerSession(), {
+      repository,
+      gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
+      adapters: [],
+    });
     render(<App application={application} />);
 
     const libraryLink = await screen.findByRole("link", { name: "曲谱库" });
@@ -345,18 +316,8 @@ describe("App", () => {
   it("offers Studio navigation only after the routed Viewer session is ready", async () => {
     const id = "8f14e45f-ea42-4c2e-a9f4-6f1f8f60d88a";
     window.history.replaceState(null, "", `#/viewer/${id}`);
-    let resolveOpenSession:
-      | ((session: {
-          togglePlayback(): Promise<void>;
-          pauseAndFlush(): Promise<void>;
-          destroy(): Promise<void>;
-        }) => void)
-      | undefined;
-    const pendingSession = new Promise<{
-      togglePlayback(): Promise<void>;
-      pauseAndFlush(): Promise<void>;
-      destroy(): Promise<void>;
-    }>((resolve) => {
+    let resolveOpenSession: ((session: ViewerSessionPort) => void) | undefined;
+    const pendingSession = new Promise<ViewerSessionPort>((resolve) => {
       resolveOpenSession = resolve;
     });
     const repository: SheetLibraryRepository & HarmonyAnalysisRepository = {
@@ -387,11 +348,7 @@ describe("App", () => {
     await screen.findByRole("status", { name: "正在加载文件" });
     expect(screen.queryByRole("link", { name: "和弦分析" })).toBeNull();
 
-    resolveOpenSession?.({
-      togglePlayback: async () => undefined,
-      pauseAndFlush: async () => undefined,
-      destroy: async () => undefined,
-    });
+    resolveOpenSession?.(viewerSession());
     expect(await screen.findByRole("link", { name: "和弦分析" })).toBeTruthy();
     await application.destroy();
   });
@@ -477,15 +434,11 @@ describe("App", () => {
       markOpened: async () => undefined,
       delete: async () => undefined,
     };
-    const application = new ViewerApplication(
-      { subscribe: () => () => undefined },
-      async () => ({
-        togglePlayback: async () => undefined,
-        pauseAndFlush: async () => undefined,
-        destroy: async () => undefined,
-      }),
-      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
-    );
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, async () => viewerSession(), {
+      repository,
+      gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
+      adapters: [],
+    });
 
     render(<App application={application} capabilities={{ harmonyAnalysis: false }} />);
 
@@ -526,11 +479,7 @@ describe("App", () => {
       markOpened: async () => undefined,
       delete: async () => undefined,
     };
-    const openSession = vi.fn(async () => ({
-      togglePlayback: async () => undefined,
-      pauseAndFlush: async () => undefined,
-      destroy: async () => undefined,
-    }));
+    const openSession = vi.fn(async () => viewerSession());
     const application = new ViewerApplication({ subscribe: () => () => undefined }, openSession, {
       repository,
       gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
@@ -582,8 +531,9 @@ describe("App", () => {
     };
     const destroy = vi.fn(async () => undefined);
     const openSession = vi.fn(async () => ({
-      togglePlayback: async () => undefined,
-      pauseAndFlush: async () => undefined,
+      getSnapshot: () => ({ loopEditor: { measureBounds: [], staffBounds: [] } }),
+      subscribe: () => () => undefined,
+      dispatch: async () => undefined,
       destroy,
     }));
     const application = new ViewerApplication({ subscribe: () => () => undefined }, openSession, {

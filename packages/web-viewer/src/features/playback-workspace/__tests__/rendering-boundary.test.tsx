@@ -3,7 +3,7 @@
 import { act, render } from "@testing-library/react";
 import { Profiler } from "react";
 import { describe, expect, it, vi } from "vitest";
-import type { ViewerSessionHandle } from "../../../host";
+import type { ViewerPlaybackSlice } from "../../../viewer-session/viewer-session-types";
 import { RhythmPracticePanel } from "../panels/rhythm-practice-panel";
 
 describe("Playback practice rendering boundary", () => {
@@ -41,7 +41,7 @@ function createPlayback() {
       return () => listeners.delete(listener);
     },
     dispatch: vi.fn(),
-  } as unknown as NonNullable<ViewerSessionHandle["playback"]>;
+  } as unknown as ViewerPlaybackSlice;
   return {
     playback,
     updatePosition(tick: number) {

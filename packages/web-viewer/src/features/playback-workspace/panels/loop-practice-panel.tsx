@@ -1,11 +1,11 @@
 import { useTranslation } from "react-i18next";
-import type { ViewerSessionHandle } from "../../../host";
+import type { ViewerPlaybackSlice } from "../../../viewer-session/viewer-session-types";
 import { usePlaybackSelector } from "../adapters/use-playback-selector";
 import { loopDisplayLabel, loopSpeedCommand, presentPlayback } from "../model/playback-presenter";
 import { setPlaybackLoopMode } from "../runtime/loop-mode";
 import styles from "../../PlaybackWorkspace.module.css";
 
-type Playback = NonNullable<ViewerSessionHandle["playback"]>;
+type Playback = ViewerPlaybackSlice;
 
 export function LoopPracticePanel({ playback }: { playback: Playback }) {
   const { t } = useTranslation("viewer");

@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useRef, type CSSProperties, type RefObject } 
 import { Music2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { PianoKeyHintEvent } from "@zupulse/web-core";
-import type { ViewerSessionHandle } from "../../../host";
+import type { ViewerPlaybackSlice } from "../../../viewer-session/viewer-session-types";
 import { projectPianoKeyFrame, pianoKeyLookaheadTicks, type PianoKeyFrame } from "../model/piano-key-projection";
 import { createPianoKeyVisualizationRuntime } from "../runtime/piano-key-visualization-runtime";
 import { PianoKeyVisualizationResizeHandle } from "./PianoKeyVisualizationResizeHandle";
@@ -17,7 +17,7 @@ type VisualizationSource = {
   events: readonly PianoKeyHintEvent[];
   getTick(): number;
 };
-type Playback = NonNullable<ViewerSessionHandle["playback"]>;
+type Playback = ViewerPlaybackSlice;
 
 export function PianoKeyVisualization({
   source,

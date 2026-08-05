@@ -8,6 +8,7 @@ import type {
 } from "@zupulse/web-core";
 import { ViewerApplication } from "../ViewerApplication";
 import { ViewerOpenFailure } from "../../host";
+import type { ViewerSessionPort } from "../../viewer-session/viewer-session-types";
 
 function studioRuntime({
   destroy = async () => undefined,
@@ -30,6 +31,17 @@ function studioRuntime({
     setPosition: () => ({ status: "unavailable" as const }),
     setSpeed: () => ({ status: "unavailable" as const }),
     setLoop: () => ({ status: "unavailable" as const }),
+    destroy,
+  };
+}
+function viewerSession(
+  dispatch: ViewerSessionPort["dispatch"] = async () => undefined,
+  destroy: ViewerSessionPort["destroy"] = async () => undefined,
+): ViewerSessionPort {
+  return {
+    getSnapshot: () => ({ loopEditor: { measureBounds: [], staffBounds: [] } }),
+    subscribe: () => () => undefined,
+    dispatch,
     destroy,
   };
 }
@@ -109,11 +121,7 @@ describe("ViewerApplication", () => {
           return () => undefined;
         },
       },
-      async () => ({
-        togglePlayback,
-        pauseAndFlush: async () => undefined,
-        destroy: async () => undefined,
-      }),
+      async () => viewerSession(async () => togglePlayback()),
       { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
     );
 
@@ -165,11 +173,7 @@ describe("ViewerApplication", () => {
     const scoreId = "00000000-0000-4000-8000-000000000001";
     const readScore = vi.fn(async () => ({ fileName: "score.gp", bytes: new Uint8Array([1]) }));
     const destroy = vi.fn(async () => undefined);
-    const openSession = vi.fn(async () => ({
-      togglePlayback: async () => undefined,
-      pauseAndFlush: async () => undefined,
-      destroy,
-    }));
+    const openSession = vi.fn(async () => viewerSession(undefined, destroy));
     const repository: SheetLibraryRepository = {
       initialize: async () => undefined,
       list: async () => [],

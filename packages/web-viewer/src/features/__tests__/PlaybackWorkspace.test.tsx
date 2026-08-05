@@ -3,10 +3,14 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PlaybackState } from "@zupulse/web-core";
-import type { ViewerSessionHandle } from "../../host";
+import type {
+  ViewerNavigationSlice,
+  ViewerPlaybackSlice,
+  ViewerPianoKeyVisualization,
+  ViewerSessionPort,
+} from "../../viewer-session/viewer-session-types";
 import { createSeekPreviewScheduler, PlaybackWorkspace } from "../PlaybackWorkspace";
 import { AppStoreProvider, createAppStore } from "../../app/appStore";
-
 afterEach(cleanup);
 
 describe("PlaybackWorkspace transport bar", () => {
@@ -574,22 +578,47 @@ describe("PlaybackWorkspace transport bar", () => {
   });
 });
 
+type TestSession = ViewerSessionPort & {
+  playback: ViewerPlaybackSlice;
+  navigation?: ViewerNavigationSlice;
+  pianoKeyVisualization?: ViewerPianoKeyVisualization;
+};
+
 function session(
   playbackState: PlaybackState,
   dispatch = vi.fn(async () => undefined),
   destroy = vi.fn(async () => undefined),
-): ViewerSessionHandle {
-  return {
-    playback: {
-      getState: () => playbackState,
-      subscribe: () => () => undefined,
-      dispatch,
-      timeline: { durationTicks: 0, durationMs: 0, measures: [] },
-    },
-    togglePlayback: async () => undefined,
-    pauseAndFlush: async () => undefined,
-    destroy,
+): TestSession {
+  const playback: ViewerPlaybackSlice = {
+    getState: () => playbackState,
+    subscribe: () => () => undefined,
+    dispatch,
+    previewSeek: vi.fn(),
+    timeline: { durationTicks: 0, durationMs: 0, measures: [] },
   };
+  const viewerSession = {
+    playback,
+    getSnapshot: () => ({
+      playback: { state: playbackState, timeline: playback.timeline },
+      ...(viewerSession.navigation ? { navigation: viewerSession.navigation.getState() } : {}),
+      loopEditor: { measureBounds: [], staffBounds: [] },
+      ...(viewerSession.pianoKeyVisualization ? { pianoKeyVisualization: viewerSession.pianoKeyVisualization } : {}),
+    }),
+    subscribe: () => () => undefined,
+    dispatch: async (command: Parameters<ViewerSessionPort["dispatch"]>[0]) => {
+      if (command.type === "playback") await viewerSession.playback.dispatch(command.command);
+      if (command.type === "preview-seek") viewerSession.playback.previewSeek(command.position);
+      if (command.type === "navigation") {
+        const navigation = viewerSession.navigation;
+        if (!navigation) return;
+        if (command.command.type === "set-mode") navigation.setMode(command.command.mode);
+        if (command.command.type === "return-to-playback") navigation.returnToPlayback();
+        if (command.command.type === "move-page") navigation.movePage(command.command.delta);
+      }
+    },
+    destroy,
+  } as TestSession;
+  return viewerSession;
 }
 
 function loopRegion() {

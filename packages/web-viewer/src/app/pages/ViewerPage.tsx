@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { Music } from "lucide-react";
 import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -6,6 +6,7 @@ import type { ViewerApplication } from "../ViewerApplication";
 import type { ViewerProductCapabilities } from "../App";
 import { PlaybackWorkspace } from "../../features/PlaybackWorkspace";
 import { ScoreViewer } from "../../components/ScoreViewer";
+import { createViewerSessionSlices } from "../../viewer-session/viewer-session-slices";
 import styles from "./PageShell.module.css";
 
 export function ViewerPage({
@@ -21,6 +22,7 @@ export function ViewerPage({
   const snapshot = useSyncExternalStore(application.subscribe, application.getSnapshot);
   const { libraryScoreId } = useParams();
   const session = application.getCurrentSession();
+  const sessionSlices = useMemo(() => (session ? createViewerSessionSlices(session) : undefined), [session]);
   const currentScore = snapshot.library?.scores.find((score) => score.id === libraryScoreId);
   const summaryRef = useRef<HTMLHeadingElement>(null);
   const statusRef = useRef<HTMLParagraphElement>(null);
@@ -30,6 +32,12 @@ export function ViewerPage({
   const openingSession = Boolean(libraryScoreId && !notFound && viewerState?.status !== "ready" && !viewerState?.error);
   const viewerError = viewerState?.error;
   const statusMessage = notFound ? t("page.notFound") : undefined;
+  const scoreViewerProps = {
+    ...(sessionSlices?.playback ? { playback: sessionSlices.playback } : {}),
+    ...(sessionSlices?.loopEditor ? { loopEditor: sessionSlices.loopEditor } : {}),
+    scoreHostRef,
+    scoreScrollRef,
+  };
 
   useLayoutEffect(() => {
     const alphaTabHost = scoreHostRef.current;
@@ -77,12 +85,7 @@ export function ViewerPage({
         </div>
       </div>
       <PlaybackWorkspace session={session}>
-        <ScoreViewer
-          playback={session?.playback}
-          loopEditor={session?.loopEditor}
-          scoreHostRef={scoreHostRef}
-          scoreScrollRef={scoreScrollRef}
-        />
+        <ScoreViewer {...scoreViewerProps} />
       </PlaybackWorkspace>
       {openingSession ? (
         <div className={styles.viewerLoading} role="status" aria-label={t("page.loading")}>

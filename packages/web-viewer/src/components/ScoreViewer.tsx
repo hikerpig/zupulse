@@ -11,7 +11,7 @@ import {
 } from "../app/appStore";
 import { SCORE_LAYOUT_COMMIT_EVENT, SCORE_ZOOM_COMMIT_EVENT } from "../scoreZoom";
 import { useTranslation } from "react-i18next";
-import type { ViewerSessionHandle } from "../host";
+import type { ViewerLoopEditorSlice, ViewerPlaybackSlice } from "../viewer-session/viewer-session-types";
 import { LoopRangeOverlay } from "../practice-loop/LoopRangeOverlay";
 import { PianoHandEmphasisOverlay } from "../practice-hand/PianoHandEmphasisOverlay";
 import styles from "./ScoreViewer.module.css";
@@ -29,8 +29,8 @@ export function ScoreViewer({
 }: {
   compact?: boolean;
   expandable?: boolean;
-  playback?: ViewerSessionHandle["playback"];
-  loopEditor?: ViewerSessionHandle["loopEditor"];
+  playback?: ViewerPlaybackSlice;
+  loopEditor?: ViewerLoopEditorSlice;
   domId?: string;
   scoreHostRef?: Ref<HTMLElement>;
   scoreScrollRef?: Ref<HTMLElement>;

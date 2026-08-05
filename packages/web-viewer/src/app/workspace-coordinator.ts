@@ -1,8 +1,9 @@
-import type { ViewerDomBindings, ViewerFile, ViewerSessionHandle } from "../host";
+import type { ViewerDomBindings, ViewerFile } from "../host";
+import type { ViewerSessionPort } from "../viewer-session/viewer-session-types";
 import type { StudioApplication } from "../features/harmony-studio/StudioApplication";
 
 export type WorkspaceCoordinatorDependencies = {
-  openSession(file: ViewerFile, libraryScoreId?: string, domBindings?: ViewerDomBindings): Promise<ViewerSessionHandle>;
+  openSession(file: ViewerFile, libraryScoreId?: string, domBindings?: ViewerDomBindings): Promise<ViewerSessionPort>;
   studio: StudioApplication;
   /** The active Viewer session was released; the owner clears its session fields. */
   onViewerReleased?(): void;
@@ -18,14 +19,14 @@ export type WorkspaceCoordinatorDependencies = {
  * invokes only after the library score has been validated.
  */
 export class WorkspaceCoordinator {
-  private active: ViewerSessionHandle | undefined;
+  private active: ViewerSessionPort | undefined;
   private activeLibraryScoreId: string | undefined;
   private chain = Promise.resolve();
   private viewerDomBindings: ViewerDomBindings | undefined;
 
   constructor(private readonly dependencies: WorkspaceCoordinatorDependencies) {}
 
-  getCurrentSession(): ViewerSessionHandle | undefined {
+  getCurrentSession(): ViewerSessionPort | undefined {
     return this.active;
   }
 
@@ -74,7 +75,7 @@ export class WorkspaceCoordinator {
       this.active = undefined;
       this.activeLibraryScoreId = undefined;
       this.dependencies.onViewerReleased?.();
-      await session?.pauseAndFlush();
+      await session?.dispatch({ type: "pause-and-flush" });
       await session?.destroy();
     });
     this.chain = operation.then(

@@ -16,7 +16,7 @@ seam / adapter / leverage / locality。
 
 - 候选 3（PlaybackController 深克隆导致的 selector identity 失效）不在本轮；只在 B2 埋点。
 - 候选 4 完整版（统一 AlphaTabSurface DOM seam）不在本轮；只做 A4 的最小切片。
-- C3（三宿主命令词汇统一 + bootstrap 去重）与 B3（收窄接口）为后续阶段，不在首轮。
+- C3（三宿主命令词汇统一 + bootstrap 去重）为后续阶段，不在首轮。
 
 ## Scope
 
@@ -110,16 +110,18 @@ seam / adapter / leverage / locality。
   adapter.destroy 不被调用）。
 - 出口达成：导航策略由单测覆盖。候选 3 的 identity 问题在此只埋点，不修。
 
-### B3 收窄接口（后续阶段，显式）
+### B3 ✅ 收窄接口（已完成 2026-08-05）
 
-- 到点后：`ViewerSession` 只暴露 `getSnapshot/subscribe/dispatch/destroy`；`PlaybackWorkspace`/`ScoreNavigationControls`/
-  overlays 改 slice 消费；删除 grab-bag 槽位；`host.ts` 删除 `ViewerSessionHandle`。
-- 与候选 3 的 identity-stable snapshot 联动（不在本轮）。
-- 出口：host.ts 只剩窄会话面；`react-application-system.md` 预写的 `ViewerSession` 形状成为事实。
+- `ViewerSession` 对外只暴露 `getSnapshot/subscribe/dispatch/destroy`；`ViewerSessionSlices` 作为 feature
+  adapter 面供 `PlaybackWorkspace`、`ScoreViewer` 和 overlays 消费。
+- 删除 `host.ts` 的 `ViewerSessionHandle`，迁移 `ViewerApplication`、`WorkspaceCoordinator`、route、shell 和
+  测试到 `ViewerSessionPort`；旧 grab-bag 操作不再属于 host seam。
+- 候选 3 的 identity-stable snapshot 不在本轮修复，仅保留现有 selector identity 行为。
+- 出口：`host.ts` 只剩 host events、DOM bindings、`ViewerAppHandle` 和 error seam；架构文档中的 Session 形状成为事实。
 
 ## 计划 C — 重塑宿主 seam
 
-### C1 从 seam 移除 openScore（行为变更，三宿主同 commit）
+### C1 ✅ 从 seam 移除 openScore（已完成 2026-08-05）
 
 - `host.ts` 删 `ViewerHost.openScore`（:20-24）。
 - `ViewerApplication`：`library` 改为必选参数；删 `openOnce`/`scheduleOpen`/`enqueueOpen` 及 `queuedError` 管道
@@ -134,7 +136,7 @@ seam / adapter / leverage / locality。
   destroy 语义搬到 library 导入路径或收敛为对 `chain` 语义的聚焦测试；只测死路径的删除；fakes 补 fake library。
 - 出口：`pnpm check`；全仓无 `host.openScore` 引用；`pnpm desktop:test:e2e`。
 
-### C2 ✅ 清掉随之死亡的 `file.open` bridge RPC（desktop + web-core，已完成 2026-08-05）
+### C2 ✅ 清掉随之死亡的 `file.open` bridge RPC（desktop + web-core + iOS native，已完成 2026-08-05）
 
 > **执行时发现计划前提错误**：`file.readBytes` 并没有死——它是 library 导入路径的字节读取口
 > （`DesktopScoreFileGateway.readTokensAsImportSources` 发 `file.readBytes`，`main.ts` 仍注册 handler）。
@@ -154,7 +156,7 @@ seam / adapter / leverage / locality。
   ADR 0030 两侧同一次提交）。
 - 出口：`pnpm check`（714 tests）、`pnpm verify:fast`、`pnpm desktop:build`、`pnpm demo:build`、
   `pnpm ipad:web:build` 全绿；全仓无 `file.open`（除 rejected fixture）`OpenFileResponse`/流程名残留。
-- 遗留：iOS native 侧可能仍有 `file.open` handler（不在本仓库），随契约删除后为不可达，需 native 侧清理。
+- iOS native 侧的不可达 `file.open` validator、payload、router handler 已清理；仓库内仅保留 rejected fixture 与历史说明。
 
 ### C3 统一命令/生命周期词汇 + 吸收重复 bootstrap（跨壳，另立项）
 
@@ -171,24 +173,24 @@ seam / adapter / leverage / locality。
 
 ## 建议执行顺序与交错点
 
-顺序：**C1 → B1/B2 → A1/A2 → A3 → A4 → A5**；C2/C3、B3 各自为后续阶段。
+顺序：**C1 → B1/B2 → A1/A2 → A3 → A4 → A5**；C1、C2、B3 已完成，C3 另立项。
 
 - `host.ts`：B1 与 C1 都改它——先 C1 再 B1。
 - `viewerApp.tsx`：B1 提类、A4 提 alphaTab settings——先 B1 后 A4。
 - `mountViewerApp`：C1 让 `library` 必选，是 A3/B1 的隐含前提——前置。
 - `ViewerApplication.ts`：C1 删 no-library openOnce（viewer/library）、A3 删 studio 成员（studio）——低冲突。
 
-## Acceptance criteria
-
 - [x] A：Studio 有独立 seam；`StudioApplication.test.ts` 无 viewer session 跑通全流程；ranges/selection 单一 owner。
-- [ ] B：`ViewerSession` 类接管 wiring；未测策略有单测；消费方零改动（B1/B2）。
-- [ ] C1：`ViewerHost` 无 `openScore`；`library` 必选；三宿主同步；无 dead path。
+- [x] B：`ViewerSession` 类接管 wiring；未测策略有单测；公开 seam 收窄为 `ViewerSessionPort`。
+- [x] C1：`ViewerHost` 无 `openScore`；`library` 必选；三宿主同步；无 dead path。
 
 ## Verification
 
 - 最小测试：`pnpm check`。
 - 完成门禁：`pnpm verify:fast`。
-- 需要时：`pnpm desktop:build`、`pnpm demo:build`、`pnpm desktop:test:e2e`、`pnpm demo:test:e2e`。
+- 本轮已运行：`pnpm vitest run packages/web-viewer/src`（53 files、265 tests 全绿）；最终 `pnpm verify:fast`
+  （165 files、730 tests 全绿）。
+- iOS native 测试按用户要求跳过；当前提交未包含 Simulator 运行结果。
 
 ## Open decisions
 

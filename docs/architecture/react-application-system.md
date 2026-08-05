@@ -186,18 +186,18 @@ primitive 或消除双重 style ownership 时才继续；不得以 CSS LOC 归�
 | 持久化领域状态    | Bridge / sidecar                    | 练习设置、批注、进度、文件索引         |
 | alphaTab 内部状态 | alphaTab adapter                    | score 渲染、光标、音频运行时           |
 
-`viewerSessionAdapter` 对 React 暴露不可变 snapshot，并用 `useSyncExternalStore` 订阅 controller。组件发送 domain command，不直接修改 snapshot：
+`ViewerSession` 对 React 暴露不可变 snapshot，并用 `useSyncExternalStore` 订阅 session。组件通过 `ViewerSessionCommand`
+发送 domain command，不直接修改 snapshot：
 
 ```ts
 const playback = useViewerSession(session, selectPlayback);
-await session.dispatch({ type: "toggle-playback" });
+await session.dispatch({ type: "playback", command: { type: "toggle-playback" } });
 ```
 
-统一 Session 边界为：
+当前对外的 Session seam 是：
 
 ```ts
 type ViewerSession = {
-  id: string;
   getSnapshot(): ViewerSessionSnapshot;
   subscribe(listener: () => void): () => void;
   dispatch(command: ViewerSessionCommand): Promise<void>;
@@ -205,9 +205,12 @@ type ViewerSession = {
 };
 ```
 
-`ViewerSessionSnapshot` 是只读、可序列化的 UI 视图，包含加载状态、谱面摘要、播放、循环、轨道和可恢复错误；registry 只保存该接口，不暴露具体 controller。alphaTab 的逐帧光标位置不进入 snapshot。旧 `playbackControls.ts` 迁移完成后删除。
-
-Session 初始化失败后仍保留在 registry 和当前 route，以结构化 snapshot 区分文件不支持、损坏、renderer、audio 与未知错误；只映射当前能够可靠识别的分类，其余使用 `unknown`，UI 不解析 message 猜测类型。文件/renderer 错误提供重新打开文件，只有音频错误提供原地 retry。不存在的 `sessionId` 才显示 route 级“会话已结束”空态。
+`ViewerSessionSnapshot` 是只读的 UI projection，包含 playback、navigation、loop-editor bounds 和 piano-key
+visualization 所需的运行时数据；它不包含 Session ID，URL 与 Session registry 继续由 `ViewerApplication` 持有。
+feature 组件消费 `ViewerSessionSlices`，而不是访问 `PlaybackController`、alphaTab adapter 或 session wiring。
+Session 初始化失败后仍保留在 registry 和当前 route，以结构化 snapshot 区分文件不支持、损坏、renderer、audio 与未知错误；
+只映射当前能够可靠识别的分类，其余使用 `unknown`，UI 不解析 message 猜测类型。文件/renderer 错误提供重新打开文件，
+只有音频错误提供原地 retry。不存在的 `libraryScoreId` 才显示 route 级“会话已结束”空态。
 
 ### 架构风格
 

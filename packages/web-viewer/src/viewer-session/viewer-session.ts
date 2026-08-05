@@ -14,15 +14,16 @@ import {
   type PlaybackCommand,
   type PlaybackPersistence,
   type PlaybackState,
+  type PlaybackTimelineMap,
 } from "@zupulse/web-core";
 import { createAppI18n, resolveLocale } from "@zupulse/app-i18n";
-import {
-  ViewerOpenFailure,
-  type ViewerDomBindings,
-  type ViewerFile,
-  type ViewerOpenFailureStage,
-  type ViewerSessionHandle,
-} from "../host";
+import { ViewerOpenFailure, type ViewerDomBindings, type ViewerFile, type ViewerOpenFailureStage } from "../host";
+import type {
+  ViewerPianoKeyVisualization,
+  ViewerSessionCommand,
+  ViewerSessionPort,
+  ViewerSessionSnapshot,
+} from "./viewer-session-types";
 import { ALPHATAB_ASSETS } from "../playbackAssets";
 import { type DemoState } from "../gpDemoPresenter";
 import { presentScoreFile } from "../importPresenter";
@@ -73,15 +74,22 @@ export class ViewerSession {
   private navigation: ScoreNavigationCoordinator | undefined;
   private loopMeasureBounds: ScoreMeasureBounds[] = [];
   private staffBounds: ScoreStaffBounds[] = [];
-  private readonly loopEditorListeners = new Set<() => void>();
   private detachNavigationRuntime: (() => void) | undefined;
   private detachScoreSelection: (() => void) | undefined;
   private unsubscribePlayback: (() => void) | undefined;
+  private unsubscribeNavigation: (() => void) | undefined;
   private controller: PlaybackController | undefined;
   private playbackSnapshot: PlaybackState | undefined;
+  private playbackTimeline: PlaybackTimelineMap | undefined;
+  private navigationSnapshot: ViewerSessionSnapshot["navigation"];
   private navigationLoopKey = "";
-  private readonly playbackListeners = new Set<(state: PlaybackState) => void>();
-  private pianoKeyVisualization: ViewerSessionHandle["pianoKeyVisualization"] | undefined;
+  private pianoKeyVisualization: ViewerPianoKeyVisualization | undefined;
+  private snapshot: ViewerSessionSnapshot = {
+    loopEditor: { measureBounds: [], staffBounds: [] },
+  };
+  private readonly listeners = new Set<() => void>();
+  private destroyPromise: Promise<void> | undefined;
+  private destroyed = false;
 
   constructor(
     ownerDocument: Document,
@@ -93,7 +101,41 @@ export class ViewerSession {
     this.dependencies = dependencies;
   }
 
-  async open(file: ViewerFile, libraryScoreId?: string, domBindings?: ViewerDomBindings): Promise<ViewerSessionHandle> {
+  getSnapshot = (): ViewerSessionSnapshot => this.snapshot;
+
+  subscribe = (listener: () => void): (() => void) => {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  };
+
+  async dispatch(command: ViewerSessionCommand): Promise<void> {
+    if (this.destroyed) throw new Error("Viewer session has been destroyed");
+    if (command.type === "playback") {
+      await this.routePlaybackCommand(command.command);
+      return;
+    }
+    if (command.type === "preview-seek") {
+      this.routePreviewSeek(command.position);
+      return;
+    }
+    if (command.type === "pause-and-flush") {
+      await this.controller?.dispatch({ type: "pause" });
+      await this.controller?.flush();
+      return;
+    }
+    const navigation = this.requireNavigation();
+    if (command.command.type === "set-mode") navigation.setMode(command.command.mode);
+    if (command.command.type === "return-to-playback") navigation.returnToPlayback();
+    if (command.command.type === "move-page") navigation.movePage(command.command.delta);
+  }
+
+  async destroy(): Promise<void> {
+    this.destroyPromise ??= this.destroySession();
+    await this.destroyPromise;
+  }
+
+  async open(file: ViewerFile, libraryScoreId?: string, domBindings?: ViewerDomBindings): Promise<ViewerSessionPort> {
+    if (this.destroyed) throw new Error("Viewer session has been destroyed");
     if (!domBindings) throw new ViewerOpenFailure("session");
     const { alphaTabHost, scoreScrollElement, status, summary } = domBindings;
     renderViewerState(status, summary, { status: "loading" });
@@ -122,6 +164,11 @@ export class ViewerSession {
       },
     });
     this.navigation = navigation;
+    this.navigationSnapshot = navigation.getSnapshot();
+    this.unsubscribeNavigation = navigation.subscribe(() => {
+      this.navigationSnapshot = navigation.getSnapshot();
+      this.publishSnapshot();
+    });
     this.refreshLoopMeasureBounds();
     const detachNavigationInputs = attachScoreNavigationInputs(scoreScrollElement, {
       mode: () => navigation.getSnapshot().mode,
@@ -170,6 +217,7 @@ export class ViewerSession {
       });
       if (state.status !== "ready" || !state.identity) {
         this.detachNavigationRuntime();
+        this.unsubscribeNavigation?.();
         this.detachScoreZoom?.();
         adapter.destroy();
         renderViewerState(status, summary, state);
@@ -209,55 +257,17 @@ export class ViewerSession {
         });
       });
       this.playbackSnapshot = sessionController.getState();
-      this.unsubscribePlayback = sessionController.subscribe((state) => {
-        this.applyNavigationPolicy(state);
-        for (const listener of this.playbackListeners) listener(state);
-      });
+      this.playbackTimeline = model.timeline;
+      this.unsubscribePlayback = sessionController.subscribe((state) => this.applyNavigationPolicy(state));
+      this.publishSnapshot();
       renderViewerState(status, summary, state);
-      return {
-        ...(this.pianoKeyVisualization ? { pianoKeyVisualization: this.pianoKeyVisualization } : {}),
-        loopEditor: {
-          getMeasureBounds: () => this.loopMeasureBounds,
-          getStaffBounds: () => this.staffBounds,
-          subscribe: (listener) => {
-            this.loopEditorListeners.add(listener);
-            return () => this.loopEditorListeners.delete(listener);
-          },
-        },
-        navigation: {
-          getState: () => this.requireNavigation().getSnapshot(),
-          subscribe: (listener) => this.requireNavigation().subscribe(listener),
-          setMode: (mode) => this.requireNavigation().setMode(mode),
-          returnToPlayback: () => this.requireNavigation().returnToPlayback(),
-          movePage: (delta) => this.requireNavigation().movePage(delta),
-        },
-        playback: {
-          getState: () => this.playbackSnapshot as PlaybackState,
-          subscribe: (listener) => {
-            this.playbackListeners.add(listener);
-            listener(this.playbackSnapshot as PlaybackState);
-            return () => this.playbackListeners.delete(listener);
-          },
-          dispatch: (command) => this.routePlaybackCommand(command),
-          previewSeek: (position) => this.routePreviewSeek(position),
-          timeline: model.timeline,
-        },
-        togglePlayback: async () => {
-          await this.controller?.dispatch({ type: "toggle-playback" });
-        },
-        pauseAndFlush: async () => {
-          await this.controller?.dispatch({ type: "pause" });
-          await this.controller?.flush();
-        },
-        destroy: async () => {
-          await this.destroySession();
-        },
-      };
+      return this;
     } catch (error) {
       let cleanupError: unknown;
       try {
         this.detachScoreSelection?.();
         this.detachNavigationRuntime?.();
+        this.unsubscribeNavigation?.();
         this.detachScoreZoom?.();
         if (this.controller) await this.controller.destroy();
         else this.adapter?.destroy();
@@ -295,25 +305,45 @@ export class ViewerSession {
     if (transportEnteredStopped(previousTransport, state.transport)) {
       navigation.transportChanged(state.transport);
     }
+    this.publishSnapshot();
   }
 
   routePlaybackCommand(command: PlaybackCommand): Promise<void> {
     const navigation = this.requireNavigation();
     if (command.type === "seek") navigation.formalSeek();
     if (command.type === "stop") navigation.transportChanged("stopped");
-    return this.controller!.dispatch(command);
+    const controller = this.controller;
+    if (!controller) throw new Error("Viewer playback is unavailable");
+    return controller.dispatch(command);
   }
 
   routePreviewSeek(position: PlaybackState["position"]): void {
     this.requireNavigation().beginScrubPreview();
-    this.controller!.previewSeek(position);
+    const controller = this.controller;
+    if (!controller) throw new Error("Viewer playback is unavailable");
+    controller.previewSeek(position);
   }
 
   private refreshLoopMeasureBounds(): void {
     if (!this.api) return;
     this.loopMeasureBounds = readAlphaTabMeasureBounds(this.api) ?? [];
     this.staffBounds = readAlphaTabStaffBounds(this.api) ?? [];
-    for (const listener of this.loopEditorListeners) listener();
+    this.publishSnapshot();
+  }
+
+  private publishSnapshot(): void {
+    this.snapshot = {
+      ...(this.playbackSnapshot && this.playbackTimeline
+        ? { playback: { state: this.playbackSnapshot, timeline: this.playbackTimeline } }
+        : {}),
+      ...(this.navigationSnapshot ? { navigation: this.navigationSnapshot } : {}),
+      loopEditor: {
+        measureBounds: this.loopMeasureBounds,
+        staffBounds: this.staffBounds,
+      },
+      ...(this.pianoKeyVisualization ? { pianoKeyVisualization: this.pianoKeyVisualization } : {}),
+    };
+    for (const listener of this.listeners) listener();
   }
 
   private requireNavigation(): ScoreNavigationCoordinator {
@@ -322,12 +352,14 @@ export class ViewerSession {
   }
 
   private async destroySession(): Promise<void> {
+    if (this.destroyed) return;
+    this.destroyed = true;
     this.detachScoreSelection?.();
     this.detachNavigationRuntime?.();
     this.detachScoreZoom?.();
     this.unsubscribePlayback?.();
-    this.playbackListeners.clear();
-    this.loopEditorListeners.clear();
+    this.unsubscribeNavigation?.();
+    this.listeners.clear();
     await this.controller?.destroy();
   }
 }
@@ -336,7 +368,7 @@ export function createDefaultOpenSession(
   ownerDocument: Document,
   persistence: PlaybackPersistence & { forLibraryScore(libraryScoreId: string): PlaybackPersistence },
   dependencies: DefaultOpenSessionDependencies = defaultOpenSessionDependencies,
-): (file: ViewerFile, libraryScoreId?: string, domBindings?: ViewerDomBindings) => Promise<ViewerSessionHandle> {
+): (file: ViewerFile, libraryScoreId?: string, domBindings?: ViewerDomBindings) => Promise<ViewerSessionPort> {
   return (file, libraryScoreId, domBindings) =>
     new ViewerSession(ownerDocument, persistence, dependencies).open(file, libraryScoreId, domBindings);
 }
@@ -345,7 +377,7 @@ function createPianoKeyVisualizationSource(
   api: AlphaTabApiLike,
   controller: PlaybackController,
   dependencies: DefaultOpenSessionDependencies,
-): ViewerSessionHandle["pianoKeyVisualization"] {
+): ViewerPianoKeyVisualization | undefined {
   const practice = controller.getState().pianoPractice;
   const buildTimeline = dependencies.buildPianoKeyTimeline ?? buildAlphaTabPianoKeyTimeline;
   if (!practice?.mapping || !api.score || !api.settings) return undefined;
@@ -417,10 +449,11 @@ function demoIssueMessage(
   return t("page.loadFailed");
 }
 
-function emptySession(): ViewerSessionHandle {
+function emptySession(): ViewerSessionPort {
   return {
-    togglePlayback: async () => undefined,
-    pauseAndFlush: async () => undefined,
+    getSnapshot: () => ({ loopEditor: { measureBounds: [], staffBounds: [] } }),
+    subscribe: () => () => undefined,
+    dispatch: async () => undefined,
     destroy: async () => undefined,
   };
 }

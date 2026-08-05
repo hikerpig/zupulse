@@ -1,7 +1,7 @@
 import { musicalPositionFromTick } from "@zupulse/web-core";
-import type { ViewerSessionHandle } from "../../../host";
+import type { ViewerPlaybackSlice } from "../../../viewer-session/viewer-session-types";
 
-type Playback = NonNullable<ViewerSessionHandle["playback"]>;
+type Playback = ViewerPlaybackSlice;
 type PlaybackState = ReturnType<Playback["getState"]>;
 
 export function setPlaybackLoopMode(playback: Playback, state: PlaybackState, enabled: boolean): void {

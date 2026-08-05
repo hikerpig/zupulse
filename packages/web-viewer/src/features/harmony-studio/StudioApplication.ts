@@ -81,8 +81,8 @@ export type StudioApplicationDependencies = {
  * Studio workspace deep module. Owns the Harmony Studio session registry, the
  * preview runtime, the analysis document, and the projection of ranges and
  * selection. React only subscribes to `getSnapshot` and sends commands; the
- * host (ViewerApplication, later a WorkspaceCoordinator) arbitrates the shared
- * alphaTab surface via the `acquireWorkspace` hook on `open`.
+ * host WorkspaceCoordinator arbitrates the shared alphaTab surface via the
+ * `acquireWorkspace` hook on `open`.
  */
 export class StudioApplication {
   private studioRuntime: StudioScoreRuntime | undefined;

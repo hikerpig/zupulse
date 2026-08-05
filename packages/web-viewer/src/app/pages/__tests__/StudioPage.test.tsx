@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import type { ReactElement } from "react";
-import { cleanup, render as testingRender, screen, within } from "@testing-library/react";
+import { cleanup, render as testingRender, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
@@ -50,6 +50,29 @@ describe("StudioPage", () => {
     expect(screen.getByRole("heading", { name: "未打开乐谱" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "撤销修正" })).toBeNull();
     expect(screen.queryByText(/session/i)).toBeNull();
+  });
+  it("opens Studio through the route workspace coordinator callback", async () => {
+    const openStudio = vi.fn(async () => undefined);
+    const application = {
+      getSnapshot: () => ({ currentLibraryScoreId: "score-1" }),
+      subscribe: () => () => undefined,
+      hasHarmonyAnalysisStorage: () => true,
+      open: vi.fn(async () => undefined),
+    };
+
+    render(
+      <MemoryRouter initialEntries={["/studio/score-1"]}>
+        <Routes>
+          <Route
+            path="/studio/:libraryScoreId"
+            element={<StudioPage application={application as never} openStudio={openStudio} />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(openStudio).toHaveBeenCalledWith("score-1"));
+    expect(application.open).not.toHaveBeenCalled();
   });
 
   it.each([

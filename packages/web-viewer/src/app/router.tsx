@@ -16,6 +16,7 @@ export function createAppRouter({
   localeHost: LocaleHost;
   capabilities: ViewerProductCapabilities;
 }) {
+  const openStudio = (id: string) => application.openStudio(id);
   return createHashRouter([
     {
       element: <ApplicationNavigation application={application} localeHost={localeHost} capabilities={capabilities} />,
@@ -45,7 +46,11 @@ export function createAppRouter({
           lazy: capabilities.harmonyAnalysis
             ? async () => {
                 const { StudioPage } = await import("./pages/StudioPage");
-                return { Component: () => <StudioPage application={application.getStudioApplication()} /> };
+                return {
+                  Component: () => (
+                    <StudioPage application={application.getStudioApplication()} openStudio={openStudio} />
+                  ),
+                };
               }
             : async () => {
                 const { StudioUnavailablePage } = await import("./pages/StudioUnavailablePage");

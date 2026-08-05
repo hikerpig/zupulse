@@ -4,6 +4,7 @@ import { hasUnpersistedStudioDocument, type StudioSnapshot } from "../model/stud
 
 export function useStudioLifecycle({
   application,
+  openStudio,
   libraryScoreId,
   storageAvailable,
   active,
@@ -11,6 +12,7 @@ export function useStudioLifecycle({
   studio,
 }: {
   application: StudioApplication;
+  openStudio?: (libraryScoreId: string) => Promise<void>;
   libraryScoreId: string | undefined;
   storageAvailable: boolean;
   active: boolean;
@@ -18,8 +20,9 @@ export function useStudioLifecycle({
   studio: StudioSnapshot | undefined;
 }) {
   useEffect(() => {
-    if (libraryScoreId && storageAvailable) void application.open(libraryScoreId);
-  }, [application, libraryScoreId, storageAvailable]);
+    if (libraryScoreId && storageAvailable)
+      void (openStudio ? openStudio(libraryScoreId) : application.open(libraryScoreId));
+  }, [application, libraryScoreId, openStudio, storageAvailable]);
 
   useEffect(() => {
     if (libraryScoreId && active) application.setPreviewEnabled(libraryScoreId, previewEnabled);

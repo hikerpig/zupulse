@@ -11,7 +11,13 @@ import type { StudioApplication, StudioApplicationSnapshot } from "../../feature
 import { loadStudioPreferences, saveStudioPreferences, type StudioPreferences } from "../studio-preferences";
 import styles from "./StudioPage.module.css";
 
-export function StudioPage({ application }: { application: StudioApplication }) {
+export function StudioPage({
+  application,
+  openStudio,
+}: {
+  application: StudioApplication;
+  openStudio?: (libraryScoreId: string) => Promise<void>;
+}) {
   const { t } = useTranslation("studio");
   const { libraryScoreId } = useParams();
   const selectStudio = useCallback(
@@ -43,6 +49,7 @@ export function StudioPage({ application }: { application: StudioApplication }) 
 
   useStudioLifecycle({
     application,
+    ...(openStudio ? { openStudio } : {}),
     libraryScoreId,
     storageAvailable,
     active,

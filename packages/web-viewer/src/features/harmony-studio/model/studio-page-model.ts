@@ -1,7 +1,7 @@
-import type { ViewerApplicationSnapshot } from "../../../app/ViewerApplication";
+import type { StudioApplicationSnapshot } from "../StudioApplication";
 import { createHarmonyRangeViewItems } from "../harmony-range-view-model";
 
-export type StudioSnapshot = NonNullable<ViewerApplicationSnapshot["studio"]>;
+export type StudioSnapshot = StudioApplicationSnapshot;
 export type StudioRange = ReturnType<typeof createHarmonyRangeViewItems>[number];
 
 export function findSelectedStudioRange(

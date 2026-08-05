@@ -52,7 +52,7 @@ seam / adapter / leverage / locality。
   test 296 改写为「落空后清高亮」（assert 无 `aria-pressed`）；test 348 补 ranges 让 loop 控件可用。
 - 出口达成：StudioPage 无平行 selection 状态；`StudioPage.test.tsx` 19 用例全绿。
 
-### A3 提取 `StudioApplication`（大动作）
+### A3 ✅ 提取 `StudioApplication`（已完成 2026-08-05）
 
 - 新建 `features/harmony-studio/StudioApplication.ts`。构造入参：`library`
   （repository + adapters + gateway，供分析/导出）、`openStudioRuntime(file)`、`harmonyAnalysisRunner`、
@@ -180,7 +180,7 @@ seam / adapter / leverage / locality。
 
 ## Acceptance criteria
 
-- [ ] A：Studio 有独立 seam；`StudioApplication.test.ts` 无 viewer session 跑通全流程；ranges/selection 单一 owner。
+- [x] A：Studio 有独立 seam；`StudioApplication.test.ts` 无 viewer session 跑通全流程；ranges/selection 单一 owner。
 - [ ] B：`ViewerSession` 类接管 wiring；未测策略有单测；消费方零改动（B1/B2）。
 - [ ] C1：`ViewerHost` 无 `openScore`；`library` 必选；三宿主同步；无 dead path。
 

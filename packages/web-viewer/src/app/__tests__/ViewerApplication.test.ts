@@ -425,184 +425,6 @@ describe("ViewerApplication", () => {
     await application.destroy();
   });
 
-  it("creates an initial Studio document once and restores it on later opens", async () => {
-    const scoreId = "00000000-0000-4000-8000-000000000001";
-    const hash = "a".repeat(64);
-    const sourceBytes = new TextEncoder().encode(
-      '<score-partwise><part id="P1"><measure><note/></measure></part></score-partwise>',
-    );
-    const sourceHash = createHash("sha256").update(sourceBytes).digest("hex");
-    let document: HarmonyAnalysisDocument | null = null;
-    const adapter: ScoreFormatAdapter = {
-      format: "musicxml",
-      parse: vi.fn(async () => ({
-        runtime: {},
-        diagnostics: [],
-        capabilities: { view: true, playback: false },
-        document: {
-          schemaVersion: "0",
-          summary: { title: "Score", trackCount: 1 },
-          tracks: [{ id: "track-1", name: "Piano", staves: [], playback: { muted: false, solo: false, volume: 1 } }],
-          timeline: { ticksPerQuarter: 1, durationTicks: 1 },
-          sections: [],
-        },
-      })),
-    };
-    const repository: SheetLibraryRepository & HarmonyAnalysisRepository = {
-      initialize: async () => undefined,
-      list: async () => [],
-      get: async () => ({
-        id: scoreId,
-        scoreIdentity: hash,
-        fileName: "score.musicxml",
-        format: "musicxml",
-        title: "Score",
-        importedAt: "2026-07-15T00:00:00.000Z",
-        isFavorite: false,
-        practice: { hasLoop: false },
-        metadata: {},
-      }),
-      findByIdentity: async () => undefined,
-      add: async () => {
-        throw new Error("unused");
-      },
-      readScore: async () => ({
-        fileName: "score.musicxml",
-        bytes: sourceBytes,
-      }),
-      updateMetadata: async () => {
-        throw new Error("unused");
-      },
-      setFavorite: async () => undefined,
-      markOpened: async () => undefined,
-      delete: async () => {
-        document = null;
-      },
-      read: async () => document,
-      save: async ({ document: next, expectedDocumentVersion }) => {
-        if ((document?.documentVersion ?? null) !== expectedDocumentVersion)
-          return { status: "conflict" as const, current: document };
-        document = { ...next, documentVersion: (document?.documentVersion ?? -1) + 1 };
-        return { status: "saved" as const, document };
-      },
-    };
-    let exported: { fileName: string; bytes: Uint8Array } | undefined;
-    const application = new ViewerApplication(
-      { subscribe: () => () => undefined },
-      async () => ({
-        togglePlayback: async () => undefined,
-        pauseAndFlush: async () => undefined,
-        destroy: async () => undefined,
-      }),
-      {
-        repository,
-        gateway: {
-          selectForImport: async () => [],
-          saveExport: async (file) => {
-            exported = file;
-            return "saved";
-          },
-        },
-        adapters: [adapter],
-      },
-      async () =>
-        studioRuntime({
-          applyPreview: () => {
-            throw new Error("预览渲染失败");
-          },
-        }),
-    );
-    await Promise.all([application.openStudio(scoreId), application.openStudio(scoreId)]);
-    expect(application.getSnapshot().studio).toMatchObject({
-      libraryScoreId: scoreId,
-      status: "ready",
-      previewError: { code: "studio-preview-failed", recoverable: true },
-    });
-    await application.setStudioAnnotationTarget(scoreId, { trackId: "track-1", staffIndex: 1 });
-    expect(application.getSnapshot().studio?.document?.annotationTarget).toEqual({ trackId: "track-1", staffIndex: 1 });
-    expect(adapter.parse).toHaveBeenCalledOnce();
-    await application.setStudioCorrection(
-      scoreId,
-      { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 1 } },
-      {
-        type: "chord",
-        chord: { root: { step: "C", alter: 0 }, kind: "major", degrees: [] },
-      },
-    );
-    expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(1);
-    await application.resetStudioCorrection(scoreId, {
-      start: { measureIndex: 0, offsetTicks: 0 },
-      end: { measureIndex: 0, offsetTicks: 1 },
-    });
-    expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(0);
-    await application.setStudioCorrection(
-      scoreId,
-      { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 1 } },
-      {
-        type: "chord",
-        chord: { root: { step: "C", alter: 0 }, kind: "major", degrees: [] },
-      },
-    );
-    expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(1);
-    application.undoStudio(scoreId);
-    expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(0);
-    application.redoStudio(scoreId);
-    expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(1);
-    await application.setStudioScope(scoreId, ["track-1"]);
-    expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(1);
-    expect(application.getSnapshot().studio?.document?.annotationTarget).toEqual({ trackId: "track-1", staffIndex: 1 });
-    expect(adapter.parse).toHaveBeenCalledTimes(2);
-    await application.setStudioCorrection(
-      scoreId,
-      { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 4 } },
-      {
-        type: "chord",
-        chord: { root: { step: "C", alter: 0 }, kind: "major", degrees: [] },
-      },
-    );
-    await application.splitStudioCorrection(scoreId, {
-      start: { measureIndex: 0, offsetTicks: 0 },
-      end: { measureIndex: 0, offsetTicks: 4 },
-    });
-    expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(2);
-    await application.mergeStudioCorrections(scoreId, {
-      start: { measureIndex: 0, offsetTicks: 0 },
-      end: { measureIndex: 0, offsetTicks: 4 },
-    });
-    expect(application.getSnapshot().studio?.document?.corrections).toHaveLength(1);
-    await application.moveStudioCorrection(
-      scoreId,
-      { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 4 } },
-      1,
-    );
-    expect(application.getSnapshot().studio?.document?.corrections[0]?.range).toEqual({
-      start: { measureIndex: 0, offsetTicks: 1 },
-      end: { measureIndex: 0, offsetTicks: 5 },
-    });
-    await application.resetStudioCorrection(scoreId, {
-      start: { measureIndex: 0, offsetTicks: 1 },
-      end: { measureIndex: 0, offsetTicks: 5 },
-    });
-    await application.setStudioCorrection(
-      scoreId,
-      { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 1 } },
-      {
-        type: "chord",
-        chord: { root: { step: "C", alter: 0 }, kind: "major", degrees: [] },
-      },
-    );
-    await expect(application.exportStudio(scoreId)).resolves.toBe("saved");
-    expect(exported?.fileName).toBe("score-chords.musicxml");
-    expect(new TextDecoder().decode(exported?.bytes)).toContain("<root-step>C</root-step>");
-    expect(createHash("sha256").update(sourceBytes).digest("hex")).toBe(sourceHash);
-    await application.openStudio(scoreId);
-    expect(adapter.parse).toHaveBeenCalledTimes(2);
-    await application.deleteLibraryScore(scoreId);
-    expect(application.getSnapshot().studio).toBeUndefined();
-    expect(document).toBeNull();
-    await application.destroy();
-  });
-
   it("replaces the Viewer runtime with a Studio runtime for the routed library score", async () => {
     const viewerScoreId = "00000000-0000-4000-8000-000000000001";
     const studioScoreId = "00000000-0000-4000-8000-000000000002";
@@ -684,10 +506,11 @@ describe("ViewerApplication", () => {
 
     expect(destroyViewer).toHaveBeenCalledOnce();
     expect(openSession).toHaveBeenCalledOnce();
-    expect(application.getSnapshot()).toMatchObject({
-      studio: { libraryScoreId: studioScoreId, status: "ready" },
+    expect(application.getStudioApplication().getSnapshot()).toMatchObject({
+      libraryScoreId: studioScoreId,
+      status: "ready",
     });
-    expect(application.getSnapshot().studio?.document?.activeRevision.algorithmVersion).toContain(
+    expect(application.getStudioApplication().getSnapshot()?.document?.activeRevision.algorithmVersion).toContain(
       "paper-semi-crf-mozart-v1-6fb18d1245aea9d89f5568a9b384b405c5326cb37015cc2caa5ade8dad5f7515",
     );
     expect(application.getSnapshot().currentLibraryScoreId).toBeUndefined();
@@ -787,23 +610,27 @@ describe("ViewerApplication", () => {
 
     expect(destroyViewer).toHaveBeenCalledOnce();
     expect(application.getSnapshot().currentLibraryScoreId).toBeUndefined();
-    expect(application.getSnapshot().studio).toMatchObject({
+    expect(application.getStudioApplication().getSnapshot()).toMatchObject({
       libraryScoreId: scoreId,
       status: "ready",
     });
     await application.destroy();
   });
 
-  it("rejects non-MusicXML scores before creating a Studio document", async () => {
+  it("delegates Studio opens to the Studio application seam", async () => {
     const scoreId = "00000000-0000-4000-8000-000000000001";
+    const sourceBytes = new TextEncoder().encode(
+      '<score-partwise><part id="P1"><measure><note/></measure></part></score-partwise>',
+    );
+    let document: HarmonyAnalysisDocument | null = null;
     const repository: SheetLibraryRepository & HarmonyAnalysisRepository = {
       initialize: async () => undefined,
       list: async () => [],
       get: async () => ({
         id: scoreId,
         scoreIdentity: "a".repeat(64),
-        fileName: "score.gp5",
-        format: "gp",
+        fileName: "score.musicxml",
+        format: "musicxml",
         title: "Score",
         importedAt: "2026-07-15T00:00:00.000Z",
         isFavorite: false,
@@ -814,34 +641,56 @@ describe("ViewerApplication", () => {
       add: async () => {
         throw new Error("unused");
       },
-      readScore: async () => {
-        throw new Error("must not read");
-      },
+      readScore: async () => ({ fileName: "score.musicxml", bytes: sourceBytes }),
       updateMetadata: async () => {
         throw new Error("unused");
       },
       setFavorite: async () => undefined,
       markOpened: async () => undefined,
       delete: async () => undefined,
-      read: async () => null,
-      save: async () => {
-        throw new Error("must not save");
+      read: async () => document,
+      save: async ({ document: next }) => {
+        document = { ...next, documentVersion: 0 };
+        return { status: "saved", document };
       },
+    };
+    const adapter: ScoreFormatAdapter = {
+      format: "musicxml",
+      parse: async () => ({
+        runtime: {},
+        diagnostics: [],
+        capabilities: { view: true, playback: false },
+        document: {
+          schemaVersion: "0",
+          summary: { title: "Score", trackCount: 1 },
+          tracks: [{ id: "track-1", name: "Piano", staves: [], playback: { muted: false, solo: false, volume: 1 } }],
+          timeline: { ticksPerQuarter: 1, durationTicks: 1 },
+          sections: [],
+        },
+      }),
     };
     const application = new ViewerApplication(
       { subscribe: () => () => undefined },
-      async () => ({
-        togglePlayback: async () => undefined,
-        pauseAndFlush: async () => undefined,
-        destroy: async () => undefined,
-      }),
-      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+      async () => {
+        throw new Error("viewer must not open");
+      },
+      {
+        repository,
+        gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
+        adapters: [adapter],
+      },
+      async () => studioRuntime(),
     );
-    await application.openStudio(scoreId);
-    expect(application.getSnapshot().studio).toMatchObject({
-      status: "error",
-      error: { code: "studio-format-unsupported", recoverable: false },
+
+    const studioApplication = application.getStudioApplication();
+    await studioApplication.open(scoreId);
+
+    expect(application.getStudioApplication()).toBe(studioApplication);
+    expect(studioApplication.getSnapshot()).toMatchObject({
+      libraryScoreId: scoreId,
+      status: "ready",
     });
+    expect(application.getSnapshot()).not.toHaveProperty("studio");
     await application.destroy();
   });
 });

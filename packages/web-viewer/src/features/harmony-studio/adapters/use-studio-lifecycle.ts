@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { ViewerApplication } from "../../../app/ViewerApplication";
+import type { StudioApplication } from "../StudioApplication";
 import { hasUnpersistedStudioDocument, type StudioSnapshot } from "../model/studio-page-model";
 
 export function useStudioLifecycle({
@@ -10,7 +10,7 @@ export function useStudioLifecycle({
   previewEnabled,
   studio,
 }: {
-  application: ViewerApplication;
+  application: StudioApplication;
   libraryScoreId: string | undefined;
   storageAvailable: boolean;
   active: boolean;
@@ -18,11 +18,11 @@ export function useStudioLifecycle({
   studio: StudioSnapshot | undefined;
 }) {
   useEffect(() => {
-    if (libraryScoreId && storageAvailable) void application.openStudio(libraryScoreId);
+    if (libraryScoreId && storageAvailable) void application.open(libraryScoreId);
   }, [application, libraryScoreId, storageAvailable]);
 
   useEffect(() => {
-    if (libraryScoreId && active) application.setStudioPreviewEnabled(libraryScoreId, previewEnabled);
+    if (libraryScoreId && active) application.setPreviewEnabled(libraryScoreId, previewEnabled);
   }, [active, application, libraryScoreId, previewEnabled]);
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export function useStudioLifecycle({
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
         event.preventDefault();
-        void application.flushStudio(libraryScoreId);
+        void application.flush(libraryScoreId);
       }
     };
     const onBeforeUnload = (event: BeforeUnloadEvent) => {

@@ -45,7 +45,7 @@ export function createAppRouter({
           lazy: capabilities.harmonyAnalysis
             ? async () => {
                 const { StudioPage } = await import("./pages/StudioPage");
-                return { Component: () => <StudioPage application={application} /> };
+                return { Component: () => <StudioPage application={application.getStudioApplication()} /> };
               }
             : async () => {
                 const { StudioUnavailablePage } = await import("./pages/StudioUnavailablePage");

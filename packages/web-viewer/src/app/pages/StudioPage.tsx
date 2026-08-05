@@ -7,16 +7,16 @@ import { useStudioLifecycle } from "../../features/harmony-studio/adapters/use-s
 import { useStudioSnapshot } from "../../features/harmony-studio/adapters/use-studio-snapshot";
 import { StudioAnalysisPanel } from "../../features/harmony-studio/components/studio-analysis-panel";
 import { findSelectedStudioRange, type StudioRange } from "../../features/harmony-studio/model/studio-page-model";
-import type { ViewerApplication } from "../ViewerApplication";
+import type { StudioApplication, StudioApplicationSnapshot } from "../../features/harmony-studio/StudioApplication";
 import { loadStudioPreferences, saveStudioPreferences, type StudioPreferences } from "../studio-preferences";
 import styles from "./StudioPage.module.css";
 
-export function StudioPage({ application }: { application: ViewerApplication }) {
+export function StudioPage({ application }: { application: StudioApplication }) {
   const { t } = useTranslation("studio");
   const { libraryScoreId } = useParams();
   const selectStudio = useCallback(
-    (snapshot: ReturnType<ViewerApplication["getSnapshot"]>) =>
-      snapshot.studio?.libraryScoreId === libraryScoreId ? snapshot.studio : undefined,
+    (snapshot: StudioApplicationSnapshot | undefined) =>
+      snapshot?.libraryScoreId === libraryScoreId ? snapshot : undefined,
     [libraryScoreId],
   );
   const studio = useStudioSnapshot(application, selectStudio);
@@ -36,7 +36,7 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   const selectRange = useCallback(
     (item: StudioRange) => {
       if (!libraryScoreId) return;
-      application.selectStudioRange(libraryScoreId, item.effective.range);
+      application.selectRange(libraryScoreId, item.effective.range);
     },
     [application, libraryScoreId],
   );

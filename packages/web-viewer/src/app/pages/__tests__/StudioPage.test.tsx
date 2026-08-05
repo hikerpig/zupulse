@@ -33,7 +33,7 @@ describe("StudioPage", () => {
       getSnapshot: () => snapshot,
       subscribe: () => () => undefined,
       hasHarmonyAnalysisStorage: () => true,
-      openStudio: async () => undefined,
+      open: async () => undefined,
     } as never;
     render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -61,33 +61,31 @@ describe("StudioPage", () => {
     ["error", "处理失败 · 0 个片段 · 0 个修正 · 修正尚未保存"],
   ] as const)("summarizes the %s Studio document state once", (status, expected) => {
     const snapshot = {
-      studio: {
-        libraryScoreId: "score-1",
-        status,
-        ...(status === "conflict" || status === "error"
-          ? {
-              error: {
-                code: status === "conflict" ? ("studio-version-conflict" as const) : ("studio-save-failed" as const),
-                recoverable: true,
-              },
-            }
-          : {}),
-        document: {
-          activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
-          corrections: [],
-          annotationTarget: { trackId: "track-1", staffIndex: 0 },
-        },
+      libraryScoreId: "score-1",
+      status,
+      ...(status === "conflict" || status === "error"
+        ? {
+            error: {
+              code: status === "conflict" ? ("studio-version-conflict" as const) : ("studio-save-failed" as const),
+              recoverable: true,
+            },
+          }
+        : {}),
+      document: {
+        activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
+        corrections: [],
+        annotationTarget: { trackId: "track-1", staffIndex: 0 },
       },
     };
     const application = {
       getSnapshot: () => snapshot,
       subscribe: () => () => undefined,
       hasHarmonyAnalysisStorage: () => true,
-      openStudio: async () => undefined,
-      undoStudio: () => undefined,
-      redoStudio: () => undefined,
-      setStudioScope: async () => undefined,
-      setStudioAnnotationTarget: async () => undefined,
+      open: async () => undefined,
+      undo: () => undefined,
+      redo: () => undefined,
+      setScope: async () => undefined,
+      setAnnotationTarget: async () => undefined,
     } as never;
     render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -101,17 +99,14 @@ describe("StudioPage", () => {
   });
 
   it("does not expose the missing-score heading after the score session is active", () => {
-    const snapshot = {
-      currentLibraryScoreId: "score-1",
-      studio: { libraryScoreId: "score-1", status: "loading" },
-    };
+    const snapshot = { libraryScoreId: "score-1", status: "loading" };
     const application = {
       getSnapshot: () => snapshot,
       subscribe: () => () => undefined,
       hasHarmonyAnalysisStorage: () => true,
       getCurrentStudioSession: () => ({}),
-      openStudio: async () => undefined,
-      setStudioPreviewEnabled: () => undefined,
+      open: async () => undefined,
+      setPreviewEnabled: () => undefined,
     } as never;
     render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -126,25 +121,23 @@ describe("StudioPage", () => {
 
   it("keeps the Studio document visible while an autosave is pending", () => {
     const snapshot = {
-      studio: {
-        libraryScoreId: "score-1",
-        status: "unsaved",
-        document: {
-          activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
-          corrections: [],
-          annotationTarget: { trackId: "track-1", staffIndex: 0 },
-        },
+      libraryScoreId: "score-1",
+      status: "unsaved",
+      document: {
+        activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
+        corrections: [],
+        annotationTarget: { trackId: "track-1", staffIndex: 0 },
       },
     };
     const application = {
       getSnapshot: () => snapshot,
       subscribe: () => () => undefined,
       hasHarmonyAnalysisStorage: () => true,
-      openStudio: async () => undefined,
-      undoStudio: () => undefined,
-      redoStudio: () => undefined,
-      setStudioScope: async () => undefined,
-      setStudioAnnotationTarget: async () => undefined,
+      open: async () => undefined,
+      undo: () => undefined,
+      redo: () => undefined,
+      setScope: async () => undefined,
+      setAnnotationTarget: async () => undefined,
     } as never;
     render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -160,27 +153,25 @@ describe("StudioPage", () => {
 
   it("keeps the previous document visible during reanalysis", () => {
     const snapshot = {
-      studio: {
-        libraryScoreId: "score-1",
-        status: "analyzing",
-        document: {
-          activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
-          corrections: [],
-          annotationTarget: { trackId: "track-1", staffIndex: 0 },
-        },
+      libraryScoreId: "score-1",
+      status: "analyzing",
+      document: {
+        activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
+        corrections: [],
+        annotationTarget: { trackId: "track-1", staffIndex: 0 },
       },
     };
     const application = {
       getSnapshot: () => snapshot,
       subscribe: () => () => undefined,
       hasHarmonyAnalysisStorage: () => true,
-      openStudio: async () => undefined,
-      cancelStudioReanalysis: () => undefined,
-      flushStudio: async () => undefined,
-      undoStudio: () => undefined,
-      redoStudio: () => undefined,
-      setStudioScope: async () => undefined,
-      setStudioAnnotationTarget: async () => undefined,
+      open: async () => undefined,
+      cancelReanalysis: () => undefined,
+      flush: async () => undefined,
+      undo: () => undefined,
+      redo: () => undefined,
+      setScope: async () => undefined,
+      setAnnotationTarget: async () => undefined,
     } as never;
     render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -195,26 +186,24 @@ describe("StudioPage", () => {
 
   it("reports a completed annotated-score export", async () => {
     const snapshot = {
-      studio: {
-        libraryScoreId: "score-1",
-        status: "ready",
-        document: {
-          activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
-          corrections: [],
-          annotationTarget: { trackId: "track-1", staffIndex: 0 },
-        },
+      libraryScoreId: "score-1",
+      status: "ready",
+      document: {
+        activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
+        corrections: [],
+        annotationTarget: { trackId: "track-1", staffIndex: 0 },
       },
     };
     const application = {
       getSnapshot: () => snapshot,
       subscribe: () => () => undefined,
       hasHarmonyAnalysisStorage: () => true,
-      openStudio: async () => undefined,
-      undoStudio: () => undefined,
-      redoStudio: () => undefined,
-      setStudioScope: async () => undefined,
-      setStudioAnnotationTarget: async () => undefined,
-      exportStudio: async () => "saved" as const,
+      open: async () => undefined,
+      undo: () => undefined,
+      redo: () => undefined,
+      setScope: async () => undefined,
+      setAnnotationTarget: async () => undefined,
+      export: async () => "saved" as const,
     } as never;
     const view = render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -232,45 +221,43 @@ describe("StudioPage", () => {
 
   it("selects any analysis segment instead of pinning the inspector to the first segment", async () => {
     const listeners = new Set<() => void>();
-    const snapshot: { studio?: Record<string, unknown> } = {
-      studio: {
-        libraryScoreId: "score-1",
-        status: "ready",
-        availableTrackIds: ["track-1", "track-2"],
-        document: {
-          activeRevision: {
-            parameters: { scope: { includedTrackIds: ["track-1"] } },
-            segments: [
-              {
-                status: "unresolved",
-                range: { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 1 } },
-                alternatives: [],
-                reason: "low-confidence",
-              },
-              {
-                status: "unresolved",
-                range: { start: { measureIndex: 1, offsetTicks: 0 }, end: { measureIndex: 1, offsetTicks: 1 } },
-                alternatives: [],
-                reason: "low-confidence",
-              },
-            ],
-          },
-          corrections: [],
-          annotationTarget: { trackId: "track-1", staffIndex: 0 },
+    let snapshot: Record<string, unknown> = {
+      libraryScoreId: "score-1",
+      status: "ready",
+      availableTrackIds: ["track-1", "track-2"],
+      document: {
+        activeRevision: {
+          parameters: { scope: { includedTrackIds: ["track-1"] } },
+          segments: [
+            {
+              status: "unresolved",
+              range: { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 1 } },
+              alternatives: [],
+              reason: "low-confidence",
+            },
+            {
+              status: "unresolved",
+              range: { start: { measureIndex: 1, offsetTicks: 0 }, end: { measureIndex: 1, offsetTicks: 1 } },
+              alternatives: [],
+              reason: "low-confidence",
+            },
+          ],
         },
-        ranges: [
-          unresolvedRangeItem({
-            start: { measureIndex: 0, offsetTicks: 0 },
-            end: { measureIndex: 0, offsetTicks: 1 },
-          }),
-          unresolvedRangeItem({
-            start: { measureIndex: 1, offsetTicks: 0 },
-            end: { measureIndex: 1, offsetTicks: 1 },
-          }),
-        ],
+        corrections: [],
+        annotationTarget: { trackId: "track-1", staffIndex: 0 },
       },
+      ranges: [
+        unresolvedRangeItem({
+          start: { measureIndex: 0, offsetTicks: 0 },
+          end: { measureIndex: 0, offsetTicks: 1 },
+        }),
+        unresolvedRangeItem({
+          start: { measureIndex: 1, offsetTicks: 0 },
+          end: { measureIndex: 1, offsetTicks: 1 },
+        }),
+      ],
     };
-    const selectStudioRange = vi.fn(
+    const selectRange = vi.fn(
       (
         _id: string,
         range: {
@@ -278,7 +265,7 @@ describe("StudioPage", () => {
           end: { measureIndex: number; offsetTicks: number };
         },
       ) => {
-        snapshot.studio = { ...snapshot.studio, selection: { focus: range.start, range } };
+        snapshot = { ...snapshot, selection: { focus: range.start, range } };
         for (const listener of listeners) listener();
       },
     );
@@ -289,15 +276,15 @@ describe("StudioPage", () => {
         return () => listeners.delete(listener);
       },
       hasHarmonyAnalysisStorage: () => true,
-      openStudio: async () => undefined,
-      undoStudio: () => undefined,
-      redoStudio: () => undefined,
-      setStudioScope: async () => undefined,
-      setStudioAnnotationTarget: async () => undefined,
-      exportStudio: async () => "saved" as const,
-      setStudioCorrection: async () => undefined,
-      resetStudioCorrection: async () => undefined,
-      selectStudioRange,
+      open: async () => undefined,
+      undo: () => undefined,
+      redo: () => undefined,
+      setScope: async () => undefined,
+      setAnnotationTarget: async () => undefined,
+      export: async () => "saved" as const,
+      setCorrection: async () => undefined,
+      resetCorrection: async () => undefined,
+      selectRange,
     } as never;
     const view = render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -312,7 +299,7 @@ describe("StudioPage", () => {
     const segments = within(view.container).getByRole("list", { name: "分析片段" });
     await user.click(within(segments).getByRole("button", { name: "片段 1，算法结果" }));
     await user.keyboard("{ArrowDown}");
-    expect(selectStudioRange).toHaveBeenLastCalledWith("score-1", {
+    expect(selectRange).toHaveBeenLastCalledWith("score-1", {
       start: { measureIndex: 1, offsetTicks: 0 },
       end: { measureIndex: 1, offsetTicks: 1 },
     });
@@ -336,38 +323,36 @@ describe("StudioPage", () => {
       end: { measureIndex: 0, offsetTicks: 4 },
     };
     const snapshot = {
-      studio: {
-        libraryScoreId: "score-1",
-        status: "ready",
-        selectionNotice: "no-effective-range",
-        document: {
-          activeRevision: {
-            parameters: { scope: { includedTrackIds: ["track-1"] } },
-            segments: [
-              {
-                status: "unresolved",
-                range: selectedRange,
-                alternatives: [],
-                reason: "low-confidence",
-              },
-            ],
-          },
-          corrections: [],
-          annotationTarget: { trackId: "track-1", staffIndex: 0 },
+      libraryScoreId: "score-1",
+      status: "ready",
+      selectionNotice: "no-effective-range",
+      document: {
+        activeRevision: {
+          parameters: { scope: { includedTrackIds: ["track-1"] } },
+          segments: [
+            {
+              status: "unresolved",
+              range: selectedRange,
+              alternatives: [],
+              reason: "low-confidence",
+            },
+          ],
         },
-        ranges: [unresolvedRangeItem(selectedRange)],
+        corrections: [],
+        annotationTarget: { trackId: "track-1", staffIndex: 0 },
       },
+      ranges: [unresolvedRangeItem(selectedRange)],
     };
     const application = {
       getSnapshot: () => snapshot,
       subscribe: () => () => undefined,
       hasHarmonyAnalysisStorage: () => true,
-      openStudio: async () => undefined,
-      setStudioPreviewEnabled: () => undefined,
-      undoStudio: () => undefined,
-      redoStudio: () => undefined,
-      setStudioScope: async () => undefined,
-      setStudioAnnotationTarget: async () => undefined,
+      open: async () => undefined,
+      setPreviewEnabled: () => undefined,
+      undo: () => undefined,
+      redo: () => undefined,
+      setScope: async () => undefined,
+      setAnnotationTarget: async () => undefined,
     } as never;
 
     render(
@@ -384,52 +369,50 @@ describe("StudioPage", () => {
 
   it("keeps preview transport local to Studio", async () => {
     const playViewer = vi.fn();
-    const toggleStudioPreview = vi.fn();
-    const setStudioPreviewLoop = vi.fn();
+    const togglePreview = vi.fn();
+    const setPreviewLoop = vi.fn();
     const snapshot = {
-      studio: {
-        libraryScoreId: "score-1",
-        status: "ready",
-        transport: { status: "playing", positionTicks: 0, speed: 1 },
-        audioStatus: "loading",
-        selection: {
-          focus: { measureIndex: 0, offsetTicks: 0 },
-          range: { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 4 } },
-        },
-        document: {
-          activeRevision: {
-            parameters: { scope: { includedTrackIds: ["track-1"] } },
-            segments: [
-              {
-                status: "unresolved",
-                range: { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 4 } },
-                alternatives: [],
-                reason: "low-confidence",
-              },
-            ],
-          },
-          corrections: [],
-          annotationTarget: { trackId: "track-1", staffIndex: 0 },
-        },
-        ranges: [
-          unresolvedRangeItem({
-            start: { measureIndex: 0, offsetTicks: 0 },
-            end: { measureIndex: 0, offsetTicks: 4 },
-          }),
-        ],
+      libraryScoreId: "score-1",
+      status: "ready",
+      transport: { status: "playing", positionTicks: 0, speed: 1 },
+      audioStatus: "loading",
+      selection: {
+        focus: { measureIndex: 0, offsetTicks: 0 },
+        range: { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 4 } },
       },
+      document: {
+        activeRevision: {
+          parameters: { scope: { includedTrackIds: ["track-1"] } },
+          segments: [
+            {
+              status: "unresolved",
+              range: { start: { measureIndex: 0, offsetTicks: 0 }, end: { measureIndex: 0, offsetTicks: 4 } },
+              alternatives: [],
+              reason: "low-confidence",
+            },
+          ],
+        },
+        corrections: [],
+        annotationTarget: { trackId: "track-1", staffIndex: 0 },
+      },
+      ranges: [
+        unresolvedRangeItem({
+          start: { measureIndex: 0, offsetTicks: 0 },
+          end: { measureIndex: 0, offsetTicks: 4 },
+        }),
+      ],
     };
     const application = {
       getSnapshot: () => snapshot,
       subscribe: () => () => undefined,
       hasHarmonyAnalysisStorage: () => true,
-      openStudio: async () => undefined,
-      undoStudio: () => undefined,
-      redoStudio: () => undefined,
-      setStudioScope: async () => undefined,
-      setStudioAnnotationTarget: async () => undefined,
-      toggleStudioPreview,
-      setStudioPreviewLoop,
+      open: async () => undefined,
+      undo: () => undefined,
+      redo: () => undefined,
+      setScope: async () => undefined,
+      setAnnotationTarget: async () => undefined,
+      togglePreview,
+      setPreviewLoop,
       playback: { play: playViewer },
     } as never;
     const view = render(
@@ -445,8 +428,8 @@ describe("StudioPage", () => {
     await user.click(screen.getByRole("button", { name: "循环选中片段" }));
     expect(screen.getByText("预览播放中")).toBeTruthy();
     expect(screen.getByText("音频加载中")).toBeTruthy();
-    expect(toggleStudioPreview).toHaveBeenCalledWith("score-1");
-    expect(setStudioPreviewLoop).toHaveBeenCalledWith("score-1", expect.anything());
+    expect(togglePreview).toHaveBeenCalledWith("score-1");
+    expect(setPreviewLoop).toHaveBeenCalledWith("score-1", expect.anything());
     expect(playViewer).not.toHaveBeenCalled();
   });
 
@@ -456,7 +439,7 @@ describe("StudioPage", () => {
       getSnapshot: () => snapshot,
       subscribe: () => () => undefined,
       hasHarmonyAnalysisStorage: () => false,
-      openStudio: async () => undefined,
+      open: async () => undefined,
     } as never;
     render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -470,17 +453,15 @@ describe("StudioPage", () => {
 
   it("shows analysis errors and CAS conflicts as accessible alerts", () => {
     const snapshot = {
-      studio: {
-        libraryScoreId: "score-1",
-        status: "error" as const,
-        error: { code: "studio-analysis-failed", recoverable: true },
-      },
+      libraryScoreId: "score-1",
+      status: "error" as const,
+      error: { code: "studio-analysis-failed", recoverable: true },
     };
     const application = {
       getSnapshot: () => snapshot,
       subscribe: () => () => undefined,
       hasHarmonyAnalysisStorage: () => true,
-      openStudio: async () => undefined,
+      open: async () => undefined,
     } as never;
     const view = render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -494,26 +475,24 @@ describe("StudioPage", () => {
 
   it("blocks leaving with unsaved work and reports a CAS conflict", () => {
     const snapshot = {
-      studio: {
-        libraryScoreId: "score-1",
-        status: "conflict",
-        error: { code: "studio-version-conflict", recoverable: true },
-        document: {
-          activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
-          corrections: [],
-          annotationTarget: { trackId: "track-1", staffIndex: 0 },
-        },
+      libraryScoreId: "score-1",
+      status: "conflict",
+      error: { code: "studio-version-conflict", recoverable: true },
+      document: {
+        activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
+        corrections: [],
+        annotationTarget: { trackId: "track-1", staffIndex: 0 },
       },
     };
     const application = {
       getSnapshot: () => snapshot,
       subscribe: () => () => undefined,
       hasHarmonyAnalysisStorage: () => true,
-      openStudio: async () => undefined,
-      undoStudio: () => undefined,
-      redoStudio: () => undefined,
-      setStudioScope: async () => undefined,
-      setStudioAnnotationTarget: async () => undefined,
+      open: async () => undefined,
+      undo: () => undefined,
+      redo: () => undefined,
+      setScope: async () => undefined,
+      setAnnotationTarget: async () => undefined,
     } as never;
     const view = render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -528,12 +507,12 @@ describe("StudioPage", () => {
     expect(conflictUnload.defaultPrevented).toBe(true);
 
     view.unmount();
-    const unsavedSnapshot = { ...snapshot, studio: { ...snapshot.studio, status: "unsaved" as const } };
+    const unsavedSnapshot = { ...snapshot, status: "unsaved" as const };
     const unsavedApplication = {
       getSnapshot: () => unsavedSnapshot,
       subscribe: () => () => undefined,
       hasHarmonyAnalysisStorage: () => true,
-      openStudio: async () => undefined,
+      open: async () => undefined,
     } as never;
     render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -549,22 +528,20 @@ describe("StudioPage", () => {
 
   it("blocks leaving after a save failure keeps the edited document local", () => {
     const snapshot = {
-      studio: {
-        libraryScoreId: "score-1",
-        status: "error" as const,
-        error: { code: "studio-save-failed", recoverable: true },
-        document: {
-          activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
-          corrections: [],
-          annotationTarget: { trackId: "track-1", staffIndex: 0 },
-        },
+      libraryScoreId: "score-1",
+      status: "error" as const,
+      error: { code: "studio-save-failed", recoverable: true },
+      document: {
+        activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
+        corrections: [],
+        annotationTarget: { trackId: "track-1", staffIndex: 0 },
       },
     };
     const application = {
       getSnapshot: () => snapshot,
       subscribe: () => () => undefined,
       hasHarmonyAnalysisStorage: () => true,
-      openStudio: async () => undefined,
+      open: async () => undefined,
     } as never;
     render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -581,27 +558,25 @@ describe("StudioPage", () => {
 
   it("keeps primary Studio controls keyboard reachable", async () => {
     const snapshot = {
-      studio: {
-        libraryScoreId: "score-1",
-        status: "ready",
-        document: {
-          activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
-          corrections: [],
-          annotationTarget: { trackId: "track-1", staffIndex: 0 },
-        },
+      libraryScoreId: "score-1",
+      status: "ready",
+      document: {
+        activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
+        corrections: [],
+        annotationTarget: { trackId: "track-1", staffIndex: 0 },
       },
     };
-    const flushStudio = vi.fn(async () => undefined);
+    const flush = vi.fn(async () => undefined);
     const application = {
       getSnapshot: () => snapshot,
       subscribe: () => () => undefined,
       hasHarmonyAnalysisStorage: () => true,
-      openStudio: async () => undefined,
-      undoStudio: () => undefined,
-      redoStudio: () => undefined,
-      setStudioScope: async () => undefined,
-      setStudioAnnotationTarget: async () => undefined,
-      flushStudio,
+      open: async () => undefined,
+      undo: () => undefined,
+      redo: () => undefined,
+      setScope: async () => undefined,
+      setAnnotationTarget: async () => undefined,
+      flush,
     } as never;
     render(
       <MemoryRouter initialEntries={["/studio/score-1"]}>
@@ -628,6 +603,6 @@ describe("StudioPage", () => {
     await user.tab();
     expect(document.activeElement?.getAttribute("aria-label")).toBe("撤销修正");
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "s", ctrlKey: true }));
-    expect(flushStudio).toHaveBeenCalledWith("score-1");
+    expect(flush).toHaveBeenCalledWith("score-1");
   });
 });

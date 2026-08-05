@@ -1,9 +1,9 @@
 import { useCallback, useRef, useSyncExternalStore } from "react";
-import type { ViewerApplication, ViewerApplicationSnapshot } from "../../../app/ViewerApplication";
+import type { StudioApplication, StudioApplicationSnapshot } from "../StudioApplication";
 
 export function useStudioSnapshot<TSelected>(
-  application: ViewerApplication,
-  selector: (snapshot: ViewerApplicationSnapshot) => TSelected,
+  application: StudioApplication,
+  selector: (snapshot: StudioApplicationSnapshot | undefined) => TSelected,
   isEqual: (left: TSelected, right: TSelected) => boolean = Object.is,
 ): TSelected {
   const cache = useRef<{ value: TSelected } | null>(null);

@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
-import type { ViewerApplication } from "../../../app/ViewerApplication";
+import type { StudioApplication } from "../StudioApplication";
 import { ContextPopup } from "../../../components/ContextPopup";
 import styles from "../../../app/pages/StudioPage.module.css";
 import type { StudioSnapshot } from "../model/studio-page-model";
@@ -13,7 +13,7 @@ export function StudioSettingsPopup({
   open,
   onOpenChange,
 }: {
-  application: ViewerApplication;
+  application: StudioApplication;
   libraryScoreId: string;
   studio: StudioSnapshot;
   anchor: RefObject<HTMLButtonElement | null>;
@@ -39,7 +39,7 @@ export function StudioSettingsPopup({
               aria-label={t("analysisScope")}
               value={includedTrackIds}
               onChange={(event) =>
-                void application.setStudioScope(
+                void application.setScope(
                   libraryScoreId,
                   Array.from(event.currentTarget.selectedOptions, (option) => option.value),
                 )
@@ -60,7 +60,7 @@ export function StudioSettingsPopup({
               aria-label={t("annotationTarget")}
               value={document.annotationTarget.trackId}
               onChange={(event) =>
-                void application.setStudioAnnotationTarget(libraryScoreId, {
+                void application.setAnnotationTarget(libraryScoreId, {
                   trackId: event.currentTarget.value,
                   staffIndex: document.annotationTarget.staffIndex,
                 })

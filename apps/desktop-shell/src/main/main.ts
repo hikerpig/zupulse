@@ -21,7 +21,7 @@ import {
 import { assertBridgeAppSender, BridgeDispatchError, dispatchBridgeRequest } from "./bridge";
 import { DiagnosticLogger } from "./diagnostics";
 import { FileTokenStore } from "./fileTokens";
-import { acceptScorePaths, openScoreFile, readScoreFileBytes, saveScoreFile, selectScoreFiles } from "./files";
+import { acceptScorePaths, readScoreFileBytes, saveScoreFile, selectScoreFiles } from "./files";
 import { registerAppProtocol } from "./protocol";
 import { JsonStore } from "./storage";
 import { DesktopLifecycleCoordinator } from "./lifecycle";
@@ -168,7 +168,6 @@ async function startDesktopApp(): Promise<void> {
             installMenu(sendEvent, openDiagnosticsDirectory, currentLocaleState.effectiveLocale);
             return currentLocaleState;
           },
-          "file.open": () => openScoreFile(fileTokens, undefined, currentLocaleState.effectiveLocale),
           "file.select": (request) =>
             selectScoreFiles(fileTokens, request.payload.multiple, currentLocaleState.effectiveLocale),
           "file.readBytes": (request) => readScoreFileBytes(fileTokens, request.payload.fileToken),

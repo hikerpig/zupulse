@@ -27,7 +27,7 @@ describe("bridge schemas", () => {
       bridgeRequestSchema.parse({
         bridgeVersion: BRIDGE_SCHEMA_VERSION,
         correlationId: "x",
-        type: "file.open",
+        type: "app.lifecycleAck",
         payload: { fileRef: "legacy" },
       }),
     ).toThrow();
@@ -35,7 +35,7 @@ describe("bridge schemas", () => {
       bridgeRequestSchema.parse({
         bridgeVersion: BRIDGE_SCHEMA_VERSION,
         correlationId: "x",
-        type: "file.open",
+        type: "app.lifecycleAck",
         payload: {},
         channel: "legacy",
       }),
@@ -87,22 +87,19 @@ describe("bridge schemas", () => {
   });
 
   it("creates typed envelopes and parses the response selected by request type", () => {
-    expect(createBridgeRequest("file.open", "open-1", {})).toEqual({
+    expect(createBridgeRequest("file.select", "select-1", { multiple: true })).toEqual({
       bridgeVersion: BRIDGE_SCHEMA_VERSION,
-      correlationId: "open-1",
-      type: "file.open",
-      payload: {},
+      correlationId: "select-1",
+      type: "file.select",
+      payload: { multiple: true },
     });
-    expect(parseBridgeResponse("file.open", { status: "cancelled" })).toEqual({
+    expect(parseBridgeResponse("file.select", { status: "cancelled" })).toEqual({
       status: "cancelled",
     });
     expect(() =>
-      parseBridgeResponse("file.open", {
-        status: "opened",
-        fileToken: "token",
-        fileName: "score.gp",
-        sizeBytes: 3,
-        legacyPath: "/tmp/score.gp",
+      parseBridgeResponse("file.select", {
+        status: "selected",
+        files: [{ fileToken: "token", fileName: "score.gp", sizeBytes: 3, legacyPath: "/tmp/score.gp" }],
       }),
     ).toThrow();
   });

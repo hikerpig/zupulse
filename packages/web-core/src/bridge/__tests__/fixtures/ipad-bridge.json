@@ -14,8 +14,8 @@
       }
     },
     {
-      "name": "valid file open",
-      "accepted": true,
+      "name": "rejected file open (seam removed)",
+      "accepted": false,
       "value": {
         "bridgeVersion": "3.0.0",
         "correlationId": "fixture-file-open",

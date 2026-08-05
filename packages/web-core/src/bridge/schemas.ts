@@ -126,7 +126,6 @@ export const bridgeRequestSchema = z.discriminatedUnion("type", [
       })
       .strict(),
   ),
-  envelope("file.open", z.object({}).strict()),
   envelope("app.locale.setPreference", z.object({ preference: localePreferenceSchema }).strict()),
   envelope("file.select", z.object({ multiple: z.boolean() }).strict()),
   envelope("file.readBytes", z.object({ fileToken: idSchema }).strict()),
@@ -222,7 +221,6 @@ export const IPAD_BRIDGE_REQUEST_TYPES = [
   "app.handshake",
   "app.lifecycleAck",
   "diagnostics.write",
-  "file.open",
   "file.select",
 ] as const satisfies readonly BridgeRequest["type"][];
 export const IPAD_BRIDGE_EVENT_TYPES = [
@@ -258,17 +256,6 @@ export const bridgeResponseSchemas = {
     })
     .strict(),
   "app.locale.setPreference": localeStateSchema,
-  "file.open": z.discriminatedUnion("status", [
-    z.object({ status: z.literal("cancelled") }).strict(),
-    z
-      .object({
-        status: z.literal("opened"),
-        fileToken: idSchema,
-        fileName: z.string().min(1),
-        sizeBytes: z.number().int().nonnegative(),
-      })
-      .strict(),
-  ]),
   "file.select": z.discriminatedUnion("status", [
     z.object({ status: z.literal("cancelled") }).strict(),
     z

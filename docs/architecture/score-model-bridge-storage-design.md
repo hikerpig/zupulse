@@ -214,16 +214,18 @@ Web Viewer Core 不能直接假设自己运行在 iOS、macOS 或 Windows，也�
 ### 第一版 RPC
 
 ```ts
-type OpenFileRequest = {
-  fileRef: string;
-  mode: "external-reference" | "local-library-copy";
-};
+// 文件选取（Library 导入）：select 返回一次性 token，readBytes 按 token 读取。
+// （早期 `file.open` 单文件直开 RPC 已随 ADR 0067 移除。）
+type FileSelectResponse =
+  | { status: "cancelled" }
+  | {
+      status: "selected";
+      files: Array<{ fileToken: string; fileName: string; sizeBytes: number }>;
+    };
 
-type OpenFileResponse = {
-  fileToken: string;
+type ReadScoreFileResponse = {
   fileName: string;
-  sizeBytes: number;
-  contentHash?: string;
+  bytes: Uint8Array;
 };
 
 type ReadSidecarRequest = {

@@ -9,7 +9,7 @@ import {
   type BridgeRequest,
   type Capabilities,
 } from "./schemas";
-import type { LocalPlaybackResume, OpenFileResponse } from "./types";
+import type { LocalPlaybackResume } from "./types";
 
 export type NativeFileBytes = {
   fileName: string;
@@ -40,8 +40,6 @@ const DEFAULT_CAPABILITIES: Capabilities = capabilitiesSchema.parse({
 });
 
 export class MockNativeBridge {
-  private readonly fileResponses = new Map<string, Extract<OpenFileResponse, { status: "opened" }>>();
-  private readonly pendingFiles: Extract<OpenFileResponse, { status: "opened" }>[] = [];
   private readonly fileBytes = new Map<string, NativeFileBytes>();
   private readonly eventMessages: BridgeEvent[] = [];
   private readonly sidecars = new Map<string, SidecarPayload>();
@@ -50,27 +48,8 @@ export class MockNativeBridge {
 
   constructor(private readonly capabilities: Capabilities = DEFAULT_CAPABILITIES) {}
 
-  registerFile(fileRef: string, response: Omit<Extract<OpenFileResponse, { status: "opened" }>, "status">): void {
-    const opened = parseBridgeResponse("file.open", { status: "opened", ...response });
-    if (opened.status !== "opened") return;
-    this.fileResponses.set(fileRef, opened);
-    this.pendingFiles.push(opened);
-  }
-
   registerFileBytes(fileToken: string, file: NativeFileBytes): void {
     this.fileBytes.set(fileToken, file);
-    if (!this.fileResponses.has(fileToken)) {
-      const opened = parseBridgeResponse("file.open", {
-        status: "opened",
-        fileToken,
-        fileName: file.fileName,
-        sizeBytes: file.bytes.byteLength,
-      });
-      if (opened.status === "opened") {
-        this.fileResponses.set(fileToken, opened);
-        this.pendingFiles.push(opened);
-      }
-    }
   }
 
   async request(message: BridgeRequest): Promise<unknown> {
@@ -90,8 +69,6 @@ export class MockNativeBridge {
           preference: request.payload.preference,
           effectiveLocale: request.payload.preference === "system" ? "en-US" : request.payload.preference,
         });
-      case "file.open":
-        return parseBridgeResponse(request.type, this.pendingFiles.shift() ?? { status: "cancelled" });
       case "file.readBytes": {
         const response = this.fileBytes.get(request.payload.fileToken);
         if (response === undefined) {

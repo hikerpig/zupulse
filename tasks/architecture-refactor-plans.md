@@ -127,11 +127,27 @@ seam / adapter / leverage / locality。
   destroy 语义搬到 library 导入路径或收敛为对 `chain` 语义的聚焦测试；只测死路径的删除；fakes 补 fake library。
 - 出口：`pnpm check`；全仓无 `host.openScore` 引用；`pnpm desktop:test:e2e`。
 
-### C2 清掉随之死亡的 bridge RPC（desktop，推荐做）
+### C2 ✅ 清掉随之死亡的 `file.open` bridge RPC（desktop + web-core，已完成 2026-08-05）
 
-- 确认 `file.open`/`file.readBytes` 只被删掉的 host.openScore 触达。若成立，连同 bridge schema + main handler +
-  preload 面一并删（ADR 0022 运行时 schema 推导、ADR 0030 桌面包内精确匹配——两侧同一次提交）。
-- 出口：`pnpm desktop:build` + e2e。
+> **执行时发现计划前提错误**：`file.readBytes` 并没有死——它是 library 导入路径的字节读取口
+> （`DesktopScoreFileGateway.readTokensAsImportSources` 发 `file.readBytes`，`main.ts` 仍注册 handler）。
+> 真正死掉的是 `file.open` 一个 RPC + 它的三个孤发送方（web-core 的 bridge open 流程）。
+> 已按正确范围执行，`file.readBytes`/`file.select`/`file.save` 全部保留。
+
+- 删除 `file.open`：bridge schema（envelope / request union / response union）、`OpenFileResponse` 类型、
+  `IPAD_BRIDGE_REQUEST_TYPES` 允许表、desktop `file.open` handler、`files.ts` 的 `openScoreFile` + 三个
+  deprecated 别名（`openGpFile`/`readGpFileBytes`/`assertReadableGp`）。
+- 删除三个孤儿流程（零调用方，已核实 desktop/ipad/web-demo/e2e）：`bridge/openFileFlow.ts`
+  （`openFileThroughBridge` + `BridgeHandshakeInput`）、`gp/gpOpenFlow.ts`（`openGpThroughBridge`）、
+  `import/openScore.ts` 的 `openScoreThroughBridge`（纯 `openScore` 保留——无调用方但为干净可复用 helper，
+  且 web-viewer 的 `importPresenter.ts` 与它重复，待 B/A 阶段收口）。
+- Mock 与契约：`MockNativeBridge` 去掉 `file.open` case / `registerFile` / `pendingFiles`（保留 `file.readBytes`
+  模拟）；`contract-manifest` 断言去掉 `file.open`；`ipad-bridge.json` fixture 把「valid file open」改为
+  `accepted:false` 钉死删除；重新生成 `apps/ipad-shell/bridge/bridge-contract.json`（ADR 0022 运行时 schema 推导、
+  ADR 0030 两侧同一次提交）。
+- 出口：`pnpm check`（714 tests）、`pnpm verify:fast`、`pnpm desktop:build`、`pnpm demo:build`、
+  `pnpm ipad:web:build` 全绿；全仓无 `file.open`（除 rejected fixture）`OpenFileResponse`/流程名残留。
+- 遗留：iOS native 侧可能仍有 `file.open` handler（不在本仓库），随契约删除后为不可达，需 native 侧清理。
 
 ### C3 统一命令/生命周期词汇 + 吸收重复 bootstrap（跨壳，另立项）
 

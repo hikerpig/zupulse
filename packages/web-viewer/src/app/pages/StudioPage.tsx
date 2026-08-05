@@ -6,11 +6,7 @@ import { StudioSplitWorkspace } from "../../components/studio-split-workspace";
 import { useStudioLifecycle } from "../../features/harmony-studio/adapters/use-studio-lifecycle";
 import { useStudioSnapshot } from "../../features/harmony-studio/adapters/use-studio-snapshot";
 import { StudioAnalysisPanel } from "../../features/harmony-studio/components/studio-analysis-panel";
-import {
-  createStudioRanges,
-  findSelectedStudioRange,
-  type StudioRange,
-} from "../../features/harmony-studio/model/studio-page-model";
+import { findSelectedStudioRange, type StudioRange } from "../../features/harmony-studio/model/studio-page-model";
 import type { ViewerApplication } from "../ViewerApplication";
 import { loadStudioPreferences, saveStudioPreferences, type StudioPreferences } from "../studio-preferences";
 import styles from "./StudioPage.module.css";
@@ -27,9 +23,8 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   const storageAvailable = application.hasHarmonyAnalysisStorage();
   const active =
     libraryScoreId !== undefined && studio !== undefined && application.getCurrentStudioSession?.() !== undefined;
-  const ranges = useMemo(() => createStudioRanges(studio), [studio]);
-  const [fallbackSelectedKey, setFallbackSelectedKey] = useState<string>();
-  const selectedRange = findSelectedStudioRange(studio, ranges, fallbackSelectedKey);
+  const ranges = useMemo(() => studio?.ranges ?? [], [studio]);
+  const selectedRange = findSelectedStudioRange(studio, ranges);
   const [preferences, setPreferences] = useState(() => loadStudioPreferences(browserStorage()));
   const updatePreferences = useCallback((next: Partial<StudioPreferences>) => {
     setPreferences((current) => {
@@ -41,7 +36,6 @@ export function StudioPage({ application }: { application: ViewerApplication }) 
   const selectRange = useCallback(
     (item: StudioRange) => {
       if (!libraryScoreId) return;
-      setFallbackSelectedKey(item.key);
       application.selectStudioRange(libraryScoreId, item.effective.range);
     },
     [application, libraryScoreId],

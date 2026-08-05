@@ -47,12 +47,12 @@ import type { StudioScoreRuntime, StudioScoreRuntimeSnapshot } from "../studio-s
 import type { BundledSampleScore, BundledSampleSource } from "../sample-scores";
 import { ApplicationFailure, applicationIssue, type ApplicationIssue } from "./applicationIssue";
 import {
-  createHarmonyRangeViewItems,
   restoreHarmonySelection,
   selectContainingHarmonyRange,
   type HarmonyRangeViewItem,
   type HarmonySelection,
 } from "../features/harmony-studio/harmony-range-view-model";
+import { projectStudioRanges, type StudioHarmonySource } from "../features/harmony-studio/model/studio-ranges";
 
 function createDefaultHarmonyAnalysisRunner(): HarmonyAnalysisRunner {
   if (typeof Worker !== "undefined") return createHarmonyAnalysisWorkerRunner();
@@ -116,7 +116,7 @@ export class ViewerApplication implements ViewerAppHandle {
   private studioOpening: { id: string; promise: Promise<void> } | undefined;
   private readonly studioSessions = new Map<string, HarmonyStudioSession>();
   private readonly studioAvailableTrackIds = new Map<string, string[]>();
-  private readonly studioSources = new Map<string, { rootXml: string; partIds: readonly string[] }>();
+  private readonly studioSources = new Map<string, StudioHarmonySource>();
   private destroying = false;
   private importAbortController: AbortController | undefined;
   private snapshot: ViewerApplicationSnapshot = {};
@@ -307,8 +307,9 @@ export class ViewerApplication implements ViewerAppHandle {
       this.setStudio(id, { ...nextStudio, selection });
       return;
     }
+    const { selection: _selection, ...clearedStudio } = studio;
     this.setStudio(id, {
-      ...studio,
+      ...clearedStudio,
       selectionNotice: "no-effective-range",
     });
   }
@@ -972,21 +973,7 @@ export class ViewerApplication implements ViewerAppHandle {
   }
 
   private getStudioRanges(libraryScoreId: string, document: HarmonyAnalysisDocument): HarmonyRangeViewItem[] {
-    const source = this.studioSources.get(libraryScoreId);
-    const scoreEnd = document.activeRevision.segments.reduce(
-      (end, segment) => (compareMoments(segment.range.end, end) > 0 ? segment.range.end : end),
-      { measureIndex: 0, offsetTicks: 0 },
-    );
-    const partId = source?.partIds[trackIndexFromId(document.annotationTarget.trackId)];
-    const projection = effectiveHarmonyProjection({
-      revision: document.activeRevision.segments,
-      source:
-        source === undefined || partId === undefined
-          ? []
-          : projectSourceHarmonyEvents(parseSourceHarmonyEvents(source.rootXml, partId), scoreEnd),
-      corrections: document.corrections,
-    });
-    return createHarmonyRangeViewItems(projection, document.activeRevision.segments);
+    return projectStudioRanges(this.studioSources.get(libraryScoreId), document);
   }
 
   private async destroyOnce(): Promise<void> {

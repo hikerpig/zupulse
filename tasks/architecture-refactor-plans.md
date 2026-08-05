@@ -30,24 +30,27 @@ seam / adapter / leverage / locality。
 
 ## 计划 A — 给 Studio 一个自己的 seam
 
-### A1 投影唯一化（纯移动，无行为变化）
+### A1 ✅ 投影唯一化（已完成 2026-08-05）
 
-- 把 `app/ViewerApplication.ts` `getStudioRanges`（:1012-1028）的组合逻辑提为纯模块
-  `features/harmony-studio/model/studio-ranges.ts` → `projectStudioRanges(source, document)`
-  （`effectiveHarmonyProjection` + `createHarmonyRangeViewItems`）。
-- 删除 `features/harmony-studio/model/studio-page-model.ts` `createStudioRanges`（:7-26，忽略 corrections 的第二套投影）。
-- feature 只消费 snapshot 里的 `studio.ranges`（document 存在时恒有值）。
-- 测试：新增 `studio-ranges.test.ts`，断言 corrections+source 覆盖 revision（旧 fallback 的错误 case）；
-  改 `harmony-range-workspace` 相关测试。
-- 出口：`pnpm check`；被修正的 range 以 `origin: "correction"` 呈现。
+- 新建 `features/harmony-studio/model/studio-ranges.ts` → `projectStudioRanges(source, document)`（纯函数，
+  组合 `effectiveHarmonyProjection` + `createHarmonyRangeViewItems`，`trackIndexFromId` 一并移入）；
+  `ViewerApplication.getStudioRanges` 变为一行委托，`studioSources` 字段用 `StudioHarmonySource` 类型。
+- 删除 `studio-page-model.ts` 的 `createStudioRanges` 第二套投影（忽略 corrections/source 的旧 fallback）；
+  `StudioPage` 改为 `studio?.ranges ?? []`。
+- 测试：新增 `studio-ranges.test.ts`（2 用例）断言 correction 覆盖 revision 时 `origin: "correction"`
+  且 chord 用修正值（旧 fallback 的错误 case）；无 correction/source 时回归 `origin: "analysis"`。
+- 出口达成：`pnpm check` 721 tests。
 
-### A2 selection 单点持有（杀掉页面 fallback）
+### A2 ✅ selection 单点持有（已完成 2026-08-05）
 
-- `app/pages/StudioPage.tsx` 删除 `fallbackSelectedKey` 与 `findSelectedStudioRange` 的 fallback 分支
-  （:31, :41-48）；selection 只来自 snapshot。
-- 修 `selectionNotice: "no-effective-range"` 不一致：score-click 落空时同步清掉高亮，notice 与 UI 行不再矛盾
-  （逻辑从 `ViewerApplication.ts:316-319` 移入 Studio 模块后一并处理）。
-- 出口：StudioPage 无平行 selection 状态。
+- `StudioPage.tsx` 删除 `fallbackSelectedKey` / `setFallbackSelectedKey`；`findSelectedStudioRange` 去掉 fallback
+  分支，selection 只来自 snapshot。
+- 修 `selectStudioMoment`（ViewerApplication）：score-click 落空时同步清掉 `selection`（原只设
+  `selectionNotice: "no-effective-range"`，与残留高亮矛盾）。
+- 测试：`StudioPage.test.tsx` 三处 snapshot 补 `ranges`（新契约「document 存在时 ranges 恒有值」）；
+  test 221 的 fake application 改有状态（`selectStudioRange` 更新 snapshot + notify 驱动重渲染，替代本地 fallback）；
+  test 296 改写为「落空后清高亮」（assert 无 `aria-pressed`）；test 348 补 ranges 让 loop 控件可用。
+- 出口达成：StudioPage 无平行 selection 状态；`StudioPage.test.tsx` 19 用例全绿。
 
 ### A3 提取 `StudioApplication`（大动作）
 

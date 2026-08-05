@@ -14,6 +14,18 @@ function render(element: ReactElement) {
   return testingRender(<AppStoreProvider>{element}</AppStoreProvider>);
 }
 
+function unresolvedRangeItem(range: {
+  start: { measureIndex: number; offsetTicks: number };
+  end: { measureIndex: number; offsetTicks: number };
+}) {
+  return {
+    key: `${range.start.measureIndex}:${range.start.offsetTicks}-${range.end.measureIndex}:${range.end.offsetTicks}`,
+    effective: { type: "unresolved", range, reason: "low-confidence", alternatives: [], origin: "analysis" },
+    origin: "analysis",
+    analysis: { status: "unresolved", range, reason: "low-confidence", alternatives: [] },
+  };
+}
+
 describe("StudioPage", () => {
   it("renders a persistent library score route without exposing a session id", () => {
     const snapshot = { currentLibraryScoreId: "score-1" };
@@ -219,8 +231,8 @@ describe("StudioPage", () => {
   });
 
   it("selects any analysis segment instead of pinning the inspector to the first segment", async () => {
-    const selectStudioRange = vi.fn();
-    const snapshot = {
+    const listeners = new Set<() => void>();
+    const snapshot: { studio?: Record<string, unknown> } = {
       studio: {
         libraryScoreId: "score-1",
         status: "ready",
@@ -246,11 +258,36 @@ describe("StudioPage", () => {
           corrections: [],
           annotationTarget: { trackId: "track-1", staffIndex: 0 },
         },
+        ranges: [
+          unresolvedRangeItem({
+            start: { measureIndex: 0, offsetTicks: 0 },
+            end: { measureIndex: 0, offsetTicks: 1 },
+          }),
+          unresolvedRangeItem({
+            start: { measureIndex: 1, offsetTicks: 0 },
+            end: { measureIndex: 1, offsetTicks: 1 },
+          }),
+        ],
       },
     };
+    const selectStudioRange = vi.fn(
+      (
+        _id: string,
+        range: {
+          start: { measureIndex: number; offsetTicks: number };
+          end: { measureIndex: number; offsetTicks: number };
+        },
+      ) => {
+        snapshot.studio = { ...snapshot.studio, selection: { focus: range.start, range } };
+        for (const listener of listeners) listener();
+      },
+    );
     const application = {
       getSnapshot: () => snapshot,
-      subscribe: () => () => undefined,
+      subscribe: (listener: () => void) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
       hasHarmonyAnalysisStorage: () => true,
       openStudio: async () => undefined,
       undoStudio: () => undefined,
@@ -293,7 +330,7 @@ describe("StudioPage", () => {
     );
   });
 
-  it("explains an uncovered score position without changing the current range", () => {
+  it("clears the range highlight when a score position has no effective range", () => {
     const selectedRange = {
       start: { measureIndex: 0, offsetTicks: 0 },
       end: { measureIndex: 0, offsetTicks: 4 },
@@ -302,7 +339,6 @@ describe("StudioPage", () => {
       studio: {
         libraryScoreId: "score-1",
         status: "ready",
-        selection: { focus: selectedRange.start, range: selectedRange },
         selectionNotice: "no-effective-range",
         document: {
           activeRevision: {
@@ -319,6 +355,7 @@ describe("StudioPage", () => {
           corrections: [],
           annotationTarget: { trackId: "track-1", staffIndex: 0 },
         },
+        ranges: [unresolvedRangeItem(selectedRange)],
       },
     };
     const application = {
@@ -342,7 +379,7 @@ describe("StudioPage", () => {
     );
 
     expect(screen.getByRole("status", { name: "谱面选择说明" }).textContent).toContain("没有有效和弦区间");
-    expect(screen.getByRole("list", { name: "分析片段" }).querySelector('[aria-pressed="true"]')).toBeTruthy();
+    expect(screen.getByRole("list", { name: "分析片段" }).querySelector('[aria-pressed="true"]')).toBeNull();
   });
 
   it("keeps preview transport local to Studio", async () => {
@@ -374,6 +411,12 @@ describe("StudioPage", () => {
           corrections: [],
           annotationTarget: { trackId: "track-1", staffIndex: 0 },
         },
+        ranges: [
+          unresolvedRangeItem({
+            start: { measureIndex: 0, offsetTicks: 0 },
+            end: { measureIndex: 0, offsetTicks: 4 },
+          }),
+        ],
       },
     };
     const application = {

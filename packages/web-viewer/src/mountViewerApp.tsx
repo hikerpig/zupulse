@@ -27,7 +27,7 @@ export type ViewerAppDependencies = {
   openSession(file: ViewerFile, libraryScoreId?: string, domBindings?: ViewerDomBindings): Promise<ViewerSessionHandle>;
   openStudioRuntime?(file: ViewerFile): Promise<StudioScoreRuntime>;
   capabilities?: ViewerProductCapabilities;
-  library?: {
+  library: {
     repository: SheetLibraryRepository;
     gateway: ScoreFileGateway;
     adapters: readonly ScoreFormatAdapter[];

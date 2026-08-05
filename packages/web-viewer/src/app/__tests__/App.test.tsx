@@ -4,7 +4,12 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
 import { ViewerApplication } from "../ViewerApplication";
-import type { HarmonyAnalysisRepository, SheetLibraryRepository } from "@zupulse/web-core";
+import type {
+  HarmonyAnalysisRepository,
+  ScoreFormatAdapter,
+  ScoreImportSource,
+  SheetLibraryRepository,
+} from "@zupulse/web-core";
 import { createAppI18n } from "@zupulse/app-i18n";
 import type { LocaleHost } from "../../i18n/locale-controller";
 
@@ -20,12 +25,43 @@ beforeEach(() => {
   window.localStorage?.clear();
 });
 
+function libraryFixture(): {
+  repository: SheetLibraryRepository;
+  gateway: { selectForImport(): Promise<ScoreImportSource[]>; saveExport(): Promise<"saved" | "cancelled"> };
+  adapters: readonly ScoreFormatAdapter[];
+} {
+  const repository: SheetLibraryRepository = {
+    initialize: async () => undefined,
+    list: async () => [],
+    get: async () => undefined,
+    findByIdentity: async () => undefined,
+    add: async () => {
+      throw new Error("unused");
+    },
+    readScore: async () => {
+      throw new Error("unused");
+    },
+    updateMetadata: async () => {
+      throw new Error("unused");
+    },
+    setFavorite: async () => undefined,
+    markOpened: async () => undefined,
+    delete: async () => undefined,
+  };
+  return {
+    repository,
+    gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
+    adapters: [],
+  };
+}
+
 describe("App", () => {
   it("switches locale without rebuilding the application", async () => {
-    window.history.replaceState(null, "", "#/library");
+    window.history.replaceState(null, "", "#/");
     const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
+      { subscribe: () => () => undefined },
       async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() }),
+      libraryFixture(),
     );
     const localeHost: LocaleHost = {
       initialState: { preference: "zh-CN", effectiveLocale: "zh-CN" },
@@ -41,19 +77,20 @@ describe("App", () => {
     await user.click(screen.getByRole("menuitemradio", { name: "English" }));
 
     expect(screen.getByRole("navigation", { name: "Primary navigation" })).toBeTruthy();
-    expect(await screen.findByRole("heading", { name: "No score open" })).toBeTruthy();
-    expect(screen.getByRole("region", { name: "Playback controls" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Open score" })).toBeTruthy();
+    expect(
+      await screen.findByRole("heading", { name: "A practice workbench for reading and playing scores" }),
+    ).toBeTruthy();
     expect(localeHost.setPreference).toHaveBeenLastCalledWith("en-US");
     expect(document.documentElement.lang).toBe("en-US");
     await application.destroy();
   });
 
   it("keeps the previous locale when persistence fails", async () => {
-    const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
-      async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() }),
-    );
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, async () => ({
+      togglePlayback: vi.fn(),
+      pauseAndFlush: vi.fn(),
+      destroy: vi.fn(),
+    }));
     const localeHost: LocaleHost = {
       initialState: { preference: "zh-CN", effectiveLocale: "zh-CN" },
       setPreference: vi.fn(async () => {
@@ -75,8 +112,9 @@ describe("App", () => {
   it("renders a compact workbench shell instead of detached cards", async () => {
     window.history.replaceState(null, "", "#/library");
     const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
+      { subscribe: () => () => undefined },
       async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() }),
+      libraryFixture(),
     );
 
     render(<App application={application} />);
@@ -85,55 +123,41 @@ describe("App", () => {
     expect(screen.getByRole("banner")).toBeTruthy();
     expect(screen.getByRole("navigation", { name: "主要页面" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "逐拍首页" })).toBeTruthy();
-    expect(await screen.findByRole("region", { name: "乐谱工作区" })).toBeTruthy();
-    expect(screen.queryByText("Score Viewer")).toBeNull();
-    expect(screen.queryByText("用于乐谱阅读、播放和循环训练的练习工作区。")).toBeNull();
-    expect(screen.queryByText("等待选择文件")).toBeNull();
-    expect(screen.getByRole("button", { name: "打开乐谱" })).toBeTruthy();
-
-    await application.destroy();
-  });
-
-  it("renders an accessible idle viewer and opens through the application service", async () => {
-    window.history.replaceState(null, "", "#/library");
-    const openScore = vi.fn(async () => undefined);
-    const application = new ViewerApplication({ openScore, subscribe: () => () => undefined }, async () => ({
-      togglePlayback: vi.fn(),
-      pauseAndFlush: vi.fn(),
-      destroy: vi.fn(),
-    }));
-    const user = userEvent.setup();
-
-    render(<App application={application} />);
-    expect(screen.getByRole("main")).toBeTruthy();
-    expect(await screen.findByRole("region", { name: "乐谱工作区" })).toBeTruthy();
-    expect(screen.queryByRole("complementary", { name: "练习设置" })).toBeNull();
-
-    await user.click(await screen.findByRole("button", { name: "练习设置" }));
-    expect(screen.getByRole("complementary", { name: "练习设置" })).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "关闭练习设置" }));
-    expect(screen.queryByRole("complementary", { name: "练习设置" })).toBeNull();
-
-    const switchToLight = screen.getByRole("button", { name: "切换至浅色主题" });
-    expect(switchToLight.textContent).toContain("深色");
-    await user.click(switchToLight);
-    expect(document.documentElement.dataset.theme).toBe("light");
-    expect(window.localStorage.getItem("zupulse-theme")).toBe("light");
-    expect(screen.getByRole("button", { name: "切换至深色主题" }).textContent).toContain("浅色");
-    await user.click(screen.getByRole("button", { name: "打开乐谱" }));
-    expect(openScore).toHaveBeenCalledOnce();
-
+    expect(await screen.findByRole("heading", { name: "曲谱库" })).toBeTruthy();
     await application.destroy();
   });
 
   it("opens a structured practice control bay instead of a loose settings drawer", async () => {
-    window.history.replaceState(null, "", "#/library");
+    const id = "00000000-0000-4000-8000-000000000001";
+    window.history.replaceState(null, "", `#/viewer/${id}`);
+    const repository: SheetLibraryRepository = {
+      initialize: async () => undefined,
+      list: async () => [],
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async () => ({ fileName: "score-a.gp", bytes: new Uint8Array([1]) }),
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+    };
     const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
-      async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() }),
+      { subscribe: () => () => undefined },
+      async () => ({
+        togglePlayback: async () => undefined,
+        pauseAndFlush: async () => undefined,
+        destroy: async () => undefined,
+      }),
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
     );
     const user = userEvent.setup();
     render(<App application={application} />);
+
     await user.click(await screen.findByRole("button", { name: "练习设置" }));
     const practice = screen.getByRole("complementary", { name: "练习设置" });
     expect(within(practice).getByRole("button", { name: "设置循环区间" })).toBeTruthy();
@@ -163,7 +187,7 @@ describe("App", () => {
       delete: async () => undefined,
     };
     const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
+      { subscribe: () => () => undefined },
       async () => ({
         togglePlayback: async () => undefined,
         pauseAndFlush: async () => undefined,
@@ -179,14 +203,11 @@ describe("App", () => {
   });
 
   it("renders the home product introduction at the root route", async () => {
-    const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
-      async () => ({
-        togglePlayback: async () => undefined,
-        pauseAndFlush: async () => undefined,
-        destroy: async () => undefined,
-      }),
-    );
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, async () => ({
+      togglePlayback: async () => undefined,
+      pauseAndFlush: async () => undefined,
+      destroy: async () => undefined,
+    }));
     render(<App application={application} />);
 
     expect(await screen.findByRole("heading", { name: "识谱与弹奏练习工作台" })).toBeTruthy();
@@ -200,14 +221,11 @@ describe("App", () => {
   });
 
   it("omits the harmony analysis section when the capability is unavailable", async () => {
-    const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
-      async () => ({
-        togglePlayback: async () => undefined,
-        pauseAndFlush: async () => undefined,
-        destroy: async () => undefined,
-      }),
-    );
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, async () => ({
+      togglePlayback: async () => undefined,
+      pauseAndFlush: async () => undefined,
+      destroy: async () => undefined,
+    }));
     render(<App application={application} capabilities={{ harmonyAnalysis: false }} />);
 
     expect(await screen.findByRole("heading", { name: "识谱与弹奏练习工作台" })).toBeTruthy();
@@ -261,11 +279,11 @@ describe("App", () => {
       markOpened: async () => undefined,
       delete: async () => undefined,
     };
-    const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
-      async () => pendingSession,
-      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
-    );
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, async () => pendingSession, {
+      repository,
+      gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
+      adapters: [],
+    });
     const user = userEvent.setup();
     render(<App application={application} />);
 
@@ -305,7 +323,7 @@ describe("App", () => {
       delete: async () => undefined,
     };
     const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
+      { subscribe: () => () => undefined },
       async () => ({
         togglePlayback: async () => undefined,
         pauseAndFlush: async () => undefined,
@@ -359,11 +377,11 @@ describe("App", () => {
         throw new Error("unused");
       },
     };
-    const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
-      async () => pendingSession,
-      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
-    );
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, async () => pendingSession, {
+      repository,
+      gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
+      adapters: [],
+    });
 
     render(<App application={application} />);
     await screen.findByRole("status", { name: "正在加载文件" });
@@ -419,7 +437,7 @@ describe("App", () => {
       },
     };
     const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
+      { subscribe: () => () => undefined },
       async () => {
         throw new Error("unused");
       },
@@ -460,7 +478,7 @@ describe("App", () => {
       delete: async () => undefined,
     };
     const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
+      { subscribe: () => () => undefined },
       async () => ({
         togglePlayback: async () => undefined,
         pauseAndFlush: async () => undefined,
@@ -513,11 +531,11 @@ describe("App", () => {
       pauseAndFlush: async () => undefined,
       destroy: async () => undefined,
     }));
-    const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
-      openSession,
-      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
-    );
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, openSession, {
+      repository,
+      gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
+      adapters: [],
+    });
     const user = userEvent.setup();
     render(<App application={application} />);
 
@@ -568,11 +586,11 @@ describe("App", () => {
       pauseAndFlush: async () => undefined,
       destroy,
     }));
-    const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
-      openSession,
-      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
-    );
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, openSession, {
+      repository,
+      gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
+      adapters: [],
+    });
     const user = userEvent.setup();
     render(<App application={application} />);
 

@@ -51,7 +51,7 @@ packages/web-viewer/src/
     tokens.css
     base.css
     components.css
-  host.ts                   # 保留现有宿主契约
+  host.ts                   # 宿主契约：subscribe（commands/lifecycle）；library 必选
   index.ts                  # 公共挂载 API
 ```
 
@@ -279,6 +279,10 @@ Data Router 只负责 route 匹配、lazy module、错误边界和导航，不�
 
 应用 service 从现有 `ViewerApplication` / `mountViewerApp()` 演进并保持以下语义：并发打开串行、新 Workspace Session 前销毁旧 Session、destroy 后拒绝新操作、清理已接受的打开操作、聚合打开与清理失败，以及转发宿主播放/挂起/关闭命令。它以 workspace kind 区分 Viewer 与 Studio，不渲染 UI、不依赖 React/DOM，也不进入 Zustand；React 只订阅其 snapshot 并发送 application command。
 
+`mountViewerApp` 必须提供宿主 `library`（Sheet Library Repository + Score File Gateway + adapters）；不存在无
+library 的直开模式（ADR 0067）。应用命令 `openScore()` 的语义是「导入并打开」，外部打开一律经 Library Import
+（ADR 0047），不再经 `ViewerHost.openScore`。
+
 已有活动谱时，系统文件选择器打开期间保留旧 Session；用户取消不改变 route 或 Session。选定新文件后先对旧 Session 执行 pause/flush/destroy，再导航到新 Library Score 并进入 loading。初始化失败时保留新 Session 的可恢复错误态，不回滚已销毁的旧 Session，也不同时持有两个 alphaTab/audio runtime。
 
 路由约束：
@@ -296,7 +300,7 @@ Repository 和 Session 所有；两者不通过 Zustand 共享可变状态。Stu
 
 ## Provider 顺序与入口
 
-`mountViewerApp(element, dependencies)` 是 Browser Demo 与 Electron 的唯一入口。两个宿主的 HTML 模板都提供 `<div id="root"></div>`；入口接收明确的 `HTMLElement`，不再接收 `Document`，也不保留旧签名兼容层。它创建 Zustand store、`ViewerApplication`、Router 与 React root，并返回保留 `openScore`、`togglePlayback`、`pauseAndFlush`、`destroy` 的 handle，供 Electron 生命周期接入。`destroy()` 先销毁 application/session，再卸载 React root。
+`mountViewerApp(element, dependencies)` 是 Browser Demo 与 Electron 的唯一入口。两个宿主的 HTML 模板都提供 `<div id="root"></div>`；入口接收明确的 `HTMLElement`，不再接收 `Document`，也不保留旧签名兼容层。`dependencies` 必须包含 `host` 与 `library`（ADR 0067）。它创建 Zustand store、`ViewerApplication`、Router 与 React root，并返回保留 `openScore`（导入并打开）、`togglePlayback`、`pauseAndFlush`、`destroy` 的 handle，供 Electron 生命周期接入。`destroy()` 先销毁 application/session，再卸载 React root。
 
 Provider 从稳定到易变排列：
 
@@ -339,7 +343,7 @@ Electron 在 React 外完成 preload Bridge 检查、`app.handshake` 和版本/h
 - `pnpm check`、Browser Demo build、Desktop build 全部通过。
 - 运行 `pnpm desktop:test:e2e`；Browser Demo 人工打开代表性 GP/MusicXML 文件，Electron 人工覆盖打开、播放/暂停、停止、速度、Loop 和轨道控制。
 - 保留 Vitest 与 jsdom，React 组件测试新增 `@testing-library/react` 和 `@testing-library/user-event`；通过 role、accessible name、键盘和指针行为查询，不以内部 class、组件名或大规模 snapshot 为主。
-- 同一组 Viewer component tests 使用 fake `ViewerHost`，不依赖 Electron；领域、controller 和 Bridge 单元测试继续使用现有测试方式。
+- 同一组 Viewer component tests 使用 fake `ViewerHost`（只实现 `subscribe`）与 fake `library`，不依赖 Electron；领域、controller 和 Bridge 单元测试继续使用现有测试方式。
 - Base UI Slider 覆盖方向键、Home/End、disabled、accessible label 和 command dispatch；指针几何交互由真实浏览器/E2E 验证。
 - Electron E2E 继续覆盖真实 Bridge、协议、应用生命周期和打包后 smoke test，不在 jsdom 重复模拟 Electron。
 - 路由至少覆盖首页、有效 session、失效 session和错误边界。

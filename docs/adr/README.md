@@ -27,6 +27,7 @@
 - `0065`：共享 Viewer UI 使用受约束的 Tailwind utility layer；运行时 semantic token 与 Base UI
   所有权保持不变。
 - `0066`：延期 Desktop dropped-file capability，保持 Preload 与一次性 token trust boundary。
+- `0067`：宿主必须提供 Sheet Library；`ViewerHost` 移除 `openScore`，外部打开一律经 Library Import。
 
 ## Proposed
 

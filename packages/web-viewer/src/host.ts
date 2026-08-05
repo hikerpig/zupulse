@@ -18,7 +18,6 @@ export class ViewerOpenFailure extends Error {
 export type ViewerHostEvent =
   { type: "open-score" } | { type: "toggle-playback" } | { type: "suspend" } | { type: "prepare-close" };
 export interface ViewerHost {
-  openScore(): Promise<ViewerFile | undefined>;
   subscribe(listener: (event: ViewerHostEvent) => void): () => void;
   reportDiagnostic?(error: unknown, operation: string): void;
 }

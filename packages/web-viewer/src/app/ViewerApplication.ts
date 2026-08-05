@@ -111,7 +111,6 @@ export class ViewerApplication implements ViewerAppHandle {
   private studioTransportDetach: (() => void) | undefined;
   private studioAudioDetach: (() => void) | undefined;
   private chain = Promise.resolve();
-  private queuedError: unknown;
   private destroyPromise?: Promise<void>;
   private studioIntent = 0;
   private studioOpening: { id: string; promise: Promise<void> } | undefined;
@@ -133,7 +132,7 @@ export class ViewerApplication implements ViewerAppHandle {
       libraryScoreId?: string,
       domBindings?: ViewerDomBindings,
     ) => Promise<ViewerSessionHandle>,
-    private readonly library?: {
+    private readonly library: {
       repository: SheetLibraryRepository;
       gateway: ScoreFileGateway;
       adapters: readonly ScoreFormatAdapter[];
@@ -178,16 +177,11 @@ export class ViewerApplication implements ViewerAppHandle {
   }
 
   openScore(): Promise<void> {
-    return this.library ? this.importScores(false).then(() => undefined) : this.scheduleOpen(false);
+    return this.importScores(false).then(() => undefined);
   }
 
   requestOpenScore(): void {
-    if (this.library) void this.importScores(false).catch(() => undefined);
-    else this.enqueueOpen();
-  }
-
-  hasLibrary(): boolean {
-    return this.library !== undefined;
+    void this.importScores(false).catch(() => undefined);
   }
 
   hasHarmonyAnalysisStorage(): boolean {
@@ -622,7 +616,6 @@ export class ViewerApplication implements ViewerAppHandle {
   }
 
   async importScores(multiple: boolean): Promise<void> {
-    if (!this.library) return this.scheduleOpen(false);
     let sources: readonly ScoreImportSource[];
     try {
       sources = await this.selectImportSources(multiple);
@@ -634,7 +627,6 @@ export class ViewerApplication implements ViewerAppHandle {
   }
 
   async selectImportSources(multiple = true): Promise<readonly ScoreImportSource[]> {
-    if (!this.library) return [];
     try {
       return await this.library.gateway.selectForImport({ multiple });
     } catch (error) {
@@ -873,36 +865,6 @@ export class ViewerApplication implements ViewerAppHandle {
     return this.destroyPromise;
   }
 
-  private async openOnce(): Promise<void> {
-    const file = await this.host.openScore();
-    if (!file) return;
-    const previous = this.active;
-    this.active = undefined;
-    this.activeLibraryScoreId = undefined;
-    this.setSnapshot({});
-    await previous?.destroy();
-    this.active = await this.openSession(file);
-    this.setSnapshot({ currentSessionId: crypto.randomUUID() });
-  }
-
-  private scheduleOpen(recordErrorForDestroy: boolean): Promise<void> {
-    if (this.destroying) return Promise.reject(new Error("Viewer app is being destroyed"));
-    const operation = this.chain.then(() => this.openOnce());
-    this.chain = operation.then(
-      () => {
-        this.queuedError = undefined;
-      },
-      (error) => {
-        if (recordErrorForDestroy) this.queuedError = error;
-      },
-    );
-    return operation;
-  }
-
-  private enqueueOpen(): void {
-    void this.scheduleOpen(true).catch(() => undefined);
-  }
-
   private onHostEvent(event: ViewerHostEvent): void {
     if (event.type === "open-score") this.requestOpenScore();
     if (event.type === "toggle-playback") void this.togglePlayback().catch(() => undefined);
@@ -1041,7 +1003,6 @@ export class ViewerApplication implements ViewerAppHandle {
     for (const studioSession of this.studioSessions.values()) studioSession.dispose();
     this.studioSessions.clear();
     await this.chain;
-    const openError = this.queuedError;
     const session = this.active;
     const studioRuntime = this.studioRuntime;
     this.active = undefined;
@@ -1056,10 +1017,6 @@ export class ViewerApplication implements ViewerAppHandle {
     } catch (error) {
       cleanupError = error;
     }
-    if (openError !== undefined && cleanupError !== undefined) {
-      throw new AggregateError([openError, cleanupError], "Viewer open and cleanup both failed");
-    }
-    if (openError !== undefined) throw openError;
     if (cleanupError !== undefined) throw cleanupError;
   }
 }

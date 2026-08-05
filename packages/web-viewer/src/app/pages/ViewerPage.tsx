@@ -42,7 +42,7 @@ export function ViewerPage({
   }, [application, libraryScoreId]);
 
   useEffect(() => {
-    if (application.hasLibrary() && libraryScoreId && !application.hasSession(libraryScoreId))
+    if (libraryScoreId && !application.hasSession(libraryScoreId))
       void application.openLibraryScore(libraryScoreId).catch(() => undefined);
   }, [application, libraryScoreId, snapshot.currentLibraryScoreId]);
 
@@ -63,7 +63,6 @@ export function ViewerPage({
         </div>
         <div className={styles.contextActions}>
           {capabilities.harmonyAnalysis &&
-          application.hasLibrary() &&
           libraryScoreId &&
           application.hasSession(libraryScoreId) &&
           application.hasHarmonyAnalysisStorage() ? (
@@ -75,16 +74,6 @@ export function ViewerPage({
           <p ref={statusRef} className={statusMessage ? styles.statusChip : "sr-only"} role="status">
             {statusMessage}
           </p>
-          {!application.hasLibrary() ? (
-            <button
-              id="open-score"
-              className="primary-button"
-              type="button"
-              onClick={() => application.requestOpenScore()}
-            >
-              {t("page.open")}
-            </button>
-          ) : null}
         </div>
       </div>
       <PlaybackWorkspace session={session}>

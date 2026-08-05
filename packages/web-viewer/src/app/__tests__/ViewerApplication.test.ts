@@ -60,7 +60,6 @@ describe("ViewerApplication", () => {
     };
     const application = new ViewerApplication(
       {
-        openScore: async () => undefined,
         subscribe: () => () => undefined,
         reportDiagnostic,
       },
@@ -83,26 +82,44 @@ describe("ViewerApplication", () => {
     await application.destroy();
   });
 
-  it("keeps cancellation on the current session and replaces a selected file", async () => {
-    const destroy = vi.fn(async () => undefined);
-    const files = [
-      { fileName: "first.gp5", bytes: new Uint8Array([1]) },
-      undefined,
-      { fileName: "second.gp5", bytes: new Uint8Array([2]) },
-    ];
+  it("forwards toggle-playback host commands to the active session", async () => {
+    const id = "00000000-0000-4000-8000-000000000001";
+    let hostListener: ((event: { type: "toggle-playback" }) => void) | undefined;
+    const togglePlayback = vi.fn(async () => undefined);
+    const repository: SheetLibraryRepository = {
+      initialize: async () => undefined,
+      list: async () => [],
+      get: async () => undefined,
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async () => ({ fileName: "score-a.gp", bytes: new Uint8Array([1]) }),
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+    };
     const application = new ViewerApplication(
-      { openScore: async () => files.shift(), subscribe: () => () => undefined },
-      async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy }),
+      {
+        subscribe: (listener) => {
+          hostListener = listener as typeof hostListener;
+          return () => undefined;
+        },
+      },
+      async () => ({
+        togglePlayback,
+        pauseAndFlush: async () => undefined,
+        destroy: async () => undefined,
+      }),
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
     );
 
-    await application.openScore();
-    const firstSessionId = application.getSnapshot().currentSessionId;
-    await application.openScore();
-    expect(application.getSnapshot().currentSessionId).toBe(firstSessionId);
-
-    await application.openScore();
-    expect(application.getSnapshot().currentSessionId).not.toBe(firstSessionId);
-    expect(destroy).toHaveBeenCalledOnce();
+    await application.openLibraryScore(id);
+    hostListener?.({ type: "toggle-playback" });
+    expect(togglePlayback).toHaveBeenCalledOnce();
     await application.destroy();
   });
 
@@ -131,11 +148,11 @@ describe("ViewerApplication", () => {
       markOpened: async () => undefined,
       delete: async () => undefined,
     };
-    const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
-      openSession,
-      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
-    );
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, openSession, {
+      repository,
+      gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
+      adapters: [],
+    });
 
     await Promise.all([application.openLibraryScore(scoreId), application.openLibraryScore(scoreId)]);
 
@@ -169,11 +186,11 @@ describe("ViewerApplication", () => {
       markOpened: async () => undefined,
       delete: async () => undefined,
     };
-    const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
-      openSession,
-      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
-    );
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, openSession, {
+      repository,
+      gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" },
+      adapters: [],
+    });
 
     await application.openLibraryScore(scoreId);
     await application.releaseLibraryScore(scoreId);
@@ -206,7 +223,7 @@ describe("ViewerApplication", () => {
       delete: async () => undefined,
     } satisfies SheetLibraryRepository;
     const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
+      { subscribe: () => () => undefined },
       async () => {
         throw new Error("unused");
       },
@@ -243,7 +260,7 @@ describe("ViewerApplication", () => {
       delete: async () => undefined,
     } satisfies SheetLibraryRepository;
     const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
+      { subscribe: () => () => undefined },
       async () => {
         throw new Error("controller initialization failed");
       },
@@ -279,7 +296,7 @@ describe("ViewerApplication", () => {
       delete: async () => undefined,
     } satisfies SheetLibraryRepository;
     const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
+      { subscribe: () => () => undefined },
       async () => {
         throw new ViewerOpenFailure("render");
       },
@@ -340,7 +357,7 @@ describe("ViewerApplication", () => {
       delete: async () => undefined,
     };
     const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
+      { subscribe: () => () => undefined },
       async () => {
         throw new Error("unused");
       },
@@ -471,7 +488,7 @@ describe("ViewerApplication", () => {
     };
     let exported: { fileName: string; bytes: Uint8Array } | undefined;
     const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
+      { subscribe: () => () => undefined },
       async () => ({
         togglePlayback: async () => undefined,
         pauseAndFlush: async () => undefined,
@@ -652,7 +669,7 @@ describe("ViewerApplication", () => {
       }),
     };
     const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
+      { subscribe: () => () => undefined },
       openSession,
       {
         repository,
@@ -746,7 +763,7 @@ describe("ViewerApplication", () => {
       }),
     };
     const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
+      { subscribe: () => () => undefined },
       openSession,
       {
         repository,
@@ -812,7 +829,7 @@ describe("ViewerApplication", () => {
       },
     };
     const application = new ViewerApplication(
-      { openScore: async () => undefined, subscribe: () => () => undefined },
+      { subscribe: () => () => undefined },
       async () => ({
         togglePlayback: async () => undefined,
         pauseAndFlush: async () => undefined,

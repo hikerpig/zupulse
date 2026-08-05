@@ -85,23 +85,27 @@ seam / adapter / leverage / locality。
 
 ## 计划 B — 会话深化（先提深模块，后收窄接口）
 
-### B1 提类，表面不动
+### B1 ✅ 提类，表面不动（已完成 2026-08-05）
 
-- 新建 `src/viewer-session/viewer-session.ts`：`class ViewerSession` 接管 `viewerApp.tsx` `createDefaultOpenSession`
-  （:61-295）的全部 wiring：alphaTab api/settings、PlaybackController、ScoreNavigationCoordinator、zoom、gesture、
-  loop bounds、pianoKey source。仍实现 `ViewerSessionHandle` 或产出同形 handle，消费方零改动。
-- `createDefaultOpenSession` 变薄工厂：`new ViewerSession(deps, ownerDocument, persistence)` + `await session.open(...)`。
-- 把未测策略移为具名方法：`applyNavigationPolicy(state)`（`navigationLoopKey` diff :199-211、
-  `transportEnteredStopped`→`transportChanged` :212-214）、`routePlaybackCommand(cmd)`
-  （seek→formalSeek / stop→transportChanged / previewSeek→beginScrubPreview :242-251）。
-- 出口：`pnpm check`；`viewerApp.test.ts` 既有 `createDefaultOpenSession` 用例不改而通过。
-- 保持：`presentFile` 失败→`renderViewerState` error + `emptySession()`；双失败→`AggregateError`。
+- 新建 `viewer-session/viewer-session.ts`：`class ViewerSession` 接管 `createDefaultOpenSession` 的全部 wiring；
+  `viewerApp.tsx` 变为 re-export shim（消费方零改动：shells 经 index、`studio-score-runtime`、`viewerApp.test.ts`
+  全部照旧）。`createDefaultOpenSession` 变薄工厂：`new ViewerSession(...).open(...)`。
+- 为避免 `viewerApp ↔ viewer-session` 循环，把 `createViewerAlphaTabSettings` / `attachScoreZoomCommit` /
+  `captureScoreAnchor` 提为 `viewer-session/alpha-tab-runtime.ts`（A4 目标的预提取；studio 仍从 `viewerApp`
+  import，re-export 保持）。
+- 未测策略移为具名方法：`applyNavigationPolicy(state)`（loop-key diff + transportEnteredStopped）、
+  `routePlaybackCommand(cmd)`（seek→formalSeek / stop→transportChanged）、`routePreviewSeek(position)`
+  （previewSeek→beginScrubPreview）。
+- `DefaultOpenSessionDependencies` 增可选 `createNavigation?`（默认真 `ScoreNavigationCoordinator`），让 B2 可注入 fake。
+- 出口达成：`pnpm check` 719 tests；既有 `createDefaultOpenSession` 用例不改而通过。
 
-### B2 补测「闭包里的真策略」
+### B2 ✅ 补测「闭包里的真策略」（已完成 2026-08-05）
 
-- 新增 `viewer-session.test.ts`：fake api/controller/deps 驱动类；断言 loop-key diff 只在边界变化时触发
-  `setLoopMeasureRange`（非每个 tick）、seek/stop/previewSeek 路由、destroy 顺序。
-- 出口：导航策略由单测覆盖。候选 3 的 identity 问题在此只埋点，不修。
+- 新增 `viewer-session.test.ts`（5 用例）：fake api/controller/navigation 驱动类；断言 loop-key diff 只在边界
+  变化时触发 `setLoopMeasureRange`（非每个 tick）、transport 进入 stopped 才 `transportChanged`、seek/stop/
+  previewSeek 路由、playback.subscribe 立即回放当前快照、destroy 顺序（beat detach 先于 controller destroy，
+  adapter.destroy 不被调用）。
+- 出口达成：导航策略由单测覆盖。候选 3 的 identity 问题在此只埋点，不修。
 
 ### B3 收窄接口（后续阶段，显式）
 

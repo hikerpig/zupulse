@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { PdfOmrError } from "./errors";
 import { createEngineRegistry, type EngineRegistry } from "./engine-registry";
 import type { RunBenchmarkDependencies } from "./benchmark/run-benchmark";
@@ -234,14 +235,16 @@ export async function runPdfOmrCommand(
     }
     const protocolSha256 = flags.get("--protocol-sha");
     const { benchmarkCommand } = await import("./commands/benchmark");
+    const cwd = context.cwd ?? process.cwd();
     return benchmarkCommand(
-      manifest,
+      resolve(cwd, manifest),
       engineId,
-      output,
+      resolve(cwd, output),
       {
         mode,
         preprocess: flags.get("--preprocess") ?? "none",
         ...(protocolSha256 === undefined ? {} : { protocolSha256 }),
+        ...(context.signal === undefined ? {} : { signal: context.signal }),
       },
       context.benchmarkDependencies ?? {},
     );

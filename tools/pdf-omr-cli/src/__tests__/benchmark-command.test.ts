@@ -3,12 +3,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { musicXmlReadyDraft } from "./fixtures/musicxml-ready-draft";
+import { runPdfOmrCommand } from "../command";
 import { benchmarkCommand } from "../commands/benchmark";
 import { PdfOmrError } from "../errors";
 import { buildBenchmarkReport, readBenchmarkItemResults } from "../benchmark/report";
 import { runBenchmark, type BenchmarkItemResult } from "../benchmark/run-benchmark";
 import { sha256Bytes } from "../canonical-json";
 import { computeSymbolicMetrics } from "../benchmark/symbolic-metrics";
+import { generateMusicXml } from "../generate-musicxml";
 
 describe("benchmark orchestrator", () => {
   it("preserves successful items when another item crashes", async () => {
@@ -59,6 +61,127 @@ describe("benchmark orchestrator", () => {
     expect(report.gate).toMatchObject({ passed: false, decision: "STOP" });
   });
 
+  it("uses the frozen protocol thresholds when evaluating holdout", async () => {
+    const setup = await corpusSetup("holdout", 1, {
+      jointF1: 0,
+      validMeasureRate: 0,
+      parseRate: 0,
+      structuralAgreementRate: 0,
+      harmonyPrecisionDelta: -1,
+      falseConfidentChordRate: 1,
+      reproducibilityAgreementRate: 0,
+      cancelLatencyP95Ms: 100_000,
+    });
+
+    await expect(
+      benchmarkCommand(
+        setup.manifestPath,
+        "audiveris",
+        setup.outputDirectory,
+        {
+          mode: "holdout",
+          protocolSha256: setup.protocolSha256,
+          preprocess: "none",
+        },
+        { runItem: async (item) => itemResult(item.id, item.category, false) },
+      ),
+    ).resolves.toMatchObject({ command: "benchmark", gateEvaluated: true, gatePassed: true });
+  });
+
+  it("resolves benchmark paths against the command context cwd", async () => {
+    const setup = await corpusSetup("development", 1);
+
+    await expect(
+      runPdfOmrCommand(
+        ["benchmark", "--manifest", "manifest.json", "--engine", "audiveris", "--output", "relative-result"],
+        {
+          cwd: setup.directory,
+          benchmarkDependencies: { runItem: async (item) => itemResult(item.id, item.category, true) },
+        },
+      ),
+    ).resolves.toMatchObject({ command: "benchmark", status: "succeeded" });
+    const report = JSON.parse(await readFile(join(setup.directory, "relative-result", "report.json"), "utf8")) as {
+      metadata: { mode: string };
+    };
+    expect(report.metadata.mode).toBe("development");
+  });
+
+  it("passes the benchmark signal to environment inspection and recognition", async () => {
+    const setup = await corpusSetup("development", 1);
+    const controller = new AbortController();
+    const receivedSignals: Array<AbortSignal | undefined> = [];
+    const draft = musicXmlReadyDraft();
+
+    await runBenchmark(
+      {
+        manifestPath: setup.manifestPath,
+        engineId: "audiveris",
+        preprocess: "none",
+        outputDirectory: setup.outputDirectory,
+        mode: "development",
+        signal: controller.signal,
+      },
+      {
+        engineRegistry: {
+          get: () => ({
+            inspectEnvironment: async (signal) => {
+              receivedSignals.push(signal);
+              return {
+                id: "audiveris",
+                version: "test",
+                executable: "fake",
+                commandTemplate: [],
+                license: { id: "MIT", source: "https://example.test/license" },
+              };
+            },
+            recognize: async (request) => {
+              receivedSignals.push(request.signal);
+              return {
+                normalizationBytes: new Uint8Array(),
+                nativeArtifacts: [],
+                diagnostics: [],
+                durationMs: 1,
+              };
+            },
+            normalize: () => draft,
+          }),
+        },
+      },
+    );
+
+    expect(receivedSignals).toEqual([controller.signal, controller.signal, controller.signal]);
+  });
+
+  it("stops benchmark output after the signal is aborted", async () => {
+    const setup = await corpusSetup("development", 2);
+    const controller = new AbortController();
+    let calls = 0;
+
+    await expect(
+      runBenchmark(
+        {
+          manifestPath: setup.manifestPath,
+          engineId: "audiveris",
+          preprocess: "none",
+          outputDirectory: setup.outputDirectory,
+          mode: "development",
+          signal: controller.signal,
+        },
+        {
+          runItem: async (item) => {
+            calls += 1;
+            controller.abort();
+            return itemResult(item.id, item.category, true);
+          },
+        },
+      ),
+    ).rejects.toMatchObject({ code: "INTERRUPTED" });
+    expect(calls).toBe(1);
+    await expect(readFile(join(setup.outputDirectory, "report.json"), "utf8")).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+  });
+
   it("rebuilds aggregate output from item artifacts with the same canonical hash", async () => {
     const setup = await corpusSetup("development", 2);
     const run = await runBenchmark(
@@ -81,10 +204,23 @@ describe("benchmark orchestrator", () => {
   });
 });
 
-async function corpusSetup(split: "development" | "holdout", count: number) {
+async function corpusSetup(
+  split: "development" | "holdout",
+  count: number,
+  gates = {
+    jointF1: 0.9,
+    validMeasureRate: 0.95,
+    parseRate: 0.95,
+    structuralAgreementRate: 0.9,
+    harmonyPrecisionDelta: -0.05,
+    falseConfidentChordRate: 0.03,
+    reproducibilityAgreementRate: 1,
+    cancelLatencyP95Ms: 2000,
+  },
+) {
   const directory = await mkdtemp(join(tmpdir(), "pdf-omr-benchmark-"));
   const inputBytes = new TextEncoder().encode("pdf");
-  const groundTruthBytes = new TextEncoder().encode("musicxml");
+  const groundTruthBytes = generateMusicXml(musicXmlReadyDraft(), { container: "mxl" });
   await writeFile(join(directory, "input.pdf"), inputBytes);
   await writeFile(join(directory, "truth.mxl"), groundTruthBytes);
   const manifest = {
@@ -114,20 +250,12 @@ async function corpusSetup(split: "development" | "holdout", count: number) {
       benchmarkCommit: "9bbff5b",
       engines: [{ id: "audiveris", version: "5.10.2", parameters: {} }],
       preprocessVariants: ["none"],
-      gates: {
-        jointF1: 0.9,
-        validMeasureRate: 0.95,
-        parseRate: 0.95,
-        structuralAgreementRate: 0.9,
-        harmonyPrecisionDelta: -0.05,
-        falseConfidentChordRate: 0.03,
-        reproducibilityAgreementRate: 1,
-        cancelLatencyP95Ms: 2000,
-      },
+      gates,
     }),
   );
   await writeFile(join(directory, "protocol.json"), protocolBytes);
   return {
+    directory,
     manifestPath,
     outputDirectory: join(directory, "result"),
     protocolSha256: sha256Bytes(protocolBytes),

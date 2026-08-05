@@ -4,6 +4,7 @@ import type { HarmonyImpactMetrics } from "./harmony-impact-metrics";
 import { aggregateRuntimeMetrics, type RuntimeMetrics, type RuntimeObservation } from "./runtime-metrics";
 import type { ReproducibilityMetrics } from "./reproducibility-metrics";
 import { aggregateSymbolicMetrics, type SymbolicMetrics } from "./symbolic-metrics";
+import type { FrozenProtocol } from "./verify-protocol";
 
 export type BenchmarkItemResult = {
   schemaVersion: "1.0.0";
@@ -36,6 +37,8 @@ export type BenchmarkMetadata = {
   protocolSha256?: string;
 };
 
+export type BenchmarkGateThresholds = FrozenProtocol["gates"];
+
 type AggregateMetrics = {
   symbolic: SymbolicMetrics;
   harmony: HarmonyImpactMetrics;
@@ -63,6 +66,7 @@ export type BenchmarkReport = {
 export function buildBenchmarkReport(
   metadata: BenchmarkMetadata,
   records: readonly BenchmarkItemRecord[],
+  gateThresholds?: BenchmarkGateThresholds,
 ): BenchmarkReport {
   const successes = records.filter((record): record is BenchmarkItemResult => record.status === "succeeded");
   const categories = Object.fromEntries(
@@ -84,7 +88,10 @@ export function buildBenchmarkReport(
     ),
     categories,
     ...(overall === undefined ? {} : { overall }),
-    gate: metadata.mode === "holdout" ? evaluateGate(overall) : { evaluated: false, decision: "NOT_EVALUATED" },
+    gate:
+      metadata.mode === "holdout"
+        ? evaluateGate(overall, requireGateThresholds(gateThresholds))
+        : { evaluated: false, decision: "NOT_EVALUATED" },
   };
 }
 
@@ -172,7 +179,10 @@ function aggregateReproducibility(items: readonly ReproducibilityMetrics[]): Rep
   };
 }
 
-function evaluateGate(overall: AggregateMetrics | undefined): Extract<BenchmarkReport["gate"], { evaluated: true }> {
+function evaluateGate(
+  overall: AggregateMetrics | undefined,
+  thresholds: BenchmarkGateThresholds,
+): Extract<BenchmarkReport["gate"], { evaluated: true }> {
   const values = {
     noteJointF1: overall?.symbolic.joint.f1,
     validMeasureRate: overall?.symbolic.validMeasure.rate,
@@ -185,14 +195,29 @@ function evaluateGate(overall: AggregateMetrics | undefined): Extract<BenchmarkR
       overall?.runtime.cancelLatencyMs === undefined ? undefined : overall.runtime.cancelLatencyMs.p95 / 1_000,
   };
   const checks = {
-    noteJointF1: check(values.noteJointF1, (value) => value >= 0.9),
-    validMeasureRate: check(values.validMeasureRate, (value) => value >= 0.95),
-    generatedMxlParseRate: check(values.generatedMxlParseRate, (value) => value >= 0.95),
-    roundTripStructuralAgreementRate: check(values.roundTripStructuralAgreementRate, (value) => value >= 0.9),
-    harmonyResolvedPrecisionDelta: check(values.harmonyResolvedPrecisionDelta, (value) => value >= -0.05),
-    falseConfidentChordRate: check(values.falseConfidentChordRate, (value) => value <= 0.03),
-    repeatedRunDraftHashAgreement: check(values.repeatedRunDraftHashAgreement, (value) => value === 1),
-    cancelLatencyP95Seconds: check(values.cancelLatencyP95Seconds, (value) => value <= 2),
+    noteJointF1: check(values.noteJointF1, (value) => value >= thresholds.jointF1),
+    validMeasureRate: check(values.validMeasureRate, (value) => value >= thresholds.validMeasureRate),
+    generatedMxlParseRate: check(values.generatedMxlParseRate, (value) => value >= thresholds.parseRate),
+    roundTripStructuralAgreementRate: check(
+      values.roundTripStructuralAgreementRate,
+      (value) => value >= thresholds.structuralAgreementRate,
+    ),
+    harmonyResolvedPrecisionDelta: check(
+      values.harmonyResolvedPrecisionDelta,
+      (value) => value >= thresholds.harmonyPrecisionDelta,
+    ),
+    falseConfidentChordRate: check(
+      values.falseConfidentChordRate,
+      (value) => value <= thresholds.falseConfidentChordRate,
+    ),
+    repeatedRunDraftHashAgreement: check(
+      values.repeatedRunDraftHashAgreement,
+      (value) => value >= thresholds.reproducibilityAgreementRate,
+    ),
+    cancelLatencyP95Seconds: check(
+      values.cancelLatencyP95Seconds,
+      (value) => value <= thresholds.cancelLatencyP95Ms / 1_000,
+    ),
   };
   const failed = Object.values(checks).filter((item) => !item.passed).length;
   return {
@@ -201,6 +226,11 @@ function evaluateGate(overall: AggregateMetrics | undefined): Extract<BenchmarkR
     decision: failed === 0 ? "CONTINUE_TO_APP_DISCOVERY" : failed === 1 ? "INVESTIGATE" : "STOP",
     checks,
   };
+}
+
+function requireGateThresholds(thresholds: BenchmarkGateThresholds | undefined): BenchmarkGateThresholds {
+  if (thresholds === undefined) throw new Error("holdout-gate-thresholds-required");
+  return thresholds;
 }
 
 function check(value: number | undefined, predicate: (value: number) => boolean): { value?: number; passed: boolean } {

@@ -10,6 +10,7 @@ export async function benchmarkCommand(
     mode: "development" | "holdout";
     preprocess: string;
     protocolSha256?: string;
+    signal?: AbortSignal;
   },
   dependencies: RunBenchmarkDependencies = {},
 ): Promise<PdfOmrBenchmarkReport> {
@@ -21,6 +22,7 @@ export async function benchmarkCommand(
       mode: options.mode,
       preprocess: options.preprocess,
       ...(options.protocolSha256 === undefined ? {} : { protocolSha256: options.protocolSha256 }),
+      ...(options.signal === undefined ? {} : { signal: options.signal }),
     },
     dependencies,
   );

@@ -19,6 +19,7 @@ import {
   type BenchmarkItemFailure,
   type BenchmarkItemRecord,
   type BenchmarkItemResult,
+  type BenchmarkGateThresholds,
   type BenchmarkMetadata,
   type BenchmarkReport,
 } from "./report";
@@ -34,6 +35,7 @@ export type RunBenchmarkRequest = {
   outputDirectory: string;
   mode: "development" | "holdout";
   protocolSha256?: string;
+  signal?: AbortSignal;
 };
 
 export type RunBenchmarkDependencies = {
@@ -46,6 +48,7 @@ export type RunBenchmarkDependencies = {
       engineId: string;
       preprocess: string;
       engineRegistry: EngineRegistry;
+      signal?: AbortSignal;
     },
   ) => Promise<BenchmarkItemResult>;
 };
@@ -54,6 +57,7 @@ export async function runBenchmark(
   request: RunBenchmarkRequest,
   dependencies: RunBenchmarkDependencies = {},
 ): Promise<{ report: BenchmarkReport; reportSha256: string }> {
+  throwIfBenchmarkAborted(request.signal);
   const manifestPath = resolve(request.manifestPath);
   const manifestBytes = await readFile(manifestPath).catch((error: unknown) => {
     throw new PdfOmrError("INVALID_INPUT", "benchmark manifest cannot be read", { cause: error });
@@ -66,6 +70,7 @@ export async function runBenchmark(
   }
   const manifest = verifyCorpusManifest(manifestInput);
   const manifestSha256 = sha256Bytes(manifestBytes);
+  let gateThresholds: BenchmarkGateThresholds | undefined;
   if (request.mode === "holdout") {
     if (request.protocolSha256 === undefined) {
       throw new PdfOmrError("INVALID_INPUT", "holdout benchmark requires a frozen protocol hash", {
@@ -78,12 +83,13 @@ export async function runBenchmark(
         cause: error,
       });
     });
-    verifyFrozenProtocol(protocolBytes, {
+    const protocol = verifyFrozenProtocol(protocolBytes, {
       protocolSha256: request.protocolSha256,
       manifestSha256,
       engineId: request.engineId,
       preprocess: request.preprocess,
     });
+    gateThresholds = protocol.gates;
   }
   const view = createCorpusView(
     manifest,
@@ -98,6 +104,7 @@ export async function runBenchmark(
   );
   const corpusRoot = dirname(manifestPath);
   await verifyCorpusFiles(view.items, corpusRoot);
+  throwIfBenchmarkAborted(request.signal);
   try {
     await mkdir(request.outputDirectory);
   } catch (error) {
@@ -109,6 +116,7 @@ export async function runBenchmark(
   const runItem = dependencies.runItem ?? runBenchmarkItem;
   const records: BenchmarkItemRecord[] = [];
   for (const item of view.items) {
+    throwIfBenchmarkAborted(request.signal);
     const itemOutputDirectory = join(request.outputDirectory, "items", item.id);
     await mkdir(itemOutputDirectory, { recursive: true });
     try {
@@ -118,7 +126,9 @@ export async function runBenchmark(
         engineId: request.engineId,
         preprocess: request.preprocess,
         engineRegistry,
+        ...(request.signal === undefined ? {} : { signal: request.signal }),
       });
+      throwIfBenchmarkAborted(request.signal);
       records.push(result);
       await writeCanonicalNew("result.json", result, itemOutputDirectory);
     } catch (error) {
@@ -126,6 +136,10 @@ export async function runBenchmark(
         error instanceof PdfOmrError
           ? error
           : new PdfOmrError("ENGINE_EXECUTION_FAILED", "benchmark item failed", { cause: error });
+      if (request.signal?.aborted === true) {
+        throw new PdfOmrError("INTERRUPTED", "benchmark interrupted", { cause: error });
+      }
+      if (canonical.code === "INTERRUPTED") throw canonical;
       const failure: BenchmarkItemFailure = {
         schemaVersion: "1.0.0",
         itemId: item.id,
@@ -146,7 +160,8 @@ export async function runBenchmark(
     preprocess: request.preprocess,
     ...(request.protocolSha256 === undefined ? {} : { protocolSha256: request.protocolSha256 }),
   };
-  const report = buildBenchmarkReport(metadata, records);
+  throwIfBenchmarkAborted(request.signal);
+  const report = buildBenchmarkReport(metadata, records, gateThresholds);
   const reportSha256 = await writeCanonicalNew("report.json", report, request.outputDirectory);
   return { report, reportSha256 };
 }
@@ -159,6 +174,7 @@ async function runBenchmarkItem(
     engineId: string;
     preprocess: string;
     engineRegistry: EngineRegistry;
+    signal?: AbortSignal;
   },
 ): Promise<BenchmarkItemResult> {
   if (context.preprocess !== "none") {
@@ -168,7 +184,7 @@ async function runBenchmarkItem(
   }
   const started = performance.now();
   const adapter = context.engineRegistry.get(context.engineId);
-  const environment = await adapter.inspectEnvironment();
+  const environment = await adapter.inspectEnvironment(context.signal);
   const inputPath = resolve(context.corpusRoot, item.input.path);
   const expectedBytes = await readFile(resolve(context.corpusRoot, item.groundTruth.path));
   const expected = normalizeAudiverisMusicXml(expectedBytes);
@@ -176,7 +192,11 @@ async function runBenchmarkItem(
   for (let repetition = 0; repetition < 2; repetition += 1) {
     const workDirectory = await mkdtemp(join(tmpdir(), "pdf-omr-benchmark-engine-"));
     try {
-      const raw = await adapter.recognize({ inputPath, outputDirectory: workDirectory });
+      const raw = await adapter.recognize({
+        inputPath,
+        outputDirectory: workDirectory,
+        ...(context.signal === undefined ? {} : { signal: context.signal }),
+      });
       const normalized = adapter.normalize(raw);
       const draft = omrScoreDraftSchema.parse({
         ...normalized,
@@ -243,6 +263,10 @@ async function runBenchmarkItem(
     },
     reproducibility: calculateReproducibilityMetrics(hashes),
   };
+}
+
+function throwIfBenchmarkAborted(signal: AbortSignal | undefined): void {
+  if (signal?.aborted === true) throw new PdfOmrError("INTERRUPTED", "benchmark interrupted");
 }
 
 async function verifyCorpusFiles(items: readonly CorpusItem[], corpusRoot: string): Promise<void> {

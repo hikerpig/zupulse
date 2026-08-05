@@ -1,1 +1,3 @@
-<?xml version="1.0"?><score-timewise version="4.0"><part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list><measure number="1"><part id="P1"><note><rest/><duration>4</duration></note></part></measure></score-timewise>
+version https://git-lfs.github.com/spec/v1
+oid sha256:d5625ea99b3ba469049d9fa2ed368f514a12869545b24f7b2a6e82c355eac03c
+size 245

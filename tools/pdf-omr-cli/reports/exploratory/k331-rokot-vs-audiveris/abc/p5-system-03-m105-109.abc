@@ -1,0 +1,17 @@
+User:
+Transcribe this staff to rokot-ABC.
+
+Assistant:
+%%rokot-abc 0.1
+X:1
+M:2/4
+L:1/8
+K:A
+V:1 clef=treble
+V:1b
+V:2 clef=bass
+V:2b
+[V:1] (d'/2 c'/2) !.!b/2 !.!c'/2 (d'/2 c'/2) !.!b/2 !.!c'/2 | [fad']4 | !appoggiatura!{f}[eac']4 | !appoggiatura!{c}[egb] !appoggiatura!{c}[egb] !appoggiatura!{c}[egb] | !appoggiatura!{a}[ea]/2 !p!c'3/2 c'/2 |
+[V:1b] z4 | z4 | z4 | z4 | z4 |
+[V:2] (A,,/2 C,/2 E,) A, A, A, | (B,,/2 F,,/2 A,) D, D, D, | (A,,/2 C,/2 E,) A, A, A, | (E,,/2 G,,/2 B,) E, E, E, | [K:clef=treble] !p!A,/2 E/2 C/2 E/2 A,/2 E/2 C/2 E/2 |
+[V:2b] z4 | z4 | z4 | z4 | z4 |

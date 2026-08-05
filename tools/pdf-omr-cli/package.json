@@ -1,0 +1,26 @@
+{
+  "name": "@zupulse/pdf-omr-cli",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "cli": "vite-node src/cli.ts",
+    "test": "vitest run --root ../.. tools/pdf-omr-cli/src",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@xmldom/xmldom": "0.9.10",
+    "@zupulse/harmony-cli": "workspace:^",
+    "@zupulse/web-core": "workspace:*",
+    "fflate": "0.8.3",
+    "midi-file": "1.2.4",
+    "pdfjs-dist": "6.1.200",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0",
+    "vite-node": "^2.0.0",
+    "vitest": "^2.0.0"
+  }
+}

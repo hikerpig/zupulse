@@ -1,2 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<score-partwise version="4.0"><work><work-title>钢琴双谱表</work-title></work><part-list><score-part id="P1"><part-name>Part 1</part-name></score-part></part-list><part id="P1"><measure number="1"><attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time><staves>2</staves></attributes><note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice></note></measure></part></score-partwise>
+version https://git-lfs.github.com/spec/v1
+oid sha256:7e2e4bf6eca53c862f4d51053a48d84a2287f160a389e3289837ed61aacc24eb
+size 493

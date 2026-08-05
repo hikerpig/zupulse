@@ -1,0 +1,10 @@
+{
+  "commandTemplate": ["-batch", "-transcribe", "-export", "-save", "-output", "<output-dir>", "<input.pdf>"],
+  "executable": "Audiveris",
+  "id": "audiveris",
+  "license": {
+    "id": "AGPL-3.0-only",
+    "source": "https://github.com/Audiveris/audiveris/blob/master/LICENSE"
+  },
+  "version": "5.11.0"
+}

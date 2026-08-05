@@ -6,3 +6,5 @@ node_modules
 test-fixtures
 packages/web-core/src/harmony/harmony-paper-semi-crf-model.json
 pnpm-lock.yaml
+
+tmp/

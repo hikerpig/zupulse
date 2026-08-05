@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "1.0.0",
+  "date": "2026-08-01",
+  "implementationBaseline": "8823f6d",
+  "items": [
+    {
+      "id": "k331-derived-controlled",
+      "scoreSha256": "cf358b873205d72b9a67cada92cc4ac11480a35fc092a25eb181eaa305c3d3f4",
+      "midiSha256": "451f291fa8c971bedd6991cfa236083b0d178110ed623e6773137531337138ec",
+      "compatibility": "compatible",
+      "alignment": {
+        "matched": 2466,
+        "ambiguous": 0,
+        "scoreOnly": 3,
+        "midiOnly": 21,
+        "scoreCoverage": 0.9987849331713244,
+        "midiCoverage": 0.991556091676719,
+        "pitchAgreement": 1
+      },
+      "proposals": {
+        "total": 24,
+        "writebackReady": 0,
+        "reviewOnly": 24,
+        "missingNote": 21,
+        "unsupportedScoreNote": 3,
+        "pitchDisagreement": 0
+      },
+      "decisions": {
+        "applied": 0,
+        "rejected": 24,
+        "unreviewed": 0
+      },
+      "correctedScoreSha256": "cf358b873205d72b9a67cada92cc4ac11480a35fc092a25eb181eaa305c3d3f4",
+      "sourceBytesPreserved": true,
+      "runtime": { "parse": true, "view": true, "playback": true },
+      "fusionNoRegression": true
+    },
+    {
+      "id": "flower-day-audiveris-exploratory",
+      "scoreSha256": "fa2af3a9f73db620367cd654b98bf37146ec1680dd051aafe1e426a6edeeedc6",
+      "midiSha256": "37e325f8e9f399fb914a6bd0c1e26559b2370ceb094e0689115ee6dffc147858",
+      "compatibility": "compatible",
+      "alignment": {
+        "matched": 1062,
+        "ambiguous": 77,
+        "scoreOnly": 2,
+        "midiOnly": 4,
+        "scoreCoverage": 0.9982471516213848,
+        "midiCoverage": 0.9965004374453194,
+        "pitchAgreement": 0.932396839332748
+      },
+      "proposals": {
+        "total": 83,
+        "writebackReady": 76,
+        "reviewOnly": 7,
+        "missingNote": 4,
+        "unsupportedScoreNote": 2,
+        "pitchDisagreement": 77,
+        "tieChainBlocked": 1
+      },
+      "decisions": {
+        "applied": 0,
+        "rejected": 0,
+        "unreviewed": 83
+      },
+      "correctedScoreSha256": "fa2af3a9f73db620367cd654b98bf37146ec1680dd051aafe1e426a6edeeedc6",
+      "sourceBytesPreserved": true,
+      "runtime": { "parse": true, "view": true, "playback": true },
+      "baselineBlockingDiagnostics": { "MISSING_EVENT_TIMING": 1 },
+      "fusionNoRegression": true,
+      "groundTruthAccuracyAvailable": false
+    }
+  ],
+  "automatedAppliedFixture": {
+    "applied": 1,
+    "pitchAgreementBefore": 0.75,
+    "pitchAgreementAfter": 1,
+    "structuralDifferences": 0
+  }
+}

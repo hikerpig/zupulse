@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "sourceRevision": "1609bd87c5c2116e40664c49373fb3e65bbbc760",
+  "cases": [
+    {
+      "id": "vector",
+      "file": "tracemonkey.pdf",
+      "sha256": "3662ff519e485810520552bf301d8c3b2b917fd2f83303f4965d7abed367e113"
+    },
+    {
+      "id": "mixed-raster-vector",
+      "file": "images.pdf",
+      "sha256": "f7a44ca650d951cfea007440cda297dabbf2cf0c8f77a948a580cc0e99496725"
+    },
+    {
+      "id": "encrypted",
+      "file": "empty_protected.pdf",
+      "sha256": "69556af04215faec7da3e93e823c64f1b74679e52fd10379176f0e0462dd4b6c"
+    },
+    {
+      "id": "degraded-raster",
+      "file": "scan-bad.pdf",
+      "sha256": "d40f31f182cf254ab134826d379875acacb1f7b48bf1a57bce2e30b38d16628e"
+    },
+    {
+      "id": "malformed",
+      "file": "malformed.pdf",
+      "sha256": "9e20bdd737c3c2092b236b1db7d1a2d66996da7d7c7eee377333b5e56aa2a9ac"
+    }
+  ]
+}

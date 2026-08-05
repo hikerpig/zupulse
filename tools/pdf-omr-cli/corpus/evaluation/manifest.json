@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "1.0.0",
+  "corpusId": "zupulse-pdf-omr-evaluation-v1",
+  "protocolVersion": "1.0.0",
+  "items": [
+    {
+      "id": "melody-clean",
+      "workId": "melody-eight",
+      "variantId": "clean",
+      "split": "development",
+      "category": "synthetic-clean",
+      "input": {
+        "path": "melody-clean.pdf",
+        "sha256": "0a98374406b5ab1e45bc6ddb88c7b293763afdcb7dcb975cfd166d46bf0491e0"
+      },
+      "groundTruth": {
+        "path": "melody-eight.musicxml",
+        "sha256": "715ab0bcf08bf52b04775318e6e38fe25d117008464a31e317f73b03853e1911",
+        "format": "musicxml"
+      },
+      "license": {
+        "id": "CC0-1.0",
+        "source": "https://creativecommons.org/publicdomain/zero/1.0/"
+      }
+    },
+    {
+      "id": "melody-low-contrast",
+      "workId": "melody-eight",
+      "variantId": "low-contrast",
+      "split": "development",
+      "category": "synthetic-low-contrast",
+      "input": {
+        "path": "melody-low-contrast.pdf",
+        "sha256": "c13741b5e79996c5028094b1654a02c9c38627bca0c20934116cc6b345c7bf1a"
+      },
+      "groundTruth": {
+        "path": "melody-eight.musicxml",
+        "sha256": "715ab0bcf08bf52b04775318e6e38fe25d117008464a31e317f73b03853e1911",
+        "format": "musicxml"
+      },
+      "license": {
+        "id": "CC0-1.0",
+        "source": "https://creativecommons.org/publicdomain/zero/1.0/"
+      }
+    },
+    {
+      "id": "melody-blur",
+      "workId": "melody-eight",
+      "variantId": "blur",
+      "split": "development",
+      "category": "synthetic-blur",
+      "input": {
+        "path": "melody-blur.pdf",
+        "sha256": "eb032b6ff37a4b68edcb7e818b08ca257e7cf4f8228a798056e2565f66a52a42"
+      },
+      "groundTruth": {
+        "path": "melody-eight.musicxml",
+        "sha256": "715ab0bcf08bf52b04775318e6e38fe25d117008464a31e317f73b03853e1911",
+        "format": "musicxml"
+      },
+      "license": {
+        "id": "CC0-1.0",
+        "source": "https://creativecommons.org/publicdomain/zero/1.0/"
+      }
+    },
+    {
+      "id": "piano-clean",
+      "workId": "piano-eight",
+      "variantId": "clean",
+      "split": "holdout",
+      "category": "synthetic-grand-staff-clean",
+      "input": {
+        "path": "piano-clean.pdf",
+        "sha256": "ab85e7657505038c4672a547db6db5bf3b15716c5282ae3c460150cd112278dc"
+      },
+      "groundTruth": {
+        "path": "piano-eight.musicxml",
+        "sha256": "5b466b860487d8edb2130ca2215c4a66f1bd267b4247ee5d0949c82c589967ac",
+        "format": "musicxml"
+      },
+      "license": {
+        "id": "CC0-1.0",
+        "source": "https://creativecommons.org/publicdomain/zero/1.0/"
+      }
+    },
+    {
+      "id": "piano-low-contrast",
+      "workId": "piano-eight",
+      "variantId": "low-contrast",
+      "split": "holdout",
+      "category": "synthetic-grand-staff-low-contrast",
+      "input": {
+        "path": "piano-low-contrast.pdf",
+        "sha256": "a96a123f18e7d48d476901592f88ae4de7c563c2e6c593a172f805df2abc7f25"
+      },
+      "groundTruth": {
+        "path": "piano-eight.musicxml",
+        "sha256": "5b466b860487d8edb2130ca2215c4a66f1bd267b4247ee5d0949c82c589967ac",
+        "format": "musicxml"
+      },
+      "license": {
+        "id": "CC0-1.0",
+        "source": "https://creativecommons.org/publicdomain/zero/1.0/"
+      }
+    }
+  ]
+}

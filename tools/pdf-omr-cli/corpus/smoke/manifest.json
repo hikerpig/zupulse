@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "corpusId": "synthetic-smoke-v1",
+  "protocolVersion": "1.0.0",
+  "items": [
+    {
+      "id": "synthetic-c-major-vector",
+      "workId": "synthetic-c-major",
+      "variantId": "vector",
+      "split": "development",
+      "category": "digital-vector",
+      "input": {
+        "path": "input.pdf",
+        "sha256": "336115d1e486e7a0869c35bca1bfbe29faf0cad58fa7b94e93e84eec2848f3b9"
+      },
+      "groundTruth": {
+        "path": "truth.musicxml",
+        "sha256": "b1aeb681571fb4be5c5e2751e7232ee450997339014c33eedb5592db0f7bda96",
+        "format": "musicxml"
+      },
+      "license": {
+        "id": "CC0-1.0",
+        "source": "https://creativecommons.org/publicdomain/zero/1.0/"
+      }
+    }
+  ]
+}

@@ -1,2 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<score-partwise version="4.0"><work><work-title>Repeat</work-title></work><part-list><score-part id="P1"><part-name>Part 1</part-name></score-part></part-list><part id="P1"><measure number="1"><attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time><staves>2</staves></attributes><note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice></note><barline location="right"><repeat direction="backward"/></barline></measure></part></score-partwise>
+version https://git-lfs.github.com/spec/v1
+oid sha256:9075651d3b6f74f88792057e51e8ec1699bb864faee6b7bedabdb064a237eacd
+size 550

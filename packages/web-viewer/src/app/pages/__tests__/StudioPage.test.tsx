@@ -44,6 +44,7 @@ describe("StudioPage", () => {
     );
     expect(screen.getByRole("heading", { level: 1, name: "和弦分析" })).toBeTruthy();
     expect(screen.queryByText("Harmony Analysis")).toBeNull();
+    expect(screen.queryByText("Chord workspace")).toBeNull();
     expect(screen.queryByText("等待曲谱加载")).toBeNull();
     expect(screen.getByRole("region", { name: "乐谱工作区" }).className).not.toMatch(/compact/i);
     expect(screen.queryByText(/Library Score:|score-1/)).toBeNull();
@@ -319,6 +320,7 @@ describe("StudioPage", () => {
     const user = userEvent.setup();
     await user.click(within(view.container).getByRole("button", { name: "分析设置" }));
     expect(screen.getByRole("option", { name: "track-2" })).toBeTruthy();
+    expect(screen.queryByText("SETTINGS")).toBeNull();
     const segments = within(view.container).getByRole("list", { name: "分析片段" });
     await user.click(within(segments).getByRole("button", { name: "片段 1，算法结果" }));
     await user.keyboard("{ArrowDown}");
@@ -447,6 +449,7 @@ describe("StudioPage", () => {
     );
     const user = userEvent.setup();
     await user.click(within(view.container).getByRole("button", { name: "片段试听" }));
+    expect(screen.queryByText("PREVIEW")).toBeNull();
     await user.click(screen.getByRole("button", { name: "暂停预览" }));
     await user.click(screen.getByRole("button", { name: "循环选中片段" }));
     expect(screen.getByText("预览播放中")).toBeTruthy();

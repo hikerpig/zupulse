@@ -37,7 +37,6 @@ export function StudioAnalysisPanel({
     <section aria-label={t("analysisRegion")}>
       <div className={styles.analysisHeading}>
         <div>
-          <p className={styles.sectionKicker}>{t("kicker")}</p>
           <h1>{t("title")}</h1>
           <p>{t("subtitle")}</p>
         </div>

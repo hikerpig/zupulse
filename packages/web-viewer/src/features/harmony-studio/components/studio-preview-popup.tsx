@@ -35,7 +35,6 @@ export function StudioPreviewPopup({
   return (
     <ContextPopup anchor={anchor.current} open={open} onOpenChange={onOpenChange}>
       <div>
-        <p className={styles.sectionKicker}>{t("previewKicker")}</p>
         <h3>{t("preview")}</h3>
         <p role="status">{previewStatusLabel(preview.status, t)}</p>
         {audioLabel ? <p role="status">{audioLabel}</p> : null}

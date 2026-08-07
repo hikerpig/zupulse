@@ -32,12 +32,13 @@ describe("alphaTab playback cursor styles", () => {
     expect(splitCss).toMatch(/--studio-left,\s*40%/);
     expect(splitCss).toMatch(/\.workspace\s*{[^}]*height:\s*100%;/s);
     expect(splitCss).toMatch(
-      /@media \(max-width:\s*960px\)[\s\S]*?\.workspace\s*{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/s,
+      /@media \(max-width:\s*960px\)[\s\S]*?\.workspace\s*{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*1fr;[^}]*grid-template-rows:\s*minmax\(240px,\s*42%\)\s+minmax\(0,\s*1fr\);/s,
     );
     expect(splitCss).toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.splitter\s*{[^}]*display:\s*none;/s);
-    expect(splitCss).toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.workspace\s*{[^}]*height:\s*auto;/s);
+    expect(splitCss).not.toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.pane\s*{[^}]*overflow:\s*visible;/s);
     expect(studioCss).not.toMatch(/\.exportBar\s*{/);
     expect(studioCss).toMatch(/\.analysisRegion\s*{[^}]*padding:\s*20px 24px;/s);
+    expect(studioCss).toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.analysisRegion\s*{[^}]*overflow:\s*auto;/s);
     expect(studioCss).toMatch(/\.utilityGrid\s*>\s*details\s*{[^}]*align-self:\s*start;[^}]*height:\s*fit-content;/s);
   });
 
@@ -48,6 +49,7 @@ describe("alphaTab playback cursor styles", () => {
     expect(css).toMatch(
       /\.list button\s*{[^}]*align-items:\s*center;[^}]*justify-content:\s*space-between;[^}]*gap:\s*10px;/s,
     );
+    expect(css).toMatch(/\.list\s*{[^}]*display:\s*grid;[^}]*align-content:\s*start;/s);
     expect(css).not.toMatch(/\.list button::before\s*{/);
     expect(css).not.toMatch(/\.list button\[aria-pressed="true"\]::after\s*{/);
     expect(css).toMatch(/\.originMarker\s*{[^}]*width:\s*8px;[^}]*height:\s*8px;/s);
@@ -56,7 +58,11 @@ describe("alphaTab playback cursor styles", () => {
       /\.originMarker\[data-origin="correction"\]\s*{[^}]*background:\s*var\(--accent-primary\);[^}]*transform:\s*rotate\(45deg\);/s,
     );
     expect(css).toMatch(/\.chordName\s*{[^}]*font-size:\s*15px;[^}]*font-weight:\s*700;/s);
+    expect(css).toMatch(/\.editor\s*{[^}]*min-height:\s*0;[^}]*overflow:\s*auto;/s);
     expect(css).toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.workspace\s*{[^}]*grid-template-columns:\s*1fr;/s);
+    expect(css).toMatch(
+      /@media \(max-width:\s*960px\)[\s\S]*?\.workspace\s*{[^}]*flex:\s*none;[^}]*grid-template-rows:\s*auto auto;[^}]*overflow:\s*visible;/s,
+    );
   });
 
   it("reserves card boundaries for the primary Studio workspace and sticky export action", async () => {

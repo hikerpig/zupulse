@@ -6,6 +6,7 @@
   --color-elevated: var(--bg-elevated);
   --color-control: var(--bg-control);
   --color-control-active: var(--bg-control-active);
+  --color-switch-thumb: var(--switch-thumb);
   --color-score: var(--bg-score);
   --color-foreground: var(--text-primary);
   --color-muted: var(--text-secondary);
@@ -53,6 +54,10 @@
   --spacing-field: var(--control-height-field);
   --spacing-control: var(--control-height-md);
   --spacing-control-lg: var(--control-height-lg);
+  --spacing-switch-track-width: var(--switch-track-width);
+  --spacing-switch-track-height: var(--switch-track-height);
+  --spacing-switch-thumb: var(--switch-thumb-size);
+  --spacing-switch-inset: var(--switch-inset);
   --spacing-context-max: var(--context-popup-max-height);
 
   --radius-control: var(--radius-sm);

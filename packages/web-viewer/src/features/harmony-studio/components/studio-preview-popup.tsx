@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { StudioApplication } from "../StudioApplication";
 import type { StudioPreferences } from "../../../app/studio-preferences";
 import { ContextPopup } from "../../../components/ContextPopup";
+import { Switch } from "../../../components/ui";
 import styles from "../../../app/pages/StudioPage.module.css";
 import type { StudioRange, StudioSnapshot } from "../model/studio-page-model";
 import { audioStatusLabel, previewStatusLabel } from "../model/studio-page-presenter";
@@ -38,9 +39,13 @@ export function StudioPreviewPopup({
         <h3>{t("preview")}</h3>
         <p role="status">{previewStatusLabel(preview.status, t)}</p>
         {audioLabel ? <p role="status">{audioLabel}</p> : null}
-        <button type="button" onClick={() => onPreferencesChange({ previewEnabled: !preferences.previewEnabled })}>
-          {preferences.previewEnabled ? t("hideChordPreview") : t("showChordPreview")}
-        </button>
+        <label className={styles.previewToggle}>
+          <span>{t("chordPreview")}</span>
+          <Switch
+            checked={preferences.previewEnabled}
+            onCheckedChange={(previewEnabled) => onPreferencesChange({ previewEnabled })}
+          />
+        </label>
         <div className={styles.previewControls}>
           <button className="primary-button" type="button" onClick={() => application.togglePreview(libraryScoreId)}>
             {preview.status === "playing" ? t("pausePreview") : t("playPreview")}

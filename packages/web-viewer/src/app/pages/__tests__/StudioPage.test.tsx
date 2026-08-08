@@ -8,7 +8,10 @@ import userEvent from "@testing-library/user-event";
 import { AppStoreProvider } from "../../appStore";
 import { StudioPage } from "../StudioPage";
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  window.localStorage.clear();
+});
 
 function render(element: ReactElement) {
   return testingRender(<AppStoreProvider>{element}</AppStoreProvider>);
@@ -450,6 +453,11 @@ describe("StudioPage", () => {
     const user = userEvent.setup();
     await user.click(within(view.container).getByRole("button", { name: "片段试听" }));
     expect(screen.queryByText("PREVIEW")).toBeNull();
+    const chordPreview = screen.getByRole("switch", { name: "和弦预览" });
+    expect(chordPreview.getAttribute("aria-checked")).toBe("true");
+    await user.click(chordPreview);
+    expect(chordPreview.getAttribute("aria-checked")).toBe("false");
+    expect(screen.getByText("和弦预览")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "暂停预览" }));
     await user.click(screen.getByRole("button", { name: "循环选中片段" }));
     expect(screen.getByText("预览播放中")).toBeTruthy();

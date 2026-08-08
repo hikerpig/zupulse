@@ -56,8 +56,36 @@
         "type": "diagnostics.write",
         "payload": {
           "code": "STARTUP_DURATION",
+          "operation": "app.runtime",
+          "errorCode": "START_FAILED",
           "durationMs": 42,
           "contentHashPrefix": "0123456789abcdef"
+        }
+      }
+    },
+    {
+      "name": "diagnostics operation is bounded",
+      "accepted": false,
+      "value": {
+        "bridgeVersion": "3.0.0",
+        "correlationId": "fixture-diagnostics-operation-range",
+        "type": "diagnostics.write",
+        "payload": {
+          "code": "HOST_OPERATION_FAILED",
+          "operation": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        }
+      }
+    },
+    {
+      "name": "diagnostics error code is stable",
+      "accepted": false,
+      "value": {
+        "bridgeVersion": "3.0.0",
+        "correlationId": "fixture-diagnostics-error-code",
+        "type": "diagnostics.write",
+        "payload": {
+          "code": "HOST_OPERATION_FAILED",
+          "errorCode": "not stable"
         }
       }
     },

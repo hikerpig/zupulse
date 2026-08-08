@@ -71,6 +71,24 @@
           "type": "object",
           "properties": {
             "code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,63}$" },
+            "operation": {
+              "type": "string",
+              "enum": [
+                "app.runtime",
+                "bridge.dispatch",
+                "library.refresh",
+                "library.import.select",
+                "library.open",
+                "playback-resume.read",
+                "renderer.load",
+                "renderer.preload",
+                "sidecar.read",
+                "studio.open",
+                "studio.preview",
+                "viewer.operation"
+              ]
+            },
+            "errorCode": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,63}$" },
             "durationMs": { "type": "number", "minimum": 0 },
             "contentHashPrefix": { "type": "string", "pattern": "^[a-f0-9]{8,16}$" }
           },

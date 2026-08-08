@@ -472,13 +472,16 @@ export const enUS = {
       lifecycleFailed: "The application state could not be saved",
       storageCorrupt: "Local practice data was damaged, isolated, and replaced with default settings",
       startupFailed: "The desktop application could not start",
+      diagnosticExportFailed: "The diagnostic information could not be exported. Try again.",
     },
   },
   desktop: {
     menu: {
       file: "File",
       openScore: "Open Score…",
-      diagnostics: "Open Diagnostics Folder",
+      help: "Help",
+      exportDiagnostics: "Export Diagnostic Information…",
+      openDiagnosticsDirectory: "Open Diagnostics Folder",
       playback: "Playback",
       togglePlayback: "Play/Pause",
       development: "Development",
@@ -490,6 +493,10 @@ export const enUS = {
       saveButton: "Save",
       scoreFiles: "Scores",
       allFiles: "All Files",
+      diagnosticExportTitle: "Export Diagnostic Information",
+      diagnosticExportButton: "Export",
+      diagnosticExportFileType: "Compressed JSON Lines",
+      diagnosticExportErrorTitle: "Export Failed",
     },
   },
   meta: {

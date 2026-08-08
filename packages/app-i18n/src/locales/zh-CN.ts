@@ -465,13 +465,16 @@ export const zhCN = {
       lifecycleFailed: "无法保存应用状态",
       storageCorrupt: "本地练习数据损坏，已隔离并使用默认设置",
       startupFailed: "桌面应用启动失败",
+      diagnosticExportFailed: "无法导出诊断信息，请重试",
     },
   },
   desktop: {
     menu: {
       file: "文件",
       openScore: "打开乐谱…",
-      diagnostics: "打开诊断目录",
+      help: "帮助",
+      exportDiagnostics: "导出诊断信息…",
+      openDiagnosticsDirectory: "打开诊断目录",
       playback: "播放",
       togglePlayback: "播放/暂停",
       development: "开发",
@@ -483,6 +486,10 @@ export const zhCN = {
       saveButton: "保存",
       scoreFiles: "乐谱",
       allFiles: "所有文件",
+      diagnosticExportTitle: "导出诊断信息",
+      diagnosticExportButton: "导出",
+      diagnosticExportFileType: "压缩的 JSON Lines",
+      diagnosticExportErrorTitle: "导出失败",
     },
   },
   meta: {

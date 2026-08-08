@@ -15,6 +15,8 @@ final class DiagnosticsTests: XCTestCase {
         for index in 0..<8 {
             logger.record(
                 code: "IMPORT_\(index)",
+                operation: "library.open",
+                errorCode: "IMPORT_FAILED",
                 durationMs: Double(index),
                 contentHashPrefix: "abcdef12"
             )
@@ -33,6 +35,8 @@ final class DiagnosticsTests: XCTestCase {
         XCTAssertFalse(text.contains("fileName"))
         XCTAssertFalse(text.contains("metadata"))
         XCTAssertFalse(text.contains("payload"))
+        XCTAssertTrue(text.contains("\"operation\":\"library.open\""))
+        XCTAssertTrue(text.contains("\"errorCode\":\"IMPORT_FAILED\""))
     }
 
     func testSwiftValidatorRejectsSensitiveAndArbitraryFields() throws {
@@ -61,13 +65,15 @@ final class DiagnosticsTests: XCTestCase {
         }
         XCTAssertTrue(
             String(decoding: logger.exportData(), as: UTF8.self)
-                .contains("IMPORT_COMPLETE")
+                .contains("\"operation\":\"library.open\"")
         )
     }
 
     private func diagnosticsRequest(extra: [String: Any]) -> [String: Any] {
         var payload: [String: Any] = [
             "code": "IMPORT_COMPLETE",
+            "operation": "library.open",
+            "errorCode": "IMPORT_FAILED",
             "durationMs": 12,
             "contentHashPrefix": "abcdef12",
         ]

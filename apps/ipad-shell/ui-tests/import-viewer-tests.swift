@@ -46,10 +46,10 @@ final class ImportViewerTests: XCTestCase {
         for _ in 0..<20 where zoomOut.isEnabled {
             zoomOut.tap()
         }
-        XCTAssertTrue(zoomStatus(in: app, percent: 75).exists, stage("zoom-minimum"))
+        XCTAssertTrue(zoomStatus(in: app, percent: 50).exists, stage("zoom-minimum"))
         app.buttons["放大谱面"].tap()
         XCTAssertTrue(
-            zoomStatus(in: app, percent: 85).waitForExistence(timeout: 5),
+            zoomStatus(in: app, percent: 60).waitForExistence(timeout: 5),
             stage("zoom-button-commit")
         )
 
@@ -63,7 +63,7 @@ final class ImportViewerTests: XCTestCase {
             .matching(NSPredicate(format: "label BEGINSWITH %@", "谱面缩放 "))
             .firstMatch
         XCTAssertTrue(committedZoomStatus.waitForExistence(timeout: 5), stage("zoom-pinch-status"))
-        XCTAssertNotEqual(committedZoomStatus.label, "谱面缩放 85%", stage("zoom-pinch-commit"))
+        XCTAssertNotEqual(committedZoomStatus.label, "谱面缩放 60%", stage("zoom-pinch-commit"))
         XCTAssertTrue(app.buttons["播放"].exists, stage("zoom-keeps-transport"))
         XCTAssertTrue(app.links["曲谱库"].exists, stage("zoom-keeps-library-route"))
 
@@ -135,13 +135,11 @@ final class ImportViewerTests: XCTestCase {
         app.terminate()
         app.launchEnvironment = ["ZUPULSE_UI_TEST_START_LIBRARY": "1"]
         app.launch()
-        XCTAssertTrue(app.buttons["批量导入"].waitForExistence(timeout: 30), stage("relaunch-library"))
+        XCTAssertTrue(app.otherElements["导入曲谱"].waitForExistence(timeout: 30), stage("relaunch-library"))
     }
 
     private func assertSingleImportedScore(in app: XCUIApplication, stage: String) {
-        let entries = app.buttons.matching(
-            NSPredicate(format: "label CONTAINS %@ AND label CONTAINS %@", "MUSICXML", "Single")
-        )
+        let entries = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Single"))
         XCTAssertTrue(entries.firstMatch.waitForExistence(timeout: 10), self.stage("\(stage)-visible"))
         XCTAssertEqual(entries.count, 1, self.stage(stage))
     }
@@ -174,7 +172,7 @@ final class BatchImportTests: XCTestCase {
         XCTAssertTrue(summary.label.contains("新增 1，已存在 1，失败 1，未开始 0"))
         XCTAssertTrue(staticText(containing: "broken.mxl", in: app).exists)
         XCTAssertTrue(staticText(containing: "失败 · INVALID_SCORE", in: app).exists)
-        XCTAssertTrue(app.buttons["批量导入"].exists)
+        XCTAssertTrue(app.otherElements["导入曲谱"].exists)
     }
 
     private func staticText(containing value: String, in app: XCUIApplication) -> XCUIElement {

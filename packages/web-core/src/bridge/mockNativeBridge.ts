@@ -92,7 +92,6 @@ export class MockNativeBridge {
         return parseBridgeResponse(request.type, {});
       case "app.lifecycleAck":
       case "diagnostics.write":
-      case "diagnostics.openDirectory":
         return parseBridgeResponse(request.type, {});
     }
   }

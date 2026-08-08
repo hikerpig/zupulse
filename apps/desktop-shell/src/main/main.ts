@@ -10,6 +10,7 @@ import { randomUUID } from "node:crypto";
 import {
   app,
   BrowserWindow,
+  dialog,
   ipcMain,
   Menu,
   powerMonitor,
@@ -19,7 +20,13 @@ import {
   type MenuItemConstructorOptions,
 } from "electron";
 import { assertBridgeAppSender, BridgeDispatchError, dispatchBridgeRequest } from "./bridge";
-import { DiagnosticLogger } from "./diagnostics";
+import { DesktopDiagnostics } from "./diagnostics";
+import {
+  installAppDiagnosticInstrumentation,
+  installWindowDiagnosticInstrumentation,
+  recordBridgeFailure,
+  recordPersistedDataCorruption,
+} from "./diagnostic-instrumentation";
 import { FileTokenStore } from "./fileTokens";
 import { acceptScorePaths, readScoreFileBytes, saveScoreFile, selectScoreFiles } from "./files";
 import { registerAppProtocol } from "./protocol";
@@ -88,167 +95,196 @@ if (!hasSingleInstanceLock) {
 async function startDesktopApp(): Promise<void> {
   const dock = process.platform === "darwin" && !app.isPackaged ? app.dock : undefined;
   if (dock) dock.setIcon(getRuntimeIconPath());
-  const rendererRoot = path.join(__dirname, "../renderer");
-  const userData = app.getPath("userData");
-  const localePreferenceStore = new LocalePreferenceStore(userData);
-  const initialPreference = await localePreferenceStore.load();
-  let currentLocaleState: LocaleState = {
-    preference: initialPreference,
-    effectiveLocale: resolveLocale(initialPreference, app.getPreferredSystemLanguages()),
-  };
-  const logDirectory = path.join(userData, "logs");
-  verifySqliteAvailable();
-  const sendStorageWarning = (category: "sidecar" | "resume") => (code: "CORRUPT_PERSISTED_DATA") => {
-    if (!mainWindow || mainWindow.isDestroyed()) return;
-    mainWindow.webContents.send(
-      "zupulse:event",
-      createBridgeEvent("storage.warning", randomUUID(), { code, category }),
-    );
-  };
-  const sidecarStore = new JsonStore(userData, "sidecars", { parse: parseSidecar }, sendStorageWarning("sidecar"));
-  const resumeStore = new JsonStore(userData, "resume", localPlaybackResumeSchema, sendStorageWarning("resume"));
-  const library = new DesktopLibraryStore(path.join(userData, "library.sqlite"), path.join(userData, "library"), {
-    readSidecar: (libraryScoreId) => sidecarStore.read(libraryScoreId),
-    readResume: (libraryScoreId) => resumeStore.read(libraryScoreId),
+  app.setAppLogsPath();
+  const logDirectory = app.getPath("logs");
+  const diagnostics = new DesktopDiagnostics({
+    directory: logDirectory,
+    appVersion: app.getVersion(),
+    electronVersion: process.versions.electron,
+    platform: process.platform,
+    arch: process.arch,
   });
-  await library.initialize();
-  app.once("will-quit", () => library.close());
-  const diagnostics = new DiagnosticLogger(logDirectory);
-  const openDiagnosticsDirectory = async () => {
-    const error = await shell.openPath(logDirectory);
-    if (error) throw new Error("DIAGNOSTICS_OPEN_DIRECTORY_FAILED");
-  };
-  registerAppProtocol(rendererRoot);
-  session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
-    callback(false);
-  });
-  const sendEvent = (event: ReturnType<typeof createBridgeEvent>) => {
-    if (!mainWindow || mainWindow.isDestroyed()) return;
-    mainWindow.webContents.send("zupulse:event", event);
-  };
-  const DROPPED_FILES_IPC_CHANNEL = "zupulse:file:importDropped" as const;
-  ipcMain.handle(DROPPED_FILES_IPC_CHANNEL, (event, value: unknown) => {
-    assertBridgeAppSender(event.senderFrame?.url ?? event.sender.getURL());
-    const parsed = fileImportDroppedRequestSchema.safeParse(value);
-    if (!parsed.success) {
-      throw new BridgeDispatchError(
-        "INVALID_BRIDGE_MESSAGE",
-        "Dropped-file import failed schema validation",
-        false,
-        parsed.error.issues,
+  await diagnostics.initialize();
+  installAppDiagnosticInstrumentation(app, diagnostics);
+  try {
+    const rendererRoot = path.join(__dirname, "../renderer");
+    const userData = app.getPath("userData");
+    const localePreferenceStore = new LocalePreferenceStore(userData);
+    const initialPreference = await localePreferenceStore.load();
+    let currentLocaleState: LocaleState = {
+      preference: initialPreference,
+      effectiveLocale: resolveLocale(initialPreference, app.getPreferredSystemLanguages()),
+    };
+    verifySqliteAvailable();
+    const sendStorageWarning = (category: "sidecar" | "resume") => (code: "CORRUPT_PERSISTED_DATA") => {
+      recordPersistedDataCorruption(diagnostics, category);
+      if (!mainWindow || mainWindow.isDestroyed()) return;
+      mainWindow.webContents.send(
+        "zupulse:event",
+        createBridgeEvent("storage.warning", randomUUID(), { code, category }),
       );
-    }
-    return acceptScorePaths(fileTokens, parsed.data.payload.paths);
-  });
-  ipcMain.handle("zupulse:request", (event, value: unknown) =>
-    dispatchBridgeRequest(
-      {
-        senderUrl: event.senderFrame?.url ?? event.sender.getURL(),
-        value,
+    };
+    const sidecarStore = new JsonStore(userData, "sidecars", { parse: parseSidecar }, sendStorageWarning("sidecar"));
+    const resumeStore = new JsonStore(userData, "resume", localPlaybackResumeSchema, sendStorageWarning("resume"));
+    const library = new DesktopLibraryStore(path.join(userData, "library.sqlite"), path.join(userData, "library"), {
+      readSidecar: (libraryScoreId) => sidecarStore.read(libraryScoreId),
+      readResume: (libraryScoreId) => resumeStore.read(libraryScoreId),
+    });
+    await library.initialize();
+    app.once("will-quit", () => library.close());
+    const openDiagnosticsDirectory = async () => {
+      const error = await shell.openPath(logDirectory);
+      if (error) throw new Error("DIAGNOSTICS_OPEN_DIRECTORY_FAILED");
+    };
+    registerAppProtocol(rendererRoot);
+    session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
+      callback(false);
+    });
+    const sendEvent = (event: ReturnType<typeof createBridgeEvent>) => {
+      if (!mainWindow || mainWindow.isDestroyed()) return;
+      mainWindow.webContents.send("zupulse:event", event);
+    };
+    const DROPPED_FILES_IPC_CHANNEL = "zupulse:file:importDropped" as const;
+    ipcMain.handle(DROPPED_FILES_IPC_CHANNEL, (event, value: unknown) => {
+      try {
+        assertBridgeAppSender(event.senderFrame?.url ?? event.sender.getURL());
+        const parsed = fileImportDroppedRequestSchema.safeParse(value);
+        if (!parsed.success) {
+          throw new BridgeDispatchError(
+            "INVALID_BRIDGE_MESSAGE",
+            "Dropped-file import failed schema validation",
+            false,
+            parsed.error.issues,
+          );
+        }
+        return acceptScorePaths(fileTokens, parsed.data.payload.paths);
+      } catch (error) {
+        recordBridgeFailure(diagnostics, error);
+        throw error;
+      }
+    });
+    ipcMain.handle("zupulse:request", async (event, value: unknown) => {
+      try {
+        return await dispatchBridgeRequest(
+          {
+            senderUrl: event.senderFrame?.url ?? event.sender.getURL(),
+            value,
+          },
+          {
+            appVersion: __APP_VERSION__,
+            rendererBuildHash: __RENDERER_BUILD_HASH__,
+            locale: currentLocaleState,
+            handlers: {
+              "app.locale.setPreference": async (request) => {
+                try {
+                  await localePreferenceStore.save(request.payload.preference);
+                } catch {
+                  throw new BridgeDispatchError(
+                    "LOCALE_PREFERENCE_WRITE_FAILED",
+                    "Locale preference could not be persisted",
+                    true,
+                  );
+                }
+                currentLocaleState = {
+                  preference: request.payload.preference,
+                  effectiveLocale: resolveLocale(request.payload.preference, app.getPreferredSystemLanguages()),
+                };
+                installMenu(sendEvent, diagnostics, openDiagnosticsDirectory, currentLocaleState.effectiveLocale);
+                return currentLocaleState;
+              },
+              "file.select": (request) =>
+                selectScoreFiles(fileTokens, request.payload.multiple, currentLocaleState.effectiveLocale),
+              "file.readBytes": (request) => readScoreFileBytes(fileTokens, request.payload.fileToken),
+              "file.save": (request) => saveScoreFile(request.payload, currentLocaleState.effectiveLocale),
+              "library.list": async () => ({ scores: await library.list() }),
+              "library.get": async (request) => ({ score: await library.get(request.payload.id) }),
+              "library.find": async (request) => ({
+                score: await library.findByIdentity(request.payload.scoreIdentity),
+              }),
+              "library.add": async (request) => {
+                const { parsedTitle, parsedArtist, durationMs, ...draft } = request.payload.draft;
+                return library.add({
+                  ...draft,
+                  file: { ...draft.file, bytes: new Uint8Array(draft.file.bytes) },
+                  ...(parsedTitle === undefined ? {} : { parsedTitle }),
+                  ...(parsedArtist === undefined ? {} : { parsedArtist }),
+                  ...(durationMs === undefined ? {} : { durationMs }),
+                });
+              },
+              "library.readScore": async (request) => await library.readScore(request.payload.id),
+              "library.updateMetadata": async (request) => ({
+                score: await library.updateMetadata(request.payload.id, request.payload.patch),
+              }),
+              "library.setFavorite": async (request) => {
+                await library.setFavorite(request.payload.id, request.payload.favorite);
+                return {};
+              },
+              "library.markOpened": async (request) => {
+                await library.markOpened(request.payload.id, request.payload.openedAt);
+                return {};
+              },
+              "library.delete": async (request) => {
+                await library.delete(request.payload.id);
+                await Promise.all([sidecarStore.delete(request.payload.id), resumeStore.delete(request.payload.id)]);
+                return {};
+              },
+              "harmonyAnalysis.read": async (request) => ({
+                document: await library.read(request.payload.libraryScoreId),
+              }),
+              "harmonyAnalysis.save": async (request) => library.save(request.payload),
+              "sidecar.read": async (request) => ({
+                payload: await sidecarStore.read(
+                  request.payload.libraryScoreId ?? request.payload.identity.contentHash,
+                ),
+              }),
+              "sidecar.write": async (request) => {
+                const key = request.payload.libraryScoreId ?? request.payload.identity.contentHash;
+                if (request.payload.libraryScoreId && !(await library.get(request.payload.libraryScoreId)))
+                  throw new Error("LIBRARY_SCORE_NOT_FOUND");
+                await sidecarStore.write(key, request.payload.payload);
+                return {};
+              },
+              "playbackResume.read": async (request) => ({
+                resume: await resumeStore.read(request.payload.libraryScoreId ?? request.payload.identity.contentHash),
+              }),
+              "playbackResume.write": async (request) => {
+                const key = request.payload.libraryScoreId ?? request.payload.identity.contentHash;
+                if (request.payload.libraryScoreId && !(await library.get(request.payload.libraryScoreId)))
+                  throw new Error("LIBRARY_SCORE_NOT_FOUND");
+                await resumeStore.write(key, request.payload.resume);
+                return {};
+              },
+              "diagnostics.write": async (request) => {
+                await diagnostics.recordRenderer(request.payload);
+                return {};
+              },
+              "app.lifecycleAck": (request) => {
+                lifecycle?.acknowledge(request.payload.state);
+                return {};
+              },
+            },
+          },
+        );
+      } catch (error) {
+        recordBridgeFailure(diagnostics, error);
+        throw error;
+      }
+    });
+    mainWindow = createMainWindow();
+    installWindowDiagnosticInstrumentation(mainWindow, diagnostics);
+    lifecycle = new DesktopLifecycleCoordinator(sendEvent, {
+      timeoutMs: 5000,
+      onTimeout: (code) => {
+        void diagnostics.recordMain({ code });
       },
-      {
-        appVersion: __APP_VERSION__,
-        rendererBuildHash: __RENDERER_BUILD_HASH__,
-        locale: currentLocaleState,
-        handlers: {
-          "app.locale.setPreference": async (request) => {
-            try {
-              await localePreferenceStore.save(request.payload.preference);
-            } catch {
-              throw new BridgeDispatchError(
-                "LOCALE_PREFERENCE_WRITE_FAILED",
-                "Locale preference could not be persisted",
-                true,
-              );
-            }
-            currentLocaleState = {
-              preference: request.payload.preference,
-              effectiveLocale: resolveLocale(request.payload.preference, app.getPreferredSystemLanguages()),
-            };
-            installMenu(sendEvent, openDiagnosticsDirectory, currentLocaleState.effectiveLocale);
-            return currentLocaleState;
-          },
-          "file.select": (request) =>
-            selectScoreFiles(fileTokens, request.payload.multiple, currentLocaleState.effectiveLocale),
-          "file.readBytes": (request) => readScoreFileBytes(fileTokens, request.payload.fileToken),
-          "file.save": (request) => saveScoreFile(request.payload, currentLocaleState.effectiveLocale),
-          "library.list": async () => ({ scores: await library.list() }),
-          "library.get": async (request) => ({ score: await library.get(request.payload.id) }),
-          "library.find": async (request) => ({ score: await library.findByIdentity(request.payload.scoreIdentity) }),
-          "library.add": async (request) => {
-            const { parsedTitle, parsedArtist, durationMs, ...draft } = request.payload.draft;
-            return library.add({
-              ...draft,
-              file: { ...draft.file, bytes: new Uint8Array(draft.file.bytes) },
-              ...(parsedTitle === undefined ? {} : { parsedTitle }),
-              ...(parsedArtist === undefined ? {} : { parsedArtist }),
-              ...(durationMs === undefined ? {} : { durationMs }),
-            });
-          },
-          "library.readScore": async (request) => await library.readScore(request.payload.id),
-          "library.updateMetadata": async (request) => ({
-            score: await library.updateMetadata(request.payload.id, request.payload.patch),
-          }),
-          "library.setFavorite": async (request) => {
-            await library.setFavorite(request.payload.id, request.payload.favorite);
-            return {};
-          },
-          "library.markOpened": async (request) => {
-            await library.markOpened(request.payload.id, request.payload.openedAt);
-            return {};
-          },
-          "library.delete": async (request) => {
-            await library.delete(request.payload.id);
-            await Promise.all([sidecarStore.delete(request.payload.id), resumeStore.delete(request.payload.id)]);
-            return {};
-          },
-          "harmonyAnalysis.read": async (request) => ({ document: await library.read(request.payload.libraryScoreId) }),
-          "harmonyAnalysis.save": async (request) => library.save(request.payload),
-          "sidecar.read": async (request) => ({
-            payload: await sidecarStore.read(request.payload.libraryScoreId ?? request.payload.identity.contentHash),
-          }),
-          "sidecar.write": async (request) => {
-            const key = request.payload.libraryScoreId ?? request.payload.identity.contentHash;
-            if (request.payload.libraryScoreId && !(await library.get(request.payload.libraryScoreId)))
-              throw new Error("LIBRARY_SCORE_NOT_FOUND");
-            await sidecarStore.write(key, request.payload.payload);
-            return {};
-          },
-          "playbackResume.read": async (request) => ({
-            resume: await resumeStore.read(request.payload.libraryScoreId ?? request.payload.identity.contentHash),
-          }),
-          "playbackResume.write": async (request) => {
-            const key = request.payload.libraryScoreId ?? request.payload.identity.contentHash;
-            if (request.payload.libraryScoreId && !(await library.get(request.payload.libraryScoreId)))
-              throw new Error("LIBRARY_SCORE_NOT_FOUND");
-            await resumeStore.write(key, request.payload.resume);
-            return {};
-          },
-          "diagnostics.write": async (request) => {
-            await diagnostics.write(request.payload);
-            return {};
-          },
-          "diagnostics.openDirectory": async () => {
-            await openDiagnosticsDirectory();
-            return {};
-          },
-          "app.lifecycleAck": (request) => {
-            lifecycle?.acknowledge(request.payload.state);
-            return {};
-          },
-        },
-      },
-    ),
-  );
-  mainWindow = createMainWindow();
-  lifecycle = new DesktopLifecycleCoordinator(sendEvent, {
-    timeoutMs: 5000,
-    onTimeout: (code) => {
-      void diagnostics.write({ code }).catch(() => undefined);
-    },
-  });
-  installLifecycle(mainWindow, lifecycle);
-  installMenu(sendEvent, openDiagnosticsDirectory, currentLocaleState.effectiveLocale);
+    });
+    installLifecycle(mainWindow, lifecycle);
+    installMenu(sendEvent, diagnostics, openDiagnosticsDirectory, currentLocaleState.effectiveLocale);
+    void diagnostics.recordMain({ code: "APP_STARTED" });
+  } catch (error) {
+    await diagnostics.recordMain({ code: "APP_START_FAILED" });
+    throw error;
+  }
 }
 
 function installLifecycle(window: BrowserWindow, coordinator: DesktopLifecycleCoordinator): void {
@@ -276,6 +312,7 @@ function installLifecycle(window: BrowserWindow, coordinator: DesktopLifecycleCo
 
 function installMenu(
   sendEvent: (event: ReturnType<typeof createBridgeEvent>) => void,
+  diagnostics: DesktopDiagnostics,
   openDiagnosticsDirectory: () => Promise<void>,
   locale: SupportedLocale,
 ): void {
@@ -288,12 +325,6 @@ function installMenu(
       label: t("menu.file"),
       submenu: [
         { label: t("menu.openScore"), accelerator: "CmdOrCtrl+O", click: command("open-score") },
-        {
-          label: t("menu.diagnostics"),
-          click: () => {
-            void openDiagnosticsDirectory().catch(() => undefined);
-          },
-        },
         { type: "separator" },
         { role: "quit" },
       ],
@@ -302,7 +333,51 @@ function installMenu(
       label: t("menu.playback"),
       submenu: [{ label: t("menu.togglePlayback"), accelerator: "Space", click: command("toggle-playback") }],
     },
-    ...(app.isPackaged ? [] : [{ label: t("menu.development"), submenu: [{ role: "toggleDevTools" as const }] }]),
+    {
+      label: t("menu.help"),
+      submenu: [
+        {
+          id: "export-diagnostics",
+          label: t("menu.exportDiagnostics"),
+          click: () => {
+            const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : undefined;
+            void diagnostics
+              .export(parent, {
+                title: t("dialog.diagnosticExportTitle"),
+                buttonLabel: t("dialog.diagnosticExportButton"),
+                filterName: t("dialog.diagnosticExportFileType"),
+              })
+              .then((result) => {
+                if (result.status !== "failed") return;
+                const options = {
+                  type: "error" as const,
+                  title: t("dialog.diagnosticExportErrorTitle"),
+                  message: t("errors:desktop.diagnosticExportFailed"),
+                };
+                return parent ? dialog.showMessageBox(parent, options) : dialog.showMessageBox(options);
+              })
+              .catch(() => undefined);
+          },
+        },
+      ],
+    },
+    ...(app.isPackaged
+      ? []
+      : [
+          {
+            label: t("menu.development"),
+            submenu: [
+              {
+                label: t("menu.openDiagnosticsDirectory"),
+                click: () => {
+                  void openDiagnosticsDirectory().catch(() => undefined);
+                },
+              },
+              { type: "separator" as const },
+              { role: "toggleDevTools" as const },
+            ],
+          },
+        ]),
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }

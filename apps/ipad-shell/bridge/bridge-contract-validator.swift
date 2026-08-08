@@ -77,10 +77,12 @@ final class BridgeContractValidator {
         case "diagnostics.write":
             try requireKeys(
                 payload,
-                allowed: ["code", "durationMs", "contentHashPrefix"],
+                allowed: ["code", "operation", "errorCode", "durationMs", "contentHashPrefix"],
                 required: ["code"],
                 context: type
             )
+            let operation = try optionalString(payload["operation"], field: "operation", maximumLength: 64)
+            let errorCode = try optionalString(payload["errorCode"], field: "errorCode", maximumLength: 64)
             let durationMs = try optionalNonnegativeNumber(payload["durationMs"], field: "durationMs")
             let contentHashPrefix = try optionalString(
                 payload["contentHashPrefix"],
@@ -90,6 +92,8 @@ final class BridgeContractValidator {
             return .diagnosticsWrite(
                 DiagnosticsWritePayload(
                     code: try requireDiagnosticCode(payload["code"]),
+                    operation: try requireDiagnosticOperation(operation),
+                    errorCode: try requireDiagnosticCode(errorCode),
                     durationMs: durationMs,
                     contentHashPrefix: try requireHashPrefix(contentHashPrefix)
                 )
@@ -129,6 +133,33 @@ private func requireDiagnosticCode(_ value: Any?) throws -> String {
         throw validationError("INVALID_FIELD", "Bridge diagnostic code is invalid")
     }
     return code
+}
+
+private func requireDiagnosticCode(_ value: String?) throws -> String? {
+    guard let value else { return nil }
+    return try requireDiagnosticCode(value as Any)
+}
+
+private func requireDiagnosticOperation(_ value: String?) throws -> String? {
+    guard let value else { return nil }
+    let allowed = Set([
+        "app.runtime",
+        "bridge.dispatch",
+        "library.refresh",
+        "library.import.select",
+        "library.open",
+        "playback-resume.read",
+        "renderer.load",
+        "renderer.preload",
+        "sidecar.read",
+        "studio.open",
+        "studio.preview",
+        "viewer.operation",
+    ])
+    guard allowed.contains(value) else {
+        throw validationError("INVALID_FIELD", "Bridge diagnostic operation is invalid")
+    }
+    return value
 }
 
 private func requireHashPrefix(_ value: String?) throws -> String? {

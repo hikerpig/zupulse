@@ -200,7 +200,11 @@ private final class WebViewRuntime {
         if environment["ZUPULSE_UI_TEST_EPHEMERAL_STORAGE"] == "1" {
             configuration.websiteDataStore = .nonPersistent()
         }
-        if environment["ZUPULSE_UI_TEST_START_LIBRARY"] == "1" {
+        if environment["ZUPULSE_UI_TEST_START_LIBRARY"] == "1" ||
+            environment["ZUPULSE_UI_TEST_OPEN_FIRST"] == "1" ||
+            environment["ZUPULSE_UI_TEST_FIXTURE"] != nil ||
+            environment["ZUPULSE_UI_TEST_FIXTURES"] != nil
+        {
             configuration.userContentController.addUserScript(
                 WKUserScript(
                     source: """
@@ -208,6 +212,7 @@ private final class WebViewRuntime {
                       "zupulse-ipad-route",
                       JSON.stringify({ route: "library" })
                     );
+                    location.hash = "#/library";
                     """,
                     injectionTime: .atDocumentStart,
                     forMainFrameOnly: true
@@ -228,23 +233,38 @@ private final class WebViewRuntime {
         if environment["ZUPULSE_UI_TEST_FIXTURE"] != nil ||
             environment["ZUPULSE_UI_TEST_FIXTURES"] != nil
         {
-            let importButtonTitle = environment["ZUPULSE_UI_TEST_FIXTURES"] == nil
-                ? "导入曲谱"
-                : "批量导入"
             configuration.userContentController.addUserScript(
                 WKUserScript(
                     source: """
                     (() => {
-                      const timer = setInterval(() => {
+                      const openTimer = setInterval(() => {
                         const buttons = [...document.querySelectorAll("button")];
                         const button = buttons.find(
                           (candidate) =>
                             !candidate.disabled &&
-                            candidate.textContent?.trim() === "\(importButtonTitle)"
+                            candidate.textContent?.trim() === "导入曲谱"
                         );
                         if (!button) return;
-                        clearInterval(timer);
+                        clearInterval(openTimer);
                         button.click();
+
+                        const selectTimer = setInterval(() => {
+                          const picker = document.querySelector(
+                            '[data-testid="import-score-picker"]'
+                          );
+                          if (!(picker instanceof HTMLButtonElement) || picker.disabled) return;
+                          clearInterval(selectTimer);
+                          picker.click();
+
+                          const submitTimer = setInterval(() => {
+                            const submit = document.querySelector(
+                              '[data-testid="import-score-submit"]'
+                            );
+                            if (!(submit instanceof HTMLButtonElement) || submit.disabled) return;
+                            clearInterval(submitTimer);
+                            submit.click();
+                          }, 100);
+                        }, 100);
                       }, 100);
                     })();
                     """,
@@ -253,14 +273,16 @@ private final class WebViewRuntime {
                 )
             )
         }
-        if environment["ZUPULSE_UI_TEST_OPEN_FIRST"] == "1" {
+        if environment["ZUPULSE_UI_TEST_OPEN_FIRST"] == "1" ||
+            environment["ZUPULSE_UI_TEST_FIXTURE"] != nil
+        {
             configuration.userContentController.addUserScript(
                 WKUserScript(
                     source: """
                     (() => {
                       const timer = setInterval(() => {
-                        const score = document.querySelector('li[role="button"]');
-                        if (!score) return;
+                        const score = document.querySelector('[data-score-id] button');
+                        if (!(score instanceof HTMLButtonElement) || score.disabled) return;
                         clearInterval(timer);
                         score.click();
                       }, 100);

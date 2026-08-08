@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { DiagnosticLogger } from "../diagnostics";
+import { DesktopDiagnostics, persistedHostDiagnosticEventSchema } from "../diagnostics";
 
 const roots: string[] = [];
 
@@ -16,26 +16,53 @@ async function tempRoot(): Promise<string> {
   return root;
 }
 
-describe("DiagnosticLogger", () => {
-  it("writes only privacy-safe diagnostic fields", async () => {
+describe("DesktopDiagnostics", () => {
+  it("adds trusted host facts and writes a strictly validated event", async () => {
     const root = await tempRoot();
-    const logger = new DiagnosticLogger(root);
-    await logger.write({ code: "SCORE_OPENED", durationMs: 12, contentHashPrefix: "abcdef12" });
-    const line = JSON.parse((await readFile(join(root, "desktop.log"), "utf8")).trim());
-    expect(line).toMatchObject({ code: "SCORE_OPENED", durationMs: 12, contentHashPrefix: "abcdef12" });
-    expect(line.at).toEqual(expect.any(String));
+    const diagnostics = new DesktopDiagnostics({
+      directory: root,
+      appVersion: "0.1.0",
+      electronVersion: "43.1.0",
+      platform: "darwin",
+      arch: "arm64",
+      now: () => new Date("2026-08-08T00:00:00.000Z"),
+    });
 
-    for (const field of ["path", "fileName", "payload"] as const) {
-      await expect(logger.write({ code: "UNSAFE", [field]: "secret" })).rejects.toThrow();
-    }
+    await diagnostics.recordRenderer({
+      code: "HOST_OPERATION_FAILED",
+      operation: "library.open",
+      errorCode: "VIEWER_OPEN_FAILED",
+    });
+
+    const event = JSON.parse((await readFile(join(root, "desktop.log"), "utf8")).trim());
+    expect(persistedHostDiagnosticEventSchema.parse(event)).toEqual({
+      schemaVersion: 1,
+      at: "2026-08-08T00:00:00.000Z",
+      appVersion: "0.1.0",
+      electronVersion: "43.1.0",
+      platform: "darwin",
+      arch: "arm64",
+      source: "renderer",
+      code: "HOST_OPERATION_FAILED",
+      operation: "library.open",
+      errorCode: "VIEWER_OPEN_FAILED",
+    });
   });
 
-  it("rotates to one previous file", async () => {
+  it("drops invalid input and filesystem failures without rejecting business calls", async () => {
     const root = await tempRoot();
-    const logger = new DiagnosticLogger(root, 1);
-    await logger.write({ code: "FIRST" });
-    await logger.write({ code: "SECOND" });
-    expect(await readFile(join(root, "desktop.log.1"), "utf8")).toContain("FIRST");
-    expect(await readFile(join(root, "desktop.log"), "utf8")).toContain("SECOND");
+    const blocked = join(root, "blocked");
+    await writeFile(blocked, "not a directory");
+    const diagnostics = new DesktopDiagnostics({
+      directory: blocked,
+      appVersion: "0.1.0",
+      electronVersion: "43.1.0",
+      platform: "darwin",
+      arch: "arm64",
+    });
+
+    await expect(diagnostics.initialize()).resolves.toBeUndefined();
+    await expect(diagnostics.recordRenderer({ code: "UNSAFE", path: "/secret" })).resolves.toBeUndefined();
+    await expect(diagnostics.recordMain({ code: "APP_STARTED" })).resolves.toBeUndefined();
   });
 });

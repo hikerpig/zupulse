@@ -382,6 +382,31 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   await expect(page.getByRole("heading", { level: 1, name: "和弦分析" })).toBeVisible();
   await expect(page.getByRole("button", { name: "分析设置" })).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const scoreWorkspace = page.getByRole("region", { name: "乐谱工作区" });
+  const analysisRegion = page.getByRole("region", { name: "分析状态" });
+  const analysisPane = analysisRegion.locator("..");
+  await expect(scoreWorkspace).toBeVisible();
+  await expect(analysisRegion).toBeVisible();
+  const mobileAnalysisBox = (await analysisPane.boundingBox())!;
+  expect(mobileAnalysisBox.y).toBeLessThan(844);
+  expect(mobileAnalysisBox.y + mobileAnalysisBox.height).toBeLessThanOrEqual(844);
+  await expect(analysisPane).toHaveCSS("overflow-y", "auto");
+
+  await page.setViewportSize({ width: 1280, height: 568 });
+  const studioEditor = page.getByRole("region", { name: "和弦编辑器" });
+  await expect(studioEditor).toBeVisible();
+  expect(
+    await studioEditor.evaluate((element) => ({
+      clientHeight: element.clientHeight,
+      scrollHeight: element.scrollHeight,
+      overflowY: getComputedStyle(element).overflowY,
+    })),
+  ).toMatchObject({ overflowY: "auto" });
+  expect(await studioEditor.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+
+  await page.setViewportSize({ width: 1280, height: 720 });
   const studioSurface = page.locator("#alpha-tab .at-surface").first();
   await expect(studioSurface).toBeVisible();
   const initialStudioHeight = (await studioSurface.boundingBox())!.height;
@@ -459,6 +484,8 @@ test("keeps K331 responsive and terminates a cancelled analysis", async ({ page 
   const ranges = page.getByRole("list", { name: "分析片段" });
   await expect(page.getByRole("button", { name: "全部 123" })).toBeVisible();
   await expect(page.getByRole("button", { name: "未解决 21" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "待确认" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "全部", exact: true }).click();
   await expect(ranges.locator('[data-type="chord"]')).toHaveCount(100);
   await expect(ranges.locator('[data-type="unresolved"]')).toHaveCount(21);
   await expect(ranges.locator('[data-type="no-chord"]')).toHaveCount(2);

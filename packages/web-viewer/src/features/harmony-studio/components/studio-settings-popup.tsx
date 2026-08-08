@@ -29,7 +29,6 @@ export function StudioSettingsPopup({
   return (
     <ContextPopup anchor={anchor.current} open={open} onOpenChange={onOpenChange}>
       <div>
-        <p className={styles.sectionKicker}>{t("settingsKicker")}</p>
         <h3>{t("settings")}</h3>
         <details className={styles.popupSection} open={false}>
           <summary>{t("analysisScope")}</summary>

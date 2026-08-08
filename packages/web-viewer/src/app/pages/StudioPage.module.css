@@ -20,15 +20,6 @@
     gap: 8px;
   }
 
-  .sectionKicker {
-    margin: 0;
-    color: var(--accent-primary);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
   .analysisHeading > div > p:last-child,
   .editorHeading > div > p:last-child {
     margin: 0;
@@ -91,7 +82,7 @@
   }
 
   .analysisHeading h1 {
-    margin: 2px 0 4px;
+    margin: 0 0 4px;
     font-size: clamp(28px, 4vw, 40px);
     letter-spacing: -0.035em;
   }
@@ -197,6 +188,19 @@
   .previewControls {
     align-items: end;
     margin-top: 14px;
+  }
+
+  .previewToggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-height: var(--control-height-sm);
+    margin-top: var(--space-3);
+    color: var(--text-primary);
+    font-size: var(--font-size-caption);
+    font-weight: 650;
+    cursor: pointer;
   }
 
   .positionField {
@@ -460,6 +464,10 @@
   }
 
   @media (max-width: 960px) {
+    .analysisRegion {
+      overflow: auto;
+    }
+
     .commandBar {
       align-items: flex-start;
     }
@@ -487,9 +495,7 @@
       flex-direction: column;
     }
 
-    .scorePane,
     .analysisRegion {
-      overflow: visible;
       padding: 0;
     }
 

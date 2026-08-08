@@ -4,12 +4,6 @@ status: implemented
 
 # Studio 工作区调优设计规格
 
-## 实施记录
-
-- 日期：2026-07-19。
-- 范围：Studio 布局、Harmony Selection、有效和弦预览与 Preview Transport。
-- 事实边界：运行时代码、Zod schema、测试、Current ADR、`docs/architecture/harmony-analysis-system.md` 和根 `DESIGN.md` 高于本文。
-
 ## 目标
 
 Studio 应成为全宽、高密度的桌面和弦校对工作台：用户能同时阅读乐谱和检查完整分析结果，谱面与右侧有效和弦区间双向定位，并在 alphaTab 中预览最终将导出的和弦符号。
@@ -20,8 +14,6 @@ Studio 应成为全宽、高密度的桌面和弦校对工作台：用户能同�
 - 当前选择只是 Revision segment 的数组索引，不能与谱面或修正后的有效结果稳定联动。
 - 当前 alphaTab 不显示 Effective Harmony Projection。
 - 当前 Studio Preview Transport 只更新本地 React 状态，没有驱动 alphaTab。
-
-实现验收记录：Studio 已使用独立 runtime、可恢复 40/60 分栏、Effective Harmony Range master-detail、alphaTab Beat/Note 双向选择和完整有效和弦预览；Transport 与 soundfont/audio 状态均由 runtime snapshot 驱动。2026-07-19 的 `pnpm verify:fast`、`pnpm verify`（105 个测试文件、390 项测试及双构建）和 `pnpm verify:e2e` 均通过，Browser/Desktop E2E 分别 5/5，并使用 `K331-3_reviewed.mxl` 验证长列表选择。无音频的 Browser 自动化 renderer 保持 paused 或显示 audio-unavailable；Desktop E2E 覆盖实际 playing 与 runtime 关闭路径。
 
 ## 术语
 
@@ -90,7 +82,7 @@ Studio 应成为全宽、高密度的桌面和弦校对工作台：用户能同�
 - 乐谱只表达当前有效音乐结果，不用颜色区分来源。来源、置信度、未解决原因和修正状态留在右侧详情。
 - 预览投影必须能以 User Correction > source harmony > Analysis Revision 的优先级替换结果，不能在来源和弦旁重复叠加一个冲突标记。
 - 预览是从 Managed Score Copy 与当前本地 Document 派生的临时渲染输入，不修改 Managed Score Copy，不保存 alphaTab runtime，也不改变正式导出边界。
-- “显示和弦预览”是默认开启的设备级界面偏好。关闭时隐藏 Studio 派生标记；来源谱自身已有的和弦仍作为原谱内容显示。
+- “和弦预览”使用固定标签与 switch 表达状态，是默认开启的设备级界面偏好。关闭时隐藏 Studio 派生标记；来源谱自身已有的和弦仍作为原谱内容显示。
 - 只在已提交领域操作后刷新：选择候选、应用手动和弦、N.C.、重置、拆分、合并、移动边界，以及成功重新分析。结构化表单草稿变化不触发重渲染。
 - 预览刷新尽量保持缩放、滚动位置与 Harmony Selection。
 - 预览生成或重渲染失败时保留原始乐谱和右侧编辑能力，在乐谱栏就地显示可重试错误；保存与正式导出使用各自校验，不因预览失败被无条件阻断。

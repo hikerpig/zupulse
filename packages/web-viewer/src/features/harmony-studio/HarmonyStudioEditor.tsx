@@ -38,6 +38,22 @@ export function HarmonyStudioEditor({
   onNoChord,
 }: HarmonyStudioEditorProps) {
   const { t } = useTranslation("studio");
+  const kindLabels: Record<(typeof kinds)[number], string> = {
+    major: t("editor.kindMajor"),
+    minor: t("editor.kindMinor"),
+    dominant: t("editor.kindDominant"),
+    diminished: t("editor.kindDiminished"),
+    "half-diminished": t("editor.kindHalfDiminished"),
+    augmented: t("editor.kindAugmented"),
+    "suspended-second": t("editor.kindSuspendedSecond"),
+    "suspended-fourth": t("editor.kindSuspendedFourth"),
+    power: t("editor.kindPower"),
+  };
+  const degreeOperationLabels: Record<(typeof degreeOperations)[number], string> = {
+    add: t("editor.operationAdd"),
+    alter: t("editor.operationAlter"),
+    subtract: t("editor.operationSubtract"),
+  };
   const [root, setRoot] = useState<(typeof steps)[number]>("C");
   const [kind, setKind] = useState<(typeof kinds)[number]>("major");
   const [extension, setExtension] = useState("none");
@@ -64,7 +80,6 @@ export function HarmonyStudioEditor({
     <section className={styles.harmonyEditor} aria-labelledby="harmony-editor-title">
       <div className={styles.editorHeading}>
         <div>
-          <p className={styles.sectionKicker}>{t("editor.kicker")}</p>
           <h2 id="harmony-editor-title">{t("editor.title")}</h2>
           <p>{t("editor.subtitle")}</p>
         </div>
@@ -111,7 +126,6 @@ export function HarmonyStudioEditor({
       )}
       <ContextPopup anchor={builderButtonRef.current} open={builderOpen} onOpenChange={setBuilderOpen}>
         <div>
-          <p className={styles.sectionKicker}>{t("editor.builderKicker")}</p>
           <h3>{t("editor.builderTitle")}</h3>
           <div className={styles.chordFields}>
             <label className={styles.field}>
@@ -137,7 +151,7 @@ export function HarmonyStudioEditor({
               >
                 {kinds.map((item) => (
                   <option key={item} value={item}>
-                    {item}
+                    {kindLabels[item]}
                   </option>
                 ))}
               </select>
@@ -185,7 +199,7 @@ export function HarmonyStudioEditor({
                 >
                   {degreeOperations.map((operation) => (
                     <option key={operation} value={operation}>
-                      {operation}
+                      {degreeOperationLabels[operation]}
                     </option>
                   ))}
                 </select>
@@ -235,7 +249,7 @@ export function HarmonyStudioEditor({
             <ul className={styles.degreeList} aria-label={t("editor.selectedDegrees")}>
               {degrees.map((degree) => (
                 <li key={degree.value}>
-                  {degree.operation} {degree.alter} {degree.value}
+                  {degreeOperationLabels[degree.operation]} {degree.alter} {degree.value}
                   <button
                     type="button"
                     onClick={() => setDegrees((current) => current.filter((item) => item !== degree))}

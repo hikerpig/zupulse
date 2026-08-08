@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { HarmonyRangeViewItem } from "../harmony-range-view-model";
 import { HarmonyRangeWorkspace } from "../harmony-range-workspace";
 
@@ -27,12 +27,32 @@ const ranges: HarmonyRangeViewItem[] = [
   },
 ];
 
+afterEach(cleanup);
+
 describe("HarmonyRangeWorkspace", () => {
+  it("starts with unresolved ranges when the document needs confirmation", () => {
+    render(
+      <HarmonyRangeWorkspace ranges={ranges} selectedKey={ranges[0]!.key} onSelect={vi.fn()} editor={<input />} />,
+    );
+
+    expect(screen.getByRole("button", { name: "待确认" }).getAttribute("aria-pressed")).toBe("true");
+    expect(within(screen.getByRole("list", { name: "分析片段" })).getAllByRole("button")).toHaveLength(1);
+    expect(screen.queryByText("SEGMENTS")).toBeNull();
+  });
+
+  it("starts with all ranges when no confirmation is needed", () => {
+    render(<HarmonyRangeWorkspace ranges={[ranges[1]!]} onSelect={vi.fn()} editor={<input />} />);
+
+    expect(screen.getByRole("button", { name: "全部" }).getAttribute("aria-pressed")).toBe("true");
+    expect(within(screen.getByRole("list", { name: "分析片段" })).getAllByRole("button")).toHaveLength(1);
+  });
+
   it("keeps a filtered selection visible and completes the list-editor keyboard loop", () => {
     const onSelect = vi.fn();
     render(
       <HarmonyRangeWorkspace ranges={ranges} selectedKey={ranges[0]!.key} onSelect={onSelect} editor={<input />} />,
     );
+    fireEvent.click(screen.getByRole("button", { name: "全部" }));
     const list = screen.getByRole("list", { name: "分析片段" });
     const first = within(list).getByRole("button", { name: "片段 1，算法结果" });
     expect(within(first).getByTitle("算法结果").dataset.origin).toBe("analysis");

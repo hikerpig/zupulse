@@ -27,6 +27,7 @@ describe("HarmonyStudioEditor", () => {
     expect(screen.getByRole("button", { name: /^首选 C ·/ })).toBeTruthy();
     expect(screen.getByRole("button", { name: "标记为 N.C." })).toBeTruthy();
     expect(screen.queryByRole("textbox")).toBeNull();
+    expect(screen.queryByText("Chord inspector")).toBeNull();
     screen.getByRole("button", { name: /^首选 C ·/ }).click();
     expect(onSelect).toHaveBeenCalledTimes(1);
   });
@@ -84,6 +85,12 @@ describe("HarmonyStudioEditor", () => {
 
     await user.click(editor.getByRole("button", { name: "手动构建" }));
 
+    expect(screen.getByRole("option", { name: "大三和弦" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "major" })).toBeNull();
+    expect(screen.getByRole("option", { name: "添加" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "add" })).toBeNull();
+    expect(screen.queryByText("CHORD BUILDER")).toBeNull();
+
     await user.selectOptions(screen.getByRole("combobox", { name: "根音" }), "D");
     await user.selectOptions(screen.getByRole("combobox", { name: "和弦类型" }), "dominant");
     await user.selectOptions(screen.getByRole("combobox", { name: "扩展音" }), "9");
@@ -91,6 +98,7 @@ describe("HarmonyStudioEditor", () => {
     await user.selectOptions(screen.getByRole("combobox", { name: "度数" }), "5");
     await user.selectOptions(screen.getByRole("combobox", { name: "度数变化" }), "1");
     await user.click(screen.getByRole("button", { name: "添加度数" }));
+    expect(screen.getByRole("list", { name: "已选度数" }).textContent).toContain("变音 1 5");
     await user.selectOptions(screen.getByRole("combobox", { name: "低音" }), "F");
     await user.click(screen.getByRole("button", { name: "应用结构化和弦" }));
 

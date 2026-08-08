@@ -20,7 +20,9 @@ export function HarmonyRangeWorkspace({
   editor: ReactNode;
 }) {
   const { t } = useTranslation("studio");
-  const [filter, setFilter] = useState<HarmonyRangeFilter>("all");
+  const [filter, setFilter] = useState<HarmonyRangeFilter>(() =>
+    ranges.some((item) => item.effective.type === "unresolved") ? "unresolved" : "all",
+  );
   const displayedRanges = filterHarmonyRangeViewItems(ranges, filter, selectedKey);
   const selectedRange = ranges.find((item) => item.key === selectedKey);
   const selectedIsTemporarilyVisible =
@@ -39,7 +41,6 @@ export function HarmonyRangeWorkspace({
     <section className={styles.workspace} aria-labelledby="segments-title">
       <aside className={styles.rail}>
         <div className={styles.heading}>
-          <span>{t("range.kicker")}</span>
           <h3 id="segments-title">{t("range.title")}</h3>
           <p>{t("range.subtitle")}</p>
         </div>

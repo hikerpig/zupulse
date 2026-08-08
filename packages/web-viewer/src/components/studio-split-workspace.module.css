@@ -26,18 +26,13 @@
 
   @media (max-width: 960px) {
     .workspace {
-      display: flex;
-      height: auto;
-      min-height: auto;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-template-rows: minmax(240px, 42%) minmax(0, 1fr);
     }
 
     .splitter {
       display: none;
-    }
-
-    .pane {
-      overflow: visible;
     }
   }
 }

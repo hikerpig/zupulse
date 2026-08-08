@@ -23,29 +23,20 @@ export function installAppDiagnosticInstrumentation(
   const childProcessGone = (_event: unknown, details: unknown) => {
     void diagnostics.recordElectron({ code: "CHILD_PROCESS_GONE", ...safeProcessGoneFacts(details) });
   };
-  const uncaughtException = () => {
+  const uncaughtException = (_error: unknown, origin: unknown) => {
     void diagnostics.recordMain({
       code: "HOST_OPERATION_FAILED",
       operation: "app.runtime",
-      errorCode: "UNCAUGHT_EXCEPTION",
-    });
-  };
-  const unhandledRejection = () => {
-    void diagnostics.recordMain({
-      code: "HOST_OPERATION_FAILED",
-      operation: "app.runtime",
-      errorCode: "UNHANDLED_REJECTION",
+      errorCode: origin === "unhandledRejection" ? "UNHANDLED_REJECTION" : "UNCAUGHT_EXCEPTION",
     });
   };
 
   app.on("child-process-gone", childProcessGone);
   processTarget.on("uncaughtExceptionMonitor", uncaughtException);
-  processTarget.on("unhandledRejection", unhandledRejection);
 
   return () => {
     app.removeListener("child-process-gone", childProcessGone);
     processTarget.removeListener("uncaughtExceptionMonitor", uncaughtException);
-    processTarget.removeListener("unhandledRejection", unhandledRejection);
   };
 }
 

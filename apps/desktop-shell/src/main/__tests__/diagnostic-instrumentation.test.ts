@@ -42,16 +42,30 @@ describe("diagnostic instrumentation", () => {
 
     app.emit("child-process-gone", {}, { reason: "crashed", exitCode: 9, name: "/secret/helper" });
     processTarget.emit("uncaughtExceptionMonitor", new Error("secret exception"), "uncaughtException");
-    processTarget.emit("unhandledRejection", new Error("secret rejection"), Promise.resolve());
     await diagnostics.recordMain({ code: "APP_STARTED" });
     uninstall();
 
     const text = await readFile(join(root, "desktop.log"), "utf8");
     expect(text).toContain('"code":"CHILD_PROCESS_GONE"');
     expect(text).toContain('"errorCode":"UNCAUGHT_EXCEPTION"');
-    expect(text).toContain('"errorCode":"UNHANDLED_REJECTION"');
     expect(text).not.toContain("secret");
     expect(text).not.toContain("helper");
+  });
+
+  it("observes unhandled rejections without changing the process failure lifecycle", async () => {
+    const { diagnostics, root } = await createDiagnostics();
+    const app = new EventEmitter();
+    const processTarget = new EventEmitter();
+    const uninstall = installAppDiagnosticInstrumentation(app, diagnostics, processTarget);
+
+    expect(processTarget.listenerCount("unhandledRejection")).toBe(0);
+    processTarget.emit("uncaughtExceptionMonitor", new Error("secret rejection"), "unhandledRejection");
+    await diagnostics.recordMain({ code: "APP_STARTED" });
+    uninstall();
+
+    const text = await readFile(join(root, "desktop.log"), "utf8");
+    expect(text).toContain('"errorCode":"UNHANDLED_REJECTION"');
+    expect(text).not.toContain("secret");
   });
 
   it("maps window failures to allowlisted facts", async () => {

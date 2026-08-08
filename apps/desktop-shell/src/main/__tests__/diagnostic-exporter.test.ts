@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { gunzip } from "node:zlib";
 import { promisify } from "node:util";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { DiagnosticExporter } from "../diagnostic-exporter";
@@ -94,5 +94,20 @@ describe("DiagnosticExporter", () => {
       code: "DIAGNOSTIC_EXPORT_FAILED",
     });
     await expect(store.snapshot()).resolves.toBe(before);
+  });
+
+  it.skipIf(process.platform === "win32")("restricts permissions when overwriting an existing export", async () => {
+    const root = await tempRoot();
+    const destination = join(root, "export.jsonl.gz");
+    await writeFile(destination, "old", { mode: 0o644 });
+    const store = new DiagnosticStore(join(root, "logs"));
+    await store.append(`${validEvent}\n`);
+    const exporter = new DiagnosticExporter(store, {
+      showSaveDialog: vi.fn().mockResolvedValue({ canceled: false, filePath: destination }),
+    });
+
+    await exporter.export(undefined, { title: "Export", buttonLabel: "Save", filterName: "Compressed JSON Lines" });
+
+    expect((await stat(destination)).mode & 0o777).toBe(0o600);
   });
 });

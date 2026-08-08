@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { open } from "node:fs/promises";
 import { promisify } from "node:util";
 import { gzip } from "node:zlib";
 import { dialog, type BrowserWindow, type SaveDialogOptions } from "electron";
@@ -27,7 +27,18 @@ export class DiagnosticExporter {
     dependencies: DiagnosticExporterDependencies = {},
   ) {
     this.showSaveDialog = dependencies.showSaveDialog ?? defaultShowSaveDialog;
-    this.writeFile = dependencies.writeFile ?? ((filePath, data) => writeFile(filePath, data, { mode: 0o600 }));
+    this.writeFile =
+      dependencies.writeFile ??
+      (async (filePath, data) => {
+        const file = await open(filePath, "a", 0o600);
+        try {
+          await file.chmod(0o600);
+          await file.truncate();
+          await file.writeFile(data);
+        } finally {
+          await file.close();
+        }
+      });
     this.now = dependencies.now ?? (() => new Date());
   }
 

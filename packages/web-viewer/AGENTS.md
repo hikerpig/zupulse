@@ -12,6 +12,9 @@
 - Before changing UI, CSS, themes, layout, or interaction states, read the root `DESIGN.md`. Read the relevant
   files under `.design_library/zupulse-te-braun-theme` only when changing themes, tokens, or foundational
   components.
+- Before editing a product surface, state its target design scale, inspect the owning component and user-facing
+  tests, and list the interaction and data states affected by the change. Reuse an existing semantic token,
+  shared primitive, or current recommended implementation when one already owns the intended role.
 - Organize new or materially expanded features under `src/features/<feature>/`. Keep small features flat; create
   `components/`, `adapters/`, `model/`, `runtime/`, or product-semantic subdirectories only when that
   responsibility has enough content to form a real boundary. Follow
@@ -52,5 +55,8 @@
 - `src/app/App.tsx` is the route-composition reference.
 - `src/app/ViewerApplication.ts` is the host-port orchestration reference.
 - `src/app/__tests__/App.test.tsx` is the user-perspective UI testing reference.
+- After a UI change, review it against the root design contract's color, typography, layout, shape, motion, and
+  anti-pattern rules. Verify the relevant Light, Dark, desktop, narrow-screen, keyboard, and state scenarios;
+  omit a scenario only when it cannot affect the changed surface.
 - Start verification with the smallest relevant command:
   `pnpm vitest run packages/web-viewer/src/<area>`.

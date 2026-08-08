@@ -29,6 +29,8 @@ struct LifecycleAckPayload: Equatable {
 
 struct DiagnosticsWritePayload: Equatable {
     let code: String
+    let operation: String?
+    let errorCode: String?
     let durationMs: Double?
     let contentHashPrefix: String?
 }

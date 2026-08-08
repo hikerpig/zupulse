@@ -10,6 +10,7 @@ UI contract.
 | Feature                    | Contract                                                                             | Status    | Delivery    |
 | -------------------------- | ------------------------------------------------------------------------------------ | --------- | ----------- |
 | Harmony Analysis           | [`contracts/harmony-analysis.md`](contracts/harmony-analysis.md)                     | `current` | `partial`   |
+| Desktop Diagnostics        | [`contracts/desktop-diagnostics.md`](contracts/desktop-diagnostics.md)               | `current` | `available` |
 | Sheet Library              | [`contracts/sheet-library.md`](contracts/sheet-library.md)                           | `current` | `partial`   |
 | Viewer Playback Navigation | [`contracts/viewer-playback-navigation.md`](contracts/viewer-playback-navigation.md) | `current` | `available` |
 

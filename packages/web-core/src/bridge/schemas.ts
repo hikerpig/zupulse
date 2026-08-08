@@ -105,9 +105,29 @@ export const capabilitiesSchema = z
   })
   .strict();
 
+export const hostDiagnosticOperationSchema = z.enum([
+  "app.runtime",
+  "bridge.dispatch",
+  "library.refresh",
+  "library.import.select",
+  "library.open",
+  "playback-resume.read",
+  "renderer.load",
+  "renderer.preload",
+  "sidecar.read",
+  "studio.open",
+  "studio.preview",
+  "viewer.operation",
+]);
+
 export const diagnosticEventSchema = z
   .object({
     code: z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/),
+    operation: hostDiagnosticOperationSchema.optional(),
+    errorCode: z
+      .string()
+      .regex(/^[A-Z][A-Z0-9_]{0,63}$/)
+      .optional(),
     durationMs: z.number().nonnegative().optional(),
     contentHashPrefix: z
       .string()
@@ -186,7 +206,6 @@ export const bridgeRequestSchema = z.discriminatedUnion("type", [
       .strict(),
   ),
   envelope("diagnostics.write", diagnosticEventSchema),
-  envelope("diagnostics.openDirectory", z.object({}).strict()),
 ]);
 
 export const bridgeEventSchema = z.discriminatedUnion("type", [
@@ -298,7 +317,6 @@ export const bridgeResponseSchemas = {
   "playbackResume.write": z.object({}).strict(),
   "app.lifecycleAck": z.object({}).strict(),
   "diagnostics.write": z.object({}).strict(),
-  "diagnostics.openDirectory": z.object({}).strict(),
 } as const;
 
 export type BridgeRequest = z.infer<typeof bridgeRequestSchema>;

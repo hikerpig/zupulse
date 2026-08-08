@@ -20,6 +20,14 @@ describe("bridge schemas", () => {
         payload: {},
       }),
     ).toThrow();
+    expect(() =>
+      bridgeRequestSchema.parse({
+        bridgeVersion: BRIDGE_SCHEMA_VERSION,
+        correlationId: "obsolete-diagnostics-directory",
+        type: "diagnostics.openDirectory",
+        payload: {},
+      }),
+    ).toThrow();
   });
 
   it("rejects additional envelope and payload fields", () => {
@@ -49,6 +57,8 @@ describe("bridge schemas", () => {
       type: "diagnostics.write",
       payload: {
         code: "IMPORT_COMPLETE",
+        operation: "library.open",
+        errorCode: "IMPORT_FAILED",
         durationMs: 12,
         contentHashPrefix: "abcdef12",
       },
@@ -66,6 +76,24 @@ describe("bridge schemas", () => {
       bridgeRequestSchema.parse({
         ...valid,
         payload: { ...valid.payload, contentHashPrefix: hash },
+      }),
+    ).toThrow();
+    expect(() =>
+      bridgeRequestSchema.parse({
+        ...valid,
+        payload: { ...valid.payload, operation: "x".repeat(65) },
+      }),
+    ).toThrow();
+    expect(() =>
+      bridgeRequestSchema.parse({
+        ...valid,
+        payload: { ...valid.payload, operation: "future.operation" },
+      }),
+    ).toThrow();
+    expect(() =>
+      bridgeRequestSchema.parse({
+        ...valid,
+        payload: { ...valid.payload, errorCode: "not stable" },
       }),
     ).toThrow();
   });

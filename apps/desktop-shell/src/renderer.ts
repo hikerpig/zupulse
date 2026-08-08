@@ -29,6 +29,7 @@ import {
   type ViewerHost,
 } from "@zupulse/web-viewer";
 import { createDesktopDroppedImportSources, DesktopScoreFileGateway } from "./desktop-score-file-gateway";
+import { createDesktopDiagnosticReporter } from "./desktop-diagnostic-reporter";
 
 document.documentElement.classList.add("desktop-shell");
 installGlobalDragAndDropGuard(document);
@@ -146,7 +147,9 @@ function createElectronHost(
   acknowledgeLifecycle: (state: "suspend" | "prepare-close") => Promise<void>,
 ): ViewerHost {
   let storageWarningShown = false;
+  const reportDiagnostic = createDesktopDiagnosticReporter(bridge);
   return {
+    reportDiagnostic,
     subscribe(listener) {
       return bridge.subscribe((value) => {
         const event = bridgeEventSchema.parse(value);

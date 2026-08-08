@@ -3,6 +3,8 @@ import Foundation
 struct DiagnosticEvent: Codable, Equatable {
     let timestamp: String
     let code: String
+    let operation: String?
+    let errorCode: String?
     let durationMs: Double?
     let contentHashPrefix: String?
 }
@@ -27,12 +29,20 @@ final class DiagnosticLogger {
         self.timestamp = timestamp
     }
 
-    func record(code: String, durationMs: Double? = nil, contentHashPrefix: String? = nil) {
+    func record(
+        code: String,
+        operation: String? = nil,
+        errorCode: String? = nil,
+        durationMs: Double? = nil,
+        contentHashPrefix: String? = nil
+    ) {
         lock.lock()
         defer { lock.unlock() }
         let event = DiagnosticEvent(
             timestamp: timestamp(),
             code: code,
+            operation: operation,
+            errorCode: errorCode,
             durationMs: durationMs,
             contentHashPrefix: contentHashPrefix
         )

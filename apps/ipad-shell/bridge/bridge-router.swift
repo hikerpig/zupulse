@@ -176,6 +176,8 @@ final class BridgeRouter {
         if case let .diagnosticsWrite(payload) = envelope.payload {
             diagnosticLogger?.record(
                 code: payload.code,
+                operation: payload.operation,
+                errorCode: payload.errorCode,
                 durationMs: payload.durationMs,
                 contentHashPrefix: payload.contentHashPrefix
             )

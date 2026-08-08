@@ -54,6 +54,14 @@ Studio 中用于播放、定位、临时速度和区间试听的临时播放状�
 
 平台原生应用壳层。macOS 与 iOS 第一版负责文件访问、窗口导航、系统权限、本地存储、同步入口和原生能力桥接。
 
+## Host Diagnostic Event
+
+App Shell 记录的一条隐私安全、结构化运行事实，用于离线排查宿主、Bridge、持久化或生命周期故障。它不是 `ImportDiagnostic`、Harmony diagnostic 或产品行为遥测。
+
+## Diagnostic Export
+
+用户明确发起生成的本地诊断资料副本，包含经过验证的 Host Diagnostic Event 与安全环境摘要，由用户自行交给开发者离线排查。它不触发自动上传，也不是应用内日志查看器。
+
 ## iPad Practice Player
 
 原生 iPad 交付面，以本地 Sheet Library 和 Viewer 前台练习为首版核心。它不是 Desktop Shell 的全量

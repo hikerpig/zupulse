@@ -1,33 +1,111 @@
 import { diagnosticEventSchema } from "@zupulse/web-core";
-import { appendFile, mkdir, rename, rm, stat } from "node:fs/promises";
-import { join } from "node:path";
+import { z } from "zod";
+import type { BrowserWindow } from "electron";
+import { DiagnosticExporter, type DiagnosticExportResult } from "./diagnostic-exporter";
+import { DiagnosticStore } from "./diagnostic-store";
 
-export class DiagnosticLogger {
-  private chain = Promise.resolve();
+const diagnosticReasonSchema = z.enum([
+  "clean-exit",
+  "abnormal-exit",
+  "killed",
+  "crashed",
+  "oom",
+  "launch-failed",
+  "integrity-failure",
+]);
 
-  constructor(
-    private readonly directory: string,
-    private readonly maxBytes = 1024 * 1024,
-  ) {}
+const diagnosticInputSchema = diagnosticEventSchema
+  .extend({
+    reason: diagnosticReasonSchema.optional(),
+    exitCode: z.number().int().min(-2147483648).max(2147483647).optional(),
+  })
+  .strict();
 
-  async write(value: unknown): Promise<void> {
-    const event = diagnosticEventSchema.parse(value);
-    const operation = this.chain
-      .catch(() => undefined)
-      .then(async () => {
-        await mkdir(this.directory, { recursive: true });
-        const current = join(this.directory, "desktop.log");
-        const previous = join(this.directory, "desktop.log.1");
-        const size = await stat(current)
-          .then((info) => info.size)
-          .catch(() => 0);
-        if (size >= this.maxBytes) {
-          await rm(previous, { force: true });
-          await rename(current, previous);
-        }
-        await appendFile(current, `${JSON.stringify({ at: new Date().toISOString(), ...event })}\n`, { mode: 0o600 });
-      });
-    this.chain = operation;
-    return operation;
+export const persistedHostDiagnosticEventSchema = diagnosticInputSchema
+  .extend({
+    schemaVersion: z.literal(1),
+    at: z.iso.datetime(),
+    appVersion: z.string().min(1).max(128),
+    electronVersion: z.string().min(1).max(128),
+    platform: z.enum([
+      "aix",
+      "android",
+      "darwin",
+      "freebsd",
+      "haiku",
+      "linux",
+      "openbsd",
+      "sunos",
+      "win32",
+      "cygwin",
+      "netbsd",
+    ]),
+    arch: z
+      .string()
+      .min(1)
+      .max(32)
+      .regex(/^[a-z0-9_]+$/),
+    source: z.enum(["main", "renderer", "electron"]),
+  })
+  .strict();
+
+type DesktopDiagnosticsOptions = {
+  directory: string;
+  appVersion: string;
+  electronVersion: string;
+  platform: NodeJS.Platform;
+  arch: string;
+  now?: () => Date;
+};
+
+export class DesktopDiagnostics {
+  private readonly store: DiagnosticStore;
+  private readonly exporter: DiagnosticExporter;
+  private readonly now: () => Date;
+
+  constructor(private readonly options: DesktopDiagnosticsOptions) {
+    this.now = options.now ?? (() => new Date());
+    this.store = new DiagnosticStore(options.directory, { now: this.now });
+    this.exporter = new DiagnosticExporter(this.store, { now: this.now });
+  }
+
+  async initialize(): Promise<void> {
+    await this.store.initialize().catch(() => undefined);
+  }
+
+  recordMain(value: unknown): Promise<void> {
+    return this.record("main", value);
+  }
+
+  recordRenderer(value: unknown): Promise<void> {
+    return this.record("renderer", value);
+  }
+
+  recordElectron(value: unknown): Promise<void> {
+    return this.record("electron", value);
+  }
+
+  export(
+    window: BrowserWindow | undefined,
+    labels: { title: string; buttonLabel: string; filterName: string },
+  ): Promise<DiagnosticExportResult> {
+    return this.exporter.export(window, labels);
+  }
+
+  private async record(source: "main" | "renderer" | "electron", value: unknown): Promise<void> {
+    const input = diagnosticInputSchema.safeParse(value);
+    if (!input.success) return;
+    const event = persistedHostDiagnosticEventSchema.safeParse({
+      ...input.data,
+      schemaVersion: 1,
+      at: this.now().toISOString(),
+      appVersion: this.options.appVersion,
+      electronVersion: this.options.electronVersion,
+      platform: this.options.platform,
+      arch: this.options.arch,
+      source,
+    });
+    if (!event.success) return;
+    await this.store.append(`${JSON.stringify(event.data)}\n`).catch(() => undefined);
   }
 }

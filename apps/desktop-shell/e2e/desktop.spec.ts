@@ -1,5 +1,7 @@
 import { expect, test, _electron as electron, type ElectronApplication } from "@playwright/test";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { gunzip } from "node:zlib";
+import { promisify } from "node:util";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,6 +15,7 @@ const harmonySelectionFixture = fileURLToPath(
   new URL("../../../test-fixtures/musicxml/generated/harmony-selection.musicxml", import.meta.url),
 );
 const reviewedFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/K331-3_reviewed.mxl", import.meta.url));
+const gunzipAsync = promisify(gunzip);
 
 async function launch(userData: string): Promise<ElectronApplication> {
   try {
@@ -113,12 +116,32 @@ test("persists locale and keeps renderer and application menu synchronized", asy
     await window.getByRole("menuitemradio", { name: "简体中文" }).click();
     await window.getByRole("link", { name: "曲谱库", exact: true }).click();
     await expect(window.getByRole("heading", { name: "曲谱库" })).toBeVisible();
+    await expect
+      .poll(() =>
+        app.evaluate(
+          ({ Menu }) =>
+            Menu.getApplicationMenu()
+              ?.items.find((item) => item.label === "帮助")
+              ?.submenu?.items.map((item) => item.label) ?? [],
+        ),
+      )
+      .toContain("导出诊断信息…");
     await window.getByRole("button", { name: "语言" }).click();
     await window.getByRole("menuitemradio", { name: "English" }).click();
     await openLibrary(window);
     await expect
       .poll(() => app.evaluate(({ Menu }) => Menu.getApplicationMenu()?.items.map((item) => item.label) ?? []))
       .toContain("File");
+    await expect
+      .poll(() =>
+        app.evaluate(
+          ({ Menu }) =>
+            Menu.getApplicationMenu()
+              ?.items.find((item) => item.label === "Help")
+              ?.submenu?.items.map((item) => item.label) ?? [],
+        ),
+      )
+      .toContain("Export Diagnostic Information…");
     await app.close();
 
     app = await launch(userData);
@@ -127,6 +150,63 @@ test("persists locale and keeps renderer and application menu synchronized", asy
     await expect(window.getByRole("button", { name: "Language" })).toBeVisible();
   } finally {
     await app.close().catch(() => undefined);
+    await rm(userData, { recursive: true, force: true });
+  }
+});
+
+test("exports validated diagnostics from the native Help menu", async () => {
+  const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-diagnostics-"));
+  const exportPath = join(userData, "diagnostics.jsonl.gz");
+  const app = await launch(userData);
+  try {
+    await app.firstWindow();
+    const menuItemFound = await app.evaluate(({ BrowserWindow, dialog, Menu }, path) => {
+      const state = { saveDialogCalled: false, errorMessage: "" };
+      (globalThis as unknown as { diagnosticExportE2E: typeof state }).diagnosticExportE2E = state;
+      dialog.showSaveDialog = async () => {
+        state.saveDialogCalled = true;
+        return { canceled: false, filePath: path };
+      };
+      dialog.showMessageBox = async (
+        _windowOrOptions: Electron.BaseWindow | Electron.MessageBoxOptions,
+        _options?: Electron.MessageBoxOptions,
+      ): Promise<Electron.MessageBoxReturnValue> => {
+        state.errorMessage = "shown";
+        return { response: 0, checkboxChecked: false };
+      };
+      const item = Menu.getApplicationMenu()?.getMenuItemById("export-diagnostics");
+      item?.click(item, BrowserWindow.getAllWindows()[0]!, {} as Electron.KeyboardEvent);
+      return item !== undefined;
+    }, exportPath);
+    expect(menuItemFound).toBe(true);
+    await expect
+      .poll(() =>
+        app.evaluate(() =>
+          Boolean(
+            (globalThis as unknown as { diagnosticExportE2E?: { saveDialogCalled: boolean } }).diagnosticExportE2E
+              ?.saveDialogCalled,
+          ),
+        ),
+      )
+      .toBe(true);
+
+    await expect
+      .poll(async () =>
+        readFile(exportPath)
+          .then((data) => data.byteLength > 0)
+          .catch(() => false),
+      )
+      .toBe(true);
+    const jsonl = String(await gunzipAsync(await readFile(exportPath)));
+    const events = jsonl
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    expect(events).toEqual(expect.arrayContaining([expect.objectContaining({ code: "APP_STARTED", source: "main" })]));
+    expect(jsonl).not.toContain(userData);
+  } finally {
+    await app.close();
     await rm(userData, { recursive: true, force: true });
   }
 });

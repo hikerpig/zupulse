@@ -31,7 +31,6 @@ export function LibraryToolbar({
       <div className={`${pageStyles.contextBar} ${styles.libraryContextBar}`}>
         <div className={`${pageStyles.contextMain} ${styles.libraryContextMain}`}>
           <h1 className={`${pageStyles.contextTitle} ${styles.libraryTitle}`}>{t("title")}</h1>
-          <p className={pageStyles.contextSubtitle}>{t("subtitle")}</p>
         </div>
         <div className={`${pageStyles.contextActions} ${styles.libraryContextActions}`}>
           <DialogTrigger render={<Button tone="primary" disabled={loading || importing} />}>

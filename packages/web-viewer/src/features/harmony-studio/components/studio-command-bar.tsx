@@ -32,6 +32,8 @@ export function StudioCommandBar({
   const previewButtonRef = useRef<HTMLButtonElement>(null);
   const document = studio.document;
   if (!document) return null;
+  const canSave =
+    studio.status === "unsaved" || (studio.status === "error" && studio.error?.code === "studio-save-failed");
 
   return (
     <>
@@ -75,7 +77,12 @@ export function StudioCommandBar({
                 {t("reanalyze")}
               </button>
             )}
-            <button className="primary-button" type="button" onClick={() => void application.flush(libraryScoreId)}>
+            <button
+              className={canSave ? "primary-button" : undefined}
+              type="button"
+              disabled={!canSave}
+              onClick={() => void application.flush(libraryScoreId)}
+            >
               {t("save")}
             </button>
             <button

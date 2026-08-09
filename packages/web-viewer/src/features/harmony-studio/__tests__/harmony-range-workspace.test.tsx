@@ -36,6 +36,8 @@ describe("HarmonyRangeWorkspace", () => {
     );
 
     expect(screen.getByRole("button", { name: "待确认" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "待确认" }).textContent).toContain("1");
+    expect(screen.queryByRole("status", { name: "分析进度统计" })).toBeNull();
     expect(within(screen.getByRole("list", { name: "分析片段" })).getAllByRole("button")).toHaveLength(1);
     expect(screen.queryByText("SEGMENTS")).toBeNull();
   });
@@ -67,6 +69,7 @@ describe("HarmonyRangeWorkspace", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "已修正" }));
     expect(screen.getByRole("status", { name: "筛选选择说明" })).toBeTruthy();
+    expect(screen.getByRole("status", { name: "筛选选择说明" }).textContent).toContain("当前片段");
     expect(within(list).getAllByRole("button")).toHaveLength(2);
   });
 });

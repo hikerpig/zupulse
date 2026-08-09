@@ -36,10 +36,7 @@ export function StudioAnalysisPanel({
   return (
     <section aria-label={t("analysisRegion")}>
       <div className={styles.analysisHeading}>
-        <div>
-          <h1>{t("title")}</h1>
-          <p>{t("subtitle")}</p>
-        </div>
+        <h1>{t("title")}</h1>
       </div>
       {!storageAvailable ? (
         <p className={styles.alert} role="alert">

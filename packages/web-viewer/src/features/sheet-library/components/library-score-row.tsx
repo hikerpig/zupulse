@@ -1,5 +1,5 @@
 import { memo, type RefObject } from "react";
-import { ArrowRight, Download, MoreHorizontal, PenLine, Star, Trash2 } from "lucide-react";
+import { ChevronRight, Download, MoreHorizontal, PenLine, Star, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { LibraryScoreSummary } from "@zupulse/web-core";
 import {
@@ -91,7 +91,7 @@ export const LibraryScoreRow = memo(function LibraryScoreRow({
             ) : null}
           </span>
         </span>
-        <ArrowRight className={styles.libraryActionIndicator} aria-hidden="true" size={16} />
+        <ChevronRight className={styles.libraryActionIndicator} aria-hidden="true" size={16} />
       </button>
 
       <div className={styles.libraryRowActions}>

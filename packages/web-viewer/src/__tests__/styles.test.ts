@@ -37,7 +37,7 @@ describe("alphaTab playback cursor styles", () => {
     expect(splitCss).toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.splitter\s*{[^}]*display:\s*none;/s);
     expect(splitCss).not.toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.pane\s*{[^}]*overflow:\s*visible;/s);
     expect(studioCss).not.toMatch(/\.exportBar\s*{/);
-    expect(studioCss).toMatch(/\.analysisRegion\s*{[^}]*padding:\s*20px 24px;/s);
+    expect(studioCss).toMatch(/\.analysisRegion\s*{[^}]*padding:\s*12px 16px;/s);
     expect(studioCss).toMatch(/@media \(max-width:\s*960px\)[\s\S]*?\.analysisRegion\s*{[^}]*overflow:\s*auto;/s);
     expect(studioCss).toMatch(/\.utilityGrid\s*>\s*details\s*{[^}]*align-self:\s*start;[^}]*height:\s*fit-content;/s);
   });
@@ -65,7 +65,7 @@ describe("alphaTab playback cursor styles", () => {
     );
   });
 
-  it("reserves card boundaries for the primary Studio workspace and sticky export action", async () => {
+  it("keeps the primary Studio workspace as a continuous bordered surface", async () => {
     const [studioCss, rangeCss] = await Promise.all([
       source("../app/pages/StudioPage.module.css"),
       source("../features/harmony-studio/harmony-range-workspace.module.css"),
@@ -82,7 +82,30 @@ describe("alphaTab playback cursor styles", () => {
       /\.degreeEditor\s*{[^}]*border:\s*0;[^}]*border-top:\s*1px solid var\(--border-default\);/s,
     );
     expect(studioCss).not.toMatch(/\.exportBar\s*{/);
-    expect(rangeCss).toMatch(/\.workspace\s*{[^}]*border:\s*1px solid var\(--border-default\);/s);
+    expect(rangeCss).toMatch(
+      /\.workspace\s*{[^}]*border:\s*1px solid var\(--border-default\);[^}]*border-radius:\s*0;[^}]*box-shadow:\s*none;/s,
+    );
+    expect(studioCss).toMatch(/\.studioShell\s*{[^}]*background:\s*var\(--bg-app\);/s);
+    expect(studioCss).toMatch(/\.analysisHeading h1\s*{[^}]*font-size:\s*22px;/s);
+  });
+
+  it("keeps the populated Library header flat and its row affordance neutral", async () => {
+    const [css, toolbarSource, rowSource] = await Promise.all([
+      source("../features/SheetLibrary.module.css"),
+      source("../features/sheet-library/components/library-toolbar.tsx"),
+      source("../features/sheet-library/components/library-score-row.tsx"),
+    ]);
+
+    expect(css).toMatch(/\.libraryHeaderSticky\s*{[^}]*background:\s*var\(--bg-shell\);/s);
+    expect(css).not.toMatch(/\.libraryHeaderSticky\s*{[^}]*backdrop-filter:/s);
+    expect(toolbarSource).not.toContain('t("subtitle")');
+    expect(rowSource).toContain("ChevronRight");
+    expect(css).toMatch(
+      /\.libraryActionIndicator\s*{[^}]*color:\s*var\(--text-tertiary\);[^}]*transition:[^}]*transform 140ms ease;/s,
+    );
+    expect(css).toMatch(
+      /\.libraryOpenAction:hover \.libraryActionIndicator,[\s\S]*?\.libraryOpenAction:focus-visible \.libraryActionIndicator\s*{[^}]*transform:\s*translateX\(4px\);/s,
+    );
   });
 
   it("loads Space Grotesk from Google Fonts and permits only its hosts", async () => {

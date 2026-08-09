@@ -380,6 +380,7 @@ export const zhCN = {
       analysisCount: "算法 {{count}}",
       temporarySelectionLabel: "筛选选择说明",
       temporarySelection: "当前选择不符合筛选条件，已临时显示。",
+      currentSelection: "当前片段",
       list: "分析片段",
       segment: "片段 {{number}}，{{origin}}",
       originSource: "谱内和弦",

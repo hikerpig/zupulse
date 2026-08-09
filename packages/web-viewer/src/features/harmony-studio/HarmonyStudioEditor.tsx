@@ -81,7 +81,6 @@ export function HarmonyStudioEditor({
       <div className={styles.editorHeading}>
         <div>
           <h2 id="harmony-editor-title">{t("editor.title")}</h2>
-          <p>{t("editor.subtitle")}</p>
         </div>
         <div className={styles.editorButtons}>
           <button ref={builderButtonRef} type="button" onClick={() => setBuilderOpen(true)}>

@@ -128,6 +128,21 @@ describe("SheetLibrary import summary", () => {
 });
 
 describe("SheetLibrary score actions", () => {
+  it("keeps the populated library header task-focused", () => {
+    render(
+      <SheetLibrary
+        application={libraryApplication()}
+        scores={[libraryScore()]}
+        loading={false}
+        {...emptyImportProps()}
+        onOpen={() => undefined}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "曲谱库" })).toBeTruthy();
+    expect(screen.queryByText("曲谱保存在这台设备上，可离线使用。")).toBeNull();
+  });
+
   it("exposes opening, favorite, and management as distinct controls", async () => {
     const application = libraryApplication();
     const onOpen = vi.fn();

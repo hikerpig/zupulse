@@ -35,61 +35,36 @@ export function HarmonyRangeWorkspace({
 
   const unresolvedCount = ranges.filter((item) => item.effective.type === "unresolved").length;
   const correctedCount = ranges.filter((item) => item.origin === "correction").length;
-  const analysisCount = ranges.filter((item) => item.origin === "analysis").length;
+  const filterCount = (value: HarmonyRangeFilter) =>
+    value === "all" ? ranges.length : value === "unresolved" ? unresolvedCount : correctedCount;
 
   return (
     <section className={styles.workspace} aria-labelledby="segments-title">
       <aside className={styles.rail}>
         <div className={styles.heading}>
           <h3 id="segments-title">{t("range.title")}</h3>
-          <p>{t("range.subtitle")}</p>
         </div>
         <div className={styles.filters} role="group" aria-label={t("range.filters")}>
-          {(["all", "unresolved", "corrected"] as const).map((value) => (
-            <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>
-              {t(
-                value === "all"
-                  ? "range.all"
-                  : value === "unresolved"
-                    ? "range.unresolvedFilter"
-                    : "range.correctedFilter",
-              )}
-            </button>
-          ))}
-        </div>
-        <div className={styles.stats} role="status" aria-label={t("range.stats")}>
-          <button type="button" aria-pressed={filter === "all"} onClick={() => setFilter("all")}>
-            {t("range.allCount", { count: ranges.length })}
-          </button>
-          <span className={styles.statsDivider}>|</span>
-          <button
-            type="button"
-            aria-pressed={filter === "unresolved"}
-            onClick={() => setFilter("unresolved")}
-            className={styles.statItem}
-          >
-            <span className={styles.statDot} data-origin="analysis"></span>
-            {t("range.unresolvedCount", { count: unresolvedCount })}
-          </button>
-          <span className={styles.statsDivider}>|</span>
-          <button
-            type="button"
-            aria-pressed={filter === "corrected"}
-            onClick={() => setFilter("corrected")}
-            className={styles.statItem}
-          >
-            <span className={styles.statDot} data-origin="correction"></span>
-            {t("range.correctedCount", { count: correctedCount })}
-          </button>
-          <span className={styles.statsDivider}>|</span>
-          <button type="button" className={styles.statItem}>
-            <span className={styles.statDot} data-origin="analysis"></span>
-            {t("range.analysisCount", { count: analysisCount })}
-          </button>
+          {(["unresolved", "all", "corrected"] as const).map((value) => {
+            const label = t(
+              value === "all"
+                ? "range.all"
+                : value === "unresolved"
+                  ? "range.unresolvedFilter"
+                  : "range.correctedFilter",
+            );
+            return (
+              <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>
+                <span>{label}</span>
+                <span className={styles.filterCount}>{filterCount(value)}</span>
+              </button>
+            );
+          })}
         </div>
         {selectedIsTemporarilyVisible ? (
           <p className={styles.filterNotice} role="status" aria-label={t("range.temporarySelectionLabel")}>
-            {t("range.temporarySelection")}
+            <strong>{t("range.currentSelection")}</strong>
+            <span className="sr-only">{t("range.temporarySelection")}</span>
           </p>
         ) : null}
         <div ref={listRef} className={`${styles.list} scrollable`} role="list" aria-label={t("range.list")}>

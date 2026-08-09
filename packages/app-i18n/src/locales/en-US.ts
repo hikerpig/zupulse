@@ -387,6 +387,7 @@ export const enUS = {
       analysisCount: "Analysis {{count}}",
       temporarySelectionLabel: "Filtered selection note",
       temporarySelection: "The current selection does not match the filter and is temporarily visible.",
+      currentSelection: "Current segment",
       list: "Analysis segments",
       segment: "Segment {{number}}, {{origin}}",
       originSource: "Score harmony",

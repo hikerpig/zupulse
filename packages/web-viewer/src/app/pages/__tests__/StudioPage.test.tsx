@@ -46,6 +46,7 @@ describe("StudioPage", () => {
       </MemoryRouter>,
     );
     expect(screen.getByRole("heading", { level: 1, name: "和弦分析" })).toBeTruthy();
+    expect(screen.queryByText("选择片段并确认候选，或使用结构化字段精确修正。")).toBeNull();
     expect(screen.queryByText("Harmony Analysis")).toBeNull();
     expect(screen.queryByText("Chord workspace")).toBeNull();
     expect(screen.queryByText("等待曲谱加载")).toBeNull();
@@ -123,6 +124,43 @@ describe("StudioPage", () => {
     );
 
     expect(screen.getByRole("status", { name: "分析文档状态" }).textContent).toBe(expected);
+  });
+
+  it.each([
+    ["ready", true],
+    ["saving", true],
+    ["analyzing", true],
+    ["unsaved", false],
+  ] as const)("makes Save actionable only when the %s document has unsaved corrections", (status, disabled) => {
+    const snapshot = {
+      libraryScoreId: "score-1",
+      status,
+      document: {
+        activeRevision: { segments: [], parameters: { scope: { includedTrackIds: ["track-1"] } } },
+        corrections: [],
+        annotationTarget: { trackId: "track-1", staffIndex: 0 },
+      },
+    };
+    const application = {
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      hasHarmonyAnalysisStorage: () => true,
+      open: async () => undefined,
+      undo: () => undefined,
+      redo: () => undefined,
+      setScope: async () => undefined,
+      setAnnotationTarget: async () => undefined,
+    } as never;
+
+    render(
+      <MemoryRouter initialEntries={["/studio/score-1"]}>
+        <Routes>
+          <Route path="/studio/:libraryScoreId" element={<StudioPage application={application} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect((screen.getByRole("button", { name: "保存" }) as HTMLButtonElement).disabled).toBe(disabled);
   });
 
   it("does not expose the missing-score heading after the score session is active", () => {
@@ -321,6 +359,8 @@ describe("StudioPage", () => {
       </MemoryRouter>,
     );
     const user = userEvent.setup();
+    expect(screen.queryByText("选择片段进行和弦校对。")).toBeNull();
+    expect(screen.queryByText("候选按置信度排序，也可以手动构建。")).toBeNull();
     await user.click(within(view.container).getByRole("button", { name: "分析设置" }));
     expect(screen.getByRole("option", { name: "track-2" })).toBeTruthy();
     expect(screen.queryByText("SETTINGS")).toBeNull();
@@ -339,7 +379,7 @@ describe("StudioPage", () => {
     expect(document.activeElement).toBe(within(view.container).getByRole("region", { name: "和弦编辑器" }));
     await user.keyboard("{Escape}");
     expect(document.activeElement).toBe(within(segments).getByRole("button", { name: "片段 2，算法结果" }));
-    await user.click(within(view.container).getByRole("button", { name: "已修正" }));
+    await user.click(within(view.container).getByRole("button", { name: "已修正 0" }));
     expect(within(view.container).getByRole("status", { name: "筛选选择说明" }).textContent).toContain(
       "当前选择不符合筛选条件，已临时显示",
     );

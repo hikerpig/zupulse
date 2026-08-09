@@ -394,7 +394,7 @@ test("opens a MusicXML Library Score in Studio and restores its saved document",
   expect(mobileAnalysisBox.y + mobileAnalysisBox.height).toBeLessThanOrEqual(844);
   await expect(analysisPane).toHaveCSS("overflow-y", "auto");
 
-  await page.setViewportSize({ width: 1280, height: 568 });
+  await page.setViewportSize({ width: 1280, height: 480 });
   const studioEditor = page.getByRole("region", { name: "和弦编辑器" });
   await expect(studioEditor).toBeVisible();
   expect(
@@ -482,10 +482,12 @@ test("keeps K331 responsive and terminates a cancelled analysis", async ({ page 
   await expect(documentStatus).toContainText("已保存", { timeout: 30_000 });
   await expect(page.getByText("预览不可用：无法在当前乐谱上显示和弦预览")).toHaveCount(0);
   const ranges = page.getByRole("list", { name: "分析片段" });
-  await expect(page.getByRole("button", { name: "全部 123" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "未解决 21" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "待确认" })).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "全部", exact: true }).click();
+  const allFilter = page.getByRole("button", { name: "全部", exact: true });
+  const unresolvedFilter = page.getByRole("button", { name: "待确认", exact: true });
+  await expect(allFilter).toContainText("123");
+  await expect(unresolvedFilter).toContainText("21");
+  await expect(unresolvedFilter).toHaveAttribute("aria-pressed", "true");
+  await allFilter.click();
   await expect(ranges.locator('[data-type="chord"]')).toHaveCount(100);
   await expect(ranges.locator('[data-type="unresolved"]')).toHaveCount(21);
   await expect(ranges.locator('[data-type="no-chord"]')).toHaveCount(2);

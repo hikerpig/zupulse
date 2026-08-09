@@ -482,8 +482,8 @@ test("keeps K331 responsive and terminates a cancelled analysis", async ({ page 
   await expect(documentStatus).toContainText("已保存", { timeout: 30_000 });
   await expect(page.getByText("预览不可用：无法在当前乐谱上显示和弦预览")).toHaveCount(0);
   const ranges = page.getByRole("list", { name: "分析片段" });
-  const allFilter = page.getByRole("button", { name: "全部", exact: true });
-  const unresolvedFilter = page.getByRole("button", { name: "待确认", exact: true });
+  const allFilter = page.getByRole("button", { name: "全部 123", exact: true });
+  const unresolvedFilter = page.getByRole("button", { name: "待确认 21", exact: true });
   await expect(allFilter).toContainText("123");
   await expect(unresolvedFilter).toContainText("21");
   await expect(unresolvedFilter).toHaveAttribute("aria-pressed", "true");

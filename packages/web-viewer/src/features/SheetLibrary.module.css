@@ -469,6 +469,17 @@
   }
 
   /* ── Responsive ────────────────────────────────────────── */
+  @container (max-width: 900px) {
+    .libraryIdentity {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+    .libraryMeta {
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+  }
+
   @container (max-width: 620px) {
     .libraryContextBar {
       display: grid;
@@ -500,14 +511,6 @@
     .libraryOpenAction {
       grid-column: 1 / -1;
       padding-bottom: 10px;
-    }
-    .libraryIdentity {
-      grid-template-columns: 1fr;
-      gap: 4px;
-    }
-    .libraryMeta {
-      justify-content: flex-start;
-      flex-wrap: wrap;
     }
     .libraryRowActions {
       grid-column: 2;

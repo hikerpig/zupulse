@@ -35,8 +35,7 @@ describe("HarmonyRangeWorkspace", () => {
       <HarmonyRangeWorkspace ranges={ranges} selectedKey={ranges[0]!.key} onSelect={vi.fn()} editor={<input />} />,
     );
 
-    expect(screen.getByRole("button", { name: "待确认" }).getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByRole("button", { name: "待确认" }).textContent).toContain("1");
+    expect(screen.getByRole("button", { name: "待确认 1" }).getAttribute("aria-pressed")).toBe("true");
     expect(screen.queryByRole("status", { name: "分析进度统计" })).toBeNull();
     expect(within(screen.getByRole("list", { name: "分析片段" })).getAllByRole("button")).toHaveLength(1);
     expect(screen.queryByText("SEGMENTS")).toBeNull();
@@ -45,7 +44,7 @@ describe("HarmonyRangeWorkspace", () => {
   it("starts with all ranges when no confirmation is needed", () => {
     render(<HarmonyRangeWorkspace ranges={[ranges[1]!]} onSelect={vi.fn()} editor={<input />} />);
 
-    expect(screen.getByRole("button", { name: "全部" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "全部 1" }).getAttribute("aria-pressed")).toBe("true");
     expect(within(screen.getByRole("list", { name: "分析片段" })).getAllByRole("button")).toHaveLength(1);
   });
 
@@ -54,7 +53,7 @@ describe("HarmonyRangeWorkspace", () => {
     render(
       <HarmonyRangeWorkspace ranges={ranges} selectedKey={ranges[0]!.key} onSelect={onSelect} editor={<input />} />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "全部" }));
+    fireEvent.click(screen.getByRole("button", { name: "全部 2" }));
     const list = screen.getByRole("list", { name: "分析片段" });
     const first = within(list).getByRole("button", { name: "片段 1，算法结果" });
     expect(within(first).getByTitle("算法结果").dataset.origin).toBe("analysis");
@@ -67,7 +66,7 @@ describe("HarmonyRangeWorkspace", () => {
     fireEvent.keyDown(document.activeElement!, { key: "Escape" });
     expect(document.activeElement).toBe(first);
 
-    fireEvent.click(screen.getByRole("button", { name: "已修正" }));
+    fireEvent.click(screen.getByRole("button", { name: "已修正 1" }));
     expect(screen.getByRole("status", { name: "筛选选择说明" })).toBeTruthy();
     expect(screen.getByRole("status", { name: "筛选选择说明" }).textContent).toContain("当前片段");
     expect(within(list).getAllByRole("button")).toHaveLength(2);

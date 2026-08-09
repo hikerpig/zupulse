@@ -379,7 +379,7 @@ describe("StudioPage", () => {
     expect(document.activeElement).toBe(within(view.container).getByRole("region", { name: "和弦编辑器" }));
     await user.keyboard("{Escape}");
     expect(document.activeElement).toBe(within(segments).getByRole("button", { name: "片段 2，算法结果" }));
-    await user.click(within(view.container).getByRole("button", { name: "已修正" }));
+    await user.click(within(view.container).getByRole("button", { name: "已修正 0" }));
     expect(within(view.container).getByRole("status", { name: "筛选选择说明" }).textContent).toContain(
       "当前选择不符合筛选条件，已临时显示",
     );

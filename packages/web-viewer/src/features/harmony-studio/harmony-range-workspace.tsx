@@ -54,17 +54,9 @@ export function HarmonyRangeWorkspace({
                   : "range.correctedFilter",
             );
             return (
-              <button
-                key={value}
-                type="button"
-                aria-label={label}
-                aria-pressed={filter === value}
-                onClick={() => setFilter(value)}
-              >
+              <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>
                 <span>{label}</span>
-                <span className={styles.filterCount} aria-hidden="true">
-                  {filterCount(value)}
-                </span>
+                <span className={styles.filterCount}>{filterCount(value)}</span>
               </button>
             );
           })}

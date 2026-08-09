@@ -106,6 +106,9 @@ describe("alphaTab playback cursor styles", () => {
     expect(css).toMatch(
       /\.libraryOpenAction:hover \.libraryActionIndicator,[\s\S]*?\.libraryOpenAction:focus-visible \.libraryActionIndicator\s*{[^}]*transform:\s*translateX\(4px\);/s,
     );
+    expect(css).toMatch(
+      /@container \(max-width:\s*900px\)[\s\S]*?\.libraryIdentity\s*{[^}]*grid-template-columns:\s*1fr;[^}]*gap:\s*4px;/s,
+    );
   });
 
   it("loads Space Grotesk from Google Fonts and permits only its hosts", async () => {

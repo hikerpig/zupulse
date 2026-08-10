@@ -119,6 +119,16 @@ deep-import Feature B 的内部文件；真正跨 feature 的 UI primitive 提�
 
 基础组件 API 以组合为主。例如 `Dialog` 暴露 `Trigger`、`Popup`、`Title`，不设计一个包含几十个配置项的 `AppDialog`。业务文案、权限判断和 controller 调用不能进入基础组件。
 
+普通 CTA、icon-only action、standard labeled field 与 generic overlay anatomy 默认由
+`src/components/ui` 拥有。已有 primitive 覆盖对应角色时，Feature 不得重新组合第三方 anatomy 或建立
+平行的 action hierarchy。表达 score、segment、loop、track、transport、chord 或 drop target 等产品对象的
+控件可以保留原生 Feature 实现，但必须消费 semantic tokens，并覆盖可访问名称及相关的 focus、disabled、
+selected 与 error 状态。
+
+新的 generic visual primitive 至少需要两个当前消费者共享同一语义角色；单一 Feature 不为假设中的复用
+预建 API。为集中 Base UI 等第三方 anatomy 而增加的薄 wrapper 属于 dependency ownership adapter，不承担
+业务文案、领域状态或 speculative configuration。
+
 ### 为什么选择 Base UI
 
 - 无默认样式和 CSS 运行时，不会把 Material、企业后台或通用 SaaS 视觉带进乐谱工作区。

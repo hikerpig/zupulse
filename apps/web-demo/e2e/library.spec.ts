@@ -122,6 +122,22 @@ test("switches locale during playback without losing workspace state and keeps c
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
 
+test("keeps Viewer and Studio navigation within a 390px App Header", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/#/library");
+  await importFixture(page, "导入自己的曲谱");
+
+  const navigation = page.getByRole("navigation", { name: "主要页面" });
+  await expect(navigation.getByRole("link", { name: "首页", exact: true })).toBeHidden();
+  await expect.poll(() => navigation.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+  await navigation.getByRole("link", { name: "和弦工作室" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "和弦分析" })).toBeVisible();
+  await expect.poll(() => navigation.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
 test("persists independent metronome and count-in practice settings", async ({ page }) => {
   await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱", musicXmlFixture);

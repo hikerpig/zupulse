@@ -170,6 +170,10 @@
       display: none;
     }
 
+    .redundantHomeLink {
+      display: none;
+    }
+
     .navLink,
     .activeLink {
       font-size: 12px;

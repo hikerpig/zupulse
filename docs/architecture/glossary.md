@@ -76,6 +76,28 @@ App Shell 记录的一条隐私安全、结构化运行事实，用于离线排�
 共享 React 应用与受信任平台宿主之间的版本化通信协议。Electron 与 iPad 可以使用不同传输适配器，
 但文件访问、生命周期、持久化和其他平台能力不得因此产生不同的领域语义。
 
+## Anonymous telemetry language
+
+### Anonymous Installation
+
+匿名统计中的宿主本地身份。它不等价于自然人、账号或硬件设备；同一人使用多个宿主、清除本地存储或
+退出后重新启用匿名分享时，可以产生多个 Anonymous Installation。
+
+### Application Session
+
+一次应用运行周期。Browser 刷新或 Desktop 重新启动会创建新的 Application Session；它可以包含
+Viewer Session 或 Studio Session，但不替代两类工作区 Session 的领域语义。
+
+### Active Installation
+
+在指定时间窗口内产生 qualifying application event 的 Anonymous Installation。它衡量可观测到的
+安装活跃度，不等价于自然人数、累计安装量或设备销量。
+
+### Telemetry Preference
+
+当前宿主是否分享匿名使用与错误报告的本地选择。它不属于 Library Score、Practice Sidecar、Viewer
+Session、Studio Session 或跨设备同步数据。
+
 ## Content Fingerprint
 
 基于文件内容生成的稳定指纹。用于判断不同路径、不同设备上的文件是否是同一份谱。

@@ -9,6 +9,7 @@
 - `0021`：Preload 只暴露经过校验的领域 Bridge。
 - `0022`：Bridge 类型从运行时 schema 推导。
 - `0023`：外部文件使用一次性 token。
+- `0029`：Internal Acceptance 与 Development 构建保持 telemetry-free。
 - `0030`：Desktop 包内要求 Bridge schema 精确匹配。
 - `0031`：Desktop 本地优先并推迟同步。
 - `0032`：按 packages/apps 组织 monorepo。
@@ -28,6 +29,7 @@
   所有权保持不变。
 - `0066`：延期 Desktop dropped-file capability，保持 Preload 与一次性 token trust boundary。
 - `0067`：宿主必须提供 Sheet Library；`ViewerHost` 移除 `openScore`，外部打开一律经 Library Import。
+- `0068`：公开分发构建允许默认启用、可退出的匿名产品遥测；不启用 autocapture/replay。
 
 ## Proposed
 

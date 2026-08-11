@@ -3,6 +3,7 @@ import { Download, Redo2, Settings, Undo2, Volume2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { StudioApplication } from "../StudioApplication";
 import type { StudioPreferences } from "../../../app/studio-preferences";
+import { Button, IconButton } from "../../../components/ui";
 import styles from "../../../app/pages/StudioPage.module.css";
 import type { StudioRange, StudioSnapshot } from "../model/studio-page-model";
 import { documentStatusLabel } from "../model/studio-page-presenter";
@@ -50,43 +51,46 @@ export function StudioCommandBar({
         </div>
         <div className={styles.commandGroups}>
           <div className={styles.buttonGroup} role="group" aria-label={t("history")}>
-            <button
-              type="button"
+            <IconButton
+              size="sm"
+              tone="ghost"
               onClick={() => application.undo(libraryScoreId)}
               aria-label={t("undo")}
               title={t("undo")}
             >
-              <Undo2 size={16} />
-            </button>
-            <button
-              type="button"
+              <Undo2 aria-hidden="true" size={16} />
+            </IconButton>
+            <IconButton
+              size="sm"
+              tone="ghost"
               onClick={() => application.redo(libraryScoreId)}
               aria-label={t("redo")}
               title={t("redo")}
             >
-              <Redo2 size={16} />
-            </button>
+              <Redo2 aria-hidden="true" size={16} />
+            </IconButton>
           </div>
           <div className={styles.buttonGroup} role="group" aria-label={t("analysisControls")}>
             {studio.status === "analyzing" ? (
-              <button type="button" onClick={() => application.cancelReanalysis(libraryScoreId)}>
+              <Button size="sm" onClick={() => application.cancelReanalysis(libraryScoreId)}>
                 {t("cancelAnalysis")}
-              </button>
+              </Button>
             ) : (
-              <button type="button" onClick={() => void application.reanalyze(libraryScoreId)}>
+              <Button size="sm" onClick={() => void application.reanalyze(libraryScoreId)}>
                 {t("reanalyze")}
-              </button>
+              </Button>
             )}
-            <button
-              className={canSave ? "primary-button" : undefined}
-              type="button"
+            <Button
+              size="sm"
+              tone="primary"
               disabled={!canSave}
               onClick={() => void application.flush(libraryScoreId)}
             >
               {t("save")}
-            </button>
-            <button
-              type="button"
+            </Button>
+            <IconButton
+              size="sm"
+              tone="ghost"
               onClick={() =>
                 void application
                   .export(libraryScoreId)
@@ -96,13 +100,14 @@ export function StudioCommandBar({
               aria-label={t("export")}
               title={t("export")}
             >
-              <Download size={16} />
-            </button>
+              <Download aria-hidden="true" size={16} />
+            </IconButton>
           </div>
           <div className={styles.buttonGroup} role="group" aria-label={t("settingsAndPreview")}>
-            <button
+            <IconButton
               ref={settingsButtonRef}
-              type="button"
+              size="sm"
+              tone="ghost"
               onClick={() => {
                 setSettingsOpen(!settingsOpen);
                 setPreviewOpen(false);
@@ -110,11 +115,12 @@ export function StudioCommandBar({
               aria-label={t("settings")}
               title={t("settings")}
             >
-              <Settings size={16} />
-            </button>
-            <button
+              <Settings aria-hidden="true" size={16} />
+            </IconButton>
+            <IconButton
               ref={previewButtonRef}
-              type="button"
+              size="sm"
+              tone="ghost"
               onClick={() => {
                 setPreviewOpen(!previewOpen);
                 setSettingsOpen(false);
@@ -122,8 +128,8 @@ export function StudioCommandBar({
               aria-label={t("preview")}
               title={t("preview")}
             >
-              <Volume2 size={16} />
-            </button>
+              <Volume2 aria-hidden="true" size={16} />
+            </IconButton>
           </div>
         </div>
       </div>

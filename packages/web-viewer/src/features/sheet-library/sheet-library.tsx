@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { LibraryScoreSummary } from "@zupulse/web-core";
 import pageStyles from "../../app/pages/PageShell.module.css";
-import { DialogRoot } from "../../components/ui";
+import { Button, DialogRoot } from "../../components/ui";
 import { ImportScoreDialog } from "../ImportScoreDialog";
 import styles from "../SheetLibrary.module.css";
 import { useDebouncedQuery } from "./adapters/use-debounced-query";
@@ -69,9 +69,9 @@ export function SheetLibrary({
       <section className="score-empty-state" role="alert">
         <p className="empty-title">{t("unavailableTitle")}</p>
         <p className="empty-copy">{error}</p>
-        <button className="primary-button" onClick={() => void application.refreshLibrary()}>
+        <Button tone="primary" onClick={() => void application.refreshLibrary()}>
           {t("retry")}
-        </button>
+        </Button>
       </section>
     );
   }

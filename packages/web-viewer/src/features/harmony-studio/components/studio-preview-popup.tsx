@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { StudioApplication } from "../StudioApplication";
 import type { StudioPreferences } from "../../../app/studio-preferences";
 import { ContextPopup } from "../../../components/ContextPopup";
-import { Switch } from "../../../components/ui";
+import { Button, Switch } from "../../../components/ui";
 import styles from "../../../app/pages/StudioPage.module.css";
 import type { StudioRange, StudioSnapshot } from "../model/studio-page-model";
 import { audioStatusLabel, previewStatusLabel } from "../model/studio-page-presenter";
@@ -47,9 +47,9 @@ export function StudioPreviewPopup({
           />
         </label>
         <div className={styles.previewControls}>
-          <button className="primary-button" type="button" onClick={() => application.togglePreview(libraryScoreId)}>
+          <Button tone="primary" onClick={() => application.togglePreview(libraryScoreId)}>
             {preview.status === "playing" ? t("pausePreview") : t("playPreview")}
-          </button>
+          </Button>
           <label className={`${styles.field} ${styles.positionField}`}>
             <span>{t("previewPosition")}</span>
             <input

@@ -4,9 +4,11 @@ import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router";
 import { flushSync } from "react-dom";
 import { LogoMark } from "../components/LogoMark";
+import { GitHubMark } from "../components/GitHubMark";
 import { ContextPopup } from "../components/ContextPopup";
 import { Button } from "../components/ui";
 import type { LocaleHost } from "../i18n/locale-controller";
+import type { ExternalNavigationHost } from "../host";
 import { useAppStore } from "./appStore";
 import type { ViewerProductCapabilities } from "./App";
 import styles from "./AppHeader.module.css";
@@ -14,9 +16,11 @@ import styles from "./AppHeader.module.css";
 export function AppHeader({
   localeHost,
   capabilities,
+  externalNavigationHost,
 }: {
   localeHost: LocaleHost;
   capabilities: ViewerProductCapabilities;
+  externalNavigationHost?: ExternalNavigationHost;
 }) {
   const { t, i18n } = useTranslation("common");
   const { t: tErrors } = useTranslation("errors");
@@ -89,6 +93,25 @@ export function AppHeader({
       </nav>
 
       <div className={`${styles.headerActions} tw:flex tw:items-center tw:gap-2 tw:justify-self-end`}>
+        <a
+          className={styles.githubLink}
+          href="https://github.com/hikerpig/zupulse"
+          target="_blank"
+          rel="noreferrer"
+          aria-label={t("links.githubRepository")}
+          onClick={
+            externalNavigationHost === undefined
+              ? undefined
+              : (event) => {
+                  event.preventDefault();
+                  void externalNavigationHost
+                    .openExternalUrl("https://github.com/hikerpig/zupulse")
+                    .catch(() => undefined);
+                }
+          }
+        >
+          <GitHubMark />
+        </a>
         <Button
           ref={localeButtonRef}
           className={styles.headerActionButton}

@@ -17,9 +17,13 @@ export class ViewerOpenFailure extends Error {
 }
 export type ViewerHostEvent =
   { type: "open-score" } | { type: "toggle-playback" } | { type: "suspend" } | { type: "prepare-close" };
+export interface ExternalNavigationHost {
+  openExternalUrl(url: string): Promise<void>;
+}
 export interface ViewerHost {
   subscribe(listener: (event: ViewerHostEvent) => void): () => void;
   reportDiagnostic?(error: unknown, operation: string): void;
+  externalNavigation?: ExternalNavigationHost;
 }
 export type { LocaleHost } from "./i18n/locale-controller";
 export type ViewerAppHandle = {

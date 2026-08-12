@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { BRIDGE_SCHEMA_VERSION, createBridgeRequest } from "@zupulse/web-core";
 import { dispatchBridgeRequest } from "../bridge";
 
@@ -52,6 +52,7 @@ describe("dispatchBridgeRequest", () => {
       bridgeVersion: BRIDGE_SCHEMA_VERSION,
       rendererBuildHash,
       locale,
+      capabilities: { externalNavigation: { openUrl: true } },
     });
   });
 
@@ -68,5 +69,25 @@ describe("dispatchBridgeRequest", () => {
       code: "BRIDGE_VERSION_MISMATCH",
       recoverable: false,
     });
+  });
+
+  it("dispatches validated external navigation requests", async () => {
+    const handler = vi.fn(async () => ({}));
+    const request = createBridgeRequest("external.openUrl", "external-1", {
+      url: "https://github.com/hikerpig/zupulse",
+    });
+
+    await expect(
+      dispatchBridgeRequest(
+        { senderUrl: "zupulse://app/index.html", value: request },
+        {
+          appVersion: "0.1.0",
+          rendererBuildHash,
+          locale,
+          handlers: { "external.openUrl": handler },
+        },
+      ),
+    ).resolves.toEqual({});
+    expect(handler).toHaveBeenCalledWith(request);
   });
 });

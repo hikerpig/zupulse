@@ -108,6 +108,36 @@
     font-size: 12px;
   }
 
+  .githubLink {
+    display: inline-flex;
+    width: var(--control-height-sm);
+    height: var(--control-height-sm);
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-round);
+    background: var(--bg-control);
+    color: var(--text-primary);
+    transition:
+      background var(--duration-fast) var(--motion-ease-standard),
+      border-color var(--duration-fast) var(--motion-ease-standard);
+  }
+
+  .githubLink:hover {
+    border-color: var(--border-strong);
+    background: var(--bg-elevated);
+  }
+
+  .githubLink:active {
+    background: var(--bg-control-active);
+  }
+
+  .githubLink:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
   @media (max-width: 680px) {
     .header {
       grid-template-columns: auto 1fr auto;

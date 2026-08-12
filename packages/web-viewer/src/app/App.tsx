@@ -5,6 +5,7 @@ import { I18nextProvider } from "react-i18next";
 import { RouterProvider } from "react-router";
 import type { ViewerApplication } from "./ViewerApplication";
 import type { LocaleHost } from "../i18n/locale-controller";
+import type { ExternalNavigationHost } from "../host";
 import { applyLocaleState } from "../i18n/locale-controller";
 import { AppStoreProvider, createPersistedAppStore, useApplyTheme, useAppStore } from "./appStore";
 import { createAppRouter } from "./router";
@@ -32,11 +33,13 @@ export function App({
   localeHost = fallbackLocaleHost,
   i18n: injectedI18n,
   capabilities = defaultViewerProductCapabilities,
+  externalNavigationHost,
 }: {
   application: ViewerApplication;
   localeHost?: LocaleHost;
   i18n?: i18n;
   capabilities?: ViewerProductCapabilities;
+  externalNavigationHost?: ExternalNavigationHost;
 }) {
   const i18n = useMemo(
     () => injectedI18n ?? createAppI18n(localeHost.initialState.effectiveLocale),
@@ -44,8 +47,14 @@ export function App({
   );
   const store = useMemo(() => createPersistedAppStore(localeHost.initialState), [localeHost]);
   const router = useMemo(
-    () => createAppRouter({ application, localeHost, capabilities }),
-    [application, capabilities, localeHost],
+    () =>
+      createAppRouter({
+        application,
+        localeHost,
+        capabilities,
+        ...(externalNavigationHost === undefined ? {} : { externalNavigationHost }),
+      }),
+    [application, capabilities, externalNavigationHost, localeHost],
   );
   return (
     <I18nextProvider i18n={i18n}>

@@ -151,5 +151,6 @@ function capabilities() {
     sync: { available: false, provider: "none" },
     audio: { webAudio: true, nativeBridge: false },
     localization: { changeLocale: false },
+    externalNavigation: { openUrl: false },
   };
 }

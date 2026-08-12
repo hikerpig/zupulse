@@ -14,6 +14,9 @@ export const enUS = {
       viewer: "Viewer",
       studio: "Harmony Studio",
     },
+    links: {
+      githubRepository: "GitHub repository",
+    },
     theme: {
       light: "Light",
       dark: "Dark",

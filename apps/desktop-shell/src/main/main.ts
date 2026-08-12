@@ -35,6 +35,7 @@ import { DesktopLifecycleCoordinator } from "./lifecycle";
 import { DesktopLibraryStore } from "./library/DesktopLibraryStore";
 import { verifySqliteAvailable } from "./library/sqlite";
 import { LocalePreferenceStore } from "./locale-preference-store";
+import { openExternalUrl } from "./external-navigation";
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -175,6 +176,7 @@ async function startDesktopApp(): Promise<void> {
             rendererBuildHash: __RENDERER_BUILD_HASH__,
             locale: currentLocaleState,
             handlers: {
+              "external.openUrl": (request) => openExternalUrl(request, (url) => shell.openExternal(url)),
               "app.locale.setPreference": async (request) => {
                 try {
                   await localePreferenceStore.save(request.payload.preference);

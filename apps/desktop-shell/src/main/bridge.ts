@@ -51,6 +51,7 @@ const DEFAULT_CAPABILITIES = capabilitiesSchema.parse({
   sync: { available: false, provider: "none" },
   audio: { webAudio: true, nativeBridge: false },
   localization: { changeLocale: true },
+  externalNavigation: { openUrl: true },
 });
 
 export async function dispatchBridgeRequest(

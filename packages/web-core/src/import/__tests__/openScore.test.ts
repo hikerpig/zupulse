@@ -8,6 +8,8 @@ const capabilities: Capabilities = {
   storage: { sqliteIndex: false, sidecarPayload: true },
   sync: { available: false, provider: "none" },
   audio: { webAudio: true, nativeBridge: false },
+  localization: { changeLocale: false },
+  externalNavigation: { openUrl: false },
 };
 const bytes = new TextEncoder().encode("<score-partwise><part/><measure/></score-partwise>");
 const adapter: ScoreFormatAdapter = {

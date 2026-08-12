@@ -110,6 +110,7 @@ describe("bridge schemas", () => {
         sync: { available: false, provider: "none" },
         audio: { webAudio: true, nativeBridge: false },
         localization: { changeLocale: true },
+        externalNavigation: { openUrl: false },
       }).fileAccess.persistentFileReferences,
     ).toBe(false);
   });
@@ -132,6 +133,36 @@ describe("bridge schemas", () => {
     ).toThrow();
   });
 
+  it("accepts only secure external-navigation URLs", () => {
+    const request = createBridgeRequest("external.openUrl", "external-1", {
+      url: "https://github.com/hikerpig/zupulse",
+    });
+
+    expect(parseBridgeResponse(request.type, {})).toEqual({});
+    expect(() =>
+      createBridgeRequest("external.openUrl", "external-2", {
+        url: "http://github.com/hikerpig/zupulse",
+      }),
+    ).toThrow();
+  });
+
+  it("advertises external navigation as an explicit host capability", () => {
+    expect(
+      capabilitiesSchema.parse({
+        fileAccess: {
+          openExternalFile: true,
+          persistentFileReferences: false,
+          localLibraryImport: false,
+        },
+        storage: { sqliteIndex: false, sidecarPayload: true },
+        sync: { available: false, provider: "none" },
+        audio: { webAudio: true, nativeBridge: false },
+        localization: { changeLocale: true },
+        externalNavigation: { openUrl: true },
+      }).externalNavigation,
+    ).toEqual({ openUrl: true });
+  });
+
   it("validates handshake and byte responses", () => {
     expect(
       bridgeResponseSchemas["app.handshake"].parse({
@@ -148,6 +179,7 @@ describe("bridge schemas", () => {
           sync: { available: false, provider: "none" },
           audio: { webAudio: true, nativeBridge: false },
           localization: { changeLocale: true },
+          externalNavigation: { openUrl: false },
         },
         locale: { preference: "system", effectiveLocale: "en-US" },
       }).rendererBuildHash,

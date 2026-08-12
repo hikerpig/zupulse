@@ -11,6 +11,9 @@ export const zhCN = {
       viewer: "查看器",
       studio: "和弦工作室",
     },
+    links: {
+      githubRepository: "GitHub 仓库",
+    },
     theme: {
       light: "浅色",
       dark: "深色",

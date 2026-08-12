@@ -95,7 +95,7 @@ export function AppHeader({
           href="https://github.com/hikerpig/zupulse"
           target="_blank"
           rel="noreferrer"
-          aria-label="GitHub"
+          aria-label={t("links.githubRepository")}
         >
           <GitHubMark />
         </a>

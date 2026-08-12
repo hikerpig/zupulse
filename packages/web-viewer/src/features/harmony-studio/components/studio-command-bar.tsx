@@ -80,12 +80,7 @@ export function StudioCommandBar({
                 {t("reanalyze")}
               </Button>
             )}
-            <Button
-              size="sm"
-              tone="primary"
-              disabled={!canSave}
-              onClick={() => void application.flush(libraryScoreId)}
-            >
+            <Button size="sm" tone="primary" disabled={!canSave} onClick={() => void application.flush(libraryScoreId)}>
               {t("save")}
             </Button>
             <IconButton

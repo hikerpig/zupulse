@@ -201,8 +201,7 @@
     .contextTitle {
       font-size: 16px;
     }
-    .harmonyAction,
-    .contextActions :global(.primary-button) {
+    .harmonyAction {
       min-height: 34px;
       padding-inline: 9px;
     }

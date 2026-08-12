@@ -747,6 +747,32 @@ describe("checkDesign", () => {
       "viewer/component.css:2: active status dot must not use an outer glow",
     ]);
   });
+
+  it("rejects legacy action classes and feature-owned Base UI anatomy", async () => {
+    const root = await fixture({
+      "DESIGN.md": "---\nstatus: current\n---\n\n# Design\n",
+      "theme.css": ":root { --brand-accent: #f26b4f; }\n",
+      "runtime.css": ":root { --accent-primary: #f26b4f; }\n",
+      "token-map.json": JSON.stringify({ mappings: [] }),
+      "viewer/features/library/Library.tsx": '<button className="primary-button">Retry</button>\n',
+      "viewer/features/playback/Bpm.tsx": 'import { Popover } from "@base-ui/react/popover";\n',
+      "viewer/components/ScoreViewer.tsx": 'import { Popover } from "@base-ui/react/popover";\n',
+      "viewer/features/library/__tests__/Library.test.tsx": 'expect(source).not.toContain("secondary-button");\n',
+    });
+
+    expect(
+      await checkDesign(root, {
+        designPath: "DESIGN.md",
+        sourceCssPath: "theme.css",
+        runtimeCssPath: "runtime.css",
+        mapPath: "token-map.json",
+        stylesDir: "viewer",
+      }),
+    ).toEqual([
+      'viewer/features/library/Library.tsx:1: legacy action class "primary-button" must use a shared action primitive',
+      'viewer/features/playback/Bpm.tsx:1: feature must not import Base UI anatomy "@base-ui/react/popover"',
+    ]);
+  });
 });
 
 async function fixture(files: Record<string, string>): Promise<string> {

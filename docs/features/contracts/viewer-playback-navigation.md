@@ -3,7 +3,7 @@ feature: viewer-playback-navigation
 title: Viewer Playback Navigation
 status: current
 delivery: available
-last_verified: 2026-07-31
+last_verified: 2026-08-12
 hosts:
   - browser
   - desktop
@@ -64,6 +64,8 @@ Viewer 在同一份 alphaTab 纵向布局上提供连续跟随和稳定翻页；
   重排完成后优先恢复视口中心的书面谱表行，bounds 暂不可用时按相对滚动位置降级。连续缩放只在
   最新 render 完成后恢复位置；播放位置与 Loop 状态不因缩放或宽度切换改变。
 - 窄屏隐藏宽度切换，使用全宽谱面；缩放控件保持可触达且不得造成横向溢出。
+- Transport 速度弹层锚定其可见触发器；响应式切换让该触发器离开布局时，弹层自动关闭。窄屏练习
+  面板内独立的速度入口仍可正常打开，并遵循 Escape 关闭后恢复触发器焦点。
 
 ### 谱面点击与 Transport
 

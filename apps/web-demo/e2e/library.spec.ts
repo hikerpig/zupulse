@@ -122,7 +122,7 @@ test("switches locale during playback without losing workspace state and keeps c
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
 
-test("keeps Viewer and Studio navigation within a 390px App Header", async ({ page }) => {
+test("keeps Viewer and Studio navigation within the responsive App Header", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱");
@@ -134,8 +134,20 @@ test("keeps Viewer and Studio navigation within a 390px App Header", async ({ pa
 
   await navigation.getByRole("link", { name: "和弦工作室" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "和弦分析" })).toBeVisible();
-  await expect.poll(() => navigation.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
-  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+  for (const theme of ["dark", "light"] as const) {
+    if ((await page.locator("html").getAttribute("data-theme")) !== theme) {
+      await page.getByRole("button", { name: /切换(?:到|至).+主题/ }).click();
+    }
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+
+    for (const width of [390, 768, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      await expect.poll(() => navigation.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await expect(page.getByRole("button", { name: "语言" })).toBeVisible();
+    }
+  }
 });
 
 test("closes a detached Transport BPM popup and keeps the narrow Practice trigger usable", async ({ page }) => {

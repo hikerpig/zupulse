@@ -6,6 +6,7 @@ export const PopoverRoot = BasePopover.Root;
 export const PopoverTrigger = BasePopover.Trigger;
 export const PopoverPortal = BasePopover.Portal;
 export const PopoverClose = BasePopover.Close;
+export const PopoverArrow = BasePopover.Arrow;
 
 export const PopoverPositioner = forwardRef<HTMLDivElement, ComponentPropsWithoutRef<typeof BasePopover.Positioner>>(
   function PopoverPositioner({ className, ...props }, ref) {

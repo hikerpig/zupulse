@@ -542,6 +542,19 @@ describe("PlaybackWorkspace transport bar", () => {
     expect(dispatch).toHaveBeenCalledWith({ type: "set-score-speed", speed: 91 / 120 });
   });
 
+  it("closes BPM details when its responsive trigger becomes hidden", async () => {
+    render(<PlaybackWorkspace session={session(state("paused"))}>乐谱</PlaybackWorkspace>);
+    const user = userEvent.setup();
+    const trigger = screen.getByRole("button", { name: "速度 96 BPM，80%" });
+
+    await user.click(trigger);
+    expect(screen.getByRole("spinbutton", { name: "速度 BPM" })).toBeTruthy();
+    vi.spyOn(trigger, "getClientRects").mockReturnValue([] as unknown as DOMRectList);
+    fireEvent(window, new Event("resize"));
+
+    expect(screen.queryByRole("spinbutton", { name: "速度 BPM" })).toBeNull();
+  });
+
   it("switches score navigation modes and recovers from Detached without changing playback", async () => {
     const setMode = vi.fn();
     const returnToPlayback = vi.fn();

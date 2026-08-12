@@ -138,6 +138,25 @@ test("keeps Viewer and Studio navigation within a 390px App Header", async ({ pa
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
+test("closes a detached Transport BPM popup and keeps the narrow Practice trigger usable", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("/#/library");
+  await importFixture(page, "导入自己的曲谱");
+
+  await page.getByRole("button", { name: /速度 \d+ BPM/ }).click();
+  await expect(page.getByRole("spinbutton", { name: "速度 BPM" })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("spinbutton", { name: "速度 BPM" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "练习设置" }).click();
+  const practice = page.getByRole("complementary", { name: "练习设置" });
+  const practiceSpeed = practice.getByRole("button", { name: /速度 \d+ BPM/ });
+  await practiceSpeed.click();
+  await expect(page.getByRole("spinbutton", { name: "速度 BPM" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(practiceSpeed).toBeFocused();
+});
+
 test("persists independent metronome and count-in practice settings", async ({ page }) => {
   await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱", musicXmlFixture);

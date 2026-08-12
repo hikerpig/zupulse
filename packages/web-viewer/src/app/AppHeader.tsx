@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router";
 import { flushSync } from "react-dom";
 import { LogoMark } from "../components/LogoMark";
+import { GitHubMark } from "../components/GitHubMark";
 import { ContextPopup } from "../components/ContextPopup";
 import { Button } from "../components/ui";
 import type { LocaleHost } from "../i18n/locale-controller";
@@ -89,6 +90,15 @@ export function AppHeader({
       </nav>
 
       <div className={`${styles.headerActions} tw:flex tw:items-center tw:gap-2 tw:justify-self-end`}>
+        <a
+          className={styles.githubLink}
+          href="https://github.com/hikerpig/zupulse"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="GitHub"
+        >
+          <GitHubMark />
+        </a>
         <Button
           ref={localeButtonRef}
           className={styles.headerActionButton}

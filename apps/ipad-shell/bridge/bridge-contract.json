@@ -165,9 +165,15 @@
               "properties": { "changeLocale": { "type": "boolean" } },
               "required": ["changeLocale"],
               "additionalProperties": false
+            },
+            "externalNavigation": {
+              "type": "object",
+              "properties": { "openUrl": { "type": "boolean" } },
+              "required": ["openUrl"],
+              "additionalProperties": false
             }
           },
-          "required": ["fileAccess", "storage", "sync", "audio", "localization"],
+          "required": ["fileAccess", "storage", "sync", "audio", "localization", "externalNavigation"],
           "additionalProperties": false
         },
         "locale": {
@@ -305,9 +311,15 @@
         "properties": { "changeLocale": { "type": "boolean" } },
         "required": ["changeLocale"],
         "additionalProperties": false
+      },
+      "externalNavigation": {
+        "type": "object",
+        "properties": { "openUrl": { "type": "boolean" } },
+        "required": ["openUrl"],
+        "additionalProperties": false
       }
     },
-    "required": ["fileAccess", "storage", "sync", "audio", "localization"],
+    "required": ["fileAccess", "storage", "sync", "audio", "localization", "externalNavigation"],
     "additionalProperties": false
   },
   "error": {

@@ -11,6 +11,18 @@ import { harmonyAnalysisDocumentSchema } from "../harmony/schemas";
 
 export const BRIDGE_SCHEMA_VERSION = "3.0.0" as const;
 const idSchema = z.string().min(1).max(128);
+const secureExternalUrlSchema = z
+  .string()
+  .min(1)
+  .max(2048)
+  .refine((value) => {
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" && url.username === "" && url.password === "";
+    } catch {
+      return false;
+    }
+  }, "External URLs must use HTTPS without embedded credentials");
 export const localePreferenceSchema = z.enum(["system", "zh-CN", "en-US"]);
 export const localeStateSchema = z
   .object({
@@ -102,6 +114,11 @@ export const capabilitiesSchema = z
         changeLocale: z.boolean(),
       })
       .strict(),
+    externalNavigation: z
+      .object({
+        openUrl: z.boolean(),
+      })
+      .strict(),
   })
   .strict();
 
@@ -147,6 +164,7 @@ export const bridgeRequestSchema = z.discriminatedUnion("type", [
       .strict(),
   ),
   envelope("app.locale.setPreference", z.object({ preference: localePreferenceSchema }).strict()),
+  envelope("external.openUrl", z.object({ url: secureExternalUrlSchema }).strict()),
   envelope("file.select", z.object({ multiple: z.boolean() }).strict()),
   envelope("file.readBytes", z.object({ fileToken: idSchema }).strict()),
   envelope("file.save", z.object({ fileName: z.string().min(1).max(255), bytes: z.instanceof(Uint8Array) }).strict()),
@@ -275,6 +293,7 @@ export const bridgeResponseSchemas = {
     })
     .strict(),
   "app.locale.setPreference": localeStateSchema,
+  "external.openUrl": z.object({}).strict(),
   "file.select": z.discriminatedUnion("status", [
     z.object({ status: z.literal("cancelled") }).strict(),
     z

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { createHashRouter, Outlet, useNavigate } from "react-router";
 import type { LocaleHost } from "../i18n/locale-controller";
+import type { ExternalNavigationHost } from "../host";
 import { AppHeader } from "./AppHeader";
 import type { ViewerProductCapabilities } from "./App";
 import type { ViewerApplication } from "./ViewerApplication";
@@ -11,15 +12,24 @@ export function createAppRouter({
   application,
   localeHost,
   capabilities,
+  externalNavigationHost,
 }: {
   application: ViewerApplication;
   localeHost: LocaleHost;
   capabilities: ViewerProductCapabilities;
+  externalNavigationHost?: ExternalNavigationHost;
 }) {
   const openStudio = (id: string) => application.openStudio(id);
   return createHashRouter([
     {
-      element: <ApplicationNavigation application={application} localeHost={localeHost} capabilities={capabilities} />,
+      element: (
+        <ApplicationNavigation
+          application={application}
+          localeHost={localeHost}
+          capabilities={capabilities}
+          {...(externalNavigationHost === undefined ? {} : { externalNavigationHost })}
+        />
+      ),
       children: [
         { path: "/", element: <HomePage capabilities={capabilities} /> },
         {
@@ -74,10 +84,12 @@ function ApplicationNavigation({
   application,
   localeHost,
   capabilities,
+  externalNavigationHost,
 }: {
   application: ViewerApplication;
   localeHost: LocaleHost;
   capabilities: ViewerProductCapabilities;
+  externalNavigationHost?: ExternalNavigationHost;
 }) {
   const navigate = useNavigate();
   useEffect(
@@ -86,7 +98,11 @@ function ApplicationNavigation({
   );
   return (
     <div className={styles.appFrame}>
-      <AppHeader localeHost={localeHost} capabilities={capabilities} />
+      <AppHeader
+        localeHost={localeHost}
+        capabilities={capabilities}
+        {...(externalNavigationHost === undefined ? {} : { externalNavigationHost })}
+      />
       <div className={styles.routeViewport}>
         <Outlet />
       </div>

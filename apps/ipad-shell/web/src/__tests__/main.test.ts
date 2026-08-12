@@ -97,6 +97,7 @@ describe("iPad viewer composition", () => {
                 sync: { available: false, provider: "none" },
                 audio: { webAudio: true, nativeBridge: false },
                 localization: { changeLocale: false },
+                externalNavigation: { openUrl: false },
               },
               locale: { preference: "system", effectiveLocale: "zh-CN" },
             },

@@ -8,6 +8,7 @@ import { GitHubMark } from "../components/GitHubMark";
 import { ContextPopup } from "../components/ContextPopup";
 import { Button } from "../components/ui";
 import type { LocaleHost } from "../i18n/locale-controller";
+import type { ExternalNavigationHost } from "../host";
 import { useAppStore } from "./appStore";
 import type { ViewerProductCapabilities } from "./App";
 import styles from "./AppHeader.module.css";
@@ -15,9 +16,11 @@ import styles from "./AppHeader.module.css";
 export function AppHeader({
   localeHost,
   capabilities,
+  externalNavigationHost,
 }: {
   localeHost: LocaleHost;
   capabilities: ViewerProductCapabilities;
+  externalNavigationHost?: ExternalNavigationHost;
 }) {
   const { t, i18n } = useTranslation("common");
   const { t: tErrors } = useTranslation("errors");
@@ -96,6 +99,16 @@ export function AppHeader({
           target="_blank"
           rel="noreferrer"
           aria-label={t("links.githubRepository")}
+          onClick={
+            externalNavigationHost === undefined
+              ? undefined
+              : (event) => {
+                  event.preventDefault();
+                  void externalNavigationHost
+                    .openExternalUrl("https://github.com/hikerpig/zupulse")
+                    .catch(() => undefined);
+                }
+          }
         >
           <GitHubMark />
         </a>

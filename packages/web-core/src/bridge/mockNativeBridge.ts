@@ -37,6 +37,9 @@ const DEFAULT_CAPABILITIES: Capabilities = capabilitiesSchema.parse({
   localization: {
     changeLocale: true,
   },
+  externalNavigation: {
+    openUrl: false,
+  },
 });
 
 export class MockNativeBridge {
@@ -69,6 +72,8 @@ export class MockNativeBridge {
           preference: request.payload.preference,
           effectiveLocale: request.payload.preference === "system" ? "en-US" : request.payload.preference,
         });
+      case "external.openUrl":
+        return parseBridgeResponse(request.type, {});
       case "file.readBytes": {
         const response = this.fileBytes.get(request.payload.fileToken);
         if (response === undefined) {

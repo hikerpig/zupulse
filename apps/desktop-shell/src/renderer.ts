@@ -30,6 +30,7 @@ import {
 } from "@zupulse/web-viewer";
 import { createDesktopDroppedImportSources, DesktopScoreFileGateway } from "./desktop-score-file-gateway";
 import { createDesktopDiagnosticReporter } from "./desktop-diagnostic-reporter";
+import { createDesktopExternalNavigation } from "./desktop-external-navigation";
 
 document.documentElement.classList.add("desktop-shell");
 installGlobalDragAndDropGuard(document);
@@ -55,7 +56,11 @@ async function start(): Promise<void> {
     const ack = createBridgeRequest("app.lifecycleAck", crypto.randomUUID(), { state });
     parseBridgeResponse(ack.type, await bridge.request(ack));
   };
-  const host = createElectronHost(bridge, acknowledgeLifecycle);
+  const host = createElectronHost(
+    bridge,
+    acknowledgeLifecycle,
+    response.capabilities.externalNavigation?.openUrl === true,
+  );
   const persistence = new BridgePlaybackPersistence(bridge);
   const root = document.getElementById("root");
   if (!root) throw new Error("VIEWER_ROOT_MISSING");
@@ -145,11 +150,17 @@ class DesktopLibraryRepository implements SheetLibraryRepository, HarmonyAnalysi
 function createElectronHost(
   bridge: NonNullable<Window["zupulseBridge"]>,
   acknowledgeLifecycle: (state: "suspend" | "prepare-close") => Promise<void>,
+  canOpenExternalUrl: boolean,
 ): ViewerHost {
   let storageWarningShown = false;
   const reportDiagnostic = createDesktopDiagnosticReporter(bridge);
   return {
     reportDiagnostic,
+    ...(canOpenExternalUrl
+      ? {
+          externalNavigation: createDesktopExternalNavigation(bridge),
+        }
+      : {}),
     subscribe(listener) {
       return bridge.subscribe((value) => {
         const event = bridgeEventSchema.parse(value);

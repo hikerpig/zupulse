@@ -22,6 +22,12 @@ const capabilities: Capabilities = {
     webAudio: true,
     nativeBridge: false,
   },
+  localization: {
+    changeLocale: false,
+  },
+  externalNavigation: {
+    openUrl: false,
+  },
 };
 
 describe("createViewerSession", () => {

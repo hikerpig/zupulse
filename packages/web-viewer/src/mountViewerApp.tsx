@@ -54,6 +54,9 @@ export function mountViewerApp(rootElement: HTMLElement, dependencies: ViewerApp
           application={application}
           localeHost={localeHost}
           i18n={i18n}
+          {...(dependencies.host.externalNavigation === undefined
+            ? {}
+            : { externalNavigationHost: dependencies.host.externalNavigation })}
           {...(dependencies.capabilities === undefined ? {} : { capabilities: dependencies.capabilities })}
         />
       </StrictMode>,

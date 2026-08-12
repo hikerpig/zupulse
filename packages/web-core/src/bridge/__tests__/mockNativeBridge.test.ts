@@ -22,6 +22,7 @@ describe("MockNativeBridge", () => {
       sync: { available: false, provider: "none" },
       audio: { webAudio: true, nativeBridge: false },
       localization: { changeLocale: true },
+      externalNavigation: { openUrl: false },
     });
     expect(response.locale).toEqual({ preference: "system", effectiveLocale: "en-US" });
   });

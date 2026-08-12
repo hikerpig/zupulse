@@ -132,6 +132,22 @@ describe("App", () => {
     await application.destroy();
   });
 
+  it("routes external links through the native host when available", async () => {
+    const application = new ViewerApplication(
+      { subscribe: () => () => undefined },
+      async () => viewerSession(),
+      libraryFixture(),
+    );
+    const openExternalUrl = vi.fn(async () => undefined);
+    const user = userEvent.setup();
+
+    render(<App application={application} externalNavigationHost={{ openExternalUrl }} />);
+    await user.click(screen.getByRole("link", { name: "GitHub 仓库" }));
+
+    expect(openExternalUrl).toHaveBeenCalledWith("https://github.com/hikerpig/zupulse");
+    await application.destroy();
+  });
+
   it("opens a structured practice control bay instead of a loose settings drawer", async () => {
     const id = "00000000-0000-4000-8000-000000000001";
     window.history.replaceState(null, "", `#/viewer/${id}`);

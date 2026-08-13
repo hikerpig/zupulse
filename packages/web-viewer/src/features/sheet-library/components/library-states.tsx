@@ -56,18 +56,14 @@ export function LibraryNoResults({
       <p className="empty-copy">{t("visibleCount", { visible: 0, total })}</p>
       <div className={styles.libraryEmptyActions}>
         {normalizedQuery ? (
-          <button type="button" className="primary-button" onClick={onClearSearch}>
+          <Button tone="primary" onClick={onClearSearch}>
             {t("clearSearch")}
-          </button>
+          </Button>
         ) : null}
         {favoritesOnly ? (
-          <button
-            type="button"
-            className={normalizedQuery ? "secondary-button" : "primary-button"}
-            onClick={onClearFilters}
-          >
+          <Button tone={normalizedQuery ? "secondary" : "primary"} onClick={onClearFilters}>
             {t("clearFilters")}
-          </button>
+          </Button>
         ) : null}
       </div>
     </section>

@@ -15,6 +15,15 @@
 - Before editing a product surface, state its target design scale, inspect the owning component and user-facing
   tests, and list the interaction and data states affected by the change. Reuse an existing semantic token,
   shared primitive, or current recommended implementation when one already owns the intended role.
+- Ordinary CTAs, icon-only actions, standard labeled fields, and generic dialog/menu/popover anatomy MUST use the
+  matching primitive from `src/components/ui` when it exists. Feature code MUST NOT recreate that visual or
+  third-party component anatomy.
+- Native feature controls MAY remain local when their geometry or interaction expresses a product object such as
+  a score, segment, loop, track, chord, transport, or drop target. They MUST consume semantic tokens and provide
+  accessible names plus relevant rest, hover, focus, disabled, selected, and error states.
+- Do not add a generic UI primitive for one speculative caller. A new generic primitive MUST have two current
+  consumers with the same semantic role; otherwise use semantic HTML locally or an existing primitive. Thin
+  wrappers that centralize required third-party anatomy are ownership adapters, not speculative visual APIs.
 - Organize new or materially expanded features under `src/features/<feature>/`. Keep small features flat; create
   `components/`, `adapters/`, `model/`, `runtime/`, or product-semantic subdirectories only when that
   responsibility has enough content to form a real boundary. Follow

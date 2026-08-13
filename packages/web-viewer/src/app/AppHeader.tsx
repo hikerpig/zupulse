@@ -64,7 +64,11 @@ export function AppHeader({
       </NavLink>
 
       <nav className={styles.navigation} aria-label={t("navigation.primary")}>
-        <NavLink className={({ isActive }) => (isActive ? styles.activeLink : styles.navLink)} to="/" end>
+        <NavLink
+          className={({ isActive }) => `${isActive ? styles.activeLink : styles.navLink} ${styles.redundantHomeLink}`}
+          to="/"
+          end
+        >
           <House aria-hidden="true" size={16} />
           {t("navigation.home")}
         </NavLink>

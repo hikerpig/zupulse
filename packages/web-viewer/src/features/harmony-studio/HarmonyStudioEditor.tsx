@@ -4,6 +4,7 @@ import type { HarmonyCandidate } from "@zupulse/web-core";
 import { formatChordSymbol } from "@zupulse/web-core";
 import styles from "../../app/pages/StudioPage.module.css";
 import { ContextPopup } from "../../components/ContextPopup";
+import { Button } from "../../components/ui";
 
 export type HarmonyStudioEditorProps = {
   candidates: readonly HarmonyCandidate[];
@@ -259,9 +260,8 @@ export function HarmonyStudioEditor({
               ))}
             </ul>
           </fieldset>
-          <button
-            className="primary-button"
-            type="button"
+          <Button
+            tone="primary"
             onClick={() => {
               onApply({
                 root: { step: root, alter: 0 },
@@ -274,7 +274,7 @@ export function HarmonyStudioEditor({
             }}
           >
             {t("editor.apply")}
-          </button>
+          </Button>
         </div>
       </ContextPopup>
     </section>

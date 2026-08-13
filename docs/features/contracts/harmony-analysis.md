@@ -3,7 +3,7 @@ feature: harmony-analysis
 title: Harmony Analysis
 status: current
 delivery: partial
-last_verified: 2026-08-08
+last_verified: 2026-08-12
 hosts:
   - browser
   - desktop
@@ -46,6 +46,9 @@ supersedes: []
 乐谱与分析 pane 各自提供滚动边界，不依赖被锁定的 App 根容器滚动。紧凑高度下，片段编辑器
 自身可滚动，底部修正操作仍可到达。片段列表按内容高度紧凑排列；少量结果不会拉伸填满列表，
 超过可用空间时继续由列表滚动承载。
+
+Studio 的 App Header 在 390px、768px 与 1280px 的明暗主题下保持当前产品导航、语言和主题动作
+可触达，且不产生页面或导航水平溢出；390px 下由品牌链接承担首页入口。
 
 Harmony Analysis Document 包含 unresolved range 时，片段工作区首次挂载默认显示“待确认”；没有
 unresolved range 时默认显示“全部”。用户后续筛选不会被数据刷新覆盖，且不符合当前筛选的选中项

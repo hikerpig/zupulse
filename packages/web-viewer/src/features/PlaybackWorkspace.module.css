@@ -130,16 +130,8 @@
   .ledDot[data-active] {
     opacity: 1;
   }
-  .speedPopoverPositioner {
-    z-index: var(--z-index-practice-panel);
-  }
   .speedPopover {
     width: 224px;
-    padding: 12px;
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-lg);
-    background: var(--bg-elevated);
-    box-shadow: var(--shadow-panel);
   }
   .speedInput {
     display: grid;
@@ -185,7 +177,7 @@
     height: 10px;
     border-right: 1px solid var(--border-default);
     border-bottom: 1px solid var(--border-default);
-    background: var(--bg-elevated);
+    background: var(--bg-panel);
     transform: rotate(45deg);
   }
   .workspace {

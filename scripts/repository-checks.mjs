@@ -271,7 +271,22 @@ async function checkStyleContract(root, stylesDir, runtimeCss) {
     for (const match of file.contents.matchAll(/(--[\w-]+)\s*:/g)) definedVariables.add(match[1]);
   }
   for (const file of contentsByFile) {
+    const isTest = file.path.includes("/__tests__/") || /\.test\.[jt]sx?$/.test(file.path);
     for (const [index, line] of file.contents.split(/\r?\n/).entries()) {
+      if (!isTest && file.path.endsWith(".tsx")) {
+        for (const match of line.matchAll(/\b(primary-button|secondary-button)\b/g)) {
+          errors.push(
+            `${file.path}:${index + 1}: legacy action class "${match[1]}" must use a shared action primitive`,
+          );
+        }
+        if (file.path.includes("/features/")) {
+          for (const specifier of importSpecifiers(line)) {
+            if (specifier.startsWith("@base-ui/react")) {
+              errors.push(`${file.path}:${index + 1}: feature must not import Base UI anatomy "${specifier}"`);
+            }
+          }
+        }
+      }
       if (file.path.endsWith(".css")) {
         for (const match of line.matchAll(/var\(\s*(--[\w-]+)\s*(,|\))/g)) {
           const [, variable, terminator] = match;

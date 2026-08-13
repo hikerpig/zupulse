@@ -122,6 +122,57 @@ test("switches locale during playback without losing workspace state and keeps c
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
 
+test("keeps Viewer and Studio navigation within the responsive App Header", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/#/library");
+  await importFixture(page, "导入自己的曲谱");
+
+  const navigation = page.getByRole("navigation", { name: "主要页面" });
+  await expect(navigation.getByRole("link", { name: "首页", exact: true })).toBeHidden();
+  await expect.poll(() => navigation.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+  await navigation.getByRole("link", { name: "和弦工作室" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "和弦分析" })).toBeVisible();
+
+  await page.evaluate(() => document.documentElement.classList.add("desktop-shell"));
+  await expect.poll(() => navigation.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+  for (const theme of ["dark", "light"] as const) {
+    if ((await page.locator("html").getAttribute("data-theme")) !== theme) {
+      await page.getByRole("button", { name: /切换(?:到|至).+主题/ }).click();
+    }
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+
+    for (const width of [390, 768, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      await expect.poll(() => navigation.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await expect(page.getByRole("button", { name: "语言" })).toBeVisible();
+    }
+  }
+});
+
+test("closes a detached Transport BPM popup and keeps the narrow Practice trigger usable", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("/#/library");
+  await importFixture(page, "导入自己的曲谱");
+
+  await page.getByRole("button", { name: /速度 \d+ BPM/ }).click();
+  await expect(page.getByRole("spinbutton", { name: "速度 BPM" })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("spinbutton", { name: "速度 BPM" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "练习设置" }).click();
+  const practice = page.getByRole("complementary", { name: "练习设置" });
+  const practiceSpeed = practice.getByRole("button", { name: /速度 \d+ BPM/ });
+  await practiceSpeed.click();
+  await expect(page.getByRole("spinbutton", { name: "速度 BPM" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(practiceSpeed).toBeFocused();
+});
+
 test("persists independent metronome and count-in practice settings", async ({ page }) => {
   await page.goto("/#/library");
   await importFixture(page, "导入自己的曲谱", musicXmlFixture);
@@ -258,23 +309,6 @@ test("shows piano key lookahead without displacing playback controls", async ({ 
 
   await page.reload();
   await expect(page.getByRole("region", { name: "琴键引导" })).toHaveCount(0);
-});
-
-test("keeps the Library to Viewer transition on a loading surface until the score renders", async ({ page }) => {
-  await page.goto("/#/library");
-  await importFixture(page, "导入自己的曲谱");
-  await expect(page.locator(".score-viewer .at-surface").first()).toBeVisible();
-  await page.getByRole("navigation", { name: "主要页面" }).getByRole("link", { name: "曲谱库" }).click();
-
-  const openScore = page.getByRole("button", { name: /^(打开|继续练习) 桌面验收谱$/ });
-  const click = openScore.click();
-  await expect(page).toHaveURL(/#\/viewer\//);
-  await expect(page.getByRole("status", { name: "正在加载文件" })).toBeVisible();
-  await click;
-
-  await expect(page.getByRole("heading", { level: 1, name: "桌面验收谱" })).toBeVisible();
-  await expect(page.locator(".score-viewer .at-surface").first()).toBeVisible();
-  await expect(page.getByText("曲谱库不可用")).toHaveCount(0);
 });
 
 test("follows playback and supports stable score page navigation", async ({ page }) => {

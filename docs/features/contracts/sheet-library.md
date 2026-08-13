@@ -3,7 +3,7 @@ feature: sheet-library
 title: Sheet Library
 status: current
 delivery: partial
-last_verified: 2026-08-02
+last_verified: 2026-08-12
 hosts:
   - browser
   - desktop
@@ -60,6 +60,8 @@ Session ID。
   语义；导出、编辑和删除位于 Base UI 管理菜单。
 - 390px 到 1280px 使用相同 DOM 和 route viewport 范围内的 unnamed container query 重排标题、
   筛选、目录状态与 Viewer 控件，不通过水平滚动隐藏关键动作。
+- App Header 在窄屏保留可识别的品牌首页入口、当前产品导航、语言与主题动作；390px 下省略重复的
+  “首页”文字导航，避免主导航和页面产生水平溢出。
 
 ### 导入
 

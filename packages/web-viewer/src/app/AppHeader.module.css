@@ -170,6 +170,19 @@
       display: none;
     }
 
+    :global(:root.desktop-shell) .header {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    :global(:root.desktop-shell) .brand {
+      display: none;
+    }
+
+    .githubLink,
+    .redundantHomeLink {
+      display: none;
+    }
+
     .navLink,
     .activeLink {
       font-size: 12px;

@@ -37,16 +37,6 @@ button:disabled {
   background: var(--bg-control);
   transform: none;
 }
-.primary-button {
-  color: var(--transport-key-text);
-  background: var(--transport-key-bg);
-  border-color: var(--accent-primary);
-  box-shadow: none;
-}
-.primary-button:hover:not(:disabled) {
-  background: var(--accent-primary-hover);
-  border-color: var(--accent-primary-hover);
-}
 input,
 select {
   color: var(--text-primary);

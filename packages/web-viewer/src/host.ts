@@ -23,6 +23,7 @@ export interface ExternalNavigationHost {
 export interface ViewerHost {
   subscribe(listener: (event: ViewerHostEvent) => void): () => void;
   reportDiagnostic?(error: unknown, operation: string): void;
+  telemetry?: import("@zupulse/web-core").TelemetryPort;
   externalNavigation?: ExternalNavigationHost;
 }
 export type { LocaleHost } from "./i18n/locale-controller";

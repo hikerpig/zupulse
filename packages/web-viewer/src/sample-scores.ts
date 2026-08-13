@@ -31,5 +31,5 @@ export function createSampleImportSource(
   sample: BundledSampleScore,
   readBytes: () => Promise<Uint8Array>,
 ): ScoreImportSource {
-  return { fileName: sample.fileName, readBytes };
+  return { fileName: sample.fileName, readBytes, telemetrySource: "sample" };
 }

@@ -7,7 +7,7 @@ import {
   type ViewerHostEvent,
 } from "../host";
 import type { ViewerSessionPort } from "../viewer-session/viewer-session-types";
-import { importLibraryScores } from "@zupulse/web-core";
+import { createNoopTelemetryPort, importLibraryScores } from "@zupulse/web-core";
 import type {
   LibraryScore,
   ScoreFileGateway,
@@ -16,6 +16,7 @@ import type {
   LibraryScoreSummary,
   ImportItemResult,
   ScoreImportSource,
+  TelemetryPort,
 } from "@zupulse/web-core";
 import type { StudioScoreRuntime } from "../studio-score-runtime";
 import type { BundledSampleScore, BundledSampleSource } from "../sample-scores";
@@ -56,6 +57,8 @@ export class ViewerApplication implements ViewerAppHandle {
   private readonly unsubscribe: () => void;
   private readonly studioApplication: StudioApplication;
   private readonly coordinator: WorkspaceCoordinator;
+  private readonly telemetry: TelemetryPort;
+  private applicationReadyCaptured = false;
 
   constructor(
     private readonly host: ViewerHost,
@@ -76,6 +79,7 @@ export class ViewerApplication implements ViewerAppHandle {
     openStudioRuntime?: (file: ViewerFile) => Promise<StudioScoreRuntime>,
     harmonyAnalysisRunner: HarmonyAnalysisRunner = createDefaultHarmonyAnalysisRunner(),
   ) {
+    this.telemetry = host.telemetry ?? createNoopTelemetryPort();
     this.unsubscribe = host.subscribe((event) => this.onHostEvent(event));
     this.studioApplication = new StudioApplication({
       library,
@@ -150,12 +154,14 @@ export class ViewerApplication implements ViewerAppHandle {
       await this.library.repository.initialize();
       const scores = await this.library.repository.list();
       this.setSnapshot({ ...this.snapshot, library: { scores, loading: false } });
+      this.captureApplicationReady("ready");
     } catch (error) {
       this.reportDiagnostic(error, "library.refresh");
       this.setSnapshot({
         ...this.snapshot,
         library: { scores: [], loading: false, error: applicationIssue("library-unavailable") },
       });
+      this.captureApplicationReady("degraded");
     }
   }
 
@@ -225,6 +231,17 @@ export class ViewerApplication implements ViewerAppHandle {
     });
     await this.refreshLibrary();
     this.setImportSummary(sources.length, results, controller.signal.aborted, false);
+    for (const result of results) {
+      const source = sources.find(
+        (item) => item.fileName === (result.status === "failed" ? result.fileName : result.score.fileName),
+      );
+      this.telemetry.capture({
+        name: "score_import_completed",
+        source: source?.telemetrySource ?? "picker",
+        outcome: result.status,
+        ...(result.status === "failed" ? { issueCode: result.error.code } : { scoreFormat: result.score.format }),
+      });
+    }
     const successful = results.some((item) => item.status === "created" || item.status === "existing");
     if (!successful) return;
     if (sources.length === 1) {
@@ -281,6 +298,14 @@ export class ViewerApplication implements ViewerAppHandle {
           currentSessionId: crypto.randomUUID(),
           currentLibraryScoreId: id,
           viewer: { libraryScoreId: id, status: "ready" },
+        });
+        void this.library.repository.get(id).then((score) => {
+          if (score)
+            this.telemetry.capture({
+              name: "workspace_session_started",
+              workspace: "viewer",
+              scoreFormat: score.format,
+            });
         });
       })
       .catch((error: unknown) => {
@@ -370,6 +395,12 @@ export class ViewerApplication implements ViewerAppHandle {
 
   private reportDiagnostic(error: unknown, operation: string): void {
     this.host.reportDiagnostic?.(error, operation);
+  }
+
+  private captureApplicationReady(state: "ready" | "degraded"): void {
+    if (this.applicationReadyCaptured) return;
+    this.applicationReadyCaptured = true;
+    this.telemetry.capture({ name: "application_ready", initialSurface: "library", state });
   }
 
   private setSnapshot(snapshot: ViewerApplicationSnapshot): void {

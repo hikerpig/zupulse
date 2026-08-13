@@ -47,7 +47,11 @@ export type ValidatedLibraryScoreDraft = {
   importedAt: LibraryTimestamp;
 };
 
-export type ScoreImportSource = { fileName: string; readBytes(): Promise<Uint8Array> };
+export type ScoreImportSource = {
+  fileName: string;
+  readBytes(): Promise<Uint8Array>;
+  telemetrySource?: "picker" | "drop" | "sample";
+};
 export type LibraryImportErrorCode =
   | "FILE_TOO_LARGE"
   | "UNSUPPORTED_FORMAT"

@@ -141,7 +141,7 @@ export function AppHeader({
           <>
             <Button
               ref={telemetryButtonRef}
-              className={styles.headerActionButton}
+              className={`${styles.headerActionButton} ${styles.telemetryButton}`}
               size="sm"
               aria-label={t("telemetry.trigger")}
               aria-haspopup="dialog"
@@ -165,7 +165,13 @@ export function AppHeader({
                       void application
                         .setTelemetryPreference(enabled)
                         .then(() => setTelemetryEnabled(enabled))
-                        .catch(() => setTelemetryError(true))
+                        .catch(() => {
+                          setTelemetryError(true);
+                          application.capturePresentedIssue("settings", {
+                            code: "telemetry-preference-write-failed",
+                            recoverable: true,
+                          });
+                        })
                         .finally(() => setTelemetrySaving(false));
                     }}
                   />

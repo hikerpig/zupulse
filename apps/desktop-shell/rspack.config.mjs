@@ -18,6 +18,7 @@ const buildDefinitions = {
 const bundledSampleBase64 = readFileSync(
   fileURLToPath(new URL("../../product-assets/samples/cannon-in-d.mxl", import.meta.url)),
 ).toString("base64");
+const emitSourceMaps = process.env.TELEMETRY_SOURCE_MAPS === "1";
 
 const createConfig = (_env, argv) => {
   const mode = argv.mode ?? "production";
@@ -33,6 +34,7 @@ const createConfig = (_env, argv) => {
       path: join(shellRoot, "dist/main"),
       library: { type: "commonjs2" },
     },
+    devtool: emitSourceMaps ? "source-map" : false,
     resolve: { extensions: [".tsx", ".ts", ".js"] },
     module: { rules: [createTypeScriptRule()] },
     plugins: [new DefinePlugin(buildDefinitions)],
@@ -50,27 +52,31 @@ const createConfig = (_env, argv) => {
       path: join(shellRoot, "dist/preload"),
       library: { type: "commonjs2" },
     },
+    devtool: emitSourceMaps ? "source-map" : false,
     resolve: { extensions: [".tsx", ".ts", ".js"] },
     module: { rules: [createTypeScriptRule()] },
   };
 
-  const renderer = createWebRspackConfig({
-    context: shellRoot,
-    mode,
-    entry: { renderer: "./src/renderer.ts" },
-    output: {
-      clean: true,
-      filename: "assets/[name].[contenthash].js",
-      path: join(shellRoot, "dist/renderer"),
-    },
-    htmlOptions: { template: "./index.html" },
-    plugins: [
-      new DefinePlugin({
-        ...buildDefinitions,
-        __BUNDLED_SAMPLE_BASE64__: JSON.stringify(bundledSampleBase64),
-      }),
-    ],
-  });
+  const renderer = {
+    ...createWebRspackConfig({
+      context: shellRoot,
+      mode,
+      entry: { renderer: "./src/renderer.ts" },
+      output: {
+        clean: true,
+        filename: "assets/[name].[contenthash].js",
+        path: join(shellRoot, "dist/renderer"),
+      },
+      htmlOptions: { template: "./index.html" },
+      plugins: [
+        new DefinePlugin({
+          ...buildDefinitions,
+          __BUNDLED_SAMPLE_BASE64__: JSON.stringify(bundledSampleBase64),
+        }),
+      ],
+    }),
+    devtool: emitSourceMaps ? "source-map" : false,
+  };
 
   return [main, preload, { ...renderer, name: "renderer", target: "web" }];
 };

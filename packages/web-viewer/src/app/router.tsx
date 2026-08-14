@@ -59,7 +59,11 @@ export function createAppRouter({
                 const { StudioPage } = await import("./pages/StudioPage");
                 return {
                   Component: () => (
-                    <StudioPage application={application.getStudioApplication()} openStudio={openStudio} />
+                    <StudioPage
+                      application={application.getStudioApplication()}
+                      openStudio={openStudio}
+                      onIssuePresented={(issue) => application.capturePresentedIssue("studio", issue)}
+                    />
                   ),
                 };
               }

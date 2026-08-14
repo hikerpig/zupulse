@@ -62,6 +62,8 @@ export class ViewerApplication implements ViewerAppHandle {
   private applicationReadyCaptured = false;
   private readonly presentedIssueKeys = new Set<string>();
   private readonly playbackTelemetryUnsubscribers = new Map<string, () => void>();
+  private readonly workspaceTelemetryKeys = new Set<string>();
+  private studioTelemetrySessionId: string | undefined;
   private readonly telemetryControl?: TelemetryControl;
 
   constructor(
@@ -83,8 +85,9 @@ export class ViewerApplication implements ViewerAppHandle {
     openStudioRuntime?: (file: ViewerFile) => Promise<StudioScoreRuntime>,
     harmonyAnalysisRunner: HarmonyAnalysisRunner = createDefaultHarmonyAnalysisRunner(),
     telemetryControl?: TelemetryControl,
+    private readonly initialSurface: "library" | "viewer" | "studio" | "not-found" = "library",
   ) {
-    this.telemetryControl = telemetryControl;
+    if (telemetryControl !== undefined) this.telemetryControl = telemetryControl;
     this.telemetry = host.telemetry ?? createNoopTelemetryPort();
     this.unsubscribe = host.subscribe((event) => this.onHostEvent(event));
     this.studioApplication = new StudioApplication({
@@ -148,8 +151,17 @@ export class ViewerApplication implements ViewerAppHandle {
     return this.library.repository.get(id as LibraryScore["id"]);
   }
 
-  openStudio(id: string): Promise<void> {
-    return this.coordinator.openStudio(id);
+  async openStudio(id: string): Promise<void> {
+    const studioWasActive =
+      this.studioApplication.getCurrentStudioSession() !== undefined &&
+      this.studioApplication.getSnapshot()?.libraryScoreId === id;
+    await this.coordinator.openStudio(id);
+    const studio = this.studioApplication.getSnapshot();
+    if (!studio || studio.libraryScoreId !== id || studio.status === "error" || studio.status === "conflict") return;
+    const score = await this.library.repository.get(id as LibraryScore["id"]);
+    if (!studioWasActive || this.studioTelemetrySessionId === undefined)
+      this.studioTelemetrySessionId = crypto.randomUUID();
+    if (score) this.captureWorkspaceSession("studio", id, score.format, this.studioTelemetrySessionId);
   }
 
   async refreshLibrary(): Promise<void> {
@@ -307,11 +319,7 @@ export class ViewerApplication implements ViewerAppHandle {
         });
         void this.library.repository.get(id).then((score) => {
           if (score) {
-            this.telemetry.capture({
-              name: "workspace_session_started",
-              workspace: "viewer",
-              scoreFormat: score.format,
-            });
+            this.captureWorkspaceSession("viewer", id, score.format);
             this.observeViewerPlayback(id, score.format);
           }
         });
@@ -380,6 +388,18 @@ export class ViewerApplication implements ViewerAppHandle {
     }
   }
 
+  private captureWorkspaceSession(
+    workspace: "viewer" | "studio",
+    scoreId: string,
+    scoreFormat: LibraryScore["format"],
+    sessionId?: string,
+  ): void {
+    const sessionKey = `${workspace}:${scoreId}:${sessionId ?? this.snapshot.currentSessionId ?? "unknown"}`;
+    if (this.workspaceTelemetryKeys.has(sessionKey)) return;
+    this.workspaceTelemetryKeys.add(sessionKey);
+    this.telemetry.capture({ name: "workspace_session_started", workspace, scoreFormat });
+  }
+
   async exportLibraryScore(id: string): Promise<void> {
     await this.library.gateway.saveExport(await this.library.repository.readScore(id));
   }
@@ -437,7 +457,7 @@ export class ViewerApplication implements ViewerAppHandle {
   private captureApplicationReady(state: "ready" | "degraded"): void {
     if (this.applicationReadyCaptured) return;
     this.applicationReadyCaptured = true;
-    this.telemetry.capture({ name: "application_ready", initialSurface: "library", state });
+    this.telemetry.capture({ name: "application_ready", initialSurface: this.initialSurface, state });
   }
 
   private observeViewerPlayback(id: string, scoreFormat: "gp" | "musicxml"): void {

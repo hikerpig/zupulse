@@ -73,6 +73,7 @@ export function createDesktopTelemetryPort({
       });
       if (!envelope.success) return;
       const { event: parsedEvent, ...base } = envelope.data;
+      const { name: eventName, ...eventProperties } = parsedEvent;
       const properties = {
         schema_version: base.schemaVersion,
         event_id: base.eventId,
@@ -85,7 +86,7 @@ export function createDesktopTelemetryPort({
         build_id: base.buildId,
         release_channel: base.releaseChannel,
         effective_locale: base.effectiveLocale,
-        ...parsedEvent,
+        ...eventProperties,
         $process_person_profile: false,
         $geoip_disable: true,
       };
@@ -96,7 +97,7 @@ export function createDesktopTelemetryPort({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           api_key: projectToken,
-          event: parsedEvent.name,
+          event: eventName,
           properties,
           timestamp: now().toISOString(),
         }),

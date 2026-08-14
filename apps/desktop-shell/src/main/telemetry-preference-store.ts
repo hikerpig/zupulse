@@ -3,7 +3,11 @@ import { readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { telemetryPreferenceStateSchema, type TelemetryPreferenceState } from "@zupulse/web-core";
 
-export type DesktopTelemetryHandshake = TelemetryPreferenceState & {
+export type DesktopTelemetryHandshake = {
+  schemaVersion: 1;
+  enabled: boolean;
+  noticeAcknowledged: boolean;
+  installationId?: string;
   applicationSessionId?: string;
 };
 
@@ -76,7 +80,10 @@ export class TelemetryPreferenceStore {
 
   private handshake(): DesktopTelemetryHandshake {
     return {
-      ...this.state,
+      schemaVersion: 1,
+      enabled: this.state.enabled,
+      noticeAcknowledged: this.state.noticeAcknowledged,
+      ...(this.state.installationId === undefined ? {} : { installationId: this.state.installationId }),
       ...(this.state.enabled ? { applicationSessionId: this.applicationSessionId } : {}),
     };
   }

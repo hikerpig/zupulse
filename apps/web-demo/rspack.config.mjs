@@ -6,6 +6,7 @@ import { join } from "node:path";
 
 const demoRoot = fileURLToPath(new URL(".", import.meta.url));
 const isE2e = process.env.PLAYWRIGHT_TEST === "1";
+const emitSourceMaps = process.env.TELEMETRY_SOURCE_MAPS === "1";
 const appVersion = "0.1.0";
 const buildId = createHash("sha256").update(`${appVersion}:browser`).digest("hex");
 
@@ -40,6 +41,7 @@ const createConfig = (_env, argv) => ({
     ],
   }),
   lazyCompilation: false,
+  devtool: emitSourceMaps ? "source-map" : false,
   experiments: { outputModule: true },
   watchOptions: {
     ignored: ["**/node_modules/**", "**/dist/**"],

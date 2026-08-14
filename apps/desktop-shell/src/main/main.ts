@@ -56,6 +56,18 @@ const fileTokens = new FileTokenStore();
 let mainWindow: BrowserWindow | undefined;
 let lifecycle: DesktopLifecycleCoordinator | undefined;
 
+function createDelegatingTelemetryPort(getCurrent: () => ReturnType<typeof createDesktopTelemetryPort>) {
+  return {
+    capture: (event: Parameters<ReturnType<typeof createDesktopTelemetryPort>["capture"]>[0]) =>
+      getCurrent().capture(event),
+    captureException: (
+      error: Parameters<ReturnType<typeof createDesktopTelemetryPort>["captureException"]>[0],
+      context: Parameters<ReturnType<typeof createDesktopTelemetryPort>["captureException"]>[1],
+    ) => getCurrent().captureException(error, context),
+    flush: (deadlineMs: number) => getCurrent().flush(deadlineMs),
+  };
+}
+
 function getRuntimeIconPath(): string {
   return path.join(app.getAppPath(), "resources/app-icon.png");
 }
@@ -113,18 +125,20 @@ async function startDesktopApp(): Promise<void> {
     const userData = app.getPath("userData");
     const telemetryStore = new TelemetryPreferenceStore(userData);
     const telemetryContext = await telemetryStore.load();
-    const mainTelemetry = createDesktopTelemetryPort({
-      context: telemetryContext,
-      runtime: "main",
-      appVersion: __APP_VERSION__,
-      buildId: __RENDERER_BUILD_HASH__,
-      releaseChannel: __TELEMETRY_RELEASE_CHANNEL__,
-      projectToken: __POSTHOG_PROJECT_TOKEN__,
-      apiHost: __POSTHOG_API_HOST__,
-      effectiveLocale: "en-US",
-    });
+    const createMainTelemetry = (context: typeof telemetryContext) =>
+      createDesktopTelemetryPort({
+        context,
+        runtime: "main",
+        appVersion: __APP_VERSION__,
+        buildId: __RENDERER_BUILD_HASH__,
+        releaseChannel: __TELEMETRY_RELEASE_CHANNEL__,
+        projectToken: __POSTHOG_PROJECT_TOKEN__,
+        apiHost: __POSTHOG_API_HOST__,
+        effectiveLocale: "en-US",
+      });
+    let currentMainTelemetry = createMainTelemetry(telemetryContext);
+    const mainTelemetry = createDelegatingTelemetryPort(() => currentMainTelemetry);
     installAppDiagnosticInstrumentation(app, diagnostics, process, mainTelemetry);
-    mainTelemetry.capture({ name: "application_session_started" });
     const localePreferenceStore = new LocalePreferenceStore(userData);
     const initialPreference = await localePreferenceStore.load();
     let currentLocaleState: LocaleState = {
@@ -191,6 +205,10 @@ async function startDesktopApp(): Promise<void> {
             appVersion: __APP_VERSION__,
             rendererBuildHash: __RENDERER_BUILD_HASH__,
             locale: currentLocaleState,
+            telemetryAvailable:
+              ["alpha", "beta", "production"].includes(__TELEMETRY_RELEASE_CHANNEL__) &&
+              Boolean(__POSTHOG_PROJECT_TOKEN__) &&
+              __POSTHOG_API_HOST__ === "https://us.i.posthog.com",
             telemetry: telemetryStore.getHandshake(),
             handlers: {
               "external.openUrl": (request) => openExternalUrl(request, (url) => shell.openExternal(url)),
@@ -213,7 +231,9 @@ async function startDesktopApp(): Promise<void> {
               },
               "app.telemetry.setPreference": async (request) => {
                 try {
-                  return await telemetryStore.setPreference(request.payload.enabled);
+                  const next = await telemetryStore.setPreference(request.payload.enabled);
+                  currentMainTelemetry = createMainTelemetry(next);
+                  return next;
                 } catch {
                   throw new BridgeDispatchError(
                     "TELEMETRY_PREFERENCE_WRITE_FAILED",

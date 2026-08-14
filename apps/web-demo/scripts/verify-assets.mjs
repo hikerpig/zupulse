@@ -37,6 +37,12 @@ for (const sample of sampleManifest.samples) {
 const bundleFiles = (await readdir(fileURLToPath(new URL("../dist/", import.meta.url)))).filter((file) =>
   file.endsWith(".js"),
 );
+if (
+  (await readdir(fileURLToPath(new URL("../dist/", import.meta.url)))).some((file) => file.endsWith(".map")) &&
+  process.env.TELEMETRY_SOURCE_MAPS !== "1"
+) {
+  throw new Error("Source maps must not ship in Browser public assets");
+}
 const bundles = await Promise.all(
   bundleFiles.map((file) => readFile(fileURLToPath(new URL(`../dist/${file}`, import.meta.url)), "utf8")),
 );

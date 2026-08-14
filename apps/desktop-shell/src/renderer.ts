@@ -38,6 +38,14 @@ document.documentElement.classList.add("desktop-shell");
 installGlobalDragAndDropGuard(document);
 let activeTelemetry: TelemetryPort | undefined;
 
+function createDelegatingTelemetryPort(getCurrent: () => TelemetryPort): TelemetryPort {
+  return {
+    capture: (event) => getCurrent().capture(event),
+    captureException: (error, context) => getCurrent().captureException(error, context),
+    flush: (deadlineMs) => getCurrent().flush(deadlineMs),
+  };
+}
+
 async function start(): Promise<void> {
   const bridge = window.zupulseBridge;
   if (!bridge) throw new Error("DESKTOP_BRIDGE_UNAVAILABLE");
@@ -50,16 +58,35 @@ async function start(): Promise<void> {
   if (response.appVersion !== __APP_VERSION__ || response.rendererBuildHash !== __RENDERER_BUILD_HASH__) {
     throw new Error("BRIDGE_VERSION_MISMATCH");
   }
-  const telemetry = createDesktopTelemetryPort({
-    context: response.telemetry ?? { enabled: false },
-    runtime: "renderer",
-    appVersion: __APP_VERSION__,
-    buildId: __RENDERER_BUILD_HASH__,
-    releaseChannel: __TELEMETRY_RELEASE_CHANNEL__,
-    projectToken: __POSTHOG_PROJECT_TOKEN__,
-    apiHost: __POSTHOG_API_HOST__,
-    effectiveLocale: response.locale.effectiveLocale,
-  });
+  type RendererTelemetryContext = {
+    enabled: boolean;
+    installationId?: string;
+    applicationSessionId?: string;
+  };
+  const createTelemetry = (context: RendererTelemetryContext) =>
+    createDesktopTelemetryPort({
+      context,
+      runtime: "renderer",
+      appVersion: __APP_VERSION__,
+      buildId: __RENDERER_BUILD_HASH__,
+      releaseChannel: __TELEMETRY_RELEASE_CHANNEL__,
+      projectToken: __POSTHOG_PROJECT_TOKEN__,
+      apiHost: __POSTHOG_API_HOST__,
+      effectiveLocale: response.locale.effectiveLocale,
+    });
+  const initialTelemetryContext: RendererTelemetryContext = response.telemetry
+    ? {
+        enabled: response.telemetry.enabled,
+        ...(response.telemetry.installationId === undefined
+          ? {}
+          : { installationId: response.telemetry.installationId }),
+        ...(response.telemetry.applicationSessionId === undefined
+          ? {}
+          : { applicationSessionId: response.telemetry.applicationSessionId }),
+      }
+    : { enabled: false };
+  let currentTelemetry = createTelemetry(initialTelemetryContext);
+  const telemetry = createDelegatingTelemetryPort(() => currentTelemetry);
   activeTelemetry = telemetry;
   window.addEventListener("error", (event) =>
     telemetry.captureException(event.error ?? new Error(event.message), { runtime: "renderer", handled: false }),
@@ -83,6 +110,14 @@ async function start(): Promise<void> {
     setPreference: async (enabled: boolean) => {
       const request = createBridgeRequest("app.telemetry.setPreference", crypto.randomUUID(), { enabled });
       telemetryState = parseBridgeResponse(request.type, await bridge.request(request));
+      currentTelemetry = createTelemetry({
+        enabled: telemetryState.enabled,
+        ...(telemetryState.installationId === undefined ? {} : { installationId: telemetryState.installationId }),
+        ...(telemetryState.applicationSessionId === undefined
+          ? {}
+          : { applicationSessionId: telemetryState.applicationSessionId }),
+      });
+      if (telemetryState.enabled) currentTelemetry.capture({ name: "application_session_started" });
     },
   };
 
@@ -106,6 +141,7 @@ async function start(): Promise<void> {
   appHandle = mountViewerApp(root, {
     host: { ...host, telemetry },
     telemetryControl,
+    initialSurface: "library",
     localeHost: createDesktopLocaleHost(bridge, response.locale),
     openSession: createDefaultOpenSession(document, persistence),
     library: {
@@ -122,6 +158,7 @@ async function start(): Promise<void> {
       })),
     },
   });
+  telemetry.capture({ name: "application_session_started" });
 }
 
 function createDesktopLocaleHost(bridge: NonNullable<Window["zupulseBridge"]>, initialState: LocaleState) {
@@ -257,6 +294,12 @@ void start().catch((error) => {
     handled: true,
     surface: "startup",
     operation: "renderer.preload",
+  });
+  activeTelemetry?.capture({
+    name: "application_issue_presented",
+    surface: "startup",
+    issueCode: "startup-failed",
+    recoverable: false,
   });
   renderStartupError(error);
 });

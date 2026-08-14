@@ -41,6 +41,7 @@ if (typeof document !== "undefined") {
       reportDiagnostic: (error: unknown, operation: string) => captureBrowserException(error, true, operation),
     },
     telemetryControl: telemetry.getControl(),
+    initialSurface: initialSurfaceForHash(window.location.hash),
     localeHost,
     openSession: async (file, libraryScoreId, domBindings) => {
       const { createDefaultOpenSession } = await import("@zupulse/web-viewer");
@@ -76,4 +77,12 @@ if (typeof document !== "undefined") {
     },
   });
   telemetry.startSession();
+}
+
+function initialSurfaceForHash(hash: string): "library" | "viewer" | "studio" | "not-found" {
+  const route = hash.replace(/^#/, "").split("?")[0] || "/";
+  if (route === "/library" || route === "/") return "library";
+  if (route.startsWith("/viewer/")) return "viewer";
+  if (route.startsWith("/studio/")) return "studio";
+  return "not-found";
 }

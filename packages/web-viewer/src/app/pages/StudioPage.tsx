@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { ScoreViewer } from "../../components/ScoreViewer";
@@ -8,15 +8,18 @@ import { useStudioSnapshot } from "../../features/harmony-studio/adapters/use-st
 import { StudioAnalysisPanel } from "../../features/harmony-studio/components/studio-analysis-panel";
 import { findSelectedStudioRange, type StudioRange } from "../../features/harmony-studio/model/studio-page-model";
 import type { StudioApplication, StudioApplicationSnapshot } from "../../features/harmony-studio/StudioApplication";
+import type { ApplicationIssue } from "../applicationIssue";
 import { loadStudioPreferences, saveStudioPreferences, type StudioPreferences } from "../studio-preferences";
 import styles from "./StudioPage.module.css";
 
 export function StudioPage({
   application,
   openStudio,
+  onIssuePresented,
 }: {
   application: StudioApplication;
   openStudio?: (libraryScoreId: string) => Promise<void>;
+  onIssuePresented?: (issue: ApplicationIssue) => void;
 }) {
   const { t } = useTranslation("studio");
   const { libraryScoreId } = useParams();
@@ -26,6 +29,12 @@ export function StudioPage({
     [libraryScoreId],
   );
   const studio = useStudioSnapshot(application, selectStudio);
+  useEffect(() => {
+    if (!onIssuePresented || !studio) return;
+    for (const issue of [studio.error, studio.previewError, studio.audioError]) {
+      if (issue) onIssuePresented(issue);
+    }
+  }, [onIssuePresented, studio]);
   const storageAvailable = application.hasHarmonyAnalysisStorage();
   const active =
     libraryScoreId !== undefined && studio !== undefined && application.getCurrentStudioSession?.() !== undefined;

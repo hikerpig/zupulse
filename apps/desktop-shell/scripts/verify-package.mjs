@@ -48,6 +48,9 @@ try {
       if (source.includes("MockNativeBridge")) {
         throw new Error(`MockNativeBridge leaked into package: ${path}`);
       }
+      if (source.includes("https://cdn.posthog.com") || source.includes("POSTHOG_PERSONAL_API_KEY")) {
+        throw new Error(`Remote PostHog code or management credential leaked into package: ${path}`);
+      }
       if (source.includes(expectedSampleBase64)) bundledSampleFound = true;
     }
   }

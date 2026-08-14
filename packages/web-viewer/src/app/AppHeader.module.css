@@ -178,6 +178,10 @@
       display: none;
     }
 
+    :global(:root.desktop-shell) .telemetryButton {
+      display: none !important;
+    }
+
     .githubLink,
     .redundantHomeLink {
       display: none;
@@ -185,7 +189,8 @@
 
     .navLink,
     .activeLink {
-      font-size: 12px;
+      padding: 0 4px;
+      font-size: 11px;
     }
   }
 }

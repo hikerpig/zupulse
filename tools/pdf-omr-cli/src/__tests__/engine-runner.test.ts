@@ -21,6 +21,19 @@ describe("engine process runner", () => {
     expect(result.durationMs).toBeGreaterThanOrEqual(0);
   });
 
+  it("samples the engine process group while it runs", async () => {
+    const result = await runEngineProcess({
+      command: process.execPath,
+      args: [fakeEngine, "resource-usage"],
+    });
+
+    expect(result.resourceUsage).toMatchObject({ scope: "process-group" });
+    expect(result.resourceUsage.sampleCount).toBeGreaterThan(0);
+    expect(result.resourceUsage.peakRssBytes).toBeGreaterThan(80 * 1024 * 1024);
+    expect(result.resourceUsage.averageCpuPercent).toBeGreaterThanOrEqual(0);
+    expect(result.resourceUsage.peakCpuPercent).toBeGreaterThanOrEqual(0);
+  });
+
   it("distinguishes a missing executable from engine failure", async () => {
     await expect(
       runEngineProcess({ command: "definitely-missing-pdf-omr-engine", args: [] }),

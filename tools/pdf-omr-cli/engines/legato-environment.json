@@ -53,7 +53,7 @@
   },
   "decoder": {
     "maxLength": 2048,
-    "numBeams": 10,
+    "numBeams": 1,
     "repetitionPenalty": 1.1
   },
   "conversion": {

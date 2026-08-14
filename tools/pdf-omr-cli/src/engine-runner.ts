@@ -1,6 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { PdfOmrError } from "./errors";
-import { startMonotonicTimer } from "./resource-metrics";
+import { startMonotonicTimer, startProcessResourceSampler, type ProcessResourceUsage } from "./resource-metrics";
 
 export type EngineProcessRequest = {
   command: string;
@@ -16,6 +16,7 @@ export type EngineProcessResult = {
   stdout: string;
   stderr: string;
   durationMs: number;
+  resourceUsage: ProcessResourceUsage;
 };
 
 const defaultTimeoutMs = 5 * 60_000;
@@ -49,6 +50,7 @@ export function runEngineProcess(request: EngineProcessRequest, signal?: AbortSi
       detached: process.platform !== "win32",
       stdio: ["ignore", "pipe", "pipe"],
     });
+    const resourceSampler = child.pid === undefined ? undefined : startProcessResourceSampler(child.pid);
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];
     let capturedBytes = 0;
@@ -60,6 +62,7 @@ export function runEngineProcess(request: EngineProcessRequest, signal?: AbortSi
       clearTimeout(timeoutTimer);
       if (forceKillTimer !== undefined) clearTimeout(forceKillTimer);
       signal?.removeEventListener("abort", onAbort);
+      void resourceSampler?.stop();
     };
     const settleReject = (error: PdfOmrError) => {
       if (settled) return;
@@ -112,8 +115,13 @@ export function runEngineProcess(request: EngineProcessRequest, signal?: AbortSi
       }
       settleReject(new PdfOmrError("ENGINE_EXECUTION_FAILED", "engine process could not start", { cause: error }));
     });
-    child.on("close", (exitCode) => {
+    child.on("close", async (exitCode) => {
       if (settled) return;
+      const resourceUsage = (await resourceSampler?.stop()) ?? {
+        scope: "process-group",
+        sampleIntervalMs: 250,
+        sampleCount: 0,
+      };
       if (terminationError !== undefined) {
         settleReject(terminationError);
         return;
@@ -133,6 +141,7 @@ export function runEngineProcess(request: EngineProcessRequest, signal?: AbortSi
         stdout: Buffer.concat(stdout).toString("utf8"),
         stderr: Buffer.concat(stderr).toString("utf8"),
         durationMs: timer.elapsedMs(),
+        resourceUsage,
       });
     });
   });

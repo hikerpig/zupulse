@@ -20,6 +20,7 @@ export function createEngineRegistry(
     audiverisExecutable?: string;
     audiverisEnvironment?: Readonly<Record<string, string>>;
     legato?: LegatoAdapterOptions;
+    legatoWorkerMode?: boolean;
     rokot?: RokotAdapterOptions;
     transcoda?: TranscodaAdapterOptions;
     environmentFallback?: boolean;
@@ -54,7 +55,10 @@ export function createEngineRegistry(
             context: { reason: "missing-legato-configuration" },
           });
         }
-        return createLegatoAdapter(configured);
+        return createLegatoAdapter({
+          ...configured,
+          ...(options.legatoWorkerMode === undefined ? {} : { workerMode: options.legatoWorkerMode }),
+        });
       }
       if (engineId === "rokot") {
         const configured =
@@ -91,7 +95,7 @@ function rokotOptionsFromEnvironment(): RokotAdapterOptions | undefined {
   return { llamaCliPath, modelPath, mmprojPath, abc2xmlPythonPath };
 }
 
-function legatoOptionsFromEnvironment(): LegatoAdapterOptions | undefined {
+export function legatoOptionsFromEnvironment(): LegatoAdapterOptions | undefined {
   const pythonExecutable = process.env.PDF_OMR_LEGATO_PYTHON;
   const repositoryPath = process.env.PDF_OMR_LEGATO_REPOSITORY;
   const modelDirectory = process.env.PDF_OMR_LEGATO_MODEL;

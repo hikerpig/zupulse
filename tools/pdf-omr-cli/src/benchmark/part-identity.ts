@@ -16,6 +16,26 @@ export type AlignedDraftParts = {
  * A role collision is an evaluation limitation rather than a zero-score prediction.
  */
 export function alignDraftParts(predicted: OmrScoreDraft, expected: OmrScoreDraft): AlignedDraftParts {
+  const expectedGrandStaff = expected.parts.length === 1 ? expected.parts[0] : undefined;
+  if (
+    expectedGrandStaff !== undefined &&
+    expectedGrandStaff.staves.length === predicted.parts.length &&
+    expectedGrandStaff.staves.length > 1 &&
+    predicted.parts.every((part) => part.staves.length === 1)
+  ) {
+    const mapping = predicted.parts.map((part) => ({ predictedId: part.id, expectedId: expectedGrandStaff.id }));
+    return {
+      draft: {
+        ...predicted,
+        parts: predicted.parts.map((part, index) => ({
+          ...part,
+          id: expectedGrandStaff.id,
+          staves: [{ ...part.staves[0]!, index: expectedGrandStaff.staves[index]!.index }],
+        })),
+      },
+      mapping,
+    };
+  }
   if (predicted.parts.length !== expected.parts.length) {
     throw limitation("part-count-mismatch", {
       predictedPartCount: predicted.parts.length,

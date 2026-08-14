@@ -136,6 +136,14 @@ wall time、peak RSS、GPU memory 与 cancel latency。没有可量化 duration 
 `MISSING_EVENT_TIMING` warning，但不会被当作 timing 对齐输入。以上只约束新的 benchmark artifacts，
 不重写本节之前的 frozen 或 K331 report，因此既有 `STOP` 结论保持不变。
 
+## 2026-08-14 Engine 资源采集口径修复
+
+新的 benchmark run 不再把父 Node 进程的 `process.memoryUsage().rss` 当作 engine peak RSS。共享 engine
+runner 在 Unix/macOS 上按 250ms 间隔采样独立 process group，将完整 process tree 的 peak RSS、平均/峰值
+CPU、sample count 与采样间隔写入 item runtime，并在 aggregate report 中输出分布；无有效样本时字段
+保持缺失并由 `metricsAvailability` 标记。GPU memory 与 cancel latency 仍只在独立 probe 可用时记录。该修复
+只改变新报告的资源证据口径，不重写历史报告，也不改变既有冻结 `STOP`。
+
 ## 2026-08-01 MIDI Fusion 人工审核回写
 
 `pdf-omr-cli` 在 report-only fusion 之后增加了独立 `apply-fusion` 阶段。它只消费 hash 固定的 fusion run
@@ -238,7 +246,8 @@ duration、staff measure count、system boundary 或缺失结构 header 阻断�
 
 新的 discovery 至少需要：
 
-1. 获取许可明确、包含真实印刷扫描与目标钢琴谱型的更大 corpus，并按 work 冻结 split。
+1. 在已完成的 6-work OLiMPiC real-corpus quick screening 基础上，扩充许可明确、包含更多真实印刷扫描与目标
+   钢琴谱型的 corpus，并继续按 work 冻结 split。
 2. 先解决 render/preprocessing domain gap，再比较 engine；不能用放宽 validator 掩盖错误。
 3. 将 cancel、峰值 GPU/RSS 和逐阶段 wall time 纳入实际 item metrics。
 4. 对 neural decoder 做可复现性诊断，并单独校准 confidence，禁止跨 engine 直接比较 raw score。

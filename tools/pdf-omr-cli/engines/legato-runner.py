@@ -6,6 +6,7 @@ import argparse
 import json
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 
@@ -32,7 +33,7 @@ def render_pdf_pages(input_path: Path):
     return images
 
 
-def recognize(args: argparse.Namespace) -> None:
+def load_runtime(args: argparse.Namespace):
     import torch
     from transformers import AutoConfig, AutoProcessor, GenerationConfig
 
@@ -64,6 +65,33 @@ def recognize(args: argparse.Namespace) -> None:
         num_beams=args.num_beams,
         repetition_penalty=args.repetition_penalty,
     )
+    return {
+        "torch": torch,
+        "processor": processor,
+        "model": model,
+        "device": device,
+        "generation": generation,
+        "pad": pad_to_portrait_letter,
+        "dtype": str(next(model.parameters()).dtype).removeprefix("torch."),
+    }
+
+
+def recognize(args: argparse.Namespace, runtime=None) -> None:
+    runtime = runtime or load_runtime(args)
+    torch = runtime["torch"]
+    processor = runtime["processor"]
+    model = runtime["model"]
+    device = runtime["device"]
+    generation = runtime["generation"]
+    pad_to_portrait_letter = runtime["pad"]
+    telemetry_pages = []
+    dtype = runtime["dtype"]
+    eos_token_ids = generation.eos_token_id
+    if eos_token_ids is None:
+        eos_token_ids = model.generation_config.eos_token_id
+    if isinstance(eos_token_ids, int):
+        eos_token_ids = [eos_token_ids]
+    eos_token_ids = set(eos_token_ids or [])
     args.page_output_directory.mkdir(parents=True, exist_ok=True)
     for page_number, page in enumerate(render_pdf_pages(args.input), start=1):
         image = pad_to_portrait_letter(page)
@@ -76,6 +104,23 @@ def recognize(args: argparse.Namespace) -> None:
             )
         abc = processor.batch_decode(output, skip_special_tokens=True)[0].replace(
             "<|text|>", "text"
+        )
+        output_token_count = int(output.shape[-1])
+        if output_token_count >= args.max_length:
+            termination = "max-length"
+        elif int(output[0, -1].item()) in eos_token_ids:
+            termination = "eos"
+        else:
+            termination = "other"
+        telemetry_pages.append(
+            {
+                "pageNumber": page_number,
+                "outputTokenCount": output_token_count,
+                "maxLength": args.max_length,
+                "termination": termination,
+                "device": device,
+                "dtype": dtype,
+            }
         )
         prefix = f"page-{page_number:03d}"
         (args.page_output_directory / f"{prefix}.abc").write_text(
@@ -98,6 +143,57 @@ def recognize(args: argparse.Namespace) -> None:
         del inputs, output
         if device == "mps":
             torch.mps.empty_cache()
+    args.telemetry_output.write_text(
+        json.dumps(
+            {"schemaVersion": "1.0.0", "pages": telemetry_pages},
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def run_worker(args: argparse.Namespace) -> None:
+    started = time.monotonic()
+    runtime = load_runtime(args)
+    print(
+        json.dumps(
+            {"type": "ready", "modelLoadMs": (time.monotonic() - started) * 1000},
+            separators=(",", ":"),
+        ),
+        flush=True,
+    )
+    for line in sys.stdin:
+        request = {}
+        failed = False
+        try:
+            request = json.loads(line)
+            if request.get("type") == "shutdown":
+                return
+            if request.get("type") != "recognize" or not isinstance(
+                request.get("id"), int
+            ):
+                raise ValueError("invalid-request")
+            request_args = argparse.Namespace(
+                **vars(args),
+                input=Path(request["inputPath"]),
+                page_output_directory=Path(request["pageOutputDirectory"]),
+                telemetry_output=Path(request["telemetryOutputPath"]),
+            )
+            recognize(request_args, runtime)
+            response = {"type": "result", "id": request["id"], "ok": True}
+        except Exception:
+            failed = True
+            response = {
+                "type": "result",
+                "id": request.get("id", -1) if isinstance(request, dict) else -1,
+                "ok": False,
+                "reason": "inference-failed",
+            }
+        print(json.dumps(response, separators=(",", ":")), flush=True)
+        if failed:
+            return
 
 
 def parser() -> argparse.ArgumentParser:
@@ -111,9 +207,17 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--model", type=Path, required=True)
     run.add_argument("--base-model", type=Path, required=True)
     run.add_argument("--page-output-directory", type=Path, required=True)
+    run.add_argument("--telemetry-output", type=Path, required=True)
     run.add_argument("--max-length", type=int, required=True)
     run.add_argument("--num-beams", type=int, required=True)
     run.add_argument("--repetition-penalty", type=float, required=True)
+    worker = commands.add_parser("worker")
+    worker.add_argument("--repository", type=Path, required=True)
+    worker.add_argument("--model", type=Path, required=True)
+    worker.add_argument("--base-model", type=Path, required=True)
+    worker.add_argument("--max-length", type=int, required=True)
+    worker.add_argument("--num-beams", type=int, required=True)
+    worker.add_argument("--repetition-penalty", type=float, required=True)
     return root
 
 
@@ -121,8 +225,10 @@ def main() -> None:
     args = parser().parse_args()
     if args.command == "inspect":
         inspect_pdf(args.input)
-    else:
+    elif args.command == "recognize":
         recognize(args)
+    else:
+        run_worker(args)
 
 
 if __name__ == "__main__":

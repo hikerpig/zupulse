@@ -30,6 +30,7 @@ import { benchmarkStages, type BenchmarkStage } from "./runtime-metrics";
 import { verifyFrozenProtocol } from "./verify-protocol";
 import { buildRokotJoiningEvidence } from "./rokot-joining-evidence";
 import { parseRokotSystemBundle } from "../normalizers/rokot";
+import { combineProcessResourceUsage, type ProcessResourceUsage } from "../resource-metrics";
 
 export type { BenchmarkItemResult } from "./report";
 
@@ -125,7 +126,19 @@ export async function runBenchmark(
       cause: error,
     });
   }
-  const engineRegistry = dependencies.engineRegistry ?? createEngineRegistry();
+  const engineRegistry = dependencies.engineRegistry ?? createEngineRegistry({ legatoWorkerMode: true });
+  let engineAdapter: ReturnType<EngineRegistry["get"]> | undefined;
+  const benchmarkEngineRegistry: EngineRegistry = {
+    get(engineId) {
+      if (engineId !== request.engineId) {
+        throw new PdfOmrError("INVALID_CLI_ARGUMENT", "benchmark requested an unexpected engine", {
+          context: { engineId },
+        });
+      }
+      engineAdapter ??= engineRegistry.get(request.engineId);
+      return engineAdapter;
+    },
+  };
   const runItem = dependencies.runItem ?? runBenchmarkItem;
   const repeatItemIds = new Set(manifest.execution?.repeatItemIds);
   const records: BenchmarkItemRecord[] = [];
@@ -158,7 +171,7 @@ export async function runBenchmark(
           engineId: request.engineId,
           preprocess: request.preprocess,
           repetitions: manifest.execution === undefined || repeatItemIds.has(item.id) ? 2 : 1,
-          engineRegistry,
+          engineRegistry: benchmarkEngineRegistry,
           groundTruth,
           ...(dependencies.readGpuMemoryBytes === undefined
             ? {}
@@ -204,6 +217,7 @@ export async function runBenchmark(
     }
   } finally {
     budget?.dispose();
+    await engineAdapter?.close?.();
   }
   const metadata: BenchmarkMetadata = {
     corpusId: manifest.corpusId,
@@ -330,14 +344,15 @@ async function runBenchmarkItem(
     number
   >;
   stageWallTimeMs.validate = context.groundTruth.validationDurationMs;
-  let peakRssBytes = process.memoryUsage().rss;
+  const resourceUsages: ProcessResourceUsage[] = [];
+  const decoderPages = [];
+  const decoderWorkerRequests = [];
   const measureStage = async <T>(stage: BenchmarkStage, operation: () => Promise<T>): Promise<T> => {
     const stageStarted = performance.now();
     try {
       return await operation();
     } finally {
       stageWallTimeMs[stage] += Math.max(0, performance.now() - stageStarted);
-      peakRssBytes = Math.max(peakRssBytes, process.memoryUsage().rss);
     }
   };
   const adapter = context.engineRegistry.get(context.engineId);
@@ -358,6 +373,11 @@ async function runBenchmarkItem(
         }),
       );
       const normalized = await measureStage("normalize", async () => adapter.normalize(raw));
+      if (raw.resourceUsage !== undefined) resourceUsages.push(raw.resourceUsage);
+      if (raw.decoderTelemetry !== undefined) {
+        decoderPages.push(...raw.decoderTelemetry.pages);
+        decoderWorkerRequests.push(...(raw.decoderTelemetry.workerRequests ?? []));
+      }
       const draft = omrScoreDraftSchema.parse({
         ...normalized,
         provenance: {
@@ -402,7 +422,6 @@ async function runBenchmarkItem(
     const validationStarted = performance.now();
     const validation = validateDraft(draft);
     stageWallTimeMs.validate += Math.max(0, performance.now() - validationStarted);
-    peakRssBytes = Math.max(peakRssBytes, process.memoryUsage().rss);
     return validation;
   });
   await writeCanonicalNew("predicted-validation.json", validationReports[0]!, context.itemOutputDirectory);
@@ -435,6 +454,7 @@ async function runBenchmarkItem(
   }
   const cancelLatencyMs = await context.measureCancelLatency?.(item);
   const gpuMemoryBytes = context.readGpuMemoryBytes?.();
+  const processResources = combineProcessResourceUsage(resourceUsages);
   return {
     schemaVersion: "1.0.0",
     itemId: item.id,
@@ -452,7 +472,17 @@ async function runBenchmarkItem(
       playback,
       structural,
       wallTimeMs: performance.now() - started,
-      peakRssBytes,
+      ...(processResources?.peakRssBytes === undefined ? {} : { peakRssBytes: processResources.peakRssBytes }),
+      ...(processResources === undefined ? {} : { processResources }),
+      ...(decoderPages.length === 0
+        ? {}
+        : {
+            decoderTelemetry: {
+              schemaVersion: "1.0.0" as const,
+              pages: decoderPages,
+              ...(decoderWorkerRequests.length === 0 ? {} : { workerRequests: decoderWorkerRequests }),
+            },
+          }),
       stageWallTimeMs,
       ...(gpuMemoryBytes === undefined ? {} : { gpuMemoryBytes }),
       ...(cancelLatencyMs === undefined ? {} : { cancelLatencyMs }),

@@ -13,6 +13,111 @@ import { computeSymbolicMetrics } from "../benchmark/symbolic-metrics";
 import { generateMusicXml } from "../generate-musicxml";
 
 describe("benchmark orchestrator", () => {
+  it("resolves one adapter for the suite and closes it after all items", async () => {
+    const setup = await corpusSetup("development", 2);
+    let getCount = 0;
+    let closeCount = 0;
+    await runBenchmark(
+      {
+        manifestPath: setup.manifestPath,
+        engineId: "legato",
+        preprocess: "none",
+        outputDirectory: setup.outputDirectory,
+        mode: "development",
+      },
+      {
+        engineRegistry: {
+          get: () => {
+            getCount += 1;
+            return {
+              inspectEnvironment: async () => ({
+                id: "legato",
+                version: "test",
+                executable: "fake",
+                commandTemplate: [],
+                license: { id: "MIT", source: "https://example.test" },
+              }),
+              recognize: async () => {
+                throw new Error("unused");
+              },
+              normalize: () => musicXmlReadyDraft(),
+              close: async () => {
+                closeCount += 1;
+              },
+            };
+          },
+        },
+        runItem: async (item, context) => {
+          context.engineRegistry.get("legato");
+          return itemResult(item.id, item.category, true);
+        },
+      },
+    );
+
+    expect(getCount).toBe(1);
+    expect(closeCount).toBe(1);
+  });
+
+  it("does not resolve an engine adapter when a custom item runner does not use it", async () => {
+    const setup = await corpusSetup("development", 1);
+    const result = await runBenchmark(
+      {
+        manifestPath: setup.manifestPath,
+        engineId: "rokot",
+        preprocess: "none",
+        outputDirectory: setup.outputDirectory,
+        mode: "development",
+      },
+      {
+        engineRegistry: {
+          get: () => {
+            throw new Error("unused engine registry");
+          },
+        },
+        runItem: async (item) => itemResult(item.id, item.category, true),
+      },
+    );
+
+    expect(result.report.items).toEqual({ total: 1, succeeded: 1, failed: 0 });
+  });
+
+  it("configures a worker-backed adapter for an ordinary LEGATO benchmark", async () => {
+    const setup = await corpusSetup("development", 2);
+    const environment = {
+      PDF_OMR_LEGATO_PYTHON: "/runtime/python",
+      PDF_OMR_LEGATO_REPOSITORY: setup.directory,
+      PDF_OMR_LEGATO_MODEL: setup.directory,
+      PDF_OMR_LEGATO_BASE_MODEL: setup.directory,
+    };
+    const previous = Object.fromEntries(Object.keys(environment).map((name) => [name, process.env[name]]));
+    Object.assign(process.env, environment);
+    try {
+      const result = await runBenchmark(
+        {
+          manifestPath: setup.manifestPath,
+          engineId: "legato",
+          preprocess: "none",
+          outputDirectory: setup.outputDirectory,
+          mode: "development",
+        },
+        {
+          runItem: async (item, context) => {
+            expect(context.engineRegistry.get("legato").close).toEqual(expect.any(Function));
+            return itemResult(item.id, item.category, true);
+          },
+        },
+      );
+
+      expect(result.report.failures).toEqual([]);
+      expect(result.report.items).toEqual({ total: 2, succeeded: 2, failed: 0 });
+    } finally {
+      for (const [name, value] of Object.entries(previous)) {
+        if (value === undefined) delete process.env[name];
+        else process.env[name] = value;
+      }
+    }
+  });
+
   it("preserves successful items when another item crashes", async () => {
     const setup = await corpusSetup("development", 2);
     const result = await runBenchmark(
@@ -204,6 +309,28 @@ describe("benchmark orchestrator", () => {
               nativeArtifacts: [],
               diagnostics: [],
               durationMs: 1,
+              resourceUsage: {
+                scope: "process-group" as const,
+                sampleIntervalMs: 250,
+                sampleCount: 2,
+                peakRssBytes: 123_456,
+                averageCpuPercent: 75,
+                peakCpuPercent: 90,
+              },
+              decoderTelemetry: {
+                schemaVersion: "1.0.0" as const,
+                workerRequests: [{ warm: true, requestDurationMs: 40 }],
+                pages: [
+                  {
+                    pageNumber: 1,
+                    outputTokenCount: 64,
+                    maxLength: 2048,
+                    termination: "eos" as const,
+                    device: "mps",
+                    dtype: "float16",
+                  },
+                ],
+              },
             }),
             normalize: () => predicted,
           }),
@@ -218,8 +345,29 @@ describe("benchmark orchestrator", () => {
       cancelLatencyMs: true,
       peakRssBytes: true,
       gpuMemoryBytes: true,
+      processCpuPercent: true,
+      decoderTelemetry: true,
     });
     expect(result.report.overall?.runtime.stageWallTimeMs).toHaveProperty("validate");
+    expect(result.report.overall?.runtime).toMatchObject({
+      peakRssBytes: { p50: 123_456, p95: 123_456, max: 123_456 },
+      processResources: {
+        scope: "process-group",
+        sampleIntervalMs: 250,
+        sampleCount: 4,
+        averageCpuPercent: { p50: 75, p95: 75, max: 75 },
+        peakCpuPercent: { p50: 90, p95: 90, max: 90 },
+      },
+      decoder: {
+        pageCount: 2,
+        outputTokens: { p50: 64, p95: 64, max: 64 },
+        maxLengthHitCount: 0,
+        terminationCounts: { eos: 2, "max-length": 0, other: 0 },
+        worker: {
+          warmRequestMs: { p50: 40, p95: 40, max: 40 },
+        },
+      },
+    });
     await expect(
       readFile(join(setup.outputDirectory, "items", "item-1", "part-identity.json"), "utf8"),
     ).resolves.toContain('"expectedId": "P1"');

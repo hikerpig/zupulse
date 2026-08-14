@@ -7,6 +7,7 @@ import { DOMParser } from "@xmldom/xmldom";
 import { canonicalJson, sha256Bytes } from "../canonical-json";
 import { PdfOmrError } from "../errors";
 import { runEngineProcess, type EngineProcessResult } from "../engine-runner";
+import { combineProcessResourceUsage, type ProcessResourceUsage } from "../resource-metrics";
 import {
   normalizeRokotOutput,
   parseRokotSystemBundle,
@@ -207,6 +208,7 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
       const bundleSystems: RokotSystemBundle["systems"] = [];
       const segmentationSystems: Array<Record<string, unknown>> = [];
       let durationMs = 0;
+      const resourceUsages: ProcessResourceUsage[] = [];
 
       for (const [systemOffset, system] of systems.entries()) {
         const stem = systemStem(system.pageIndex, system.systemIndex);
@@ -271,6 +273,7 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
         const musicXmlBytes = await readFile(musicXmlPath);
         const musicXml = new TextDecoder("utf-8", { fatal: true }).decode(musicXmlBytes);
         durationMs += inference.durationMs + conversion.durationMs;
+        resourceUsages.push(inference.resourceUsage, conversion.resourceUsage);
         bundleSystems.push({
           pageIndex: system.pageIndex,
           systemIndex: system.systemIndex,
@@ -318,11 +321,13 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           systems: segmentationSystems,
         }),
       );
+      const resourceUsage = combineProcessResourceUsage(resourceUsages);
       return {
         normalizationBytes: bundleBytes,
         nativeArtifacts: [{ relativePath: "segmentation.json", bytes: segmentationBytes }, ...artifacts],
         diagnostics: [],
         durationMs,
+        ...(resourceUsage === undefined ? {} : { resourceUsage }),
       };
     },
 

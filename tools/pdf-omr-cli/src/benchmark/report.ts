@@ -281,7 +281,7 @@ function evaluateGate(
       ? {}
       : {
           peakRssP95WithinBudget: check(
-            overall?.runtime.peakRssBytes.p95,
+            overall?.runtime.peakRssBytes?.p95,
             (value) => value <= thresholds.maxPeakRssP95Bytes!,
           ),
         }),

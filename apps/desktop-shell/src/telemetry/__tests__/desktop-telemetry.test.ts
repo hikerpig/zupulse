@@ -67,4 +67,13 @@ describe("createDesktopTelemetryPort", () => {
     expect(payload.properties.exception_message).not.toContain("/Users/alice");
     expect(payload.properties.exception_message).not.toContain("token=secret");
   });
+
+  it("does not surface provider failures through capture or flush", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockRejectedValue(new Error("offline"));
+    const port = createDesktopTelemetryPort({ ...base, fetcher });
+
+    expect(() => port.capture({ name: "application_session_started" })).not.toThrow();
+    await expect(port.flush(300)).resolves.toBeUndefined();
+    expect(fetcher).toHaveBeenCalledOnce();
+  });
 });

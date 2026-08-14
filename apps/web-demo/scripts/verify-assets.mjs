@@ -1,5 +1,6 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { createHash } from "node:crypto";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const requiredAssets = [
@@ -34,19 +35,35 @@ for (const sample of sampleManifest.samples) {
   }
 }
 
-const bundleFiles = (await readdir(fileURLToPath(new URL("../dist/", import.meta.url)))).filter((file) =>
-  file.endsWith(".js"),
-);
-if (
-  (await readdir(fileURLToPath(new URL("../dist/", import.meta.url)))).some((file) => file.endsWith(".map")) &&
-  process.env.TELEMETRY_SOURCE_MAPS !== "1"
-) {
-  throw new Error("Source maps must not ship in Browser public assets");
-}
-const bundles = await Promise.all(
-  bundleFiles.map((file) => readFile(fileURLToPath(new URL(`../dist/${file}`, import.meta.url)), "utf8")),
-);
+const distRoot = fileURLToPath(new URL("../dist/", import.meta.url));
+const bundleFiles = (await listFiles(distRoot)).filter((file) => file.endsWith(".js"));
+const sourceMaps = (await listFiles(distRoot)).filter((file) => file.endsWith(".map"));
+if (sourceMaps.length > 0) throw new Error("Source maps must not ship in Browser public assets");
+const bundles = await Promise.all(bundleFiles.map((file) => readFile(file, "utf8")));
 
 if (bundles.some((bundle) => bundle.includes("file:///"))) {
   throw new Error("alphaTab must be imported from /alphatab/, not bundled from a local file URL");
+}
+if (
+  bundles.some(
+    (bundle) =>
+      bundle.includes("POSTHOG_PERSONAL_API_KEY") ||
+      bundle.includes("https://cdn.posthog.com") ||
+      [...bundle.matchAll(/https?:\/\/[^"'\\s)]+posthog[^"'\\s)]*/gi)].some(
+        ([host]) => !host.startsWith("https://us.i.posthog.com"),
+      ),
+  )
+) {
+  throw new Error("Browser public assets contain an invalid telemetry or remote-code reference");
+}
+
+async function listFiles(root) {
+  const entries = await readdir(root, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const child = path.join(root, entry.name);
+    if (entry.isDirectory()) files.push(...(await listFiles(child)));
+    else files.push(child);
+  }
+  return files;
 }

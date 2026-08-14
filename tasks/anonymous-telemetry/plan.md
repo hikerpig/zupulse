@@ -124,9 +124,9 @@ exception sanitizer 和 deterministic rate-limit/fingerprint primitives，不引
 
 **Acceptance criteria:**
 
-- [ ] Missing state defaults to enabled/unacknowledged, corrupt state fails closed, and disabling deletes the installation identity.
-- [ ] Re-enabling creates a new installation/application-session identity and never uses cookies, identify, alias, or person profiles.
-- [ ] The adapter emits only schema-approved properties and remains non-throwing under SDK failure.
+- [x] Missing state defaults to enabled/unacknowledged, corrupt state fails closed, and disabling deletes the installation identity.
+- [x] Re-enabling creates a new installation/application-session identity and never uses cookies, identify, alias, or person profiles.
+- [x] The adapter emits only schema-approved properties and remains non-throwing under SDK failure.
 
 **Verification:** `pnpm vitest run apps/web-demo/src/telemetry`.
 
@@ -143,9 +143,9 @@ exception sanitizer 和 deterministic rate-limit/fingerprint primitives，不引
 
 **Acceptance criteria:**
 
-- [ ] Distribution builds with valid config emit one launch event; development, test, E2E, missing-token, and invalid-host builds initialize no remote SDK.
-- [ ] `script-src` remains local-only and `connect-src` allows only the compiled PostHog US ingestion origin.
-- [ ] A fake-ingestion test proves that raw URL, route params, DOM text, library data, and automatic properties are absent.
+- [x] Distribution builds with valid config emit one launch event; development, test, E2E, missing-token, and invalid-host builds initialize no remote SDK.
+- [x] `script-src` remains local-only and `connect-src` allows only the compiled PostHog US ingestion origin.
+- [x] A fake-ingestion test proves that raw URL, route params, DOM text, library data, and automatic properties are absent.
 
 **Verification:** `pnpm vitest run apps/web-demo/src`; `pnpm demo:build`.
 
@@ -158,11 +158,11 @@ exception sanitizer 和 deterministic rate-limit/fingerprint primitives，不引
 
 ### Checkpoint A: Browser safety and viability
 
-- [ ] `pnpm vitest run packages/web-core/src/telemetry apps/web-demo/src`
-- [ ] `pnpm demo:build`
-- [ ] Captured payload matches the strict allowlist.
-- [ ] Invalid/absent configuration produces no network initialization.
-- [ ] Review SDK bundle size and confirm no remote-code extension loading.
+- [x] `pnpm vitest run packages/web-core/src/telemetry apps/web-demo/src`
+- [x] `pnpm demo:build`
+- [x] Captured payload matches the strict allowlist.
+- [x] Invalid/absent configuration produces no network initialization.
+- [x] Review SDK bundle size and confirm no remote-code extension loading.
 
 ## Phase 2: Shared semantic usage events
 
@@ -173,9 +173,9 @@ exception sanitizer 和 deterministic rate-limit/fingerprint primitives，不引
 
 **Acceptance criteria:**
 
-- [ ] Ready is emitted only after the first library refresh settles and contains no raw route or score identifier.
-- [ ] Import events map terminal results to the exact source/outcome/format/code contract and ignore an empty picker cancellation.
-- [ ] Workspace events emit once only after a Viewer or Studio runtime is ready.
+- [x] Ready is emitted only after the first library refresh settles and contains no raw route or score identifier.
+- [x] Import events map terminal results to the exact source/outcome/format/code contract and ignore an empty picker cancellation.
+- [x] Workspace events emit once only after a Viewer or Studio runtime is ready.
 
 **Verification:** `pnpm vitest run packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`.
 
@@ -195,9 +195,9 @@ exception sanitizer 和 deterministic rate-limit/fingerprint primitives，不引
 
 **Acceptance criteria:**
 
-- [ ] Playback emits once per Viewer Session after actual `playing`, never on click, blocked audio, pause/resume repetition, or Studio preview.
-- [ ] Presented issues emit once per application-session/surface/code only when the user-visible state is rendered.
-- [ ] Neither event contains Library Score ID, title, artist, duration, raw route, or source content.
+- [x] Playback emits once per Viewer Session after actual `playing`, never on click, blocked audio, pause/resume repetition, or Studio preview.
+- [x] Presented issues emit once per application-session/surface/code only when the user-visible state is rendered.
+- [x] Neither event contains Library Score ID, title, artist, duration, raw route, or source content.
 
 **Verification:** focused Viewer Session/Application/Page tests under `packages/web-viewer/src`.
 
@@ -210,10 +210,10 @@ relevant Viewer Session/Page tests; split by playback and issue surface if the f
 
 ### Checkpoint B: Semantic event correctness
 
-- [ ] All seven custom event schemas have at least one real producer or an explicitly deferred Desktop-only producer.
-- [ ] Event cardinality tests pass under React StrictMode setup/cleanup/setup.
-- [ ] `pnpm vitest run packages/web-viewer/src/app packages/web-viewer/src/viewer-session`
-- [ ] `pnpm typecheck`
+- [x] All seven custom event schemas have at least one real producer or an explicitly deferred Desktop-only producer.
+- [x] Event cardinality tests pass under React StrictMode setup/cleanup/setup.
+- [x] `pnpm vitest run packages/web-viewer/src/app packages/web-viewer/src/viewer-session`
+- [x] `pnpm typecheck`
 
 ## Phase 3: Desktop identity and Bridge
 
@@ -224,9 +224,9 @@ relevant Viewer Session/Page tests; split by playback and issue surface if the f
 
 **Acceptance criteria:**
 
-- [ ] Request, response, capability, inferred types, mock behavior, and invalid-input tests are updated together.
-- [ ] The preference request accepts only the strict boolean preference input and never accepts identity, token, host, or arbitrary config.
-- [ ] iPad request/event allowlists remain unchanged and reject the Desktop-only method.
+- [x] Request, response, capability, inferred types, mock behavior, and invalid-input tests are updated together.
+- [x] The preference request accepts only the strict boolean preference input and never accepts identity, token, host, or arbitrary config.
+- [x] iPad request/event allowlists remain unchanged and reject the Desktop-only method.
 
 **Verification:** `pnpm vitest run packages/web-core/src/bridge apps/desktop-shell/src/main/__tests__/bridge.test.ts`.
 
@@ -244,9 +244,9 @@ Application Session ID，并实现“先持久化再返回”的 Preference hand
 
 **Acceptance criteria:**
 
-- [ ] Missing state defaults correctly, corrupt state fails closed and is quarantined, and file permissions remain private.
-- [ ] Main owns installation/application-session identity and Renderer cannot provide or overwrite either identifier.
-- [ ] Persistence failure returns a stable recoverable Bridge error and leaves the previous state unchanged.
+- [x] Missing state defaults correctly, corrupt state fails closed and is quarantined, and file permissions remain private.
+- [x] Main owns installation/application-session identity and Renderer cannot provide or overwrite either identifier.
+- [x] Persistence failure returns a stable recoverable Bridge error and leaves the previous state unchanged.
 
 **Verification:** focused telemetry-store and Desktop bridge dispatcher tests.
 
@@ -264,9 +264,9 @@ identity/session context，分发 config 无效或 Preference disabled 时组合
 
 **Acceptance criteria:**
 
-- [ ] Renderer and Main use the same distinct/session identifiers and different allowlisted runtime values.
-- [ ] The packaged Renderer loads no remote JavaScript and both adapters remain non-blocking under SDK failure.
-- [ ] Internal Acceptance, development, test, E2E, and iPad builds initialize no PostHog client.
+- [x] Renderer and Main use the same distinct/session identifiers and different allowlisted runtime values.
+- [x] The packaged Renderer loads no remote JavaScript and both adapters remain non-blocking under SDK failure.
+- [x] Internal Acceptance, development, test, E2E, and iPad builds initialize no PostHog client.
 
 **Verification:** focused adapter tests; `pnpm desktop:build`; package source inspection.
 
@@ -291,9 +291,9 @@ runtime 和 fixtures；iPad 继续省略 telemetry capability 且拒绝 Desktop-
 
 **Acceptance criteria:**
 
-- [ ] Main, Preload, Renderer, iPad Web, Swift runtime, manifest, fixtures, and tests agree on one exact version.
-- [ ] The generated iPad contract contains no telemetry request and the Swift router rejects it as unknown.
-- [ ] No compatibility shim or multi-version branch remains.
+- [x] Main, Preload, Renderer, iPad Web, Swift runtime, manifest, fixtures, and tests agree on one exact version.
+- [x] The generated iPad contract contains no telemetry request and the Swift router rejects it as unknown.
+- [x] No compatibility shim or multi-version branch remains.
 
 **Verification:** bridge manifest drift test; `pnpm ipad:test`; `pnpm ipad:verify`; `pnpm desktop:build`.
 
@@ -306,12 +306,12 @@ only through `scripts/generate-bridge-contract.mjs`.
 
 ### Checkpoint C: Desktop and shared Bridge
 
-- [ ] Browser and Desktop emit the same envelope semantics.
-- [ ] Desktop Main/Renderer count as one Installation and one Application Session.
-- [ ] `pnpm vitest run packages/web-core/src/bridge apps/desktop-shell/src`
-- [ ] `pnpm desktop:build`
-- [ ] `pnpm ipad:verify`
-- [ ] Packaged Renderer CSP and local-only code-loading inspection pass.
+- [x] Browser and Desktop emit the same envelope semantics.
+- [x] Desktop Main/Renderer count as one Installation and one Application Session.
+- [x] `pnpm vitest run packages/web-core/src/bridge apps/desktop-shell/src`
+- [x] `pnpm desktop:build`
+- [x] `pnpm ipad:verify`
+- [x] Packaged Renderer CSP and local-only code-loading inspection pass.
 
 ## Phase 4: User control and error capture
 
@@ -322,9 +322,9 @@ only through `scripts/generate-bridge-contract.mjs`.
 
 **Acceptance criteria:**
 
-- [ ] The notice renders before the first launch event, supports keyboard/focus, and uses only `@zupulse/app-i18n` copy.
-- [ ] Continue and disable persist before updating UI; failed persistence keeps the notice and presents a stable localized issue.
-- [ ] The notice does not cover or rebuild the active Viewer/Studio session.
+- [x] The notice renders before the first launch event, supports keyboard/focus, and uses only `@zupulse/app-i18n` copy.
+- [x] Continue and disable persist before updating UI; failed persistence keeps the notice and presents a stable localized issue.
+- [x] The notice does not cover or rebuild the active Viewer/Studio session.
 
 **Verification:** focused React tests; Light/Dark and narrow/desktop visual inspection; `pnpm check:i18n`.
 
@@ -341,9 +341,9 @@ only through `scripts/generate-bridge-contract.mjs`.
 
 **Acceptance criteria:**
 
-- [ ] The setting is available from every route, reports saving/error states, and persists before Renderer state changes.
-- [ ] Disable immediately stops capture, clears pending/provider persistence, deletes identity, and emits no opt-out event.
-- [ ] Re-enable creates a new identity/session without rebuilding workspaces or interrupting playback.
+- [x] The setting is available from every route, reports saving/error states, and persists before Renderer state changes.
+- [x] Disable immediately stops capture, clears pending/provider persistence, deletes identity, and emits no opt-out event.
+- [x] Re-enable creates a new identity/session without rebuilding workspaces or interrupting playback.
 
 **Verification:** focused AppHeader/App tests; Browser persistence test; Desktop Bridge preference test;
 `pnpm check:i18n`.
@@ -362,9 +362,9 @@ capture，并通过 single-owner dedupe、session budget 和 sanitizer 发送 Po
 
 **Acceptance criteria:**
 
-- [ ] Unhandled exceptions, unhandled rejections, handled route errors, and Desktop startup errors reach one owner exactly once.
-- [ ] The 20-per-session budget and 60-second fingerprint dedupe are deterministic and cannot recurse.
-- [ ] Unsafe exceptions are dropped; console, breadcrumbs, DOM, network payloads, attachments, and local variables remain disabled.
+- [x] Unhandled exceptions, unhandled rejections, handled route errors, and Desktop startup errors reach one owner exactly once.
+- [x] The 20-per-session budget and 60-second fingerprint dedupe are deterministic and cannot recurse.
+- [x] Unsafe exceptions are dropped; console, breadcrumbs, DOM, network payloads, attachments, and local variables remain disabled.
 
 **Verification:** focused adapter/router/startup tests using fake transport and synthetic sensitive errors.
 
@@ -382,9 +382,9 @@ allowlisted `runtime_failure_observed`；process-level fatal handler 只 best-ef
 
 **Acceptance criteria:**
 
-- [ ] Main exceptions are sanitized and associated with the shared installation/session identity.
-- [ ] `render-process-gone` maps only to the approved reason enum and never forwards Electron details or dump paths.
-- [ ] Fatal process state never continues solely to flush telemetry, and close-time flush is bounded to 300 ms.
+- [x] Main exceptions are sanitized and associated with the shared installation/session identity.
+- [x] `render-process-gone` maps only to the approved reason enum and never forwards Electron details or dump paths.
+- [x] Fatal process state never continues solely to flush telemetry, and close-time flush is bounded to 300 ms.
 
 **Verification:** focused Main adapter/lifecycle tests; Desktop E2E renderer-failure fixture if deterministic.
 
@@ -396,11 +396,11 @@ allowlisted `runtime_failure_observed`；process-level fatal handler 只 best-ef
 
 ### Checkpoint D: User control and diagnostics
 
-- [ ] First-run and settings journeys pass in `zh-CN` and `en-US`.
-- [ ] Opt-out proves zero subsequent fake-ingestion requests.
-- [ ] Synthetic sensitive exceptions are sanitized or dropped in Browser, Renderer, and Main.
-- [ ] `pnpm check:i18n`
-- [ ] `pnpm verify:fast`
+- [x] First-run and settings journeys pass in `zh-CN` and `en-US`.
+- [x] Opt-out proves zero subsequent fake-ingestion requests.
+- [x] Synthetic sensitive exceptions are sanitized or dropped in Browser, Renderer, and Main.
+- [x] `pnpm check:i18n`
+- [x] `pnpm verify:fast`
 
 ## Phase 5: Release pipeline, E2E, and durable truth
 
@@ -411,8 +411,8 @@ alpha/beta/production CI 上传 source maps，上传后确保 `.map` 不进入 p
 
 **Acceptance criteria:**
 
-- [ ] Release jobs fail when required source-map upload fails, while normal verify/internal package jobs require no telemetry secrets.
-- [ ] Public and packaged artifacts contain no source maps, management credentials, remote scripts, or invalid telemetry host.
+- [x] Release jobs fail when required source-map upload fails, while normal verify/internal package jobs require no telemetry secrets.
+- [x] Public and packaged artifacts contain no source maps, management credentials, remote scripts, or invalid telemetry host.
 - [ ] Source maps resolve a synthetic release exception to the correct Browser/Renderer/Main source and build identity.
 
 **Verification:** Rspack config tests/builds; package verification script; CI dry-run/config inspection; manual PostHog
@@ -432,8 +432,8 @@ offline 和 relaunch identity；在 PostHog 建立 Product Health dashboard 并�
 
 **Acceptance criteria:**
 
-- [ ] Browser refresh and Desktop relaunch preserve installation identity and create new application-session identity.
-- [ ] Offline/provider failure leaves import, Viewer open, playback, save, close, and local diagnostics unchanged.
+- [x] Browser refresh and Desktop relaunch preserve installation identity and create new application-session identity.
+- [x] Offline/provider failure leaves import, Viewer open, playback, save, close, and local diagnostics unchanged.
 - [ ] The nine dashboard metrics use Installation/Session terminology; privacy URL, retention, access owner, and production access review are recorded before release.
 
 **Verification:** `pnpm demo:test:e2e`; `pnpm desktop:test:e2e`; manual PostHog US smoke and dashboard review.
@@ -467,16 +467,16 @@ last.
 
 ### Checkpoint E: Definition of Done
 
-- [ ] `pnpm verify:fast`
-- [ ] `pnpm verify`
-- [ ] `pnpm verify:e2e`
-- [ ] `pnpm ipad:verify`
-- [ ] `pnpm format:check`
-- [ ] `git diff --check`
-- [ ] `git status --short` confirms only intended files.
+- [x] `pnpm verify:fast`
+- [x] `pnpm verify`
+- [x] `pnpm verify:e2e`
+- [x] `pnpm ipad:verify`
+- [x] `pnpm format:check`
+- [x] `git diff --check`
+- [x] `git status --short` confirms only intended files.
 - [ ] Manual packaged Desktop and deployed Browser PostHog US smoke pass.
 - [ ] Public privacy URL and PostHog retention/access owner are recorded.
-- [ ] Current Feature Contract and architecture documents match verified runtime behavior.
+- [x] Current Feature Contract and architecture documents match verified runtime behavior; external PostHog governance and deployed URL remain explicit gaps.
 
 ## Risks and mitigations
 

@@ -13,6 +13,8 @@ implementation_paths:
   - apps/web-demo/src/telemetry/browser-telemetry.ts
   - apps/desktop-shell/src/telemetry/desktop-telemetry.ts
   - apps/desktop-shell/src/main/telemetry-preference-store.ts
+  - scripts/verify-source-map-artifacts.mjs
+  - .github/workflows/release-telemetry.yml
 supersedes: []
 ---
 
@@ -74,9 +76,10 @@ identity，并由 Main 为本次运行创建新的 application session。损坏�
 
 以下内容尚未作为发布治理事实落地：
 
-- source-map upload/release smoke 尚未接入 CI provider workflow；当前只提供 opt-in source-map build 和产物检查。
-- Browser/Desktop 本地 fake-ingestion E2E 已覆盖；PostHog US smoke、dashboard、公开隐私 URL、retention policy 与
-  named access owner 尚未记录。
+- source-map upload 已接入 tagged/manual release workflow，并在上传成功后删除 public/package artifacts 中的
+  source maps；真实 PostHog release smoke 仍待 provider credentials 与 release owner 执行。
+- Browser/Desktop 本地 fake-ingestion E2E 已覆盖刷新、relaunch、allowlist 与 opt-out；PostHog US smoke、远端
+  dashboard、公开隐私 URL 的部署、retention policy 与 named access owner 仍是外部 release gates。
 - native crash dump、durable offline queue 和 iPad telemetry 明确不在当前承诺范围。
 
 ## 明确非目标
@@ -101,6 +104,7 @@ identity，并由 Main 为本次运行创建新的 application session。损坏�
 | semantic events and issue presentation  | `packages/web-viewer/src/app/ViewerApplication.ts`, App/route pages                                    | `packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`, full Viewer/App suite |
 | Browser/Desktop journeys                | Browser and Desktop host composition                                                                   | `pnpm verify:e2e`                                                                        |
 | fake-ingestion journeys                 | `apps/web-demo/e2e/telemetry`, `apps/desktop-shell/e2e/telemetry`                                      | `pnpm demo:test:telemetry:e2e`, `pnpm desktop:test:telemetry:e2e`                        |
+| release/source-map boundary             | `scripts/verify-source-map-artifacts.mjs`, `.github/workflows/release-telemetry.yml`                   | map require/forbid checks; provider upload is release-secret gated                       |
 
 ## 相关资料
 
@@ -113,3 +117,8 @@ identity，并由 Main 为本次运行创建新的 application session。损坏�
 - telemetry event schema、Bridge handshake/preference、identity persistence 或 host allowlist 变化。
 - 告知、Header setting、错误呈现和 release-channel boundary 变化。
 - source-map、privacy notice、retention/access governance gate 落地或变更。
+
+发布 dashboard 的九项指标定义与尚未完成的外部治理门槛见
+[`docs/validation/anonymous-telemetry-dashboard.md`](../../validation/anonymous-telemetry-dashboard.md)。公开隐私
+告知页的仓库内容位于 [`apps/web-demo/public/privacy.html`](../../../apps/web-demo/public/privacy.html)，部署 URL
+在外部发布前仍需验证。

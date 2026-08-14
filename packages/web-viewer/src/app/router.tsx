@@ -9,6 +9,8 @@ import type { ViewerApplication } from "./ViewerApplication";
 import { HomePage } from "./pages/HomePage";
 import styles from "./App.module.css";
 
+export const TELEMETRY_PRIVACY_NOTICE_URL = "https://zupulse.vercel.app/privacy.html";
+
 export function createAppRouter({
   application,
   localeHost,
@@ -138,7 +140,7 @@ function TelemetryNotice({ application }: { application: ViewerApplication }) {
       <div>
         <h2 id="telemetry-notice-title">{t("telemetry.noticeTitle")}</h2>
         <p>{t("telemetry.noticeBody")}</p>
-        <a href="https://github.com/hikerpig/zupulse" target="_blank" rel="noreferrer">
+        <a href={TELEMETRY_PRIVACY_NOTICE_URL} target="_blank" rel="noreferrer">
           {t("telemetry.learnMore")}
         </a>
       </div>

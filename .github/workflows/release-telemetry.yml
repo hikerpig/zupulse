@@ -1,0 +1,98 @@
+name: Release Telemetry Artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_channel:
+        description: Release channel to build
+        required: true
+        default: production
+        type: choice
+        options: [alpha, beta, production]
+      release_version:
+        description: PostHog release version (for example a tag or commit SHA)
+        required: true
+        type: string
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RELEASE_CHANNEL: ${{ inputs.release_channel || 'production' }}
+      RELEASE_VERSION: ${{ inputs.release_version || github.ref_name }}
+      TELEMETRY_BUILD_ID: ${{ github.sha }}
+      TELEMETRY_RELEASE_CHANNEL: ${{ inputs.release_channel || 'production' }}
+      TELEMETRY_SOURCE_MAPS: "1"
+      POSTHOG_CLI_HOST: https://us.posthog.com
+      POSTHOG_CLI_API_KEY: ${{ secrets.POSTHOG_CLI_API_KEY }}
+      POSTHOG_CLI_PROJECT_ID: ${{ secrets.POSTHOG_CLI_PROJECT_ID }}
+      POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.3.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build Browser source maps
+        run: pnpm --filter @zupulse/web-demo exec rspack build
+      - name: Validate Browser source maps
+        run: node scripts/verify-source-map-artifacts.mjs require apps/web-demo/dist
+      - name: Upload Browser source maps
+        run: >-
+          pnpm dlx @posthog/cli@0.11.2 sourcemap process
+          --directory apps/web-demo/dist
+          --release-name zupulse-browser
+          --release-version "$RELEASE_VERSION"
+          --build "$TELEMETRY_BUILD_ID"
+          --delete-after
+      - name: Verify Browser public artifact
+        run: |
+          node scripts/verify-source-map-artifacts.mjs forbid apps/web-demo/dist
+          node apps/web-demo/scripts/verify-assets.mjs
+
+      - name: Build Desktop source maps
+        run: pnpm desktop:build
+      - name: Validate Desktop source maps
+        run: node scripts/verify-source-map-artifacts.mjs require apps/desktop-shell/dist/main apps/desktop-shell/dist/preload apps/desktop-shell/dist/renderer
+      - name: Upload Desktop Main source maps
+        run: >-
+          pnpm dlx @posthog/cli@0.11.2 sourcemap process
+          --directory apps/desktop-shell/dist/main
+          --release-name zupulse-desktop-main
+          --release-version "$RELEASE_VERSION"
+          --build "$TELEMETRY_BUILD_ID"
+          --delete-after
+      - name: Upload Desktop Preload source maps
+        run: >-
+          pnpm dlx @posthog/cli@0.11.2 sourcemap process
+          --directory apps/desktop-shell/dist/preload
+          --release-name zupulse-desktop-preload
+          --release-version "$RELEASE_VERSION"
+          --build "$TELEMETRY_BUILD_ID"
+          --delete-after
+      - name: Upload Desktop Renderer source maps
+        run: >-
+          pnpm dlx @posthog/cli@0.11.2 sourcemap process
+          --directory apps/desktop-shell/dist/renderer
+          --release-name zupulse-desktop-renderer
+          --release-version "$RELEASE_VERSION"
+          --build "$TELEMETRY_BUILD_ID"
+          --delete-after
+      - name: Verify Desktop package inputs
+        run: |
+          node scripts/verify-source-map-artifacts.mjs forbid apps/desktop-shell/dist/main apps/desktop-shell/dist/preload apps/desktop-shell/dist/renderer
+          env -u TELEMETRY_SOURCE_MAPS pnpm desktop:package

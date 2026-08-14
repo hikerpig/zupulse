@@ -126,6 +126,7 @@ async function start(): Promise<void> {
     if (!appHandle) throw new Error("VIEWER_NOT_READY");
     if (state === "suspend") await appHandle.pauseAndFlush();
     else await appHandle.destroy();
+    await telemetry.flush(300);
     const ack = createBridgeRequest("app.lifecycleAck", crypto.randomUUID(), { state });
     parseBridgeResponse(ack.type, await bridge.request(ack));
   };

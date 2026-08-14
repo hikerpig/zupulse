@@ -4,6 +4,7 @@ import {
   fileImportDroppedRequestSchema,
   localPlaybackResumeSchema,
   parseSidecar,
+  type TelemetryPort,
 } from "@zupulse/web-core";
 import { createAppI18n, resolveLocale, type LocaleState, type SupportedLocale } from "@zupulse/app-i18n";
 import { randomUUID } from "node:crypto";
@@ -329,7 +330,7 @@ async function startDesktopApp(): Promise<void> {
         void diagnostics.recordMain({ code });
       },
     });
-    installLifecycle(mainWindow, lifecycle);
+    installLifecycle(mainWindow, lifecycle, mainTelemetry);
     installMenu(sendEvent, diagnostics, openDiagnosticsDirectory, currentLocaleState.effectiveLocale);
     void diagnostics.recordMain({ code: "APP_STARTED" });
   } catch (error) {
@@ -338,7 +339,11 @@ async function startDesktopApp(): Promise<void> {
   }
 }
 
-function installLifecycle(window: BrowserWindow, coordinator: DesktopLifecycleCoordinator): void {
+function installLifecycle(
+  window: BrowserWindow,
+  coordinator: DesktopLifecycleCoordinator,
+  telemetry: TelemetryPort,
+): void {
   let closeRequested = false;
   window.on("close", (event) => {
     if (closeRequested) {
@@ -347,11 +352,20 @@ function installLifecycle(window: BrowserWindow, coordinator: DesktopLifecycleCo
     }
     event.preventDefault();
     closeRequested = true;
-    void coordinator.prepareClose().finally(() => {
-      fileTokens.clear();
-      window.destroy();
-      app.quit();
-    });
+    void coordinator.prepareClose().then(
+      async () => {
+        await flushTelemetry(telemetry, 300);
+        fileTokens.clear();
+        window.destroy();
+        app.quit();
+      },
+      async () => {
+        await flushTelemetry(telemetry, 300);
+        fileTokens.clear();
+        window.destroy();
+        app.quit();
+      },
+    );
   });
   powerMonitor.on("suspend", () => {
     void coordinator.request("suspend");
@@ -359,6 +373,13 @@ function installLifecycle(window: BrowserWindow, coordinator: DesktopLifecycleCo
   powerMonitor.on("lock-screen", () => {
     void coordinator.request("suspend");
   });
+}
+
+async function flushTelemetry(telemetry: TelemetryPort, deadlineMs: number): Promise<void> {
+  await Promise.race([
+    telemetry.flush(deadlineMs),
+    new Promise<void>((resolve) => setTimeout(resolve, deadlineMs)),
+  ]).catch(() => undefined);
 }
 
 function installMenu(

@@ -8,7 +8,8 @@ import { fileURLToPath } from "node:url";
 const shellRoot = fileURLToPath(new URL(".", import.meta.url));
 const appVersion = "0.1.0";
 const telemetryE2e = process.env.TELEMETRY_E2E === "1";
-const rendererBuildHash = createHash("sha256").update(`${appVersion}:desktop-renderer`).digest("hex");
+const rendererBuildHash =
+  process.env.TELEMETRY_BUILD_ID ?? createHash("sha256").update(`${appVersion}:desktop-renderer`).digest("hex");
 const buildDefinitions = {
   __APP_VERSION__: JSON.stringify(appVersion),
   __RENDERER_BUILD_HASH__: JSON.stringify(rendererBuildHash),

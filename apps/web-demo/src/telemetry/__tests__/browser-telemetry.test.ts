@@ -111,4 +111,13 @@ describe("createBrowserTelemetry", () => {
     expect(payload.properties.exception_message).not.toContain("/Users/alice");
     expect(payload.properties.exception_message).not.toContain("token=secret");
   });
+
+  it("does not surface provider failures through capture or flush", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockRejectedValue(new Error("offline"));
+    const telemetry = createBrowserTelemetry({ ownerDocument: document, config: validConfig, fetcher });
+
+    expect(() => telemetry.port.capture({ name: "application_session_started" })).not.toThrow();
+    await expect(telemetry.port.flush(300)).resolves.toBeUndefined();
+    expect(fetcher).toHaveBeenCalledOnce();
+  });
 });

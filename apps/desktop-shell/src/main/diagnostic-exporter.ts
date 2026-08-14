@@ -15,7 +15,9 @@ type DiagnosticExporterDependencies = {
 };
 
 export type DiagnosticExportResult =
-  { status: "saved" } | { status: "cancelled" } | { status: "failed"; code: "DIAGNOSTIC_EXPORT_FAILED" };
+  | { status: "saved" }
+  | { status: "cancelled" }
+  | { status: "failed"; code: "DIAGNOSTIC_EXPORT_FAILED" };
 
 export class DiagnosticExporter {
   private readonly showSaveDialog: NonNullable<DiagnosticExporterDependencies["showSaveDialog"]>;

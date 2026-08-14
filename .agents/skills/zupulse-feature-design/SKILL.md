@@ -143,7 +143,7 @@ Review the draft against the input requirement, observed journey, Current contra
 Run:
 
 ```sh
-pnpm prettier --check <spec-path>
+pnpm oxfmt --check <spec-path>
 pnpm check:docs
 git diff --check
 ```

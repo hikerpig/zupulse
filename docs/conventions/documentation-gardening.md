@@ -74,7 +74,7 @@ Current ADR/架构/证据路径最近变化。不得审计模板或把 Historica
 
    ```bash
    pnpm check:docs
-   pnpm exec prettier --check docs/features/contracts/<feature>.md
+   pnpm exec oxfmt --check docs/features/contracts/<feature>.md
    git diff --check
    ```
 
@@ -93,7 +93,7 @@ Current ADR/架构/证据路径最近变化。不得审计模板或把 Historica
 | `unverifiable_claim`    | 只有单一事实源，或缺少表达相同语义的可重复测试                  | 报告；不改声明或验证日期       |
 | `no_drift`              | 重要声明抽样与实现、测试、Current 决策一致                      | 不写仓库、不建 PR/issue        |
 
-自动修正文档还必须满足：不发明新目标、不扩大范围，且最小测试、`check:docs`、Prettier 和
+自动修正文档还必须满足：不发明新目标、不扩大范围，且最小测试、`check:docs`、Oxfmt 和
 `git diff --check` 全部通过。运行时代码优先级不能把疑似回归自动合法化；与 Current ADR 或当前架构
 冲突时只能归类为 `source_conflict`。
 

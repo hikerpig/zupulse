@@ -18,6 +18,7 @@ import {
   type HarmonyAnalysisRepository,
   type HarmonyAnalysisSaveResult,
   type ScoreImportSource,
+  type TelemetryPort,
 } from "@zupulse/web-core";
 import "@zupulse/web-viewer/styles.css";
 import {
@@ -35,6 +36,7 @@ import { createDesktopTelemetryPort } from "./telemetry/desktop-telemetry";
 
 document.documentElement.classList.add("desktop-shell");
 installGlobalDragAndDropGuard(document);
+let activeTelemetry: TelemetryPort | undefined;
 
 async function start(): Promise<void> {
   const bridge = window.zupulseBridge;
@@ -58,6 +60,13 @@ async function start(): Promise<void> {
     apiHost: __POSTHOG_API_HOST__,
     effectiveLocale: response.locale.effectiveLocale,
   });
+  activeTelemetry = telemetry;
+  window.addEventListener("error", (event) =>
+    telemetry.captureException(event.error ?? new Error(event.message), { runtime: "renderer", handled: false }),
+  );
+  window.addEventListener("unhandledrejection", (event) =>
+    telemetry.captureException(event.reason, { runtime: "renderer", handled: false }),
+  );
   let telemetryState = response.telemetry ?? { schemaVersion: 1 as const, enabled: false, noticeAcknowledged: false };
   const telemetryControl = {
     getState: () => ({
@@ -89,6 +98,7 @@ async function start(): Promise<void> {
     bridge,
     acknowledgeLifecycle,
     response.capabilities.externalNavigation?.openUrl === true,
+    telemetry,
   );
   const persistence = new BridgePlaybackPersistence(bridge);
   const root = document.getElementById("root");
@@ -181,9 +191,14 @@ function createElectronHost(
   bridge: NonNullable<Window["zupulseBridge"]>,
   acknowledgeLifecycle: (state: "suspend" | "prepare-close") => Promise<void>,
   canOpenExternalUrl: boolean,
+  telemetry: TelemetryPort,
 ): ViewerHost {
   let storageWarningShown = false;
-  const reportDiagnostic = createDesktopDiagnosticReporter(bridge);
+  const reportDiagnosticBase = createDesktopDiagnosticReporter(bridge);
+  const reportDiagnostic = (error: unknown, operation: string) => {
+    reportDiagnosticBase(error, operation);
+    telemetry.captureException(error, { runtime: "renderer", handled: true, operation });
+  };
   return {
     reportDiagnostic,
     ...(canOpenExternalUrl
@@ -236,4 +251,12 @@ function installGlobalDragAndDropGuard(target: Document): void {
   target.addEventListener("drop", swallowIfExternal, true);
 }
 
-void start().catch(renderStartupError);
+void start().catch((error) => {
+  activeTelemetry?.captureException(error, {
+    runtime: "renderer",
+    handled: true,
+    surface: "startup",
+    operation: "renderer.preload",
+  });
+  renderStartupError(error);
+});

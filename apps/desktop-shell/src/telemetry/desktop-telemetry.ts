@@ -2,8 +2,12 @@ import {
   createNoopTelemetryPort,
   createSafeTelemetryPort,
   telemetryEnvelopeSchema,
+  TelemetryExceptionBudget,
+  sanitizeTelemetryException,
+  telemetryExceptionContextSchema,
   type TelemetryEvent,
   type TelemetryPort,
+  type TelemetryExceptionContext,
 } from "@zupulse/web-core";
 
 export const POSTHOG_US_ORIGIN = "https://us.i.posthog.com";
@@ -50,6 +54,7 @@ export function createDesktopTelemetryPort({
     return createNoopTelemetryPort();
   }
 
+  const exceptionBudget = new TelemetryExceptionBudget();
   return createSafeTelemetryPort({
     capture: (event: TelemetryEvent) => {
       const envelope = telemetryEnvelopeSchema.safeParse({
@@ -97,7 +102,44 @@ export function createDesktopTelemetryPort({
         }),
       }).catch(() => undefined);
     },
-    captureException: () => undefined,
+    captureException: (error, exceptionContext: TelemetryExceptionContext) => {
+      const parsedContext = telemetryExceptionContextSchema.safeParse(exceptionContext);
+      const sanitized = sanitizeTelemetryException(error);
+      if (!parsedContext.success || !sanitized) return;
+      if (!exceptionBudget.allow(context.applicationSessionId ?? "unknown", sanitized.fingerprint)) return;
+      const properties = {
+        schema_version: 1,
+        distinct_id: context.installationId,
+        application_session_id: context.applicationSessionId,
+        platform: "desktop",
+        runtime,
+        app_version: appVersion,
+        build_id: buildId,
+        release_channel: releaseChannel,
+        effective_locale: effectiveLocale,
+        exception_name: sanitized.name,
+        exception_message: sanitized.message,
+        exception_fingerprint: sanitized.fingerprint,
+        ...(sanitized.stack === undefined ? {} : { exception_stack: sanitized.stack }),
+        handled: parsedContext.data.handled,
+        ...(parsedContext.data.surface === undefined ? {} : { surface: parsedContext.data.surface }),
+        ...(parsedContext.data.operation === undefined ? {} : { operation: parsedContext.data.operation }),
+        $process_person_profile: false,
+        $geoip_disable: true,
+      };
+      void fetcher(`${POSTHOG_US_ORIGIN}/capture/`, {
+        method: "POST",
+        credentials: "omit",
+        keepalive: true,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          api_key: projectToken,
+          event: "$exception",
+          properties,
+          timestamp: now().toISOString(),
+        }),
+      }).catch(() => undefined);
+    },
     flush: async () => undefined,
   });
 }

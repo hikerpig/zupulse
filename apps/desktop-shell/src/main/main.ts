@@ -108,7 +108,6 @@ async function startDesktopApp(): Promise<void> {
     arch: process.arch,
   });
   await diagnostics.initialize();
-  installAppDiagnosticInstrumentation(app, diagnostics);
   try {
     const rendererRoot = path.join(__dirname, "../renderer");
     const userData = app.getPath("userData");
@@ -124,6 +123,7 @@ async function startDesktopApp(): Promise<void> {
       apiHost: __POSTHOG_API_HOST__,
       effectiveLocale: "en-US",
     });
+    installAppDiagnosticInstrumentation(app, diagnostics, process, mainTelemetry);
     mainTelemetry.capture({ name: "application_session_started" });
     const localePreferenceStore = new LocalePreferenceStore(userData);
     const initialPreference = await localePreferenceStore.load();
@@ -176,6 +176,7 @@ async function startDesktopApp(): Promise<void> {
         return acceptScorePaths(fileTokens, parsed.data.payload.paths);
       } catch (error) {
         recordBridgeFailure(diagnostics, error);
+        mainTelemetry.captureException(error, { runtime: "main", handled: true, operation: "bridge.dispatch" });
         throw error;
       }
     });
@@ -296,11 +297,12 @@ async function startDesktopApp(): Promise<void> {
         );
       } catch (error) {
         recordBridgeFailure(diagnostics, error);
+        mainTelemetry.captureException(error, { runtime: "main", handled: true, operation: "bridge.dispatch" });
         throw error;
       }
     });
     mainWindow = createMainWindow();
-    installWindowDiagnosticInstrumentation(mainWindow, diagnostics);
+    installWindowDiagnosticInstrumentation(mainWindow, diagnostics, mainTelemetry);
     lifecycle = new DesktopLifecycleCoordinator(sendEvent, {
       timeoutMs: 5000,
       onTimeout: (code) => {

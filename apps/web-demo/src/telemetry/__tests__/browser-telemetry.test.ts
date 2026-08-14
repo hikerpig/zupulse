@@ -96,4 +96,19 @@ describe("createBrowserTelemetry", () => {
     await telemetry.port.flush(1);
     expect(fetcher).not.toHaveBeenCalled();
   });
+
+  it("sanitizes and budgets unexpected exceptions", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response("{}", { status: 200 }));
+    const telemetry = createBrowserTelemetry({ ownerDocument: document, config: validConfig, fetcher });
+    const error = new Error("failed at /Users/alice/score.gp token=secret");
+    telemetry.port.captureException(error, { runtime: "browser", handled: false, operation: "startup" });
+    telemetry.port.captureException(error, { runtime: "browser", handled: false, operation: "startup" });
+    await Promise.resolve();
+
+    expect(fetcher).toHaveBeenCalledOnce();
+    const payload = JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body));
+    expect(payload.event).toBe("$exception");
+    expect(payload.properties.exception_message).not.toContain("/Users/alice");
+    expect(payload.properties.exception_message).not.toContain("token=secret");
+  });
 });

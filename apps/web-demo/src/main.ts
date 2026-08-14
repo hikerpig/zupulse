@@ -22,11 +22,24 @@ if (typeof document !== "undefined") {
       apiHost: __POSTHOG_API_HOST__,
     },
   });
+  const captureBrowserException = (error: unknown, handled: boolean, operation?: string) => {
+    telemetry.port.captureException(error, {
+      runtime: "browser",
+      handled,
+      ...(operation === undefined ? {} : { operation }),
+    });
+  };
+  window.addEventListener("error", (event) => captureBrowserException(event.error ?? new Error(event.message), false));
+  window.addEventListener("unhandledrejection", (event) => captureBrowserException(event.reason, false));
   const localeHost = createBrowserLocaleHost(document);
   const repository = new IndexedDbSheetLibraryRepository();
   void navigator.storage?.persist?.().catch(() => false);
   mountViewerApp(root, {
-    host: { ...host, telemetry: telemetry.port },
+    host: {
+      ...host,
+      telemetry: telemetry.port,
+      reportDiagnostic: (error: unknown, operation: string) => captureBrowserException(error, true, operation),
+    },
     telemetryControl: telemetry.getControl(),
     localeHost,
     openSession: async (file, libraryScoreId, domBindings) => {

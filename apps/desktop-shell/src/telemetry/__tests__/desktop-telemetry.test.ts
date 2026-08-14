@@ -52,4 +52,19 @@ describe("createDesktopTelemetryPort", () => {
       }),
     ).toBeUndefined();
   });
+
+  it("sanitizes exception payloads and suppresses duplicate fingerprints", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response("{}"));
+    const port = createDesktopTelemetryPort({ ...base, fetcher });
+    const error = new Error("failed at /Users/alice/score.gp token=secret");
+    port.captureException(error, { runtime: "renderer", handled: false, operation: "renderer.load" });
+    port.captureException(error, { runtime: "renderer", handled: false, operation: "renderer.load" });
+    await Promise.resolve();
+
+    expect(fetcher).toHaveBeenCalledOnce();
+    const payload = JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body));
+    expect(payload.event).toBe("$exception");
+    expect(payload.properties.exception_message).not.toContain("/Users/alice");
+    expect(payload.properties.exception_message).not.toContain("token=secret");
+  });
 });

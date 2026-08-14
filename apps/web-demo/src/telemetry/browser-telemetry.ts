@@ -3,9 +3,13 @@ import {
   createSafeTelemetryPort,
   telemetryEnvelopeSchema,
   telemetryPreferenceStateSchema,
+  TelemetryExceptionBudget,
+  sanitizeTelemetryException,
+  telemetryExceptionContextSchema,
   type TelemetryEvent,
   type TelemetryPort,
   type TelemetryPreferenceState,
+  type TelemetryExceptionContext,
 } from "@zupulse/web-core";
 import type { TelemetryPreferenceSnapshot } from "@zupulse/web-viewer";
 
@@ -175,6 +179,7 @@ function createPostHogPort(
   fetcher: typeof fetch,
   now: () => Date,
 ): TelemetryPort {
+  const exceptionBudget = new TelemetryExceptionBudget();
   return {
     capture: (event) => {
       const state = getState();
@@ -225,7 +230,46 @@ function createPostHogPort(
         }),
       }).catch(() => undefined);
     },
-    captureException: () => undefined,
+    captureException: (error, context: TelemetryExceptionContext) => {
+      const parsedContext = telemetryExceptionContextSchema.safeParse(context);
+      const state = getState();
+      const sessionId = getSessionId();
+      const sanitized = sanitizeTelemetryException(error);
+      if (!parsedContext.success || !sanitized || !state.enabled || !state.installationId || !sessionId) return;
+      if (!exceptionBudget.allow(sessionId, sanitized.fingerprint)) return;
+      const properties = {
+        schema_version: 1,
+        distinct_id: state.installationId,
+        application_session_id: sessionId,
+        platform: "browser",
+        runtime: "browser",
+        app_version: config.appVersion,
+        build_id: config.buildId,
+        release_channel: config.releaseChannel,
+        effective_locale: config.effectiveLocale ?? "zh-CN",
+        exception_name: sanitized.name,
+        exception_message: sanitized.message,
+        exception_fingerprint: sanitized.fingerprint,
+        ...(sanitized.stack === undefined ? {} : { exception_stack: sanitized.stack }),
+        handled: parsedContext.data.handled,
+        ...(parsedContext.data.surface === undefined ? {} : { surface: parsedContext.data.surface }),
+        ...(parsedContext.data.operation === undefined ? {} : { operation: parsedContext.data.operation }),
+        $process_person_profile: false,
+        $geoip_disable: true,
+      };
+      void fetcher(`${POSTHOG_US_ORIGIN}/capture/`, {
+        method: "POST",
+        credentials: "omit",
+        keepalive: true,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          api_key: config.projectToken,
+          event: "$exception",
+          properties,
+          timestamp: now().toISOString(),
+        }),
+      }).catch(() => undefined);
+    },
     flush: async () => undefined,
   };
 }

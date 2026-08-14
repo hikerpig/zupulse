@@ -32,7 +32,10 @@ Feature Contract and must not add person profiles, autocapture, replay, GeoIP, o
 ## Current evidence
 
 - Local fake ingestion: `pnpm demo:test:telemetry:e2e` and `pnpm desktop:test:telemetry:e2e`.
-- Source-map contract: `node scripts/verify-source-map-artifacts.mjs require <build-dir>` and the tagged workflow.
+- Local packaged Desktop artifact: `pnpm desktop:package` and `node apps/desktop-shell/scripts/verify-package.mjs` passed,
+  including CSP, bundled sample, no source maps, and no management credentials.
+- Source-map contract: `node scripts/verify-source-map-artifacts.mjs require <build-dir>` plus `resolve <build-id>`
+  for Browser/Main/Renderer, and the tagged workflow.
 - Artifact guard: Browser `verify-assets.mjs`; Desktop package verification and source-map guard.
 - External evidence intentionally remains pending until the release owner supplies the PostHog project and access
   governance details.

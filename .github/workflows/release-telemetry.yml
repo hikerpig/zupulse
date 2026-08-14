@@ -46,11 +46,18 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - name: Validate telemetry release secrets
+        run: |
+          test -n "$POSTHOG_PROJECT_TOKEN"
+          test -n "$POSTHOG_CLI_API_KEY"
+          test -n "$POSTHOG_CLI_PROJECT_ID"
 
       - name: Build Browser source maps
         run: pnpm --filter @zupulse/web-demo exec rspack build
       - name: Validate Browser source maps
         run: node scripts/verify-source-map-artifacts.mjs require apps/web-demo/dist
+      - name: Resolve Browser synthetic exception source
+        run: node scripts/verify-source-map-artifacts.mjs resolve "$TELEMETRY_BUILD_ID" apps/web-demo/dist
       - name: Upload Browser source maps
         run: >-
           pnpm dlx @posthog/cli@0.11.2 sourcemap process
@@ -68,6 +75,10 @@ jobs:
         run: pnpm desktop:build
       - name: Validate Desktop source maps
         run: node scripts/verify-source-map-artifacts.mjs require apps/desktop-shell/dist/main apps/desktop-shell/dist/preload apps/desktop-shell/dist/renderer
+      - name: Resolve Desktop synthetic exception sources
+        run: >-
+          node scripts/verify-source-map-artifacts.mjs resolve "$TELEMETRY_BUILD_ID"
+          apps/desktop-shell/dist/main apps/desktop-shell/dist/renderer
       - name: Upload Desktop Main source maps
         run: >-
           pnpm dlx @posthog/cli@0.11.2 sourcemap process

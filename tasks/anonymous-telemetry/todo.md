@@ -62,9 +62,10 @@ Canonical plan: `tasks/anonymous-telemetry/plan.md`
 
 ## Phase 5: Release and durable truth
 
-- [ ] T15 Add release/build identity, CI source-map upload, artifact removal, and package guards.
+- [x] T15 Add release/build identity, CI source-map upload, artifact removal, and package guards.
 - [x] Build identity, opt-in source-map emission, Browser asset guard, and Desktop package `.map`/credential guards.
   - [x] Connect the approved PostHog source-map uploader and make publishing conditional on upload success.
+  - [x] Decode synthetic source-map positions for Browser, Desktop Main, and Desktop Renderer and verify build identity.
 - [ ] T16 Complete Browser/Desktop fake-ingestion E2E, PostHog US smoke, dashboard, privacy URL, and access/retention gates.
 - [x] Browser and Desktop fake-ingestion E2E assert allowlisted payloads and stop after opt-out.
   - [ ] Run external PostHog US smoke and record dashboard, privacy URL deployment, retention policy, and named access owner.
@@ -72,14 +73,14 @@ Canonical plan: `tasks/anonymous-telemetry/plan.md`
 
 ## Definition of Done
 
-- [ ] All task acceptance criteria are met with final-scope evidence.
-- [ ] `pnpm verify:fast`
-- [ ] `pnpm verify`
-- [ ] `pnpm verify:e2e`
-- [ ] `pnpm ipad:verify`
-- [ ] `pnpm format:check`
-- [ ] `git diff --check`
-- [ ] `git status --short` confirms only intended changes.
+- [ ] All task acceptance criteria are met with final-scope evidence; external PostHog governance gates remain open.
+- [x] `pnpm verify:fast`
+- [x] `pnpm verify`
+- [x] `pnpm verify:e2e`
+- [x] `pnpm ipad:verify`
+- [x] `pnpm format:check`
+- [x] `git diff --check`
+- [x] `git status --short` confirms only intended changes.
 - [ ] Manual packaged Desktop and deployed Browser PostHog US smoke pass.
 - [ ] Public privacy URL and PostHog retention/access owner are recorded.
 - [ ] Durable outcomes are promoted before `tasks/anonymous-telemetry/` is deleted.

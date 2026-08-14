@@ -413,7 +413,7 @@ alpha/beta/production CI 上传 source maps，上传后确保 `.map` 不进入 p
 
 - [x] Release jobs fail when required source-map upload fails, while normal verify/internal package jobs require no telemetry secrets.
 - [x] Public and packaged artifacts contain no source maps, management credentials, remote scripts, or invalid telemetry host.
-- [ ] Source maps resolve a synthetic release exception to the correct Browser/Renderer/Main source and build identity.
+- [x] Source maps resolve a synthetic release exception to the correct Browser/Renderer/Main source and build identity.
 
 **Verification:** Rspack config tests/builds; package verification script; CI dry-run/config inspection; manual PostHog
 release smoke.
@@ -452,7 +452,7 @@ external dashboard configuration out of repository secrets.
 
 **Acceptance criteria:**
 
-- [ ] The Current Feature Contract records actual platform behavior, event catalog, preference semantics, known gaps, and reproducible evidence.
+- [x] The Current Feature Contract records actual platform behavior, event catalog, preference semantics, known gaps, and reproducible evidence.
 - [ ] Architecture and ADR status describe the implemented trust boundary; the Spec is `implemented` only after final verification.
 - [ ] `tasks/anonymous-telemetry/` is deleted only after durable outcomes are promoted.
 

@@ -43,6 +43,21 @@ Acceptance、开发测试构建与 iPad 保持 No-op。遥测不是业务事实�
 - 异常在发送前移除路径、URL 参数、UUID、hash、token、cause/custom fields，并受每 session 20 条及
   fingerprint 时间窗限制。
 
+### Event catalog
+
+| Event                         | Producer boundary                                 | Cardinality / scope               |
+| ----------------------------- | ------------------------------------------------- | --------------------------------- |
+| `application_session_started` | Shared App Shell after the notice is rendered     | once per application session      |
+| `application_ready`           | first library refresh settles                     | once per application session      |
+| `score_import_completed`      | semantic import terminal result                   | once per completed import         |
+| `workspace_session_started`   | Viewer or Studio runtime becomes ready            | once per workspace runtime        |
+| `viewer_playback_started`     | Viewer playback enters `playing`                  | once per Viewer Session           |
+| `application_issue_presented` | user-visible Application Issue rendering boundary | once per session/surface/code     |
+| `runtime_failure_observed`    | allowlisted Desktop runtime-failure projection    | once per observed runtime failure |
+
+The provider envelope and exact event fields remain defined by the strict Zod schemas in `web-core`; this table is
+the host-neutral catalog rather than a second schema source.
+
 ### 取消、失败与重试
 
 取消文件选择不产生 import 事件。关闭分享会删除 installation identity、停止后续 capture；重新启用会创建
@@ -104,7 +119,7 @@ identity，并由 Main 为本次运行创建新的 application session。损坏�
 | semantic events and issue presentation  | `packages/web-viewer/src/app/ViewerApplication.ts`, App/route pages                                    | `packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`, full Viewer/App suite |
 | Browser/Desktop journeys                | Browser and Desktop host composition                                                                   | `pnpm verify:e2e`                                                                        |
 | fake-ingestion journeys                 | `apps/web-demo/e2e/telemetry`, `apps/desktop-shell/e2e/telemetry`                                      | `pnpm demo:test:telemetry:e2e`, `pnpm desktop:test:telemetry:e2e`                        |
-| release/source-map boundary             | `scripts/verify-source-map-artifacts.mjs`, `.github/workflows/release-telemetry.yml`                   | map require/forbid checks; provider upload is release-secret gated                       |
+| release/source-map boundary             | `scripts/verify-source-map-artifacts.mjs`, `.github/workflows/release-telemetry.yml`                   | map require/resolve/forbid checks; provider upload is release-secret gated               |
 
 ## 相关资料
 

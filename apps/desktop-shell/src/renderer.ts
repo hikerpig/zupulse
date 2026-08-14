@@ -58,6 +58,24 @@ async function start(): Promise<void> {
     apiHost: __POSTHOG_API_HOST__,
     effectiveLocale: response.locale.effectiveLocale,
   });
+  let telemetryState = response.telemetry ?? { schemaVersion: 1 as const, enabled: false, noticeAcknowledged: false };
+  const telemetryControl = {
+    getState: () => ({
+      available: response.capabilities.telemetry?.available === true,
+      enabled: telemetryState.enabled,
+      noticeAcknowledged: telemetryState.noticeAcknowledged,
+    }),
+    acknowledgeNotice: async () => {
+      const request = createBridgeRequest("app.telemetry.setPreference", crypto.randomUUID(), {
+        enabled: telemetryState.enabled,
+      });
+      telemetryState = parseBridgeResponse(request.type, await bridge.request(request));
+    },
+    setPreference: async (enabled: boolean) => {
+      const request = createBridgeRequest("app.telemetry.setPreference", crypto.randomUUID(), { enabled });
+      telemetryState = parseBridgeResponse(request.type, await bridge.request(request));
+    },
+  };
 
   let appHandle: ViewerAppHandle | undefined;
   const acknowledgeLifecycle = async (state: "suspend" | "prepare-close") => {
@@ -77,6 +95,7 @@ async function start(): Promise<void> {
   if (!root) throw new Error("VIEWER_ROOT_MISSING");
   appHandle = mountViewerApp(root, {
     host: { ...host, telemetry },
+    telemetryControl,
     localeHost: createDesktopLocaleHost(bridge, response.locale),
     openSession: createDefaultOpenSession(document, persistence),
     library: {

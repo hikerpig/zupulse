@@ -58,14 +58,17 @@ export class TelemetryPreferenceStore {
   }
 
   async setPreference(enabled: boolean): Promise<DesktopTelemetryHandshake> {
-    const next: TelemetryPreferenceState = enabled
-      ? {
-          schemaVersion: 1,
-          enabled: true,
-          noticeAcknowledged: true,
-          installationId: randomUUID(),
-        }
-      : { schemaVersion: 1, enabled: false, noticeAcknowledged: true };
+    const next: TelemetryPreferenceState =
+      enabled && this.state.enabled
+        ? { ...this.state, noticeAcknowledged: true }
+        : enabled
+          ? {
+              schemaVersion: 1,
+              enabled: true,
+              noticeAcknowledged: true,
+              installationId: randomUUID(),
+            }
+          : { schemaVersion: 1, enabled: false, noticeAcknowledged: true };
     await this.persist(next);
     this.state = next;
     return this.handshake();

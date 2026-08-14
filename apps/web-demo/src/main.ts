@@ -27,6 +27,7 @@ if (typeof document !== "undefined") {
   void navigator.storage?.persist?.().catch(() => false);
   mountViewerApp(root, {
     host: { ...host, telemetry: telemetry.port },
+    telemetryControl: telemetry.getControl(),
     localeHost,
     openSession: async (file, libraryScoreId, domBindings) => {
       const { createDefaultOpenSession } = await import("@zupulse/web-viewer");

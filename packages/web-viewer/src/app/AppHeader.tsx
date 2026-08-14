@@ -1,4 +1,4 @@
-import { House, Languages, LibraryBig, Moon, Sun } from "lucide-react";
+import { House, Languages, LibraryBig, Moon, ShieldCheck, Sun } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router";
@@ -11,13 +11,16 @@ import type { LocaleHost } from "../i18n/locale-controller";
 import type { ExternalNavigationHost } from "../host";
 import { useAppStore } from "./appStore";
 import type { ViewerProductCapabilities } from "./App";
+import type { ViewerApplication } from "./ViewerApplication";
 import styles from "./AppHeader.module.css";
 
 export function AppHeader({
+  application,
   localeHost,
   capabilities,
   externalNavigationHost,
 }: {
+  application: ViewerApplication;
   localeHost: LocaleHost;
   capabilities: ViewerProductCapabilities;
   externalNavigationHost?: ExternalNavigationHost;
@@ -35,6 +38,12 @@ export function AppHeader({
   const nextTheme = theme === "dark" ? "light" : "dark";
   const [localeOpen, setLocaleOpen] = useState(false);
   const localeButtonRef = useRef<HTMLButtonElement>(null);
+  const telemetry = application.getTelemetryPreference();
+  const [telemetryOpen, setTelemetryOpen] = useState(false);
+  const [telemetrySaving, setTelemetrySaving] = useState(false);
+  const [telemetryError, setTelemetryError] = useState(false);
+  const telemetryButtonRef = useRef<HTMLButtonElement>(null);
+  const [telemetryEnabled, setTelemetryEnabled] = useState(telemetry?.enabled ?? false);
 
   const selectLocale = async (preference: "system" | "zh-CN" | "en-US") => {
     setLocaleChange("saving");
@@ -128,6 +137,47 @@ export function AppHeader({
           <Languages aria-hidden="true" size={17} />
           <span>{t("locale.trigger")}</span>
         </Button>
+        {telemetry ? (
+          <>
+            <Button
+              ref={telemetryButtonRef}
+              className={styles.headerActionButton}
+              size="sm"
+              aria-label={t("telemetry.trigger")}
+              aria-haspopup="dialog"
+              aria-expanded={telemetryOpen}
+              onClick={() => setTelemetryOpen((open) => !open)}
+            >
+              <ShieldCheck aria-hidden="true" size={17} />
+              <span>{t("telemetry.trigger")}</span>
+            </Button>
+            <ContextPopup anchor={telemetryButtonRef.current} open={telemetryOpen} onOpenChange={setTelemetryOpen}>
+              <div className={`${styles.localePopup} tw:grid tw:gap-2`} aria-label={t("telemetry.dialogLabel")}>
+                <label className="tw:text-xs tw:flex tw:items-start tw:gap-2">
+                  <input
+                    type="checkbox"
+                    checked={telemetryEnabled}
+                    disabled={telemetrySaving || !telemetry.available}
+                    onChange={(event) => {
+                      const enabled = event.target.checked;
+                      setTelemetrySaving(true);
+                      setTelemetryError(false);
+                      void application
+                        .setTelemetryPreference(enabled)
+                        .then(() => setTelemetryEnabled(enabled))
+                        .catch(() => setTelemetryError(true))
+                        .finally(() => setTelemetrySaving(false));
+                    }}
+                  />
+                  <span>{t("telemetry.enabled")}</span>
+                </label>
+                {!telemetry.available ? <p>{t("telemetry.unavailable")}</p> : null}
+                {telemetrySaving ? <p role="status">{t("telemetry.saving")}</p> : null}
+                {telemetryError ? <p role="alert">{tErrors("telemetryPreferenceWriteFailed")}</p> : null}
+              </div>
+            </ContextPopup>
+          </>
+        ) : null}
         <ContextPopup anchor={localeButtonRef.current} open={localeOpen} onOpenChange={setLocaleOpen}>
           <div className={`${styles.localePopup} tw:grid tw:gap-1`} aria-label={t("locale.dialogLabel")}>
             {(

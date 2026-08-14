@@ -28,6 +28,18 @@ export const zhCN = {
       enUS: "English",
       saving: "正在保存语言设置",
     },
+    telemetry: {
+      trigger: "隐私与诊断",
+      dialogLabel: "隐私与诊断设置",
+      noticeTitle: "帮助改进逐拍",
+      noticeBody: "分享匿名启动、功能使用和错误报告。曲谱、文件名、路径和你的输入都会留在本机。",
+      learnMore: "了解详情",
+      continueSharing: "继续分享",
+      disableSharing: "关闭分享",
+      enabled: "分享匿名使用与错误报告",
+      saving: "正在保存隐私设置",
+      unavailable: "此构建不可用匿名报告",
+    },
   },
   home: {
     intro: {
@@ -439,6 +451,7 @@ export const zhCN = {
   errors: {
     generic: "操作失败，请重试",
     localePreferenceWriteFailed: "无法保存语言设置，已保留当前语言",
+    telemetryPreferenceWriteFailed: "无法保存隐私设置，已保留当前设置",
     import: {
       generic: "无法导入乐谱",
       unsupportedFormat: "不支持这种乐谱格式。",

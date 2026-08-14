@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createHashRouter, Outlet, useNavigate } from "react-router";
 import type { LocaleHost } from "../i18n/locale-controller";
 import type { ExternalNavigationHost } from "../host";
@@ -99,13 +100,53 @@ function ApplicationNavigation({
   return (
     <div className={styles.appFrame}>
       <AppHeader
+        application={application}
         localeHost={localeHost}
         capabilities={capabilities}
         {...(externalNavigationHost === undefined ? {} : { externalNavigationHost })}
       />
       <div className={styles.routeViewport}>
+        <TelemetryNotice application={application} />
         <Outlet />
       </div>
     </div>
+  );
+}
+
+function TelemetryNotice({ application }: { application: ViewerApplication }) {
+  const { t } = useTranslation("common");
+  const state = application.getTelemetryPreference();
+  const [busy, setBusy] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  if (!state?.available || !state.enabled || state.noticeAcknowledged || dismissed) return null;
+
+  const choose = (enabled: boolean) => {
+    setBusy(true);
+    const operation = enabled ? application.acknowledgeTelemetryNotice() : application.setTelemetryPreference(false);
+    void operation
+      .then(() => setDismissed(true))
+      .catch(() => undefined)
+      .finally(() => setBusy(false));
+  };
+
+  return (
+    <aside className={styles.telemetryNotice} aria-labelledby="telemetry-notice-title">
+      <div>
+        <h2 id="telemetry-notice-title">{t("telemetry.noticeTitle")}</h2>
+        <p>{t("telemetry.noticeBody")}</p>
+        <a href="https://github.com/hikerpig/zupulse" target="_blank" rel="noreferrer">
+          {t("telemetry.learnMore")}
+        </a>
+      </div>
+      <div className="tw:flex tw:flex-wrap tw:gap-2">
+        <button type="button" disabled={busy} onClick={() => choose(true)}>
+          {t("telemetry.continueSharing")}
+        </button>
+        <button type="button" disabled={busy} onClick={() => choose(false)}>
+          {t("telemetry.disableSharing")}
+        </button>
+      </div>
+      {busy ? <p role="status">{t("telemetry.saving")}</p> : null}
+    </aside>
   );
 }

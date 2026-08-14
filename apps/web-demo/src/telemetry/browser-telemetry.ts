@@ -7,6 +7,7 @@ import {
   type TelemetryPort,
   type TelemetryPreferenceState,
 } from "@zupulse/web-core";
+import type { TelemetryPreferenceSnapshot } from "@zupulse/web-viewer";
 
 export const BROWSER_TELEMETRY_STORAGE_KEY = "zupulse-telemetry";
 export const POSTHOG_US_ORIGIN = "https://us.i.posthog.com";
@@ -35,6 +36,11 @@ export type BrowserTelemetry = {
   setPreference(enabled: boolean): Promise<void>;
   startSession(): void;
   capture(event: TelemetryEvent): void;
+  getControl(): {
+    getState(): TelemetryPreferenceSnapshot;
+    acknowledgeNotice(): void;
+    setPreference(enabled: boolean): Promise<void>;
+  };
 };
 
 const defaultState = (): TelemetryPreferenceState => ({
@@ -110,12 +116,19 @@ export function createBrowserTelemetry({
       currentPort = createNoopTelemetryPort();
       return;
     }
-    const next = {
-      schemaVersion: 1 as const,
-      enabled: true,
-      noticeAcknowledged: state.noticeAcknowledged,
-      installationId: randomUuid(),
-    };
+    const next = state.enabled
+      ? { ...state, noticeAcknowledged: true }
+      : {
+          schemaVersion: 1 as const,
+          enabled: true,
+          noticeAcknowledged: state.noticeAcknowledged,
+          installationId: randomUuid(),
+        };
+    if (state.enabled) {
+      if (!writeState(storage, next)) throw new Error("TELEMETRY_PREFERENCE_WRITE_FAILED");
+      state = next;
+      return;
+    }
     if (!writeState(storage, next)) throw new Error("TELEMETRY_PREFERENCE_WRITE_FAILED");
     state = next;
     applicationSessionId = randomUuid();
@@ -142,6 +155,15 @@ export function createBrowserTelemetry({
     setPreference,
     startSession,
     capture,
+    getControl: () => ({
+      getState: () => ({
+        available: isSafeConfig(config),
+        enabled: state.enabled,
+        noticeAcknowledged: state.noticeAcknowledged,
+      }),
+      acknowledgeNotice,
+      setPreference,
+    }),
   };
 }
 

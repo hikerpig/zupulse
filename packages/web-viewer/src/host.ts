@@ -26,6 +26,16 @@ export interface ViewerHost {
   telemetry?: import("@zupulse/web-core").TelemetryPort;
   externalNavigation?: ExternalNavigationHost;
 }
+export type TelemetryPreferenceSnapshot = {
+  available: boolean;
+  enabled: boolean;
+  noticeAcknowledged: boolean;
+};
+export type TelemetryControl = {
+  getState(): TelemetryPreferenceSnapshot;
+  acknowledgeNotice(): Promise<void> | void;
+  setPreference(enabled: boolean): Promise<void>;
+};
 export type { LocaleHost } from "./i18n/locale-controller";
 export type ViewerAppHandle = {
   openScore(): Promise<void>;

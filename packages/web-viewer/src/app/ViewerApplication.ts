@@ -5,6 +5,7 @@ import {
   type ViewerFile,
   type ViewerHost,
   type ViewerHostEvent,
+  type TelemetryControl,
 } from "../host";
 import type { ViewerSessionPort } from "../viewer-session/viewer-session-types";
 import { createNoopTelemetryPort, importLibraryScores } from "@zupulse/web-core";
@@ -61,6 +62,7 @@ export class ViewerApplication implements ViewerAppHandle {
   private applicationReadyCaptured = false;
   private readonly presentedIssueKeys = new Set<string>();
   private readonly playbackTelemetryUnsubscribers = new Map<string, () => void>();
+  private readonly telemetryControl?: TelemetryControl;
 
   constructor(
     private readonly host: ViewerHost,
@@ -80,7 +82,9 @@ export class ViewerApplication implements ViewerAppHandle {
     },
     openStudioRuntime?: (file: ViewerFile) => Promise<StudioScoreRuntime>,
     harmonyAnalysisRunner: HarmonyAnalysisRunner = createDefaultHarmonyAnalysisRunner(),
+    telemetryControl?: TelemetryControl,
   ) {
+    this.telemetryControl = telemetryControl;
     this.telemetry = host.telemetry ?? createNoopTelemetryPort();
     this.unsubscribe = host.subscribe((event) => this.onHostEvent(event));
     this.studioApplication = new StudioApplication({
@@ -352,6 +356,18 @@ export class ViewerApplication implements ViewerAppHandle {
       issueCode: issue.code,
       recoverable: issue.recoverable,
     });
+  }
+
+  getTelemetryPreference(): ReturnType<TelemetryControl["getState"]> | undefined {
+    return this.telemetryControl?.getState();
+  }
+
+  acknowledgeTelemetryNotice(): Promise<void> {
+    return Promise.resolve(this.telemetryControl?.acknowledgeNotice());
+  }
+
+  async setTelemetryPreference(enabled: boolean): Promise<void> {
+    await this.telemetryControl?.setPreference(enabled);
   }
 
   private async readLibraryScore(id: string): Promise<ViewerFile> {

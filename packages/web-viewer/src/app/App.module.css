@@ -17,4 +17,40 @@
     overflow: hidden;
     container-type: inline-size;
   }
+
+  .telemetryNotice {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border-default);
+    background: var(--bg-shell);
+    color: var(--text-primary);
+  }
+
+  .telemetryNotice h2,
+  .telemetryNotice p {
+    margin: 0;
+  }
+
+  .telemetryNotice h2 {
+    font-size: 13px;
+  }
+
+  .telemetryNotice p,
+  .telemetryNotice a {
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+
+  .telemetryNotice button {
+    min-height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-control);
+    color: var(--text-primary);
+    font-size: 12px;
+  }
 }

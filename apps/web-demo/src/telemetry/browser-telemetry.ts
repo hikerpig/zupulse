@@ -3,7 +3,6 @@ import {
   createSafeTelemetryPort,
   telemetryEnvelopeSchema,
   telemetryPreferenceStateSchema,
-  type TelemetryEnvelope,
   type TelemetryEvent,
   type TelemetryPort,
   type TelemetryPreferenceState,
@@ -86,22 +85,7 @@ export function createBrowserTelemetry({
   const getState = () => state;
 
   const capture = (event: TelemetryEvent): void => {
-    if (!state.enabled || !applicationSessionId || !state.installationId) return;
-    const envelope = telemetryEnvelopeSchema.safeParse({
-      schemaVersion: 1,
-      eventId: randomUuid(),
-      installationId: state.installationId,
-      applicationSessionId,
-      occurredAt: now().toISOString(),
-      platform: "browser",
-      runtime: "browser",
-      appVersion: config.appVersion,
-      buildId: config.buildId,
-      releaseChannel: config.releaseChannel,
-      effectiveLocale: config.effectiveLocale ?? "zh-CN",
-      event,
-    });
-    if (envelope.success) currentPort.capture(envelope.data);
+    if (state.enabled && applicationSessionId && state.installationId) currentPort.capture(event);
   };
 
   const startSession = (): void => {
@@ -162,18 +146,34 @@ export function createBrowserTelemetry({
 }
 
 function createPostHogPort(
-  config: Required<Pick<BrowserTelemetryConfig, "appVersion" | "buildId" | "releaseChannel" | "projectToken">>,
+  config: Required<Pick<BrowserTelemetryConfig, "appVersion" | "buildId" | "releaseChannel" | "projectToken">> &
+    Pick<BrowserTelemetryConfig, "effectiveLocale">,
   getState: () => TelemetryPreferenceState,
   getSessionId: () => string | undefined,
   fetcher: typeof fetch,
   now: () => Date,
 ): TelemetryPort {
   return {
-    capture: (envelope) => {
-      const parsed = telemetryEnvelopeSchema.safeParse(envelope);
+    capture: (event) => {
       const state = getState();
-      if (!parsed.success || !state.enabled || !state.installationId || !getSessionId()) return;
-      const { event, ...base } = parsed.data;
+      const applicationSessionId = getSessionId();
+      if (!state.enabled || !state.installationId || !applicationSessionId) return;
+      const envelope = telemetryEnvelopeSchema.safeParse({
+        schemaVersion: 1,
+        eventId: randomUuid(),
+        installationId: state.installationId,
+        applicationSessionId,
+        occurredAt: now().toISOString(),
+        platform: "browser",
+        runtime: "browser",
+        appVersion: config.appVersion,
+        buildId: config.buildId,
+        releaseChannel: config.releaseChannel,
+        effectiveLocale: config.effectiveLocale ?? "zh-CN",
+        event,
+      });
+      if (!envelope.success) return;
+      const { event: parsedEvent, ...base } = envelope.data;
       const properties = {
         schema_version: base.schemaVersion,
         event_id: base.eventId,
@@ -186,7 +186,7 @@ function createPostHogPort(
         build_id: base.buildId,
         release_channel: base.releaseChannel,
         effective_locale: base.effectiveLocale,
-        ...event,
+        ...parsedEvent,
         $process_person_profile: false,
         $geoip_disable: true,
       };
@@ -197,7 +197,7 @@ function createPostHogPort(
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           api_key: config.projectToken,
-          event: event.name,
+          event: parsedEvent.name,
           properties,
           timestamp: now().toISOString(),
         }),

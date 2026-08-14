@@ -37,6 +37,7 @@ import { verifySqliteAvailable } from "./library/sqlite";
 import { LocalePreferenceStore } from "./locale-preference-store";
 import { openExternalUrl } from "./external-navigation";
 import { TelemetryPreferenceStore } from "./telemetry-preference-store";
+import { createDesktopTelemetryPort } from "../telemetry/desktop-telemetry";
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -112,7 +113,18 @@ async function startDesktopApp(): Promise<void> {
     const rendererRoot = path.join(__dirname, "../renderer");
     const userData = app.getPath("userData");
     const telemetryStore = new TelemetryPreferenceStore(userData);
-    await telemetryStore.load();
+    const telemetryContext = await telemetryStore.load();
+    const mainTelemetry = createDesktopTelemetryPort({
+      context: telemetryContext,
+      runtime: "main",
+      appVersion: __APP_VERSION__,
+      buildId: __RENDERER_BUILD_HASH__,
+      releaseChannel: __TELEMETRY_RELEASE_CHANNEL__,
+      projectToken: __POSTHOG_PROJECT_TOKEN__,
+      apiHost: __POSTHOG_API_HOST__,
+      effectiveLocale: "en-US",
+    });
+    mainTelemetry.capture({ name: "application_session_started" });
     const localePreferenceStore = new LocalePreferenceStore(userData);
     const initialPreference = await localePreferenceStore.load();
     let currentLocaleState: LocaleState = {

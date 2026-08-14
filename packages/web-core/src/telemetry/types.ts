@@ -1,7 +1,7 @@
-import type { TelemetryEnvelope, TelemetryExceptionContext } from "./schemas";
+import type { TelemetryEvent, TelemetryExceptionContext } from "./schemas";
 
 export interface TelemetryPort {
-  capture(event: TelemetryEnvelope): void;
+  capture(event: TelemetryEvent): void;
   captureException(error: unknown, context: TelemetryExceptionContext): void;
   flush(deadlineMs: number): Promise<void>;
 }

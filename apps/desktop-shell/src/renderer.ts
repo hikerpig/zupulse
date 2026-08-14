@@ -31,6 +31,7 @@ import {
 import { createDesktopDroppedImportSources, DesktopScoreFileGateway } from "./desktop-score-file-gateway";
 import { createDesktopDiagnosticReporter } from "./desktop-diagnostic-reporter";
 import { createDesktopExternalNavigation } from "./desktop-external-navigation";
+import { createDesktopTelemetryPort } from "./telemetry/desktop-telemetry";
 
 document.documentElement.classList.add("desktop-shell");
 installGlobalDragAndDropGuard(document);
@@ -47,6 +48,16 @@ async function start(): Promise<void> {
   if (response.appVersion !== __APP_VERSION__ || response.rendererBuildHash !== __RENDERER_BUILD_HASH__) {
     throw new Error("BRIDGE_VERSION_MISMATCH");
   }
+  const telemetry = createDesktopTelemetryPort({
+    context: response.telemetry ?? { enabled: false },
+    runtime: "renderer",
+    appVersion: __APP_VERSION__,
+    buildId: __RENDERER_BUILD_HASH__,
+    releaseChannel: __TELEMETRY_RELEASE_CHANNEL__,
+    projectToken: __POSTHOG_PROJECT_TOKEN__,
+    apiHost: __POSTHOG_API_HOST__,
+    effectiveLocale: response.locale.effectiveLocale,
+  });
 
   let appHandle: ViewerAppHandle | undefined;
   const acknowledgeLifecycle = async (state: "suspend" | "prepare-close") => {
@@ -65,7 +76,7 @@ async function start(): Promise<void> {
   const root = document.getElementById("root");
   if (!root) throw new Error("VIEWER_ROOT_MISSING");
   appHandle = mountViewerApp(root, {
-    host,
+    host: { ...host, telemetry },
     localeHost: createDesktopLocaleHost(bridge, response.locale),
     openSession: createDefaultOpenSession(document, persistence),
     library: {

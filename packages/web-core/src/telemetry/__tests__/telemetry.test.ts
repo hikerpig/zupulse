@@ -86,7 +86,7 @@ describe("telemetry contracts", () => {
 
   it("keeps a provider boundary non-throwing", async () => {
     const noop = createNoopTelemetryPort();
-    expect(() => noop.capture(envelope)).not.toThrow();
+    expect(() => noop.capture(envelope.event)).not.toThrow();
     expect(() => noop.captureException(new Error("boom"), { runtime: "browser", handled: true })).not.toThrow();
     await expect(noop.flush(10)).resolves.toBeUndefined();
 
@@ -101,7 +101,7 @@ describe("telemetry contracts", () => {
         throw new Error("provider failure");
       },
     });
-    expect(() => safe.capture(envelope)).not.toThrow();
+    expect(() => safe.capture(envelope.event)).not.toThrow();
     expect(() => safe.captureException(new Error("boom"), { runtime: "browser", handled: true })).not.toThrow();
     await expect(safe.flush(10)).resolves.toBeUndefined();
   });

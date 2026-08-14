@@ -13,8 +13,13 @@ import {
   validateRokotAbc,
   type RokotSystemBundle,
 } from "../normalizers/rokot";
-import { encodeRgbaPng, renderPdfPages } from "../render-pdf-pages";
-import { GRAND_STAFF_SEGMENTATION_PARAMETERS, segmentGrandStaffSystems } from "../staff-system-segmentation";
+import { encodeRgbaPng, renderPdfPages, type RenderedPdfPage } from "../render-pdf-pages";
+import {
+  STAFF_SYSTEM_SEGMENTATION_PARAMETERS,
+  segmentStaffSystems,
+  type StaffSystem,
+  type StaffSystemSegmentation,
+} from "../staff-system-segmentation";
 import type { OmrEngineAdapter } from "./types";
 
 const defaultModelRevision = "7add305aade6fb3a64ad4dde77d410fa68381089";
@@ -106,17 +111,27 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           modelRevision: configuration.modelRevision,
           prompt,
           reasoning: "off",
-          segmentationCropPaddingMultiplier: GRAND_STAFF_SEGMENTATION_PARAMETERS.cropPaddingMultiplier,
-          segmentationDetectorVersion: GRAND_STAFF_SEGMENTATION_PARAMETERS.detectorVersion,
-          segmentationHorizontalRunCoverage: GRAND_STAFF_SEGMENTATION_PARAMETERS.horizontalRunCoverage,
+          segmentationAllowFragmentedRuns: true,
+          segmentationAllowLandscape: true,
+          segmentationStaffLayout: "auto",
+          segmentationCropPaddingMultiplier: STAFF_SYSTEM_SEGMENTATION_PARAMETERS.cropPaddingMultiplier,
+          segmentationContinuousRowCoverage: STAFF_SYSTEM_SEGMENTATION_PARAMETERS.continuousRowCoverage,
+          segmentationDetectorVersion: STAFF_SYSTEM_SEGMENTATION_PARAMETERS.detectorVersion,
+          segmentationFragmentedRowCoverage: STAFF_SYSTEM_SEGMENTATION_PARAMETERS.fragmentedRowCoverage,
+          segmentationFragmentedRunContainmentRatio: STAFF_SYSTEM_SEGMENTATION_PARAMETERS.fragmentedRunContainmentRatio,
+          segmentationFragmentedSpacingToleranceRatio:
+            STAFF_SYSTEM_SEGMENTATION_PARAMETERS.fragmentedSpacingToleranceRatio,
+          segmentationHorizontalRunCoverage: STAFF_SYSTEM_SEGMENTATION_PARAMETERS.horizontalRunCoverage,
           segmentationMaximumGrandStaffGapMultiplier:
-            GRAND_STAFF_SEGMENTATION_PARAMETERS.maximumGrandStaffGapMultiplier,
-          segmentationMaximumStaffSpacingPx: GRAND_STAFF_SEGMENTATION_PARAMETERS.maximumStaffSpacingPx,
-          segmentationMinimumConnectorCoverage: GRAND_STAFF_SEGMENTATION_PARAMETERS.minimumConnectorCoverage,
+            STAFF_SYSTEM_SEGMENTATION_PARAMETERS.maximumGrandStaffGapMultiplier,
+          segmentationMaximumStaffSpacingPx: STAFF_SYSTEM_SEGMENTATION_PARAMETERS.maximumStaffSpacingPx,
+          segmentationMinimumConnectorCoverage: STAFF_SYSTEM_SEGMENTATION_PARAMETERS.minimumConnectorCoverage,
+          segmentationMinimumCurvedConnectorCoverage:
+            STAFF_SYSTEM_SEGMENTATION_PARAMETERS.minimumCurvedConnectorCoverage,
           segmentationMinimumGrandStaffGapMultiplier:
-            GRAND_STAFF_SEGMENTATION_PARAMETERS.minimumGrandStaffGapMultiplier,
-          segmentationMinimumStaffSpacingPx: GRAND_STAFF_SEGMENTATION_PARAMETERS.minimumStaffSpacingPx,
-          segmentationSpacingToleranceRatio: GRAND_STAFF_SEGMENTATION_PARAMETERS.spacingToleranceRatio,
+            STAFF_SYSTEM_SEGMENTATION_PARAMETERS.minimumGrandStaffGapMultiplier,
+          segmentationMinimumStaffSpacingPx: STAFF_SYSTEM_SEGMENTATION_PARAMETERS.minimumStaffSpacingPx,
+          segmentationSpacingToleranceRatio: STAFF_SYSTEM_SEGMENTATION_PARAMETERS.spacingToleranceRatio,
           temperature: 0,
           visionProjectorSha256: mmprojHash,
         },
@@ -161,8 +176,28 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           cause: error,
         });
       });
-      const pages = await renderPdfPages(inputBytes, { targetWidth: 1400 });
-      const segmentation = segmentGrandStaffSystems(pages);
+      const pages = await renderPdfPages(inputBytes, {
+        targetWidth: 1400,
+        allowLandscape: true,
+        ...(request.standardFontDirectory === undefined
+          ? {}
+          : { standardFontDirectory: request.standardFontDirectory }),
+        ...(request.wasmDirectory === undefined ? {} : { wasmDirectory: request.wasmDirectory }),
+      });
+      const inputScope = request.inputScope ?? "full-page";
+      let segmentation: StaffSystemSegmentation;
+      try {
+        segmentation =
+          inputScope === "system-crop"
+            ? systemCropSegmentation(pages, request.staffLayout)
+            : segmentStaffSystems(pages, {
+                allowFragmentedRuns: true,
+                staffLayout: request.staffLayout ?? "auto",
+              });
+      } catch (error) {
+        await writeSegmentationFailureEvidence(request.outputDirectory, pages, error);
+        throw error;
+      }
       const systems = [...segmentation.systems].sort(
         (left, right) => left.pageIndex - right.pageIndex || left.systemIndex - right.systemIndex,
       );
@@ -173,7 +208,7 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
       const segmentationSystems: Array<Record<string, unknown>> = [];
       let durationMs = 0;
 
-      for (const system of systems) {
+      for (const [systemOffset, system] of systems.entries()) {
         const stem = systemStem(system.pageIndex, system.systemIndex);
         const pngBytes = encodeRgbaPng(system.pixelBBox.width, system.pixelBBox.height, system.cropPixels);
         const pngPath = join(systemsDirectory, `${stem}.png`);
@@ -212,7 +247,13 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
         const rawAbcBytes = await readFile(rawAbcPath).catch((error: unknown) => {
           throw invalidOutput("invalid-rokot-abc-envelope", error);
         });
-        const abc = extractCanonicalAbc(rawAbcBytes);
+        let abc: string;
+        try {
+          abc = extractCanonicalAbc(rawAbcBytes, system.staffLayout);
+        } catch (error) {
+          await writeInferenceFailureEvidence(request.outputDirectory, stem, pngBytes, rawAbcBytes, error);
+          throw error;
+        }
         const abcBytes = new TextEncoder().encode(abc);
         await writeFile(canonicalAbcPath, abcBytes, { flag: "wx" });
         const conversion = await convertRokotAbc(
@@ -234,6 +275,8 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           pageIndex: system.pageIndex,
           systemIndex: system.systemIndex,
           source: {
+            staffLayout: system.staffLayout,
+            staffCount: system.staffCount,
             pixelBbox: system.pixelBBox,
             pdfPointBbox: system.pdfPointBBox,
             cropSha256: system.cropSha256,
@@ -244,6 +287,8 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
         segmentationSystems.push({
           pageIndex: system.pageIndex,
           systemIndex: system.systemIndex,
+          staffLayout: system.staffLayout,
+          staffCount: system.staffCount,
           pageRenderSha256: system.pageRenderSha256,
           localStaffSpacingPx: system.localStaffSpacingPx,
           pixelBBox: system.pixelBBox,
@@ -257,6 +302,7 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           { relativePath: `systems/${stem}.abc`, bytes: abcBytes },
           { relativePath: `systems/${stem}.musicxml`, bytes: musicXmlBytes },
         );
+        request.onProgress?.({ unit: "system", completed: systemOffset + 1, total: systems.length });
       }
 
       const bundleBytes = new TextEncoder().encode(
@@ -266,6 +312,7 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
       const segmentationBytes = new TextEncoder().encode(
         canonicalJson({
           schemaVersion: "1.0.0",
+          inputScope,
           detectorVersion: segmentation.detectorVersion,
           parameters: segmentation.parameters,
           systems: segmentationSystems,
@@ -283,6 +330,85 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
       return normalizeRokotOutput(recognition.normalizationBytes);
     },
   };
+}
+
+function systemCropSegmentation(
+  pages: readonly RenderedPdfPage[],
+  staffLayout: "auto" | "single-staff" | "grand-staff" | undefined,
+): StaffSystemSegmentation {
+  if (staffLayout === undefined || staffLayout === "auto") {
+    throw new PdfOmrError("INVALID_CLI_ARGUMENT", "system crop requires an explicit staff layout", {
+      context: { reason: "system-crop-requires-staff-layout" },
+    });
+  }
+  const staffCount = staffLayout === "single-staff" ? 1 : 2;
+  const systems: StaffSystem[] = [...pages]
+    .sort((left, right) => left.pageIndex - right.pageIndex)
+    .map((page) => ({
+      staffLayout,
+      staffCount,
+      pageIndex: page.pageIndex,
+      systemIndex: 0,
+      pageRenderSha256: page.renderSha256,
+      localStaffSpacingPx: 0,
+      pixelBBox: { x: 0, y: 0, width: page.pixelWidth, height: page.pixelHeight },
+      pdfPointBBox: { x: 0, y: 0, width: page.pdfWidth, height: page.pdfHeight },
+      cropPixels: page.pixels,
+      cropSha256: sha256Bytes(page.pixels),
+      staffLineYs: [],
+    }));
+  return {
+    detectorVersion: STAFF_SYSTEM_SEGMENTATION_PARAMETERS.detectorVersion,
+    parameters: STAFF_SYSTEM_SEGMENTATION_PARAMETERS,
+    systems,
+  };
+}
+
+async function writeSegmentationFailureEvidence(
+  outputDirectory: string,
+  pages: readonly RenderedPdfPage[],
+  error: unknown,
+): Promise<void> {
+  const directory = join(outputDirectory, "failure-debug");
+  await mkdir(directory, { recursive: true });
+  const canonical =
+    error instanceof PdfOmrError
+      ? error.toJSON()
+      : new PdfOmrError("ENGINE_OUTPUT_INVALID", "staff-system segmentation failed").toJSON();
+  await writeFile(
+    join(directory, "segmentation-error.json"),
+    canonicalJson({ schemaVersion: "1.0.0", error: canonical }),
+    { flag: "wx" },
+  );
+  for (const page of pages.slice(0, 4)) {
+    await writeFile(
+      join(directory, `page-${String(page.pageIndex + 1).padStart(3, "0")}.png`),
+      encodeRgbaPng(page.pixelWidth, page.pixelHeight, page.pixels),
+      { flag: "wx" },
+    );
+  }
+}
+
+async function writeInferenceFailureEvidence(
+  outputDirectory: string,
+  stem: string,
+  pngBytes: Uint8Array,
+  rawResponse: Uint8Array,
+  error: unknown,
+): Promise<void> {
+  const directory = join(outputDirectory, "failure-debug");
+  await mkdir(directory, { recursive: true });
+  const canonical =
+    error instanceof PdfOmrError
+      ? error.toJSON()
+      : new PdfOmrError("ENGINE_OUTPUT_INVALID", "Rokot inference output is invalid").toJSON();
+  await Promise.all([
+    writeFile(join(directory, `${stem}.png`), pngBytes, { flag: "wx" }),
+    writeFile(join(directory, `${stem}.raw.txt`), rawResponse.subarray(0, 256 * 1024), { flag: "wx" }),
+    writeFile(join(directory, `${stem}.error.json`), canonicalJson({ schemaVersion: "1.0.0", error: canonical }), {
+      flag: "wx",
+    }),
+  ]);
 }
 
 export async function convertRokotAbc(
@@ -399,7 +525,7 @@ function parseConverterVersion(output: string): string {
   return "";
 }
 
-function extractCanonicalAbc(bytes: Uint8Array): string {
+function extractCanonicalAbc(bytes: Uint8Array, staffLayout: "single-staff" | "grand-staff"): string {
   let output: string;
   try {
     output = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
@@ -408,7 +534,35 @@ function extractCanonicalAbc(bytes: Uint8Array): string {
   }
   const wrapper = `User:\n${prompt}\n\nAssistant:\n`;
   const payload = output.startsWith(wrapper) ? output.slice(wrapper.length) : output;
-  return validateRokotAbc(new TextEncoder().encode(payload));
+  const canonical = staffLayout === "single-staff" ? canonicalizeUnvoicedSingleStaffAbc(payload) : payload;
+  return validateRokotAbc(new TextEncoder().encode(canonical));
+}
+
+function canonicalizeUnvoicedSingleStaffAbc(abc: string): string {
+  const lines = abc.split(/\r?\n/);
+  const hasTempoHeader = /^Q:[^\r\n]+$/.test(lines[4] ?? "");
+  const keyHeaderIndex = hasTempoHeader ? 5 : 4;
+  const headersValid =
+    lines[0] === "%%rokot-abc 0.1" &&
+    /^X:[^\r\n]+$/.test(lines[1] ?? "") &&
+    /^M:[^\r\n]+$/.test(lines[2] ?? "") &&
+    /^L:[^\r\n]+$/.test(lines[3] ?? "") &&
+    /^K:[^\r\n]+$/.test(lines[keyHeaderIndex] ?? "");
+  const contentLines = lines.slice(keyHeaderIndex + 1).filter((line) => line.length > 0);
+  if (
+    !headersValid ||
+    contentLines.length === 0 ||
+    contentLines.some((line) => /^(?:V:|\[V:)/.test(line)) ||
+    contentLines.some((line) => !/^w:/.test(line) && !/(?:\||:\||\|\])\s*$/.test(line))
+  ) {
+    return abc;
+  }
+  return [
+    ...lines.slice(0, keyHeaderIndex + 1),
+    "V:1 clef=treble",
+    ...contentLines.map((line) => (line.startsWith("w:") ? line : `[V:1] ${line}`)),
+    "",
+  ].join("\n");
 }
 
 function systemStem(pageIndex: number, systemIndex: number): string {

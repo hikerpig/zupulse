@@ -11,7 +11,8 @@ pnpm pdf-omr -- inspect <input.pdf> --output <run-dir>
 pnpm pdf-omr -- import-midi <input.mid> --output <run-dir>
 pnpm pdf-omr -- fuse --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --output <run-dir>
 pnpm pdf-omr -- apply-fusion --run <fusion-run-dir> --decisions <decisions.json> --output <run-dir>
-pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|transcoda|legato|rokot> --output <run-dir>
+pnpm pdf-omr -- rebuild-from-midi --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --musescore <executable> --output <run-dir>
+pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|transcoda|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff>]
 pnpm pdf-omr -- validate <draft.json> --output <diagnostics.json>
 pnpm pdf-omr -- analyze <draft.json> --output <harmony.json>
 pnpm pdf-omr -- export-musicxml <draft.json> --output <score.mxl>
@@ -28,7 +29,8 @@ staff/voice 推断或 MusicXML alignment。Format 2、SMPTE division、冲突 te
 `fuse` 是隔离在 CLI 内的 report-only MIDI 辅助识别实验。v1 只接受制谱软件导出的
 `score-export` MIDI：它从 MusicXML/MXL 和 MIDI 构造可追溯 evidence，先检测兼容性与移调，再用
 确定性 onset-frame alignment 报告 matched、score-only、MIDI-only 和 ambiguous notes。它会生成
-修复建议和 coverage/pitch agreement metrics，所有建议仍为 `autoApplicable: false`。
+修复建议和 coverage/pitch agreement metrics，所有建议仍为 `autoApplicable: false`。没有 repeat marker
+时允许 OMR 产生的 staff/part 小节数不同；存在 repeat marker 时仍要求所有 staff 严格一致。
 
 `apply-fusion` 是独立的人工审核回写阶段：它验证 fusion run 和 proposal hashes，只应用 reviewer 明确
 批准并提供 `writtenPitch` 的 writeback-ready pitch proposal，以最小 XML patch 生成新的 corrected
@@ -36,10 +38,16 @@ MusicXML/MXL，再执行结构、runtime 与 before/after fusion 无回归门禁
 missing/extra、tie chain、非零移调、冲突 repeat evidence、真人演奏 MIDI、D.C./D.S./coda、volta ending
 和无人审核自动修复不在 v1 范围。
 
+`rebuild-from-midi` 用于 OMR 小节或时值结构已经损坏、最小 pitch patch 无法修复的情况。它先验证 OMR
+MusicXML 与 `score-export` MIDI 为同曲，再调用用户显式提供的 MuseScore executable 从 MIDI 重建
+MusicXML。命令仅在重建 Draft 无 blocking diagnostic、可 view/playback，且与 MIDI 达到逐音符
+`scoreCoverage=1`、`midiCoverage=1`、`pitchAgreement=1` 时发布新文件。它不会覆盖原文件，也不会把
+真人演奏 MIDI 当作制谱真值；重建会舍弃 OMR 的排版细节和文本。
+
 `recognize` 通过可替换 adapter 调用 Audiveris、Transcoda、LEGATO 或 Rokot，再规范化为
 engine-neutral Draft。Audiveris 保留原始 MXL/OMR；Transcoda 保留原始 `**kern`；LEGATO 保留原始
-ABC。后两者同时保留转换后的 MusicXML。Rokot v1 仅处理印刷体钢琴 grand staff，保留逐 system
-crop、ABC、MusicXML fragment 和 segmentation metadata；它是隔离的本地研究 engine，不代表 App
+ABC。后两者同时保留转换后的 MusicXML。Rokot 处理印刷体 single staff 与 piano grand staff，保留逐 system
+crop、ABC、MusicXML fragment 和包含 `staffLayout`/`staffCount` 的 segmentation metadata；它是隔离的本地研究 engine，不代表 App
 已经支持 PDF 导入。
 
 Audiveris executable 默认从 `PATH` 查找。开发或 CI 可以显式指定：
@@ -78,6 +86,21 @@ git clone https://huggingface.co/spaces/guangyangmusic/legato-demo /absolute/pat
 git -C /absolute/path/to/legato-demo checkout 8c1de27e414f487fe59086547aaae23b868ed6ca
 ```
 
+若 Hugging Face 的 Meta gated repository 尚未批准，可在已经接受 Llama 3.2 Community License 的前提下，
+使用 ModelScope 上相同 Transformers 目录结构的 base model 镜像。必须锁定 revision，不能替换为
+`-Instruct`、GGUF、MLX 或量化版本：
+
+```bash
+uvx --from modelscope modelscope download \
+  LLM-Research/Llama-3.2-11B-Vision \
+  --revision f602922f64cbe153c580e358fdabc2bbd023b3ca \
+  --exclude "original/*" \
+  --local-dir /absolute/path/to/llama-3.2-11b-vision
+```
+
+ModelScope revision 的 5 个 `model-*.safetensors` 分片必须逐文件核对 SHA-256；锁定值记录在
+`engines/legato-environment.json`。该镜像只解决下载来源，不改变模型许可义务。
+
 使用独立 Python 3.11 环境安装锁定依赖，并显式配置所有路径：
 
 ```bash
@@ -92,9 +115,15 @@ PDF_OMR_LEGATO_BASE_MODEL=/absolute/path/to/llama-3.2-11b-vision \
   pnpm pdf-omr -- recognize input.pdf --engine legato --output result
 ```
 
-LEGATO 本地 engine 与官方 Demo 对齐：接受一至三页 PDF，将页面纵向拼接，输出 ABC，再通过
-锁定的 `abc2xml.py` 转为 MusicXML。模型条款、revision、hash、预处理和 decoder 参数见
+LEGATO 本地 engine 接受一至三页 PDF。每页独立使用官方 Demo 的 padding 语义执行推理，再用锁定的
+`abc2xml.py` 转换；CLI 校验每页每个声明 part 均含音符，然后合并 MusicXML，并保留
+`engine/pages/page-NNN.{abc,musicxml}` 作为证据。模型条款、revision、hash、预处理和 decoder 参数见
 `engines/legato-environment.json`。模型、Llama vision encoder 与外部 repository 不提交到仓库。
+默认 inference timeout 为 60 分钟。CUDA 与 MPS 使用 float16 推理，CPU 按 checkpoint config dtype
+加载；这与官方 Demo 的 GPU half-precision 路径一致，同时避免 MPS 上的 float32 attention OOM 和
+mixed bfloat16/float32 Metal crash。64 GB M2 Max 对三页 `flower_day.pdf` 的逐页固定 10-beam、
+2048-token 本地运行用时约 637 秒，峰值 RSS 约 5.31 GB；不得通过降低 beam、截短输出或替换量化模型
+来静默规避。
 
 Rokot 使用明确锁定的 Q8_0 GGUF、F16 vision projector、llama.cpp build 和独立 Python 3.11
 converter environment；recognize 不会自动下载模型。先准备并保留本地模型：
@@ -112,8 +141,34 @@ PDF_OMR_ROKOT_ABC2XML_PYTHON=/absolute/path/to/abc2xml-venv/bin/python \
   pnpm pdf-omr -- recognize input.pdf --engine rokot --output result
 ```
 
+默认 `--staff-layout auto`。已知输入类型时应显式传 `single-staff` 或 `grand-staff`；`auto` 只接受整页一致的
+topology，同页同时出现已配对 grand staff 与未配对 single staff 时会在 inference 前失败。benchmark manifest
+也用每个 item 的 `staffLayout` 声明相同约束，避免用文件名或 category 猜测。
+
+默认 `--input-scope full-page`。若 PDF 每页已经是一个裁好的 system，使用
+`--input-scope system-crop --staff-layout <single-staff|grand-staff>` 直接送入模型，避免二次 segmentation。
+公开 benchmark 的 OLiMPiC oracle items 使用 `system-crop`；contract 与 FP-GrandStaff 使用 `full-page`。
+full-page detector v2 合并 continuous-first 与 fragmented-first 候选，并按 connector evidence 选择
+grand-staff pairing。对已确认的 single staff，adapter 还可将严格 header-valid、以 barline 结束的 unvoiced
+ABC 确定性规范化为 `V:1`；grand staff 仍 fail closed。
+
 converter environment 必须安装 `abc-xml-converter==1.0.1`。完整 revision、hash、decoder 参数和
 license provenance 见 `engines/rokot-environment.json`；模型和 Python environment 不提交到仓库。
+
+full-page development corpus 的 segmentation pilot 不调用模型，只渲染原始多页 PDF 并逐页运行
+`rokot-staff-system-v1` 的 `grand-staff` mode，用于在 inference 前审计 page/system boundary。该 detector 保留 fragmented-row 检测，
+并允许被密集音符遮断的谱线片段对齐到同一条完整谱线范围；严格直线配对失败后，孤立候选可使用
+曲线花括号覆盖率回退：
+
+```bash
+pnpm exec vite-node tools/pdf-omr-cli/scripts/run_full_page_segmentation_pilot.ts \
+  tools/pdf-omr-cli/corpus/olimpic-scanned-full-page-dev-v1/manifest.json \
+  tools/pdf-omr-cli/reports/development/olimpic-scanned-full-page-v1-segmentation-pilot/segmentation.json
+```
+
+该脚本保留 render/crop hashes、逐页错误 stage 和 `ambiguous-system-segmentation` context，不写回输入或
+人工修补 crop。full-page protocol、readiness limitation 和两次相同 report hash 见
+`tools/pdf-omr-cli/docs/evaluation.md` 与对应 development report README。
 
 ## Run artifacts
 
@@ -203,6 +258,19 @@ pnpm pdf-omr -- apply-fusion \
 `diagnostics.json` 和带 artifact hashes 的 `run.json`。source/proposal hash 漂移、已有 output、结构变化或
 fusion metrics 回退都会在发布 output 前失败。
 
+当 OMR 的小节边界或 voice duration 已损坏时，使用显式的 MIDI 重建阶段：
+
+```bash
+pnpm pdf-omr -- rebuild-from-midi \
+  --musicxml /absolute/path/to/recognized.musicxml \
+  --midi /absolute/path/to/score-export.mid \
+  --musescore /absolute/path/to/mscore \
+  --output /absolute/path/to/rebuild-run
+```
+
+成功 run 包含 immutable inputs、`corrected/score.musicxml`、`validation.json` 和记录 MuseScore version、
+输入/输出 hashes、小节数及音符数的 `run.json`。
+
 仓库内 K331 是 `derived-controlled` upper-bound：reviewed MusicXML 是 ground truth，PDF 与 MIDI
 均由它导出。当前 fixture 的 report-only 结果为 score coverage `0.9988`、MIDI coverage `0.9916`、
 pitch agreement `1.0`，剩余 24 条 proposal 全部不可自动应用。这组结果用于防止 clean alignment
@@ -228,9 +296,169 @@ validation 问题都必须稳定失败，不能静默猜测。
 `run.json` 记录 input hash、engine version、参数和所有已提交 artifact hashes。绝对输入路径、raw
 stderr 和 exception stack 不进入 canonical artifacts。已有输出目录不会被覆盖。
 
+Benchmark 还会先校验 ground-truth readiness，并以 structural role 对齐 part identity；校验阻断或 part
+mapping 冲突会生成 evaluation limitation，不伪造 symbolic/Harmony metrics。成功 item 的 runtime artifacts
+记录五个 pipeline stage 的 wall time、peak RSS，以及可用的 GPU/cancel probe；holdout gate 对缺失指标
+fail closed。没有可量化 duration 的 grace note 会保留 `MISSING_EVENT_TIMING` warning，不会被当成可用于
+timing 对齐的事件。Benchmark item 还保留 `engine/normalization-output.bin`，即 adapter 的原始 canonical
+normalization payload；Rokot item 另外写出 `joining.json`，其中包含按 page/system 排序的 system span、local
+measure numbers、global measure boundaries 和 normalized measure count。它可与 `segmentation.json`、
+`systems/*` 和 `predicted-draft.json` 一起复查 joining、measure identity 与 source boundary。
+每个成功 item 还写出 `predicted-validation.json`，直接记录 Harmony/MusicXML readiness 与诊断。development
+失败 item 可保留有界 `failure-debug/`；holdout 不保留该目录。
+
+新的真实扫描 intake 位于 `corpus/olimpic-scanned-v1/`，manifest 记录 OLiMPiC release、source split、
+archive/item hashes 与 CC BY-SA 4.0 provenance；该 v1 明确是 `system-crop` scope，不代表 full-page
+segmentation 或跨 system joining。
+
+## Public pianoform benchmark profiles
+
+新的 profiled manifest 支持两种固定规模：`quick` 为 10 个唯一 items 且不重复；`standard` 为 45 个唯一
+items，其中仅 6 个 `oracle-system` items 运行两次，并带 `3_600_000 ms` 总墙钟预算。总预算过期会终止
+runner 持有的执行、为未完成 items 写入稳定失败记录，并以
+`BENCHMARK_RESOURCE_BUDGET_EXCEEDED` 返回；外部取消仍保持 `INTERRUPTED`。
+
+profiled report 的 `overall` 聚合所有成功 items，`quality` 只聚合 `oracle-system`。holdout gate 只读取
+`quality`，因此 contract fixtures 与 synthetic full-page pages 不能抬高 engine 识别质量。旧 manifest 没有
+`execution` 时仍保持全部 items 运行两次，既有冻结 hash 不变。
+
+每个公开 benchmark item 声明 `staffLayout`：三个 melody contract fixtures 为 `single-staff`，piano
+contract、OLiMPiC 与 FP-GrandStaff 为 `grand-staff`。quick 的两个 contract 固定为一单谱表加一大谱表；
+失败摘要保留稳定的 `code`、`stage` 和 `reason`，不包含 path、raw exception 或 stderr。
+
+公开大文件与 materialized assets 保持在仓库外；仓库只冻结三个 suite 的 selection metadata。当前锁定输入为：
+
+- OLiMPiC `1.0-scanned (2024-02-12)` archive SHA-256
+  `a84091b50154251b66d37b50806f98d8a6d758b4195d2aa9805d1b9cb78e6993`。
+- FP-GrandStaff revision `334351427faf94cdb17fecbbab8d83fcf225fa46`；`val` parquet SHA-256
+  `c7d6d77dd0e4874c7875c36f02b8c4dd62edbcb4a8e31dc49db4006f3135a1bc`，`test` parquet SHA-256
+  `6a16319fd368ce5fa9b99d13817733ed1fe4f7a01565cb4d0bf5f50f829d17ad`。
+
+在一个全新的外部目录中按以下顺序构建。先生成 OLiMPiC inventory，执行 ground-truth readiness audit，
+再基于 ready candidates 冻结选择并 materialize 72 个 system assets：
+
+```bash
+python3 tools/pdf-omr-cli/scripts/build_olimpic_system_inventory.py \
+  --source-root "$PUBLIC_BENCHMARK_CACHE/olimpic-1.0-scanned" \
+  --archive-sha256 a84091b50154251b66d37b50806f98d8a6d758b4195d2aa9805d1b9cb78e6993 \
+  --output "$PUBLIC_BENCHMARK_CACHE/olimpic.inventory.json"
+
+pnpm exec vite-node tools/pdf-omr-cli/scripts/audit_benchmark_ground_truth.ts \
+  "$PUBLIC_BENCHMARK_CACHE/olimpic.inventory.json" \
+  "$PUBLIC_BENCHMARK_CACHE/olimpic-1.0-scanned" \
+  "$PUBLIC_BENCHMARK_CACHE/olimpic.readiness.json"
+
+python3 tools/pdf-omr-cli/scripts/build_olimpic_system_inventory.py \
+  --source-root "$PUBLIC_BENCHMARK_CACHE/olimpic-1.0-scanned" \
+  --archive-sha256 a84091b50154251b66d37b50806f98d8a6d758b4195d2aa9805d1b9cb78e6993 \
+  --output "$PUBLIC_BENCHMARK_CACHE/olimpic.inventory.json" \
+  --readiness "$PUBLIC_BENCHMARK_CACHE/olimpic.readiness.json" \
+  --selection-output "$PUBLIC_BENCHMARK_CACHE/olimpic-selection.json"
+
+python3 tools/pdf-omr-cli/scripts/materialize_olimpic_system_selection.py \
+  --source-root "$PUBLIC_BENCHMARK_CACHE/olimpic-1.0-scanned" \
+  --inventory "$PUBLIC_BENCHMARK_CACHE/olimpic.inventory.json" \
+  --selection "$PUBLIC_BENCHMARK_CACHE/olimpic-selection.json" \
+  --output-root "$PUBLIC_BENCHMARK_CACHE/materialized" \
+  --output-inventory "$PUBLIC_BENCHMARK_CACHE/olimpic.materialized.json"
+```
+
+FP-GrandStaff 先从 pinned parquet 生成全量 inventory，把 eKern 转成临时 MusicXML 做 readiness audit，
+再选择并 materialize 8 个 page assets：
+
+```bash
+uv run --with pyarrow tools/pdf-omr-cli/scripts/build_fp_grandstaff_inventory.py \
+  --val-parquet "$PUBLIC_BENCHMARK_CACHE/fp-grandstaff-val.parquet" \
+  --val-sha256 c7d6d77dd0e4874c7875c36f02b8c4dd62edbcb4a8e31dc49db4006f3135a1bc \
+  --test-parquet "$PUBLIC_BENCHMARK_CACHE/fp-grandstaff-test.parquet" \
+  --test-sha256 6a16319fd368ce5fa9b99d13817733ed1fe4f7a01565cb4d0bf5f50f829d17ad \
+  --output "$PUBLIC_BENCHMARK_CACHE/fp-grandstaff.inventory.json"
+
+uv run --with converter21 tools/pdf-omr-cli/scripts/prepare_fp_ground_truth_audit.py \
+  --inventory "$PUBLIC_BENCHMARK_CACHE/fp-grandstaff.inventory.json" \
+  --output-root "$PUBLIC_BENCHMARK_CACHE/fp-ground-truth-audit" \
+  --output-inventory "$PUBLIC_BENCHMARK_CACHE/fp-audit.inventory.json"
+
+pnpm exec vite-node tools/pdf-omr-cli/scripts/audit_benchmark_ground_truth.ts \
+  "$PUBLIC_BENCHMARK_CACHE/fp-audit.inventory.json" \
+  "$PUBLIC_BENCHMARK_CACHE/fp-ground-truth-audit" \
+  "$PUBLIC_BENCHMARK_CACHE/fp.readiness.json"
+
+uv run --with pyarrow tools/pdf-omr-cli/scripts/build_fp_grandstaff_inventory.py \
+  --val-parquet "$PUBLIC_BENCHMARK_CACHE/fp-grandstaff-val.parquet" \
+  --val-sha256 c7d6d77dd0e4874c7875c36f02b8c4dd62edbcb4a8e31dc49db4006f3135a1bc \
+  --test-parquet "$PUBLIC_BENCHMARK_CACHE/fp-grandstaff-test.parquet" \
+  --test-sha256 6a16319fd368ce5fa9b99d13817733ed1fe4f7a01565cb4d0bf5f50f829d17ad \
+  --output "$PUBLIC_BENCHMARK_CACHE/fp-grandstaff.inventory.json" \
+  --readiness "$PUBLIC_BENCHMARK_CACHE/fp.readiness.json" \
+  --selection-output "$PUBLIC_BENCHMARK_CACHE/fp-grandstaff-selection.json"
+
+uv run --with pyarrow --with pillow --with converter21 \
+  tools/pdf-omr-cli/scripts/materialize_fp_grandstaff_selection.py \
+  --val-parquet "$PUBLIC_BENCHMARK_CACHE/fp-grandstaff-val.parquet" \
+  --test-parquet "$PUBLIC_BENCHMARK_CACHE/fp-grandstaff-test.parquet" \
+  --inventory "$PUBLIC_BENCHMARK_CACHE/fp-grandstaff.inventory.json" \
+  --selection "$PUBLIC_BENCHMARK_CACHE/fp-grandstaff-selection.json" \
+  --output-root "$PUBLIC_BENCHMARK_CACHE/materialized" \
+  --output-inventory "$PUBLIC_BENCHMARK_CACHE/fp-grandstaff.materialized.json"
+```
+
+最后复制现有 5 个 contract fixtures，并合并三个 materialized inventories：
+
+```bash
+python3 tools/pdf-omr-cli/scripts/build_public_contract_inventory.py \
+  --manifest tools/pdf-omr-cli/corpus/evaluation/manifest.json \
+  --source-root tools/pdf-omr-cli/corpus/evaluation \
+  --output-root "$PUBLIC_BENCHMARK_CACHE/materialized" \
+  --output-inventory "$PUBLIC_BENCHMARK_CACHE/contract.materialized.json" \
+  --selection-output "$PUBLIC_BENCHMARK_CACHE/contract-selection.json"
+
+python3 tools/pdf-omr-cli/scripts/build_public_pianoform_benchmark.py \
+  --contract-inventory "$PUBLIC_BENCHMARK_CACHE/contract.materialized.json" \
+  --olimpic-inventory "$PUBLIC_BENCHMARK_CACHE/olimpic.materialized.json" \
+  --fp-grandstaff-inventory "$PUBLIC_BENCHMARK_CACHE/fp-grandstaff.materialized.json" \
+  --output-directory "$PUBLIC_BENCHMARK_CACHE/materialized"
+```
+
+builders 不下载数据，也不读取 engine output。最终目录包含 90 个 split-specific assets，以及
+`selection.json`、`quick-development.manifest.json`、`standard-development.manifest.json` 与
+`standard-holdout.manifest.json`。仓库内 `corpus/public-pianoform-v1/*-selection.json` 是当前冻结选择；
+重新构建后 MUST byte-compare 一致，差异意味着 source、readiness 或 selection contract 已漂移。
+
+standard holdout 运行前，使用已提交的 benchmark commit 和显式时间冻结同目录 `protocol.json`。该命令
+从三个 engine environment 文件读取锁定 revision/model/decoder，拒绝非 standard holdout manifest，且不
+覆盖已有 protocol：
+
+```bash
+pnpm exec vite-node tools/pdf-omr-cli/scripts/freeze_public_pianoform_protocol.ts \
+  --manifest "$PUBLIC_BENCHMARK_CACHE/materialized/standard-holdout.manifest.json" \
+  --output "$PUBLIC_BENCHMARK_CACHE/materialized/protocol.json" \
+  --benchmark-commit "$(git rev-parse HEAD)" \
+  --frozen-at "2026-08-12T12:00:00.000Z" \
+  --audiveris-version 5.11.0
+```
+
+命令输出 `protocolSha256`。holdout 运行必须原样传给 `--protocol-sha`；development/quick 不需要读取
+holdout protocol。
+
+运行 quick 前先校验 20 个 corpus files 的 hash，并独立检查四个 engine environment。report 只记录稳定
+failure code/reason，不写入绝对路径、raw exception 或 secrets：
+
+```bash
+pnpm exec vite-node tools/pdf-omr-cli/scripts/check_public_pianoform_readiness.ts \
+  --manifest "$PUBLIC_BENCHMARK_CACHE/materialized/quick-development.manifest.json" \
+  --output "$PUBLIC_BENCHMARK_CACHE/readiness.json"
+
+jq '{readyEngineIds, engines}' "$PUBLIC_BENCHMARK_CACHE/readiness.json"
+```
+
+只有出现在 `readyEngineIds` 的 engine 才进入 quick。实际运行仍使用统一 benchmark command，因此 10 分钟
+预算、canonical item/report artifacts 和 semantic exit code 不会被 wrapper 绕开。
+
 ## 验证
 
 ```bash
 pnpm --filter @zupulse/pdf-omr-cli test
 pnpm --filter @zupulse/pdf-omr-cli typecheck
+python3 -m unittest discover -s tools/pdf-omr-cli/scripts -p 'test_*.py'
 ```

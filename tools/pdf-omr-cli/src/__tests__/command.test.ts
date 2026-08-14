@@ -16,4 +16,43 @@ describe("pdf OMR CLI", () => {
       command: "help",
     });
   });
+
+  it("validates Rokot-only staff layout arguments before recognition", async () => {
+    await expect(
+      runPdfOmrCommand(["recognize", "score.pdf", "--engine", "rokot", "--output", "run", "--staff-layout", "mixed"]),
+    ).rejects.toMatchObject({
+      code: "INVALID_CLI_ARGUMENT",
+      context: { command: "recognize", staffLayout: "mixed" },
+    });
+    await expect(
+      runPdfOmrCommand([
+        "recognize",
+        "score.pdf",
+        "--engine",
+        "audiveris",
+        "--output",
+        "run",
+        "--staff-layout",
+        "single-staff",
+      ]),
+    ).rejects.toMatchObject({
+      code: "INVALID_CLI_ARGUMENT",
+      context: { command: "recognize", engineId: "audiveris" },
+    });
+    await expect(
+      runPdfOmrCommand([
+        "recognize",
+        "score.pdf",
+        "--engine",
+        "rokot",
+        "--output",
+        "run",
+        "--input-scope",
+        "page-fragment",
+      ]),
+    ).rejects.toMatchObject({
+      code: "INVALID_CLI_ARGUMENT",
+      context: { command: "recognize", inputScope: "page-fragment" },
+    });
+  });
 });

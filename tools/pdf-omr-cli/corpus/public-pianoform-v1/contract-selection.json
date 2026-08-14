@@ -1,0 +1,60 @@
+{
+  "corpusId": "public-pianoform-v1",
+  "profiles": {
+    "quick-development": {
+      "counts": {
+        "items": 2
+      },
+      "itemIds": [
+        "contract-development-melody-blur",
+        "contract-development-piano-clean"
+      ],
+      "sourceFixtureIds": [
+        "melody-blur",
+        "piano-clean"
+      ]
+    },
+    "standard-development": {
+      "counts": {
+        "items": 5
+      },
+      "itemIds": [
+        "contract-development-melody-blur",
+        "contract-development-melody-clean",
+        "contract-development-melody-low-contrast",
+        "contract-development-piano-clean",
+        "contract-development-piano-low-contrast"
+      ],
+      "sourceFixtureIds": [
+        "melody-blur",
+        "melody-clean",
+        "melody-low-contrast",
+        "piano-clean",
+        "piano-low-contrast"
+      ]
+    },
+    "standard-holdout": {
+      "counts": {
+        "items": 5
+      },
+      "itemIds": [
+        "contract-holdout-melody-blur",
+        "contract-holdout-melody-clean",
+        "contract-holdout-melody-low-contrast",
+        "contract-holdout-piano-clean",
+        "contract-holdout-piano-low-contrast"
+      ],
+      "sourceFixtureIds": [
+        "melody-blur",
+        "melody-clean",
+        "melody-low-contrast",
+        "piano-clean",
+        "piano-low-contrast"
+      ]
+    }
+  },
+  "qualityClaim": "excluded",
+  "schemaVersion": "1.0.0",
+  "selectionRule": "all five existing synthetic fixtures; quick uses one single-staff and one grand-staff item",
+  "suite": "contract"
+}

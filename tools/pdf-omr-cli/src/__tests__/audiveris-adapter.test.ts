@@ -16,6 +16,7 @@ describe("Audiveris adapter", () => {
       id: "audiveris",
       version: "5.5.3",
       executable: "fake-audiveris.mjs",
+      inputKinds: ["pdf", "image"],
       commandTemplate: ["-batch", "-transcribe", "-export", "-save", "-output", "<output-dir>", "<input.pdf>"],
       license: {
         id: "AGPL-3.0-only",

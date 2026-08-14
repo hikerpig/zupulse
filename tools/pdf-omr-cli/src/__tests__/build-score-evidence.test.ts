@@ -63,6 +63,21 @@ describe("buildScoreEvidence", () => {
     expect(evidence.notes).toEqual([]);
   });
 
+  it("aligns unequal staff lengths when the score has no repeat markers", () => {
+    const firstStaff = [
+      measure(0, { events: [note("right-c", 60, rational(0, 1), rational(1, 4))] }),
+      measure(1, { events: [note("right-d", 62, rational(0, 1), rational(1, 4))] }),
+    ];
+    const secondStaff = [measure(0, { events: [note("left-c", 48, rational(0, 1), rational(1, 4))] })];
+
+    const evidence = buildScoreEvidence(scoreDraft(firstStaff, secondStaff), source());
+
+    expect(evidence.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "FUSION_REPEAT_MARKERS_INCONSISTENT" }),
+    );
+    expect(evidence.notes.map((note) => note.sourceNoteId)).toEqual(["right-c", "left-c", "right-d"]);
+  });
+
   it("keeps alignable notes while reporting omitted events without timing", () => {
     const draft = scoreDraft([measure(0, { events: [note("c", 60, rational(0, 1), rational(1, 4))] })]);
     draft.diagnostics.push({

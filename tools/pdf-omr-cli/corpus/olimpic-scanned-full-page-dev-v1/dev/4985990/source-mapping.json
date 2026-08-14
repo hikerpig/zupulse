@@ -1,0 +1,293 @@
+{
+  "schemaVersion": "1.0.0",
+  "workId": "4985990",
+  "sourceSplit": "dev",
+  "sourceDocument": "#60828",
+  "sourcePdf": {
+    "memberName": "IMSLP60828-PMLP02204-Schubert_Werke_Breitkopf_Serie_XX_Band_9_F.S.920-933.pdf",
+    "sha256": "4c427ae415189d2d123ddf3e2437abf755901b6dcbf149cfaf0b9991499f15cc",
+    "bytes": 6594458
+  },
+  "pages": [
+    {
+      "samplePage": 1,
+      "sourcePage": 18,
+      "width": 5490,
+      "height": 6994,
+      "systems": [
+        {
+          "sampleVariant": "p1-s1",
+          "sourceSystem": 1,
+          "boundingBox": {
+            "left": 1006,
+            "top": 2106,
+            "width": 4058,
+            "height": 609
+          }
+        },
+        {
+          "sampleVariant": "p1-s2",
+          "sourceSystem": 2,
+          "boundingBox": {
+            "left": 358,
+            "top": 3427,
+            "width": 4707,
+            "height": 568
+          }
+        },
+        {
+          "sampleVariant": "p1-s3",
+          "sourceSystem": 3,
+          "boundingBox": {
+            "left": 357,
+            "top": 4674,
+            "width": 4710,
+            "height": 568
+          }
+        },
+        {
+          "sampleVariant": "p1-s4",
+          "sourceSystem": 4,
+          "boundingBox": {
+            "left": 368,
+            "top": 5936,
+            "width": 4710,
+            "height": 568
+          }
+        }
+      ]
+    },
+    {
+      "samplePage": 2,
+      "sourcePage": 19,
+      "width": 5490,
+      "height": 6958,
+      "systems": [
+        {
+          "sampleVariant": "p2-s1",
+          "sourceSystem": 1,
+          "boundingBox": {
+            "left": 464,
+            "top": 877,
+            "width": 4692,
+            "height": 527
+          }
+        },
+        {
+          "sampleVariant": "p2-s2",
+          "sourceSystem": 2,
+          "boundingBox": {
+            "left": 466,
+            "top": 2183,
+            "width": 4691,
+            "height": 549
+          }
+        },
+        {
+          "sampleVariant": "p2-s3",
+          "sourceSystem": 3,
+          "boundingBox": {
+            "left": 458,
+            "top": 3463,
+            "width": 4697,
+            "height": 513
+          }
+        },
+        {
+          "sampleVariant": "p2-s4",
+          "sourceSystem": 4,
+          "boundingBox": {
+            "left": 449,
+            "top": 4678,
+            "width": 4701,
+            "height": 554
+          }
+        },
+        {
+          "sampleVariant": "p2-s5",
+          "sourceSystem": 5,
+          "boundingBox": {
+            "left": 436,
+            "top": 5933,
+            "width": 4710,
+            "height": 526
+          }
+        }
+      ]
+    },
+    {
+      "samplePage": 3,
+      "sourcePage": 20,
+      "width": 5490,
+      "height": 6994,
+      "systems": [
+        {
+          "sampleVariant": "p3-s1",
+          "sourceSystem": 1,
+          "boundingBox": {
+            "left": 401,
+            "top": 957,
+            "width": 4694,
+            "height": 533
+          }
+        },
+        {
+          "sampleVariant": "p3-s2",
+          "sourceSystem": 2,
+          "boundingBox": {
+            "left": 401,
+            "top": 2169,
+            "width": 4694,
+            "height": 546
+          }
+        },
+        {
+          "sampleVariant": "p3-s3",
+          "sourceSystem": 3,
+          "boundingBox": {
+            "left": 396,
+            "top": 3392,
+            "width": 4696,
+            "height": 618
+          }
+        },
+        {
+          "sampleVariant": "p3-s4",
+          "sourceSystem": 4,
+          "boundingBox": {
+            "left": 392,
+            "top": 4690,
+            "width": 4699,
+            "height": 610
+          }
+        },
+        {
+          "sampleVariant": "p3-s5",
+          "sourceSystem": 5,
+          "boundingBox": {
+            "left": 384,
+            "top": 5944,
+            "width": 4710,
+            "height": 536
+          }
+        }
+      ]
+    },
+    {
+      "samplePage": 4,
+      "sourcePage": 21,
+      "width": 5490,
+      "height": 6958,
+      "systems": [
+        {
+          "sampleVariant": "p4-s1",
+          "sourceSystem": 1,
+          "boundingBox": {
+            "left": 379,
+            "top": 928,
+            "width": 4703,
+            "height": 542
+          }
+        },
+        {
+          "sampleVariant": "p4-s2",
+          "sourceSystem": 2,
+          "boundingBox": {
+            "left": 382,
+            "top": 2173,
+            "width": 4705,
+            "height": 532
+          }
+        },
+        {
+          "sampleVariant": "p4-s3",
+          "sourceSystem": 3,
+          "boundingBox": {
+            "left": 382,
+            "top": 3407,
+            "width": 4705,
+            "height": 565
+          }
+        },
+        {
+          "sampleVariant": "p4-s4",
+          "sourceSystem": 4,
+          "boundingBox": {
+            "left": 384,
+            "top": 4682,
+            "width": 4698,
+            "height": 518
+          }
+        },
+        {
+          "sampleVariant": "p4-s5",
+          "sourceSystem": 5,
+          "boundingBox": {
+            "left": 381,
+            "top": 5886,
+            "width": 4698,
+            "height": 518
+          }
+        }
+      ]
+    },
+    {
+      "samplePage": 5,
+      "sourcePage": 22,
+      "width": 5490,
+      "height": 6994,
+      "systems": [
+        {
+          "sampleVariant": "p5-s1",
+          "sourceSystem": 1,
+          "boundingBox": {
+            "left": 428,
+            "top": 951,
+            "width": 4706,
+            "height": 525
+          }
+        },
+        {
+          "sampleVariant": "p5-s2",
+          "sourceSystem": 2,
+          "boundingBox": {
+            "left": 430,
+            "top": 2182,
+            "width": 4706,
+            "height": 537
+          }
+        },
+        {
+          "sampleVariant": "p5-s3",
+          "sourceSystem": 3,
+          "boundingBox": {
+            "left": 434,
+            "top": 3421,
+            "width": 4704,
+            "height": 542
+          }
+        },
+        {
+          "sampleVariant": "p5-s4",
+          "sourceSystem": 4,
+          "boundingBox": {
+            "left": 432,
+            "top": 4666,
+            "width": 4708,
+            "height": 531
+          }
+        },
+        {
+          "sampleVariant": "p5-s5",
+          "sourceSystem": 5,
+          "boundingBox": {
+            "left": 434,
+            "top": 5856,
+            "width": 4709,
+            "height": 589
+          }
+        }
+      ]
+    }
+  ]
+}

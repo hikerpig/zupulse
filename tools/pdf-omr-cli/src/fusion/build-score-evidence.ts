@@ -100,6 +100,10 @@ function scoreDiagnostics(draft: OmrScoreDraft): FusionDiagnostic[] {
 }
 
 function repeatMarkersAreConsistent(draft: OmrScoreDraft, reference: readonly Measure[]): boolean {
+  const hasRepeatMarkers = draft.parts.some((part) =>
+    part.staves.some((staff) => staff.measures.some((measure) => measure.repeat !== undefined)),
+  );
+  if (!hasRepeatMarkers) return true;
   const expected = reference.map(repeatKey);
   return draft.parts.every((part) =>
     part.staves.every(

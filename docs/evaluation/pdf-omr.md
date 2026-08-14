@@ -127,6 +127,15 @@ durable report 位于 `tools/pdf-omr-cli/reports/development/k331-rokot/`。它�
 不放进 Harmony CLI 目录；只提交说明和小型 summary，不提交完整 run 或模型。K331 仍是
 `derived-controlled` development evidence，不进入 frozen holdout，也不改写既有 `STOP`。
 
+## 2026-08-05 评测器边界修复
+
+后续 benchmark run 已增加三项 fail-closed 边界：prediction 与 ground truth 的 part identity 先按
+structural role 对齐并写入 `part-identity.json`；ground truth 自身 readiness 阻断时只生成
+`evaluation-limitation.json`，不生成 symbolic/Harmony pseudo-metrics；holdout 还必须提供逐阶段
+wall time、peak RSS、GPU memory 与 cancel latency。没有可量化 duration 的 grace note 会保留
+`MISSING_EVENT_TIMING` warning，但不会被当作 timing 对齐输入。以上只约束新的 benchmark artifacts，
+不重写本节之前的 frozen 或 K331 report，因此既有 `STOP` 结论保持不变。
+
 ## 2026-08-01 MIDI Fusion 人工审核回写
 
 `pdf-omr-cli` 在 report-only fusion 之后增加了独立 `apply-fusion` 阶段。它只消费 hash 固定的 fusion run
@@ -155,6 +164,17 @@ Flower Day 的 `writeback-ready: 76` 不是 accuracy 指标：这些 proposal �
 批量当成 reviewer decision。其原始 Audiveris MXL 已有 1 条 `MISSING_EVENT_TIMING`；no-regression gate
 允许该基线诊断保留，但不允许新增。
 
+Flower Day LEGATO pagewise run 的 P1/P2 为 72/65 小节，证明仅修改 pitch 不能修复已损坏的
+timing skeleton。使用同份 score-export MIDI 的验证结果：
+
+| Mode                | Result                                                                                |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| Reviewed writeback  | 289 pitches applied; pitch agreement `0.7114 -> 0.9990`; no structural/runtime drift  |
+| MIDI reconstruction | 67 measures, 1143 matched attacks, zero alignment residue, all coverage/agreement `1` |
+
+`rebuild-from-midi` 可修复小节和时值结构，但会以 MIDI 取代 OMR notation skeleton，不保留 OMR 排版或
+文本。两组结果都没有逐音符 ground truth，不得解释为独立识别准确率。
+
 durable aggregate 位于 `tools/pdf-omr-cli/reports/development/midi-score-writeback/`。该能力仍是隔离 CLI
 研究链路，不修改 App、Library、Bridge、managed files 或产品格式边界。
 
@@ -168,6 +188,51 @@ durable aggregate 位于 `tools/pdf-omr-cli/reports/development/midi-score-write
 - Rokot Q8_0 + F16 vision projector 下载量约 2.7 GB，模型只处理单个 system，完整 PDF 需要外层流水线
 
 这些许可证只在隔离 CLI benchmark 中被评估，没有批准 Desktop、Browser、服务端或模型分发。
+
+## 2026-08-06 OLiMPiC full-page development corpus
+
+为验证整页输入，新增并冻结 `olimpic-scanned-full-page-dev-v1`，manifest SHA-256 为
+`4cbd78411f15f73bf548a50f2af125e29c6cc42297b43a8616934a08a2cb0a1f`，protocol SHA-256 为
+`d1b6beeb912350eb134524cf3100c8d49ee908578825c95fc1171bfacbce4782`。该 corpus 只使用 OLiMPiC `dev`
+work，共 6 works、29 pages、121 systems；source PDF 的逐项 rights 仍为 `pending-item-review`，只允许
+本地研究评测，不允许产品分发。
+
+全页 segmentation pilot 对 29/29 pages 都以 `ambiguous-system-segmentation` fail closed；逐页 stage、
+group/gap context 见 `tools/pdf-omr-cli/reports/development/olimpic-scanned-full-page-v1-segmentation-pilot/`。
+五个 work 的 ground truth readiness 被 `VOICE_DURATION_MISMATCH`、`MISSING_EVENT_TIMING`、`INVALID_TIE`
+或 `UNRESOLVED_TIE` 阻断；唯一 timing-ready 的 `6007571` 也在 segmentation 阶段失败。两次独立 development
+run 的 canonical report SHA-256 均为
+`bd77eced58d6bb39b6d15cd4b510d0ece62ef61c589fe0e3193cab8dafa9330c`，均为 0/6 succeeded、`NOT_EVALUATED`，
+没有生成 symbolic 或 Harmony quality metrics。
+
+因此 full-page development 的唯一决策仍为 `STOP`：本轮不运行单变量模型实验，也不读取新 holdout。
+下一轮必须先修复 detector 或取得 rights-reviewed、timing-ready 的 ground truth，并使用新的 protocol；
+既有 system-crop protocol、frozen reports 和 App 边界不变。
+
+## 2026-08-11 Public pianoform benchmark capability
+
+CLI 已支持新的 `quick` 与 `standard` manifest execution profile。`quick` 固定为
+`2 contract + 6 oracle-system + 2 full-page`；`standard` 固定为
+`5 contract + 36 oracle-system + 4 full-page`，仅六个声明的 OLiMPiC systems 重复运行，并对每个 engine
+设置一小时总墙钟预算。profiled holdout 的质量门禁只使用 `oracle-system` 聚合；contract 与 synthetic
+full-page 仍保留为运行和流水线证据，但不能改善识别质量结论。
+
+确定性 builder 只消费显式本地 inventory，按 ground-truth complexity tuple、work identity、system
+position 与 page density 生成 selection 和三个 manifests。它不会下载或提交公开 archive。这里记录的是
+评测能力，不是新的 engine result；既有冻结 `STOP`、历史 manifests/reports 与 App 隔离边界均未改变。
+
+## 2026-08-13 Rokot quick development result
+
+在 10-item `public-pianoform-v1-quick-development` 上，Rokot admission 从 5/10 提升到 10/10：OLiMPiC
+oracle systems 声明为 `system-crop` 后不再重复 segmentation；full-page detector v2 解决了密集谱面的重复
+staff candidates；严格 header-valid 的 single-staff unvoiced ABC 可以确定性补入 `V:1`。最终 report
+SHA-256 为 `ff4a45aadf5388353a77053766267cf58a06633aeebbb1952d8292abcf5a25f9`。
+
+这次提升仅证明 pipeline admission 改善。预测 Draft 中 4/10 同时达到 Harmony/MusicXML ready，6/10 仍被
+duration、staff measure count、system boundary 或缺失结构 header 阻断；oracle-system quality joint F1
+为 `0.1774`，valid measure rate 为 `0.0750`。当前决策仍为 `INVESTIGATE`，不进入 App discovery，
+也不改写 frozen `STOP`。durable 摘要位于
+`tools/pdf-omr-cli/reports/development/rokot-public-pianoform-v1/`；完整生成式 runs 不进入 Git。
 
 ## 若未来重启
 

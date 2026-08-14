@@ -49,6 +49,38 @@ describe("DesktopDiagnostics", () => {
     });
   });
 
+  it("records PDF OMR lifecycle fields without accepting paths", async () => {
+    const root = await tempRoot();
+    const diagnostics = new DesktopDiagnostics({
+      directory: root,
+      appVersion: "0.1.0",
+      electronVersion: "43.1.0",
+      platform: "darwin",
+      arch: "arm64",
+    });
+
+    await diagnostics.recordPdfOmr({
+      code: "PDF_OMR_STAGE",
+      jobId: "job-1",
+      stage: "recognize",
+      status: "started",
+      completed: 1,
+      total: 3,
+    });
+    const line = JSON.parse((await readFile(join(root, "desktop.log"), "utf8")).trim());
+    expect(line).toMatchObject({
+      code: "PDF_OMR_STAGE",
+      jobId: "job-1",
+      stage: "recognize",
+      status: "started",
+      completed: 1,
+      total: 3,
+    });
+    await expect(
+      diagnostics.recordPdfOmr({ code: "PDF_OMR_STAGE", jobId: "job-1", inputPath: "/private/score.pdf" }),
+    ).resolves.toBeUndefined();
+  });
+
   it("drops invalid input and filesystem failures without rejecting business calls", async () => {
     const root = await tempRoot();
     const blocked = join(root, "blocked");

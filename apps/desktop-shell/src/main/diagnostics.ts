@@ -49,6 +49,26 @@ export const persistedHostDiagnosticEventSchema = diagnosticInputSchema
   })
   .strict();
 
+const pdfOmrLogEventSchema = z
+  .object({
+    code: z.string().regex(/^PDF_OMR_[A-Z0-9_]{1,54}$/),
+    jobId: z.string().min(1).max(128),
+    engineId: z.string().min(1).max(128).optional(),
+    stage: z.enum(["inspect", "recognize", "validate", "export"]).optional(),
+    status: z.enum(["started", "completed", "succeeded", "cancelled", "failed"]).optional(),
+    errorCode: z
+      .string()
+      .regex(/^[A-Z][A-Z0-9_]{0,63}$/)
+      .optional(),
+    unit: z.enum(["page", "system"]).optional(),
+    completed: z.number().int().nonnegative().optional(),
+    total: z.number().int().positive().optional(),
+    durationMs: z.number().nonnegative().optional(),
+  })
+  .strict();
+
+export type PdfOmrLogEvent = z.infer<typeof pdfOmrLogEventSchema>;
+
 type DesktopDiagnosticsOptions = {
   directory: string;
   appVersion: string;
@@ -83,6 +103,13 @@ export class DesktopDiagnostics {
 
   recordElectron(value: unknown): Promise<void> {
     return this.record("electron", value);
+  }
+
+  recordPdfOmr(value: unknown): Promise<void> {
+    const input = pdfOmrLogEventSchema.safeParse(value);
+    if (!input.success) return Promise.resolve();
+    const event = JSON.stringify({ at: this.now().toISOString(), ...input.data });
+    return this.store.append(`${event}\n`).catch(() => undefined);
   }
 
   export(

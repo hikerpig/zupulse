@@ -1,4 +1,5 @@
 import type { OmrScoreDraft } from "../schemas";
+import type { StaffLayout } from "../staff-system-segmentation";
 
 export type OmrEngineEnvironment = {
   id: string;
@@ -7,6 +8,7 @@ export type OmrEngineEnvironment = {
   modelSha256?: string;
   parameters?: Readonly<Record<string, string | number | boolean>>;
   commandTemplate: readonly string[];
+  inputKinds?: readonly ("pdf" | "image")[];
   license: {
     id: string;
     source: string;
@@ -16,7 +18,18 @@ export type OmrEngineEnvironment = {
 export type OmrRecognitionRequest = {
   inputPath: string;
   outputDirectory: string;
+  inputScope?: "system-crop" | "full-page";
+  standardFontDirectory?: string;
+  wasmDirectory?: string;
+  staffLayout?: StaffLayout;
   signal?: AbortSignal;
+  onProgress?: (progress: OmrEngineProgress) => void;
+};
+
+export type OmrEngineProgress = {
+  unit: "page" | "system";
+  completed: number;
+  total: number;
 };
 
 export type OmrRawRecognition = {

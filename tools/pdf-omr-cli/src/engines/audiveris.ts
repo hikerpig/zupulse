@@ -42,6 +42,7 @@ export function createAudiverisAdapter(options: {
         version: versionMatch[1],
         executable: basename(executable),
         commandTemplate,
+        inputKinds: ["pdf", "image"],
         license: {
           id: "AGPL-3.0-only",
           source: "https://github.com/Audiveris/audiveris/blob/master/LICENSE",

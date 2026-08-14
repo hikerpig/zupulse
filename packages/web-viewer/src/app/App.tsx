@@ -9,6 +9,9 @@ import type { ExternalNavigationHost } from "../host";
 import { applyLocaleState } from "../i18n/locale-controller";
 import { AppStoreProvider, createPersistedAppStore, useApplyTheme, useAppStore } from "./appStore";
 import { createAppRouter } from "./router";
+import type { PdfOmrWorkbenchPort } from "../features/pdf-omr/pdf-omr-port";
+import type { ViewerSessionPort } from "../viewer-session/viewer-session-types";
+import type { RecognitionSettingsPort } from "../features/application-settings/recognition-settings-port";
 
 const fallbackLocaleHost: LocaleHost = {
   initialState: { preference: "zh-CN", effectiveLocale: "zh-CN" },
@@ -22,10 +25,14 @@ const fallbackLocaleHost: LocaleHost = {
 
 export type ViewerProductCapabilities = {
   harmonyAnalysis: boolean;
+  pdfOmrWorkbench?: boolean;
+  recognitionProviderSettings?: boolean;
 };
 
 export const defaultViewerProductCapabilities: ViewerProductCapabilities = {
   harmonyAnalysis: true,
+  pdfOmrWorkbench: false,
+  recognitionProviderSettings: false,
 };
 
 export function App({
@@ -34,12 +41,23 @@ export function App({
   i18n: injectedI18n,
   capabilities = defaultViewerProductCapabilities,
   externalNavigationHost,
+  pdfOmr,
+  openPdfOmrPreview,
+  recognitionSettings,
 }: {
   application: ViewerApplication;
   localeHost?: LocaleHost;
   i18n?: i18n;
   capabilities?: ViewerProductCapabilities;
   externalNavigationHost?: ExternalNavigationHost;
+  pdfOmr?: PdfOmrWorkbenchPort | undefined;
+  recognitionSettings?: RecognitionSettingsPort | undefined;
+  openPdfOmrPreview?:
+    | ((
+        file: import("../host").ViewerFile,
+        domBindings?: import("../host").ViewerDomBindings,
+      ) => Promise<ViewerSessionPort>)
+    | undefined;
 }) {
   const i18n = useMemo(
     () => injectedI18n ?? createAppI18n(localeHost.initialState.effectiveLocale),
@@ -53,8 +71,11 @@ export function App({
         localeHost,
         capabilities,
         ...(externalNavigationHost === undefined ? {} : { externalNavigationHost }),
+        pdfOmr,
+        openPdfOmrPreview,
+        recognitionSettings,
       }),
-    [application, capabilities, externalNavigationHost, localeHost],
+    [application, capabilities, externalNavigationHost, localeHost, openPdfOmrPreview, pdfOmr, recognitionSettings],
   );
   return (
     <I18nextProvider i18n={i18n}>

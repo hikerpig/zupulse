@@ -240,6 +240,195 @@ describe("App", () => {
     await application.destroy();
   });
 
+  it("exposes the PDF recognition route only when the Desktop capability is enabled", async () => {
+    window.history.replaceState(null, "", "#/pdf-omr");
+    const application = new ViewerApplication(
+      { openScore: async () => undefined, subscribe: () => () => undefined },
+      async () => ({ togglePlayback: vi.fn(), pauseAndFlush: vi.fn(), destroy: vi.fn() }),
+    );
+
+    render(<App application={application} capabilities={{ harmonyAnalysis: false, pdfOmrWorkbench: true }} />);
+
+    expect(await screen.findByRole("heading", { name: "PDF 识谱" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "PDF 识谱" })).toBeTruthy();
+    await application.destroy();
+  });
+
+  it("opens shared application settings from the Header and keeps Browser settings limited to General", async () => {
+    window.history.replaceState(null, "", "#/settings");
+    const application = new ViewerApplication(
+      { subscribe: () => () => undefined },
+      async () => viewerSession(),
+      libraryFixture(),
+    );
+
+    render(<App application={application} />);
+
+    expect(await screen.findByRole("heading", { name: "设置" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "设置" }).getAttribute("href")).toBe("#/settings");
+    expect(screen.getByRole("heading", { name: "通用" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "识谱引擎" })).toBeNull();
+    await application.destroy();
+  });
+
+  it("updates the same theme state from General settings and the Header shortcut", async () => {
+    window.history.replaceState(null, "", "#/settings");
+    const application = new ViewerApplication(
+      { subscribe: () => () => undefined },
+      async () => viewerSession(),
+      libraryFixture(),
+    );
+    const user = userEvent.setup();
+
+    render(<App application={application} />);
+    await user.click(await screen.findByRole("radio", { name: "浅色" }));
+
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(screen.getByRole("button", { name: "切换至深色主题" })).toBeTruthy();
+    expect((screen.getByRole("radio", { name: "浅色" }) as HTMLInputElement).checked).toBe(true);
+    await application.destroy();
+  });
+
+  it("updates the same locale state from General settings and the Header shortcut", async () => {
+    window.history.replaceState(null, "", "#/settings");
+    const application = new ViewerApplication(
+      { subscribe: () => () => undefined },
+      async () => viewerSession(),
+      libraryFixture(),
+    );
+    const localeHost: LocaleHost = {
+      initialState: { preference: "zh-CN", effectiveLocale: "zh-CN" },
+      setPreference: vi.fn(async (preference) => ({
+        preference,
+        effectiveLocale: preference === "system" ? "zh-CN" : preference,
+      })),
+    };
+    const user = userEvent.setup();
+
+    render(<App application={application} localeHost={localeHost} i18n={createAppI18n("zh-CN")} />);
+    await user.click(await screen.findByRole("radio", { name: "English" }));
+
+    expect(localeHost.setPreference).toHaveBeenCalledWith("en-US");
+    expect(await screen.findByRole("heading", { name: "General" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Language" })).toBeTruthy();
+    await application.destroy();
+  });
+
+  it("lists every local recognition provider only when the host supplies the settings capability", async () => {
+    window.history.replaceState(null, "", "#/settings");
+    const application = new ViewerApplication(
+      { subscribe: () => () => undefined },
+      async () => viewerSession(),
+      libraryFixture(),
+    );
+    const recognitionSettings = {
+      list: vi.fn(async () =>
+        (["audiveris", "rokot", "legato", "transcoda"] as const).map((id) => ({
+          id,
+          state: "unconfigured" as const,
+          inputKinds: id === "audiveris" ? (["pdf", "image"] as const) : (["pdf"] as const),
+          hasExplicitConfiguration: false,
+          fields: [],
+        })),
+      ),
+      selectResource: vi.fn(),
+      save: vi.fn(),
+      clear: vi.fn(),
+    };
+
+    render(
+      <App
+        application={application}
+        capabilities={{ harmonyAnalysis: false, recognitionProviderSettings: true }}
+        recognitionSettings={recognitionSettings}
+      />,
+    );
+
+    expect(await screen.findByRole("heading", { name: "识谱引擎" })).toBeTruthy();
+    for (const name of ["Audiveris", "Rokot", "LEGATO", "Transcoda"]) {
+      expect(await screen.findByText(name, { selector: "strong" })).toBeTruthy();
+    }
+    expect(recognitionSettings.list).toHaveBeenCalledOnce();
+    await application.destroy();
+  });
+
+  it("saves a recognition engine path pasted into the field", async () => {
+    window.history.replaceState(null, "", "#/settings");
+    const application = new ViewerApplication(
+      { subscribe: () => () => undefined },
+      async () => viewerSession(),
+      libraryFixture(),
+    );
+    const audiveris = {
+      id: "audiveris" as const,
+      state: "unconfigured" as const,
+      inputKinds: ["pdf", "image"] as const,
+      hasExplicitConfiguration: false,
+      fields: [],
+    };
+    const recognitionSettings = {
+      list: vi.fn(async () => [
+        audiveris,
+        {
+          id: "rokot" as const,
+          state: "unconfigured" as const,
+          inputKinds: ["pdf"] as const,
+          hasExplicitConfiguration: false,
+          fields: [],
+        },
+        {
+          id: "legato" as const,
+          state: "unconfigured" as const,
+          inputKinds: ["pdf"] as const,
+          hasExplicitConfiguration: false,
+          fields: [],
+        },
+        {
+          id: "transcoda" as const,
+          state: "unconfigured" as const,
+          inputKinds: ["pdf"] as const,
+          hasExplicitConfiguration: false,
+          fields: [],
+        },
+      ]),
+      selectResource: vi.fn(async (_providerId: string, _fieldId: string, path?: string) => ({
+        status: "selected" as const,
+        selectionToken: "manual-selection",
+        label: path?.split("/").at(-1) ?? "Audiveris",
+        kind: "executable" as const,
+      })),
+      save: vi.fn(async () => ({ ...audiveris, state: "ready" as const, version: "5.3" })),
+      clear: vi.fn(),
+    };
+    const user = userEvent.setup();
+
+    render(
+      <App
+        application={application}
+        capabilities={{ harmonyAnalysis: false, recognitionProviderSettings: true }}
+        recognitionSettings={recognitionSettings}
+      />,
+    );
+    await user.click(await screen.findByRole("button", { name: "Audiveris 配置" }));
+    const field = screen.getByRole("textbox", { name: "可执行程序" });
+    await user.click(screen.getByRole("button", { name: "选择 可执行程序" }));
+    expect(recognitionSettings.selectResource).toHaveBeenCalledWith("audiveris", "executable");
+    expect((field as HTMLInputElement).value).toBe("Audiveris");
+    await user.clear(field);
+    await user.type(field, "/opt/audiveris/bin/Audiveris");
+    await user.click(screen.getByRole("button", { name: "验证并保存" }));
+
+    expect(recognitionSettings.selectResource).toHaveBeenCalledWith(
+      "audiveris",
+      "executable",
+      "/opt/audiveris/bin/Audiveris",
+    );
+    expect(recognitionSettings.save).toHaveBeenCalledWith("audiveris", {
+      executable: { source: "selection", selectionToken: "manual-selection" },
+    });
+    await application.destroy();
+  });
+
   it("keeps the incomplete viewer hidden until the requested session is ready", async () => {
     window.history.replaceState(null, "", "#/library");
     const id = "8f14e45f-ea42-4c2e-a9f4-6f1f8f60d88a";

@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "1.0.0",
+  "workId": "4976604",
+  "sourceSplit": "dev",
+  "sourceDocument": "#96281",
+  "sourcePdf": {
+    "memberName": "IMSLP96281-PMLP181600-FranzOp6.pdf",
+    "sha256": "9c645a0a5528494ff27ff101343772e644fe60f45b581788eb8b55361ed3957c",
+    "bytes": 4248056
+  },
+  "pages": [
+    {
+      "samplePage": 1,
+      "sourcePage": 6,
+      "width": 2250,
+      "height": 3221,
+      "systems": [
+        {
+          "sampleVariant": "p1-s1",
+          "sourceSystem": 1,
+          "boundingBox": {
+            "left": 477,
+            "top": 688,
+            "width": 1528,
+            "height": 263
+          }
+        },
+        {
+          "sampleVariant": "p1-s2",
+          "sourceSystem": 2,
+          "boundingBox": {
+            "left": 188,
+            "top": 1285,
+            "width": 1830,
+            "height": 293
+          }
+        },
+        {
+          "sampleVariant": "p1-s3",
+          "sourceSystem": 3,
+          "boundingBox": {
+            "left": 197,
+            "top": 1894,
+            "width": 1826,
+            "height": 302
+          }
+        },
+        {
+          "sampleVariant": "p1-s4",
+          "sourceSystem": 4,
+          "boundingBox": {
+            "left": 208,
+            "top": 2552,
+            "width": 1826,
+            "height": 302
+          }
+        }
+      ]
+    },
+    {
+      "samplePage": 2,
+      "sourcePage": 7,
+      "width": 2250,
+      "height": 3221,
+      "systems": [
+        {
+          "sampleVariant": "p2-s1",
+          "sourceSystem": 1,
+          "boundingBox": {
+            "left": 262,
+            "top": 415,
+            "width": 1819,
+            "height": 267
+          }
+        },
+        {
+          "sampleVariant": "p2-s2",
+          "sourceSystem": 2,
+          "boundingBox": {
+            "left": 261,
+            "top": 1014,
+            "width": 1820,
+            "height": 249
+          }
+        },
+        {
+          "sampleVariant": "p2-s3",
+          "sourceSystem": 3,
+          "boundingBox": {
+            "left": 259,
+            "top": 1553,
+            "width": 1822,
+            "height": 233
+          }
+        },
+        {
+          "sampleVariant": "p2-s4",
+          "sourceSystem": 4,
+          "boundingBox": {
+            "left": 256,
+            "top": 2121,
+            "width": 1822,
+            "height": 261
+          }
+        },
+        {
+          "sampleVariant": "p2-s5",
+          "sourceSystem": 5,
+          "boundingBox": {
+            "left": 251,
+            "top": 2604,
+            "width": 1813,
+            "height": 257
+          }
+        }
+      ]
+    }
+  ]
+}

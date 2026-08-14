@@ -1,9 +1,10 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { PdfOmrError } from "../errors";
 import { runEngineProcess } from "../engine-runner";
 import { normalizeAudiverisMusicXml } from "../normalizers/audiveris";
+import { mergeLegatoPageAbc, mergeLegatoPageMusicXml } from "./legato-page-merge";
 import type { OmrEngineAdapter } from "./types";
 
 export type LegatoAdapterOptions = {
@@ -30,8 +31,11 @@ const parameters = {
   repetitionPenalty: 1.1,
 } as const;
 
+const defaultInferenceTimeoutMs = 3_600_000;
+
 export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAdapter {
   const gitExecutable = options.gitExecutable ?? "git";
+  const inferenceTimeoutMs = options.timeoutMs ?? defaultInferenceTimeoutMs;
   const processOptions = {
     ...(options.environment === undefined ? {} : { env: options.environment }),
     ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
@@ -73,7 +77,7 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
         version: actualRevision,
         executable: basename(options.pythonExecutable),
         modelSha256: actualModelSha256,
-        parameters,
+        parameters: { ...parameters, inferenceTimeoutMs },
         commandTemplate: [
           "legato-runner.py",
           "recognize",
@@ -83,10 +87,8 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
           "<legato-model>",
           "--base-model",
           "<llama-vision-model>",
-          "--abc-output",
-          "<raw-output.abc>",
-          "--musicxml-output",
-          "<converted.musicxml>",
+          "--page-output-directory",
+          "<page-output-directory>",
         ],
         license: {
           id: "MIT + Llama-3.2-Community",
@@ -114,6 +116,7 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
 
       const abcPath = join(request.outputDirectory, "raw-output.abc");
       const musicXmlPath = join(request.outputDirectory, "converted.musicxml");
+      const pageOutputDirectory = join(request.outputDirectory, "pages");
       const inference = await runEngineProcess(
         {
           command: options.pythonExecutable,
@@ -128,10 +131,8 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
             dirname(options.modelPath),
             "--base-model",
             options.baseModelPath,
-            "--abc-output",
-            abcPath,
-            "--musicxml-output",
-            musicXmlPath,
+            "--page-output-directory",
+            pageOutputDirectory,
             "--max-length",
             String(parameters.maxLength),
             "--num-beams",
@@ -140,29 +141,44 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
             String(parameters.repetitionPenalty),
           ],
           ...processOptions,
+          timeoutMs: inferenceTimeoutMs,
         },
         request.signal,
       );
-      const [abcBytes, musicXmlBytes] = await Promise.all([
-        readFile(abcPath).catch((error: unknown) => {
-          throw invalidOutput("missing-abc", error);
+      const pageArtifacts = await Promise.all(
+        Array.from({ length: report.pageCount }, async (_, pageIndex) => {
+          const pageNumber = pageIndex + 1;
+          const prefix = `page-${String(pageNumber).padStart(3, "0")}`;
+          const [abcBytes, musicXmlBytes] = await Promise.all([
+            readFile(join(pageOutputDirectory, `${prefix}.abc`)).catch((error: unknown) => {
+              throw invalidOutput("missing-page-abc", error);
+            }),
+            readFile(join(pageOutputDirectory, `${prefix}.musicxml`)).catch((error: unknown) => {
+              throw invalidOutput("missing-page-musicxml", error);
+            }),
+          ]);
+          let abc: string;
+          try {
+            abc = new TextDecoder("utf-8", { fatal: true }).decode(abcBytes);
+          } catch (error) {
+            throw invalidOutput("invalid-page-abc-utf8", error);
+          }
+          return { prefix, abc, abcBytes, musicXmlBytes };
         }),
-        readFile(musicXmlPath).catch((error: unknown) => {
-          throw invalidOutput("missing-musicxml", error);
-        }),
-      ]);
-      let abc: string;
-      try {
-        abc = new TextDecoder("utf-8", { fatal: true }).decode(abcBytes);
-      } catch (error) {
-        throw invalidOutput("invalid-abc-utf8", error);
-      }
-      if (abc.trim().length === 0) throw invalidOutput("empty-abc");
+      );
+      const abc = mergeLegatoPageAbc(pageArtifacts.map((artifact) => artifact.abc));
+      const abcBytes = new TextEncoder().encode(abc);
+      const musicXmlBytes = mergeLegatoPageMusicXml(pageArtifacts.map((artifact) => artifact.musicXmlBytes));
+      await Promise.all([writeFile(abcPath, abcBytes), writeFile(musicXmlPath, musicXmlBytes)]);
       return {
         normalizationBytes: musicXmlBytes,
         nativeArtifacts: [
           { relativePath: "raw-output.abc", bytes: abcBytes },
           { relativePath: "converted.musicxml", bytes: musicXmlBytes },
+          ...pageArtifacts.flatMap((artifact) => [
+            { relativePath: `pages/${artifact.prefix}.abc`, bytes: artifact.abcBytes },
+            { relativePath: `pages/${artifact.prefix}.musicxml`, bytes: artifact.musicXmlBytes },
+          ]),
         ],
         diagnostics: [],
         durationMs: inspect.durationMs + inference.durationMs,
@@ -170,7 +186,19 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
     },
 
     normalize(recognition) {
-      return normalizeAudiverisMusicXml(recognition.normalizationBytes);
+      const draft = normalizeAudiverisMusicXml(recognition.normalizationBytes);
+      const emptyPart = draft.parts.find(
+        (part) =>
+          !part.staves.some((staff) =>
+            staff.measures.some((measure) => measure.voices.some((voice) => voice.events.length > 0)),
+          ),
+      );
+      if (emptyPart !== undefined) {
+        throw new PdfOmrError("ENGINE_OUTPUT_INVALID", "LEGATO output contains an empty part", {
+          context: { reason: "empty-part", partId: emptyPart.id },
+        });
+      }
+      return draft;
     },
   };
 }

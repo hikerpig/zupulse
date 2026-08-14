@@ -10,7 +10,9 @@ describe("PDF OMR errors", () => {
     ["ENGINE_OUTPUT_INVALID", 6],
     ["DRAFT_VALIDATION_FAILED", 7],
     ["PROJECTION_OR_EXPORT_FAILED", 8],
+    ["BENCHMARK_EVALUATION_LIMITATION", 9],
     ["BENCHMARK_GATE_FAILED", 9],
+    ["BENCHMARK_RESOURCE_BUDGET_EXCEEDED", 9],
     ["INTERRUPTED", 130],
   ] as const)("maps %s to exit code %i", (code, exitCode) => {
     expect(exitCodeForPdfOmrError(new PdfOmrError(code, code))).toBe(exitCode);

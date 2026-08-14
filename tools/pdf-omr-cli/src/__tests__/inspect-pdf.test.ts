@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { runPdfOmrCommand } from "../command";
-import { inspectPdfBytes, mapPdfLoadError } from "../inspect-pdf";
+import { inspectOmrInputBytes, inspectPdfBytes, mapPdfLoadError } from "../inspect-pdf";
 
 describe("PDF inspection", () => {
   it("reports deterministic page and vector/raster signals", async () => {
@@ -62,7 +62,65 @@ describe("PDF inspection", () => {
     const artifact = await readFile(join(outputPath, "input.json"), "utf8");
     expect(artifact).not.toContain(directory);
   });
+
+  it("inspects PNG and JPEG as single-page raster inputs", async () => {
+    const png = await inspectOmrInputBytes(minimalPng(640, 480), { fileName: "/private/input/score.png" });
+    const jpeg = await inspectOmrInputBytes(minimalJpeg(1200, 900), { fileName: "/private/input/score.jpg" });
+
+    expect(png).toMatchObject({
+      source: { fileName: "score.png" },
+      pageCount: 1,
+      pages: [{ index: 0, width: 640, height: 480, vectorOperators: 0, rasterOperators: 1 }],
+    });
+    expect(jpeg).toMatchObject({
+      source: { fileName: "score.jpg" },
+      pageCount: 1,
+      pages: [{ index: 0, width: 1200, height: 900, vectorOperators: 0, rasterOperators: 1 }],
+    });
+  });
+
+  it("rejects an image extension whose bytes are not a supported image", async () => {
+    await expect(
+      inspectOmrInputBytes(new TextEncoder().encode("not-an-image"), { fileName: "score.png" }),
+    ).rejects.toMatchObject({ code: "INVALID_INPUT", context: { reason: "malformed-image", fileName: "score.png" } });
+  });
 });
+
+function minimalPng(width: number, height: number): Uint8Array {
+  const bytes = new Uint8Array(24);
+  bytes.set([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82]);
+  new DataView(bytes.buffer).setUint32(16, width);
+  new DataView(bytes.buffer).setUint32(20, height);
+  return bytes;
+}
+
+function minimalJpeg(width: number, height: number): Uint8Array {
+  return Uint8Array.from([
+    0xff,
+    0xd8,
+    0xff,
+    0xc0,
+    0x00,
+    0x11,
+    0x08,
+    (height >> 8) & 0xff,
+    height & 0xff,
+    (width >> 8) & 0xff,
+    width & 0xff,
+    0x03,
+    0x01,
+    0x11,
+    0x00,
+    0x02,
+    0x11,
+    0x00,
+    0x03,
+    0x11,
+    0x00,
+    0xff,
+    0xd9,
+  ]);
+}
 
 function minimalPdf(content: string): Uint8Array {
   const objects = [

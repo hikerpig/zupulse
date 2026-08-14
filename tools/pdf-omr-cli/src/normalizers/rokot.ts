@@ -29,6 +29,8 @@ const rokotSystemSchema = z
     systemIndex: z.number().int().nonnegative(),
     source: z
       .object({
+        staffLayout: z.enum(["single-staff", "grand-staff"]),
+        staffCount: z.union([z.literal(1), z.literal(2)]),
         pixelBbox: pixelBboxSchema,
         pdfPointBbox: pdfPointBboxSchema,
         cropSha256: sha256Schema,
@@ -46,6 +48,18 @@ export const rokotSystemBundleSchema = z
   })
   .strict()
   .superRefine((bundle, context) => {
+    for (const [index, system] of bundle.systems.entries()) {
+      if (
+        (system.source.staffLayout === "single-staff" && system.source.staffCount !== 1) ||
+        (system.source.staffLayout === "grand-staff" && system.source.staffCount !== 2)
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["systems", index, "source"],
+          message: "staffLayout and staffCount must agree",
+        });
+      }
+    }
     for (let index = 1; index < bundle.systems.length; index += 1) {
       const previous = bundle.systems[index - 1]!;
       const current = bundle.systems[index]!;
@@ -144,8 +158,12 @@ const voiceMapping: Readonly<Record<RokotVoice, { staffIndex: number; voiceIndex
 
 export function normalizeRokotOutput(bytes: Uint8Array): OmrScoreDraft {
   const bundle = parseRokotSystemBundle(bytes);
+  const staffCount = bundle.systems[0]!.source.staffCount;
+  if (bundle.systems.some((system) => system.source.staffCount !== staffCount)) {
+    throw invalidOutput("inconsistent-system-staff-layout");
+  }
   const diagnostics: Diagnostic[] = [];
-  const measuresByStaff: [DraftMeasure[], DraftMeasure[]] = [[], []];
+  const measuresByStaff: DraftMeasure[][] = Array.from({ length: staffCount }, () => []);
   let globalMeasureIndex = 0;
 
   for (const system of bundle.systems) {
@@ -195,11 +213,13 @@ export function normalizeRokotOutput(bytes: Uint8Array): OmrScoreDraft {
       }
     }
 
-    if (!seen.has("1") || !seen.has("2")) {
+    const missingPrimaryStaff = !seen.has("1") || (staffCount === 2 && !seen.has("2"));
+    const unexpectedBassStaff = staffCount === 1 && (seen.has("2") || seen.has("2b"));
+    if (missingPrimaryStaff || unexpectedBassStaff) {
       addDiagnostic(
         diagnostics,
         "ROKOT_UNSUPPORTED_STAFF_TOPOLOGY",
-        "Rokot system does not contain both primary piano staves",
+        `Rokot system does not match the declared ${staffCount}-staff topology`,
         system,
       );
     }
@@ -224,16 +244,19 @@ export function normalizeRokotOutput(bytes: Uint8Array): OmrScoreDraft {
       }
     }
 
-    const primaryCounts = [
-      parts.get("P1")?.staves[0]?.measures.length ?? 0,
-      parts.get("P2")?.staves[0]?.measures.length ?? 0,
-    ];
+    const primaryCounts = Array.from(
+      { length: staffCount },
+      (_, staffIndex) => parts.get(staffIndex === 0 ? "P1" : "P2")?.staves[0]?.measures.length ?? 0,
+    );
     const systemMeasureCount = Math.max(...primaryCounts);
-    const secondaryCounts = [
-      parts.get("P1b")?.staves[0]?.measures.length,
-      parts.get("P2b")?.staves[0]?.measures.length,
-    ].filter((count): count is number => count !== undefined);
-    if (primaryCounts[0] !== primaryCounts[1] || secondaryCounts.some((count) => count !== systemMeasureCount)) {
+    const secondaryCounts = Array.from(
+      { length: staffCount },
+      (_, staffIndex) => parts.get(staffIndex === 0 ? "P1b" : "P2b")?.staves[0]?.measures.length,
+    ).filter((count): count is number => count !== undefined);
+    if (
+      primaryCounts.some((count) => count !== systemMeasureCount) ||
+      secondaryCounts.some((count) => count !== systemMeasureCount)
+    ) {
       addDiagnostic(
         diagnostics,
         "ROKOT_STAFF_MEASURE_COUNT_MISMATCH",
@@ -258,7 +281,7 @@ export function normalizeRokotOutput(bytes: Uint8Array): OmrScoreDraft {
       }
     }
 
-    const removable = alignedHeaderOnlyMeasureIndexes(explicitHeaderOnly, systemMeasureCount);
+    const removable = alignedHeaderOnlyMeasureIndexes(explicitHeaderOnly, systemMeasureCount, staffCount);
     for (let localIndex = 0; localIndex < systemMeasureCount; localIndex += 1) {
       const headerOnlyCount = [...explicitHeaderOnly.values()].filter((values) => values[localIndex] === true).length;
       if (headerOnlyCount > 0 && headerOnlyCount !== explicitHeaderOnly.size) {
@@ -270,10 +293,10 @@ export function normalizeRokotOutput(bytes: Uint8Array): OmrScoreDraft {
         );
       }
       if (removable.has(localIndex)) continue;
-      const joined = [0, 1].map((staffIndex) =>
+      const joined = Array.from({ length: staffCount }, (_, staffIndex) =>
         joinStaffMeasure(parts, staffIndex, localIndex, globalMeasureIndex, system),
-      ) as [DraftMeasure, DraftMeasure];
-      if (compareRational(measureExtent(joined[0]), measureExtent(joined[1])) !== 0) {
+      );
+      if (staffCount === 2 && compareRational(measureExtent(joined[0]!), measureExtent(joined[1]!)) !== 0) {
         addDiagnostic(
           diagnostics,
           "ROKOT_MEASURE_DURATION_MISMATCH",
@@ -281,8 +304,7 @@ export function normalizeRokotOutput(bytes: Uint8Array): OmrScoreDraft {
           system,
         );
       }
-      measuresByStaff[0].push(joined[0]);
-      measuresByStaff[1].push(joined[1]);
+      joined.forEach((measure, staffIndex) => measuresByStaff[staffIndex]!.push(measure));
       globalMeasureIndex += 1;
     }
   }
@@ -292,12 +314,9 @@ export function normalizeRokotOutput(bytes: Uint8Array): OmrScoreDraft {
     schemaVersion: "1.0.0",
     parts: [
       {
-        id: "piano",
-        name: "Piano",
-        staves: [
-          { index: 0, measures: measuresByStaff[0] },
-          { index: 1, measures: measuresByStaff[1] },
-        ],
+        id: staffCount === 1 ? "score" : "piano",
+        name: staffCount === 1 ? "Score" : "Piano",
+        staves: measuresByStaff.map((measures, index) => ({ index, measures })),
       },
     ],
     diagnostics,
@@ -312,9 +331,10 @@ function parsePartVoice(partId: string | null): RokotVoice | undefined {
 function alignedHeaderOnlyMeasureIndexes(
   explicitHeaderOnly: ReadonlyMap<RokotVoice, readonly boolean[]>,
   measureCount: number,
+  staffCount: 1 | 2,
 ): Set<number> {
   const removable = new Set<number>();
-  if (!explicitHeaderOnly.has("1") || !explicitHeaderOnly.has("2")) return removable;
+  if (!explicitHeaderOnly.has("1") || (staffCount === 2 && !explicitHeaderOnly.has("2"))) return removable;
   for (let index = 0; index < measureCount - 1; index += 1) {
     const values = [...explicitHeaderOnly.values()];
     if (values.length > 0 && values.every((headers) => headers[index] === true)) removable.add(index);

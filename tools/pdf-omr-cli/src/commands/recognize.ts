@@ -4,7 +4,9 @@ import { basename, join, resolve } from "node:path";
 import { createArtifactWriter } from "../artifact-writer";
 import type { EngineRegistry } from "../engine-registry";
 import { PdfOmrError } from "../errors";
-import { inspectPdfBytes } from "../inspect-pdf";
+import type { OmrEngineProgress } from "../engines/types";
+import type { StaffLayout } from "../staff-system-segmentation";
+import { inspectOmrInputBytes } from "../inspect-pdf";
 import {
   omrRunManifestSchema,
   omrScoreDraftSchema,
@@ -16,7 +18,16 @@ export async function recognizeCommand(
   input: string,
   engineId: string,
   output: string,
-  context: { cwd: string; engineRegistry: EngineRegistry; signal?: AbortSignal },
+  context: {
+    cwd: string;
+    engineRegistry: EngineRegistry;
+    standardFontDirectory?: string;
+    wasmDirectory?: string;
+    inputScope?: "full-page" | "system-crop";
+    staffLayout?: StaffLayout;
+    signal?: AbortSignal;
+    onProgress?: (progress: OmrEngineProgress) => void;
+  },
 ): Promise<PdfOmrRecognizeReport> {
   const adapter = context.engineRegistry.get(engineId);
   const inputPath = resolve(context.cwd, input);
@@ -24,12 +35,16 @@ export async function recognizeCommand(
   try {
     bytes = await readFile(inputPath);
   } catch (error) {
-    throw new PdfOmrError("INVALID_INPUT", "input PDF cannot be read", {
-      context: { reason: "unreadable-pdf", fileName: basename(input) },
+    throw new PdfOmrError("INVALID_INPUT", "OMR input cannot be read", {
+      context: { reason: "unreadable-input", fileName: basename(input) },
       cause: error,
     });
   }
-  const inputReport = await inspectPdfBytes(bytes, { fileName: input });
+  const inputReport = await inspectOmrInputBytes(bytes, {
+    fileName: input,
+    ...(context.standardFontDirectory === undefined ? {} : { standardFontDirectory: context.standardFontDirectory }),
+    ...(context.wasmDirectory === undefined ? {} : { wasmDirectory: context.wasmDirectory }),
+  });
   const writer = await createArtifactWriter(resolve(context.cwd, output));
   const startedAt = new Date().toISOString();
   const runId = `${inputReport.source.sha256.slice(0, 16)}-${engineId}`;
@@ -37,10 +52,20 @@ export async function recognizeCommand(
 
   try {
     const environment = await adapter.inspectEnvironment(context.signal);
+    if (!(environment.inputKinds ?? ["pdf"]).includes(inputReport.source.inputKind)) {
+      throw new PdfOmrError("INVALID_INPUT", "engine does not support this OMR input kind", {
+        context: { reason: "unsupported-engine-input-kind", inputKind: inputReport.source.inputKind },
+      });
+    }
     const raw = await adapter.recognize({
       inputPath,
       outputDirectory: workDirectory,
+      ...(context.standardFontDirectory === undefined ? {} : { standardFontDirectory: context.standardFontDirectory }),
+      ...(context.wasmDirectory === undefined ? {} : { wasmDirectory: context.wasmDirectory }),
+      ...(context.inputScope === undefined ? {} : { inputScope: context.inputScope }),
+      ...(context.staffLayout === undefined ? {} : { staffLayout: context.staffLayout }),
       ...(context.signal === undefined ? {} : { signal: context.signal }),
+      ...(context.onProgress === undefined ? {} : { onProgress: context.onProgress }),
     });
     const normalizedDraft = adapter.normalize(raw);
     const draft = omrScoreDraftSchema.parse({

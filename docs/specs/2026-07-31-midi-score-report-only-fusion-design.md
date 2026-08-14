@@ -91,7 +91,8 @@ type ScoreEvidence = {
 
 - v1 使用第一 part / 第一 staff 的 repeat markers 生成统一 playback measure order；
 - 支持普通 forward/backward repeat，每个 backward repeat 只展开一次；
-- 多 staff 的 repeat markers 不一致时输出 blocking diagnostic，停止 alignment；
+- 乐谱完全没有 repeat marker 时允许 staff/part 的小节数不同；只要任一 staff 存在 repeat marker，所有
+  staff 的小节数和逐小节 repeat markers 必须一致，否则输出 blocking diagnostic 并停止 alignment；
 - measure playback duration 取所有 staff/voice 中最大的 `onset + duration`，无事件时才使用声明 duration；
 - tie `continue` / `end` 不生成新的 attack evidence，tie `start` 保留；
 - 无 `soundingMidi` 或不支持的 repeat 状态不得静默猜测。

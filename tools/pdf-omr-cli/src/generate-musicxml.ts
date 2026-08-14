@@ -22,7 +22,7 @@ export function generateMusicXml(draft: OmrScoreDraft, options: { container: "xm
         ),
         "score.musicxml": xmlBytes,
       },
-      { level: 6 },
+      { level: 6, mtime: new Date("1980-01-01T00:00:00.000Z") },
     );
   } catch (error) {
     if (error instanceof PdfOmrError) throw error;

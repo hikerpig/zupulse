@@ -45,6 +45,12 @@ describe("renderPdfPages", () => {
       context: { reason: "unsupported-page-orientation", pageIndex: 0 },
     });
   });
+
+  it("allows landscape source pages only when the caller explicitly opts in", async () => {
+    const pages = await renderPdfPages(pdf([{ width: 400, height: 200, content: "" }]), { allowLandscape: true });
+
+    expect(pages[0]).toMatchObject({ pdfWidth: 400, pdfHeight: 200, pixelWidth: 1400, pixelHeight: 700 });
+  });
 });
 
 function pdf(pages: readonly { width: number; height: number; content: string }[]): Uint8Array {

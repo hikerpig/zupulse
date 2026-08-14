@@ -2,6 +2,7 @@
 status: approved
 date: 2026-07-31
 approved: 2026-07-31
+amended: 2026-08-13
 owner: Engineering
 scope: PDF OMR CLI and local benchmark only
 ---
@@ -21,7 +22,7 @@ engine-neutral `OmrScoreDraft`。现有 `pdf-omr analyze` 随后把 Draft 投影
 ```mermaid
 flowchart LR
   PDF["Printed piano PDF"] --> Render["PDF.js render\n1400 px page width"]
-  Render --> Segment["Deterministic\ngrand-staff segmentation"]
+  Render --> Segment["Deterministic\n1-2 staff segmentation"]
   Segment --> Crops["Ordered system PNGs"]
   Crops --> Rokot["rokot-omr-2b Q8_0\nllama.cpp"]
   Rokot --> ABC["Per-system rokot-ABC"]
@@ -34,7 +35,7 @@ flowchart LR
 
 ## 默认假设
 
-1. v1 只支持印刷体 piano grand staff；single staff、lead sheet、手写谱、TAB、打击乐与管弦总谱不在范围。
+1. 支持印刷体 single staff 与 piano grand staff；混合 topology page、lead sheet、手写谱、TAB、打击乐与管弦总谱不在范围。
 2. v1 使用已验证的 `rokot-omr-2b-Q8_0.gguf` 和 F16 vision projector，不支持 Q4。
 3. 模型与 `llama-cli` 预先安装；recognize 不隐式下载约 2.7 GB 权重。
 4. inference 完全本地运行，不上传 PDF、crop 或输出。
@@ -76,6 +77,9 @@ process dependency 使用，但不 vendoring converter source；实际分发仍�
 
 ```bash
 pnpm pdf-omr -- recognize input.pdf --engine rokot --output run
+pnpm pdf-omr -- recognize melody.pdf --engine rokot --output melody-run --staff-layout single-staff
+pnpm pdf-omr -- recognize system.pdf --engine rokot --output system-run \
+  --input-scope system-crop --staff-layout grand-staff
 pnpm pdf-omr -- validate run/draft.json --output run/validation.json
 pnpm pdf-omr -- analyze run/draft.json --output run/harmony.json
 pnpm pdf-omr -- export-musicxml run/draft.json --output run/score.mxl
@@ -95,7 +99,11 @@ pnpm benchmark:pdf-omr -- \
 
 - Engine ID MUST be `rokot`.
 - Input MUST be a readable PDF with at least one page.
-- v1 MUST accept only printed piano grand-staff systems.
+- Rokot MUST accept printed `single-staff` and `grand-staff` systems.
+- `inputScope=system-crop` MUST bypass staff-system detection and treat each input page as one model unit；它必须同时
+  声明显式 `staffLayout`。`inputScope=full-page` MUST run deterministic segmentation.
+- `--staff-layout` MUST accept `auto`、`single-staff` 或 `grand-staff`；benchmark item MAY declare the same field.
+- `auto` MUST accept a page only when all detected systems have one unambiguous topology；同页混合 topology MUST fail closed.
 - Page rendering MUST use repository-owned `pdfjs-dist`, a white background, and a target width of 1400 px.
 - Inference MUST use `temperature=0`, `max_new_tokens=1600`, `reasoning=off`, and concurrency `1`.
 - Prompt MUST be exactly `Transcribe this staff to rokot-ABC.`.
@@ -104,6 +112,7 @@ pnpm benchmark:pdf-omr -- \
 - The adapter MUST NOT silently repair ambiguous pitches, rhythms, voices, measures, repeats, or system order.
 - Cancellation MUST terminate the current `llama-cli` process tree and MUST NOT commit a succeeded run.
 - Canonical artifacts MUST NOT contain access tokens, absolute input paths, raw exception stacks, or raw stderr.
+- Development benchmark MAY retain bounded `failure-debug` artifacts；holdout MUST NOT retain them.
 
 ## Locked Environment
 
@@ -144,18 +153,24 @@ llama.cpp build、converter version 和 decoder settings 记录在 `parameters`�
 `segmentation.json` 同时记录 pixel bbox、PDF point bbox、page render hash 和 crop hash，避免 raster scale
 变化破坏 provenance。
 
-### v1 deterministic detector
+### deterministic 1-2 staff detector
 
 1. 将 RGB 转成 luminance，使用 Otsu threshold 得到 binary foreground。
-2. 对每行计算长水平 run coverage，合并相邻的粗线像素行。
-3. 将近似等距的五条线组成 staff group；line spacing 必须落在锁定范围内。
-4. 将 x-range 对齐、垂直距离落在锁定倍率内的相邻两个 staff group 配成 grand-staff system。
-5. crop 保留整页宽度；上下 padding 由 local staff spacing 计算，必须包含 measure number、ornaments、
+2. 对每行同时计算 continuous run coverage 与 fragmented foreground coverage。`rokot-staff-system-v2`
+   分别提取 continuous-first 和 fragmented-first 两组候选，避免密集音符把真实 staff line 合并进相邻像素行。
+3. 将近似等距的五条线组成 staff group；line spacing 必须落在锁定范围内。两组候选按垂直重叠、
+   spacing consistency 与 horizontal coverage 确定性去重。
+4. 对 `grand-staff`，将 x-range 对齐、垂直距离落在锁定倍率内且具有 connector evidence 的相邻两个
+   staff group 配成 system；候选 pairing 按 connector coverage 与 staff coverage 排序，避免 ledger line
+   或 beam-like decoy 抢占真实 pairing。对 `single-staff`，每个五线 staff group 独立成为 system。
+5. `auto` 仅接受“全部可配对 grand staff”或“全部未配对 single staff”；同时出现 paired 与 unpaired
+   groups 时必须视为 topology ambiguous，不得猜测混排含义。
+6. crop 保留整页宽度；上下 padding 由 local staff spacing 计算，必须包含 measure number、ornaments、
    dynamics、lyrics/harmony-like text，但不得与相邻 system 相交。
-6. system 顺序固定为 `(pageIndex, topY)`；不得使用 filesystem enumeration order。
+7. system 顺序固定为 `(pageIndex, topY)`；不得使用 filesystem enumeration order。
 
-所有 threshold 与倍率进入 environment parameters 和 segmentation artifact。任一 staff group 无法唯一
-配对、crop 重叠、system 数为 0、页面方向不受支持或检测结果跨两次运行不一致时，在 inference 前返回
+所有 threshold、倍率、resolved `staffLayout` 与 `staffCount` 进入 environment 或 segmentation artifact。
+任一 topology 无法唯一确定、crop 重叠、system 数为 0、页面方向不受支持或检测结果跨两次运行不一致时，在 inference 前返回
 `ENGINE_OUTPUT_INVALID`，reason 为 `ambiguous-system-segmentation`。
 
 首个实现不引入 OpenCV 或新的 native image dependency。PDF.js canvas 的 RGBA buffer 足以实现投影与
@@ -204,9 +219,13 @@ then undergoes UTF-8 and rokot-ABC envelope validation:
 - output MUST contain at least one pitched note or rest;
 - prose、Markdown fence、duplicate header 或未知 voice MUST fail with `ENGINE_OUTPUT_INVALID`.
 
+对于 detector 已确认的 `single-staff`，若模型输出具有完整固定 header、没有 voice declaration，且每条
+非 lyrics body line 以 ABC barline 结束，adapter MUST 确定性补入 `V:1 clef=treble` 与 `[V:1]`。该规则不得
+用于 `grand-staff`，也不得接受 header 外 prose 或 suffix prose。
+
 失败 reason 使用 `invalid-abc-utf8`、`invalid-rokot-abc-envelope`、`unknown-rokot-voice` 或
-`empty-rokot-abc`。原始输出只有在整个 recognition 成功提交时才成为 canonical artifact；失败现场保留在
-临时目录，不生成 succeeded run。
+`empty-rokot-abc`。原始输出只有在整个 recognition 成功提交时才成为 canonical artifact；development
+benchmark 可以按前述上限复制失败现场，holdout 不得保留。
 
 ## ABC Conversion 与 Normalization Bundle
 
@@ -223,6 +242,8 @@ type RokotSystemBundle = {
     pageIndex: number;
     systemIndex: number;
     source: {
+      staffLayout: "single-staff" | "grand-staff";
+      staffCount: 1 | 2;
       pixelBbox: { x: number; y: number; width: number; height: number };
       pdfPointBbox: { x: number; y: number; width: number; height: number };
       cropSha256: string;
@@ -251,8 +272,9 @@ Draft staff indices are zero-based, while Draft voice indices are one-based. Thi
 `omrScoreDraftSchema`, Audiveris normalizer, validator, and MusicXML exporter contracts; changing those shared
 contracts is outside this engine implementation.
 
-空的 secondary voice 可以省略；未知 part/voice 不得猜测映射。每个 system 的两个 staff 必须产生相同
-measure count，global measure index 按 system 顺序连续生成。只有完全无 events 的 header-only measure
+空的 secondary voice 可以省略；未知 part/voice 不得猜测映射。single-staff system 必须包含 `P1`，
+grand-staff system 必须包含 `P1` 与 `P2`；同一 bundle 不允许混合 staff count。grand-staff 的两个 staff
+必须产生相同 measure count，global measure index 按 system 顺序连续生成。只有完全无 events 的 header-only measure
 可以删除，其 attributes 必须显式 carry 到下一 measure。
 
 以下事实必须产生 blocking diagnostic，而不是自动修复：
@@ -287,6 +309,12 @@ engine/systems/page-001-system-001.musicxml
 不额外生成伪装成完整 score 的 `converted.musicxml`。完整 MusicXML 只能由通过 readiness validation 的
 Draft 经现有 `export-musicxml` 生成。这样可以避免 per-system XML 拼接失败却被误认为 engine-native
 成功输出。
+
+已经由 corpus 声明为 `system-crop` 的输入不得重复运行 staff detector；每个 PDF page 直接作为一个
+ordered system，并在 `segmentation.json` 中记录 `inputScope`。Development benchmark 的失败 item 可以
+额外保留 `failure-debug/`：最多 16 个文件、单文件最多 1 MiB、总计最多 2 MiB。Rokot 对 segmentation
+failure 保留 bounded rendered page 与结构化 error；对 ABC envelope failure 保留对应 crop、最多 256 KiB
+raw response 与结构化 error。holdout 不复制这些调试证据。
 
 ## Project Structure
 
@@ -334,12 +362,12 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
 
 ## Testing Strategy
 
-1. Segmentation unit tests generate in-memory binary staff matrices and cover valid grand staff、noise、missing
-   line、ambiguous pairing、overlap 与 deterministic ordering；不依赖外部 model。
+1. Segmentation unit tests generate in-memory binary staff matrices and cover valid single staff、grand staff、
+   explicit layout、noise、missing line、ambiguous pairing、overlap 与 deterministic ordering；不依赖外部 model。
 2. Adapter tests 使用 fake `llama-cli` 和 fake converter process，验证 args、sequential ordering、artifacts、
    cancellation、timeout、output limit 与 stable errors。
 3. Environment tests 使用小 fixture bytes 验证 streaming hash、build lock、缺失配置与 hash mismatch。
-4. Normalizer tests 覆盖 `1/1b/2/2b` mapping、empty secondary voice、attribute carry、partial measure、
+4. Normalizer tests 覆盖 single-staff `1/1b`、grand-staff `1/1b/2/2b` mapping、empty secondary voice、attribute carry、partial measure、
    duration mismatch 和 cross-system measure indexing。
 5. Recognize integration test 使用两 system 小 PDF，要求重复运行的 `draft.json`、`segmentation.json`、ABC
    和 XML hashes 一致。
@@ -365,7 +393,7 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
 - Vendor converter source, change the approved converter version, or change its external-process boundary.
 - Change `OmrScoreDraft`, CLI error codes, or canonical report schemas.
 - Add resident `llama-server`, parallel inference, GPU-specific behavior, or automatic model download.
-- Expand beyond printed piano grand staff.
+- Expand beyond printed one- or two-staff systems, or accept mixed topology pages.
 - Integrate with Browser, Desktop, Bridge, Library, or any product UI.
 
 ### Never
@@ -394,7 +422,8 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
 9. The repository K331 fixture MUST complete the development run and preserve its derived-controlled provenance in
    the report.
 10. Existing Audiveris, Transcoda, LEGATO, Harmony CLI, and frozen report tests MUST remain green.
-11. Target verification MUST pass:
+11. Single-staff input MUST produce one-staff Draft output without `ROKOT_UNSUPPORTED_STAFF_TOPOLOGY`.
+12. Target verification MUST pass:
 
 ```bash
 pnpm --filter @zupulse/pdf-omr-cli test
@@ -410,7 +439,7 @@ pnpm verify:fast
 - Development corpus uses the repository K331 fixture and MUST be labeled `derived-controlled`.
 - The K331 fixture is development/regression evidence only and MUST NOT enter holdout.
 - v1 acceptance does not require a new independent scan corpus.
-- v1 supports printed piano grand staff only.
+- Rokot supports printed single staff and piano grand staff；mixed topology pages remain fail closed.
 - v1 launches `llama-cli` once per system; resident-server optimization is deferred.
 - `abc-xml-converter==1.0.1` is approved as an isolated external process and MUST NOT be vendored in v1.
 - v1 adds only `pdf-omr --engine rokot`; no root-level convenience alias is added.

@@ -1,10 +1,8 @@
-import { createRequire } from "node:module";
-import { dirname, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
 import { zlibSync } from "fflate";
 import { sha256Bytes } from "./canonical-json";
 import { PdfOmrError } from "./errors";
 import { mapPdfLoadError } from "./inspect-pdf";
+import { createPdfJsOptions } from "./pdfjs-options";
 
 export interface RenderedPdfPage {
   readonly pageIndex: number;
@@ -35,7 +33,12 @@ type PdfCanvasFactory = {
 
 export async function renderPdfPages(
   bytes: Uint8Array,
-  options: { readonly targetWidth?: number } = {},
+  options: {
+    readonly targetWidth?: number;
+    readonly standardFontDirectory?: string;
+    readonly wasmDirectory?: string;
+    readonly allowLandscape?: boolean;
+  } = {},
 ): Promise<readonly RenderedPdfPage[]> {
   const targetWidth = options.targetWidth ?? 1400;
   if (!Number.isInteger(targetWidth) || targetWidth <= 0) {
@@ -45,11 +48,10 @@ export async function renderPdfPages(
   }
 
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  const pdfjsModulePath = createRequire(import.meta.url).resolve("pdfjs-dist/legacy/build/pdf.mjs");
-  const standardFontDataUrl = pathToFileURL(resolve(dirname(pdfjsModulePath), "../../standard_fonts/")).href;
+  const pdfJsOptions = createPdfJsOptions(options);
   const loadingTask = pdfjs.getDocument({
     data: Uint8Array.from(bytes),
-    standardFontDataUrl: standardFontDataUrl.endsWith("/") ? standardFontDataUrl : `${standardFontDataUrl}/`,
+    ...pdfJsOptions,
   });
   const document = await loadingTask.promise.catch((error: unknown) => mapPdfLoadError(error, "input.pdf"));
 
@@ -64,7 +66,7 @@ export async function renderPdfPages(
     for (let pageIndex = 0; pageIndex < document.numPages; pageIndex += 1) {
       const page = await document.getPage(pageIndex + 1);
       const pdfViewport = page.getViewport({ scale: 1 });
-      if (pdfViewport.width > pdfViewport.height) {
+      if (!options.allowLandscape && pdfViewport.width > pdfViewport.height) {
         page.cleanup();
         throw new PdfOmrError("ENGINE_OUTPUT_INVALID", "Landscape PDF pages are not supported", {
           context: { reason: "unsupported-page-orientation", pageIndex },

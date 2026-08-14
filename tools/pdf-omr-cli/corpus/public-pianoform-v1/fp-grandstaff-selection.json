@@ -1,0 +1,155 @@
+{
+  "corpusId": "public-pianoform-v1",
+  "groundTruthReadiness": {
+    "auditSha256": "bbcc0afd33e21c9a5645cc80c8a1bbc4ab10aca97a35239f5b6a232d7703a94d",
+    "development": {
+      "readyItems": 52
+    },
+    "holdout": {
+      "readyItems": 73
+    }
+  },
+  "profiles": {
+    "quick-development": {
+      "counts": {
+        "items": 2,
+        "works": 2
+      },
+      "items": [
+        {
+          "itemId": "fp-grandstaff-val-000",
+          "measureCount": 1,
+          "sourceImageSha256": "847d3e11a5492af1b1458d2ece36690728d8fa1563667107e6948df15ce3041a",
+          "sourceSampleId": "val/0",
+          "transcriptionSha256": "2b8ab2c40370e54361f9cf16ac9176a7a8f14bdf9fef63a0f9848f6edd715d42",
+          "workId": "fp-grandstaff-val-000"
+        },
+        {
+          "itemId": "fp-grandstaff-val-091",
+          "measureCount": 78,
+          "sourceImageSha256": "b1779062013b60c6317d9ef73a3da1cfe193d5c762b0a50efec80c099310a14c",
+          "sourceSampleId": "val/91",
+          "transcriptionSha256": "584a1e417c0263c53299bcb3d8f58c5ca5868d767b9568e082dabffb948a2c83",
+          "workId": "fp-grandstaff-val-091"
+        }
+      ],
+      "measureCounts": [
+        1,
+        78
+      ]
+    },
+    "standard-development": {
+      "counts": {
+        "items": 4,
+        "works": 4
+      },
+      "items": [
+        {
+          "itemId": "fp-grandstaff-val-000",
+          "measureCount": 1,
+          "sourceImageSha256": "847d3e11a5492af1b1458d2ece36690728d8fa1563667107e6948df15ce3041a",
+          "sourceSampleId": "val/0",
+          "transcriptionSha256": "2b8ab2c40370e54361f9cf16ac9176a7a8f14bdf9fef63a0f9848f6edd715d42",
+          "workId": "fp-grandstaff-val-000"
+        },
+        {
+          "itemId": "fp-grandstaff-val-059",
+          "measureCount": 13,
+          "sourceImageSha256": "7d970dc35c445a685609a9a101029aaff379357fe35254d5555b183e9deb9a29",
+          "sourceSampleId": "val/59",
+          "transcriptionSha256": "e3c31200e6b0f5c71575c74fe7951dac68799130b2fe47e1831d26622a23621b",
+          "workId": "fp-grandstaff-val-059"
+        },
+        {
+          "itemId": "fp-grandstaff-val-037",
+          "measureCount": 28,
+          "sourceImageSha256": "02ae772b794342f505e4ac0b466ef356278b5a950c7ae03e9e446afacbe41cd3",
+          "sourceSampleId": "val/37",
+          "transcriptionSha256": "03363d0b610f1093690a5f26a193fb138baeb01192c895abd3c889b92fc0d802",
+          "workId": "fp-grandstaff-val-037"
+        },
+        {
+          "itemId": "fp-grandstaff-val-091",
+          "measureCount": 78,
+          "sourceImageSha256": "b1779062013b60c6317d9ef73a3da1cfe193d5c762b0a50efec80c099310a14c",
+          "sourceSampleId": "val/91",
+          "transcriptionSha256": "584a1e417c0263c53299bcb3d8f58c5ca5868d767b9568e082dabffb948a2c83",
+          "workId": "fp-grandstaff-val-091"
+        }
+      ],
+      "measureCounts": [
+        1,
+        13,
+        28,
+        78
+      ]
+    },
+    "standard-holdout": {
+      "counts": {
+        "items": 4,
+        "works": 4
+      },
+      "items": [
+        {
+          "itemId": "fp-grandstaff-test-006",
+          "measureCount": 1,
+          "sourceImageSha256": "0b03160e5f37ac7366d97aa001f7a021bfa024807c281c0f64209b059d027d26",
+          "sourceSampleId": "test/6",
+          "transcriptionSha256": "3571a668b90100b32caf3557c91973cf3ab1a9b123d70be914f2458a25f5d5bc",
+          "workId": "fp-grandstaff-test-006"
+        },
+        {
+          "itemId": "fp-grandstaff-test-117",
+          "measureCount": 7,
+          "sourceImageSha256": "b037b585579c4586c12fd98f48ff9df244dff39f9dcc08b16150b083399dd675",
+          "sourceSampleId": "test/117",
+          "transcriptionSha256": "1960edb605e524c4fa88e015c5fcd088eb7824419220b2082132bdf05d38fc36",
+          "workId": "fp-grandstaff-test-117"
+        },
+        {
+          "itemId": "fp-grandstaff-test-055",
+          "measureCount": 29,
+          "sourceImageSha256": "0011858c2386d5ceed14cf42ca458b86ae7f6823646da863b504466fb5111ec4",
+          "sourceSampleId": "test/55",
+          "transcriptionSha256": "129d9e391683234b13e38d0169e6dea27a57ec9f2e843c49c780c8d4ac6df668",
+          "workId": "fp-grandstaff-test-055"
+        },
+        {
+          "itemId": "fp-grandstaff-test-109",
+          "measureCount": 60,
+          "sourceImageSha256": "501eabbf1708645426f2a496a8f77e4d41dec6a0f4ddfd67cd3972262e5e2656",
+          "sourceSampleId": "test/109",
+          "transcriptionSha256": "fccbde0299fc3e42fdda1bb04bf11524ded773ecfe3ba2a6dd460b65da59f535",
+          "workId": "fp-grandstaff-test-109"
+        }
+      ],
+      "measureCounts": [
+        1,
+        7,
+        29,
+        60
+      ]
+    }
+  },
+  "release": {
+    "dataset": "PRAIG/fp-grandstaff",
+    "license": "MIT",
+    "revision": "334351427faf94cdb17fecbbab8d83fcf225fa46",
+    "splitArtifactSha256": {
+      "test": "6a16319fd368ce5fa9b99d13817733ed1fe4f7a01565cb4d0bf5f50f829d17ad",
+      "val": "c7d6d77dd0e4874c7875c36f02b8c4dd62edbcb4a8e31dc49db4006f3135a1bc"
+    },
+    "url": "https://huggingface.co/datasets/PRAIG/fp-grandstaff"
+  },
+  "schemaVersion": "1.0.0",
+  "selectionAlgorithm": {
+    "density": "ground-truth measureCount",
+    "ordering": "ascending measureCount then itemId; four evenly spaced ranks",
+    "splitMapping": {
+      "test": "holdout",
+      "val": "development"
+    },
+    "version": "1.0.0"
+  },
+  "suite": "full-page"
+}

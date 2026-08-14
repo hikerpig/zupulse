@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0.0",
+  "corpusId": "olimpic-scanned-full-page-dev-v1",
+  "sourceArchive": {
+    "asset": "olimpic-1.0-sources-for-scanned.2024-02-12.tar.gz.tgz",
+    "sha256": "8b77529d06cbf3d0f392af7ea5457906a510cf6ca7dad8eb751f6839bfde39f8"
+  },
+  "rightsReviewStatus": "pending-item-review",
+  "items": [
+    {
+      "workId": "4945954",
+      "sourceSplit": "dev",
+      "imslpDocument": "#22864",
+      "sourcePdfMember": "imslp_pdfs/IMSLP22864-PMLP52321-Wolf_-_Mörike_Lieder.pdf",
+      "sourcePdfSha256": "0ba9bc1253e9443db4aa2a1aeb5068fe3957edaa1d8254cd64a2ba3479a8d085",
+      "sourcePdfBytes": 10167635,
+      "sourcePdfPageCount": 190,
+      "mappedSourcePages": [26, 28],
+      "rightsStatus": "pending-item-review"
+    },
+    {
+      "workId": "4976604",
+      "sourceSplit": "dev",
+      "imslpDocument": "#96281",
+      "sourcePdfMember": "imslp_pdfs/IMSLP96281-PMLP181600-FranzOp6.pdf",
+      "sourcePdfSha256": "9c645a0a5528494ff27ff101343772e644fe60f45b581788eb8b55361ed3957c",
+      "sourcePdfBytes": 4248056,
+      "sourcePdfPageCount": 12,
+      "mappedSourcePages": [6, 7],
+      "rightsStatus": "pending-item-review"
+    },
+    {
+      "workId": "4985990",
+      "sourceSplit": "dev",
+      "imslpDocument": "#60828",
+      "sourcePdfMember": "imslp_pdfs/IMSLP60828-PMLP02204-Schubert_Werke_Breitkopf_Serie_XX_Band_9_F.S.920-933.pdf",
+      "sourcePdfSha256": "4c427ae415189d2d123ddf3e2437abf755901b6dcbf149cfaf0b9991499f15cc",
+      "sourcePdfBytes": 6594458,
+      "sourcePdfPageCount": 55,
+      "mappedSourcePages": [18, 22],
+      "rightsStatus": "pending-item-review"
+    },
+    {
+      "workId": "6007571",
+      "sourceSplit": "dev",
+      "imslpDocument": "#335938",
+      "sourcePdfMember": "imslp_pdfs/IMSLP335938-SIBLEY1802.21502.10a6-39087012010577chant.pdf",
+      "sourcePdfSha256": "fb2d8715274a05e6bb2e49820bad4af226ded972c8465382cae6048e47c29de2",
+      "sourcePdfBytes": 8700211,
+      "sourcePdfPageCount": 137,
+      "mappedSourcePages": [77, 80],
+      "rightsStatus": "pending-item-review"
+    },
+    {
+      "workId": "5862368",
+      "sourceSplit": "dev",
+      "imslpDocument": "#295514",
+      "sourcePdfMember": "imslp_pdfs/IMSLP295514-SIBLEY1802.21501.da88-39087012010577vingt.pdf",
+      "sourcePdfSha256": "df0e4a01bc8c335376dc98efd8f608cda64d701d779f09aaa270de40d71902b5",
+      "sourcePdfBytes": 6529848,
+      "sourcePdfPageCount": 115,
+      "mappedSourcePages": [38, 44],
+      "rightsStatus": "pending-item-review"
+    },
+    {
+      "workId": "6011095",
+      "sourceSplit": "dev",
+      "imslpDocument": "#335938",
+      "sourcePdfMember": "imslp_pdfs/IMSLP335938-SIBLEY1802.21502.10a6-39087012010577chant.pdf",
+      "sourcePdfSha256": "fb2d8715274a05e6bb2e49820bad4af226ded972c8465382cae6048e47c29de2",
+      "sourcePdfBytes": 8700211,
+      "sourcePdfPageCount": 137,
+      "mappedSourcePages": [108, 115],
+      "rightsStatus": "pending-item-review"
+    }
+  ]
+}

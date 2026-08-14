@@ -97,6 +97,26 @@ describe("PdfOmrPage", () => {
     expect(screen.getByText(/ENGINE_UNAVAILABLE/)).toBeTruthy();
   });
 
+  it("restores failed input metadata and retry after remount", async () => {
+    const port = createPort();
+    port.setSnapshot({
+      ...runningSnapshot,
+      status: "failed",
+      error: { code: "ENGINE_EXECUTION_FAILED", recoverable: true },
+    });
+    const user = userEvent.setup();
+
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+
+    expect(await screen.findByText("sonata.pdf")).toBeTruthy();
+    await user.click(await screen.findByRole("button", { name: "重试" }));
+    expect(port.retry).toHaveBeenCalledWith("job-1", "audiveris");
+  });
+
   it("keeps the active input fixed while recognition is running", async () => {
     const port = createPort();
     const user = userEvent.setup();

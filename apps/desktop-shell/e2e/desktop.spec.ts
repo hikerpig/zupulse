@@ -1,5 +1,5 @@
 import { expect, test, _electron as electron, type ElectronApplication } from "@playwright/test";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { gunzip } from "node:zlib";
 import { promisify } from "node:util";
 import { tmpdir } from "node:os";
@@ -47,6 +47,16 @@ async function choosePdfFixture(app: ElectronApplication): Promise<void> {
   await app.evaluate(({ dialog }, filePath) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [filePath] });
   }, pdfFixture);
+}
+
+async function configureAudiveris(userData: string, executable: string): Promise<void> {
+  const directory = join(userData, "recognition-providers");
+  await mkdir(directory, { recursive: true, mode: 0o700 });
+  await writeFile(
+    join(directory, "audiveris.json"),
+    `${JSON.stringify({ schemaVersion: "1.0.0", configuration: { providerId: "audiveris", executable } }, null, 2)}\n`,
+    { encoding: "utf8", mode: 0o600 },
+  );
 }
 
 async function importSelectedFixture(window: import("@playwright/test").Page): Promise<void> {
@@ -157,7 +167,12 @@ test("configures a recognition engine by picker or pasted path", async () => {
 
 test("keeps PDF OMR Desktop-only and observes a selected PDF without Library mutation", async () => {
   const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-pdf-omr-ui-"));
-  const app = await launch(userData);
+  const ignoredEnvironmentAudiveris = join(userData, "environment-audiveris.sh");
+  await writeFile(ignoredEnvironmentAudiveris, '#!/bin/sh\nprintf "Audiveris 1.0.0\\n"\n', {
+    encoding: "utf8",
+    mode: 0o755,
+  });
+  const app = await launch(userData, { PDF_OMR_AUDIVERIS_EXECUTABLE: ignoredEnvironmentAudiveris });
   try {
     const window = await app.firstWindow();
     await window.goto("zupulse://app/index.html#/pdf-omr");
@@ -205,9 +220,8 @@ test("runs the packaged PDF OMR path through stage observation, transient previe
     ].join("\n") + "\n",
     { encoding: "utf8", mode: 0o755 },
   );
-  const app = await launch(userData, {
-    PDF_OMR_AUDIVERIS_EXECUTABLE: fakeAudiveris,
-  });
+  await configureAudiveris(userData, fakeAudiveris);
+  const app = await launch(userData);
   try {
     const window = await app.firstWindow();
     await window.goto("zupulse://app/index.html#/pdf-omr");

@@ -51,8 +51,9 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
 
 ### 成功路径
 
-- Main 消费一次性输入 token，在 session-scoped 临时目录直接调用 programmatic `pdf-omr-cli` pipeline；失败或取消后的
-  retry 使用 Main 仍持有的当前 session 输入，不会再次消费已失效的 token。
+- Main 消费一次性输入 token 后，通过已打开的文件描述符重新校验文件 identity、regular-file 类型和 64 MiB 上限，
+  再复制到 job-scoped 临时输入目录并调用 programmatic `pdf-omr-cli` pipeline；失败或取消后的 retry 使用这份稳定副本，
+  不会再次消费已失效的 token，也不会重新读取已被替换的外部路径。
 - Main 启动时并行预检已知 engine，将真实 `available`、`version`、`inputKinds` 或 bounded semantic `reason`
   写入 capability handshake；每次 start/retry 会重新预检最新配置，并为该 job 捕获不可变 registry snapshot。
 - Settings 支持 Main 原生文件或目录选择器，也支持在对应字段粘贴绝对路径。用户手输路径只单向送入 Main；Main
@@ -94,8 +95,8 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
 
 ### 恢复与并发
 
-- route 离开或刷新不会主动取消 Main job；重新进入 route 时通过 `pdfOmr.getSnapshot` 恢复当前 session snapshot，
-  成功任务还会通过 `pdfOmr.readResult` 恢复当前 initial/corrected MXL。
+- route 离开或刷新不会主动取消 Main job；重新进入 route 时通过 `pdfOmr.getSnapshot` 恢复当前 session snapshot、输入摘要
+  和 failed/cancelled retry 操作，成功任务还会通过 `pdfOmr.readResult` 恢复当前 initial/corrected MXL。
 - App shutdown 在 lifecycle acknowledgement 前调用 runtime cancel；临时 run directory 不成为 Library 历史。
 
 ## 状态与转换

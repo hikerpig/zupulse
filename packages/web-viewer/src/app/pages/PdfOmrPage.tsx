@@ -43,8 +43,9 @@ export function PdfOmrPage({
   const [midiApplied, setMidiApplied] = useState(false);
 
   const engines = port?.engines ?? [];
+  const input = file ?? snapshot?.input;
   const availableEngines = engines.filter(
-    (engine) => engine.available && (file === undefined || engine.inputKinds.includes(file.inputKind)),
+    (engine) => engine.available && (input === undefined || engine.inputKinds.includes(input.inputKind)),
   );
   useEffect(() => {
     if (availableEngines.some((engine) => engine.id === selectedEngine)) return;
@@ -144,7 +145,7 @@ export function PdfOmrPage({
   };
 
   const retry = async () => {
-    if (!port || !file || !snapshot) return;
+    if (!port || !snapshot) return;
     const previousJobId = snapshot.jobId;
     setBusy("start");
     setNotice(undefined);
@@ -220,7 +221,7 @@ export function PdfOmrPage({
   const statusTone = snapshotStatusTone(snapshot?.status);
   const hasJob = snapshot !== undefined;
   const canStart = file !== undefined && selectedEngine !== "" && !hasJob;
-  const canRetry = file !== undefined && (snapshot?.status === "failed" || snapshot?.status === "cancelled");
+  const canRetry = snapshot?.status === "failed" || snapshot?.status === "cancelled";
 
   return (
     <main className={styles.shell} aria-labelledby="pdf-omr-title">
@@ -302,7 +303,7 @@ export function PdfOmrPage({
             ) : tab === "engine" ? (
               <EngineEvidence snapshot={snapshot} lastProgress={lastProgress} t={t} />
             ) : (
-              <PdfEvidence file={file} t={t} />
+              <PdfEvidence file={input} t={t} />
             )}
           </div>
         </section>
@@ -326,11 +327,11 @@ export function PdfOmrPage({
                       key={engine.id}
                       value={engine.id}
                       disabled={
-                        !engine.available || (file !== undefined && !engine.inputKinds.includes(file.inputKind))
+                        !engine.available || (input !== undefined && !engine.inputKinds.includes(input.inputKind))
                       }
                     >
                       {engine.label} · {formatEngineVersion(engine.version)}
-                      {engine.available && (file === undefined || engine.inputKinds.includes(file.inputKind))
+                      {engine.available && (input === undefined || engine.inputKinds.includes(input.inputKind))
                         ? ""
                         : ` — ${t("pdfOmr.unavailable")}`}
                     </option>
@@ -339,7 +340,7 @@ export function PdfOmrPage({
               </Field>
               <ul className={styles.engineStatusList} aria-label={t("pdfOmr.engineAvailability.label")}>
                 {engines.map((engine) => {
-                  const compatible = file === undefined || engine.inputKinds.includes(file.inputKind);
+                  const compatible = input === undefined || engine.inputKinds.includes(input.inputKind);
                   return (
                     <li key={engine.id} data-available={engine.available && compatible}>
                       <span className={styles.engineStatusDot} aria-hidden="true" />

@@ -32,6 +32,7 @@ import {
 import { FileTokenStore } from "./fileTokens";
 import {
   acceptScorePaths,
+  materializePdfOmrInput,
   readScoreFileBytes,
   saveScoreFile,
   selectMidiFile,
@@ -159,9 +160,6 @@ async function startDesktopApp(): Promise<void> {
       effectiveLocale: resolveLocale(initialPreference, app.getPreferredSystemLanguages()),
     };
     const audiverisExecutable = await resolveAudiverisExecutable({
-      ...(process.env.PDF_OMR_AUDIVERIS_EXECUTABLE === undefined
-        ? {}
-        : { configuredExecutable: process.env.PDF_OMR_AUDIVERIS_EXECUTABLE }),
       homeDirectory: app.getPath("home"),
       platform: process.platform,
     });
@@ -370,14 +368,20 @@ async function startDesktopApp(): Promise<void> {
               "pdfOmr.select": () => selectPdfFile(fileTokens, undefined, currentLocaleState.effectiveLocale),
               "pdfOmr.start": async (request) => {
                 await assertRecognitionProviderReady(recognitionSettings, request.payload.engineId);
-                const file = fileTokens.consume(request.payload.fileToken);
+                const jobDirectory = path.join(userData, "pdf-omr", randomUUID());
+                const outputDirectory = path.join(jobDirectory, "output");
+                const file = await materializePdfOmrInput(
+                  fileTokens,
+                  request.payload.fileToken,
+                  path.join(jobDirectory, "input"),
+                );
                 const snapshot = pdfOmrController.start({
                   inputPath: file.path,
                   fileName: file.fileName,
                   sizeBytes: file.sizeBytes,
                   inputKind: /\.(png|jpe?g)$/i.test(file.fileName) ? "image" : "pdf",
                   engineId: request.payload.engineId,
-                  outputDirectory: path.join(userData, "pdf-omr", randomUUID()),
+                  outputDirectory,
                 });
                 beginPdfOmrLog(snapshot.jobId);
                 logPdfOmr({ code: "PDF_OMR_STARTED", jobId: snapshot.jobId, engineId: request.payload.engineId });

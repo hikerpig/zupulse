@@ -1,9 +1,9 @@
 import { isSupportedLibraryScoreFile } from "@zupulse/web-core";
 import { createAppI18n, type SupportedLocale } from "@zupulse/app-i18n";
 import { dialog } from "electron";
-import { readFile, stat, writeFile } from "node:fs/promises";
-import { basename } from "node:path";
-import type { FileTokenStore } from "./fileTokens";
+import { mkdir, open, readFile, stat, writeFile } from "node:fs/promises";
+import { basename, join } from "node:path";
+import type { FileTokenEntry, FileTokenStore } from "./fileTokens";
 
 export const MAX_SCORE_BYTES = 64 * 1024 * 1024;
 export type ReadableScoreMetadata = {
@@ -24,7 +24,13 @@ type TokenFile = { fileToken: string; fileName: string; sizeBytes: number };
 
 export type PdfFileDependencies = {
   showOpenDialog(): Promise<{ canceled: boolean; filePaths: string[] }>;
-  stat(path: string): Promise<{ size: number; isFile(): boolean }>;
+  stat(path: string): Promise<{
+    size: number;
+    isFile(): boolean;
+    dev?: number;
+    ino?: number;
+    mtimeMs?: number;
+  }>;
 };
 
 export async function selectMidiFile(
@@ -41,7 +47,7 @@ export async function selectMidiFile(
   assertReadableScore({ fileName, sizeBytes: info.size, isFile: info.isFile() });
   return {
     status: "selected",
-    fileToken: tokens.issue(path, { fileName, sizeBytes: info.size }),
+    fileToken: tokens.issue(path, { fileName, sizeBytes: info.size, ...fileIdentity(info) }),
     fileName,
     sizeBytes: info.size,
   };
@@ -83,7 +89,7 @@ export async function selectPdfFile(
   assertReadableScore({ fileName, sizeBytes: info.size, isFile: info.isFile() });
   return {
     status: "selected",
-    fileToken: tokens.issue(path, { fileName, sizeBytes: info.size }),
+    fileToken: tokens.issue(path, { fileName, sizeBytes: info.size, ...fileIdentity(info) }),
     fileName,
     sizeBytes: info.size,
     inputKind: extension === "pdf" ? "pdf" : "image",
@@ -155,6 +161,43 @@ export async function readScoreFileBytes(
   const bytes = new Uint8Array(await read(entry.path));
   if (bytes.byteLength > MAX_SCORE_BYTES) throw new Error("FILE_TOO_LARGE");
   return { fileName: entry.fileName, bytes };
+}
+
+export async function materializePdfOmrInput(
+  tokens: FileTokenStore,
+  token: string,
+  directory: string,
+): Promise<FileTokenEntry> {
+  const entry = tokens.consume(token);
+  const source = await open(entry.path, "r");
+  const bytes = await (async () => {
+    try {
+      const info = await source.stat();
+      assertReadableScore({ fileName: entry.fileName, sizeBytes: info.size, isFile: info.isFile() });
+      if (
+        info.size !== entry.sizeBytes ||
+        (entry.identity !== undefined &&
+          (info.dev !== entry.identity.dev ||
+            info.ino !== entry.identity.ino ||
+            info.mtimeMs !== entry.identity.mtimeMs))
+      ) {
+        throw new Error("FILE_CHANGED");
+      }
+      return new Uint8Array(await source.readFile());
+    } finally {
+      await source.close();
+    }
+  })();
+  if (bytes.byteLength !== entry.sizeBytes) throw new Error("FILE_CHANGED");
+  await mkdir(directory, { recursive: true, mode: 0o700 });
+  const stablePath = join(directory, entry.fileName);
+  await writeFile(stablePath, bytes, { mode: 0o600, flag: "wx" });
+  return { ...entry, path: stablePath };
+}
+
+function fileIdentity(info: { dev?: number; ino?: number; mtimeMs?: number }): Pick<FileTokenEntry, "identity"> {
+  if (info.dev === undefined || info.ino === undefined || info.mtimeMs === undefined) return {};
+  return { identity: { dev: info.dev, ino: info.ino, mtimeMs: info.mtimeMs } };
 }
 
 export async function saveScoreFile(

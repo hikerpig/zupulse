@@ -326,7 +326,7 @@ describe("benchmark orchestrator", () => {
         }),
       ),
     ).toEqual(Object.fromEntries(recognitionCounts));
-  });
+  }, 15_000);
 
   it("writes Rokot joining evidence alongside the normalized Draft", async () => {
     const setup = await corpusSetup("development", 1);

@@ -63,7 +63,11 @@ Canonical plan: `tasks/anonymous-telemetry/plan.md`
 ## Phase 5: Release and durable truth
 
 - [ ] T15 Add release/build identity, CI source-map upload, artifact removal, and package guards.
+  - [x] Build identity, opt-in source-map emission, Browser asset guard, and Desktop package `.map`/credential guards.
+  - [ ] Connect the approved PostHog source-map uploader and make publishing conditional on upload success.
 - [ ] T16 Complete Browser/Desktop fake-ingestion E2E, PostHog US smoke, dashboard, privacy URL, and access/retention gates.
+  - [x] Browser and Desktop fake-ingestion E2E assert allowlisted payloads and stop after opt-out.
+  - [ ] Run external PostHog US smoke and record dashboard, privacy URL, retention policy, and named access owner.
 - [ ] T17 Promote verified behavior to a Current Feature Contract and architecture/ADR docs, then delete this task bundle.
 
 ## Definition of Done

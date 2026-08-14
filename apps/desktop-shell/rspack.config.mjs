@@ -7,12 +7,17 @@ import { fileURLToPath } from "node:url";
 
 const shellRoot = fileURLToPath(new URL(".", import.meta.url));
 const appVersion = "0.1.0";
+const telemetryE2e = process.env.TELEMETRY_E2E === "1";
 const rendererBuildHash = createHash("sha256").update(`${appVersion}:desktop-renderer`).digest("hex");
 const buildDefinitions = {
   __APP_VERSION__: JSON.stringify(appVersion),
   __RENDERER_BUILD_HASH__: JSON.stringify(rendererBuildHash),
-  __TELEMETRY_RELEASE_CHANNEL__: JSON.stringify(process.env.TELEMETRY_RELEASE_CHANNEL ?? "development"),
-  __POSTHOG_PROJECT_TOKEN__: JSON.stringify(process.env.POSTHOG_PROJECT_TOKEN ?? ""),
+  __TELEMETRY_RELEASE_CHANNEL__: JSON.stringify(
+    telemetryE2e ? "alpha" : (process.env.TELEMETRY_RELEASE_CHANNEL ?? "development"),
+  ),
+  __POSTHOG_PROJECT_TOKEN__: JSON.stringify(
+    telemetryE2e ? "phc_telemetry_e2e" : (process.env.POSTHOG_PROJECT_TOKEN ?? ""),
+  ),
   __POSTHOG_API_HOST__: JSON.stringify(process.env.POSTHOG_API_HOST ?? "https://us.i.posthog.com"),
 };
 const bundledSampleBase64 = readFileSync(

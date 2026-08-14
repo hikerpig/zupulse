@@ -75,7 +75,8 @@ identity，并由 Main 为本次运行创建新的 application session。损坏�
 以下内容尚未作为发布治理事实落地：
 
 - source-map upload/release smoke 尚未接入 CI provider workflow；当前只提供 opt-in source-map build 和产物检查。
-- 本地 fake-ingestion E2E、PostHog dashboard、公开隐私 URL、retention policy 与 named access owner 尚未记录。
+- Browser/Desktop 本地 fake-ingestion E2E 已覆盖；PostHog US smoke、dashboard、公开隐私 URL、retention policy 与
+  named access owner 尚未记录。
 - native crash dump、durable offline queue 和 iPad telemetry 明确不在当前承诺范围。
 
 ## 明确非目标
@@ -99,6 +100,7 @@ identity，并由 Main 为本次运行创建新的 application session。损坏�
 | Desktop identity and Bridge             | `apps/desktop-shell/src/main/telemetry-preference-store.ts`, `packages/web-core/src/bridge/schemas.ts` | Desktop bridge/store tests and contract manifest test                                    |
 | semantic events and issue presentation  | `packages/web-viewer/src/app/ViewerApplication.ts`, App/route pages                                    | `packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`, full Viewer/App suite |
 | Browser/Desktop journeys                | Browser and Desktop host composition                                                                   | `pnpm verify:e2e`                                                                        |
+| fake-ingestion journeys                 | `apps/web-demo/e2e/telemetry`, `apps/desktop-shell/e2e/telemetry`                                      | `pnpm demo:test:telemetry:e2e`, `pnpm desktop:test:telemetry:e2e`                        |
 
 ## 相关资料
 

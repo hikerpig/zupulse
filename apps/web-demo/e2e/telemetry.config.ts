@@ -1,10 +1,9 @@
 import { defineConfig } from "@playwright/test";
 
-const e2ePort = Number(process.env.E2E_PORT ?? "41731");
+const e2ePort = Number(process.env.E2E_TELEMETRY_PORT ?? "41732");
 
 export default defineConfig({
-  testDir: "./e2e",
-  testIgnore: "**/telemetry/**",
+  testDir: "./telemetry",
   timeout: 45_000,
   workers: 1,
   retries: 0,
@@ -14,7 +13,7 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: `PLAYWRIGHT_TEST=1 pnpm exec rspack serve --mode development --port ${e2ePort}`,
+    command: `node ./telemetry-server.mjs ${e2ePort}`,
     url: `http://127.0.0.1:${e2ePort}`,
     reuseExistingServer: false,
   },

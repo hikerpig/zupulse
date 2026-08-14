@@ -78,6 +78,7 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm --filter @zupulse/web-demo exec playwright install --with-deps --only-shell chromium
       - run: pnpm demo:test:e2e
+      - run: pnpm demo:test:telemetry:e2e
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
@@ -116,6 +117,7 @@ jobs:
         run: pnpm install --frozen-lockfile
       - run: pnpm desktop:build
       - run: pnpm desktop:test:e2e
+      - run: pnpm desktop:test:telemetry:e2e
       - if: failure()
         uses: actions/upload-artifact@v4
         with:

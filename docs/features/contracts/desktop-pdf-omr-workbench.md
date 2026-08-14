@@ -3,7 +3,7 @@ feature: desktop-pdf-omr-workbench
 title: Desktop PDF 识谱实验工作台
 status: current
 delivery: partial
-last_verified: 2026-08-13
+last_verified: 2026-08-14
 hosts:
   - desktop
 implementation_paths:
@@ -58,7 +58,8 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
 - Settings 支持 Main 原生文件或目录选择器，也支持在对应字段粘贴绝对路径。用户手输路径只单向送入 Main；Main
   去除首尾空白、拒绝相对路径，并将候选资源转换为 session-scoped opaque token 与 basename 安全标签。整份
   candidate 只有通过 canonical preflight 后才以 mode `0600` 的版本化 provider document 原子替换；失败保留旧配置，
-  损坏文件按 provider 隔离。清除配置不影响 active job，新配置只影响后续任务。
+  损坏文件按 provider 隔离。保存时只预检目标 provider；保存或清除返回的单个 provider summary 会立即同步工作台
+  engine 状态，不重复预检其他 provider。清除配置不影响 active job，新配置只影响后续任务。
 - Main 将 job start、heartbeat、stage、engine progress 和 terminal status 以不含绝对路径或原始 stderr 的安全字段
   输出到 Electron 主进程日志，并追加写入 `desktop.log`。
 - pipeline 依次发出 `inspect`、`recognize`、`validate`、`export` stage 事件，并转发 engine 提供的 page/system
@@ -80,12 +81,15 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
 ### 取消、失败与重试
 
 - 一个 Desktop session 同时最多一个 active job；运行中可取消，Main 终止 runtime 的 abort signal，UI 保留
-  已提交阶段并进入 `cancelled`。
+  已提交阶段并进入 `cancelled`。`running` 与 `cancelling` 期间输入选择保持禁用，避免页面文件与 Main active job
+  错位。
 - `ENGINE_UNAVAILABLE`、`DRAFT_VALIDATION_FAILED` 等 semantic error code 进入安全失败快照，不把原始 exception、
   stack、stderr 或路径写入 Renderer。
 - Runtime 未自行提交 terminal event 时，Main 会补发带 semantic `errorCode` 的 terminal failed event，确保页面从
   running 恢复到可重试状态，并在诊断区展示错误代码和用户可读原因。
 - `failed` 或 `cancelled` 可在重新选择兼容 engine 后对当前输入重试；成功结果尚未导出时重新选择输入会先请求确认。
+- retry request 在新 job 建立前失败时，页面保留原失败快照、错误原因与 retry 操作，不回退到需要重新消费旧 token
+  的 start 状态。
 - 原生导出 Dialog 取消不会清空成功结果；成功导出只显示稳定的已导出状态，不显示目标绝对路径。
 
 ### 恢复与并发

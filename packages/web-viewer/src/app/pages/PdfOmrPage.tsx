@@ -82,8 +82,10 @@ export function PdfOmrPage({
     };
   }, [port, syncSnapshot]);
 
+  const activeJob = snapshot?.status === "running" || snapshot?.status === "cancelling";
+
   const selectPdf = async () => {
-    if (!port) return;
+    if (!port || activeJob) return;
     if (snapshot?.status === "succeeded" && !exported && !window.confirm(t("pdfOmr.replaceConfirm"))) return;
     setBusy("select");
     setNotice(undefined);
@@ -144,14 +146,13 @@ export function PdfOmrPage({
   const retry = async () => {
     if (!port || !file || !snapshot) return;
     const previousJobId = snapshot.jobId;
-    setSnapshot(undefined);
-    setResult(null);
-    setExported(false);
     setBusy("start");
     setNotice(undefined);
     try {
       const retried = await port.retry(previousJobId, selectedEngine);
       setSnapshot(retried.snapshot);
+      setResult(null);
+      setExported(false);
       setTab("engine");
     } catch {
       setNotice(t("pdfOmr.startFailed"));
@@ -247,7 +248,13 @@ export function PdfOmrPage({
             ) : (
               <p className={styles.muted}>{t("pdfOmr.noFile")}</p>
             )}
-            <Button tone="secondary" size="sm" onClick={() => void selectPdf()} loading={busy === "select"}>
+            <Button
+              tone="secondary"
+              size="sm"
+              onClick={() => void selectPdf()}
+              disabled={activeJob}
+              loading={busy === "select"}
+            >
               <Upload aria-hidden="true" size={15} />
               {t("pdfOmr.selectPdf")}
             </Button>
@@ -557,13 +564,18 @@ function EvidenceTabButton({
   const moveTab = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
-    const tabs: EvidenceTab[] = ["pdf", "engine", "score"];
+    const tabs = Array.from(
+      event.currentTarget
+        .closest('[role="tablist"]')
+        ?.querySelectorAll<HTMLButtonElement>('[role="tab"]:not(:disabled)') ?? [],
+    );
+    if (tabs.length === 0) return;
     const direction = event.key === "ArrowLeft" ? -1 : 1;
     const targetIndex =
-      event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : tabs.indexOf(tab) + direction;
+      event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : tabs.indexOf(event.currentTarget) + direction;
     const target = tabs[(targetIndex + tabs.length) % tabs.length]!;
-    onSelect(target);
-    requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(`[data-pdf-omr-tab="${target}"]`)?.focus());
+    onSelect(target.dataset.pdfOmrTab as EvidenceTab);
+    requestAnimationFrame(() => target.focus());
   };
   return (
     <button

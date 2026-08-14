@@ -17,6 +17,7 @@ const engines = [
   { id: "legato", inputKinds: ["pdf"] },
   { id: "rokot", inputKinds: ["pdf"] },
 ] as const;
+type PdfOmrEngineId = (typeof engines)[number]["id"];
 
 const safeReasons = new Set([
   "missing-transcoda-configuration",
@@ -57,26 +58,16 @@ export async function resolveAudiverisExecutable(options: {
 }
 
 export async function preflightPdfOmrEngines(registry: EngineRegistry): Promise<PdfOmrEngineCapability[]> {
-  return Promise.all(
-    engines.map(async (definition) => {
-      try {
-        const environment = await registry.get(definition.id).inspectEnvironment();
-        return {
-          id: definition.id,
-          version: environment.version,
-          available: true,
-          inputKinds: definition.inputKinds,
-        };
-      } catch (error) {
-        return {
-          id: definition.id,
-          version: "unknown",
-          available: false,
-          inputKinds: definition.inputKinds,
-          reason: availabilityReason(definition.id, error),
-        };
-      }
-    }),
+  return Promise.all(engines.map((definition) => inspectEngine(registry, definition)));
+}
+
+export function preflightPdfOmrEngine(
+  registry: EngineRegistry,
+  engineId: PdfOmrEngineId,
+): Promise<PdfOmrEngineCapability> {
+  return inspectEngine(
+    registry,
+    engines.find((engine) => engine.id === engineId)!,
   );
 }
 
@@ -94,4 +85,27 @@ function availabilityReason(engineId: string, error: unknown): string {
     if (engineId === "audiveris" && error.code === "ENGINE_UNAVAILABLE") return "engine-executable-unavailable";
   }
   return "engine-inspection-failed";
+}
+
+async function inspectEngine(
+  registry: EngineRegistry,
+  definition: (typeof engines)[number],
+): Promise<PdfOmrEngineCapability> {
+  try {
+    const environment = await registry.get(definition.id).inspectEnvironment();
+    return {
+      id: definition.id,
+      version: environment.version,
+      available: true,
+      inputKinds: definition.inputKinds,
+    };
+  } catch (error) {
+    return {
+      id: definition.id,
+      version: "unknown",
+      available: false,
+      inputKinds: definition.inputKinds,
+      reason: availabilityReason(definition.id, error),
+    };
+  }
 }

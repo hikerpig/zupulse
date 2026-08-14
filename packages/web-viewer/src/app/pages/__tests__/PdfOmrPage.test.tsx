@@ -67,6 +67,69 @@ describe("PdfOmrPage", () => {
     expect(port.retry).toHaveBeenCalledWith("job-1", "audiveris");
   });
 
+  it("keeps the failed snapshot retryable when retry cannot start", async () => {
+    const port = createPort();
+    port.retry.mockRejectedValueOnce(new Error("provider unavailable"));
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+    await user.click(screen.getByRole("button", { name: "开始提取" }));
+    port.setSnapshot({
+      ...runningSnapshot,
+      status: "failed",
+      error: { code: "ENGINE_UNAVAILABLE", recoverable: false },
+    });
+    port.emit({
+      schemaVersion: "1.0.0",
+      sequence: 6,
+      kind: "terminal",
+      status: "failed",
+      errorCode: "ENGINE_UNAVAILABLE",
+    });
+
+    await user.click(await screen.findByRole("button", { name: "重试" }));
+
+    expect(await screen.findByRole("button", { name: "重试" })).toBeTruthy();
+    expect(screen.getByText(/ENGINE_UNAVAILABLE/)).toBeTruthy();
+  });
+
+  it("keeps the active input fixed while recognition is running", async () => {
+    const port = createPort();
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+    const selectInput = screen.getByRole("button", { name: "选择 PDF 或图片" });
+    await user.click(selectInput);
+    await user.click(screen.getByRole("button", { name: "开始提取" }));
+
+    expect(selectInput).toHaveProperty("disabled", true);
+  });
+
+  it("skips disabled evidence tabs during keyboard navigation", async () => {
+    const port = createPort();
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+    const inputTab = screen.getByRole("tab", { name: "原始输入" });
+    inputTab.focus();
+
+    await user.keyboard("{ArrowRight}");
+
+    expect(inputTab.getAttribute("aria-selected")).toBe("true");
+    expect(document.activeElement).toBe(inputTab);
+  });
+
   it("shows the failure reason and makes retry available after an engine error", async () => {
     const port = createPort();
     const user = userEvent.setup();

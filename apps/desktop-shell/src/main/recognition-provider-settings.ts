@@ -11,7 +11,7 @@ import type {
   RecognitionProviderIssueCode,
   RecognitionProviderSummary,
 } from "@zupulse/web-core";
-import { preflightPdfOmrEngines } from "./pdf-omr-engine-preflight";
+import { preflightPdfOmrEngine, preflightPdfOmrEngines } from "./pdf-omr-engine-preflight";
 import {
   RecognitionProviderConfigurationStore,
   type RecognitionProviderConfiguration,
@@ -89,9 +89,9 @@ export class RecognitionProviderSettings {
   async save(request: SaveRequest): Promise<RecognitionProviderSummary> {
     const candidate = this.resolveCandidate(request);
     const registry = this.createRegistry({ ...this.configurations, [request.providerId]: candidate });
-    const capability = (await preflightPdfOmrEngines(registry)).find((item) => item.id === request.providerId);
-    if (!capability?.available)
-      throw new RecognitionSettingsError(mapIssue(capability?.reason), "Provider preflight failed");
+    const capability = await preflightPdfOmrEngine(registry, request.providerId);
+    if (!capability.available)
+      throw new RecognitionSettingsError(mapIssue(capability.reason), "Provider preflight failed");
     try {
       await this.store.save(candidate);
     } catch {

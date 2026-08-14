@@ -35,6 +35,7 @@ import {
 import { createDesktopDroppedImportSources, DesktopScoreFileGateway } from "./desktop-score-file-gateway";
 import { createDesktopDiagnosticReporter } from "./desktop-diagnostic-reporter";
 import { createDesktopExternalNavigation } from "./desktop-external-navigation";
+import { pdfOmrEngineLabel, providerEngineOption, synchronizePdfOmrEngine } from "./desktop-pdf-omr-engines";
 
 document.documentElement.classList.add("desktop-shell");
 installGlobalDragAndDropGuard(document);
@@ -69,7 +70,11 @@ async function start(): Promise<void> {
   const root = document.getElementById("root");
   if (!root) throw new Error("VIEWER_ROOT_MISSING");
   const pdfOmr = createDesktopPdfOmrPort(bridge, response.capabilities.pdfOmrEngines);
-  const recognitionSettings = createDesktopRecognitionSettingsPort(bridge, pdfOmr.synchronizeProviders);
+  const recognitionSettings = createDesktopRecognitionSettingsPort(
+    bridge,
+    pdfOmr.synchronizeProviders,
+    pdfOmr.synchronizeProvider,
+  );
   appHandle = mountViewerApp(root, {
     host,
     capabilities: {
@@ -102,6 +107,7 @@ async function start(): Promise<void> {
 function createDesktopRecognitionSettingsPort(
   bridge: NonNullable<Window["zupulseBridge"]>,
   synchronizeProviders: (providers: readonly RecognitionProviderSummary[]) => void,
+  synchronizeProvider: (provider: RecognitionProviderSummary) => void,
 ): RecognitionSettingsPort {
   return {
     async list() {
@@ -125,12 +131,14 @@ function createDesktopRecognitionSettingsPort(
         fields,
       } as never);
       const provider = parseBridgeResponse(request.type, await bridge.request(request));
-      await this.list();
+      synchronizeProvider(provider);
       return provider;
     },
     async clear(providerId) {
       const request = createBridgeRequest("recognitionSettings.clear", crypto.randomUUID(), { providerId });
-      return parseBridgeResponse(request.type, await bridge.request(request));
+      const provider = parseBridgeResponse(request.type, await bridge.request(request));
+      synchronizeProvider(provider);
+      return provider;
     },
   };
 }
@@ -146,30 +154,25 @@ function createDesktopPdfOmrPort(
         reason?: string | undefined;
       }>
     | undefined,
-): PdfOmrWorkbenchPort & { synchronizeProviders(providers: readonly RecognitionProviderSummary[]): void } {
+): PdfOmrWorkbenchPort & {
+  synchronizeProviders(providers: readonly RecognitionProviderSummary[]): void;
+  synchronizeProvider(provider: RecognitionProviderSummary): void;
+} {
   const engines = (configuredEngines ?? []).map((engine) => ({
     id: engine.id,
     version: engine.version,
     available: engine.available,
-    label: engineLabel(engine.id),
+    label: pdfOmrEngineLabel(engine.id),
     inputKinds: engine.inputKinds,
     ...(engine.reason === undefined ? {} : { reason: engine.reason }),
   }));
   return {
     engines,
     synchronizeProviders(providers) {
-      engines.splice(
-        0,
-        engines.length,
-        ...providers.map((provider) => ({
-          id: provider.id,
-          version: provider.version ?? "unknown",
-          available: provider.state === "ready",
-          label: engineLabel(provider.id),
-          inputKinds: provider.inputKinds,
-          ...(provider.state === "ready" ? {} : { reason: workbenchAvailabilityReason(provider) }),
-        })),
-      );
+      engines.splice(0, engines.length, ...providers.map(providerEngineOption));
+    },
+    synchronizeProvider(provider) {
+      synchronizePdfOmrEngine(engines, provider);
     },
     async select() {
       const request = createBridgeRequest("pdfOmr.select", crypto.randomUUID(), {});
@@ -249,24 +252,6 @@ function createDesktopPdfOmrPort(
       });
     },
   };
-}
-
-function engineLabel(engineId: string): string {
-  return (
-    (
-      {
-        audiveris: "Audiveris",
-        transcoda: "Transcoda",
-        legato: "LEGATO",
-        rokot: "Rokot",
-      } as const
-    )[engineId as "audiveris" | "transcoda" | "legato" | "rokot"] ?? engineId
-  );
-}
-
-function workbenchAvailabilityReason(provider: RecognitionProviderSummary): string {
-  if (provider.state === "unconfigured") return `missing-${provider.id}-configuration`;
-  return provider.reason === "resource-unreadable" ? "model-unreadable" : "engine-inspection-failed";
 }
 
 function ephemeralPlaybackPersistence(): PlaybackPersistence & {

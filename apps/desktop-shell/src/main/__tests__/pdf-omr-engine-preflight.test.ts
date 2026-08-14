@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { PdfOmrError, type EngineRegistry, type OmrEngineAdapter } from "@zupulse/pdf-omr-cli/pipeline";
-import { preflightPdfOmrEngines, resolveAudiverisExecutable } from "../pdf-omr-engine-preflight";
+import { preflightPdfOmrEngine, preflightPdfOmrEngines, resolveAudiverisExecutable } from "../pdf-omr-engine-preflight";
 
 describe("Desktop PDF OMR engine preflight", () => {
   it("prefers explicit Audiveris configuration before macOS app discovery", async () => {
@@ -87,6 +87,28 @@ describe("Desktop PDF OMR engine preflight", () => {
       },
     ]);
     expect(JSON.stringify(engines)).not.toContain("/private/");
+  });
+
+  it("preflights only the requested provider when saving configuration", async () => {
+    const get = vi.fn(() =>
+      adapter(async () => ({
+        id: "audiveris",
+        version: "5.11.0",
+        executable: "Audiveris",
+        commandTemplate: [],
+        inputKinds: ["pdf", "image"],
+        license: { id: "AGPL-3.0-only", source: "https://example.invalid/license" },
+      })),
+    );
+
+    await expect(preflightPdfOmrEngine({ get }, "audiveris")).resolves.toEqual({
+      id: "audiveris",
+      version: "5.11.0",
+      available: true,
+      inputKinds: ["pdf", "image"],
+    });
+    expect(get).toHaveBeenCalledOnce();
+    expect(get).toHaveBeenCalledWith("audiveris");
   });
 });
 

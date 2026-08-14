@@ -36,6 +36,7 @@ import { DesktopLibraryStore } from "./library/DesktopLibraryStore";
 import { verifySqliteAvailable } from "./library/sqlite";
 import { LocalePreferenceStore } from "./locale-preference-store";
 import { openExternalUrl } from "./external-navigation";
+import { TelemetryPreferenceStore } from "./telemetry-preference-store";
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -110,6 +111,8 @@ async function startDesktopApp(): Promise<void> {
   try {
     const rendererRoot = path.join(__dirname, "../renderer");
     const userData = app.getPath("userData");
+    const telemetryStore = new TelemetryPreferenceStore(userData);
+    await telemetryStore.load();
     const localePreferenceStore = new LocalePreferenceStore(userData);
     const initialPreference = await localePreferenceStore.load();
     let currentLocaleState: LocaleState = {
@@ -175,6 +178,7 @@ async function startDesktopApp(): Promise<void> {
             appVersion: __APP_VERSION__,
             rendererBuildHash: __RENDERER_BUILD_HASH__,
             locale: currentLocaleState,
+            telemetry: telemetryStore.getHandshake(),
             handlers: {
               "external.openUrl": (request) => openExternalUrl(request, (url) => shell.openExternal(url)),
               "app.locale.setPreference": async (request) => {
@@ -193,6 +197,17 @@ async function startDesktopApp(): Promise<void> {
                 };
                 installMenu(sendEvent, diagnostics, openDiagnosticsDirectory, currentLocaleState.effectiveLocale);
                 return currentLocaleState;
+              },
+              "app.telemetry.setPreference": async (request) => {
+                try {
+                  return await telemetryStore.setPreference(request.payload.enabled);
+                } catch {
+                  throw new BridgeDispatchError(
+                    "TELEMETRY_PREFERENCE_WRITE_FAILED",
+                    "Telemetry preference could not be persisted",
+                    true,
+                  );
+                }
               },
               "file.select": (request) =>
                 selectScoreFiles(fileTokens, request.payload.multiple, currentLocaleState.effectiveLocale),

@@ -11,6 +11,9 @@ const rendererBuildHash = createHash("sha256").update(`${appVersion}:desktop-ren
 const buildDefinitions = {
   __APP_VERSION__: JSON.stringify(appVersion),
   __RENDERER_BUILD_HASH__: JSON.stringify(rendererBuildHash),
+  __TELEMETRY_RELEASE_CHANNEL__: JSON.stringify(process.env.TELEMETRY_RELEASE_CHANNEL ?? "development"),
+  __POSTHOG_PROJECT_TOKEN__: JSON.stringify(process.env.POSTHOG_PROJECT_TOKEN ?? ""),
+  __POSTHOG_API_HOST__: JSON.stringify(process.env.POSTHOG_API_HOST ?? "https://us.i.posthog.com"),
 };
 const bundledSampleBase64 = readFileSync(
   fileURLToPath(new URL("../../product-assets/samples/cannon-in-d.mxl", import.meta.url)),

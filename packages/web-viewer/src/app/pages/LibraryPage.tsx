@@ -16,6 +16,9 @@ export function LibraryPage({ application }: { application: ViewerApplication })
 
   const library = snapshot.library ?? { scores: [], loading: true };
   const { error, ...libraryProps } = library;
+  useEffect(() => {
+    if (error) application.capturePresentedIssue("library", error);
+  }, [application, error]);
   return (
     <SheetLibrary
       application={application}

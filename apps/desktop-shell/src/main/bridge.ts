@@ -21,6 +21,13 @@ export type BridgeDispatcherOptions = {
   locale: LocaleState;
   capabilities?: Capabilities;
   handlers?: BridgeHandlers;
+  telemetry?: {
+    schemaVersion: 1;
+    enabled: boolean;
+    noticeAcknowledged: boolean;
+    installationId?: string;
+    applicationSessionId?: string;
+  };
 };
 
 export class BridgeDispatchError extends Error {
@@ -52,6 +59,7 @@ const DEFAULT_CAPABILITIES = capabilitiesSchema.parse({
   audio: { webAudio: true, nativeBridge: false },
   localization: { changeLocale: true },
   externalNavigation: { openUrl: true },
+  telemetry: { available: true },
 });
 
 export async function dispatchBridgeRequest(
@@ -84,6 +92,7 @@ export async function dispatchBridgeRequest(
       rendererBuildHash: options.rendererBuildHash,
       capabilities: options.capabilities ?? DEFAULT_CAPABILITIES,
       locale: options.locale,
+      ...(options.telemetry === undefined ? {} : { telemetry: options.telemetry }),
     });
   }
 

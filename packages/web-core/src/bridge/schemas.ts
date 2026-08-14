@@ -119,6 +119,12 @@ export const capabilitiesSchema = z
         openUrl: z.boolean(),
       })
       .strict(),
+    telemetry: z
+      .object({
+        available: z.boolean(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -164,6 +170,7 @@ export const bridgeRequestSchema = z.discriminatedUnion("type", [
       .strict(),
   ),
   envelope("app.locale.setPreference", z.object({ preference: localePreferenceSchema }).strict()),
+  envelope("app.telemetry.setPreference", z.object({ enabled: z.boolean() }).strict()),
   envelope("external.openUrl", z.object({ url: secureExternalUrlSchema }).strict()),
   envelope("file.select", z.object({ multiple: z.boolean() }).strict()),
   envelope("file.readBytes", z.object({ fileToken: idSchema }).strict()),
@@ -290,9 +297,28 @@ export const bridgeResponseSchemas = {
       rendererBuildHash: idSchema,
       capabilities: capabilitiesSchema,
       locale: localeStateSchema,
+      telemetry: z
+        .object({
+          schemaVersion: z.literal(1),
+          enabled: z.boolean(),
+          noticeAcknowledged: z.boolean(),
+          installationId: z.uuid().optional(),
+          applicationSessionId: z.uuid().optional(),
+        })
+        .strict()
+        .optional(),
     })
     .strict(),
   "app.locale.setPreference": localeStateSchema,
+  "app.telemetry.setPreference": z
+    .object({
+      schemaVersion: z.literal(1),
+      enabled: z.boolean(),
+      noticeAcknowledged: z.boolean(),
+      installationId: z.uuid().optional(),
+      applicationSessionId: z.uuid().optional(),
+    })
+    .strict(),
   "external.openUrl": z.object({}).strict(),
   "file.select": z.discriminatedUnion("status", [
     z.object({ status: z.literal("cancelled") }).strict(),

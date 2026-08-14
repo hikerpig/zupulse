@@ -1,0 +1,970 @@
+{
+  "diagnostics": [
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "severity": "warning"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "severity": "blocking"
+    }
+  ],
+  "readiness": {
+    "harmony": "blocked",
+    "musicXml": "blocked"
+  },
+  "reason": "ground-truth-readiness-blocked",
+  "schemaVersion": "1.0.0"
+}

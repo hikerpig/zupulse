@@ -11,6 +11,13 @@ const runner = fileURLToPath(new URL("../../engines/legato-runner.py", import.me
 const revision = "8c1de27e414f487fe59086547aaae23b868ed6ca";
 
 describe("LEGATO adapter", () => {
+  it("loads configured checkpoint dtypes and uses float16 on GPU", async () => {
+    const source = await readFile(runner, "utf8");
+
+    expect(source).toContain('torch_dtype="auto"');
+    expect(source).toContain('if device in {"cuda", "mps"}:');
+  });
+
   it("verifies the repository revision and model hash", async () => {
     const context = await createContext();
     const adapter = createAdapter(context);
@@ -20,6 +27,7 @@ describe("LEGATO adapter", () => {
       version: revision,
       modelSha256: context.modelSha256,
       parameters: {
+        inferenceTimeoutMs: 3_600_000,
         maxLength: 2048,
         maxPdfPages: 3,
         numBeams: 10,
@@ -39,11 +47,36 @@ describe("LEGATO adapter", () => {
     expect(raw.nativeArtifacts.map((artifact) => artifact.relativePath)).toEqual([
       "raw-output.abc",
       "converted.musicxml",
+      "pages/page-001.abc",
+      "pages/page-001.musicxml",
     ]);
     expect(new TextDecoder().decode(raw.nativeArtifacts[0]?.bytes)).toContain("X:1");
     expect(new TextDecoder().decode(raw.normalizationBytes)).toContain("<score-partwise");
     expect(createAdapter(context).normalize(raw).parts).toHaveLength(1);
     await expect(readFile(join(outputDirectory, "raw-output.abc"), "utf8")).resolves.toContain("Fixture");
+  });
+
+  it("recognizes multiple pages independently and preserves page evidence", async () => {
+    const context = await createContext();
+    const adapter = createLegatoAdapter({
+      ...adapterOptions(context),
+      environment: { FAKE_LEGATO_PAGES: "2" },
+    });
+    const raw = await adapter.recognize({
+      inputPath: join(context.directory, "score.pdf"),
+      outputDirectory: join(context.directory, "two-pages"),
+    });
+
+    expect(raw.nativeArtifacts.map((artifact) => artifact.relativePath)).toEqual([
+      "raw-output.abc",
+      "converted.musicxml",
+      "pages/page-001.abc",
+      "pages/page-001.musicxml",
+      "pages/page-002.abc",
+      "pages/page-002.musicxml",
+    ]);
+    expect(new TextDecoder().decode(raw.nativeArtifacts[0]?.bytes)).toContain("X:2");
+    expect(createAdapter(context).normalize(raw).parts[0]?.staves[0]?.measures).toHaveLength(2);
   });
 
   it("rejects more than three PDF pages before inference", async () => {
@@ -91,7 +124,24 @@ describe("LEGATO adapter", () => {
       }),
     ).rejects.toMatchObject({
       code: "ENGINE_OUTPUT_INVALID",
-      context: { reason: "empty-abc" },
+      context: { reason: "empty-page-abc", pageNumber: 1 },
+    });
+  });
+
+  it("rejects a declared MusicXML part with no events", async () => {
+    const context = await createContext();
+    const adapter = createLegatoAdapter({
+      ...adapterOptions(context),
+      environment: { FAKE_LEGATO_EMPTY_SECOND_PART: "1" },
+    });
+    await expect(
+      adapter.recognize({
+        inputPath: join(context.directory, "score.pdf"),
+        outputDirectory: join(context.directory, "empty-part"),
+      }),
+    ).rejects.toMatchObject({
+      code: "ENGINE_OUTPUT_INVALID",
+      context: { reason: "empty-page-part", pageNumber: 1, partId: "P2" },
     });
   });
 

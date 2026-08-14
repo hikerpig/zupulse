@@ -16,8 +16,9 @@ const harmonySelectionFixture = fileURLToPath(
 );
 const reviewedFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/K331-3_reviewed.mxl", import.meta.url));
 const gunzipAsync = promisify(gunzip);
+const pdfFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/K331-3_reviewed.pdf", import.meta.url));
 
-async function launch(userData: string): Promise<ElectronApplication> {
+async function launch(userData: string, environment: Record<string, string> = {}): Promise<ElectronApplication> {
   try {
     await writeFile(
       join(userData, "preferences.json"),
@@ -27,13 +28,25 @@ async function launch(userData: string): Promise<ElectronApplication> {
   } catch (error) {
     if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) throw error;
   }
-  return electron.launch({ args: [".", `--user-data-dir=${userData}`] });
+  const inheritedEnvironment = Object.fromEntries(
+    Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined),
+  );
+  return electron.launch({
+    args: [".", `--user-data-dir=${userData}`],
+    env: { ...inheritedEnvironment, ...environment },
+  });
 }
 
 async function chooseFixture(app: ElectronApplication, filePath = fixture): Promise<void> {
   await app.evaluate(({ dialog }, filePath) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [filePath] });
   }, filePath);
+}
+
+async function choosePdfFixture(app: ElectronApplication): Promise<void> {
+  await app.evaluate(({ dialog }, filePath) => {
+    dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [filePath] });
+  }, pdfFixture);
 }
 
 async function importSelectedFixture(window: import("@playwright/test").Page): Promise<void> {
@@ -101,6 +114,118 @@ test("starts offline with an isolated renderer", async () => {
       }),
     ).resolves.toBe("rejected");
     expect(await page.evaluate(() => window.open("https://example.com/") === null)).toBe(true);
+  } finally {
+    await app.close();
+    await rm(userData, { recursive: true, force: true });
+  }
+});
+
+test("configures a recognition engine by picker or pasted path", async () => {
+  const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-recognition-settings-"));
+  const fakeAudiveris = join(userData, "fake-audiveris.sh");
+  await writeFile(fakeAudiveris, '#!/bin/sh\nprintf "Audiveris 1.0.0\\n"\n', { encoding: "utf8", mode: 0o755 });
+  const app = await launch(userData);
+  try {
+    const window = await app.firstWindow();
+    await window.goto("zupulse://app/index.html#/settings");
+    expect(
+      await app.evaluate(({ Menu }) =>
+        Menu.getApplicationMenu()?.items.some((item) =>
+          item.submenu?.items.some((submenuItem) => submenuItem.role === "paste"),
+        ),
+      ),
+    ).toBe(true);
+    await window.getByRole("button", { name: "Audiveris Configure" }).click();
+    await chooseFixture(app, fakeAudiveris);
+    await window.getByRole("button", { name: "Choose Executable" }).click();
+    const input = window.getByRole("textbox", { name: "Executable" });
+    await expect(input).toHaveValue("fake-audiveris.sh");
+    await input.clear();
+    await app.evaluate(({ clipboard }, value) => clipboard.writeText(value), fakeAudiveris);
+    await input.press(process.platform === "darwin" ? "Meta+V" : "Control+V");
+    await expect(input).toHaveValue(fakeAudiveris);
+    await window.getByRole("button", { name: "Validate and save" }).click();
+
+    await expect(window.getByText("Ready · 1.0.0")).toBeVisible();
+    await expect(window.getByText(fakeAudiveris)).toHaveCount(0);
+  } finally {
+    await app.close();
+    await rm(userData, { recursive: true, force: true });
+  }
+});
+
+test("keeps PDF OMR Desktop-only and observes a selected PDF without Library mutation", async () => {
+  const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-pdf-omr-ui-"));
+  const app = await launch(userData);
+  try {
+    const window = await app.firstWindow();
+    await window.goto("zupulse://app/index.html#/pdf-omr");
+    await expect(window.getByRole("heading", { name: "PDF recognition" })).toBeVisible();
+    await expect(window.getByRole("link", { name: "PDF recognition" })).toBeVisible();
+    await choosePdfFixture(app);
+    await window.getByRole("button", { name: "Choose PDF or image" }).click();
+    await expect(window.getByText("K331-3_reviewed.pdf").first()).toBeVisible();
+    await expect(window.getByRole("tab", { name: "Original input" })).toHaveAttribute("aria-selected", "true");
+    await expect(window.getByRole("button", { name: "Start extraction" })).toBeEnabled();
+    await window.getByRole("button", { name: "Switch to light theme" }).click();
+    await expect.poll(() => window.locator("html").getAttribute("data-theme")).toBe("light");
+    await window.getByRole("button", { name: "Switch to dark theme" }).click();
+    await window.setViewportSize({ width: 390, height: 844 });
+    expect(await window.evaluate(() => document.documentElement.scrollWidth <= globalThis.innerWidth)).toBe(true);
+    await window.setViewportSize({ width: 1440, height: 900 });
+    await window.getByRole("link", { name: "Library", exact: true }).click();
+    await expect(window.getByRole("heading", { name: "Score Library" })).toBeVisible();
+    await expect(window.getByText("Your scores will stay on this device")).toBeVisible();
+  } finally {
+    await app.close();
+    await rm(userData, { recursive: true, force: true });
+  }
+});
+
+test("runs the packaged PDF OMR path through stage observation, transient preview, and native MXL export", async () => {
+  test.setTimeout(60_000);
+  const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-pdf-omr-run-"));
+  const fakeAudiveris = join(userData, "fake-audiveris.sh");
+  const retryMarker = join(userData, "fake-audiveris-failed-once");
+  const exportPath = join(userData, "extracted-score.mxl");
+  await writeFile(
+    fakeAudiveris,
+    [
+      "#!/bin/sh",
+      'if [ "$1" = "-version" ]; then printf "Audiveris 1.0.0\\n"; exit 0; fi',
+      `if [ ! -f "${retryMarker}" ]; then : > "${retryMarker}"; exit 1; fi`,
+      'output=""; previous=""',
+      'for arg in "$@"; do if [ "$previous" = "-output" ]; then output="$arg"; fi; previous="$arg"; done',
+      'mkdir -p "$output"',
+      "cat > \"$output/K331-3_reviewed.mxl\" <<'XML'",
+      '<?xml version="1.0"?><score-partwise version="4.0"><part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list><part id="P1"><measure number="1"><attributes><divisions>1</divisions><key><fifths>0</fifths></key><time><beats>4</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes><note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><staff>1</staff></note></measure></part></score-partwise>',
+      "XML",
+      ': > "$output/K331-3_reviewed.omr"',
+    ].join("\n") + "\n",
+    { encoding: "utf8", mode: 0o755 },
+  );
+  const app = await launch(userData, {
+    PDF_OMR_AUDIVERIS_EXECUTABLE: fakeAudiveris,
+  });
+  try {
+    const window = await app.firstWindow();
+    await window.goto("zupulse://app/index.html#/pdf-omr");
+    await choosePdfFixture(app);
+    await window.getByRole("button", { name: "Choose PDF or image" }).click();
+    await window.getByRole("button", { name: "Start extraction" }).click();
+    await expect(window.getByRole("button", { name: "Retry" })).toBeVisible({ timeout: 15_000 });
+    await expect(window.getByRole("combobox", { name: "Recognition engine" })).toBeEnabled();
+    await window.getByRole("button", { name: "Retry" }).click();
+    await expect(window.getByText("MXL ready")).toBeVisible({ timeout: 45_000 });
+    await expect(window.getByRole("tab", { name: "Extracted score" })).toBeEnabled();
+    await window.getByRole("tab", { name: "Extracted score" }).click();
+    await expect(window.getByText("Extracted score preview is ready")).toBeVisible({ timeout: 15_000 });
+    await app.evaluate(({ dialog }, path) => {
+      dialog.showSaveDialog = async () => ({ canceled: false, filePath: path });
+    }, exportPath);
+    await window.getByRole("button", { name: "Export MXL" }).click();
+    await expect(window.getByRole("button", { name: "MXL exported" })).toBeVisible();
+    await expect.poll(async () => (await readFile(exportPath)).byteLength > 0).toBe(true);
   } finally {
     await app.close();
     await rm(userData, { recursive: true, force: true });

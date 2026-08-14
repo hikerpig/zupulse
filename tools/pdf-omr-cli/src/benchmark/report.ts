@@ -10,6 +10,7 @@ export type BenchmarkItemResult = {
   schemaVersion: "1.0.0";
   itemId: string;
   category: string;
+  benchmarkSuite?: "contract" | "oracle-system" | "full-page";
   status: "succeeded";
   symbolic: SymbolicMetrics;
   harmony: HarmonyImpactMetrics;
@@ -21,6 +22,7 @@ export type BenchmarkItemFailure = {
   schemaVersion: "1.0.0";
   itemId: string;
   category: string;
+  benchmarkSuite?: "contract" | "oracle-system" | "full-page";
   status: "failed";
   error: { code: string; message: string; context?: Readonly<Record<string, unknown>> };
 };
@@ -35,6 +37,11 @@ export type BenchmarkMetadata = {
   engineId: string;
   preprocess: string;
   protocolSha256?: string;
+  execution?: {
+    profile: "quick" | "standard";
+    maxTotalWallTimeMs: number;
+    repeatItemCount: number;
+  };
 };
 
 export type BenchmarkGateThresholds = FrozenProtocol["gates"];
@@ -49,10 +56,12 @@ type AggregateMetrics = {
 export type BenchmarkReport = {
   schemaVersion: "1.0.0";
   metadata: BenchmarkMetadata;
+  completion?: { complete: true } | { complete: false; reason: "total-wall-time-budget-exceeded" };
   items: { total: number; succeeded: number; failed: number };
-  failures: Array<{ itemId: string; category: string; code: string }>;
+  failures: Array<{ itemId: string; category: string; code: string; stage?: string; reason?: string }>;
   categories: Record<string, AggregateMetrics>;
   overall?: AggregateMetrics;
+  quality?: AggregateMetrics;
   gate:
     | { evaluated: false; decision: "NOT_EVALUATED" }
     | {
@@ -67,6 +76,7 @@ export function buildBenchmarkReport(
   metadata: BenchmarkMetadata,
   records: readonly BenchmarkItemRecord[],
   gateThresholds?: BenchmarkGateThresholds,
+  completion?: BenchmarkReport["completion"],
 ): BenchmarkReport {
   const successes = records.filter((record): record is BenchmarkItemResult => record.status === "succeeded");
   const categories = Object.fromEntries(
@@ -75,22 +85,45 @@ export function buildBenchmarkReport(
       .map((category) => [category, aggregate(successes.filter((record) => record.category === category))]),
   );
   const overall = successes.length === 0 ? undefined : aggregate(successes);
+  const qualityRecords =
+    metadata.execution === undefined ? records : records.filter((record) => record.benchmarkSuite === "oracle-system");
+  const qualitySuccesses = qualityRecords.filter(
+    (record): record is BenchmarkItemResult => record.status === "succeeded",
+  );
+  const quality = qualitySuccesses.length === 0 ? undefined : aggregate(qualitySuccesses);
   return {
     schemaVersion: "1.0.0",
     metadata,
+    ...(completion === undefined ? {} : { completion }),
     items: {
       total: records.length,
       succeeded: successes.length,
       failed: records.length - successes.length,
     },
-    failures: records.flatMap((record) =>
-      record.status === "failed" ? [{ itemId: record.itemId, category: record.category, code: record.error.code }] : [],
-    ),
+    failures: records.flatMap((record) => {
+      if (record.status !== "failed") return [];
+      const stage = record.error.context?.stage;
+      const reason = record.error.context?.reason;
+      return [
+        {
+          itemId: record.itemId,
+          category: record.category,
+          code: record.error.code,
+          ...(typeof stage === "string" ? { stage } : {}),
+          ...(typeof reason === "string" ? { reason } : {}),
+        },
+      ];
+    }),
     categories,
     ...(overall === undefined ? {} : { overall }),
+    ...(metadata.execution === undefined || quality === undefined ? {} : { quality }),
     gate:
       metadata.mode === "holdout"
-        ? evaluateGate(overall, requireGateThresholds(gateThresholds))
+        ? evaluateGate(
+            quality,
+            requireGateThresholds(gateThresholds),
+            qualityRecords.length > 0 && qualityRecords.every((record) => record.status === "succeeded"),
+          )
         : { evaluated: false, decision: "NOT_EVALUATED" },
   };
 }
@@ -182,6 +215,7 @@ function aggregateReproducibility(items: readonly ReproducibilityMetrics[]): Rep
 function evaluateGate(
   overall: AggregateMetrics | undefined,
   thresholds: BenchmarkGateThresholds,
+  allItemsEvaluable: boolean,
 ): Extract<BenchmarkReport["gate"], { evaluated: true }> {
   const values = {
     noteJointF1: overall?.symbolic.joint.f1,
@@ -195,6 +229,7 @@ function evaluateGate(
       overall?.runtime.cancelLatencyMs === undefined ? undefined : overall.runtime.cancelLatencyMs.p95 / 1_000,
   };
   const checks = {
+    allItemsEvaluable: { value: allItemsEvaluable ? 1 : 0, passed: allItemsEvaluable },
     noteJointF1: check(values.noteJointF1, (value) => value >= thresholds.jointF1),
     validMeasureRate: check(values.validMeasureRate, (value) => value >= thresholds.validMeasureRate),
     generatedMxlParseRate: check(values.generatedMxlParseRate, (value) => value >= thresholds.parseRate),
@@ -218,6 +253,46 @@ function evaluateGate(
       values.cancelLatencyP95Seconds,
       (value) => value <= thresholds.cancelLatencyP95Ms / 1_000,
     ),
+    stageWallTimeComplete: {
+      value: overall?.runtime.metricsAvailability.stageWallTimeMs ? 1 : 0,
+      passed: overall?.runtime.metricsAvailability.stageWallTimeMs === true,
+    },
+    cancelLatencyComplete: {
+      value: overall?.runtime.metricsAvailability.cancelLatencyMs ? 1 : 0,
+      passed: overall?.runtime.metricsAvailability.cancelLatencyMs === true,
+    },
+    peakRssComplete: {
+      value: overall?.runtime.metricsAvailability.peakRssBytes ? 1 : 0,
+      passed: overall?.runtime.metricsAvailability.peakRssBytes === true,
+    },
+    gpuMemoryComplete: {
+      value: overall?.runtime.metricsAvailability.gpuMemoryBytes ? 1 : 0,
+      passed: overall?.runtime.metricsAvailability.gpuMemoryBytes === true,
+    },
+    ...(thresholds.maxWallTimeP95Ms === undefined
+      ? {}
+      : {
+          wallTimeP95WithinBudget: check(
+            overall?.runtime.wallTimeMs.p95,
+            (value) => value <= thresholds.maxWallTimeP95Ms!,
+          ),
+        }),
+    ...(thresholds.maxPeakRssP95Bytes === undefined
+      ? {}
+      : {
+          peakRssP95WithinBudget: check(
+            overall?.runtime.peakRssBytes.p95,
+            (value) => value <= thresholds.maxPeakRssP95Bytes!,
+          ),
+        }),
+    ...(thresholds.maxGpuMemoryP95Bytes === undefined
+      ? {}
+      : {
+          gpuMemoryP95WithinBudget: check(
+            overall?.runtime.gpuMemoryBytes?.p95,
+            (value) => value <= thresholds.maxGpuMemoryP95Bytes!,
+          ),
+        }),
   };
   const failed = Object.values(checks).filter((item) => !item.passed).length;
   return {

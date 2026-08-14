@@ -1,0 +1,54 @@
+{
+  "categories": {},
+  "failures": [
+    {
+      "category": "real-scanned-full-page",
+      "code": "BENCHMARK_EVALUATION_LIMITATION",
+      "itemId": "olimpic-4945954-full-page"
+    },
+    {
+      "category": "real-scanned-full-page",
+      "code": "BENCHMARK_EVALUATION_LIMITATION",
+      "itemId": "olimpic-4976604-full-page"
+    },
+    {
+      "category": "real-scanned-full-page",
+      "code": "BENCHMARK_EVALUATION_LIMITATION",
+      "itemId": "olimpic-4985990-full-page"
+    },
+    {
+      "category": "real-scanned-full-page",
+      "code": "ENGINE_OUTPUT_INVALID",
+      "itemId": "olimpic-6007571-full-page"
+    },
+    {
+      "category": "real-scanned-full-page",
+      "code": "BENCHMARK_EVALUATION_LIMITATION",
+      "itemId": "olimpic-5862368-full-page"
+    },
+    {
+      "category": "real-scanned-full-page",
+      "code": "BENCHMARK_EVALUATION_LIMITATION",
+      "itemId": "olimpic-6011095-full-page"
+    }
+  ],
+  "gate": {
+    "decision": "NOT_EVALUATED",
+    "evaluated": false
+  },
+  "items": {
+    "failed": 6,
+    "succeeded": 0,
+    "total": 6
+  },
+  "metadata": {
+    "corpusId": "olimpic-scanned-full-page-dev-v1",
+    "engineId": "rokot",
+    "manifestSha256": "4cbd78411f15f73bf548a50f2af125e29c6cc42297b43a8616934a08a2cb0a1f",
+    "mode": "development",
+    "preprocess": "none",
+    "protocolSha256": "d1b6beeb912350eb134524cf3100c8d49ee908578825c95fc1171bfacbce4782",
+    "protocolVersion": "2.0.0"
+  },
+  "schemaVersion": "1.0.0"
+}

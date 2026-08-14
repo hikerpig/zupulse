@@ -1,0 +1,159 @@
+{
+  "diagnostics": [
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 0",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 does not fill measure 0",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 has an unexplained gap in measure 1",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 does not fill measure 4",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 has an unexplained gap in measure 7",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 has an unexplained gap in measure 12",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 29",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 does not fill measure 31",
+      "severity": "blocking"
+    },
+    {
+      "code": "INVALID_TIE",
+      "message": "ended tie P2:0:2:56 has no start",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 5 has an unexplained gap in measure 34",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 5 has an unexplained gap in measure 35",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 5 has an unexplained gap in measure 45",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 does not fill measure 47",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 has an unexplained gap in measure 49",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 has an unexplained gap in measure 50",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 does not fill measure 51",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 5 does not fill measure 0",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 6 has an unexplained gap in measure 4",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 6 does not fill measure 6",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 6 has an unexplained gap in measure 7",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 29",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 has an unexplained gap in measure 31",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 6 has an unexplained gap in measure 31",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 6 has an unexplained gap in measure 33",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 5 does not fill measure 34",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 5 does not fill measure 35",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 6 has an unexplained gap in measure 37",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 6 does not fill measure 39",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 5 does not fill measure 45",
+      "severity": "blocking"
+    },
+    {
+      "code": "UNRESOLVED_TIE",
+      "message": "tie P2:1:2:56 has no endpoint",
+      "severity": "blocking"
+    }
+  ],
+  "readiness": {
+    "harmony": "blocked",
+    "musicXml": "blocked"
+  },
+  "schemaVersion": "1.0.0"
+}

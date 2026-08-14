@@ -3,6 +3,10 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "exports": {
+    "./pipeline": "./src/pipeline.ts",
+    "./midi-correction": "./src/midi-correction.ts"
+  },
   "scripts": {
     "cli": "vite-node src/cli.ts",
     "test": "vitest run --root ../.. tools/pdf-omr-cli/src",

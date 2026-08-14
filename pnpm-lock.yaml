@@ -68,6 +68,9 @@ importers:
       '@zupulse/app-i18n':
         specifier: workspace:*
         version: link:../../packages/app-i18n
+      '@zupulse/pdf-omr-cli':
+        specifier: workspace:*
+        version: link:../../tools/pdf-omr-cli
       '@zupulse/web-core':
         specifier: workspace:*
         version: link:../../packages/web-core

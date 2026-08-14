@@ -18,6 +18,8 @@ import {
   type HarmonyAnalysisRepository,
   type HarmonyAnalysisSaveResult,
   type ScoreImportSource,
+  type PlaybackPersistence,
+  type RecognitionProviderSummary,
 } from "@zupulse/web-core";
 import "@zupulse/web-viewer/styles.css";
 import {
@@ -27,6 +29,8 @@ import {
   mountViewerApp,
   type ViewerAppHandle,
   type ViewerHost,
+  type PdfOmrWorkbenchPort,
+  type RecognitionSettingsPort,
 } from "@zupulse/web-viewer";
 import { createDesktopDroppedImportSources, DesktopScoreFileGateway } from "./desktop-score-file-gateway";
 import { createDesktopDiagnosticReporter } from "./desktop-diagnostic-reporter";
@@ -64,10 +68,21 @@ async function start(): Promise<void> {
   const persistence = new BridgePlaybackPersistence(bridge);
   const root = document.getElementById("root");
   if (!root) throw new Error("VIEWER_ROOT_MISSING");
+  const pdfOmr = createDesktopPdfOmrPort(bridge, response.capabilities.pdfOmrEngines);
+  const recognitionSettings = createDesktopRecognitionSettingsPort(bridge, pdfOmr.synchronizeProviders);
   appHandle = mountViewerApp(root, {
     host,
+    capabilities: {
+      harmonyAnalysis: response.capabilities.harmonyAnalysis ?? false,
+      pdfOmrWorkbench: response.capabilities.pdfOmrWorkbench ?? false,
+      recognitionProviderSettings: response.capabilities.recognitionProviderSettings ?? false,
+    },
     localeHost: createDesktopLocaleHost(bridge, response.locale),
     openSession: createDefaultOpenSession(document, persistence),
+    openPdfOmrPreview: (file, domBindings) =>
+      createDefaultOpenSession(document, ephemeralPlaybackPersistence())(file, undefined, domBindings),
+    pdfOmr,
+    recognitionSettings,
     library: {
       repository: new DesktopLibraryRepository(bridge),
       gateway: new DesktopScoreFileGateway(bridge),
@@ -82,6 +97,195 @@ async function start(): Promise<void> {
       })),
     },
   });
+}
+
+function createDesktopRecognitionSettingsPort(
+  bridge: NonNullable<Window["zupulseBridge"]>,
+  synchronizeProviders: (providers: readonly RecognitionProviderSummary[]) => void,
+): RecognitionSettingsPort {
+  return {
+    async list() {
+      const request = createBridgeRequest("recognitionSettings.list", crypto.randomUUID(), {});
+      const providers = parseBridgeResponse(request.type, await bridge.request(request)).providers;
+      synchronizeProviders(providers);
+      return providers;
+    },
+    async selectResource(providerId, fieldId, path) {
+      const request = createBridgeRequest("recognitionSettings.selectResource", crypto.randomUUID(), {
+        providerId,
+        fieldId,
+        ...(path === undefined ? {} : { path }),
+      } as never);
+      const provider = parseBridgeResponse(request.type, await bridge.request(request));
+      return provider;
+    },
+    async save(providerId, fields) {
+      const request = createBridgeRequest("recognitionSettings.save", crypto.randomUUID(), {
+        providerId,
+        fields,
+      } as never);
+      const provider = parseBridgeResponse(request.type, await bridge.request(request));
+      await this.list();
+      return provider;
+    },
+    async clear(providerId) {
+      const request = createBridgeRequest("recognitionSettings.clear", crypto.randomUUID(), { providerId });
+      return parseBridgeResponse(request.type, await bridge.request(request));
+    },
+  };
+}
+
+function createDesktopPdfOmrPort(
+  bridge: NonNullable<Window["zupulseBridge"]>,
+  configuredEngines:
+    | ReadonlyArray<{
+        id: string;
+        version: string;
+        available: boolean;
+        inputKinds: readonly ("pdf" | "image")[];
+        reason?: string | undefined;
+      }>
+    | undefined,
+): PdfOmrWorkbenchPort & { synchronizeProviders(providers: readonly RecognitionProviderSummary[]): void } {
+  const engines = (configuredEngines ?? []).map((engine) => ({
+    id: engine.id,
+    version: engine.version,
+    available: engine.available,
+    label: engineLabel(engine.id),
+    inputKinds: engine.inputKinds,
+    ...(engine.reason === undefined ? {} : { reason: engine.reason }),
+  }));
+  return {
+    engines,
+    synchronizeProviders(providers) {
+      engines.splice(
+        0,
+        engines.length,
+        ...providers.map((provider) => ({
+          id: provider.id,
+          version: provider.version ?? "unknown",
+          available: provider.state === "ready",
+          label: engineLabel(provider.id),
+          inputKinds: provider.inputKinds,
+          ...(provider.state === "ready" ? {} : { reason: workbenchAvailabilityReason(provider) }),
+        })),
+      );
+    },
+    async select() {
+      const request = createBridgeRequest("pdfOmr.select", crypto.randomUUID(), {});
+      return parseBridgeResponse(request.type, await bridge.request(request));
+    },
+    async start(fileToken, engineId) {
+      const request = createBridgeRequest("pdfOmr.start", crypto.randomUUID(), { fileToken, engineId });
+      return parseBridgeResponse(request.type, await bridge.request(request));
+    },
+    async retry(jobId, engineId) {
+      const request = createBridgeRequest("pdfOmr.retry", crypto.randomUUID(), { jobId, engineId });
+      return parseBridgeResponse(request.type, await bridge.request(request));
+    },
+    async cancel(jobId) {
+      const request = createBridgeRequest("pdfOmr.cancel", crypto.randomUUID(), { jobId });
+      parseBridgeResponse(request.type, await bridge.request(request));
+    },
+    async getSnapshot() {
+      const request = createBridgeRequest("pdfOmr.getSnapshot", crypto.randomUUID(), {});
+      return parseBridgeResponse(request.type, await bridge.request(request)).snapshot;
+    },
+    async readResult(jobId) {
+      const request = createBridgeRequest("pdfOmr.readResult", crypto.randomUUID(), { jobId });
+      const response = parseBridgeResponse(request.type, await bridge.request(request));
+      return response.status === "available" ? response : null;
+    },
+    async selectMidi() {
+      const request = createBridgeRequest("pdfOmr.selectMidi", crypto.randomUUID(), {});
+      return parseBridgeResponse(request.type, await bridge.request(request));
+    },
+    async analyzeMidi(jobId, fileToken) {
+      const request = createBridgeRequest("pdfOmr.analyzeMidi", crypto.randomUUID(), { jobId, fileToken });
+      const response = parseBridgeResponse(request.type, await bridge.request(request));
+      return {
+        midiFileName: response.midiFileName,
+        compatibility: response.compatibility,
+        proposals: response.proposals.map((proposal) => ({
+          id: proposal.id,
+          type: proposal.type,
+          confidence: proposal.confidence,
+          reviewability: proposal.reviewability,
+          ...(proposal.measureIndex === undefined ? {} : { measureIndex: proposal.measureIndex }),
+          ...(proposal.before === undefined
+            ? {}
+            : {
+                before: {
+                  ...proposal.before,
+                  alter: proposal.before.alter as -2 | -1 | 0 | 1 | 2,
+                },
+              }),
+          ...(proposal.suggestedSoundingMidi === undefined
+            ? {}
+            : { suggestedSoundingMidi: proposal.suggestedSoundingMidi }),
+        })),
+      };
+    },
+    async applyMidiCorrections(jobId, decisions) {
+      const request = createBridgeRequest("pdfOmr.applyMidiCorrections", crypto.randomUUID(), {
+        jobId,
+        decisions: [...decisions],
+      });
+      return parseBridgeResponse(request.type, await bridge.request(request));
+    },
+    async exportResult(jobId) {
+      const result = await this.readResult(jobId);
+      if (result === null) return "cancelled";
+      const request = createBridgeRequest("file.save", crypto.randomUUID(), {
+        fileName: result.fileName,
+        bytes: Uint8Array.from(result.bytes),
+      });
+      return parseBridgeResponse(request.type, await bridge.request(request)).status;
+    },
+    subscribe(listener) {
+      return bridge.subscribe((value) => {
+        const event = bridgeEventSchema.parse(value);
+        if (event.type === "pdfOmr.progress") listener(event.payload.jobId, event.payload.event);
+      });
+    },
+  };
+}
+
+function engineLabel(engineId: string): string {
+  return (
+    (
+      {
+        audiveris: "Audiveris",
+        transcoda: "Transcoda",
+        legato: "LEGATO",
+        rokot: "Rokot",
+      } as const
+    )[engineId as "audiveris" | "transcoda" | "legato" | "rokot"] ?? engineId
+  );
+}
+
+function workbenchAvailabilityReason(provider: RecognitionProviderSummary): string {
+  if (provider.state === "unconfigured") return `missing-${provider.id}-configuration`;
+  return provider.reason === "resource-unreadable" ? "model-unreadable" : "engine-inspection-failed";
+}
+
+function ephemeralPlaybackPersistence(): PlaybackPersistence & {
+  forLibraryScore(libraryScoreId: string): PlaybackPersistence;
+} {
+  const persistence: PlaybackPersistence & { forLibraryScore(libraryScoreId: string): PlaybackPersistence } = {
+    async readSidecar() {
+      return undefined;
+    },
+    async writeSidecar() {},
+    async readResume() {
+      return undefined;
+    },
+    async writeResume() {},
+    forLibraryScore() {
+      return persistence;
+    },
+  };
+  return persistence;
 }
 
 function createDesktopLocaleHost(bridge: NonNullable<Window["zupulseBridge"]>, initialState: LocaleState) {

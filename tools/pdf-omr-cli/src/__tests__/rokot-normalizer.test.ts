@@ -27,6 +27,8 @@ function system(pageIndex: number, systemIndex: number) {
     pageIndex,
     systemIndex,
     source: {
+      staffLayout: "grand-staff" as "single-staff" | "grand-staff",
+      staffCount: 2 as 1 | 2,
       pixelBbox: { x: 0, y: 10, width: 1400, height: 300 },
       pdfPointBbox: { x: 0, y: 4.2, width: 612, height: 131.1 },
       cropSha256: hash,
@@ -200,6 +202,24 @@ describe("RokotSystemBundle boundary", () => {
 });
 
 describe("normalizeRokotOutput", () => {
+  it("normalizes a single-staff system without requiring a bass-staff voice", () => {
+    const xml = musicXml({
+      "1": [{ attributes: true, duration: 8, pitch: "C4" }],
+      "1b": [{ attributes: true, duration: 8, pitch: "E4" }],
+    });
+    const single = bundleSystem(0, 0, xml);
+    single.source.staffLayout = "single-staff";
+    single.source.staffCount = 1;
+
+    const draft = normalizeSystems(single);
+
+    expect(draft.parts).toHaveLength(1);
+    expect(draft.parts[0]).toMatchObject({ id: "score", name: "Score" });
+    expect(draft.parts[0]!.staves).toHaveLength(1);
+    expect(draft.diagnostics).not.toContainEqual(expect.objectContaining({ code: "ROKOT_UNSUPPORTED_STAFF_TOPOLOGY" }));
+    expect(validateDraft(draft).readiness).toEqual({ harmony: "ready", musicXml: "ready" });
+  });
+
   it("maps Rokot parts to two Draft staves and joins systems with global measure indices", () => {
     const first = musicXml({
       "1": [{ attributes: true, duration: 8, pitch: "C4", tie: "start", tuplet: true }],

@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { normalizeAudiverisMusicXml } from "../normalizers/audiveris";
+import { validateDraft } from "../validate-draft";
 
 const fixture = fileURLToPath(new URL("fixtures/audiveris-output.musicxml", import.meta.url));
 
@@ -78,6 +79,19 @@ describe("Audiveris MusicXML normalizer", () => {
         expect.objectContaining({ code: "MISSING_PITCH", severity: "blocking" }),
       ]),
     );
+  });
+
+  it("keeps grace-note timing omissions as explicit warnings", () => {
+    const bytes = new TextEncoder().encode(
+      '<score-partwise><part-list><score-part id="P1"><part-name>Grace</part-name></score-part></part-list><part id="P1"><measure number="1"><attributes><divisions>4</divisions><time><beats>4</beats><beat-type>4</beat-type></time><key><fifths>0</fifths></key><clef><sign>G</sign><line>2</line></clef></attributes><note><grace/><pitch><step>C</step><octave>5</octave></pitch><voice>1</voice></note><note><pitch><step>D</step><octave>5</octave></pitch><duration>16</duration><voice>1</voice></note></measure></part></score-partwise>',
+    );
+
+    const draft = normalizeAudiverisMusicXml(bytes);
+
+    expect(draft.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "MISSING_EVENT_TIMING", severity: "warning" }),
+    );
+    expect(validateDraft(draft).readiness).toEqual({ harmony: "ready-with-warnings", musicXml: "ready-with-warnings" });
   });
 
   it("rejects invalid XML as engine output instead of leaking parser failures", () => {

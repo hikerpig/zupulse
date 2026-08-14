@@ -2,9 +2,52 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { renderPdfPages, type RenderedPdfPage } from "../render-pdf-pages";
-import { GRAND_STAFF_SEGMENTATION_PARAMETERS, segmentGrandStaffSystems } from "../staff-system-segmentation";
+import {
+  STAFF_SYSTEM_SEGMENTATION_PARAMETERS,
+  segmentGrandStaffSystems,
+  segmentStaffSystems,
+} from "../staff-system-segmentation";
 
 describe("segmentGrandStaffSystems", () => {
+  it("segments isolated five-line groups as single-staff systems in auto mode", () => {
+    const input = page(0, 200, 220, []);
+    const lineYs = [20, 26, 32, 38, 44, 140, 146, 152, 158, 164];
+    lineYs.forEach((y) => setBlackRange(input, 10, 190, y));
+
+    const result = segmentStaffSystems([input]);
+
+    expect(result.systems).toHaveLength(2);
+    expect(result.systems.map((system) => [system.staffLayout, system.staffCount])).toEqual([
+      ["single-staff", 1],
+      ["single-staff", 1],
+    ]);
+    expect(result.systems.map((system) => system.staffLineYs)).toEqual([lineYs.slice(0, 5), lineYs.slice(5)]);
+  });
+
+  it("keeps explicit grand-staff mode fail-closed for isolated single staves", () => {
+    const input = page(0, 200, 220, []);
+    [20, 26, 32, 38, 44, 140, 146, 152, 158, 164].forEach((y) => setBlackRange(input, 10, 190, y));
+
+    expect(() => segmentStaffSystems([input], { staffLayout: "grand-staff" })).toThrow(
+      expect.objectContaining({
+        code: "ENGINE_OUTPUT_INVALID",
+        context: expect.objectContaining({ stage: "grand-staff-pairing", pageIndex: 0 }),
+      }),
+    );
+  });
+
+  it("keeps auto mode fail-closed when a page mixes paired and unpaired staff groups", () => {
+    const input = page(0, 200, 220, [20, 26, 32, 38, 44, 68, 74, 80, 86, 92]);
+    [150, 156, 162, 168, 174].forEach((y) => setBlackRange(input, 10, 190, y));
+
+    expect(() => segmentStaffSystems([input])).toThrow(
+      expect.objectContaining({
+        code: "ENGINE_OUTPUT_INVALID",
+        context: expect.objectContaining({ stage: "staff-system-topology", pageIndex: 0 }),
+      }),
+    );
+  });
+
   it("detects noisy grand staffs, sorts systems, maps coordinates, and is deterministic", () => {
     const pageOne = page(1, 200, 260, [30, 36, 42, 48, 54, 78, 84, 90, 96, 102]);
     const pageZero = page(
@@ -20,14 +63,16 @@ describe("segmentGrandStaffSystems", () => {
     const second = segmentGrandStaffSystems([pageOne, pageZero]);
 
     expect(first).toEqual(second);
-    expect(first.detectorVersion).toBe("rokot-grand-staff-v1");
-    expect(first.parameters).toEqual(GRAND_STAFF_SEGMENTATION_PARAMETERS);
+    expect(first.detectorVersion).toBe("rokot-staff-system-v2");
+    expect(first.parameters).toEqual(STAFF_SYSTEM_SEGMENTATION_PARAMETERS);
     expect(first.systems.map((system) => [system.pageIndex, system.systemIndex])).toEqual([
       [0, 0],
       [0, 1],
       [1, 0],
     ]);
     expect(first.systems[0]).toMatchObject({
+      staffLayout: "grand-staff",
+      staffCount: 2,
       pageIndex: 0,
       pageRenderSha256: "render-0",
       localStaffSpacingPx: 6,
@@ -66,6 +111,21 @@ describe("segmentGrandStaffSystems", () => {
     expect(result.systems[0]!.staffLineYs).toEqual([20, 26, 32, 38, 44, 68, 74, 80, 86, 92]);
   });
 
+  it("keeps continuous staff lines separate from adjacent fragmented notation rows", () => {
+    const lineYs = [20, 26, 32, 38, 44, 68, 74, 80, 86, 92] as const;
+    const input = page(0, 200, 120, lineYs);
+    for (const y of lineYs) {
+      if (lineYs.includes((y + 1) as (typeof lineYs)[number])) continue;
+      setBlackRange(input, 20, 65, y + 1);
+      setBlackRange(input, 95, 140, y + 1);
+    }
+
+    const result = segmentGrandStaffSystems([input], { allowFragmentedRuns: true });
+
+    expect(result.systems).toHaveLength(1);
+    expect(result.systems[0]!.staffLineYs).toEqual(lineYs);
+  });
+
   it("segments every grand staff in the repository K331 development fixture", async () => {
     const fixture = fileURLToPath(new URL("../../../../test-fixtures/musicxml/K331-3_reviewed.pdf", import.meta.url));
     const pages = await renderPdfPages(await readFile(fixture));
@@ -81,6 +141,107 @@ describe("segmentGrandStaffSystems", () => {
     ]);
   });
 
+  it("segments the real scanned OLiMPiC system crop with landscape rendering enabled", async () => {
+    const fixture = fileURLToPath(new URL("../../corpus/olimpic-scanned-v1/dev/6586696/input.pdf", import.meta.url));
+    const pages = await renderPdfPages(await readFile(fixture), { allowLandscape: true });
+
+    const result = segmentGrandStaffSystems(pages, { allowFragmentedRuns: true });
+
+    expect(result.systems).toHaveLength(1);
+    expect(result.systems[0]).toMatchObject({ pageIndex: 0, systemIndex: 0 });
+  });
+
+  it("prefers consistent staff spacing when fragmented rows include text-like decoys", () => {
+    const input = page(0, 200, 320, [10, 37, 69, 92, 114, 160, 172, 184, 196, 208, 240, 252, 264, 276, 288]);
+    for (let y = 160; y <= 288; y += 1) setBlack(input, 10, y);
+
+    const result = segmentGrandStaffSystems([input], { allowFragmentedRuns: true });
+
+    expect(result.systems).toHaveLength(1);
+    expect(result.systems[0]!.staffLineYs).toEqual([160, 172, 184, 196, 208, 240, 252, 264, 276, 288]);
+  });
+
+  it("keeps a grand staff when dense notation leaves staggered fragments on adjacent staff lines", () => {
+    const input = page(0, 1400, 260, []);
+    const upperLines = [40, 51, 62, 73, 84] as const;
+    const lowerLines = [150, 161, 172, 183, 194] as const;
+    const upperRanges = [
+      [123, 1249],
+      [97, 1265],
+      [85, 1265],
+      [473, 801],
+      [673, 1132],
+    ] as const;
+
+    upperLines.forEach((y, index) => setBlackRange(input, upperRanges[index]![0], upperRanges[index]![1], y));
+    lowerLines.forEach((y) => setBlackRange(input, 85, 1265, y));
+    for (let y = upperLines[0]; y <= lowerLines.at(-1)!; y += 1) setBlack(input, 800, y);
+
+    const result = segmentGrandStaffSystems([input], { allowFragmentedRuns: true });
+
+    expect(result.systems).toHaveLength(1);
+    expect(result.systems[0]!.staffLineYs).toEqual([...upperLines, ...lowerLines]);
+  });
+
+  it("tolerates small accumulated row-center drift across a fragmented five-line staff", () => {
+    const input = page(0, 1400, 260, []);
+    const upperLines = [40, 50, 61, 73, 86] as const;
+    const lowerLines = [150, 161, 172, 183, 194] as const;
+
+    upperLines.forEach((y) => setBlackRange(input, 100, 1265, y));
+    lowerLines.forEach((y) => setBlackRange(input, 100, 1265, y));
+    for (let y = upperLines[0]; y <= lowerLines.at(-1)!; y += 1) setBlack(input, 800, y);
+
+    const result = segmentGrandStaffSystems([input], { allowFragmentedRuns: true });
+
+    expect(result.systems).toHaveLength(1);
+    expect(result.systems[0]!.staffLineYs).toEqual([...upperLines, ...lowerLines]);
+  });
+
+  it("skips ledger-line decoys when only a later five-line candidate forms a connected grand staff", () => {
+    const input = page(0, 1400, 240, []);
+    const ledgerLineDecoys = [18, 29] as const;
+    const upperLines = [40, 51, 62, 73, 84] as const;
+    const lowerLines = [130, 141, 152, 163, 174] as const;
+
+    [...ledgerLineDecoys, ...upperLines, ...lowerLines].forEach((y) => setBlackRange(input, 100, 1265, y));
+    for (let y = upperLines[1]; y <= lowerLines.at(-1)!; y += 1) setBlack(input, 800, y);
+
+    const result = segmentGrandStaffSystems([input], { allowFragmentedRuns: true });
+
+    expect(result.systems).toHaveLength(1);
+    expect(result.systems[0]!.staffLineYs).toEqual([...upperLines, ...lowerLines]);
+  });
+
+  it("accepts an otherwise isolated grand staff connected by a curved brace with small endpoint gaps", () => {
+    const input = page(0, 1400, 240, []);
+    const upperLines = [40, 51, 62, 73, 84] as const;
+    const lowerLines = [130, 141, 152, 163, 174] as const;
+
+    [...upperLines, ...lowerLines].forEach((y) => setBlackRange(input, 100, 1265, y));
+    for (let y = 50; y <= 165; y += 1) setBlack(input, 800, y);
+
+    const result = segmentGrandStaffSystems([input], { allowFragmentedRuns: true });
+
+    expect(result.systems).toHaveLength(1);
+    expect(result.systems[0]!.staffLineYs).toEqual([...upperLines, ...lowerLines]);
+  });
+
+  it("does not promote a short beam-like row into a staff through fragmented containment", () => {
+    const input = page(0, 1400, 240, []);
+    const upperLines = [40, 51, 62, 73, 84] as const;
+    const lowerLines = [130, 141, 152, 163, 174] as const;
+
+    setBlackRange(input, 700, 780, 29);
+    [...upperLines, ...lowerLines].forEach((y) => setBlackRange(input, 100, 1265, y));
+    for (let y = upperLines[0]; y <= lowerLines.at(-1)!; y += 1) setBlack(input, 800, y);
+
+    const result = segmentGrandStaffSystems([input], { allowFragmentedRuns: true });
+
+    expect(result.systems).toHaveLength(1);
+    expect(result.systems[0]!.staffLineYs).toEqual([...upperLines, ...lowerLines]);
+  });
+
   it("rejects missing staff lines, ambiguous pairings, and zero systems before inference", () => {
     const missingLine = page(0, 200, 160, [20, 26, 32, 38, 68, 74, 80, 86, 92]);
     const ambiguousPairing = page(0, 200, 180, [20, 26, 32, 38, 44, 68, 74, 80, 86, 92, 116, 122, 128, 134, 140]);
@@ -94,6 +255,12 @@ describe("segmentGrandStaffSystems", () => {
         }),
       );
     }
+
+    expect(() => segmentGrandStaffSystems([ambiguousPairing])).toThrow(
+      expect.objectContaining({
+        context: expect.objectContaining({ unpairedStaffLineYs: [[116, 122, 128, 134, 140]] }),
+      }),
+    );
   });
 });
 
@@ -131,4 +298,8 @@ function setBlack(page: RenderedPdfPage, x: number, y: number): void {
   page.pixels[offset + 1] = 0;
   page.pixels[offset + 2] = 0;
   page.pixels[offset + 3] = 255;
+}
+
+function setBlackRange(page: RenderedPdfPage, startX: number, endX: number, y: number): void {
+  for (let x = startX; x < endX; x += 1) setBlack(page, x, y);
 }

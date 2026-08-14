@@ -22,6 +22,31 @@ export function assertReadableScore(metadata: ReadableScoreMetadata): void {
 
 type TokenFile = { fileToken: string; fileName: string; sizeBytes: number };
 
+export type PdfFileDependencies = {
+  showOpenDialog(): Promise<{ canceled: boolean; filePaths: string[] }>;
+  stat(path: string): Promise<{ size: number; isFile(): boolean }>;
+};
+
+export async function selectMidiFile(
+  tokens: FileTokenStore,
+  dependencies?: PdfFileDependencies,
+  locale: SupportedLocale = "en-US",
+): Promise<{ status: "cancelled" } | { status: "selected"; fileToken: string; fileName: string; sizeBytes: number }> {
+  const resolvedDependencies = dependencies ?? defaultMidiDependencies(locale);
+  const selection = await resolvedDependencies.showOpenDialog();
+  const path = selection.filePaths[0];
+  if (selection.canceled || !path || !/\.midi?$/i.test(path)) return { status: "cancelled" };
+  const fileName = basename(path);
+  const info = await resolvedDependencies.stat(path);
+  assertReadableScore({ fileName, sizeBytes: info.size, isFile: info.isFile() });
+  return {
+    status: "selected",
+    fileToken: tokens.issue(path, { fileName, sizeBytes: info.size }),
+    fileName,
+    sizeBytes: info.size,
+  };
+}
+
 export async function selectScoreFiles(
   tokens: FileTokenStore,
   multiple: boolean,
@@ -38,6 +63,59 @@ export async function selectScoreFiles(
   const accepted = await acceptScorePaths(tokens, selection.filePaths);
   if (accepted.status === "cancelled") return { status: "cancelled" };
   return { status: "selected", files: accepted.files };
+}
+
+export async function selectPdfFile(
+  tokens: FileTokenStore,
+  dependencies?: PdfFileDependencies,
+  locale: SupportedLocale = "en-US",
+): Promise<
+  | { status: "cancelled" }
+  | { status: "selected"; fileToken: string; fileName: string; sizeBytes: number; inputKind: "pdf" | "image" }
+> {
+  const resolvedDependencies = dependencies ?? defaultPdfDependencies(locale);
+  const selection = await resolvedDependencies.showOpenDialog();
+  const path = selection.filePaths[0];
+  const extension = path?.toLowerCase().match(/\.(pdf|png|jpe?g)$/)?.[1];
+  if (selection.canceled || !path || extension === undefined) return { status: "cancelled" };
+  const fileName = basename(path);
+  const info = await resolvedDependencies.stat(path);
+  assertReadableScore({ fileName, sizeBytes: info.size, isFile: info.isFile() });
+  return {
+    status: "selected",
+    fileToken: tokens.issue(path, { fileName, sizeBytes: info.size }),
+    fileName,
+    sizeBytes: info.size,
+    inputKind: extension === "pdf" ? "pdf" : "image",
+  };
+}
+
+function defaultPdfDependencies(locale: SupportedLocale): PdfFileDependencies {
+  const t = createAppI18n(locale).getFixedT(locale, "desktop");
+  return {
+    showOpenDialog: () =>
+      dialog.showOpenDialog({
+        title: t("dialog.openTitle"),
+        buttonLabel: t("dialog.openButton"),
+        properties: ["openFile"],
+        filters: [{ name: "PDF / PNG / JPEG", extensions: ["pdf", "png", "jpg", "jpeg"] }],
+      }),
+    stat,
+  };
+}
+
+function defaultMidiDependencies(locale: SupportedLocale): PdfFileDependencies {
+  const t = createAppI18n(locale).getFixedT(locale, "desktop");
+  return {
+    showOpenDialog: () =>
+      dialog.showOpenDialog({
+        title: t("dialog.openTitle"),
+        buttonLabel: t("dialog.openButton"),
+        properties: ["openFile"],
+        filters: [{ name: "MIDI", extensions: ["mid", "midi"] }],
+      }),
+    stat,
+  };
 }
 
 export async function acceptScorePaths(

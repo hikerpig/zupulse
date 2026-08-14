@@ -1,0 +1,195 @@
+{
+  "schemaVersion": "1.0.0",
+  "workId": "6007571",
+  "sourceSplit": "dev",
+  "sourceDocument": "#335938",
+  "sourcePdf": {
+    "memberName": "IMSLP335938-SIBLEY1802.21502.10a6-39087012010577chant.pdf",
+    "sha256": "fb2d8715274a05e6bb2e49820bad4af226ded972c8465382cae6048e47c29de2",
+    "bytes": 8700211
+  },
+  "pages": [
+    {
+      "samplePage": 1,
+      "sourcePage": 77,
+      "width": 3328,
+      "height": 4677,
+      "systems": [
+        {
+          "sampleVariant": "p1-s1",
+          "sourceSystem": 1,
+          "boundingBox": {
+            "left": 781,
+            "top": 1426,
+            "width": 2017,
+            "height": 411
+          }
+        },
+        {
+          "sampleVariant": "p1-s2",
+          "sourceSystem": 2,
+          "boundingBox": {
+            "left": 478,
+            "top": 2377,
+            "width": 2333,
+            "height": 409
+          }
+        },
+        {
+          "sampleVariant": "p1-s3",
+          "sourceSystem": 3,
+          "boundingBox": {
+            "left": 492,
+            "top": 3633,
+            "width": 2332,
+            "height": 406
+          }
+        }
+      ]
+    },
+    {
+      "samplePage": 2,
+      "sourcePage": 78,
+      "width": 3328,
+      "height": 4677,
+      "systems": [
+        {
+          "sampleVariant": "p2-s1",
+          "sourceSystem": 1,
+          "boundingBox": {
+            "left": 547,
+            "top": 858,
+            "width": 2323,
+            "height": 360
+          }
+        },
+        {
+          "sampleVariant": "p2-s2",
+          "sourceSystem": 2,
+          "boundingBox": {
+            "left": 544,
+            "top": 1988,
+            "width": 2323,
+            "height": 360
+          }
+        },
+        {
+          "sampleVariant": "p2-s3",
+          "sourceSystem": 3,
+          "boundingBox": {
+            "left": 537,
+            "top": 2847,
+            "width": 2326,
+            "height": 349
+          }
+        },
+        {
+          "sampleVariant": "p2-s4",
+          "sourceSystem": 4,
+          "boundingBox": {
+            "left": 532,
+            "top": 3687,
+            "width": 2326,
+            "height": 356
+          }
+        }
+      ]
+    },
+    {
+      "samplePage": 3,
+      "sourcePage": 79,
+      "width": 3328,
+      "height": 4677,
+      "systems": [
+        {
+          "sampleVariant": "p3-s1",
+          "sourceSystem": 1,
+          "boundingBox": {
+            "left": 457,
+            "top": 886,
+            "width": 2337,
+            "height": 375
+          }
+        },
+        {
+          "sampleVariant": "p3-s2",
+          "sourceSystem": 2,
+          "boundingBox": {
+            "left": 471,
+            "top": 2007,
+            "width": 2327,
+            "height": 372
+          }
+        },
+        {
+          "sampleVariant": "p3-s3",
+          "sourceSystem": 3,
+          "boundingBox": {
+            "left": 479,
+            "top": 2864,
+            "width": 2326,
+            "height": 365
+          }
+        },
+        {
+          "sampleVariant": "p3-s4",
+          "sourceSystem": 4,
+          "boundingBox": {
+            "left": 482,
+            "top": 3713,
+            "width": 2330,
+            "height": 372
+          }
+        }
+      ]
+    },
+    {
+      "samplePage": 4,
+      "sourcePage": 80,
+      "width": 3328,
+      "height": 4677,
+      "systems": [
+        {
+          "sampleVariant": "p4-s1",
+          "sourceSystem": 1,
+          "boundingBox": {
+            "left": 566,
+            "top": 665,
+            "width": 2314,
+            "height": 381
+          }
+        },
+        {
+          "sampleVariant": "p4-s2",
+          "sourceSystem": 2,
+          "boundingBox": {
+            "left": 557,
+            "top": 1653,
+            "width": 2319,
+            "height": 371
+          }
+        },
+        {
+          "sampleVariant": "p4-s3",
+          "sourceSystem": 3,
+          "boundingBox": {
+            "left": 553,
+            "top": 2633,
+            "width": 2323,
+            "height": 370
+          }
+        },
+        {
+          "sampleVariant": "p4-s4",
+          "sourceSystem": 4,
+          "boundingBox": {
+            "left": 550,
+            "top": 3599,
+            "width": 2323,
+            "height": 378
+          }
+        }
+      ]
+    }
+  ]
+}

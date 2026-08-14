@@ -1,0 +1,1209 @@
+{
+  "diagnostics": [
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 42",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 43",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 44",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 45",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 46",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 47",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 48",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 49",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 50",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 51",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 52",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 53",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 54",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 55",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 100",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 101",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 102",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 103",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 104",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 105",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 106",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 107",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 108",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 109",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 110",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 111",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 112",
+      "severity": "warning"
+    },
+    {
+      "code": "MISSING_EVENT_TIMING",
+      "message": "missing event timing at measure 113",
+      "severity": "warning"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 0",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 1",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 2",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 3",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 4",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 5",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 6",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 7",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 8",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 9",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 10",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 11",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 12",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 13",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 14",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 15",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 16",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 17",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 18",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 19",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 25",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 26",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 27",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 28",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 29",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 30",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 31",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 32",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 34",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 35",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 36",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 37",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 38",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 39",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 does not fill measure 56",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 does not fill measure 57",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 58",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 59",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 60",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 61",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 62",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 63",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 64",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 65",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 66",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 67",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 68",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 69",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 70",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 71",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 72",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 73",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 74",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 75",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 76",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 77",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 83",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 84",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 85",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 86",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 87",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 88",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 89",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 90",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 92",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 93",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 94",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 95",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 96",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 97",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 does not fill measure 114",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 does not fill measure 115",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 116",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 117",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 118",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 119",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 120",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 121",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 122",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 123",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 124",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 125",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 126",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 127",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 128",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 129",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 130",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 131",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 132",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 133",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 134",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 135",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 141",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 142",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 143",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 144",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 145",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 146",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 147",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 148",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 150",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 151",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 152",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 153",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 154",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 has an unexplained gap in measure 155",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 has an unexplained gap in measure 158",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 does not fill measure 159",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 does not fill measure 160",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 2 does not fill measure 161",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 0",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 1",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 2",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 3",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 4",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 5",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 6",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 7",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 8",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 9",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 10",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 11",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 12",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 13",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 14",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 15",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 16",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 17",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 18",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 19",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 25",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 26",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 27",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 28",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 29",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 30",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 31",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 32",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 34",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 35",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 36",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 37",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 38",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 39",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 58",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 59",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 60",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 61",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 62",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 63",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 64",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 65",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 66",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 67",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 68",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 69",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 70",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 71",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 72",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 73",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 74",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 75",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 76",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 77",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 83",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 84",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 85",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 86",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 87",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 88",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 89",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 90",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 92",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 93",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 94",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 95",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 96",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 97",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 116",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 117",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 118",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 119",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 120",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 121",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 122",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 123",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 124",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 125",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 126",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 127",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 128",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 129",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 130",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 131",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 132",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 133",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 134",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 135",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 141",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 142",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 143",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 144",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 145",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 146",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 147",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 148",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 150",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 151",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 152",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 153",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 154",
+      "severity": "blocking"
+    },
+    {
+      "code": "VOICE_DURATION_MISMATCH",
+      "message": "voice 1 does not fill measure 155",
+      "severity": "blocking"
+    }
+  ],
+  "readiness": {
+    "harmony": "blocked",
+    "musicXml": "blocked"
+  },
+  "schemaVersion": "1.0.0"
+}

@@ -6,8 +6,19 @@ export type RuntimeObservation = {
   structural: boolean;
   wallTimeMs: number;
   peakRssBytes: number;
+  stageWallTimeMs: Record<BenchmarkStage, number>;
   gpuMemoryBytes?: number;
   cancelLatencyMs?: number;
+};
+
+export const benchmarkStages = ["inspect", "recognize", "normalize", "validate", "export"] as const;
+export type BenchmarkStage = (typeof benchmarkStages)[number];
+
+export type RuntimeMetricAvailability = {
+  stageWallTimeMs: boolean;
+  cancelLatencyMs: boolean;
+  peakRssBytes: boolean;
+  gpuMemoryBytes: boolean;
 };
 
 type Distribution = { p50: number; p95: number; max: number };
@@ -22,10 +33,30 @@ export type RuntimeMetrics = {
     structuralAgreementRate: number;
   };
   wallTimeMs: Distribution;
+  stageWallTimeMs: Record<BenchmarkStage, Distribution>;
   peakRssBytes: Distribution;
   gpuMemoryBytes?: Distribution;
   cancelLatencyMs?: Distribution;
+  metricsAvailability: RuntimeMetricAvailability;
 };
+
+export function assessRuntimeObservation(observation: RuntimeObservation): {
+  complete: boolean;
+  missing: string[];
+} {
+  const missing: string[] = [];
+  if (
+    benchmarkStages.some(
+      (stage) => !Number.isFinite(observation.stageWallTimeMs[stage]) || observation.stageWallTimeMs[stage] < 0,
+    )
+  ) {
+    missing.push("stageWallTimeMs");
+  }
+  if (observation.cancelLatencyMs === undefined) missing.push("cancelLatencyMs");
+  if (!Number.isFinite(observation.peakRssBytes) || observation.peakRssBytes <= 0) missing.push("peakRssBytes");
+  if (observation.gpuMemoryBytes === undefined) missing.push("gpuMemoryBytes");
+  return { complete: missing.length === 0, missing };
+}
 
 export function aggregateRuntimeMetrics(observations: readonly RuntimeObservation[]): RuntimeMetrics {
   const gpu = observations.flatMap((observation) =>
@@ -44,9 +75,25 @@ export function aggregateRuntimeMetrics(observations: readonly RuntimeObservatio
       structuralAgreementRate: rate(observations, (observation) => observation.structural),
     },
     wallTimeMs: distribution(observations.map((observation) => observation.wallTimeMs)),
+    stageWallTimeMs: Object.fromEntries(
+      benchmarkStages.map((stage) => [
+        stage,
+        distribution(observations.map((observation) => observation.stageWallTimeMs[stage])),
+      ]),
+    ) as Record<BenchmarkStage, Distribution>,
     peakRssBytes: distribution(observations.map((observation) => observation.peakRssBytes)),
     ...(gpu.length === 0 ? {} : { gpuMemoryBytes: distribution(gpu) }),
     ...(cancellation.length === 0 ? {} : { cancelLatencyMs: distribution(cancellation) }),
+    metricsAvailability: {
+      stageWallTimeMs: observations.every(
+        (observation) => assessRuntimeObservation(observation).missing.includes("stageWallTimeMs") === false,
+      ),
+      cancelLatencyMs: observations.every((observation) => observation.cancelLatencyMs !== undefined),
+      peakRssBytes: observations.every(
+        (observation) => Number.isFinite(observation.peakRssBytes) && observation.peakRssBytes > 0,
+      ),
+      gpuMemoryBytes: observations.every((observation) => observation.gpuMemoryBytes !== undefined),
+    },
   };
 }
 

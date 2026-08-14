@@ -3,8 +3,10 @@ node_modules
 **/out
 **/test-results
 **/playwright-report
+**/.codex-design
 test-fixtures
 packages/web-core/src/harmony/harmony-paper-semi-crf-model.json
+tools/pdf-omr-cli/corpus/public-pianoform-v1/*.json
 pnpm-lock.yaml
 
 tmp/

@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "1.0.0",
+  "corpusId": "olimpic-scanned-full-page-dev-v1",
+  "selectionRule": {
+    "sourceSplit": "dev",
+    "sampleList": "samples.dev.txt",
+    "strata": [
+      {
+        "id": "small",
+        "minPages": 2,
+        "maxPages": 3,
+        "count": 2
+      },
+      {
+        "id": "medium",
+        "minPages": 4,
+        "maxPages": 6,
+        "count": 2
+      },
+      {
+        "id": "large",
+        "minPages": 7,
+        "count": 2
+      }
+    ],
+    "ordering": "ascending numeric workId within each stratum",
+    "forceInclude": {
+      "workId": "6007571",
+      "reason": "dev 4-page/15-system page-shape representative; not a quality claim"
+    }
+  },
+  "provenance": {
+    "dataset": "OLiMPiC scanned",
+    "release": "1.0 (2024-02-12)",
+    "releaseUrl": "https://github.com/ufal/olimpic-icdar24/releases/tag/datasets",
+    "sourceSplit": "dev",
+    "license": "CC-BY-SA-4.0 (dataset release; source PDF rights require per-item review)",
+    "sourceArchive": {
+      "asset": "olimpic-1.0-sources-for-scanned.2024-02-12.tar.gz.tgz",
+      "bytes": 1589585159,
+      "sha256": "8b77529d06cbf3d0f392af7ea5457906a510cf6ca7dad8eb751f6839bfde39f8"
+    },
+    "scannedArchive": {
+      "asset": "olimpic-1.0-scanned.2024-02-12.tar.gz",
+      "bytes": 225607163,
+      "sha256": "a84091b50154251b66d37b50806f98d8a6d758b4195d2aa9805d1b9cb78e6993"
+    }
+  },
+  "works": [
+    {
+      "workId": "4945954",
+      "stratum": "small",
+      "pageCount": 3,
+      "systemCount": 12
+    },
+    {
+      "workId": "4976604",
+      "stratum": "small",
+      "pageCount": 2,
+      "systemCount": 9
+    },
+    {
+      "workId": "4985990",
+      "stratum": "medium",
+      "pageCount": 5,
+      "systemCount": 24
+    },
+    {
+      "workId": "6007571",
+      "stratum": "medium",
+      "pageCount": 4,
+      "systemCount": 15
+    },
+    {
+      "workId": "5862368",
+      "stratum": "large",
+      "pageCount": 7,
+      "systemCount": 27
+    },
+    {
+      "workId": "6011095",
+      "stratum": "large",
+      "pageCount": 8,
+      "systemCount": 34
+    }
+  ],
+  "totals": {
+    "sourceSampleCount": 1438,
+    "workCount": 6,
+    "pageCount": 29,
+    "systemCount": 121
+  }
+}

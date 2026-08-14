@@ -62,6 +62,31 @@ App Shell 记录的一条隐私安全、结构化运行事实，用于离线排�
 
 用户明确发起生成的本地诊断资料副本，包含经过验证的 Host Diagnostic Event 与安全环境摘要，由用户自行交给开发者离线排查。它不触发自动上传，也不是应用内日志查看器。
 
+## Application Settings
+
+规划中的 Browser 与 Desktop 共享设备级设置表面。它按宿主能力呈现可操作分区，不把某个平台尚未提供的能力伪装成
+可配置项，也不表示设置会跨设备同步。
+
+## Recognition Provider
+
+为 PDF 识谱提供运行能力及可验证配置状态的宿主能力。当前只有 Desktop 的 Local Recognition Engine；未来
+Web Remote Recognition Service 必须通过独立能力与安全契约接入。
+
+## Recognition Provider Configuration
+
+规划中由当前设备为一种 Recognition Provider 保存的唯一一份类型化配置。配置字段由 provider schema 定义，不以环境
+变量名称或可重复 profile 列表作为产品模型。
+
+## Local Recognition Engine
+
+由 Desktop Main 在本机调用的 Recognition Provider。其 executable、repository、model 与 converter 等配置属于
+当前设备，不进入 Renderer 或 Browser。
+
+## Remote Recognition Service
+
+规划中的、通过网络提供 PDF 识谱的 Recognition Provider。它不是当前 Browser 能力，认证、隐私、上传和
+服务端处理边界必须在接入前另行定义。
+
 ## iPad Practice Player
 
 原生 iPad 交付面，以本地 Sheet Library 和 Viewer 前台练习为首版核心。它不是 Desktop Shell 的全量

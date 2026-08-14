@@ -1,0 +1,14 @@
+{
+  "diagnostics": [
+    {
+      "code": "INVALID_TIE",
+      "severity": "blocking"
+    }
+  ],
+  "readiness": {
+    "harmony": "blocked",
+    "musicXml": "blocked"
+  },
+  "reason": "ground-truth-readiness-blocked",
+  "schemaVersion": "1.0.0"
+}

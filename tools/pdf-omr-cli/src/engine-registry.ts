@@ -11,6 +11,10 @@ export type EngineRegistry = {
   get(engineId: string): OmrEngineAdapter;
 };
 
+export function resolveBundledLegatoRunnerPath(): string {
+  return fileURLToPath(new URL("../engines/legato-runner.py", import.meta.url));
+}
+
 export function createEngineRegistry(
   options: {
     audiverisExecutable?: string;
@@ -18,18 +22,23 @@ export function createEngineRegistry(
     legato?: LegatoAdapterOptions;
     rokot?: RokotAdapterOptions;
     transcoda?: TranscodaAdapterOptions;
+    environmentFallback?: boolean;
   } = {},
 ): EngineRegistry {
   return {
     get(engineId) {
       if (engineId === "audiveris") {
         return createAudiverisAdapter({
-          executable: options.audiverisExecutable ?? process.env.PDF_OMR_AUDIVERIS_EXECUTABLE ?? "audiveris",
+          executable:
+            options.audiverisExecutable ??
+            (options.environmentFallback === false ? undefined : process.env.PDF_OMR_AUDIVERIS_EXECUTABLE) ??
+            "audiveris",
           ...(options.audiverisEnvironment === undefined ? {} : { environment: options.audiverisEnvironment }),
         });
       }
       if (engineId === "transcoda") {
-        const configured = options.transcoda ?? transcodaOptionsFromEnvironment();
+        const configured =
+          options.transcoda ?? (options.environmentFallback === false ? undefined : transcodaOptionsFromEnvironment());
         if (configured === undefined) {
           throw new PdfOmrError("ENGINE_UNAVAILABLE", "Transcoda environment is not configured", {
             context: { reason: "missing-transcoda-configuration" },
@@ -38,7 +47,8 @@ export function createEngineRegistry(
         return createTranscodaAdapter(configured);
       }
       if (engineId === "legato") {
-        const configured = options.legato ?? legatoOptionsFromEnvironment();
+        const configured =
+          options.legato ?? (options.environmentFallback === false ? undefined : legatoOptionsFromEnvironment());
         if (configured === undefined) {
           throw new PdfOmrError("ENGINE_UNAVAILABLE", "LEGATO environment is not configured", {
             context: { reason: "missing-legato-configuration" },
@@ -47,7 +57,8 @@ export function createEngineRegistry(
         return createLegatoAdapter(configured);
       }
       if (engineId === "rokot") {
-        const configured = options.rokot ?? rokotOptionsFromEnvironment();
+        const configured =
+          options.rokot ?? (options.environmentFallback === false ? undefined : rokotOptionsFromEnvironment());
         if (configured === undefined) {
           throw new PdfOmrError("ENGINE_UNAVAILABLE", "Rokot environment is not configured", {
             context: { reason: "missing-rokot-configuration" },
@@ -100,8 +111,7 @@ function legatoOptionsFromEnvironment(): LegatoAdapterOptions | undefined {
     modelPath: join(modelDirectory, "model.safetensors"),
     modelSha256: "cdeafc9ab30eba74e1c87f0722f869aa9c00d4c4d5986561d4abfeccd6f9cfcc",
     baseModelPath,
-    runnerPath:
-      process.env.PDF_OMR_LEGATO_RUNNER ?? fileURLToPath(new URL("../engines/legato-runner.py", import.meta.url)),
+    runnerPath: process.env.PDF_OMR_LEGATO_RUNNER ?? resolveBundledLegatoRunnerPath(),
   };
 }
 

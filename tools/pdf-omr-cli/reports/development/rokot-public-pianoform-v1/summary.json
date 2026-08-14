@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "completed-with-blocked-downstream-readiness",
+  "corpus": {
+    "id": "public-pianoform-v1-quick-development",
+    "role": "development",
+    "manifestSha256": "250b343cd67425b15fdd837038e94bacc8897af4c142e3ace5bc1f1cca97688e",
+    "itemCount": 10,
+    "inputScopes": {
+      "systemCrop": 6,
+      "fullPage": 4
+    }
+  },
+  "environment": {
+    "engineId": "rokot",
+    "modelRevision": "7add305aade6fb3a64ad4dde77d410fa68381089",
+    "modelSha256": "df53948ada1a4a584b4c7c81cc7e3293d3457f2e5ec9688271693459eb950f25",
+    "visionProjectorSha256": "1074d47f6fd864bffa9d8843bbae30e6aa696ad0d55535ebd77053d81c699bd0",
+    "llamaCppBuild": "b10200-5f55650a7",
+    "abcConverter": "abc-xml-converter==1.0.1",
+    "segmentationDetectorVersion": "rokot-staff-system-v2"
+  },
+  "benchmark": {
+    "commandStatus": "succeeded",
+    "reportSha256": "ff4a45aadf5388353a77053766267cf58a06633aeebbb1952d8292abcf5a25f9",
+    "itemsSucceeded": 10,
+    "itemsFailed": 0,
+    "itemRuntimeTotalMs": 218271.0,
+    "maximumItemWallTimeMs": 46924.351792,
+    "gateEvaluated": false
+  },
+  "admissionProgression": [
+    {
+      "stage": "staff-layout-only",
+      "itemsSucceeded": 5,
+      "itemsFailed": 5,
+      "reportSha256": "2c4e475de246d8c59f9d63450be2fbf15056d36e0e9d37ac4b062ad6bd493dfe"
+    },
+    {
+      "stage": "input-scope-routing",
+      "itemsSucceeded": 8,
+      "itemsFailed": 2,
+      "reportSha256": "844204e9a2b8b2795149eb7682f2c4937722e906a19ca7aa76c0e9a4c586e136"
+    },
+    {
+      "stage": "detector-v2-and-single-staff-canonicalization",
+      "itemsSucceeded": 10,
+      "itemsFailed": 0,
+      "reportSha256": "ff4a45aadf5388353a77053766267cf58a06633aeebbb1952d8292abcf5a25f9"
+    }
+  ],
+  "downstreamReadiness": {
+    "ready": 4,
+    "blocked": 6,
+    "diagnosticsByCode": {
+      "MISSING_CLEF": 7,
+      "MISSING_KEY_SIGNATURE": 6,
+      "MISSING_MEASURE_DURATION": 6,
+      "MISSING_TIME_SIGNATURE": 6,
+      "ROKOT_MEASURE_DURATION_MISMATCH": 13,
+      "ROKOT_STAFF_MEASURE_COUNT_MISMATCH": 3,
+      "ROKOT_SYSTEM_BOUNDARY_AMBIGUOUS": 1,
+      "VOICE_DURATION_MISMATCH": 17
+    }
+  },
+  "symbolic": {
+    "overall": {
+      "pitchF1": 0.8888888888888888,
+      "onsetF1": 0.9076923076923077,
+      "durationF1": 0.8656410256410256,
+      "jointF1": 0.41435897435897434,
+      "validMeasureRate": 0.38288288288288286
+    },
+    "qualityOracleSystem": {
+      "pitchF1": 0.7544378698224852,
+      "onsetF1": 0.7639836289222375,
+      "durationF1": 0.6957708049113234,
+      "jointF1": 0.17735334242837655,
+      "validMeasureRate": 0.075
+    }
+  },
+  "decision": "INVESTIGATE"
+}

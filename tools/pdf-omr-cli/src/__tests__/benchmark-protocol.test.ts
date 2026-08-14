@@ -19,6 +19,27 @@ describe("frozen benchmark protocol", () => {
     ).toMatchObject({ status: "frozen" });
   });
 
+  it("retains frozen render, segmentation and decoder declarations", () => {
+    const bytes = protocolBytes({
+      render: { id: "source-pdf", version: "1", dpi: 300 },
+      segmentation: { id: "provided-system-crop", version: "1", scope: "system-crop" },
+      decoder: { id: "rokot-abc", version: "1", parameters: { temperature: 0 } },
+    });
+
+    expect(
+      verifyFrozenProtocol(bytes, {
+        protocolSha256: sha256Bytes(bytes),
+        manifestSha256,
+        engineId: "audiveris",
+        preprocess: "none",
+      }),
+    ).toMatchObject({
+      render: { id: "source-pdf" },
+      segmentation: { scope: "system-crop" },
+      decoder: { id: "rokot-abc" },
+    });
+  });
+
   it.each([
     ["protocol hash", { protocolSha256: "b".repeat(64) }, "protocol-hash-mismatch"],
     ["manifest hash", { manifestSha256: "b".repeat(64) }, "manifest-hash-mismatch"],
@@ -39,7 +60,7 @@ describe("frozen benchmark protocol", () => {
   });
 });
 
-function protocolBytes(): Uint8Array {
+function protocolBytes(overrides: Record<string, unknown> = {}): Uint8Array {
   return new TextEncoder().encode(
     JSON.stringify({
       schemaVersion: "1.0.0",
@@ -65,6 +86,7 @@ function protocolBytes(): Uint8Array {
         reproducibilityAgreementRate: 1,
         cancelLatencyP95Ms: 2000,
       },
+      ...overrides,
     }),
   );
 }

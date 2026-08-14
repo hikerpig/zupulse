@@ -1,0 +1,169 @@
+{
+  "schemaVersion": "1.0.0",
+  "corpusId": "olimpic-scanned-full-page-dev-v1",
+  "protocolVersion": "2.0.0",
+  "items": [
+    {
+      "id": "olimpic-4945954-full-page",
+      "workId": "olimpic-4945954",
+      "variantId": "full-work",
+      "split": "development",
+      "category": "real-scanned-full-page",
+      "input": {
+        "path": "dev/4945954/input.pdf",
+        "sha256": "9041badf0af41dc69cc079b7254c74e700dcf46726ee3060182f0867d1d2c63f"
+      },
+      "groundTruth": {
+        "path": "dev/4945954/truth.musicxml",
+        "sha256": "43e66018a1c6904067a956399c6ba281b0d24b1945c8844e73d4a1f9cc5de72a",
+        "format": "musicxml"
+      },
+      "license": {
+        "id": "CC-BY-SA-4.0",
+        "source": "https://creativecommons.org/licenses/by-sa/4.0/"
+      },
+      "provenance": {
+        "dataset": "OLiMPiC scanned",
+        "release": "1.0 (2024-02-12)",
+        "sampleId": "4945954/full-work",
+        "sourceSplit": "dev",
+        "archiveSha256": "a84091b50154251b66d37b50806f98d8a6d758b4195d2aa9805d1b9cb78e6993"
+      }
+    },
+    {
+      "id": "olimpic-4976604-full-page",
+      "workId": "olimpic-4976604",
+      "variantId": "full-work",
+      "split": "development",
+      "category": "real-scanned-full-page",
+      "input": {
+        "path": "dev/4976604/input.pdf",
+        "sha256": "3ab43c6a947d9589cff415afac9abb63f43a42eab327e71ee7b6d0d024ca9dc5"
+      },
+      "groundTruth": {
+        "path": "dev/4976604/truth.musicxml",
+        "sha256": "b703b8d9ae2de21766b3938f8550c607c71497d47bdef2eed627feb2dc7742fd",
+        "format": "musicxml"
+      },
+      "license": {
+        "id": "CC-BY-SA-4.0",
+        "source": "https://creativecommons.org/licenses/by-sa/4.0/"
+      },
+      "provenance": {
+        "dataset": "OLiMPiC scanned",
+        "release": "1.0 (2024-02-12)",
+        "sampleId": "4976604/full-work",
+        "sourceSplit": "dev",
+        "archiveSha256": "a84091b50154251b66d37b50806f98d8a6d758b4195d2aa9805d1b9cb78e6993"
+      }
+    },
+    {
+      "id": "olimpic-4985990-full-page",
+      "workId": "olimpic-4985990",
+      "variantId": "full-work",
+      "split": "development",
+      "category": "real-scanned-full-page",
+      "input": {
+        "path": "dev/4985990/input.pdf",
+        "sha256": "d2153b2606d8df25a659e7cb9352dd2ab161f6caf41b7eec40cfb0177f8189a2"
+      },
+      "groundTruth": {
+        "path": "dev/4985990/truth.musicxml",
+        "sha256": "0d23b02d0d82f65a6fe20ab7df5bd539d205ac13425e3594558ada62da898c75",
+        "format": "musicxml"
+      },
+      "license": {
+        "id": "CC-BY-SA-4.0",
+        "source": "https://creativecommons.org/licenses/by-sa/4.0/"
+      },
+      "provenance": {
+        "dataset": "OLiMPiC scanned",
+        "release": "1.0 (2024-02-12)",
+        "sampleId": "4985990/full-work",
+        "sourceSplit": "dev",
+        "archiveSha256": "a84091b50154251b66d37b50806f98d8a6d758b4195d2aa9805d1b9cb78e6993"
+      }
+    },
+    {
+      "id": "olimpic-6007571-full-page",
+      "workId": "olimpic-6007571",
+      "variantId": "full-work",
+      "split": "development",
+      "category": "real-scanned-full-page",
+      "input": {
+        "path": "dev/6007571/input.pdf",
+        "sha256": "f89b5ae71c7248a846c09ce3fe70924c67ad16d5a30c62ac043a733c4ccccb9d"
+      },
+      "groundTruth": {
+        "path": "dev/6007571/truth.musicxml",
+        "sha256": "d822ea6011aa393536f8702c57ac79679129ac8720789793b00cb6bbd2298817",
+        "format": "musicxml"
+      },
+      "license": {
+        "id": "CC-BY-SA-4.0",
+        "source": "https://creativecommons.org/licenses/by-sa/4.0/"
+      },
+      "provenance": {
+        "dataset": "OLiMPiC scanned",
+        "release": "1.0 (2024-02-12)",
+        "sampleId": "6007571/full-work",
+        "sourceSplit": "dev",
+        "archiveSha256": "a84091b50154251b66d37b50806f98d8a6d758b4195d2aa9805d1b9cb78e6993"
+      }
+    },
+    {
+      "id": "olimpic-5862368-full-page",
+      "workId": "olimpic-5862368",
+      "variantId": "full-work",
+      "split": "development",
+      "category": "real-scanned-full-page",
+      "input": {
+        "path": "dev/5862368/input.pdf",
+        "sha256": "d76b02e03475e61742dcfafb4f5e0ff6eb19798321594b51619774dc1e67fa16"
+      },
+      "groundTruth": {
+        "path": "dev/5862368/truth.musicxml",
+        "sha256": "49f9e45cc2dffc0435f1efe9000e03ac53038ed72bca7e1e5790e8a57a646792",
+        "format": "musicxml"
+      },
+      "license": {
+        "id": "CC-BY-SA-4.0",
+        "source": "https://creativecommons.org/licenses/by-sa/4.0/"
+      },
+      "provenance": {
+        "dataset": "OLiMPiC scanned",
+        "release": "1.0 (2024-02-12)",
+        "sampleId": "5862368/full-work",
+        "sourceSplit": "dev",
+        "archiveSha256": "a84091b50154251b66d37b50806f98d8a6d758b4195d2aa9805d1b9cb78e6993"
+      }
+    },
+    {
+      "id": "olimpic-6011095-full-page",
+      "workId": "olimpic-6011095",
+      "variantId": "full-work",
+      "split": "development",
+      "category": "real-scanned-full-page",
+      "input": {
+        "path": "dev/6011095/input.pdf",
+        "sha256": "410d498f827ad3e0521ae9f0a47d1dbc649a76b93375d41bebd870403f57953d"
+      },
+      "groundTruth": {
+        "path": "dev/6011095/truth.musicxml",
+        "sha256": "86d330f3fd05f93ff88b4d47cac53be007c9901aa1d665d3f4997acffdd3ede5",
+        "format": "musicxml"
+      },
+      "license": {
+        "id": "CC-BY-SA-4.0",
+        "source": "https://creativecommons.org/licenses/by-sa/4.0/"
+      },
+      "provenance": {
+        "dataset": "OLiMPiC scanned",
+        "release": "1.0 (2024-02-12)",
+        "sampleId": "6011095/full-work",
+        "sourceSplit": "dev",
+        "archiveSha256": "a84091b50154251b66d37b50806f98d8a6d758b4195d2aa9805d1b9cb78e6993"
+      }
+    }
+  ]
+}

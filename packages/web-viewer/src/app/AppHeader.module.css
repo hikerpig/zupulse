@@ -138,6 +138,29 @@
     box-shadow: var(--focus-ring);
   }
 
+  .settingsLink {
+    display: inline-flex;
+    height: var(--control-height-sm);
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .settingsLink:hover {
+    background: var(--bg-control);
+  }
+
+  .settingsLink:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
   @media (max-width: 680px) {
     .header {
       grid-template-columns: auto 1fr auto;
@@ -147,6 +170,7 @@
 
     .wordmark span,
     .headerActionButton span,
+    .settingsLink span,
     .navLink svg,
     .activeLink svg {
       display: none;

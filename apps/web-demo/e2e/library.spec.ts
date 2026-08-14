@@ -14,6 +14,14 @@ const harmonySelectionFixture = fileURLToPath(
 );
 const reviewedFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/K331-3_reviewed.mxl", import.meta.url));
 
+test("does not expose the Desktop-only PDF OMR route or entry", async ({ page }) => {
+  await page.goto("/#/library");
+  await expect(page.getByRole("link", { name: "PDF 识谱" })).toHaveCount(0);
+  await page.goto("/#/pdf-omr");
+  await expect(page.getByRole("heading", { name: "PDF 识谱" })).toHaveCount(0);
+  await expect(page.getByText("PDF 识谱")).toHaveCount(0);
+});
+
 test("keeps the Library sort select compact on desktop", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto("/#/library");

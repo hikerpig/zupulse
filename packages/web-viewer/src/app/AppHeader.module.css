@@ -190,16 +190,12 @@
   }
 
   @media (max-width: 430px) {
-    .wordmark {
+    .brand {
       display: none;
     }
 
-    :global(:root.desktop-shell) .header {
+    .header {
       grid-template-columns: minmax(0, 1fr) auto;
-    }
-
-    :global(:root.desktop-shell) .brand {
-      display: none;
     }
 
     .githubLink,
@@ -207,8 +203,13 @@
       display: none;
     }
 
+    .navigation {
+      gap: 0;
+    }
+
     .navLink,
     .activeLink {
+      padding-inline: 0;
       font-size: 12px;
     }
   }

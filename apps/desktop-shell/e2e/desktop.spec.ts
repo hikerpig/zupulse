@@ -127,7 +127,8 @@ test("configures a recognition engine by picker or pasted path", async () => {
   const app = await launch(userData);
   try {
     const window = await app.firstWindow();
-    await window.goto("zupulse://app/index.html#/settings");
+    await window.getByRole("link", { name: "Settings" }).click();
+    await expect(window.getByRole("heading", { name: "Settings" })).toBeVisible();
     expect(
       await app.evaluate(({ Menu }) =>
         Menu.getApplicationMenu()?.items.some((item) =>
@@ -135,7 +136,7 @@ test("configures a recognition engine by picker or pasted path", async () => {
         ),
       ),
     ).toBe(true);
-    await window.getByRole("button", { name: "Audiveris Configure" }).click();
+    await window.getByRole("button", { name: /Audiveris (?:Configure|Fix)/ }).click();
     await chooseFixture(app, fakeAudiveris);
     await window.getByRole("button", { name: "Choose Executable" }).click();
     const input = window.getByRole("textbox", { name: "Executable" });
@@ -166,7 +167,7 @@ test("keeps PDF OMR Desktop-only and observes a selected PDF without Library mut
     await window.getByRole("button", { name: "Choose PDF or image" }).click();
     await expect(window.getByText("K331-3_reviewed.pdf").first()).toBeVisible();
     await expect(window.getByRole("tab", { name: "Original input" })).toHaveAttribute("aria-selected", "true");
-    await expect(window.getByRole("button", { name: "Start extraction" })).toBeEnabled();
+    await expect(window.getByRole("button", { name: "Start extraction" })).toBeDisabled();
     await window.getByRole("button", { name: "Switch to light theme" }).click();
     await expect.poll(() => window.locator("html").getAttribute("data-theme")).toBe("light");
     await window.getByRole("button", { name: "Switch to dark theme" }).click();

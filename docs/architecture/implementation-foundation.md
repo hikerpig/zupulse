@@ -20,6 +20,8 @@
 - 播放练习 sidecar 与本机恢复位置合约。
 - Electron Main/Preload/Renderer 安全边界、受限自定义协议和 typed IPC。
 - 一次性文件 token、原子 JSON 持久化、隐私化诊断日志和桌面生命周期协调。
+- Browser/Desktop 分发构建的 provider-neutral 匿名遥测边界、Main-owned identity、隐私告知与可退出设置。
+- Tagged/manual release 的 source-map upload、`.map` artifact removal、credential/remote-host guards。
 - macOS arm64 Internal Acceptance Build、Electron E2E 与 `app.asar` 资源校验。
 
 当前实现不包含真实 MIDI Analyzer、SQLite adapter、跨平台同步 adapter、原生音频桥、正式签名/公证/自动更新。Windows x64 配置已保留，但尚未在 Windows 主机完成构建和人工验收。
@@ -67,6 +69,8 @@ pnpm desktop:package
 - alphaTab script、字体、SoundFont 和许可证进入构建产物。
 - Electron 离线/隔离、安全拒绝、真实 GP 打开与练习状态恢复 smoke 通过。
 - 当前平台 Forge package 生成后，自动解包验证 CSP、运行时代码和离线资源，并拒绝测试 fixture、source map 与 MockNativeBridge 泄漏。
+- Release workflow 还要求 source maps 能被独立校验、上传成功后从 public/package artifacts 删除，并拒绝无效
+  PostHog host、remote script 和管理凭据；Browser/Desktop fake-ingestion journeys 验证刷新、relaunch 和 opt-out。
 
 ## 后续计划
 
@@ -78,7 +82,7 @@ pnpm desktop:package
 4. 单独实现 MIDI Analyzer heuristic、piano-roll、基础钢琴谱与测试素材，再开放 MIDI 文件入口。
 5. 云同步退出当前 Desktop MVP；未来按 macOS/Windows 对等的 provider-neutral 能力重新设计。
 
-Desktop GP Slice 保留 Browser Demo，并把仓库组织为 `packages/web-core`、`packages/web-viewer`、`apps/web-demo` 与 `apps/desktop-shell`。首个桌面版本是内部可安装验收包，不包含正式签名、公证、自动更新或遥测。
+Desktop GP Slice 保留 Browser Demo，并把仓库组织为 `packages/web-core`、`packages/web-viewer`、`apps/web-demo` 与 `apps/desktop-shell`。首个桌面版本是内部可安装验收包，不包含正式签名、公证或自动更新；Internal Acceptance 仍不启用分发遥测。
 
 ## GP alphaTab 竖切
 

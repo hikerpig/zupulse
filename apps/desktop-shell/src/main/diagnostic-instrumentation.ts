@@ -1,6 +1,7 @@
 import type { EventEmitter } from "node:events";
 import type { DesktopDiagnostics } from "./diagnostics";
 import { BridgeDispatchError } from "./bridge";
+import type { TelemetryPort } from "@zupulse/web-core";
 
 type DiagnosticTarget = Pick<EventEmitter, "on" | "removeListener">;
 type WindowDiagnosticTarget = DiagnosticTarget & { webContents: DiagnosticTarget };
@@ -19,6 +20,7 @@ export function installAppDiagnosticInstrumentation(
   app: DiagnosticTarget,
   diagnostics: DesktopDiagnostics,
   processTarget: DiagnosticTarget = process,
+  telemetry?: TelemetryPort,
 ): () => void {
   const childProcessGone = (_event: unknown, details: unknown) => {
     void diagnostics.recordElectron({ code: "CHILD_PROCESS_GONE", ...safeProcessGoneFacts(details) });
@@ -28,6 +30,11 @@ export function installAppDiagnosticInstrumentation(
       code: "HOST_OPERATION_FAILED",
       operation: "app.runtime",
       errorCode: origin === "unhandledRejection" ? "UNHANDLED_REJECTION" : "UNCAUGHT_EXCEPTION",
+    });
+    telemetry?.captureException(_error, {
+      runtime: "main",
+      handled: false,
+      operation: "app.runtime",
     });
   };
 
@@ -43,6 +50,7 @@ export function installAppDiagnosticInstrumentation(
 export function installWindowDiagnosticInstrumentation(
   window: WindowDiagnosticTarget,
   diagnostics: DesktopDiagnostics,
+  telemetry?: TelemetryPort,
 ): () => void {
   const didFailLoad = () => {
     void diagnostics.recordElectron({
@@ -63,6 +71,11 @@ export function installWindowDiagnosticInstrumentation(
   };
   const renderProcessGone = (_event: unknown, details: unknown) => {
     void diagnostics.recordElectron({ code: "RENDERER_PROCESS_GONE", ...safeProcessGoneFacts(details) });
+    telemetry?.capture({
+      name: "runtime_failure_observed",
+      runtime: "renderer",
+      reason: toTelemetryFailureReason(safeProcessGoneFacts(details).reason),
+    });
   };
 
   window.webContents.on("did-fail-load", didFailLoad);
@@ -107,4 +120,11 @@ function safeProcessGoneFacts(value: unknown): { reason?: string; exitCode?: num
       ? details.exitCode
       : undefined;
   return { ...(reason === undefined ? {} : { reason }), ...(exitCode === undefined ? {} : { exitCode }) };
+}
+
+function toTelemetryFailureReason(
+  reason: string | undefined,
+): "crashed" | "oom" | "killed" | "integrity-failure" | "unknown" {
+  if (reason === "crashed" || reason === "oom" || reason === "killed" || reason === "integrity-failure") return reason;
+  return "unknown";
 }

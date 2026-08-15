@@ -281,6 +281,12 @@ export const capabilitiesSchema = z
         openUrl: z.boolean(),
       })
       .strict(),
+    telemetry: z
+      .object({
+        available: z.boolean(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -470,6 +476,7 @@ export const bridgeRequestSchema = z.discriminatedUnion("type", [
       .strict(),
   ),
   envelope("app.locale.setPreference", z.object({ preference: localePreferenceSchema }).strict()),
+  envelope("app.telemetry.setPreference", z.object({ enabled: z.boolean() }).strict()),
   envelope("external.openUrl", z.object({ url: secureExternalUrlSchema }).strict()),
   envelope("recognitionSettings.list", z.object({}).strict()),
   envelope("recognitionSettings.selectResource", recognitionResourceSelectionRequestSchema),
@@ -621,9 +628,28 @@ export const bridgeResponseSchemas = {
       rendererBuildHash: idSchema,
       capabilities: capabilitiesSchema,
       locale: localeStateSchema,
+      telemetry: z
+        .object({
+          schemaVersion: z.literal(1),
+          enabled: z.boolean(),
+          noticeAcknowledged: z.boolean(),
+          installationId: z.uuid().optional(),
+          applicationSessionId: z.uuid().optional(),
+        })
+        .strict()
+        .optional(),
     })
     .strict(),
   "app.locale.setPreference": localeStateSchema,
+  "app.telemetry.setPreference": z
+    .object({
+      schemaVersion: z.literal(1),
+      enabled: z.boolean(),
+      noticeAcknowledged: z.boolean(),
+      installationId: z.uuid().optional(),
+      applicationSessionId: z.uuid().optional(),
+    })
+    .strict(),
   "external.openUrl": z.object({}).strict(),
   "recognitionSettings.list": z.object({ providers: z.array(recognitionProviderSummarySchema).length(4) }).strict(),
   "recognitionSettings.selectResource": z.discriminatedUnion("status", [

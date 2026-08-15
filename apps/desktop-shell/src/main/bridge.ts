@@ -20,7 +20,15 @@ export type BridgeDispatcherOptions = {
   rendererBuildHash: string;
   locale: LocaleState;
   capabilities?: Capabilities;
+  telemetryAvailable?: boolean;
   handlers?: BridgeHandlers;
+  telemetry?: {
+    schemaVersion: 1;
+    enabled: boolean;
+    noticeAcknowledged: boolean;
+    installationId?: string;
+    applicationSessionId?: string;
+  };
 };
 
 export class BridgeDispatchError extends Error {
@@ -64,6 +72,7 @@ export function createDesktopCapabilities(
     audio: { webAudio: true, nativeBridge: false },
     localization: { changeLocale: true },
     externalNavigation: { openUrl: true },
+    telemetry: { available: true },
   });
 }
 
@@ -97,8 +106,12 @@ export async function dispatchBridgeRequest(
       appVersion: options.appVersion,
       bridgeVersion: BRIDGE_SCHEMA_VERSION,
       rendererBuildHash: options.rendererBuildHash,
-      capabilities: options.capabilities ?? DEFAULT_CAPABILITIES,
+      capabilities: {
+        ...(options.capabilities ?? DEFAULT_CAPABILITIES),
+        telemetry: { available: options.telemetryAvailable ?? true },
+      },
       locale: options.locale,
+      ...(options.telemetry === undefined ? {} : { telemetry: options.telemetry }),
     });
   }
 

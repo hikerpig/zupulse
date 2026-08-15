@@ -14,7 +14,8 @@ export type ApplicationIssueCode =
   | "studio-version-conflict"
   | "studio-preview-unavailable"
   | "studio-preview-failed"
-  | "studio-audio-unavailable";
+  | "studio-audio-unavailable"
+  | "telemetry-preference-write-failed";
 
 export type ApplicationIssue = {
   code: ApplicationIssueCode;

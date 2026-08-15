@@ -72,6 +72,18 @@ export class MockNativeBridge {
           preference: request.payload.preference,
           effectiveLocale: request.payload.preference === "system" ? "en-US" : request.payload.preference,
         });
+      case "app.telemetry.setPreference":
+        return parseBridgeResponse(request.type, {
+          schemaVersion: 1,
+          enabled: request.payload.enabled,
+          noticeAcknowledged: true,
+          ...(request.payload.enabled
+            ? {
+                installationId: "11111111-1111-4111-8111-111111111111",
+                applicationSessionId: "22222222-2222-4222-8222-222222222222",
+              }
+            : {}),
+        });
       case "external.openUrl":
         return parseBridgeResponse(request.type, {});
       case "file.readBytes": {

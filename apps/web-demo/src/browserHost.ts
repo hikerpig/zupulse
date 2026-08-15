@@ -40,6 +40,9 @@ export function createBrowserHost(ownerDocument: Document): ViewerHost & { bridg
   };
 }
 
+export { createBrowserTelemetry } from "./telemetry/browser-telemetry";
+export type { BrowserTelemetry } from "./telemetry/browser-telemetry";
+
 function getStorage(ownerDocument: Document): Storage | undefined {
   try {
     return ownerDocument.defaultView?.localStorage;

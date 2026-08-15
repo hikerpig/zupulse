@@ -33,6 +33,19 @@ export const enUS = {
       enUS: "English",
       saving: "Saving language preference",
     },
+    telemetry: {
+      trigger: "Privacy & diagnostics",
+      dialogLabel: "Privacy and diagnostics",
+      noticeTitle: "Help improve Zupulse",
+      noticeBody:
+        "Share anonymous startup, feature-use, and error reports. Scores, file names, paths, and your input stay on this device.",
+      learnMore: "Learn more",
+      continueSharing: "Continue sharing",
+      disableSharing: "Turn off sharing",
+      enabled: "Share anonymous usage and error reports",
+      saving: "Saving privacy preference",
+      unavailable: "Anonymous reporting is unavailable in this build",
+    },
     settings: {
       title: "Settings",
       description: "Manage Zupulse appearance, language, and app capabilities on this device.",
@@ -630,6 +643,7 @@ export const enUS = {
   errors: {
     generic: "Something went wrong. Try again.",
     localePreferenceWriteFailed: "Could not save the language preference. The current language was kept.",
+    telemetryPreferenceWriteFailed: "Could not save the privacy preference. The current setting was kept.",
     import: {
       generic: "The score could not be imported.",
       unsupportedFormat: "This score format is not supported.",

@@ -216,6 +216,12 @@
               "properties": { "openUrl": { "type": "boolean" } },
               "required": ["openUrl"],
               "additionalProperties": false
+            },
+            "telemetry": {
+              "type": "object",
+              "properties": { "available": { "type": "boolean" } },
+              "required": ["available"],
+              "additionalProperties": false
             }
           },
           "required": ["fileAccess", "storage", "sync", "audio", "localization", "externalNavigation"],
@@ -228,6 +234,26 @@
             "effectiveLocale": { "type": "string", "enum": ["zh-CN", "en-US"] }
           },
           "required": ["preference", "effectiveLocale"],
+          "additionalProperties": false
+        },
+        "telemetry": {
+          "type": "object",
+          "properties": {
+            "schemaVersion": { "type": "number", "const": 1 },
+            "enabled": { "type": "boolean" },
+            "noticeAcknowledged": { "type": "boolean" },
+            "installationId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "applicationSessionId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          "required": ["schemaVersion", "enabled", "noticeAcknowledged"],
           "additionalProperties": false
         }
       },
@@ -406,6 +432,12 @@
         "type": "object",
         "properties": { "openUrl": { "type": "boolean" } },
         "required": ["openUrl"],
+        "additionalProperties": false
+      },
+      "telemetry": {
+        "type": "object",
+        "properties": { "available": { "type": "boolean" } },
+        "required": ["available"],
         "additionalProperties": false
       }
     },

@@ -152,6 +152,12 @@
     text-decoration: none;
   }
 
+  .headerActions {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+  }
+
   .settingsLink:hover {
     background: var(--bg-control);
   }
@@ -198,6 +204,13 @@
       grid-template-columns: minmax(0, 1fr) auto;
     }
 
+    :global(:root.desktop-shell) .brand {
+      display: none;
+    }
+
+    :global(:root.desktop-shell) .telemetryButton {
+      display: none !important;
+    }
     .githubLink,
     .redundantHomeLink {
       display: none;

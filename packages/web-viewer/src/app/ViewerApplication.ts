@@ -5,9 +5,10 @@ import {
   type ViewerFile,
   type ViewerHost,
   type ViewerHostEvent,
+  type TelemetryControl,
 } from "../host";
 import type { ViewerSessionPort } from "../viewer-session/viewer-session-types";
-import { importLibraryScores } from "@zupulse/web-core";
+import { createNoopTelemetryPort, importLibraryScores } from "@zupulse/web-core";
 import type {
   LibraryScore,
   ScoreFileGateway,
@@ -16,6 +17,7 @@ import type {
   LibraryScoreSummary,
   ImportItemResult,
   ScoreImportSource,
+  TelemetryPort,
 } from "@zupulse/web-core";
 import type { StudioScoreRuntime } from "../studio-score-runtime";
 import type { BundledSampleScore, BundledSampleSource } from "../sample-scores";
@@ -56,6 +58,13 @@ export class ViewerApplication implements ViewerAppHandle {
   private readonly unsubscribe: () => void;
   private readonly studioApplication: StudioApplication;
   private readonly coordinator: WorkspaceCoordinator;
+  private readonly telemetry: TelemetryPort;
+  private applicationReadyCaptured = false;
+  private readonly presentedIssueKeys = new Set<string>();
+  private readonly playbackTelemetryUnsubscribers = new Map<string, () => void>();
+  private readonly workspaceTelemetryKeys = new Set<string>();
+  private studioTelemetrySessionId: string | undefined;
+  private readonly telemetryControl?: TelemetryControl;
 
   constructor(
     private readonly host: ViewerHost,
@@ -75,7 +84,11 @@ export class ViewerApplication implements ViewerAppHandle {
     },
     openStudioRuntime?: (file: ViewerFile) => Promise<StudioScoreRuntime>,
     harmonyAnalysisRunner: HarmonyAnalysisRunner = createDefaultHarmonyAnalysisRunner(),
+    telemetryControl?: TelemetryControl,
+    private readonly initialSurface: "library" | "viewer" | "studio" | "not-found" = "library",
   ) {
+    if (telemetryControl !== undefined) this.telemetryControl = telemetryControl;
+    this.telemetry = host.telemetry ?? createNoopTelemetryPort();
     this.unsubscribe = host.subscribe((event) => this.onHostEvent(event));
     this.studioApplication = new StudioApplication({
       library,
@@ -138,8 +151,17 @@ export class ViewerApplication implements ViewerAppHandle {
     return this.library.repository.get(id as LibraryScore["id"]);
   }
 
-  openStudio(id: string): Promise<void> {
-    return this.coordinator.openStudio(id);
+  async openStudio(id: string): Promise<void> {
+    const studioWasActive =
+      this.studioApplication.getCurrentStudioSession() !== undefined &&
+      this.studioApplication.getSnapshot()?.libraryScoreId === id;
+    await this.coordinator.openStudio(id);
+    const studio = this.studioApplication.getSnapshot();
+    if (!studio || studio.libraryScoreId !== id || studio.status === "error" || studio.status === "conflict") return;
+    const score = await this.library.repository.get(id as LibraryScore["id"]);
+    if (!studioWasActive || this.studioTelemetrySessionId === undefined)
+      this.studioTelemetrySessionId = crypto.randomUUID();
+    if (score) this.captureWorkspaceSession("studio", id, score.format, this.studioTelemetrySessionId);
   }
 
   async refreshLibrary(): Promise<void> {
@@ -150,12 +172,14 @@ export class ViewerApplication implements ViewerAppHandle {
       await this.library.repository.initialize();
       const scores = await this.library.repository.list();
       this.setSnapshot({ ...this.snapshot, library: { scores, loading: false } });
+      this.captureApplicationReady("ready");
     } catch (error) {
       this.reportDiagnostic(error, "library.refresh");
       this.setSnapshot({
         ...this.snapshot,
         library: { scores: [], loading: false, error: applicationIssue("library-unavailable") },
       });
+      this.captureApplicationReady("degraded");
     }
   }
 
@@ -225,6 +249,17 @@ export class ViewerApplication implements ViewerAppHandle {
     });
     await this.refreshLibrary();
     this.setImportSummary(sources.length, results, controller.signal.aborted, false);
+    for (const result of results) {
+      const source = sources.find(
+        (item) => item.fileName === (result.status === "failed" ? result.fileName : result.score.fileName),
+      );
+      this.telemetry.capture({
+        name: "score_import_completed",
+        source: source?.telemetrySource ?? "picker",
+        outcome: result.status,
+        ...(result.status === "failed" ? { issueCode: result.error.code } : { scoreFormat: result.score.format }),
+      });
+    }
     const successful = results.some((item) => item.status === "created" || item.status === "existing");
     if (!successful) return;
     if (sources.length === 1) {
@@ -282,6 +317,12 @@ export class ViewerApplication implements ViewerAppHandle {
           currentLibraryScoreId: id,
           viewer: { libraryScoreId: id, status: "ready" },
         });
+        void this.library.repository.get(id).then((score) => {
+          if (score) {
+            this.captureWorkspaceSession("viewer", id, score.format);
+            this.observeViewerPlayback(id, score.format);
+          }
+        });
       })
       .catch((error: unknown) => {
         this.reportDiagnostic(error, "library.open");
@@ -305,7 +346,36 @@ export class ViewerApplication implements ViewerAppHandle {
   }
 
   releaseLibraryScore(id: string): Promise<void> {
+    this.playbackTelemetryUnsubscribers.get(id)?.();
+    this.playbackTelemetryUnsubscribers.delete(id);
     return this.coordinator.releaseViewer(id);
+  }
+
+  capturePresentedIssue(
+    surface: "startup" | "library" | "viewer" | "studio" | "settings",
+    issue: ApplicationIssue,
+  ): void {
+    const key = `${surface}:${issue.code}`;
+    if (this.presentedIssueKeys.has(key)) return;
+    this.presentedIssueKeys.add(key);
+    this.telemetry.capture({
+      name: "application_issue_presented",
+      surface,
+      issueCode: issue.code,
+      recoverable: issue.recoverable,
+    });
+  }
+
+  getTelemetryPreference(): ReturnType<TelemetryControl["getState"]> | undefined {
+    return this.telemetryControl?.getState();
+  }
+
+  acknowledgeTelemetryNotice(): Promise<void> {
+    return Promise.resolve(this.telemetryControl?.acknowledgeNotice());
+  }
+
+  async setTelemetryPreference(enabled: boolean): Promise<void> {
+    await this.telemetryControl?.setPreference(enabled);
   }
 
   private async readLibraryScore(id: string): Promise<ViewerFile> {
@@ -316,6 +386,18 @@ export class ViewerApplication implements ViewerAppHandle {
     } catch (error) {
       throw new ApplicationFailure(applicationIssue("viewer-library-failed"), { cause: error });
     }
+  }
+
+  private captureWorkspaceSession(
+    workspace: "viewer" | "studio",
+    scoreId: string,
+    scoreFormat: LibraryScore["format"],
+    sessionId?: string,
+  ): void {
+    const sessionKey = `${workspace}:${scoreId}:${sessionId ?? this.snapshot.currentSessionId ?? "unknown"}`;
+    if (this.workspaceTelemetryKeys.has(sessionKey)) return;
+    this.workspaceTelemetryKeys.add(sessionKey);
+    this.telemetry.capture({ name: "workspace_session_started", workspace, scoreFormat });
   }
 
   async exportLibraryScore(id: string): Promise<void> {
@@ -372,6 +454,33 @@ export class ViewerApplication implements ViewerAppHandle {
     this.host.reportDiagnostic?.(error, operation);
   }
 
+  private captureApplicationReady(state: "ready" | "degraded"): void {
+    if (this.applicationReadyCaptured) return;
+    this.applicationReadyCaptured = true;
+    this.telemetry.capture({ name: "application_ready", initialSurface: this.initialSurface, state });
+  }
+
+  private observeViewerPlayback(id: string, scoreFormat: "gp" | "musicxml"): void {
+    if (this.playbackTelemetryUnsubscribers.has(id)) return;
+    const session = this.coordinator.getCurrentSession();
+    if (!session || typeof session.subscribe !== "function") return;
+    let wasPlaying = false;
+    const unsubscribe = session.subscribe(() => {
+      const snapshot = session.getSnapshot();
+      const state = snapshot.playback?.state;
+      if (!state) return;
+      if (state.transport === "playing" && !wasPlaying) {
+        this.telemetry.capture({
+          name: "viewer_playback_started",
+          scoreFormat,
+          navigationMode: snapshot.navigation?.mode === "page-turn" ? "page-turn" : "continuous-follow",
+        });
+      }
+      wasPlaying = state.transport === "playing";
+    });
+    this.playbackTelemetryUnsubscribers.set(id, unsubscribe);
+  }
+
   private setSnapshot(snapshot: ViewerApplicationSnapshot): void {
     this.snapshot = snapshot;
     for (const listener of this.listeners) listener();
@@ -379,6 +488,9 @@ export class ViewerApplication implements ViewerAppHandle {
 
   private async destroyOnce(): Promise<void> {
     this.unsubscribe();
+    for (const unsubscribe of this.playbackTelemetryUnsubscribers.values()) unsubscribe();
+    this.playbackTelemetryUnsubscribers.clear();
+    this.presentedIssueKeys.clear();
     this.navigationListeners.clear();
     let cleanupError: unknown;
     try {

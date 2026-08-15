@@ -83,5 +83,12 @@ Zupulse 是本地优先的乐谱查看与练习应用。当前交付面是共享
 - **Remote Recognition Service**：规划中的、通过网络提供 PDF 识谱的 Recognition Provider；它不是当前
   Browser 能力，认证、隐私、上传和服务端处理边界必须在接入前另行定义。
 
+### Anonymous telemetry language
+
+- **Anonymous Installation**：匿名统计中的宿主本地身份，不等价于自然人、账号或硬件设备；同一人可对应多个 Anonymous Installation。
+- **Application Session**：一次应用运行周期；它包含期间创建的 Viewer Session 或 Studio Session，但不替代两者的工作区语义。
+- **Active Installation**：在指定时间窗口内产生 qualifying application event 的 Anonymous Installation；报表不得把它称为真实用户人数。
+- **Telemetry Preference**：当前宿主是否分享匿名使用与错误报告的本地选择；它不属于 Library Score、Practice Sidecar 或同步数据。
+
 完整术语见 `docs/architecture/glossary.md`。当前架构和决策入口见
 `docs/architecture/README.md`；若历史文档与本页冲突，以根 `AGENTS.md` 的事实源顺序处理。

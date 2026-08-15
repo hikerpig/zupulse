@@ -6,6 +6,7 @@ import {
   localPlaybackResumeSchema,
   parseSidecar,
   type PdfOmrProgressEvent,
+  type TelemetryPort,
 } from "@zupulse/web-core";
 import { createAppI18n, resolveLocale, type LocaleState, type SupportedLocale } from "@zupulse/app-i18n";
 import { randomUUID } from "node:crypto";
@@ -46,6 +47,8 @@ import { DesktopLibraryStore } from "./library/DesktopLibraryStore";
 import { verifySqliteAvailable } from "./library/sqlite";
 import { LocalePreferenceStore } from "./locale-preference-store";
 import { openExternalUrl } from "./external-navigation";
+import { TelemetryPreferenceStore } from "./telemetry-preference-store";
+import { createDesktopTelemetryPort } from "../telemetry/desktop-telemetry";
 import { DesktopPdfOmrRuntime } from "./pdf-omr-runtime";
 import { PdfOmrJobController } from "./pdf-omr-controller";
 import { PdfOmrMidiCorrectionController } from "./pdf-omr-midi-correction-controller";
@@ -96,6 +99,18 @@ protocol.registerSchemesAsPrivileged([
 const fileTokens = new FileTokenStore();
 let mainWindow: BrowserWindow | undefined;
 let lifecycle: DesktopLifecycleCoordinator | undefined;
+
+function createDelegatingTelemetryPort(getCurrent: () => ReturnType<typeof createDesktopTelemetryPort>) {
+  return {
+    capture: (event: Parameters<ReturnType<typeof createDesktopTelemetryPort>["capture"]>[0]) =>
+      getCurrent().capture(event),
+    captureException: (
+      error: Parameters<ReturnType<typeof createDesktopTelemetryPort>["captureException"]>[0],
+      context: Parameters<ReturnType<typeof createDesktopTelemetryPort>["captureException"]>[1],
+    ) => getCurrent().captureException(error, context),
+    flush: (deadlineMs: number) => getCurrent().flush(deadlineMs),
+  };
+}
 
 function getRuntimeIconPath(): string {
   return path.join(app.getAppPath(), "resources/app-icon.png");
@@ -149,10 +164,25 @@ async function startDesktopApp(): Promise<void> {
     arch: process.arch,
   });
   await diagnostics.initialize();
-  installAppDiagnosticInstrumentation(app, diagnostics);
   try {
     const rendererRoot = path.join(__dirname, "../renderer");
     const userData = app.getPath("userData");
+    const telemetryStore = new TelemetryPreferenceStore(userData);
+    const telemetryContext = await telemetryStore.load();
+    const createMainTelemetry = (context: typeof telemetryContext) =>
+      createDesktopTelemetryPort({
+        context,
+        runtime: "main",
+        appVersion: __APP_VERSION__,
+        buildId: __RENDERER_BUILD_HASH__,
+        releaseChannel: __TELEMETRY_RELEASE_CHANNEL__,
+        projectToken: __POSTHOG_PROJECT_TOKEN__,
+        apiHost: __POSTHOG_API_HOST__,
+        effectiveLocale: "en-US",
+      });
+    let currentMainTelemetry = createMainTelemetry(telemetryContext);
+    const mainTelemetry = createDelegatingTelemetryPort(() => currentMainTelemetry);
+    installAppDiagnosticInstrumentation(app, diagnostics, process, mainTelemetry);
     const localePreferenceStore = new LocalePreferenceStore(userData);
     const initialPreference = await localePreferenceStore.load();
     let currentLocaleState: LocaleState = {
@@ -291,6 +321,7 @@ async function startDesktopApp(): Promise<void> {
         return acceptScorePaths(fileTokens, parsed.data.payload.paths);
       } catch (error) {
         recordBridgeFailure(diagnostics, error);
+        mainTelemetry.captureException(error, { runtime: "main", handled: true, operation: "bridge.dispatch" });
         throw error;
       }
     });
@@ -306,6 +337,11 @@ async function startDesktopApp(): Promise<void> {
             rendererBuildHash: __RENDERER_BUILD_HASH__,
             locale: currentLocaleState,
             capabilities: desktopCapabilities,
+            telemetryAvailable:
+              ["alpha", "beta", "production"].includes(__TELEMETRY_RELEASE_CHANNEL__) &&
+              Boolean(__POSTHOG_PROJECT_TOKEN__) &&
+              __POSTHOG_API_HOST__ === "https://us.i.posthog.com",
+            telemetry: telemetryStore.getHandshake(),
             handlers: {
               "external.openUrl": (request) => openExternalUrl(request, (url) => shell.openExternal(url)),
               "app.locale.setPreference": async (request) => {
@@ -324,6 +360,19 @@ async function startDesktopApp(): Promise<void> {
                 };
                 installMenu(sendEvent, diagnostics, openDiagnosticsDirectory, currentLocaleState.effectiveLocale);
                 return currentLocaleState;
+              },
+              "app.telemetry.setPreference": async (request) => {
+                try {
+                  const next = await telemetryStore.setPreference(request.payload.enabled);
+                  currentMainTelemetry = createMainTelemetry(next);
+                  return next;
+                } catch {
+                  throw new BridgeDispatchError(
+                    "TELEMETRY_PREFERENCE_WRITE_FAILED",
+                    "Telemetry preference could not be persisted",
+                    true,
+                  );
+                }
               },
               "recognitionSettings.list": () => recognitionSettings.list().then((providers) => ({ providers })),
               "recognitionSettings.selectResource": async (request) => {
@@ -498,18 +547,19 @@ async function startDesktopApp(): Promise<void> {
         );
       } catch (error) {
         recordBridgeFailure(diagnostics, error);
+        mainTelemetry.captureException(error, { runtime: "main", handled: true, operation: "bridge.dispatch" });
         throw error;
       }
     });
     mainWindow = createMainWindow();
-    installWindowDiagnosticInstrumentation(mainWindow, diagnostics);
+    installWindowDiagnosticInstrumentation(mainWindow, diagnostics, mainTelemetry);
     lifecycle = new DesktopLifecycleCoordinator(sendEvent, {
       timeoutMs: 5000,
       onTimeout: (code) => {
         void diagnostics.recordMain({ code });
       },
     });
-    installLifecycle(mainWindow, lifecycle);
+    installLifecycle(mainWindow, lifecycle, mainTelemetry);
     installMenu(sendEvent, diagnostics, openDiagnosticsDirectory, currentLocaleState.effectiveLocale);
     void diagnostics.recordMain({ code: "APP_STARTED" });
   } catch (error) {
@@ -575,7 +625,11 @@ function isSafePdfOmrDiagnostic(value: unknown): value is { code: string; severi
   );
 }
 
-function installLifecycle(window: BrowserWindow, coordinator: DesktopLifecycleCoordinator): void {
+function installLifecycle(
+  window: BrowserWindow,
+  coordinator: DesktopLifecycleCoordinator,
+  telemetry: TelemetryPort,
+): void {
   let closeRequested = false;
   window.on("close", (event) => {
     if (closeRequested) {
@@ -584,11 +638,20 @@ function installLifecycle(window: BrowserWindow, coordinator: DesktopLifecycleCo
     }
     event.preventDefault();
     closeRequested = true;
-    void coordinator.prepareClose().finally(() => {
-      fileTokens.clear();
-      window.destroy();
-      app.quit();
-    });
+    void coordinator.prepareClose().then(
+      async () => {
+        await flushTelemetry(telemetry, 300);
+        fileTokens.clear();
+        window.destroy();
+        app.quit();
+      },
+      async () => {
+        await flushTelemetry(telemetry, 300);
+        fileTokens.clear();
+        window.destroy();
+        app.quit();
+      },
+    );
   });
   powerMonitor.on("suspend", () => {
     void coordinator.request("suspend");
@@ -596,6 +659,13 @@ function installLifecycle(window: BrowserWindow, coordinator: DesktopLifecycleCo
   powerMonitor.on("lock-screen", () => {
     void coordinator.request("suspend");
   });
+}
+
+async function flushTelemetry(telemetry: TelemetryPort, deadlineMs: number): Promise<void> {
+  await Promise.race([
+    telemetry.flush(deadlineMs),
+    new Promise<void>((resolve) => setTimeout(resolve, deadlineMs)),
+  ]).catch(() => undefined);
 }
 
 function installMenu(

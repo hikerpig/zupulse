@@ -55,6 +55,10 @@ export function ViewerPage({
   }, [application, libraryScoreId, snapshot.currentLibraryScoreId]);
 
   useEffect(() => {
+    if (viewerError) application.capturePresentedIssue("viewer", viewerError);
+  }, [application, viewerError]);
+
+  useEffect(() => {
     if (!libraryScoreId) return;
     return () => {
       void application.releaseLibraryScore(libraryScoreId).catch(() => undefined);

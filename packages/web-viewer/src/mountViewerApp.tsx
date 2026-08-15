@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
-import type { LocaleHost, ViewerAppHandle, ViewerDomBindings, ViewerFile, ViewerHost } from "./host";
+import type { LocaleHost, TelemetryControl, ViewerAppHandle, ViewerDomBindings, ViewerFile, ViewerHost } from "./host";
 import type { ViewerSessionPort } from "./viewer-session/viewer-session-types";
 import { App, type ViewerProductCapabilities } from "./app/App";
 import { ViewerApplication } from "./app/ViewerApplication";
@@ -19,6 +19,8 @@ import type { RecognitionSettingsPort } from "./features/application-settings/re
 
 export type ViewerAppDependencies = {
   host: ViewerHost;
+  telemetryControl?: TelemetryControl;
+  initialSurface?: "library" | "viewer" | "studio" | "not-found";
   localeHost?: LocaleHost;
   openSession(file: ViewerFile, libraryScoreId?: string, domBindings?: ViewerDomBindings): Promise<ViewerSessionPort>;
   openStudioRuntime?(file: ViewerFile): Promise<StudioScoreRuntime>;
@@ -44,6 +46,9 @@ export function mountViewerApp(rootElement: HTMLElement, dependencies: ViewerApp
     dependencies.openSession,
     dependencies.library,
     dependencies.openStudioRuntime ?? ((file) => createStudioScoreRuntime(rootElement.ownerDocument, file)),
+    undefined,
+    dependencies.telemetryControl,
+    dependencies.initialSurface,
   );
   const localeHost: LocaleHost = dependencies.localeHost ?? {
     initialState: { preference: "zh-CN", effectiveLocale: "zh-CN" },

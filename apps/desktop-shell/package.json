@@ -12,6 +12,7 @@
     "build": "rspack build",
     "start": "electron .",
     "test:e2e": "playwright test -c playwright.config.ts",
+    "test:telemetry:e2e": "node ./e2e/telemetry-runner.mjs",
     "package": "pnpm build && electron-forge package && node ./scripts/verify-package.mjs",
     "verify:pdf-omr-runtime": "rspack build --env pdfOmrRuntimeSmoke=1 && electron-forge package && node ./scripts/verify-package.mjs --allow-pdf-omr-smoke && node ./scripts/verify-pdf-omr-runtime.mjs",
     "make": "pnpm build && electron-forge make && node ./scripts/verify-package.mjs",

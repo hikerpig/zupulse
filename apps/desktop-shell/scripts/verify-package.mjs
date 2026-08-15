@@ -1,5 +1,5 @@
 import { extractAll } from "@electron/asar";
-import { access, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, readdir, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,7 +10,8 @@ const expectedSampleBase64 = (
   await readFile(new URL("../../../product-assets/samples/cannon-in-d.mxl", import.meta.url))
 ).toString("base64");
 const outRoot = new URL("./out/", shellRoot);
-const asar = await findFile(outRoot, "app.asar");
+const asarMatch = await findFile(outRoot, "app.asar");
+const asar = asarMatch?.url;
 if (!asar) throw new Error("Missing packaged app.asar");
 
 const extracted = await mkdtemp(join(tmpdir(), "zupulse-package-"));
@@ -59,6 +60,9 @@ try {
       if (source.includes("MockNativeBridge")) {
         throw new Error(`MockNativeBridge leaked into package: ${path}`);
       }
+      if (source.includes("https://cdn.posthog.com") || source.includes("POSTHOG_PERSONAL_API_KEY")) {
+        throw new Error(`Remote PostHog code or management credential leaked into package: ${path}`);
+      }
       if (source.includes(expectedSampleBase64)) bundledSampleFound = true;
     }
   }
@@ -69,15 +73,17 @@ try {
 
 async function findFile(rootUrl, name) {
   const entries = await readdir(rootUrl, { withFileTypes: true }).catch(() => []);
+  let latest;
   for (const entry of entries) {
     const child = new URL(`${entry.name}${entry.isDirectory() ? "/" : ""}`, rootUrl);
-    if (entry.isFile() && basename(entry.name) === name) return child;
-    if (entry.isDirectory()) {
+    if (entry.isFile() && basename(entry.name) === name) {
+      latest = { url: child, mtimeMs: (await stat(fileURLToPath(child))).mtimeMs };
+    } else if (entry.isDirectory()) {
       const found = await findFile(child, name);
-      if (found) return found;
+      if (found && (!latest || found.mtimeMs > latest.mtimeMs)) latest = found;
     }
   }
-  return undefined;
+  return latest;
 }
 
 async function listFiles(root) {

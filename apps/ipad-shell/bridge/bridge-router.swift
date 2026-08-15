@@ -253,6 +253,9 @@ final class BridgeRouter {
         "localization": [
             "changeLocale": false,
         ],
+        "externalNavigation": [
+            "openUrl": false,
+        ],
     ]
 
     private func responseEnvelope(

@@ -1,9 +1,13 @@
 import type { ScoreFileGateway, ScoreImportSource, StoredScoreFile } from "@zupulse/web-core";
 
-export function createBrowserImportSources(files: readonly File[]): readonly ScoreImportSource[] {
+export function createBrowserImportSources(
+  files: readonly File[],
+  telemetrySource: "picker" | "drop" = "drop",
+): readonly ScoreImportSource[] {
   return files.map((file) => ({
     fileName: file.name,
     readBytes: async () => new Uint8Array(await file.arrayBuffer()),
+    telemetrySource,
   }));
 }
 
@@ -19,7 +23,7 @@ export class BrowserScoreFileGateway implements ScoreFileGateway {
       input.addEventListener("cancel", () => resolve([]), { once: true });
       input.click();
     });
-    return createBrowserImportSources(files);
+    return createBrowserImportSources(files, "picker");
   }
   async saveExport(file: StoredScoreFile): Promise<"saved" | "cancelled"> {
     const link = this.ownerDocument.createElement("a");

@@ -3,6 +3,9 @@ export {};
 declare global {
   const __APP_VERSION__: string;
   const __RENDERER_BUILD_HASH__: string;
+  const __TELEMETRY_RELEASE_CHANNEL__: string;
+  const __POSTHOG_PROJECT_TOKEN__: string;
+  const __POSTHOG_API_HOST__: string;
   const __BUNDLED_SAMPLE_BASE64__: string;
 
   interface Window {

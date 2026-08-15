@@ -20,6 +20,7 @@ import {
   type ScoreImportSource,
   type PlaybackPersistence,
   type RecognitionProviderSummary,
+  type TelemetryPort,
 } from "@zupulse/web-core";
 import "@zupulse/web-viewer/styles.css";
 import {
@@ -35,10 +36,20 @@ import {
 import { createDesktopDroppedImportSources, DesktopScoreFileGateway } from "./desktop-score-file-gateway";
 import { createDesktopDiagnosticReporter } from "./desktop-diagnostic-reporter";
 import { createDesktopExternalNavigation } from "./desktop-external-navigation";
+import { createDesktopTelemetryPort } from "./telemetry/desktop-telemetry";
 import { pdfOmrEngineLabel, providerEngineOption, synchronizePdfOmrEngine } from "./desktop-pdf-omr-engines";
 
 document.documentElement.classList.add("desktop-shell");
 installGlobalDragAndDropGuard(document);
+let activeTelemetry: TelemetryPort | undefined;
+
+function createDelegatingTelemetryPort(getCurrent: () => TelemetryPort): TelemetryPort {
+  return {
+    capture: (event) => getCurrent().capture(event),
+    captureException: (error, context) => getCurrent().captureException(error, context),
+    flush: (deadlineMs) => getCurrent().flush(deadlineMs),
+  };
+}
 
 async function start(): Promise<void> {
   const bridge = window.zupulseBridge;
@@ -52,12 +63,75 @@ async function start(): Promise<void> {
   if (response.appVersion !== __APP_VERSION__ || response.rendererBuildHash !== __RENDERER_BUILD_HASH__) {
     throw new Error("BRIDGE_VERSION_MISMATCH");
   }
+  type RendererTelemetryContext = {
+    enabled: boolean;
+    installationId?: string;
+    applicationSessionId?: string;
+  };
+  const createTelemetry = (context: RendererTelemetryContext) =>
+    createDesktopTelemetryPort({
+      context,
+      runtime: "renderer",
+      appVersion: __APP_VERSION__,
+      buildId: __RENDERER_BUILD_HASH__,
+      releaseChannel: __TELEMETRY_RELEASE_CHANNEL__,
+      projectToken: __POSTHOG_PROJECT_TOKEN__,
+      apiHost: __POSTHOG_API_HOST__,
+      effectiveLocale: response.locale.effectiveLocale,
+    });
+  const initialTelemetryContext: RendererTelemetryContext = response.telemetry
+    ? {
+        enabled: response.telemetry.enabled,
+        ...(response.telemetry.installationId === undefined
+          ? {}
+          : { installationId: response.telemetry.installationId }),
+        ...(response.telemetry.applicationSessionId === undefined
+          ? {}
+          : { applicationSessionId: response.telemetry.applicationSessionId }),
+      }
+    : { enabled: false };
+  let currentTelemetry = createTelemetry(initialTelemetryContext);
+  const telemetry = createDelegatingTelemetryPort(() => currentTelemetry);
+  activeTelemetry = telemetry;
+  window.addEventListener("error", (event) =>
+    telemetry.captureException(event.error ?? new Error(event.message), { runtime: "renderer", handled: false }),
+  );
+  window.addEventListener("unhandledrejection", (event) =>
+    telemetry.captureException(event.reason, { runtime: "renderer", handled: false }),
+  );
+  let telemetryState = response.telemetry ?? { schemaVersion: 1 as const, enabled: false, noticeAcknowledged: false };
+  const telemetryControl = {
+    getState: () => ({
+      available: response.capabilities.telemetry?.available === true,
+      enabled: telemetryState.enabled,
+      noticeAcknowledged: telemetryState.noticeAcknowledged,
+    }),
+    acknowledgeNotice: async () => {
+      const request = createBridgeRequest("app.telemetry.setPreference", crypto.randomUUID(), {
+        enabled: telemetryState.enabled,
+      });
+      telemetryState = parseBridgeResponse(request.type, await bridge.request(request));
+    },
+    setPreference: async (enabled: boolean) => {
+      const request = createBridgeRequest("app.telemetry.setPreference", crypto.randomUUID(), { enabled });
+      telemetryState = parseBridgeResponse(request.type, await bridge.request(request));
+      currentTelemetry = createTelemetry({
+        enabled: telemetryState.enabled,
+        ...(telemetryState.installationId === undefined ? {} : { installationId: telemetryState.installationId }),
+        ...(telemetryState.applicationSessionId === undefined
+          ? {}
+          : { applicationSessionId: telemetryState.applicationSessionId }),
+      });
+      if (telemetryState.enabled) currentTelemetry.capture({ name: "application_session_started" });
+    },
+  };
 
   let appHandle: ViewerAppHandle | undefined;
   const acknowledgeLifecycle = async (state: "suspend" | "prepare-close") => {
     if (!appHandle) throw new Error("VIEWER_NOT_READY");
     if (state === "suspend") await appHandle.pauseAndFlush();
     else await appHandle.destroy();
+    await telemetry.flush(300);
     const ack = createBridgeRequest("app.lifecycleAck", crypto.randomUUID(), { state });
     parseBridgeResponse(ack.type, await bridge.request(ack));
   };
@@ -65,6 +139,7 @@ async function start(): Promise<void> {
     bridge,
     acknowledgeLifecycle,
     response.capabilities.externalNavigation?.openUrl === true,
+    telemetry,
   );
   const persistence = new BridgePlaybackPersistence(bridge);
   const root = document.getElementById("root");
@@ -76,7 +151,9 @@ async function start(): Promise<void> {
     pdfOmr.synchronizeProvider,
   );
   appHandle = mountViewerApp(root, {
-    host,
+    host: { ...host, telemetry },
+    telemetryControl,
+    initialSurface: "library",
     capabilities: {
       harmonyAnalysis: response.capabilities.harmonyAnalysis ?? false,
       pdfOmrWorkbench: response.capabilities.pdfOmrWorkbench ?? false,
@@ -102,6 +179,7 @@ async function start(): Promise<void> {
       })),
     },
   });
+  telemetry.capture({ name: "application_session_started" });
 }
 
 function createDesktopRecognitionSettingsPort(
@@ -340,9 +418,14 @@ function createElectronHost(
   bridge: NonNullable<Window["zupulseBridge"]>,
   acknowledgeLifecycle: (state: "suspend" | "prepare-close") => Promise<void>,
   canOpenExternalUrl: boolean,
+  telemetry: TelemetryPort,
 ): ViewerHost {
   let storageWarningShown = false;
-  const reportDiagnostic = createDesktopDiagnosticReporter(bridge);
+  const reportDiagnosticBase = createDesktopDiagnosticReporter(bridge);
+  const reportDiagnostic = (error: unknown, operation: string) => {
+    reportDiagnosticBase(error, operation);
+    telemetry.captureException(error, { runtime: "renderer", handled: true, operation });
+  };
   return {
     reportDiagnostic,
     ...(canOpenExternalUrl
@@ -395,4 +478,18 @@ function installGlobalDragAndDropGuard(target: Document): void {
   target.addEventListener("drop", swallowIfExternal, true);
 }
 
-void start().catch(renderStartupError);
+void start().catch((error) => {
+  activeTelemetry?.captureException(error, {
+    runtime: "renderer",
+    handled: true,
+    surface: "startup",
+    operation: "renderer.preload",
+  });
+  activeTelemetry?.capture({
+    name: "application_issue_presented",
+    surface: "startup",
+    issueCode: "startup-failed",
+    recoverable: false,
+  });
+  renderStartupError(error);
+});

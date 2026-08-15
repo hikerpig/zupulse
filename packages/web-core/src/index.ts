@@ -56,6 +56,7 @@ export * from "./playback/alphaTabPlaybackAdapter";
 export * from "./playback/playbackController";
 export * from "./playback/previewTransport";
 export * from "./playback/writtenSelection";
+export * from "./telemetry";
 export * from "./playback/pianoHandMapping";
 export * from "./playback/alphaTabStaffAudioProjection";
 export * from "./playback/alphaTabPianoKeyTimeline";

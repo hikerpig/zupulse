@@ -26,8 +26,19 @@ export interface ExternalNavigationHost {
 export interface ViewerHost {
   subscribe(listener: (event: ViewerHostEvent) => void): () => void;
   reportDiagnostic?(error: unknown, operation: string): void;
+  telemetry?: import("@zupulse/web-core").TelemetryPort;
   externalNavigation?: ExternalNavigationHost;
 }
+export type TelemetryPreferenceSnapshot = {
+  available: boolean;
+  enabled: boolean;
+  noticeAcknowledged: boolean;
+};
+export type TelemetryControl = {
+  getState(): TelemetryPreferenceSnapshot;
+  acknowledgeNotice(): Promise<void> | void;
+  setPreference(enabled: boolean): Promise<void>;
+};
 export type { LocaleHost } from "./i18n/locale-controller";
 export type ViewerAppHandle = {
   openScore(): Promise<void>;

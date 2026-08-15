@@ -4,6 +4,7 @@ const e2ePort = Number(process.env.E2E_PORT ?? "41731");
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: "**/telemetry/**",
   timeout: 45_000,
   workers: 1,
   retries: 0,

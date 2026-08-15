@@ -7,7 +7,7 @@
 - Target surfaces: Browser and Electron Desktop
 - Provider: PostHog Cloud US
 - Release channels: `alpha | beta | production`; Internal Acceptance and iPad remain No-op
-- Release gates still requiring ownership: public privacy notice URL and PostHog retention/access owner
+- Release gates still requiring ownership: PostHog retention/access owner and production dashboard access review
 
 ## Goal
 
@@ -475,7 +475,8 @@ last.
 - [x] `git diff --check`
 - [x] `git status --short` confirms only intended files.
 - [x] Manual packaged Desktop and deployed Browser PostHog US smoke pass.
-- [ ] Public privacy URL and PostHog retention/access owner are recorded.
+- [x] Public privacy URL is live and recorded.
+- [ ] PostHog retention/access owner and production dashboard access review are recorded.
 - [x] Current Feature Contract and architecture documents match verified runtime behavior; external PostHog governance and deployed URL remain explicit gaps.
 
 ## Risks and mitigations

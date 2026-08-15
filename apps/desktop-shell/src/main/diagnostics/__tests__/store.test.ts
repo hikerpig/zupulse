@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { mkdtemp, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { DiagnosticStore } from "../diagnostic-store";
+import { DiagnosticStore } from "../store";
 
 const roots: string[] = [];
 

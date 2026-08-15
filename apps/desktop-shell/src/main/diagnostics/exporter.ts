@@ -2,8 +2,8 @@ import { open } from "node:fs/promises";
 import { promisify } from "node:util";
 import { gzip } from "node:zlib";
 import { dialog, type BrowserWindow, type SaveDialogOptions } from "electron";
-import { persistedHostDiagnosticEventSchema } from "./diagnostics";
-import type { DiagnosticStore } from "./diagnostic-store";
+import { persistedHostDiagnosticEventSchema } from "./desktop-diagnostics";
+import type { DiagnosticStore } from "./store";
 
 const gzipAsync = promisify(gzip);
 

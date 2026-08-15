@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { BRIDGE_SCHEMA_VERSION, createBridgeRequest } from "@zupulse/web-core";
-import { createDesktopCapabilities, dispatchBridgeRequest } from "../bridge";
+import { createDesktopCapabilities, dispatchBridgeRequest } from "../dispatcher";
 
 const rendererBuildHash = "b".repeat(64);
 const validHandshake = createBridgeRequest("app.handshake", "handshake-1", {

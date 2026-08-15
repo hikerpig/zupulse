@@ -13,5 +13,5 @@
 - Preload 暴露面、Main handler、Renderer adapter。
 - schema 单测、dispatcher 单测和必要的 E2E 用户旅程。
 
-参考：`src/preload.ts`、`src/main/bridge.ts`、`src/renderer.ts`、`e2e/desktop.spec.ts`。
+参考：`src/preload.ts`、`src/main/bridge/dispatcher.ts`、`src/main/bridge/server.ts`、`src/renderer.ts`、`e2e/desktop.spec.ts`。
 最小验证：`pnpm desktop:build`；端到端：`pnpm desktop:test:e2e`。

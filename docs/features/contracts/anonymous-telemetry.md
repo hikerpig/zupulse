@@ -3,7 +3,7 @@ feature: anonymous-telemetry
 title: Anonymous Product Telemetry and Error Tracking
 status: current
 delivery: partial
-last_verified: 2026-08-14
+last_verified: 2026-08-15
 hosts:
   - browser
   - desktop
@@ -13,6 +13,8 @@ implementation_paths:
   - apps/web-demo/src/telemetry/browser-telemetry.ts
   - apps/desktop-shell/src/telemetry/desktop-telemetry.ts
   - apps/desktop-shell/src/main/telemetry-preference-store.ts
+  - apps/desktop-shell/src/main/desktop-app.ts
+  - apps/desktop-shell/src/main/diagnostics/instrumentation.ts
   - scripts/verify-source-map-artifacts.mjs
   - .github/workflows/release-telemetry.yml
 supersedes: []
@@ -111,15 +113,15 @@ identity，并由 Main 为本次运行创建新的 application session。损坏�
 
 ## 证据地图
 
-| 契约                                    | 运行时代码 / Schema                                                                                    | 自动化证据                                                                               |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| strict events and sanitizer             | `packages/web-core/src/telemetry/{schemas,sanitizer,types}.ts`                                         | `packages/web-core/src/telemetry/__tests__/telemetry.test.ts`                            |
-| Browser identity and provider allowlist | `apps/web-demo/src/telemetry/browser-telemetry.ts`                                                     | `apps/web-demo/src/telemetry/__tests__/browser-telemetry.test.ts`                        |
-| Desktop identity and Bridge             | `apps/desktop-shell/src/main/telemetry-preference-store.ts`, `packages/web-core/src/bridge/schemas.ts` | Desktop bridge/store tests and contract manifest test                                    |
-| semantic events and issue presentation  | `packages/web-viewer/src/app/ViewerApplication.ts`, App/route pages                                    | `packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`, full Viewer/App suite |
-| Browser/Desktop journeys                | Browser and Desktop host composition                                                                   | `pnpm verify:e2e`                                                                        |
-| fake-ingestion journeys                 | `apps/web-demo/e2e/telemetry`, `apps/desktop-shell/e2e/telemetry`                                      | `pnpm demo:test:telemetry:e2e`, `pnpm desktop:test:telemetry:e2e`                        |
-| release/source-map boundary             | `scripts/verify-source-map-artifacts.mjs`, `.github/workflows/release-telemetry.yml`                   | map require/resolve/forbid checks; provider upload is release-secret gated               |
+| 契约                                    | 运行时代码 / Schema                                                                                                                                  | 自动化证据                                                                               |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| strict events and sanitizer             | `packages/web-core/src/telemetry/{schemas,sanitizer,types}.ts`                                                                                       | `packages/web-core/src/telemetry/__tests__/telemetry.test.ts`                            |
+| Browser identity and provider allowlist | `apps/web-demo/src/telemetry/browser-telemetry.ts`                                                                                                   | `apps/web-demo/src/telemetry/__tests__/browser-telemetry.test.ts`                        |
+| Desktop identity and Bridge             | `apps/desktop-shell/src/main/telemetry-preference-store.ts`, `apps/desktop-shell/src/main/desktop-app.ts`, `packages/web-core/src/bridge/schemas.ts` | Desktop bridge/store tests and contract manifest test                                    |
+| semantic events and issue presentation  | `packages/web-viewer/src/app/ViewerApplication.ts`, App/route pages                                                                                  | `packages/web-viewer/src/app/__tests__/ViewerApplication.test.ts`, full Viewer/App suite |
+| Browser/Desktop journeys                | Browser and Desktop host composition                                                                                                                 | `pnpm verify:e2e`                                                                        |
+| fake-ingestion journeys                 | `apps/web-demo/e2e/telemetry`, `apps/desktop-shell/e2e/telemetry`                                                                                    | `pnpm demo:test:telemetry:e2e`, `pnpm desktop:test:telemetry:e2e`                        |
+| release/source-map boundary             | `scripts/verify-source-map-artifacts.mjs`, `.github/workflows/release-telemetry.yml`                                                                 | map require/resolve/forbid checks; provider upload is release-secret gated               |
 
 ## 相关资料
 

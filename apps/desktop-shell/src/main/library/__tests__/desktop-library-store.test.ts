@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createDefaultSidecar, type HarmonyAnalysisDocument } from "@zupulse/web-core";
 import { sheetLibraryRepositoryContract } from "../../../../../../test-harness/__tests__/sheetLibraryRepositoryContract";
-import { DesktopLibraryStore } from "../DesktopLibraryStore";
+import { DesktopLibraryStore } from "../desktop-library-store";
 
 const roots: string[] = [];
 afterEach(async () => Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true }))));

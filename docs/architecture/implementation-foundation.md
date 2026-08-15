@@ -45,7 +45,7 @@
 - `packages/web-viewer/src/viewer-session/`：Viewer wiring、Session port 与 feature slices。
   `packages/web-viewer/src/features/playback-workspace/`：Viewer playback controls 与 practice UI。
 - `apps/web-demo/src/main.ts`：Browser Demo 宿主入口。
-- `apps/desktop-shell/src/main/main.ts`：Electron Main 组合入口。
+- `apps/desktop-shell/src/main/main.ts`：Electron entry point；`desktop-app.ts` 是 Main composition root。
 - `apps/desktop-shell/src/preload.ts`：固定的 `request` / `subscribe` contextBridge 暴露面。
 - `apps/desktop-shell/src/renderer.ts`：Electron Renderer 与共享 Viewer 挂载入口。
 

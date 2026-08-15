@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { RecognitionProviderConfigurationStore } from "../recognition-provider-configuration-store";
-import { RecognitionProviderSettings, RecognitionSettingsError } from "../recognition-provider-settings";
+import type { RecognitionProviderConfigurationStore } from "../provider-configuration-store";
+import { RecognitionProviderSettings, RecognitionSettingsError } from "../provider-settings";
 
 describe("RecognitionProviderSettings", () => {
   it("registers a trimmed absolute path as an opaque selection", async () => {

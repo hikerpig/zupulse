@@ -6,5 +6,5 @@
 - 删除顺序和故障恢复不得留下托管字节、馆藏记录、sidecar 或 resume 孤儿。
 - Renderer 可见的错误和诊断不得包含绝对路径、原始异常对象或敏感环境数据。
 
-修改持久化前阅读 `library/DesktopLibraryStore.ts`、`library/reconcile.ts`、迁移和相邻故障测试；
-修改 IPC 前阅读 `bridge.ts` 与 `packages/web-core/src/bridge/schemas.ts`。
+修改持久化前阅读 `library/desktop-library-store.ts`、`library/reconcile.ts`、迁移和相邻故障测试；
+修改 IPC 前阅读 `bridge/dispatcher.ts`、`bridge/server.ts` 与 `packages/web-core/src/bridge/schemas.ts`。

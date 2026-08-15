@@ -1,7 +1,7 @@
 import type { EventEmitter } from "node:events";
-import type { DesktopDiagnostics } from "./diagnostics";
-import { BridgeDispatchError } from "./bridge";
 import type { TelemetryPort } from "@zupulse/web-core";
+import type { DesktopDiagnostics } from "./desktop-diagnostics";
+import { BridgeDispatchError } from "../bridge/dispatcher";
 
 type DiagnosticTarget = Pick<EventEmitter, "on" | "removeListener">;
 type WindowDiagnosticTarget = DiagnosticTarget & { webContents: DiagnosticTarget };
@@ -70,11 +70,12 @@ export function installWindowDiagnosticInstrumentation(
     void diagnostics.recordElectron({ code: "RENDERER_UNRESPONSIVE" });
   };
   const renderProcessGone = (_event: unknown, details: unknown) => {
-    void diagnostics.recordElectron({ code: "RENDERER_PROCESS_GONE", ...safeProcessGoneFacts(details) });
+    const facts = safeProcessGoneFacts(details);
+    void diagnostics.recordElectron({ code: "RENDERER_PROCESS_GONE", ...facts });
     telemetry?.capture({
       name: "runtime_failure_observed",
       runtime: "renderer",
-      reason: toTelemetryFailureReason(safeProcessGoneFacts(details).reason),
+      reason: toTelemetryFailureReason(facts.reason),
     });
   };
 

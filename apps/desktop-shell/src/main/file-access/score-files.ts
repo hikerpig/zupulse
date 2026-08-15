@@ -3,7 +3,7 @@ import { createAppI18n, type SupportedLocale } from "@zupulse/app-i18n";
 import { dialog } from "electron";
 import { mkdir, open, readFile, stat, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
-import type { FileTokenEntry, FileTokenStore } from "./fileTokens";
+import type { FileTokenEntry, FileTokenStore } from "./file-token-store";
 
 export const MAX_SCORE_BYTES = 64 * 1024 * 1024;
 export type ReadableScoreMetadata = {

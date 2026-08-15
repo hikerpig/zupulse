@@ -72,6 +72,16 @@ Zupulse 是本地优先的乐谱查看与练习应用。当前交付面是共享
 - **Annotated Score Export**：把 Effective Harmony Projection 增量写入来源格式与结构后生成的新文件副本；它保持来源容器，不修改 Managed Score Copy 或当前 Library Score。
 - **Bridge API**：共享 React 应用与受信任平台宿主之间经版本化 schema 校验的 RPC/事件边界；
   Electron 与 iPad 使用不同传输适配器，但不得创造不同的领域语义。
+- **Application Settings**：规划中的 Browser 与 Desktop 共享设备级设置表面；它按宿主能力呈现可操作分区，
+  不把某个平台尚未提供的能力伪装成可配置项，也不表示设置会跨设备同步。
+- **Recognition Provider**：为 PDF 识谱提供运行能力及可验证配置状态的宿主能力。当前只有 Desktop
+  的 Local Recognition Engine；未来 Web Remote Recognition Service 必须通过独立能力与安全契约接入。
+- **Recognition Provider Configuration**：规划中由当前设备为一种 Recognition Provider 保存的唯一一份类型化配置；
+  配置字段由 provider schema 定义，不以环境变量名称或可重复 profile 列表作为产品模型。
+- **Local Recognition Engine**：由 Desktop Main 在本机调用的 Recognition Provider；其 executable、
+  repository、model 与 converter 等配置属于当前设备，不进入 Renderer 或 Browser。
+- **Remote Recognition Service**：规划中的、通过网络提供 PDF 识谱的 Recognition Provider；它不是当前
+  Browser 能力，认证、隐私、上传和服务端处理边界必须在接入前另行定义。
 
 ### Anonymous telemetry language
 

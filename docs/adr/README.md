@@ -33,7 +33,7 @@
 
 ## Proposed
 
-- 当前没有。
+- `0068`：Application Settings 按 host capability 组合，具体设置保持类型化 ownership。
 
 ## Superseded
 

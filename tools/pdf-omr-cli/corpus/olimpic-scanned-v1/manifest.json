@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "corpusId": "olimpic-scanned-system-v1",
+  "protocolVersion": "1.1.0",
+  "items": [
+    {
+      "id": "openscore-6586696-p1-s1",
+      "workId": "openscore-6586696",
+      "variantId": "p1-s1",
+      "split": "development",
+      "category": "real-scanned-system",
+      "input": {
+        "path": "dev/6586696/input.pdf",
+        "sha256": "1022c2359055fdfa428bc5281769c83fa33d1d273870be65c22ec7d31eba5dc1"
+      },
+      "groundTruth": {
+        "path": "dev/6586696/truth.musicxml",
+        "sha256": "fafd8869ff506818f34a037a870e00a81fac6633bea21c389bb6d9b3c95c54d1",
+        "format": "musicxml"
+      },
+      "license": {
+        "id": "CC-BY-SA-4.0",
+        "source": "https://creativecommons.org/licenses/by-sa/4.0/"
+      },
+      "provenance": {
+        "dataset": "OLiMPiC scanned",
+        "release": "1.0 (2024-02-12)",
+        "sampleId": "6586696/p1-s1",
+        "sourceSplit": "test",
+        "archiveSha256": "a84091b50154251b66d37b50806f98d8a6d758b4195d2aa9805d1b9cb78e6993"
+      }
+    },
+    {
+      "id": "openscore-6245974-p1-s1",
+      "workId": "openscore-6245974",
+      "variantId": "p1-s1",
+      "split": "holdout",
+      "category": "real-scanned-system",
+      "input": {
+        "path": "holdout/6245974/input.pdf",
+        "sha256": "7d636683cd9f2a172c9d2093ae3e0b5b87ea6e47ea07960ff8ed71816e0ce8a5"
+      },
+      "groundTruth": {
+        "path": "holdout/6245974/truth.musicxml",
+        "sha256": "a8ffedd9f043970fa81c96fb355589e045e381b2765e36a88c570d312962ff0f",
+        "format": "musicxml"
+      },
+      "license": {
+        "id": "CC-BY-SA-4.0",
+        "source": "https://creativecommons.org/licenses/by-sa/4.0/"
+      },
+      "provenance": {
+        "dataset": "OLiMPiC scanned",
+        "release": "1.0 (2024-02-12)",
+        "sampleId": "6245974/p1-s1",
+        "sourceSplit": "dev",
+        "archiveSha256": "a84091b50154251b66d37b50806f98d8a6d758b4195d2aa9805d1b9cb78e6993"
+      }
+    }
+  ]
+}

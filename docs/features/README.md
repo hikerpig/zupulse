@@ -14,6 +14,7 @@ UI contract.
 | Sheet Library              | [`contracts/sheet-library.md`](contracts/sheet-library.md)                           | `current` | `partial`   |
 | Viewer Playback Navigation | [`contracts/viewer-playback-navigation.md`](contracts/viewer-playback-navigation.md) | `current` | `available` |
 | Anonymous Telemetry        | [`contracts/anonymous-telemetry.md`](contracts/anonymous-telemetry.md)               | `current` | `partial`   |
+| Desktop PDF OMR Workbench  | [`contracts/desktop-pdf-omr-workbench.md`](contracts/desktop-pdf-omr-workbench.md)   | `current` | `partial`   |
 
 Create a Contract from [`templates/feature-contract.md`](templates/feature-contract.md). Keep a stable
 `contracts/<feature-slug>.md` path while the Feature remains part of the product. Move a Contract to `archive/`

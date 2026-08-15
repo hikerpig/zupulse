@@ -22,6 +22,7 @@ export const pdfOmrInspectReportSchema = z
         fileName: z.string().min(1),
         sha256: sha256Schema,
         sizeBytes: z.number().int().nonnegative(),
+        inputKind: z.enum(["pdf", "image"]),
       })
       .strict(),
     pageCount: z.number().int().nonnegative(),

@@ -47,21 +47,36 @@ export function assertBridgeAppSender(senderUrl: string): void {
   assertAppSender(senderUrl);
 }
 
-const DEFAULT_CAPABILITIES = capabilitiesSchema.parse({
-  fileAccess: {
-    openExternalFile: true,
-    persistentFileReferences: false,
-    localLibraryImport: true,
-    droppedFileImport: true,
-  },
-  storage: { sqliteIndex: true, sidecarPayload: true },
-  harmonyAnalysis: true,
-  sync: { available: false, provider: "none" },
-  audio: { webAudio: true, nativeBridge: false },
-  localization: { changeLocale: true },
-  externalNavigation: { openUrl: true },
-  telemetry: { available: true },
-});
+export function createDesktopCapabilities(
+  pdfOmrEngines: ReadonlyArray<{
+    id: string;
+    version: string;
+    available: boolean;
+    inputKinds: readonly ("pdf" | "image")[];
+    reason?: string;
+  }>,
+): Capabilities {
+  return capabilitiesSchema.parse({
+    pdfOmrWorkbench: true,
+    recognitionProviderSettings: true,
+    pdfOmrEngines,
+    fileAccess: {
+      openExternalFile: true,
+      persistentFileReferences: false,
+      localLibraryImport: true,
+      droppedFileImport: true,
+    },
+    storage: { sqliteIndex: true, sidecarPayload: true },
+    harmonyAnalysis: true,
+    sync: { available: false, provider: "none" },
+    audio: { webAudio: true, nativeBridge: false },
+    localization: { changeLocale: true },
+    externalNavigation: { openUrl: true },
+    telemetry: { available: true },
+  });
+}
+
+const DEFAULT_CAPABILITIES = createDesktopCapabilities([]);
 
 export async function dispatchBridgeRequest(
   input: { senderUrl: string; value: unknown },
@@ -101,7 +116,8 @@ export async function dispatchBridgeRequest(
   }
 
   const handler = options.handlers?.[request.type] as
-    ((value: BridgeRequest) => unknown | Promise<unknown>) | undefined;
+    | ((value: BridgeRequest) => unknown | Promise<unknown>)
+    | undefined;
   if (!handler) {
     throw new BridgeDispatchError("BRIDGE_HANDLER_UNAVAILABLE", `No handler registered for ${request.type}`, true);
   }

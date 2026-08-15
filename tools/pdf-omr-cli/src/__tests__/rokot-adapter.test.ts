@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { sha256Bytes } from "../canonical-json";
 import { convertRokotAbc, createRokotAdapter } from "../engines/rokot";
+import type { OmrEngineProgress } from "../engines/types";
 import { parseRokotSystemBundle } from "../normalizers/rokot";
 
 const runnerPath = fileURLToPath(new URL("../../engines/rokot-abc2xml-runner.py", import.meta.url));
@@ -31,15 +32,23 @@ describe("Rokot adapter environment", () => {
         modelRevision,
         prompt: "Transcribe this staff to rokot-ABC.",
         reasoning: "off",
+        segmentationAllowFragmentedRuns: true,
+        segmentationAllowLandscape: true,
+        segmentationContinuousRowCoverage: 0.5,
         segmentationCropPaddingMultiplier: 4,
-        segmentationDetectorVersion: "rokot-grand-staff-v1",
+        segmentationDetectorVersion: "rokot-staff-system-v2",
+        segmentationFragmentedRowCoverage: 0.2,
+        segmentationFragmentedRunContainmentRatio: 0.9,
+        segmentationFragmentedSpacingToleranceRatio: 0.3,
         segmentationHorizontalRunCoverage: 0.05,
         segmentationMaximumGrandStaffGapMultiplier: 10,
         segmentationMaximumStaffSpacingPx: 40,
-        segmentationMinimumConnectorCoverage: 0.9,
+        segmentationMinimumConnectorCoverage: 0.95,
+        segmentationMinimumCurvedConnectorCoverage: 0.85,
         segmentationMinimumGrandStaffGapMultiplier: 2,
         segmentationMinimumStaffSpacingPx: 3,
         segmentationSpacingToleranceRatio: 0.25,
+        segmentationStaffLayout: "auto",
         temperature: 0,
         visionProjectorSha256: context.mmprojSha256,
       },
@@ -193,15 +202,62 @@ describe("Rokot ABC converter boundary", () => {
 });
 
 describe("Rokot recognition adapter", () => {
+  it("uses a declared system crop directly without requiring detectable staff lines", async () => {
+    const context = await createContext();
+    const inputPath = join(context.directory, "system-crop.pdf");
+    await writeFile(inputPath, pdf([{ width: 200, height: 100, content: "" }]));
+
+    const recognition = await createAdapter(context).recognize({
+      inputPath,
+      outputDirectory: join(context.directory, "system-crop"),
+      inputScope: "system-crop",
+      staffLayout: "grand-staff",
+    });
+
+    const bundle = parseRokotSystemBundle(recognition.normalizationBytes);
+    expect(bundle.systems).toHaveLength(1);
+    expect(bundle.systems[0]!.source).toMatchObject({ staffLayout: "grand-staff", staffCount: 2 });
+    const segmentation = JSON.parse(new TextDecoder().decode(recognition.nativeArtifacts[0]!.bytes)) as {
+      inputScope: string;
+      systems: Array<{ staffLineYs: number[] }>;
+    };
+    expect(segmentation).toMatchObject({ inputScope: "system-crop" });
+    expect(segmentation.systems[0]!.staffLineYs).toEqual([]);
+  });
+
+  it("recognizes isolated single-staff systems when the layout is declared", async () => {
+    const context = await createContext({ staffLayout: "single-staff" });
+    const inputPath = join(context.directory, "melody.pdf");
+    await writeFile(inputPath, singleStaffPdf());
+
+    const recognition = await createAdapter(context).recognize({
+      inputPath,
+      outputDirectory: join(context.directory, "single"),
+      staffLayout: "single-staff",
+    });
+
+    const bundle = parseRokotSystemBundle(recognition.normalizationBytes);
+    expect(bundle.systems.map((system) => system.source)).toEqual([
+      expect.objectContaining({ staffLayout: "single-staff", staffCount: 1 }),
+      expect.objectContaining({ staffLayout: "single-staff", staffCount: 1 }),
+    ]);
+    const draft = createAdapter(context).normalize(recognition);
+    expect(draft.parts[0]).toMatchObject({ id: "score", name: "Score" });
+    expect(draft.parts[0]!.staves).toHaveLength(1);
+    expect(draft.diagnostics).not.toContainEqual(expect.objectContaining({ code: "ROKOT_UNSUPPORTED_STAFF_TOPOLOGY" }));
+  });
+
   it("renders, segments, transcribes, converts, and returns deterministic system artifacts", async () => {
     const context = await createContext();
     const inputPath = join(context.directory, "score.pdf");
     await writeFile(inputPath, grandStaffPdf());
     const adapter = createAdapter(context);
+    const progress: OmrEngineProgress[] = [];
 
     const first = await adapter.recognize({
       inputPath,
       outputDirectory: join(context.directory, "first"),
+      onProgress: (event) => progress.push(event),
     });
     const second = await adapter.recognize({
       inputPath,
@@ -218,6 +274,10 @@ describe("Rokot recognition adapter", () => {
       "systems/page-001-system-002.musicxml",
     ]);
     expect(first.nativeArtifacts).toEqual(second.nativeArtifacts);
+    expect(progress).toEqual([
+      { unit: "system", completed: 1, total: 2 },
+      { unit: "system", completed: 2, total: 2 },
+    ]);
     const png = first.nativeArtifacts[1]!.bytes;
     expect([...png.subarray(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
     const segmentation = JSON.parse(new TextDecoder().decode(first.nativeArtifacts[0]!.bytes)) as {
@@ -289,20 +349,39 @@ describe("Rokot recognition adapter", () => {
     expect(abc).not.toContain("Assistant:");
   });
 
+  it("canonicalizes a header-valid unvoiced response for a detected single staff", async () => {
+    const context = await createContext({ llamaMode: "unvoiced", staffLayout: "single-staff" });
+    const inputPath = join(context.directory, "melody.pdf");
+    await writeFile(inputPath, singleStaffPdf());
+
+    const recognition = await createAdapter(context).recognize({
+      inputPath,
+      outputDirectory: join(context.directory, "unvoiced"),
+      staffLayout: "single-staff",
+    });
+
+    const bundle = parseRokotSystemBundle(recognition.normalizationBytes);
+    expect(bundle.systems[0]!.abcUtf8).toContain("V:1 clef=treble\n[V:1] C2 D2 E2 F2 |");
+  });
+
   it.each(["leading-prose", "suffix-prose"] as const)("rejects %s around the canonical ABC", async (llamaMode) => {
     const context = await createContext({ llamaMode });
     const inputPath = join(context.directory, "score.pdf");
     await writeFile(inputPath, grandStaffPdf());
 
+    const outputDirectory = join(context.directory, llamaMode);
     await expect(
       createAdapter(context).recognize({
         inputPath,
-        outputDirectory: join(context.directory, llamaMode),
+        outputDirectory,
       }),
     ).rejects.toMatchObject({
       code: "ENGINE_OUTPUT_INVALID",
       context: { reason: "invalid-rokot-abc-envelope" },
     });
+    await expect(
+      readFile(join(outputDirectory, "failure-debug", "page-001-system-001.raw.txt"), "utf8"),
+    ).resolves.toContain(llamaMode === "leading-prose" ? "Here is the score:" : "Done.");
   });
 
   it("propagates llama process failure and cancellation through the shared runner", async () => {
@@ -358,8 +437,17 @@ describe("Rokot recognition adapter", () => {
 type ContextOptions = {
   converterMode?: "empty" | "invalid-xml" | "raise" | "sleep";
   converterVersion?: string;
-  llamaMode?: "canonical" | "leading-prose" | "non-zero" | "output-limit" | "sleep" | "suffix-prose" | "wrapper";
+  llamaMode?:
+    | "canonical"
+    | "leading-prose"
+    | "non-zero"
+    | "output-limit"
+    | "sleep"
+    | "suffix-prose"
+    | "unvoiced"
+    | "wrapper";
   llamaVersion?: string;
+  staffLayout?: "single-staff" | "grand-staff";
 };
 
 async function createContext(options: ContextOptions = {}) {
@@ -388,7 +476,7 @@ async function createContext(options: ContextOptions = {}) {
         converterMode === "sleep" ? "    time.sleep(10)" : "    pass",
         converterMode === "empty" ? "    return ''" : "    pass",
         converterMode === "invalid-xml" ? "    return '<score-partwise>'" : "    pass",
-        `    return ${JSON.stringify(validRokotMusicXml())}`,
+        `    return ${JSON.stringify(validRokotMusicXml(options.staffLayout))}`,
       ].join("\n"),
     ),
     writeFile(
@@ -402,6 +490,7 @@ async function createContext(options: ContextOptions = {}) {
     environment: {
       FAKE_ROKOT_LLAMA_LOG: llamaLogPath,
       FAKE_ROKOT_LLAMA_MODE: options.llamaMode ?? "canonical",
+      FAKE_ROKOT_STAFF_LAYOUT: options.staffLayout ?? "grand-staff",
       PYTHONPATH: join(directory, "python"),
     },
     llamaCliPath,
@@ -448,8 +537,12 @@ if (mode === "output-limit") process.stdout.write("x".repeat(4096));
 if (mode === "sleep") setTimeout(() => process.exit(0), 10000);
 else {
   const outputIndex = args.indexOf("-o");
-  const abc = ${JSON.stringify(validRokotAbc())};
-  const response = mode === "wrapper"
+  const abc = process.env.FAKE_ROKOT_STAFF_LAYOUT === "single-staff"
+    ? ${JSON.stringify(validRokotAbc("single-staff"))}
+    : ${JSON.stringify(validRokotAbc("grand-staff"))};
+  const response = mode === "unvoiced"
+    ? "User:\\nTranscribe this staff to rokot-ABC.\\n\\nAssistant:\\n%%rokot-abc 0.1\\nX:1\\nM:4/4\\nL:1/8\\nK:C\\nC2 D2 E2 F2 |\\n"
+    : mode === "wrapper"
     ? "User:\\nTranscribe this staff to rokot-ABC.\\n\\nAssistant:\\n" + abc
     : mode === "leading-prose"
       ? "Here is the score:\\n" + abc
@@ -461,29 +554,36 @@ else {
 `;
 }
 
-function validRokotAbc(): string {
+function validRokotAbc(staffLayout: "single-staff" | "grand-staff" = "grand-staff"): string {
   return `%%rokot-abc 0.1
 X:1
 M:2/4
 L:1/8
 K:C
 V:1 clef=treble
-V:2 clef=bass
-[V:1] C4 |
-[V:2] C,4 |
-`;
+${staffLayout === "grand-staff" ? "V:2 clef=bass\n" : ""}[V:1] C4 |
+${staffLayout === "grand-staff" ? "[V:2] C,4 |\n" : ""}`;
 }
 
-function validRokotMusicXml(): string {
+function validRokotMusicXml(staffLayout: "single-staff" | "grand-staff" = "grand-staff"): string {
   return `<?xml version="1.0"?>
 <score-partwise version="4.0">
   <part-list>
     <score-part id="P1"><part-name>Right</part-name></score-part>
-    <score-part id="P2"><part-name>Left</part-name></score-part>
+    ${staffLayout === "grand-staff" ? '<score-part id="P2"><part-name>Left</part-name></score-part>' : ""}
   </part-list>
   <part id="P1"><measure number="1"><attributes><divisions>8</divisions><key><fifths>0</fifths></key><time><beats>2</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes><note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice></note></measure></part>
-  <part id="P2"><measure number="1"><attributes><divisions>8</divisions><key><fifths>0</fifths></key><time><beats>2</beats><beat-type>4</beat-type></time><clef><sign>F</sign><line>4</line></clef></attributes><note><pitch><step>C</step><octave>3</octave></pitch><duration>4</duration><voice>1</voice></note></measure></part>
+  ${staffLayout === "grand-staff" ? '<part id="P2"><measure number="1"><attributes><divisions>8</divisions><key><fifths>0</fifths></key><time><beats>2</beats><beat-type>4</beat-type></time><clef><sign>F</sign><line>4</line></clef></attributes><note><pitch><step>C</step><octave>3</octave></pitch><duration>4</duration><voice>1</voice></note></measure></part>' : ""}
 </score-partwise>`;
+}
+
+function singleStaffPdf(): Uint8Array {
+  const systems = [
+    [220, 216, 212, 208, 204],
+    [90, 86, 82, 78, 74],
+  ];
+  const commands = systems.flatMap((lines) => lines.map((y) => `10 ${y} m 190 ${y} l S`));
+  return pdf([{ width: 200, height: 260, content: `0 0 0 RG 0.3 w ${commands.join(" ")}` }]);
 }
 
 function grandStaffPdf(): Uint8Array {

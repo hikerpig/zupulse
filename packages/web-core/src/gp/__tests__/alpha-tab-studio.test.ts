@@ -50,7 +50,8 @@ describe("toScoreWrittenMoment", () => {
 describe("attachAlphaTabBeatSelection", () => {
   it("emits written positions from beat clicks and detaches the alphaTab listener", () => {
     let handler:
-      ((value: (typeof score.tracks)[0]["staves"][0]["bars"][0]["voices"][0]["beats"][number]) => void) | undefined;
+      | ((value: (typeof score.tracks)[0]["staves"][0]["bars"][0]["voices"][0]["beats"][number]) => void)
+      | undefined;
     let detached = false;
     const selected: unknown[] = [];
 

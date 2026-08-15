@@ -1,6 +1,6 @@
 import { createMusicXmlAdapter } from "@zupulse/web-core";
 import { unzipSync } from "fflate";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { musicXmlReadyDraft } from "./fixtures/musicxml-ready-draft";
 import { generateMusicXml } from "../generate-musicxml";
 
@@ -8,8 +8,12 @@ describe("Draft MusicXML generator", () => {
   it("generates deterministic MXL for the supported notation subset", async () => {
     const draft = musicXmlReadyDraft();
 
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
     const first = generateMusicXml(draft, { container: "mxl" });
+    vi.setSystemTime(new Date("2026-08-14T00:00:00.000Z"));
     const second = generateMusicXml(draft, { container: "mxl" });
+    vi.useRealTimers();
 
     expect(first).toEqual(second);
     const entries = unzipSync(first);

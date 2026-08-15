@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "frozen",
+  "frozenAt": "2026-08-05T22:45:00.000Z",
+  "manifestSha256": "00395444a460136f9a35bb443af24a986d85fbcedeeffce20eb4a7bf978f0816",
+  "benchmarkCommit": "c085814",
+  "engines": [
+    {
+      "id": "rokot",
+      "version": "7add305aade6fb3a64ad4dde77d410fa68381089",
+      "modelSha256": "df53948ada1a4a584b4c7c81cc7e3293d3457f2e5ec9688271693459eb950f25",
+      "parameters": {
+        "temperature": 0,
+        "maxNewTokens": 1600,
+        "reasoning": "off",
+        "concurrency": 1
+      }
+    }
+  ],
+  "preprocessVariants": ["none"],
+  "render": { "id": "olimpic-source-pdf", "version": "1.0.0", "dpi": 300 },
+  "segmentation": { "id": "provided-system-crop", "version": "1.0.0", "scope": "system-crop" },
+  "decoder": {
+    "id": "rokot-abc",
+    "version": "1.0.0",
+    "parameters": { "prompt": "Transcribe this staff to rokot-ABC.", "temperature": 0, "reasoning": "off" }
+  },
+  "gates": {
+    "jointF1": 0.9,
+    "validMeasureRate": 0.95,
+    "parseRate": 0.95,
+    "structuralAgreementRate": 0.9,
+    "harmonyPrecisionDelta": -0.05,
+    "falseConfidentChordRate": 0.03,
+    "reproducibilityAgreementRate": 1,
+    "cancelLatencyP95Ms": 2000
+  }
+}

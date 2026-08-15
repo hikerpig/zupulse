@@ -8,6 +8,9 @@ import type { ViewerProductCapabilities } from "./App";
 import type { ViewerApplication } from "./ViewerApplication";
 import { HomePage } from "./pages/HomePage";
 import styles from "./App.module.css";
+import type { PdfOmrWorkbenchPort } from "../features/pdf-omr/pdf-omr-port";
+import type { ViewerSessionPort } from "../viewer-session/viewer-session-types";
+import type { RecognitionSettingsPort } from "../features/application-settings/recognition-settings-port";
 
 export const TELEMETRY_PRIVACY_NOTICE_URL = "https://zupulse.vercel.app/privacy.html";
 
@@ -16,11 +19,22 @@ export function createAppRouter({
   localeHost,
   capabilities,
   externalNavigationHost,
+  pdfOmr,
+  openPdfOmrPreview,
+  recognitionSettings,
 }: {
   application: ViewerApplication;
   localeHost: LocaleHost;
   capabilities: ViewerProductCapabilities;
   externalNavigationHost?: ExternalNavigationHost;
+  pdfOmr?: PdfOmrWorkbenchPort | undefined;
+  recognitionSettings?: RecognitionSettingsPort | undefined;
+  openPdfOmrPreview?:
+    | ((
+        file: import("../host").ViewerFile,
+        domBindings?: import("../host").ViewerDomBindings,
+      ) => Promise<ViewerSessionPort>)
+    | undefined;
 }) {
   const openStudio = (id: string) => application.openStudio(id);
   return createHashRouter([
@@ -35,6 +49,32 @@ export function createAppRouter({
       ),
       children: [
         { path: "/", element: <HomePage capabilities={capabilities} /> },
+        {
+          path: "/settings",
+          hydrateFallbackElement: <main aria-busy="true" />,
+          lazy: async () => {
+            const { SettingsPage } = await import("../features/application-settings/SettingsPage");
+            return {
+              Component: () => (
+                <SettingsPage
+                  localeHost={localeHost}
+                  recognitionSettings={capabilities.recognitionProviderSettings ? recognitionSettings : undefined}
+                />
+              ),
+            };
+          },
+        },
+        ...(capabilities.pdfOmrWorkbench
+          ? [
+              {
+                path: "/pdf-omr",
+                lazy: async () => {
+                  const { PdfOmrPage } = await import("./pages/PdfOmrPage");
+                  return { Component: () => <PdfOmrPage port={pdfOmr} openPreviewSession={openPdfOmrPreview} /> };
+                },
+              },
+            ]
+          : []),
         {
           path: "/library",
           hydrateFallbackElement: <main aria-busy="true" />,

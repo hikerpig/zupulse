@@ -32,6 +32,32 @@ MusicXML/MXL + score-export MIDI
 本切片的目标是让“报告”变成“可以安全落盘的修正”，同时保持以下性质：原文件不覆盖、每个改动可追溯、
 源文件或 proposal 漂移时拒绝执行、回写后必须通过结构与 fusion 无回归验证。
 
+## 2026-08-08 MIDI Timing Rebuild Extension
+
+当 OMR 已破坏 measure boundary 或 voice duration 时，`apply-fusion` 的最小 pitch patch 不能安全修复。
+新增独立命令：
+
+```bash
+pnpm pdf-omr -- rebuild-from-midi \
+  --musicxml <recognized.musicxml|score.mxl> \
+  --midi <score-export.mid> \
+  --musescore <executable> \
+  --output <rebuild-run-dir>
+```
+
+该命令把 score-export MIDI 作为 notation timing skeleton，由本地 MuseScore 重建 MusicXML。原 OMR
+MusicXML 只用于同曲 compatibility gate，不参与生成最终 measure/voice 结构。发布前必须满足：
+
+1. source MusicXML 与 MIDI compatibility 为 `compatible` 且 detected transposition 为零；
+2. 重建 Draft 的 Harmony 与 MusicXML readiness 均非 `blocked`；
+3. MusicXML adapter 必须返回 `view: true` 与 `playback: true`；
+4. 重建谱与 MIDI 必须无 ambiguous、score-only、midi-only note，且两侧 coverage 与 pitch agreement
+   均为 `1`；
+5. 输出目录必须不存在，source/MIDI 不覆盖，run 记录 MuseScore version 与全部 artifact hashes。
+
+此模式只接受制谱软件导出的 MIDI。它会舍弃 OMR engraving、layout 与 text，不得用于真人演奏 MIDI，
+也不得描述为对 OMR measure 的最小 patch。
+
 ## Assumptions
 
 1. `score-export` MIDI 仍是唯一支持的 MIDI 类型；真人演奏 MIDI 不进入本切片。

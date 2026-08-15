@@ -1,0 +1,515 @@
+{
+  "corpusId": "olimpic-scanned-full-page-dev-v1",
+  "detector": {
+    "allowFragmentedRuns": true,
+    "allowLandscape": true,
+    "id": "rokot-grand-staff-v2",
+    "scope": "full-page"
+  },
+  "items": [
+    {
+      "inputSha256": "9041badf0af41dc69cc079b7254c74e700dcf46726ee3060182f0867d1d2c63f",
+      "itemId": "olimpic-4945954-full-page",
+      "pageCount": 3,
+      "pages": [
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "groupCount": 9,
+              "pageIndex": 0,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "staff-groups"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 0,
+          "renderSha256": "83b5785643ed532ac1041a3cfb5812a26f6cba67710fd363a735ba44700f832c",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "groupIndex": 0,
+              "pageIndex": 1,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "staff-spacing"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 1,
+          "renderSha256": "459692a02f33e0fb6d26c76c2525e3d30c1e0fa1785e00c2120b1fcc3da9f483",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "gap": 440,
+              "groupIndex": 0,
+              "pageIndex": 2,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "grand-staff-pairing"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 2,
+          "renderSha256": "83fb7cc901bde5acf49ecf7a8051ce96a7a826c17ead436b1aa89946299fa999",
+          "status": "failed"
+        }
+      ],
+      "status": "failed",
+      "systemCount": 0
+    },
+    {
+      "inputSha256": "3ab43c6a947d9589cff415afac9abb63f43a42eab327e71ee7b6d0d024ca9dc5",
+      "itemId": "olimpic-4976604-full-page",
+      "pageCount": 2,
+      "pages": [
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "gap": 385,
+              "groupIndex": 0,
+              "pageIndex": 0,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "grand-staff-pairing"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 0,
+          "renderSha256": "7f8c549cd7f82c152068e9920ce5cea046b0502bf4c05487ace46d1f98cc5a29",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "groupCount": 9,
+              "pageIndex": 1,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "staff-groups"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 1,
+          "renderSha256": "60b853c97cff4caf25593d5605454ae726ce2595ef16a77c4e160da2037a21a1",
+          "status": "failed"
+        }
+      ],
+      "status": "failed",
+      "systemCount": 0
+    },
+    {
+      "inputSha256": "d2153b2606d8df25a659e7cb9352dd2ab161f6caf41b7eec40cfb0177f8189a2",
+      "itemId": "olimpic-4985990-full-page",
+      "pageCount": 5,
+      "pages": [
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "gap": 88,
+              "groupIndex": 2,
+              "pageIndex": 0,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "grand-staff-pairing"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 0,
+          "renderSha256": "df960b3ecb8e22d86caa93ca2e7274264d08c64c8db206cd218baaf2511f584f",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "groupCount": 5,
+              "pageIndex": 1,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "staff-groups"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 1,
+          "renderSha256": "1d7f37ab69e48ffc261e6aa0143b35f2c71ea6ec12e0484743688cc0b1c6e032",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "groupIndex": 0,
+              "pageIndex": 2,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "staff-spacing"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 2,
+          "renderSha256": "12699ecaec8ae4cb2c0776d6c2fcc88fdc7f8b734097d5ff9b8b7e924c9843c4",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "groupCount": 7,
+              "pageIndex": 3,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "staff-groups"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 3,
+          "renderSha256": "039bea0e55777cadb919dbadb08b945e8d2bc2456b1207a255b277ebd22b1f54",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "gap": 74,
+              "groupIndex": 2,
+              "pageIndex": 4,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "grand-staff-pairing"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 4,
+          "renderSha256": "7918a0970d35979a6f8b35fce6e08e5a969b00ed1e00e4c135a0faec0a67bd8c",
+          "status": "failed"
+        }
+      ],
+      "status": "failed",
+      "systemCount": 0
+    },
+    {
+      "inputSha256": "f89b5ae71c7248a846c09ce3fe70924c67ad16d5a30c62ac043a733c4ccccb9d",
+      "itemId": "olimpic-6007571-full-page",
+      "pageCount": 4,
+      "pages": [
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "groupCount": 7,
+              "pageIndex": 0,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "staff-groups"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 0,
+          "renderSha256": "4feccd4fabbd0a5147184a192a3509d416db46c5b7fd543a1dc3bdb8372c004a",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "groupIndex": 2,
+              "pageIndex": 1,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "staff-spacing"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 1,
+          "renderSha256": "6194b26537caae04394ac16988251c815d5a7b5e462a3440b0471dfcb1ab67d6",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "gap": 323,
+              "groupIndex": 4,
+              "pageIndex": 2,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "grand-staff-pairing"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 2,
+          "renderSha256": "c04a9985c28fd2fee9d3cd40f55ed0dbebeab822f64dd0ba11855df65f65c3e3",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "groupCount": 9,
+              "pageIndex": 3,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "staff-groups"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 3,
+          "renderSha256": "fe4e4e1c181784e0d903cde618f5842c36196229e9a553f93023901f45bc6ac8",
+          "status": "failed"
+        }
+      ],
+      "status": "failed",
+      "systemCount": 0
+    },
+    {
+      "inputSha256": "d76b02e03475e61742dcfafb4f5e0ff6eb19798321594b51619774dc1e67fa16",
+      "itemId": "olimpic-5862368-full-page",
+      "pageCount": 7,
+      "pages": [
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "groupCount": 9,
+              "pageIndex": 0,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "staff-groups"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 0,
+          "renderSha256": "b5d9ea755cbb3f4eeebe76cd013c16df9262b3599479eb2470644975cc8e718c",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "gap": 107,
+              "groupIndex": 2,
+              "pageIndex": 1,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "grand-staff-pairing"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 1,
+          "renderSha256": "464a7e1480f3ec253834b648b9ef1804a28b33974f8e459a01335cd418842650",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "gap": 126,
+              "groupIndex": 0,
+              "pageIndex": 2,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "grand-staff-pairing"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 2,
+          "renderSha256": "a25cd925b2ea2a5975e1a945acba92f38f3c2c04ba409b250cee86644cbdfc4f",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "gap": 136,
+              "groupIndex": 2,
+              "pageIndex": 3,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "grand-staff-pairing"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 3,
+          "renderSha256": "ea2ae11d5ab822391c6694ebb4cdca42e3de2fc07845f16bcac44ee87aad1b1e",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "gap": 307,
+              "groupIndex": 2,
+              "pageIndex": 4,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "grand-staff-pairing"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 4,
+          "renderSha256": "74a3627914c9c944fd72d4f86ab7bc1e273b99f1aec34c730597a78e969f1d21",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "gap": 242,
+              "groupIndex": 0,
+              "pageIndex": 5,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "grand-staff-pairing"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 5,
+          "renderSha256": "53808ae15d6cba874823156b5c9605dc6d302ac0ddc58d7c7da1c0b90bc9b038",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "groupCount": 3,
+              "pageIndex": 6,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "staff-groups"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 6,
+          "renderSha256": "549ff6d1d6e6e66fc56a571ababa65abb44c5620b9a9c59da9d366dfca3a0431",
+          "status": "failed"
+        }
+      ],
+      "status": "failed",
+      "systemCount": 0
+    },
+    {
+      "inputSha256": "410d498f827ad3e0521ae9f0a47d1dbc649a76b93375d41bebd870403f57953d",
+      "itemId": "olimpic-6011095-full-page",
+      "pageCount": 8,
+      "pages": [
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "groupCount": 11,
+              "pageIndex": 0,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "staff-groups"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 0,
+          "renderSha256": "d3f7f1bd28a279ce27d7b91307600cb0cf2286ebbc0a33bf8663be5c9e898ccd",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "groupCount": 11,
+              "pageIndex": 1,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "staff-groups"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 1,
+          "renderSha256": "70e3c4d21a6887a8c506edcc52a2a295791c4295952f1af63b129e54f5f5459b",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "groupCount": 11,
+              "pageIndex": 2,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "staff-groups"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 2,
+          "renderSha256": "e2acd6c1330f3650ca144ec8525d6a0136017ad730b8ec2d473850c9d5a47c19",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "gap": 559,
+              "groupIndex": 0,
+              "pageIndex": 3,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "grand-staff-pairing"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 3,
+          "renderSha256": "0c4a413de9f5091bb13fe8b10d8cbfd9b6918bed580d729bb51d68e21f39cf96",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "gap": 143,
+              "groupIndex": 2,
+              "pageIndex": 4,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "grand-staff-pairing"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 4,
+          "renderSha256": "b67b472e2a07afba8c8740045c8582f862e26bb5ac14682725cba24b587a0525",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "gap": 168,
+              "groupIndex": 0,
+              "pageIndex": 5,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "grand-staff-pairing"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 5,
+          "renderSha256": "eecefc4e87845603c322d68bbb7430d1cc1697e001fafcfe678339db0a4234a9",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "groupCount": 11,
+              "pageIndex": 6,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "staff-groups"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 6,
+          "renderSha256": "f5f254dffd93d6b279c25a20350b9bb4d9d1aa35abdb888e919229a3a5f10d1b",
+          "status": "failed"
+        },
+        {
+          "error": {
+            "code": "ENGINE_OUTPUT_INVALID",
+            "context": {
+              "groupCount": 7,
+              "pageIndex": 7,
+              "reason": "ambiguous-system-segmentation",
+              "stage": "staff-groups"
+            },
+            "message": "PDF staff-system segmentation is ambiguous"
+          },
+          "pageIndex": 7,
+          "renderSha256": "9793c4c417235418308d05762f41d1717f23e26ce9c91550e10ac5ad482073cc",
+          "status": "failed"
+        }
+      ],
+      "status": "failed",
+      "systemCount": 0
+    }
+  ],
+  "manifestSha256": "4cbd78411f15f73bf548a50f2af125e29c6cc42297b43a8616934a08a2cb0a1f",
+  "schemaVersion": "1.0.0"
+}

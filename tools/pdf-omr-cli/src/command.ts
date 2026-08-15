@@ -4,6 +4,7 @@ import { createEngineRegistry, type EngineRegistry } from "./engine-registry";
 import type { RunBenchmarkDependencies } from "./benchmark/run-benchmark";
 import type { FusionReport } from "./fusion/schemas";
 import type { ApplyFusionReport } from "./fusion/writeback-schemas";
+import type { MidiRebuildReport } from "./fusion/midi-rebuild-schemas";
 import type { MidiImportReport } from "./midi/schemas";
 import {
   type PdfOmrBenchmarkReport,
@@ -24,7 +25,8 @@ const usage = [
   "  import-midi <input.mid> --output <run-dir>",
   "  fuse --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --output <run-dir>",
   "  apply-fusion --run <fusion-run-dir> --decisions <decisions.json> --output <run-dir>",
-  "  recognize <input.pdf> --engine <audiveris|transcoda|legato|rokot> --output <run-dir>",
+  "  rebuild-from-midi --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --musescore <executable> --output <run-dir>",
+  "  recognize <input.pdf> --engine <audiveris|transcoda|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff>]",
   "  validate <draft.json> --output <diagnostics.json>",
   "  analyze <draft.json> --output <harmony.json>",
   "  export-musicxml <draft.json> --output <score.mxl>",
@@ -50,6 +52,7 @@ export async function runPdfOmrCommand(
   | MidiImportReport
   | FusionReport
   | ApplyFusionReport
+  | MidiRebuildReport
 > {
   const normalized = args[0] === "--" ? args.slice(1) : args;
   if (normalized.length === 0 || normalized[0] === "--help" || normalized[0] === "-h") {
@@ -115,6 +118,29 @@ export async function runPdfOmrCommand(
     const { applyFusionCommand } = await import("./commands/apply-fusion");
     return applyFusionCommand({ run, decisions, output, cwd: context.cwd ?? process.cwd() });
   }
+  if (normalized[0] === "rebuild-from-midi") {
+    const flags = parseFlags(normalized.slice(1), new Set(["--musicxml", "--midi", "--musescore", "--output"]));
+    const musicXml = flags.get("--musicxml");
+    const midi = flags.get("--midi");
+    const museScore = flags.get("--musescore");
+    const output = flags.get("--output");
+    if (musicXml === undefined || midi === undefined || museScore === undefined || output === undefined) {
+      throw new PdfOmrError(
+        "INVALID_CLI_ARGUMENT",
+        "rebuild-from-midi requires --musicxml <score> --midi <score-export.mid> --musescore <executable> --output <run-dir>",
+        { context: { command: "rebuild-from-midi" } },
+      );
+    }
+    const { rebuildFromMidiCommand } = await import("./commands/rebuild-from-midi");
+    return rebuildFromMidiCommand({
+      musicXml,
+      midi,
+      museScore,
+      output,
+      cwd: context.cwd ?? process.cwd(),
+      ...(context.signal === undefined ? {} : { signal: context.signal }),
+    });
+  }
   if (normalized[0] === "inspect") {
     const input = normalized[1];
     const outputFlag = normalized[2];
@@ -129,28 +155,44 @@ export async function runPdfOmrCommand(
   }
   if (normalized[0] === "recognize") {
     const input = normalized[1];
-    const engineFlag = normalized[2];
-    const engineId = normalized[3];
-    const outputFlag = normalized[4];
-    const output = normalized[5];
-    if (
-      input === undefined ||
-      engineFlag !== "--engine" ||
-      engineId === undefined ||
-      outputFlag !== "--output" ||
-      output === undefined ||
-      normalized.length !== 6
-    ) {
+    const flags = parseFlags(normalized.slice(2), new Set(["--engine", "--output", "--input-scope", "--staff-layout"]));
+    const engineId = flags.get("--engine");
+    const output = flags.get("--output");
+    const inputScope = flags.get("--input-scope");
+    const staffLayout = flags.get("--staff-layout");
+    if (input === undefined || engineId === undefined || output === undefined) {
       throw new PdfOmrError(
         "INVALID_CLI_ARGUMENT",
-        "recognize requires <input.pdf> --engine <engine-id> --output <run-dir>",
+        "recognize requires <input.pdf> --engine <engine-id> --output <run-dir> [--staff-layout <layout>]",
         { context: { command: "recognize" } },
       );
+    }
+    if (staffLayout !== undefined && !["auto", "single-staff", "grand-staff"].includes(staffLayout)) {
+      throw new PdfOmrError("INVALID_CLI_ARGUMENT", "unknown staff layout", {
+        context: { command: "recognize", staffLayout },
+      });
+    }
+    if (staffLayout !== undefined && engineId !== "rokot") {
+      throw new PdfOmrError("INVALID_CLI_ARGUMENT", "staff layout is supported only by Rokot", {
+        context: { command: "recognize", engineId },
+      });
+    }
+    if (inputScope !== undefined && !["full-page", "system-crop"].includes(inputScope)) {
+      throw new PdfOmrError("INVALID_CLI_ARGUMENT", "unknown input scope", {
+        context: { command: "recognize", inputScope },
+      });
+    }
+    if (inputScope !== undefined && engineId !== "rokot") {
+      throw new PdfOmrError("INVALID_CLI_ARGUMENT", "input scope is supported only by Rokot", {
+        context: { command: "recognize", engineId },
+      });
     }
     const { recognizeCommand } = await import("./commands/recognize");
     return recognizeCommand(input, engineId, output, {
       cwd: context.cwd ?? process.cwd(),
       engineRegistry: context.engineRegistry ?? createEngineRegistry(),
+      ...(inputScope === undefined ? {} : { inputScope: inputScope as "full-page" | "system-crop" }),
+      ...(staffLayout === undefined ? {} : { staffLayout: staffLayout as "auto" | "single-staff" | "grand-staff" }),
       ...(context.signal === undefined ? {} : { signal: context.signal }),
     });
   }

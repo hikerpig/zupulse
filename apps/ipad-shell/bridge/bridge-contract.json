@@ -127,6 +127,51 @@
         "capabilities": {
           "type": "object",
           "properties": {
+            "pdfOmrWorkbench": { "type": "boolean" },
+            "recognitionProviderSettings": { "type": "boolean" },
+            "pdfOmrEngines": {
+              "maxItems": 16,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+                  "version": { "type": "string", "minLength": 1 },
+                  "available": { "type": "boolean" },
+                  "inputKinds": {
+                    "minItems": 1,
+                    "maxItems": 2,
+                    "type": "array",
+                    "items": { "type": "string", "enum": ["pdf", "image"] }
+                  },
+                  "reason": {
+                    "type": "string",
+                    "enum": [
+                      "missing-transcoda-configuration",
+                      "missing-legato-configuration",
+                      "missing-rokot-configuration",
+                      "engine-executable-unavailable",
+                      "engine-inspection-failed",
+                      "checkpoint-unreadable",
+                      "repository-revision-mismatch",
+                      "checkpoint-hash-mismatch",
+                      "python-version-mismatch",
+                      "model-unreadable",
+                      "base-model-unreadable",
+                      "base-model-config-empty",
+                      "mmproj-unreadable",
+                      "model-hash-mismatch",
+                      "mmproj-hash-mismatch",
+                      "llama-build-mismatch",
+                      "abc-converter-unavailable",
+                      "invalid-version-output"
+                    ]
+                  }
+                },
+                "required": ["id", "version", "available", "inputKinds"],
+                "additionalProperties": false
+              }
+            },
             "fileAccess": {
               "type": "object",
               "properties": {
@@ -299,6 +344,51 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
+      "pdfOmrWorkbench": { "type": "boolean" },
+      "recognitionProviderSettings": { "type": "boolean" },
+      "pdfOmrEngines": {
+        "maxItems": 16,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "version": { "type": "string", "minLength": 1 },
+            "available": { "type": "boolean" },
+            "inputKinds": {
+              "minItems": 1,
+              "maxItems": 2,
+              "type": "array",
+              "items": { "type": "string", "enum": ["pdf", "image"] }
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "missing-transcoda-configuration",
+                "missing-legato-configuration",
+                "missing-rokot-configuration",
+                "engine-executable-unavailable",
+                "engine-inspection-failed",
+                "checkpoint-unreadable",
+                "repository-revision-mismatch",
+                "checkpoint-hash-mismatch",
+                "python-version-mismatch",
+                "model-unreadable",
+                "base-model-unreadable",
+                "base-model-config-empty",
+                "mmproj-unreadable",
+                "model-hash-mismatch",
+                "mmproj-hash-mismatch",
+                "llama-build-mismatch",
+                "abc-converter-unavailable",
+                "invalid-version-output"
+              ]
+            }
+          },
+          "required": ["id", "version", "available", "inputKinds"],
+          "additionalProperties": false
+        }
+      },
       "fileAccess": {
         "type": "object",
         "properties": {

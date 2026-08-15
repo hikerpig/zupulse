@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { BRIDGE_SCHEMA_VERSION, createBridgeRequest } from "@zupulse/web-core";
-import { dispatchBridgeRequest } from "../bridge";
+import { createDesktopCapabilities, dispatchBridgeRequest } from "../bridge";
 
 const rendererBuildHash = "b".repeat(64);
 const validHandshake = createBridgeRequest("app.handshake", "handshake-1", {
@@ -10,6 +10,30 @@ const validHandshake = createBridgeRequest("app.handshake", "handshake-1", {
 const locale = { preference: "system" as const, effectiveLocale: "en-US" as const };
 
 describe("dispatchBridgeRequest", () => {
+  it("builds Desktop capabilities from inspected OMR engines", () => {
+    expect(
+      createDesktopCapabilities([
+        { id: "audiveris", version: "5.11.0", available: true, inputKinds: ["pdf", "image"] },
+        {
+          id: "rokot",
+          version: "unknown",
+          available: false,
+          inputKinds: ["pdf"],
+          reason: "missing-rokot-configuration",
+        },
+      ]).pdfOmrEngines,
+    ).toEqual([
+      { id: "audiveris", version: "5.11.0", available: true, inputKinds: ["pdf", "image"] },
+      {
+        id: "rokot",
+        version: "unknown",
+        available: false,
+        inputKinds: ["pdf"],
+        reason: "missing-rokot-configuration",
+      },
+    ]);
+  });
+
   it("rejects requests from a non-app sender", async () => {
     await expect(
       dispatchBridgeRequest(

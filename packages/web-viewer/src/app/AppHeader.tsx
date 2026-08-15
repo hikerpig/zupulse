@@ -1,4 +1,4 @@
-import { House, Languages, LibraryBig, Moon, ShieldCheck, Sun } from "lucide-react";
+import { FileCog, House, Languages, LibraryBig, Moon, Settings, ShieldCheck, Sun } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router";
@@ -9,6 +9,7 @@ import { ContextPopup } from "../components/ContextPopup";
 import { Button } from "../components/ui";
 import type { LocaleHost } from "../i18n/locale-controller";
 import type { ExternalNavigationHost } from "../host";
+import { useLocalePreference } from "../i18n/use-locale-preference";
 import { useAppStore } from "./appStore";
 import type { ViewerProductCapabilities } from "./App";
 import type { ViewerApplication } from "./ViewerApplication";
@@ -25,16 +26,13 @@ export function AppHeader({
   capabilities: ViewerProductCapabilities;
   externalNavigationHost?: ExternalNavigationHost;
 }) {
-  const { t, i18n } = useTranslation("common");
+  const { t } = useTranslation("common");
   const { t: tErrors } = useTranslation("errors");
   const { pathname } = useLocation();
   const libraryScoreId = pathname.match(/^\/(?:viewer|studio)\/([^/]+)$/)?.[1];
   const theme = useAppStore((state) => state.theme);
-  const locale = useAppStore((state) => state.locale);
-  const localeChange = useAppStore((state) => state.localeChange);
   const setTheme = useAppStore((state) => state.setTheme);
-  const setLocaleState = useAppStore((state) => state.setLocaleState);
-  const setLocaleChange = useAppStore((state) => state.setLocaleChange);
+  const { locale, localeChange, selectLocale } = useLocalePreference(localeHost);
   const nextTheme = theme === "dark" ? "light" : "dark";
   const [localeOpen, setLocaleOpen] = useState(false);
   const localeButtonRef = useRef<HTMLButtonElement>(null);
@@ -44,23 +42,6 @@ export function AppHeader({
   const [telemetryError, setTelemetryError] = useState(false);
   const telemetryButtonRef = useRef<HTMLButtonElement>(null);
   const [telemetryEnabled, setTelemetryEnabled] = useState(telemetry?.enabled ?? false);
-
-  const selectLocale = async (preference: "system" | "zh-CN" | "en-US") => {
-    setLocaleChange("saving");
-    let nextLocale;
-    try {
-      nextLocale = await localeHost.setPreference(preference);
-    } catch {
-      setLocaleChange("error");
-      return;
-    }
-    await i18n.changeLanguage(nextLocale.effectiveLocale);
-    flushSync(() => {
-      setLocaleState(nextLocale);
-      setLocaleChange("idle");
-    });
-    setLocaleOpen(false);
-  };
 
   return (
     <header className={styles.header}>
@@ -85,6 +66,12 @@ export function AppHeader({
           <LibraryBig aria-hidden="true" size={16} />
           {t("navigation.library")}
         </NavLink>
+        {capabilities.pdfOmrWorkbench && !libraryScoreId ? (
+          <NavLink className={({ isActive }) => (isActive ? styles.activeLink : styles.navLink)} to="/pdf-omr">
+            <FileCog aria-hidden="true" size={16} />
+            {t("navigation.pdfOmr")}
+          </NavLink>
+        ) : null}
         {libraryScoreId ? (
           <>
             <NavLink
@@ -201,7 +188,7 @@ export function AppHeader({
                 role="menuitemradio"
                 aria-checked={locale.preference === preference}
                 disabled={localeChange === "saving"}
-                onClick={() => void selectLocale(preference)}
+                onClick={() => void selectLocale(preference).then((saved) => saved && setLocaleOpen(false))}
               >
                 {label}
               </Button>
@@ -219,6 +206,15 @@ export function AppHeader({
           {theme === "dark" ? <Sun aria-hidden="true" size={17} /> : <Moon aria-hidden="true" size={17} />}
           <span>{theme === "dark" ? t("theme.dark") : t("theme.light")}</span>
         </Button>
+        <NavLink
+          className={styles.settingsLink ?? ""}
+          to="/settings"
+          state={{ from: pathname }}
+          aria-label={t("navigation.settings")}
+        >
+          <Settings aria-hidden="true" size={17} />
+          <span>{t("navigation.settings")}</span>
+        </NavLink>
       </div>
     </header>
   );

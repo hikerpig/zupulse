@@ -1,0 +1,281 @@
+@layer components {
+  .page {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    color: var(--text-primary);
+  }
+
+  .container {
+    width: min(960px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 44px 0 72px;
+  }
+
+  .pageHeader {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+    margin-bottom: 42px;
+  }
+
+  .pageHeader h1,
+  .sectionHeading h2 {
+    margin: 0;
+  }
+
+  .pageHeader h1 {
+    font-size: clamp(28px, 4vw, 40px);
+    line-height: 1.1;
+  }
+
+  .pageHeader p,
+  .sectionHeading p,
+  .settingRow p {
+    color: var(--text-secondary);
+  }
+
+  .pageHeader p,
+  .sectionHeading p {
+    margin: 8px 0 0;
+  }
+
+  .backLink {
+    display: inline-flex;
+    width: 38px;
+    height: 38px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+
+  .backLink:hover {
+    background: var(--bg-control);
+  }
+
+  .backLink:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  .section {
+    border-top: 1px solid var(--border-default);
+  }
+
+  .sectionHeading {
+    padding: 28px 0 20px;
+  }
+
+  .sectionHeading h2 {
+    font-size: 20px;
+  }
+
+  .settingRow {
+    display: grid;
+    grid-template-columns: minmax(160px, 0.7fr) minmax(220px, 1fr);
+    column-gap: 32px;
+    align-items: center;
+    margin: 0;
+    padding: 22px 0;
+    border: 0;
+    border-top: 1px solid var(--border-default);
+  }
+
+  .settingRow legend {
+    grid-column: 1;
+    font-weight: 650;
+  }
+
+  .settingRow > p {
+    grid-column: 1;
+    margin: 5px 0 0;
+    font-size: 13px;
+  }
+
+  .options {
+    display: flex;
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .option {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-control);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .option:has(input:checked) {
+    border-color: var(--accent-primary);
+    background: var(--accent-soft);
+  }
+
+  .option:has(input:focus-visible) {
+    box-shadow: var(--focus-ring);
+  }
+
+  .option input {
+    margin: 0;
+    accent-color: var(--accent-primary);
+  }
+
+  .settingRow > [role="status"],
+  .settingRow > [role="alert"] {
+    grid-column: 2;
+    margin-top: 8px;
+    font-size: 12px;
+  }
+
+  .error {
+    color: var(--status-error-text);
+  }
+
+  .providerList {
+    border-top: 1px solid var(--border-default);
+  }
+
+  .provider {
+    border-bottom: 1px solid var(--border-default);
+  }
+
+  .providerRow {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(150px, auto) auto;
+    gap: 20px;
+    align-items: center;
+    min-height: 72px;
+  }
+
+  .providerRow div {
+    display: grid;
+    gap: 5px;
+  }
+
+  .providerRow span {
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+
+  .providerRow button,
+  .resourceRow button,
+  .formActions button {
+    min-height: 34px;
+    padding: 0 12px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-control);
+    color: var(--text-primary);
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .providerForm {
+    padding: 4px 0 22px 28px;
+    border-left: 2px solid var(--accent-primary);
+  }
+
+  .resourceRow {
+    display: grid;
+    grid-template-columns: minmax(150px, 0.7fr) minmax(180px, 1fr) auto;
+    gap: 16px;
+    align-items: center;
+    min-height: 54px;
+    border-top: 1px solid var(--border-default);
+  }
+
+  .resourceRow label {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .resourceControl input {
+    width: 100%;
+    min-height: 34px;
+    box-sizing: border-box;
+    padding: 0 10px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-control);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 13px;
+  }
+
+  .resourceControl input::placeholder {
+    color: var(--text-secondary);
+  }
+
+  .resourceControl input:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  .formActions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 18px;
+  }
+
+  .formActions .primaryAction {
+    border-color: var(--accent-primary);
+    background: var(--accent-primary);
+    color: var(--text-on-accent);
+  }
+
+  .settingRow > [role="alert"] {
+    color: var(--status-error-text);
+  }
+
+  @media (max-width: 620px) {
+    .container {
+      width: min(100% - 24px, 960px);
+      padding-top: 28px;
+    }
+
+    .settingRow {
+      grid-template-columns: 1fr;
+    }
+
+    .settingRow legend,
+    .settingRow > p,
+    .options,
+    .settingRow > [role="status"],
+    .settingRow > [role="alert"] {
+      grid-column: 1;
+      grid-row: auto;
+    }
+
+    .options {
+      justify-content: flex-start;
+      margin-top: 14px;
+    }
+
+    .providerRow,
+    .resourceRow {
+      grid-template-columns: 1fr;
+      gap: 8px;
+      padding: 14px 0;
+    }
+
+    .providerForm {
+      padding-left: 14px;
+    }
+  }
+}

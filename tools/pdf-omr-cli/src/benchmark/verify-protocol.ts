@@ -25,6 +25,22 @@ export const frozenProtocolSchema = z
       )
       .min(1),
     preprocessVariants: z.array(z.string().min(1)).min(1),
+    render: z
+      .object({ id: z.string().min(1), version: z.string().min(1), dpi: z.number().int().positive().optional() })
+      .strict()
+      .optional(),
+    segmentation: z
+      .object({ id: z.string().min(1), version: z.string().min(1), scope: z.enum(["full-page", "system-crop"]) })
+      .strict()
+      .optional(),
+    builder: z
+      .object({ id: z.string().min(1), version: z.string().min(1), sourceSha256: sha256Schema })
+      .strict()
+      .optional(),
+    decoder: z
+      .object({ id: z.string().min(1), version: z.string().min(1), parameters: z.record(z.string(), parameterSchema) })
+      .strict()
+      .optional(),
     gates: z
       .object({
         jointF1: z.number().min(0).max(1),
@@ -35,6 +51,9 @@ export const frozenProtocolSchema = z
         falseConfidentChordRate: z.number().min(0).max(1),
         reproducibilityAgreementRate: z.number().min(0).max(1),
         cancelLatencyP95Ms: z.number().positive(),
+        maxWallTimeP95Ms: z.number().positive().optional(),
+        maxPeakRssP95Bytes: z.number().int().positive().optional(),
+        maxGpuMemoryP95Bytes: z.number().int().positive().optional(),
       })
       .strict(),
   })

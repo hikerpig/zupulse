@@ -4,6 +4,7 @@ export type FileTokenEntry = {
   path: string;
   fileName: string;
   sizeBytes: number;
+  identity?: { dev: number; ino: number; mtimeMs: number };
   expiresAt: number;
 };
 
@@ -17,7 +18,10 @@ export class FileTokenStore {
     },
   ) {}
 
-  issue(path: string, metadata: { fileName: string; sizeBytes: number }): string {
+  issue(
+    path: string,
+    metadata: { fileName: string; sizeBytes: number; identity?: { dev: number; ino: number; mtimeMs: number } },
+  ): string {
     const token = randomUUID();
     this.entries.set(token, {
       path,

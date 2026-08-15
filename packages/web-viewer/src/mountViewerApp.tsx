@@ -14,6 +14,8 @@ import type {
 } from "@zupulse/web-core";
 import { createAppI18n } from "@zupulse/app-i18n";
 import type { BundledSampleSource } from "./sample-scores";
+import type { PdfOmrWorkbenchPort } from "./features/pdf-omr/pdf-omr-port";
+import type { RecognitionSettingsPort } from "./features/application-settings/recognition-settings-port";
 
 export type ViewerAppDependencies = {
   host: ViewerHost;
@@ -22,7 +24,10 @@ export type ViewerAppDependencies = {
   localeHost?: LocaleHost;
   openSession(file: ViewerFile, libraryScoreId?: string, domBindings?: ViewerDomBindings): Promise<ViewerSessionPort>;
   openStudioRuntime?(file: ViewerFile): Promise<StudioScoreRuntime>;
+  openPdfOmrPreview?(file: ViewerFile, domBindings?: ViewerDomBindings): Promise<ViewerSessionPort>;
   capabilities?: ViewerProductCapabilities;
+  pdfOmr?: PdfOmrWorkbenchPort;
+  recognitionSettings?: RecognitionSettingsPort;
   library: {
     repository: SheetLibraryRepository;
     gateway: ScoreFileGateway;
@@ -63,6 +68,13 @@ export function mountViewerApp(rootElement: HTMLElement, dependencies: ViewerApp
             ? {}
             : { externalNavigationHost: dependencies.host.externalNavigation })}
           {...(dependencies.capabilities === undefined ? {} : { capabilities: dependencies.capabilities })}
+          {...(dependencies.pdfOmr === undefined ? {} : { pdfOmr: dependencies.pdfOmr })}
+          {...(dependencies.recognitionSettings === undefined
+            ? {}
+            : { recognitionSettings: dependencies.recognitionSettings })}
+          {...(dependencies.openPdfOmrPreview === undefined
+            ? {}
+            : { openPdfOmrPreview: dependencies.openPdfOmrPreview })}
         />
       </StrictMode>,
     ),

@@ -11,6 +11,69 @@ import {
 const hash = "a".repeat(64);
 
 describe("bridge schemas", () => {
+  it("accepts only closed recognition provider setting requests and path-free responses", () => {
+    expect(
+      createBridgeRequest("recognitionSettings.selectResource", "selection-1", {
+        providerId: "rokot",
+        fieldId: "model",
+      }).payload,
+    ).toEqual({ providerId: "rokot", fieldId: "model" });
+    expect(
+      createBridgeRequest("recognitionSettings.selectResource", "selection-manual", {
+        providerId: "rokot",
+        fieldId: "model",
+        path: "/opt/models/rokot.gguf",
+      }).payload,
+    ).toEqual({ providerId: "rokot", fieldId: "model", path: "/opt/models/rokot.gguf" });
+    expect(() =>
+      createBridgeRequest("recognitionSettings.selectResource", "selection-empty", {
+        providerId: "rokot",
+        fieldId: "model",
+        path: "   ",
+      } as never),
+    ).toThrow();
+    expect(() =>
+      createBridgeRequest("recognitionSettings.selectResource", "selection-2", {
+        providerId: "rokot",
+        fieldId: "repository",
+      } as never),
+    ).toThrow();
+    expect(
+      parseBridgeResponse("recognitionSettings.list", {
+        providers: [
+          {
+            id: "audiveris",
+            state: "ready",
+            version: "5.3",
+            inputKinds: ["pdf", "image"],
+            hasExplicitConfiguration: false,
+            fields: [],
+          },
+          { id: "rokot", state: "unconfigured", inputKinds: ["pdf"], hasExplicitConfiguration: false, fields: [] },
+          { id: "legato", state: "unconfigured", inputKinds: ["pdf"], hasExplicitConfiguration: false, fields: [] },
+          { id: "transcoda", state: "unconfigured", inputKinds: ["pdf"], hasExplicitConfiguration: false, fields: [] },
+        ],
+      }),
+    ).toBeTruthy();
+    expect(() =>
+      parseBridgeResponse("recognitionSettings.list", {
+        providers: [
+          {
+            id: "audiveris",
+            state: "ready",
+            version: "5.3",
+            inputKinds: ["pdf", "image"],
+            hasExplicitConfiguration: true,
+            fields: [{ id: "executable", label: "/Applications/Audiveris" }],
+          },
+          { id: "rokot", state: "unconfigured", inputKinds: ["pdf"], hasExplicitConfiguration: false, fields: [] },
+          { id: "legato", state: "unconfigured", inputKinds: ["pdf"], hasExplicitConfiguration: false, fields: [] },
+          { id: "transcoda", state: "unconfigured", inputKinds: ["pdf"], hasExplicitConfiguration: false, fields: [] },
+        ],
+      }),
+    ).toThrow();
+  });
+
   it("rejects unknown message types", () => {
     expect(() =>
       bridgeRequestSchema.parse({
@@ -240,5 +303,85 @@ describe("bridge schemas", () => {
       sourceHints: { fileName: "score.musicxml", trackNames: ["Piano"] },
     };
     expect(createBridgeRequest("sidecar.read", "sidecar-1", { identity }).payload.identity).toEqual(identity);
+  });
+
+  it("defines a capability-gated PDF OMR bridge without exposing paths", () => {
+    const request = createBridgeRequest("pdfOmr.start", "pdf-start-1", {
+      fileToken: "token-1",
+      engineId: "rokot",
+    });
+    expect(request.type).toBe("pdfOmr.start");
+    const retry = createBridgeRequest("pdfOmr.retry", "pdf-retry-1", {
+      jobId: "job-1",
+      engineId: "rokot",
+    });
+    expect(retry.type).toBe("pdfOmr.retry");
+    expect(
+      capabilitiesSchema.parse({
+        pdfOmrWorkbench: true,
+        pdfOmrEngines: [{ id: "audiveris", version: "host", available: true, inputKinds: ["pdf", "image"] }],
+        fileAccess: { openExternalFile: true, persistentFileReferences: false, localLibraryImport: false },
+        storage: { sqliteIndex: false, sidecarPayload: true },
+        sync: { available: false, provider: "none" },
+        audio: { webAudio: true, nativeBridge: false },
+        localization: { changeLocale: true },
+        externalNavigation: { openUrl: true },
+      }).pdfOmrWorkbench,
+    ).toBe(true);
+    expect(
+      parseBridgeResponse("pdfOmr.select", {
+        status: "selected",
+        fileToken: "token-1",
+        fileName: "score.png",
+        sizeBytes: 42,
+        inputKind: "image",
+      }),
+    ).toMatchObject({ inputKind: "image" });
+    expect(createBridgeRequest("pdfOmr.selectMidi", "midi-select-1", {}).type).toBe("pdfOmr.selectMidi");
+    expect(
+      createBridgeRequest("pdfOmr.analyzeMidi", "midi-analyze-1", {
+        jobId: "job-1",
+        fileToken: "midi-token-1",
+      }).payload,
+    ).toEqual({ jobId: "job-1", fileToken: "midi-token-1" });
+    expect(
+      createBridgeRequest("pdfOmr.applyMidiCorrections", "midi-apply-1", {
+        jobId: "job-1",
+        decisions: [{ proposalId: "proposal-1", writtenPitch: { step: "C", alter: 1, octave: 4 } }],
+      }).payload.decisions,
+    ).toHaveLength(1);
+    expect(
+      parseBridgeResponse("pdfOmr.analyzeMidi", {
+        midiFileName: "reference.mid",
+        compatibility: {
+          status: "compatible",
+          scoreCoverage: 1,
+          midiCoverage: 1,
+          pitchAgreement: 0.75,
+        },
+        proposals: [
+          {
+            id: "proposal-1",
+            type: "pitch-disagreement",
+            confidence: 0.9,
+            reviewability: { status: "writeback-ready", reasons: [] },
+            measureIndex: 0,
+            before: { step: "C", alter: 0, octave: 4 },
+            suggestedSoundingMidi: 61,
+          },
+        ],
+      }),
+    ).toMatchObject({ compatibility: { status: "compatible" } });
+    expect(() =>
+      parseBridgeResponse("pdfOmr.start", {
+        jobId: "job-1",
+        snapshot: {
+          jobId: "job-1",
+          status: "running",
+          input: { fileName: "score.pdf", sizeBytes: 42, inputKind: "pdf" },
+          error: { code: "INVALID_INPUT", recoverable: true, path: "/private/score.pdf" },
+        },
+      }),
+    ).toThrow();
   });
 });

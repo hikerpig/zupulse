@@ -1,0 +1,477 @@
+@layer components {
+  .shell {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100%;
+    min-height: 0;
+    padding: 24px;
+    gap: 18px;
+    background: var(--bg-glow), var(--bg-app);
+  }
+
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    max-width: 1480px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .header h1 {
+    margin: 3px 0 5px;
+    font-size: clamp(26px, 3vw, 38px);
+    letter-spacing: -0.035em;
+  }
+  .header p {
+    max-width: 720px;
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+  .eyebrow {
+    color: var(--accent-primary) !important;
+    font-size: 11px !important;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .workbench {
+    display: grid;
+    grid-template-columns: minmax(210px, 240px) minmax(0, 1fr) minmax(250px, 290px);
+    gap: 12px;
+    width: 100%;
+    max-width: 1480px;
+    min-height: 0;
+    margin: 0 auto;
+  }
+
+  .rail,
+  .summary {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    min-width: 0;
+  }
+  .inputPanel,
+  .stagePanel,
+  .controlPanel,
+  .midiPanel,
+  .diagnosticsPanel {
+    padding: 16px;
+  }
+  .panelTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panelTitle h2 {
+    margin: 0;
+    font-size: 14px;
+  }
+  .muted {
+    margin: 12px 0;
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+  .fileSummary {
+    display: grid;
+    gap: 4px;
+    margin: 16px 0;
+    min-width: 0;
+  }
+  .fileSummary strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+  .fileSummary span {
+    color: var(--text-tertiary);
+    font: 12px var(--font-family-technical);
+  }
+
+  .stageList {
+    display: grid;
+    gap: 3px;
+    padding: 0;
+    margin: 16px 0 0;
+    list-style: none;
+  }
+  .stageList li {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+    padding: 8px 0;
+    color: var(--text-tertiary);
+  }
+  .stageList li[data-state="active"] {
+    color: var(--text-primary);
+  }
+  .stageList li[data-state="completed"] {
+    color: var(--status-ready-text);
+  }
+  .stageList li[data-state="failed"] {
+    color: var(--status-error-text);
+  }
+  .stageList strong,
+  .stageList small {
+    display: block;
+  }
+  .stageList strong {
+    font-size: 12px;
+  }
+  .stageList small {
+    margin-top: 3px;
+    color: var(--text-secondary);
+    font-size: 11px;
+  }
+  .stageMarker {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border: 1px solid currentColor;
+    border-radius: var(--radius-round);
+    font: 11px var(--font-family-technical);
+  }
+
+  .evidence {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid var(--border-default);
+    background: var(--bg-panel);
+    box-shadow: var(--shadow-soft);
+  }
+  .evidenceToolbar {
+    display: flex;
+    gap: 4px;
+    padding: 8px;
+    border-bottom: 1px solid var(--border-default);
+    background: var(--bg-panel-muted);
+  }
+  .evidenceToolbar button {
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    background: transparent;
+    font: 600 12px var(--font-family-ui);
+    cursor: pointer;
+  }
+  .evidenceToolbar button[aria-selected="true"] {
+    border-color: var(--border-default);
+    color: var(--text-primary);
+    background: var(--bg-panel);
+  }
+  .evidenceToolbar button:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+  .evidenceViewport {
+    min-height: 0;
+    overflow: auto;
+  }
+  .emptyEvidence,
+  .engineEvidence {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    min-height: 100%;
+    padding: 48px;
+    text-align: center;
+    color: var(--text-secondary);
+  }
+  .emptyEvidence h2,
+  .engineEvidence h2 {
+    margin: 16px 0 6px;
+    color: var(--text-primary);
+    font-size: 20px;
+  }
+  .emptyEvidence p,
+  .engineEvidence p {
+    max-width: 440px;
+    margin: 0;
+    font-size: 13px;
+  }
+  .engineEvidence code {
+    margin-top: 18px;
+    color: var(--text-primary);
+    font: 12px var(--font-family-technical);
+  }
+  .progressFact {
+    margin-top: 18px !important;
+    color: var(--accent-primary) !important;
+    font-weight: 700;
+  }
+
+  .engineField {
+    margin-top: 18px;
+  }
+  .engineStatusList {
+    display: grid;
+    gap: 8px;
+    padding: 0;
+    margin: 12px 0 0;
+    list-style: none;
+  }
+  .engineStatusList li {
+    display: grid;
+    grid-template-columns: 8px minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+  }
+  .engineStatusList strong,
+  .engineStatusList small {
+    display: block;
+  }
+  .engineStatusList strong {
+    color: var(--text-primary);
+    font-size: 11px;
+  }
+  .engineStatusList small {
+    margin-top: 2px;
+    color: var(--text-secondary);
+    font-size: 10px;
+    line-height: 1.4;
+  }
+  .engineStatusDot {
+    width: 7px;
+    height: 7px;
+    margin-top: 4px;
+    border-radius: var(--radius-round);
+    background: var(--status-error-text);
+  }
+  .engineStatusList li[data-available="true"] .engineStatusDot {
+    background: var(--status-ready-text);
+  }
+  .primaryActions {
+    display: flex;
+    margin-top: 18px;
+  }
+  .primaryActions > button {
+    width: 100%;
+  }
+  .notice {
+    margin: 12px 0 0;
+    color: var(--status-error-text);
+    font-size: 12px;
+  }
+  .midiReview {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .midiReview > strong {
+    color: var(--status-ready-text);
+    font-size: 12px;
+  }
+  .midiReview > strong[data-compatibility="ambiguous"] {
+    color: var(--status-warning-text);
+  }
+  .midiReview > strong[data-compatibility="incompatible"] {
+    color: var(--status-error-text);
+  }
+  .midiReview > p,
+  .midiReview > small {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 11px;
+  }
+  .pitchDecision {
+    display: grid;
+    gap: 5px;
+    padding-top: 9px;
+    border-top: 1px solid var(--border-default);
+    font-size: 11px;
+  }
+  .pitchDecision small {
+    color: var(--text-tertiary);
+    font-family: var(--font-family-technical);
+  }
+  .midiApplied {
+    color: var(--status-ready-text) !important;
+    font-weight: 700;
+  }
+  .errorSummary {
+    display: grid;
+    gap: 6px;
+    margin-top: 14px;
+    padding: 10px;
+    border: 1px solid var(--border-default);
+    background: var(--bg-panel-muted);
+  }
+  .errorSummary strong {
+    color: var(--status-error-text);
+    font-size: 12px;
+  }
+  .errorSummary code {
+    color: var(--status-error-text);
+    font: 11px var(--font-family-technical);
+  }
+  .errorSummary p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 22px;
+    height: 22px;
+    margin-left: auto;
+    border-radius: var(--radius-round);
+    background: var(--bg-control);
+    color: var(--text-secondary);
+    font: 11px var(--font-family-technical);
+  }
+  .diagnosticsPanel {
+    min-height: 160px;
+  }
+  .readinessGrid {
+    display: grid;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .readinessGrid > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px;
+    border: 1px solid var(--border-default);
+    font-size: 11px;
+  }
+  .readinessGrid strong {
+    color: var(--status-ready-text);
+  }
+  .readinessGrid [data-readiness="blocked"] strong {
+    color: var(--status-error-text);
+  }
+  .readinessGrid [data-readiness="ready-with-warnings"] strong {
+    color: var(--status-warning-text);
+  }
+  .diagnosticList {
+    display: grid;
+    gap: 7px;
+    padding: 0;
+    margin: 14px 0 0;
+    list-style: none;
+  }
+  .diagnosticList li {
+    color: var(--text-secondary);
+    font-size: 10px;
+  }
+  .diagnosticList details summary {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .diagnosticList details p {
+    margin: 6px 0 0;
+    color: var(--text-tertiary);
+    line-height: 1.4;
+  }
+  .diagnosticList code {
+    color: var(--text-primary);
+    font: 10px var(--font-family-technical);
+  }
+  .diagnosticList li[data-severity="blocking"] code {
+    color: var(--status-error-text);
+  }
+  .diagnosticList li[data-severity="warning"] code {
+    color: var(--status-warning-text);
+  }
+
+  .previewShell {
+    height: 100%;
+    min-height: 0;
+    background: var(--bg-score-shell);
+  }
+  .previewScroll {
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+  }
+  .previewScroll > section {
+    min-height: 100%;
+  }
+
+  @media (max-width: 1100px) {
+    .workbench {
+      grid-template-columns: minmax(190px, 220px) minmax(0, 1fr) 240px;
+    }
+    .shell {
+      padding: 18px;
+    }
+  }
+
+  @media (max-width: 899px) {
+    .shell {
+      display: block;
+      height: auto;
+      min-height: 100%;
+      overflow: auto;
+    }
+    .header {
+      margin-bottom: 16px;
+    }
+    .workbench {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      min-height: auto;
+    }
+    .rail {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .evidence {
+      min-height: 520px;
+    }
+    .evidenceViewport,
+    .previewScroll {
+      overflow: visible;
+    }
+    .summary {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 619px) {
+    .shell {
+      padding: 14px;
+    }
+    .header {
+      display: grid;
+      gap: 12px;
+    }
+    .header h1 {
+      font-size: 28px;
+    }
+    .rail,
+    .summary {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .evidence {
+      min-height: 420px;
+    }
+    .evidenceToolbar {
+      overflow-x: auto;
+    }
+    .evidenceToolbar button {
+      flex: 0 0 auto;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .evidenceToolbar button {
+      transition: none;
+    }
+  }
+}

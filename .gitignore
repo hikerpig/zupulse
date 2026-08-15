@@ -9,3 +9,9 @@ apps/*/playwright-report/
 apps/ipad-shell/Zupulse.xcodeproj/project.xcworkspace/
 apps/ipad-shell/Zupulse.xcodeproj/xcuserdata/
 .serena/
+
+.envrc
+
+# Local PDF OMR development runs. Commit only curated README/summary artifacts.
+tools/pdf-omr-cli/reports/development/rokot-evaluation-*/
+tools/pdf-omr-cli/reports/development/rokot-quick-*/

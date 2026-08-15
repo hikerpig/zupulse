@@ -1,0 +1,157 @@
+{
+  "schemaVersion": "1.0.0",
+  "workId": "4945954",
+  "sourceSplit": "dev",
+  "sourceDocument": "#22864",
+  "sourcePdf": {
+    "memberName": "IMSLP22864-PMLP52321-Wolf_-_M\u00f6rike_Lieder.pdf",
+    "sha256": "0ba9bc1253e9443db4aa2a1aeb5068fe3957edaa1d8254cd64a2ba3479a8d085",
+    "bytes": 10167635
+  },
+  "pages": [
+    {
+      "samplePage": 1,
+      "sourcePage": 26,
+      "width": 2249,
+      "height": 3010,
+      "systems": [
+        {
+          "sampleVariant": "p1-s1",
+          "sourceSystem": 1,
+          "boundingBox": {
+            "left": 332,
+            "top": 559,
+            "width": 1861,
+            "height": 334
+          }
+        },
+        {
+          "sampleVariant": "p1-s2",
+          "sourceSystem": 2,
+          "boundingBox": {
+            "left": 66,
+            "top": 1252,
+            "width": 2128,
+            "height": 315
+          }
+        },
+        {
+          "sampleVariant": "p1-s3",
+          "sourceSystem": 3,
+          "boundingBox": {
+            "left": 62,
+            "top": 1925,
+            "width": 2135,
+            "height": 277
+          }
+        },
+        {
+          "sampleVariant": "p1-s4",
+          "sourceSystem": 4,
+          "boundingBox": {
+            "left": 65,
+            "top": 2579,
+            "width": 2135,
+            "height": 285
+          }
+        }
+      ]
+    },
+    {
+      "samplePage": 2,
+      "sourcePage": 27,
+      "width": 2250,
+      "height": 3121,
+      "systems": [
+        {
+          "sampleVariant": "p2-s1",
+          "sourceSystem": 1,
+          "boundingBox": {
+            "left": 65,
+            "top": 387,
+            "width": 2132,
+            "height": 316
+          }
+        },
+        {
+          "sampleVariant": "p2-s2",
+          "sourceSystem": 2,
+          "boundingBox": {
+            "left": 69,
+            "top": 1127,
+            "width": 2134,
+            "height": 320
+          }
+        },
+        {
+          "sampleVariant": "p2-s3",
+          "sourceSystem": 3,
+          "boundingBox": {
+            "left": 68,
+            "top": 1891,
+            "width": 2134,
+            "height": 311
+          }
+        },
+        {
+          "sampleVariant": "p2-s4",
+          "sourceSystem": 4,
+          "boundingBox": {
+            "left": 68,
+            "top": 2661,
+            "width": 2137,
+            "height": 307
+          }
+        }
+      ]
+    },
+    {
+      "samplePage": 3,
+      "sourcePage": 28,
+      "width": 2247,
+      "height": 3124,
+      "systems": [
+        {
+          "sampleVariant": "p3-s1",
+          "sourceSystem": 1,
+          "boundingBox": {
+            "left": 72,
+            "top": 408,
+            "width": 2120,
+            "height": 330
+          }
+        },
+        {
+          "sampleVariant": "p3-s2",
+          "sourceSystem": 2,
+          "boundingBox": {
+            "left": 72,
+            "top": 1195,
+            "width": 2120,
+            "height": 330
+          }
+        },
+        {
+          "sampleVariant": "p3-s3",
+          "sourceSystem": 3,
+          "boundingBox": {
+            "left": 67,
+            "top": 1934,
+            "width": 2130,
+            "height": 330
+          }
+        },
+        {
+          "sampleVariant": "p3-s4",
+          "sourceSystem": 4,
+          "boundingBox": {
+            "left": 73,
+            "top": 2659,
+            "width": 2114,
+            "height": 310
+          }
+        }
+      ]
+    }
+  ]
+}

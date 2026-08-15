@@ -42,13 +42,21 @@ Transcoda 更完整的可读结果。因此 CLI 增加 `legato` adapter 进入 d
 
 - adapter、registry、artifact contract 和 fake-process tests 已实现；
 - `guangyangmusic/legato` revision、model hash、Demo revision 和 Python dependencies 已锁定；
-- 本地 LEGATO 权重与 runtime 已安装并校验；
-- `meta-llama/Llama-3.2-11B-Vision` gated access 尚未对评测机 CLI token 生效，因此本地真实
-  inference 未通过，不得标记 runtime acceptance；
-- 官方 Space 结果只能作为质量线索，不能替代本地可复现 benchmark。
+- ModelScope 的固定 base-model mirror revision 与五个 shard hash 已锁定；本地运行只保留并加载
+  `MllamaVisionModel` 实际需要的 `vision_model.*` tensor，source shard hash 与锁定 mirror 一致；
+- 2026-08-07 的整份三页输入虽然进程成功退出，但固定 `2048` decoder budget 在右手结束后生成 EOS，
+  合并 MusicXML 的 P2 为空；该 run 不构成有效识别；
+- 2026-08-08 改为逐页推理和转换，并在合并前拒绝任何页面的空 part。在 64 GB M2 Max 上以 MPS
+  float16、`max_length=2048`、`num_beams=10`、`repetition_penalty=1.1` 完成三页
+  `flower_day.pdf`，wall time `636.79s`，峰值 RSS 约 `5.31 GB`；
+- 合并 MusicXML 的 P1 为 72 小节、614 个 note，P2 为 65 小节、592 个 note。双手不再为空，但 Draft
+  validation 仍报告多个 blocking `VOICE_DURATION_MISMATCH`；该单例证明 runtime 可运行，不代表识别
+  质量或可导出性通过，也不改变产品 `INVESTIGATE` / `STOP` 结论；
+- float32 vision attention 会在 MPS 上 OOM；config-driven mixed bfloat16/float32 会触发 Metal
+  linear abort，因此 GPU 路径统一使用与官方 CUDA Demo 一致的 float16。
 
-完整锁定项见 `../engines/legato-environment.json`。在 vision encoder 下载、本地 smoke 和统一
-development corpus 完成前，LEGATO 状态为 `INVESTIGATE`。
+完整锁定项见 `../engines/legato-environment.json`。在统一 development corpus 和 ground-truth
+quality evaluation 完成前，LEGATO 状态仍为 `INVESTIGATE`。
 
 ## 消费级产品 follow-up
 

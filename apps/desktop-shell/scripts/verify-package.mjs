@@ -5,6 +5,7 @@ import { basename, extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const shellRoot = new URL("..", import.meta.url);
+const allowPdfOmrSmoke = process.argv.includes("--allow-pdf-omr-smoke");
 const expectedSampleBase64 = (
   await readFile(new URL("../../../product-assets/samples/cannon-in-d.mxl", import.meta.url))
 ).toString("base64");
@@ -18,6 +19,10 @@ try {
   extractAll(fileURLToPath(asar), extracted);
   const required = [
     "dist/main/main.cjs",
+    "dist/main/pdf.worker.mjs",
+    "dist/main/pdfjs-standard-fonts/FoxitSerif.pfb",
+    "dist/main/pdfjs-wasm/jbig2.wasm",
+    "dist/main/pdfjs-wasm/jbig2_nowasm_fallback.js",
     "dist/preload/preload.cjs",
     "dist/renderer/index.html",
     "dist/renderer/alphatab/alphaTab.mjs",
@@ -41,11 +46,17 @@ try {
   let bundledSampleFound = false;
   for (const file of await listFiles(extracted)) {
     const path = relative(extracted, file);
+    if (!allowPdfOmrSmoke && path === "dist/main/pdf-omr-packaged-smoke-entry.cjs") {
+      throw new Error(`Verification-only packaged file: ${path}`);
+    }
     if (path.includes("test-fixtures") || extname(path) === ".map") {
       throw new Error(`Forbidden packaged file: ${path}`);
     }
     if ([".js", ".cjs", ".html"].includes(extname(path))) {
       const source = await readFile(file, "utf8");
+      if (source.includes("tools/pdf-omr-cli/src/")) {
+        throw new Error(`Workspace source path leaked into package: ${path}`);
+      }
       if (source.includes("MockNativeBridge")) {
         throw new Error(`MockNativeBridge leaked into package: ${path}`);
       }

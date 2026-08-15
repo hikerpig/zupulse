@@ -14,12 +14,14 @@
     "test:e2e": "playwright test -c playwright.config.ts",
     "test:telemetry:e2e": "node ./e2e/telemetry-runner.mjs",
     "package": "pnpm build && electron-forge package && node ./scripts/verify-package.mjs",
+    "verify:pdf-omr-runtime": "rspack build --env pdfOmrRuntimeSmoke=1 && electron-forge package && node ./scripts/verify-package.mjs --allow-pdf-omr-smoke && node ./scripts/verify-pdf-omr-runtime.mjs",
     "make": "pnpm build && electron-forge make && node ./scripts/verify-package.mjs",
     "make:mac": "pnpm build && electron-forge make --platform=darwin --arch=arm64 && node ./scripts/verify-package.mjs && node ./scripts/create-dmg.mjs",
     "make:win": "pnpm build && electron-forge make --platform=win32 --arch=x64 && node ./scripts/verify-package.mjs"
   },
   "dependencies": {
     "@zupulse/app-i18n": "workspace:*",
+    "@zupulse/pdf-omr-cli": "workspace:*",
     "@zupulse/web-core": "workspace:*",
     "@zupulse/web-viewer": "workspace:*",
     "zod": "4.4.3"

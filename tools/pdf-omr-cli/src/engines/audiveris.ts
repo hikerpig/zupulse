@@ -3,6 +3,7 @@ import { basename, extname, join } from "node:path";
 import { PdfOmrError } from "../errors";
 import { runEngineProcess } from "../engine-runner";
 import { normalizeAudiverisMusicXml } from "../normalizers/audiveris";
+import { combineProcessResourceUsage } from "../resource-metrics";
 import type { OmrEngineAdapter, OmrRawRecognition } from "./types";
 
 const commandTemplate = [
@@ -42,6 +43,7 @@ export function createAudiverisAdapter(options: {
         version: versionMatch[1],
         executable: basename(executable),
         commandTemplate,
+        inputKinds: ["pdf", "image"],
         license: {
           id: "AGPL-3.0-only",
           source: "https://github.com/Audiveris/audiveris/blob/master/LICENSE",
@@ -73,6 +75,7 @@ export function createAudiverisAdapter(options: {
           ],
           diagnostics: [],
           durationMs: result.durationMs,
+          resourceUsage: combineProcessResourceUsage([result.resourceUsage])!,
         };
       } catch (error) {
         throw new PdfOmrError("ENGINE_OUTPUT_INVALID", "Audiveris did not produce required artifacts", {

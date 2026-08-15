@@ -141,7 +141,12 @@ function normalizePart(
       const hasPitch = childElement(item, "pitch") !== undefined || childElement(item, "rest") !== undefined;
       if (!hasPitch) addDiagnostic(diagnostics, "MISSING_PITCH", measureIndex);
       if (voice === undefined || voice <= 0 || durationUnits === undefined || durationUnits <= 0) {
-        addDiagnostic(diagnostics, "MISSING_EVENT_TIMING", measureIndex);
+        addDiagnostic(
+          diagnostics,
+          "MISSING_EVENT_TIMING",
+          measureIndex,
+          childElement(item, "grace") === undefined ? "blocking" : "warning",
+        );
         continue;
       }
       staffCount = Math.max(staffCount, staff);
@@ -297,12 +302,17 @@ function isClefSign(value: string | undefined): value is "G" | "F" | "C" | "perc
   return value !== undefined && ["G", "F", "C", "percussion", "TAB", "none"].includes(value);
 }
 
-function addDiagnostic(diagnostics: Diagnostic[], code: string, measureIndex: number): void {
+function addDiagnostic(
+  diagnostics: Diagnostic[],
+  code: string,
+  measureIndex: number,
+  severity: Diagnostic["severity"] = "blocking",
+): void {
   const message = `${code.toLowerCase().replaceAll("_", " ")} at measure ${measureIndex}`;
   if (diagnostics.some((diagnostic) => diagnostic.code === code && diagnostic.message === message)) return;
   diagnostics.push({
     code,
-    severity: "blocking",
+    severity,
     message,
   });
 }

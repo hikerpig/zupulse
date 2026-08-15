@@ -36,6 +36,29 @@ describe("engine registry", () => {
     ).not.toThrow();
   });
 
+  it("can disable environment fallback for Desktop product configuration", () => {
+    const previous = {
+      llama: process.env.PDF_OMR_ROKOT_LLAMA_CLI,
+      model: process.env.PDF_OMR_ROKOT_MODEL,
+      mmproj: process.env.PDF_OMR_ROKOT_MMPROJ,
+      python: process.env.PDF_OMR_ROKOT_ABC2XML_PYTHON,
+    };
+    process.env.PDF_OMR_ROKOT_LLAMA_CLI = "/runtime/llama-cli";
+    process.env.PDF_OMR_ROKOT_MODEL = "/models/rokot.gguf";
+    process.env.PDF_OMR_ROKOT_MMPROJ = "/models/mmproj.gguf";
+    process.env.PDF_OMR_ROKOT_ABC2XML_PYTHON = "/runtime/python";
+    try {
+      expect(() => createEngineRegistry({ environmentFallback: false }).get("rokot")).toThrow(
+        expect.objectContaining({ context: { reason: "missing-rokot-configuration" } }),
+      );
+    } finally {
+      restore("PDF_OMR_ROKOT_LLAMA_CLI", previous.llama);
+      restore("PDF_OMR_ROKOT_MODEL", previous.model);
+      restore("PDF_OMR_ROKOT_MMPROJ", previous.mmproj);
+      restore("PDF_OMR_ROKOT_ABC2XML_PYTHON", previous.python);
+    }
+  });
+
   it("returns a stable unavailable error when LEGATO is not configured", () => {
     const previous = {
       python: process.env.PDF_OMR_LEGATO_PYTHON,

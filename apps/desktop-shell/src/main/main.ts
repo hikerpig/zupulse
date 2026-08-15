@@ -1,9 +1,11 @@
 import path from "node:path";
+import { readFile } from "node:fs/promises";
 import {
   createBridgeEvent,
   fileImportDroppedRequestSchema,
   localPlaybackResumeSchema,
   parseSidecar,
+  type PdfOmrProgressEvent,
   type TelemetryPort,
 } from "@zupulse/web-core";
 import { createAppI18n, resolveLocale, type LocaleState, type SupportedLocale } from "@zupulse/app-i18n";
@@ -20,8 +22,8 @@ import {
   shell,
   type MenuItemConstructorOptions,
 } from "electron";
-import { assertBridgeAppSender, BridgeDispatchError, dispatchBridgeRequest } from "./bridge";
-import { DesktopDiagnostics } from "./diagnostics";
+import { assertBridgeAppSender, BridgeDispatchError, createDesktopCapabilities, dispatchBridgeRequest } from "./bridge";
+import { DesktopDiagnostics, type PdfOmrLogEvent } from "./diagnostics";
 import {
   installAppDiagnosticInstrumentation,
   installWindowDiagnosticInstrumentation,
@@ -29,7 +31,15 @@ import {
   recordPersistedDataCorruption,
 } from "./diagnostic-instrumentation";
 import { FileTokenStore } from "./fileTokens";
-import { acceptScorePaths, readScoreFileBytes, saveScoreFile, selectScoreFiles } from "./files";
+import {
+  acceptScorePaths,
+  materializePdfOmrInput,
+  readScoreFileBytes,
+  saveScoreFile,
+  selectMidiFile,
+  selectPdfFile,
+  selectScoreFiles,
+} from "./files";
 import { registerAppProtocol } from "./protocol";
 import { JsonStore } from "./storage";
 import { DesktopLifecycleCoordinator } from "./lifecycle";
@@ -39,6 +49,39 @@ import { LocalePreferenceStore } from "./locale-preference-store";
 import { openExternalUrl } from "./external-navigation";
 import { TelemetryPreferenceStore } from "./telemetry-preference-store";
 import { createDesktopTelemetryPort } from "../telemetry/desktop-telemetry";
+import { DesktopPdfOmrRuntime } from "./pdf-omr-runtime";
+import { PdfOmrJobController } from "./pdf-omr-controller";
+import { PdfOmrMidiCorrectionController } from "./pdf-omr-midi-correction-controller";
+import { preflightPdfOmrEngines, resolveAudiverisExecutable } from "./pdf-omr-engine-preflight";
+import { RecognitionProviderConfigurationStore } from "./recognition-provider-configuration-store";
+import { RecognitionProviderSettings, RecognitionSettingsError } from "./recognition-provider-settings";
+
+function recognitionResourceKind(
+  providerId: "audiveris" | "rokot" | "legato" | "transcoda",
+  fieldId: string,
+): "executable" | "file" | "directory" {
+  if (fieldId === "repository" || fieldId === "baseModel") return "directory";
+  if (["model", "visionProjector", "checkpoint"].includes(fieldId)) return "file";
+  if (providerId === "audiveris" || fieldId === "python" || fieldId === "llamaCli") return "executable";
+  throw new BridgeDispatchError("INVALID_RECOGNITION_RESOURCE_FIELD", "Unknown provider resource field", false);
+}
+
+function recognitionBridgeError(error: unknown): BridgeDispatchError {
+  if (error instanceof RecognitionSettingsError) {
+    return new BridgeDispatchError("RECOGNITION_SETTINGS_VALIDATION_FAILED", error.message, true, {
+      reason: error.reason,
+    });
+  }
+  return new BridgeDispatchError("RECOGNITION_SETTINGS_FAILED", "Recognition settings operation failed", true);
+}
+
+async function assertRecognitionProviderReady(settings: RecognitionProviderSettings, engineId: string): Promise<void> {
+  const provider = (await settings.list()).find((candidate) => candidate.id === engineId);
+  if (provider?.state === "ready") return;
+  throw new BridgeDispatchError("PDF_OMR_ENGINE_UNAVAILABLE", "Recognition provider preflight failed", true, {
+    reason: provider?.reason ?? "missing-configuration",
+  });
+}
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -146,6 +189,19 @@ async function startDesktopApp(): Promise<void> {
       preference: initialPreference,
       effectiveLocale: resolveLocale(initialPreference, app.getPreferredSystemLanguages()),
     };
+    const audiverisExecutable = await resolveAudiverisExecutable({
+      homeDirectory: app.getPath("home"),
+      platform: process.platform,
+    });
+    const recognitionSettings = await RecognitionProviderSettings.create({
+      store: new RecognitionProviderConfigurationStore(userData),
+      automaticAudiverisExecutable: audiverisExecutable,
+    });
+    const pdfOmrEngines = await preflightPdfOmrEngines(recognitionSettings.createRegistrySnapshot());
+    const pdfOmrRuntime = new DesktopPdfOmrRuntime({
+      engineRegistryProvider: () => recognitionSettings.createRegistrySnapshot(),
+    });
+    const desktopCapabilities = createDesktopCapabilities(pdfOmrEngines);
     verifySqliteAvailable();
     const sendStorageWarning = (category: "sidecar" | "resume") => (code: "CORRUPT_PERSISTED_DATA") => {
       recordPersistedDataCorruption(diagnostics, category);
@@ -162,7 +218,10 @@ async function startDesktopApp(): Promise<void> {
       readResume: (libraryScoreId) => resumeStore.read(libraryScoreId),
     });
     await library.initialize();
-    app.once("will-quit", () => library.close());
+    app.once("will-quit", () => {
+      pdfOmrRuntime.cancel();
+      library.close();
+    });
     const openDiagnosticsDirectory = async () => {
       const error = await shell.openPath(logDirectory);
       if (error) throw new Error("DIAGNOSTICS_OPEN_DIRECTORY_FAILED");
@@ -174,6 +233,77 @@ async function startDesktopApp(): Promise<void> {
     const sendEvent = (event: ReturnType<typeof createBridgeEvent>) => {
       if (!mainWindow || mainWindow.isDestroyed()) return;
       mainWindow.webContents.send("zupulse:event", event);
+    };
+    const pdfOmrController = new PdfOmrJobController(pdfOmrRuntime);
+    const pdfOmrMidiCorrections = new PdfOmrMidiCorrectionController(pdfOmrController);
+    const pdfOmrStartedAt = new Map<string, number>();
+    const pdfOmrHeartbeats = new Map<string, ReturnType<typeof setInterval>>();
+    const loggedPdfOmrTerminals = new Set<string>();
+    const logPdfOmr = (event: PdfOmrLogEvent): void => {
+      console.info(`[PDF OMR] ${event.code}`, event);
+      void diagnostics.recordPdfOmr(event).catch(() => undefined);
+    };
+    pdfOmrController.subscribeProgress((jobId, event) => {
+      sendEvent(
+        createBridgeEvent("pdfOmr.progress", randomUUID(), {
+          jobId,
+          event: event as PdfOmrProgressEvent,
+        }),
+      );
+      if (event.kind === "stage") {
+        logPdfOmr({ code: "PDF_OMR_STAGE", jobId, stage: event.stage, status: event.status });
+      } else if (event.kind === "engine-progress") {
+        logPdfOmr({
+          code: "PDF_OMR_ENGINE_PROGRESS",
+          jobId,
+          stage: event.stage,
+          unit: event.unit,
+          completed: event.completed,
+          total: event.total,
+        });
+      }
+    });
+    pdfOmrController.subscribe((snapshot) => {
+      if (snapshot.status !== "succeeded" && snapshot.status !== "failed" && snapshot.status !== "cancelled") return;
+      if (loggedPdfOmrTerminals.has(snapshot.jobId)) return;
+      loggedPdfOmrTerminals.add(snapshot.jobId);
+      const heartbeat = pdfOmrHeartbeats.get(snapshot.jobId);
+      if (heartbeat !== undefined) {
+        clearInterval(heartbeat);
+        pdfOmrHeartbeats.delete(snapshot.jobId);
+      }
+      const startedAt = pdfOmrStartedAt.get(snapshot.jobId);
+      pdfOmrStartedAt.delete(snapshot.jobId);
+      logPdfOmr({
+        code: "PDF_OMR_COMPLETED",
+        jobId: snapshot.jobId,
+        status: snapshot.status,
+        ...(snapshot.error?.code === undefined ? {} : { errorCode: snapshot.error.code }),
+        ...(startedAt === undefined ? {} : { durationMs: Date.now() - startedAt }),
+      });
+    });
+    const beginPdfOmrLog = (jobId: string): void => {
+      pdfOmrStartedAt.set(jobId, Date.now());
+      const heartbeat = setInterval(() => {
+        const snapshot = pdfOmrController.getSnapshot();
+        if (
+          snapshot?.jobId !== jobId ||
+          snapshot.status === "succeeded" ||
+          snapshot.status === "failed" ||
+          snapshot.status === "cancelled"
+        ) {
+          clearInterval(heartbeat);
+          pdfOmrHeartbeats.delete(jobId);
+          return;
+        }
+        logPdfOmr({
+          code: "PDF_OMR_HEARTBEAT",
+          jobId,
+          durationMs: Date.now() - (pdfOmrStartedAt.get(jobId) ?? Date.now()),
+        });
+      }, 10_000);
+      heartbeat.unref();
+      pdfOmrHeartbeats.set(jobId, heartbeat);
     };
     const DROPPED_FILES_IPC_CHANNEL = "zupulse:file:importDropped" as const;
     ipcMain.handle(DROPPED_FILES_IPC_CHANNEL, (event, value: unknown) => {
@@ -206,6 +336,7 @@ async function startDesktopApp(): Promise<void> {
             appVersion: __APP_VERSION__,
             rendererBuildHash: __RENDERER_BUILD_HASH__,
             locale: currentLocaleState,
+            capabilities: desktopCapabilities,
             telemetryAvailable:
               ["alpha", "beta", "production"].includes(__TELEMETRY_RELEASE_CHANNEL__) &&
               Boolean(__POSTHOG_PROJECT_TOKEN__) &&
@@ -243,8 +374,106 @@ async function startDesktopApp(): Promise<void> {
                   );
                 }
               },
+              "recognitionSettings.list": () => recognitionSettings.list().then((providers) => ({ providers })),
+              "recognitionSettings.selectResource": async (request) => {
+                try {
+                  let selectedPath = request.payload.path;
+                  if (selectedPath === undefined) {
+                    const kind = recognitionResourceKind(request.payload.providerId, request.payload.fieldId);
+                    const result = await dialog.showOpenDialog({
+                      properties: kind === "directory" ? ["openDirectory"] : ["openFile"],
+                    });
+                    selectedPath = result.filePaths[0];
+                    if (result.canceled || !selectedPath) return { status: "cancelled" };
+                  }
+                  return {
+                    status: "selected",
+                    ...recognitionSettings.registerSelection(
+                      request.payload.providerId,
+                      request.payload.fieldId,
+                      selectedPath,
+                    ),
+                  };
+                } catch (error) {
+                  throw recognitionBridgeError(error);
+                }
+              },
+              "recognitionSettings.save": async (request) => {
+                try {
+                  return await recognitionSettings.save(request.payload);
+                } catch (error) {
+                  throw recognitionBridgeError(error);
+                }
+              },
+              "recognitionSettings.clear": async (request) => {
+                try {
+                  return await recognitionSettings.clear(request.payload.providerId);
+                } catch (error) {
+                  throw recognitionBridgeError(error);
+                }
+              },
               "file.select": (request) =>
                 selectScoreFiles(fileTokens, request.payload.multiple, currentLocaleState.effectiveLocale),
+              "pdfOmr.select": () => selectPdfFile(fileTokens, undefined, currentLocaleState.effectiveLocale),
+              "pdfOmr.start": async (request) => {
+                await assertRecognitionProviderReady(recognitionSettings, request.payload.engineId);
+                const jobDirectory = path.join(userData, "pdf-omr", randomUUID());
+                const outputDirectory = path.join(jobDirectory, "output");
+                const file = await materializePdfOmrInput(
+                  fileTokens,
+                  request.payload.fileToken,
+                  path.join(jobDirectory, "input"),
+                );
+                const snapshot = pdfOmrController.start({
+                  inputPath: file.path,
+                  fileName: file.fileName,
+                  sizeBytes: file.sizeBytes,
+                  inputKind: /\.(png|jpe?g)$/i.test(file.fileName) ? "image" : "pdf",
+                  engineId: request.payload.engineId,
+                  outputDirectory,
+                });
+                beginPdfOmrLog(snapshot.jobId);
+                logPdfOmr({ code: "PDF_OMR_STARTED", jobId: snapshot.jobId, engineId: request.payload.engineId });
+                return { jobId: snapshot.jobId, snapshot };
+              },
+              "pdfOmr.retry": async (request) => {
+                await assertRecognitionProviderReady(recognitionSettings, request.payload.engineId);
+                const snapshot = pdfOmrController.retry(
+                  request.payload.jobId,
+                  request.payload.engineId,
+                  path.join(userData, "pdf-omr", randomUUID()),
+                );
+                beginPdfOmrLog(snapshot.jobId);
+                logPdfOmr({
+                  code: "PDF_OMR_RETRY_STARTED",
+                  jobId: snapshot.jobId,
+                  engineId: request.payload.engineId,
+                });
+                return { jobId: snapshot.jobId, snapshot };
+              },
+              "pdfOmr.cancel": (request) => {
+                pdfOmrController.cancel(request.payload.jobId);
+                return {};
+              },
+              "pdfOmr.getSnapshot": () => ({ snapshot: pdfOmrController.getSnapshot() ?? null }),
+              "pdfOmr.readResult": async (request) =>
+                readPdfOmrResult(pdfOmrController, pdfOmrMidiCorrections, request.payload.jobId),
+              "pdfOmr.selectMidi": () => selectMidiFile(fileTokens, undefined, currentLocaleState.effectiveLocale),
+              "pdfOmr.analyzeMidi": (request) => {
+                const midi = fileTokens.consume(request.payload.fileToken);
+                return pdfOmrMidiCorrections.analyze({
+                  jobId: request.payload.jobId,
+                  midiPath: midi.path,
+                  midiFileName: midi.fileName,
+                  outputDirectory: path.join(userData, "pdf-omr", randomUUID(), "midi-fusion"),
+                });
+              },
+              "pdfOmr.applyMidiCorrections": (request) =>
+                pdfOmrMidiCorrections.apply({
+                  jobId: request.payload.jobId,
+                  decisions: request.payload.decisions,
+                  outputDirectory: path.join(userData, "pdf-omr", randomUUID(), "midi-writeback"),
+                }),
               "file.readBytes": (request) => readScoreFileBytes(fileTokens, request.payload.fileToken),
               "file.save": (request) => saveScoreFile(request.payload, currentLocaleState.effectiveLocale),
               "library.list": async () => ({ scores: await library.list() }),
@@ -339,6 +568,63 @@ async function startDesktopApp(): Promise<void> {
   }
 }
 
+async function readPdfOmrResult(
+  controller: PdfOmrJobController,
+  corrections: PdfOmrMidiCorrectionController,
+  jobId: string,
+): Promise<
+  | { status: "unavailable" }
+  | {
+      status: "available";
+      fileName: string;
+      bytes: Uint8Array;
+      outputSha256: string;
+      validation: {
+        readiness: {
+          harmony: "blocked" | "ready-with-warnings" | "ready";
+          musicXml: "blocked" | "ready-with-warnings" | "ready";
+        };
+        diagnostics: readonly { code: string; severity: "blocking" | "warning" | "info" }[];
+      };
+    }
+> {
+  const completed = controller.getCompletedResult(jobId);
+  if (completed === undefined) return { status: "unavailable" };
+  const corrected = corrections.getCorrectedResult(jobId);
+  const bytes = new Uint8Array(
+    await readFile(corrected?.path ?? path.join(completed.outputDirectory, completed.result.artifacts.musicXml)),
+  );
+  if (bytes.byteLength > 64 * 1024 * 1024)
+    throw new BridgeDispatchError("FILE_TOO_LARGE", "PDF OMR result is too large", false);
+  const raw = JSON.parse(
+    await readFile(path.join(completed.outputDirectory, completed.result.artifacts.validation), "utf8"),
+  ) as { readiness?: unknown; diagnostics?: unknown };
+  const readiness = completed.result.validation.readiness;
+  const diagnostics = Array.isArray(raw.diagnostics)
+    ? raw.diagnostics
+        .slice(0, 512)
+        .filter(isSafePdfOmrDiagnostic)
+        .map((diagnostic) => ({ code: diagnostic.code, severity: diagnostic.severity }))
+    : [];
+  return {
+    status: "available",
+    fileName: corrected?.fileName ?? "score.mxl",
+    bytes,
+    outputSha256: corrected?.outputSha256 ?? completed.result.outputSha256,
+    validation: { readiness, diagnostics },
+  };
+}
+
+function isSafePdfOmrDiagnostic(value: unknown): value is { code: string; severity: "blocking" | "warning" | "info" } {
+  if (typeof value !== "object" || value === null) return false;
+  const diagnostic = value as { code?: unknown; severity?: unknown };
+  return (
+    typeof diagnostic.code === "string" &&
+    /^[A-Z][A-Z0-9_]{0,63}$/.test(diagnostic.code) &&
+    (diagnostic.severity === "blocking" || diagnostic.severity === "warning" || diagnostic.severity === "info")
+  );
+}
+
 function installLifecycle(
   window: BrowserWindow,
   coordinator: DesktopLifecycleCoordinator,
@@ -401,6 +687,7 @@ function installMenu(
         { role: "quit" },
       ],
     },
+    { role: "editMenu" },
     {
       label: t("menu.playback"),
       submenu: [{ label: t("menu.togglePlayback"), accelerator: "Space", click: command("toggle-playback") }],

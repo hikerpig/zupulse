@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { PdfOmrError } from "../errors";
 import { runEngineProcess } from "../engine-runner";
+import { combineProcessResourceUsage } from "../resource-metrics";
 import { normalizeTranscodaOutput, prepareTranscodaKern } from "../normalizers/transcoda";
 import type { OmrEngineAdapter } from "./types";
 
@@ -176,6 +177,11 @@ export function createTranscodaAdapter(options: TranscodaAdapterOptions): OmrEng
         ],
         diagnostics: prepared.diagnostics,
         durationMs: raster.durationMs + inference.durationMs + conversion.durationMs,
+        resourceUsage: combineProcessResourceUsage([
+          raster.resourceUsage,
+          inference.resourceUsage,
+          conversion.resourceUsage,
+        ])!,
       };
     },
 

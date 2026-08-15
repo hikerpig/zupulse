@@ -16,12 +16,29 @@
   "visionEncoder": {
     "id": "meta-llama/Llama-3.2-11B-Vision",
     "revision": "3f2e93603aaa5dd142f27d34b06dfa2b6e97b8be",
-    "license": "Llama-3.2-Community"
+    "license": "Llama-3.2-Community",
+    "modelScopeMirror": {
+      "id": "LLM-Research/Llama-3.2-11B-Vision",
+      "revision": "f602922f64cbe153c580e358fdabc2bbd023b3ca",
+      "shardSha256": {
+        "model-00001-of-00005.safetensors": "20f9ea8006cc17642463a94a916c5b9ad7907aa02ce4891d42d2095c146de2fa",
+        "model-00002-of-00005.safetensors": "700ba215225f5e2b16e9d451f2cc9703cfc124ea2a9de8fa8886f7a8911413da",
+        "model-00003-of-00005.safetensors": "b06cdc33032dfe5f7a9cf61d9dbe388e2af72e952bda75bf2aedac0bbaadb142",
+        "model-00004-of-00005.safetensors": "806d7a1d87d0a2d45b2f6c42dddc8b8f2b77bcaf45ac085181d0af74f7492909",
+        "model-00005-of-00005.safetensors": "c5fefff872f2d7f82ed0498e0b5e7dc10fdd01b051e8be6e41ee3ae4f4fa192d"
+      }
+    }
   },
   "runtime": {
     "python": "3.11.2",
     "platform": "macOS arm64",
     "devicePriority": ["cuda", "mps", "cpu"],
+    "inferenceDtype": {
+      "cuda": "float16",
+      "mps": "float16",
+      "cpu": "config"
+    },
+    "inferenceTimeoutMs": 3600000,
     "torch": "2.8.0",
     "transformers": "4.54.0",
     "pillow": "11.1.0",
@@ -29,19 +46,21 @@
   },
   "preprocess": {
     "maxPdfPages": 3,
-    "pageLayout": "vertical-concatenation",
+    "pageLayout": "independent-page-inference",
     "normalizedWidth": 1050,
     "minimumHeight": 1485,
     "padding": "bottom-white"
   },
   "decoder": {
     "maxLength": 2048,
-    "numBeams": 10,
+    "numBeams": 1,
     "repetitionPenalty": 1.1
   },
   "conversion": {
     "nativeFormat": "abc",
     "script": "abc2xml.py",
-    "outputFormat": "musicxml"
+    "outputFormat": "musicxml",
+    "scope": "per-page-then-merge",
+    "rejectEmptyPageParts": true
   }
 }

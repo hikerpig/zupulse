@@ -152,6 +152,12 @@
     text-decoration: none;
   }
 
+  .headerActions {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+  }
+
   .settingsLink:hover {
     background: var(--bg-control);
   }

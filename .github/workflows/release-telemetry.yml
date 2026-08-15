@@ -68,6 +68,7 @@ jobs:
           --delete-after
       - name: Verify Browser public artifact
         run: |
+          find apps/web-demo/dist -type f -name '*.map' -delete
           node scripts/verify-source-map-artifacts.mjs forbid apps/web-demo/dist
           node apps/web-demo/scripts/verify-assets.mjs
 
@@ -105,5 +106,6 @@ jobs:
           --delete-after
       - name: Verify Desktop package inputs
         run: |
+          find apps/desktop-shell/dist/main apps/desktop-shell/dist/preload apps/desktop-shell/dist/renderer -type f -name '*.map' -delete
           node scripts/verify-source-map-artifacts.mjs forbid apps/desktop-shell/dist/main apps/desktop-shell/dist/preload apps/desktop-shell/dist/renderer
           env -u TELEMETRY_SOURCE_MAPS pnpm desktop:package

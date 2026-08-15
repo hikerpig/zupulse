@@ -1,9 +1,6 @@
 import { CopyRspackPlugin, DefinePlugin } from "@rspack/core";
 import { createHash } from "node:crypto";
-import {
-  alphaTabDist,
-  createWebRspackConfig,
-} from "../../tools/builder/rspack.mjs";
+import { alphaTabDist, createWebRspackConfig } from "../../tools/builder/rspack.mjs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 
@@ -12,9 +9,7 @@ const isE2e = process.env.PLAYWRIGHT_TEST === "1";
 const telemetryE2e = process.env.TELEMETRY_E2E === "1";
 const emitSourceMaps = process.env.TELEMETRY_SOURCE_MAPS === "1";
 const appVersion = "0.1.0";
-const buildId =
-  process.env.TELEMETRY_BUILD_ID ??
-  createHash("sha256").update(`${appVersion}:browser`).digest("hex");
+const buildId = process.env.TELEMETRY_BUILD_ID ?? createHash("sha256").update(`${appVersion}:browser`).digest("hex");
 
 const createConfig = (_env, argv) => {
   const mode = argv.mode ?? "production";
@@ -38,18 +33,12 @@ const createConfig = (_env, argv) => {
             telemetryE2e
               ? "alpha"
               : (process.env.TELEMETRY_RELEASE_CHANNEL ??
-                  (mode === "production" && !isE2e
-                    ? "production"
-                    : "development")),
+                  (mode === "production" && !isE2e ? "production" : "development")),
           ),
           __POSTHOG_PROJECT_TOKEN__: JSON.stringify(
-            telemetryE2e
-              ? "phc_telemetry_e2e"
-              : (process.env.POSTHOG_PROJECT_TOKEN ?? ""),
+            telemetryE2e ? "phc_telemetry_e2e" : (process.env.POSTHOG_PROJECT_TOKEN ?? ""),
           ),
-          __POSTHOG_API_HOST__: JSON.stringify(
-            process.env.POSTHOG_API_HOST ?? "https://us.i.posthog.com",
-          ),
+          __POSTHOG_API_HOST__: JSON.stringify(process.env.POSTHOG_API_HOST ?? "https://us.i.posthog.com"),
         }),
         new CopyRspackPlugin({
           patterns: [

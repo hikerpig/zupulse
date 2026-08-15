@@ -15,7 +15,7 @@ import { preflightPdfOmrEngine, preflightPdfOmrEngines } from "./pdf-omr-engine-
 import {
   RecognitionProviderConfigurationStore,
   type RecognitionProviderConfiguration,
-} from "./recognition-provider-configuration-store";
+} from "./provider-configuration-store";
 
 type SaveRequest = Extract<BridgeRequest, { type: "recognitionSettings.save" }>["payload"];
 type FieldReference = { source: "saved" } | { source: "selection"; selectionToken: string };

@@ -4,8 +4,8 @@ import { promisify } from "node:util";
 import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { DiagnosticExporter } from "../diagnostic-exporter";
-import { DiagnosticStore } from "../diagnostic-store";
+import { DiagnosticExporter } from "../exporter";
+import { DiagnosticStore } from "../store";
 
 const gunzipAsync = promisify(gunzip);
 const roots: string[] = [];

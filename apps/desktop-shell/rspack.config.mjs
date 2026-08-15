@@ -37,7 +37,9 @@ const createConfig = (env, argv) => {
     target: "electron-main",
     entry: {
       main: "./src/main/main.ts",
-      ...(pdfOmrRuntimeSmoke ? { "pdf-omr-packaged-smoke-entry": "./src/main/pdf-omr-packaged-smoke-entry.ts" } : {}),
+      ...(pdfOmrRuntimeSmoke
+        ? { "pdf-omr-packaged-smoke-entry": "./src/main/recognition/pdf-omr-packaged-smoke-entry.ts" }
+        : {}),
     },
     output: {
       clean: true,

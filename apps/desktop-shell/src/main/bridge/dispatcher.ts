@@ -15,6 +15,8 @@ export type BridgeHandlers = Partial<{
   [T in BridgeRequestType]: (request: RequestFor<T>) => unknown | Promise<unknown>;
 }>;
 
+export type RequiredBridgeHandlers<T extends keyof BridgeHandlers> = Required<Pick<BridgeHandlers, T>>;
+
 export type BridgeDispatcherOptions = {
   appVersion: string;
   rendererBuildHash: string;

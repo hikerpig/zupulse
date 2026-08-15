@@ -2,8 +2,8 @@ import { mkdtemp, readFile, rm, stat, utimes, writeFile } from "node:fs/promises
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { FileTokenStore } from "../fileTokens";
-import { materializePdfOmrInput, selectMidiFile, selectPdfFile } from "../files";
+import { FileTokenStore } from "../file-token-store";
+import { materializePdfOmrInput, selectMidiFile, selectPdfFile } from "../score-files";
 
 const temporaryDirectories: string[] = [];
 

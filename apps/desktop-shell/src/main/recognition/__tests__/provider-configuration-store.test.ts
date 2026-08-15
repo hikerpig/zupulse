@@ -2,7 +2,7 @@ import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { RecognitionProviderConfigurationStore } from "../recognition-provider-configuration-store";
+import { RecognitionProviderConfigurationStore } from "../provider-configuration-store";
 
 describe("RecognitionProviderConfigurationStore", () => {
   it("atomically persists provider-specific documents and loads them after restart", async () => {

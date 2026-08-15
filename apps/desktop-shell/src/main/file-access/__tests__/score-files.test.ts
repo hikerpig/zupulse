@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { FileTokenStore } from "../fileTokens";
-import { MAX_SCORE_BYTES, assertReadableScore, readScoreFileBytes } from "../files";
+import { FileTokenStore } from "../file-token-store";
+import { MAX_SCORE_BYTES, assertReadableScore, readScoreFileBytes } from "../score-files";
 
 vi.mock("electron", () => ({ dialog: { showOpenDialog: vi.fn() } }));
 

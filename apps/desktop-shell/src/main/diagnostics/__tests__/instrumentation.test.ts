@@ -3,14 +3,14 @@ import { EventEmitter } from "node:events";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { DesktopDiagnostics } from "../diagnostics";
+import { DesktopDiagnostics } from "../desktop-diagnostics";
 import {
   installAppDiagnosticInstrumentation,
   installWindowDiagnosticInstrumentation,
   recordBridgeFailure,
   recordPersistedDataCorruption,
-} from "../diagnostic-instrumentation";
-import { BridgeDispatchError } from "../bridge";
+} from "../instrumentation";
+import { BridgeDispatchError } from "../../bridge/dispatcher";
 
 const roots: string[] = [];
 

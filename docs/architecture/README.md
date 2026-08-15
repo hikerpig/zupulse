@@ -44,6 +44,7 @@ flowchart LR
 - Viewer 谱面导航实现：`viewer-score-navigation.md`
 - React 应用系统：`react-application-system.md`
 - Desktop 打包与人工构建：`desktop-packaging.md`
+- Desktop Main Process：`desktop-main-process.md`
 - Desktop Diagnostics 当前行为：`../features/contracts/desktop-diagnostics.md`
 - 应用国际化：`application-i18n.md`
 - Viewer 键盘与播放控制：`viewer-keyboard-and-transport-controls.md`

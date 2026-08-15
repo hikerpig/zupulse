@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FileTokenStore } from "../fileTokens";
+import { FileTokenStore } from "../file-token-store";
 
 describe("FileTokenStore", () => {
   it("consumes a token exactly once", () => {

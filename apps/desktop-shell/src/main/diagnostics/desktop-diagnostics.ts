@@ -1,8 +1,8 @@
 import { diagnosticEventSchema } from "@zupulse/web-core";
 import { z } from "zod";
 import type { BrowserWindow } from "electron";
-import { DiagnosticExporter, type DiagnosticExportResult } from "./diagnostic-exporter";
-import { DiagnosticStore } from "./diagnostic-store";
+import { DiagnosticExporter, type DiagnosticExportResult } from "./exporter";
+import { DiagnosticStore } from "./store";
 
 const diagnosticReasonSchema = z.enum([
   "clean-exit",

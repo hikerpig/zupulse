@@ -7,10 +7,10 @@ last_verified: 2026-08-08
 hosts:
   - desktop
 implementation_paths:
-  - apps/desktop-shell/src/main/diagnostics.ts
-  - apps/desktop-shell/src/main/diagnostic-store.ts
-  - apps/desktop-shell/src/main/diagnostic-instrumentation.ts
-  - apps/desktop-shell/src/main/diagnostic-exporter.ts
+  - apps/desktop-shell/src/main/diagnostics/desktop-diagnostics.ts
+  - apps/desktop-shell/src/main/diagnostics/store.ts
+  - apps/desktop-shell/src/main/diagnostics/instrumentation.ts
+  - apps/desktop-shell/src/main/diagnostics/exporter.ts
   - apps/desktop-shell/src/desktop-diagnostic-reporter.ts
   - packages/web-core/src/bridge/schemas.ts
 supersedes: []
@@ -66,7 +66,7 @@ Desktop 在本机保存少量、隐私安全的 Host Diagnostic Event，用户�
 5. diagnostics failure 是 best-effort，不得改变应用业务流程或 Electron 默认故障生命周期。
 
 完整字段约束见 `packages/web-core/src/bridge/schemas.ts` 与
-`apps/desktop-shell/src/main/diagnostics.ts`，本文不复制 schema。
+`apps/desktop-shell/src/main/diagnostics/desktop-diagnostics.ts`，本文不复制 schema。
 
 ## 明确非目标
 
@@ -89,12 +89,12 @@ Desktop 在本机保存少量、隐私安全的 Host Diagnostic Event，用户�
 | 契约                                          | 运行时代码 / Schema                                                                                 | 自动化证据                                                                      |
 | --------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | Bridge 安全输入与 iPad 同步                   | `packages/web-core/src/bridge/schemas.ts`、`apps/ipad-shell/bridge/bridge-contract-validator.swift` | `schemas.test.ts`、`contract-manifest.test.ts`、`diagnostic-logger-tests.swift` |
-| Main 宿主字段与 best-effort 门面              | `apps/desktop-shell/src/main/diagnostics.ts`                                                        | `apps/desktop-shell/src/main/__tests__/diagnostics.test.ts`                     |
-| 串行写入、轮转、保留与 snapshot               | `apps/desktop-shell/src/main/diagnostic-store.ts`                                                   | `apps/desktop-shell/src/main/__tests__/diagnostic-store.test.ts`                |
-| Electron、Node、Bridge 与 persistence mapping | `apps/desktop-shell/src/main/diagnostic-instrumentation.ts`                                         | `apps/desktop-shell/src/main/__tests__/diagnostic-instrumentation.test.ts`      |
+| Main 宿主字段与 best-effort 门面              | `apps/desktop-shell/src/main/diagnostics/desktop-diagnostics.ts`                                    | `apps/desktop-shell/src/main/diagnostics/__tests__/desktop-diagnostics.test.ts` |
+| 串行写入、轮转、保留与 snapshot               | `apps/desktop-shell/src/main/diagnostics/store.ts`                                                  | `apps/desktop-shell/src/main/diagnostics/__tests__/store.test.ts`               |
+| Electron、Node、Bridge 与 persistence mapping | `apps/desktop-shell/src/main/diagnostics/instrumentation.ts`                                        | `apps/desktop-shell/src/main/diagnostics/__tests__/instrumentation.test.ts`     |
 | Renderer failure adapter                      | `apps/desktop-shell/src/desktop-diagnostic-reporter.ts`                                             | `apps/desktop-shell/src/__tests__/desktop-diagnostic-reporter.test.ts`          |
-| 重验、gzip、取消与失败                        | `apps/desktop-shell/src/main/diagnostic-exporter.ts`                                                | `apps/desktop-shell/src/main/__tests__/diagnostic-exporter.test.ts`             |
-| 原生菜单、locale 与真实导出                   | `apps/desktop-shell/src/main/main.ts`、`packages/app-i18n/src/locales`                              | `apps/desktop-shell/e2e/desktop.spec.ts`                                        |
+| 重验、gzip、取消与失败                        | `apps/desktop-shell/src/main/diagnostics/exporter.ts`                                               | `apps/desktop-shell/src/main/diagnostics/__tests__/exporter.test.ts`            |
+| 原生菜单、locale 与真实导出                   | `apps/desktop-shell/src/main/shell/menu.ts`、`packages/app-i18n/src/locales`                        | `apps/desktop-shell/e2e/desktop.spec.ts`                                        |
 
 ## 相关资料
 

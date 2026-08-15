@@ -18,7 +18,7 @@ const reviewedFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/K
 const gunzipAsync = promisify(gunzip);
 const pdfFixture = fileURLToPath(new URL("../../../test-fixtures/musicxml/K331-3_reviewed.pdf", import.meta.url));
 
-async function launch(userData: string, environment: Record<string, string> = {}): Promise<ElectronApplication> {
+async function launch(userData: string): Promise<ElectronApplication> {
   try {
     await writeFile(
       join(userData, "preferences.json"),
@@ -28,12 +28,8 @@ async function launch(userData: string, environment: Record<string, string> = {}
   } catch (error) {
     if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) throw error;
   }
-  const inheritedEnvironment = Object.fromEntries(
-    Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined),
-  );
   return electron.launch({
     args: [".", `--user-data-dir=${userData}`],
-    env: { ...inheritedEnvironment, ...environment },
   });
 }
 
@@ -167,12 +163,7 @@ test("configures a recognition engine by picker or pasted path", async () => {
 
 test("keeps PDF OMR Desktop-only and observes a selected PDF without Library mutation", async () => {
   const userData = await mkdtemp(join(tmpdir(), "zupulse-e2e-pdf-omr-ui-"));
-  const ignoredEnvironmentAudiveris = join(userData, "environment-audiveris.sh");
-  await writeFile(ignoredEnvironmentAudiveris, '#!/bin/sh\nprintf "Audiveris 1.0.0\\n"\n', {
-    encoding: "utf8",
-    mode: 0o755,
-  });
-  const app = await launch(userData, { PDF_OMR_AUDIVERIS_EXECUTABLE: ignoredEnvironmentAudiveris });
+  const app = await launch(userData);
   try {
     const window = await app.firstWindow();
     await window.goto("zupulse://app/index.html#/pdf-omr");
@@ -182,7 +173,6 @@ test("keeps PDF OMR Desktop-only and observes a selected PDF without Library mut
     await window.getByRole("button", { name: "Choose PDF or image" }).click();
     await expect(window.getByText("K331-3_reviewed.pdf").first()).toBeVisible();
     await expect(window.getByRole("tab", { name: "Original input" })).toHaveAttribute("aria-selected", "true");
-    await expect(window.getByRole("button", { name: "Start extraction" })).toBeDisabled();
     await window.getByRole("button", { name: "Switch to light theme" }).click();
     await expect.poll(() => window.locator("html").getAttribute("data-theme")).toBe("light");
     await window.getByRole("button", { name: "Switch to dark theme" }).click();

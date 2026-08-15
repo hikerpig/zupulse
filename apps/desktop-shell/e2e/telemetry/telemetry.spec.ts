@@ -64,6 +64,7 @@ test("captures allowlisted desktop events and stops after opt-out", async () => 
     const relaunchedPage = await app.firstWindow();
     await expect(relaunchedPage.getByRole("button", { name: "Privacy & diagnostics" })).toBeVisible();
     await expect.poll(() => payloads.filter(({ event }) => event === "application_session_started").length).toBe(2);
+    await expect.poll(() => payloads.filter(({ event }) => event === "application_ready").length).toBe(2);
     const launchEvents = payloads.filter(({ event }) => event === "application_session_started");
     expect(launchEvents[1]?.properties?.distinct_id).toBe(launchEvents[0]?.properties?.distinct_id);
     expect(launchEvents[1]?.properties?.application_session_id).not.toBe(

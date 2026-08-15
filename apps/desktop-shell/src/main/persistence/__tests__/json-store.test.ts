@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promis
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createDefaultSidecar, parseSidecar } from "@zupulse/web-core";
-import { JsonStore } from "../storage";
+import { JsonStore } from "../json-store";
 
 const hash = "a".repeat(64);
 const roots: string[] = [];

@@ -46,16 +46,60 @@ describe("MusicXML and runtime metrics", () => {
       cancelLatencyMs: true,
       peakRssBytes: true,
       gpuMemoryBytes: true,
+      processCpuPercent: true,
+      decoderTelemetry: true,
     });
   });
 
   it("retains missing resource metrics as unavailable instead of writing zero", () => {
-    const metrics = aggregateRuntimeMetrics([baseObservation()]);
+    const observation = baseObservation();
+    delete observation.peakRssBytes;
+    delete observation.processResources;
+    const metrics = aggregateRuntimeMetrics([observation]);
 
+    expect(metrics).not.toHaveProperty("peakRssBytes");
+    expect(metrics).not.toHaveProperty("processResources");
     expect(metrics).not.toHaveProperty("gpuMemoryBytes");
     expect(metrics).not.toHaveProperty("cancelLatencyMs");
     expect(metrics.metricsAvailability.gpuMemoryBytes).toBe(false);
     expect(metrics.metricsAvailability.cancelLatencyMs).toBe(false);
+    expect(metrics.metricsAvailability.peakRssBytes).toBe(false);
+    expect(metrics.metricsAvailability.processCpuPercent).toBe(false);
+  });
+
+  it("separates worker model load, cold request, and warm request timings", () => {
+    const cold = baseObservation();
+    cold.decoderTelemetry!.workerRequests = [{ warm: false, requestDurationMs: 80, modelLoadMs: 500 }];
+    const warm = baseObservation();
+    warm.decoderTelemetry!.workerRequests = [{ warm: true, requestDurationMs: 40 }];
+
+    expect(aggregateRuntimeMetrics([cold, warm]).decoder?.worker).toEqual({
+      modelLoadMs: { p50: 500, p95: 500, max: 500 },
+      coldRequestMs: { p50: 80, p95: 80, max: 80 },
+      warmRequestMs: { p50: 40, p95: 40, max: 40 },
+    });
+  });
+
+  it("does not report a fabricated process count", () => {
+    expect(aggregateRuntimeMetrics([baseObservation()]).processResources).not.toHaveProperty("processCount");
+  });
+
+  it("omits CPU distributions when the process probe collected no samples", () => {
+    const observation = baseObservation();
+    observation.processResources = {
+      scope: "process-group",
+      sampleIntervalMs: 250,
+      sampleCount: 0,
+    };
+
+    const metrics = aggregateRuntimeMetrics([observation]);
+
+    expect(metrics.processResources).toEqual({
+      scope: "process-group",
+      sampleIntervalMs: 250,
+      sampleCount: 0,
+    });
+    expect(metrics.metricsAvailability.processCpuPercent).toBe(false);
   });
 });
 
@@ -68,6 +112,27 @@ function baseObservation(): RuntimeObservation {
     structural: true,
     wallTimeMs: 100,
     peakRssBytes: 1_000,
+    processResources: {
+      scope: "process-group",
+      sampleIntervalMs: 250,
+      sampleCount: 2,
+      peakRssBytes: 1_000,
+      averageCpuPercent: 25,
+      peakCpuPercent: 50,
+    },
     stageWallTimeMs: { inspect: 10, recognize: 20, normalize: 30, validate: 40, export: 50 },
+    decoderTelemetry: {
+      schemaVersion: "1.0.0",
+      pages: [
+        {
+          pageNumber: 1,
+          outputTokenCount: 64,
+          maxLength: 2048,
+          termination: "eos",
+          device: "mps",
+          dtype: "float16",
+        },
+      ],
+    },
   };
 }

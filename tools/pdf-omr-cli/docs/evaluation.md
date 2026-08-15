@@ -26,8 +26,41 @@ MusicXML readiness 为 `blocked`，该 item 只写出 `ground-truth-validation.j
 解释成音符质量分数。
 
 每个成功 item 的 runtime observation 必须包含 `inspect`、`recognize`、`normalize`、`validate`、`export` 五个
-阶段的 wall time、峰值 RSS，以及可用时的 GPU memory 和 cancel latency。资源探针缺失不会写零值；对应
-`metricsAvailability` 和 holdout gate check 会明确失败，避免缺失指标被误读为通过。
+阶段的 wall time。Unix/macOS engine process runner 每 250ms 采样独立进程组；`processResources` 记录
+`scope`、sample count、sample interval、平均/峰值 CPU，`peakRssBytes` 取完整 engine process tree 的
+采样峰值，不再采样 benchmark Node 父进程。多 process 与重复运行以 sample count 加权 CPU average，并取 RSS/
+CPU peak；aggregate report 保留对应分布。Windows 当前不提供该 `ps` 探针；GPU memory 和 cancel latency 仅在
+独立 probe 可用时记录。资源探针缺失不会写零值；对应 `metricsAvailability` 和 holdout gate check 会明确失败，
+避免缺失指标被误读为通过。
+
+LEGATO 的成功 item 额外保存逐页 decoder telemetry：output token count、`maxLength`、termination、device 和
+dtype；aggregate report 给出 token P50/P95/max 与 limit-hit count。development ablation 使用单进程串行 worker，
+报告将 model load、cold request 与 warm request 分开，suite wall time 仍包含完整成本。缺少 telemetry 时字段保持
+缺失且 `metricsAvailability.decoderTelemetry = false`。development beam 筛选只记录事实，不读取 holdout 或自动
+作 promotion 决策。真实 corpus 筛选完成后，普通 `recognize` 使用 `beam=1 / maxLength=2048 / FP16` baseline。
+
+### LEGATO real-corpus beam screening（2026-08-14）
+
+后续筛选只读取 OLiMPiC development split，从 1,438 个可用条目中冻结 6 个不同 work、覆盖 easy/medium/hard
+和首/中/末位置的真实扫描 system；每个 beam 对每项运行两次，共 12 次 recognition。外部 manifest SHA-256 为
+`076b38ccffe94aeaa01a32a0d3cfb78071f93ebc29f98ec2f700e880270df005`，结果位于本机 cache
+`public-pianoform-legato/legato-beam-1-2-4-v2/`，comparison SHA-256 为
+`d129abab7944cf0c1b4d7a20fd358e9ca3ee85f84aaa66fbf6ac7cfecf6fae48`。没有读取 test/holdout。
+
+beam 1/2 各有 4/6 项可评，beam 4 为 3/6；三者共同可评的 3 项用于以下同集合质量比较，避免把失败项变化
+误算成准确率变化。
+
+| beam | 可评项 | recognize P50 | joint F1 | pitch F1 | onset F1 |
+| ---: | -----: | ------------: | -------: | -------: | -------: |
+|    1 |    4/6 |        12.81s |   0.2737 |   0.8931 |   0.7550 |
+|    2 |    4/6 |        20.76s |   0.2649 |   0.8789 |   0.7461 |
+|    4 |    3/6 |        85.04s |   0.2725 |   0.8889 |   0.7516 |
+
+在共同可评集合上，beam 4 相对 beam 1 的三个 core F1 都没有提升，反而分别低约
+`0.0012 / 0.0042 / 0.0033`；beam 1 的 recognition P50 比 beam 4 低约 `84.94%`（约 `6.64x`）。因此按本轮
+停止规则不测试 beam 10。结合共同可评集合的质量结果和显著运行时收益，正式 baseline 已改为 `beam=1`。
+由于各 beam 的完整成功/失败集合不同，canonical gate 仍保持 fail-closed，不能把完整 aggregate 当成可直接
+比较的质量证据。
 
 每个成功 item 还保留 `engine/normalization-output.bin`。对 Rokot，它是严格按 `pageIndex/systemIndex`
 排序的 system bundle；同一 item 的 `joining.json` 汇总 system span、local measure numbers、global measure

@@ -30,7 +30,7 @@ repository 不提交到本仓库。
 - Preprocessing: render and pad every page independently to portrait-letter aspect using the same semantics as the
   official Hugging Face Demo. Do not concatenate pages before inference because the fixed decoder budget can end
   after the first declared voice.
-- Inference: `max_length=2048`, `num_beams=10`, `repetition_penalty=1.1`.
+- Inference: `max_length=2048`, `num_beams=1`, `repetition_penalty=1.1`.
 - Inference precision: CUDA and MPS use float16; CPU uses checkpoint-configured dtype.
 - Default inference timeout: `3600000 ms`.
 - Native output: one UTF-8 ABC tune per page plus a combined multi-tune ABC evidence file.

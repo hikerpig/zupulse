@@ -1,3 +1,6 @@
+import type { ProcessResourceUsage } from "../resource-metrics";
+import type { DecoderTelemetry } from "../engines/types";
+
 export type RuntimeObservation = {
   generation: boolean;
   parse: boolean;
@@ -5,7 +8,9 @@ export type RuntimeObservation = {
   playback: boolean;
   structural: boolean;
   wallTimeMs: number;
-  peakRssBytes: number;
+  peakRssBytes?: number;
+  processResources?: ProcessResourceUsage;
+  decoderTelemetry?: DecoderTelemetry;
   stageWallTimeMs: Record<BenchmarkStage, number>;
   gpuMemoryBytes?: number;
   cancelLatencyMs?: number;
@@ -19,6 +24,8 @@ export type RuntimeMetricAvailability = {
   cancelLatencyMs: boolean;
   peakRssBytes: boolean;
   gpuMemoryBytes: boolean;
+  processCpuPercent: boolean;
+  decoderTelemetry: boolean;
 };
 
 type Distribution = { p50: number; p95: number; max: number };
@@ -34,9 +41,27 @@ export type RuntimeMetrics = {
   };
   wallTimeMs: Distribution;
   stageWallTimeMs: Record<BenchmarkStage, Distribution>;
-  peakRssBytes: Distribution;
+  peakRssBytes?: Distribution;
+  processResources?: {
+    scope: "process-group";
+    sampleIntervalMs: number;
+    sampleCount: number;
+    averageCpuPercent?: Distribution;
+    peakCpuPercent?: Distribution;
+  };
   gpuMemoryBytes?: Distribution;
   cancelLatencyMs?: Distribution;
+  decoder?: {
+    pageCount: number;
+    outputTokens: Distribution;
+    maxLengthHitCount: number;
+    terminationCounts: Record<"eos" | "max-length" | "other", number>;
+    worker?: {
+      modelLoadMs?: Distribution;
+      coldRequestMs?: Distribution;
+      warmRequestMs?: Distribution;
+    };
+  };
   metricsAvailability: RuntimeMetricAvailability;
 };
 
@@ -53,8 +78,21 @@ export function assessRuntimeObservation(observation: RuntimeObservation): {
     missing.push("stageWallTimeMs");
   }
   if (observation.cancelLatencyMs === undefined) missing.push("cancelLatencyMs");
-  if (!Number.isFinite(observation.peakRssBytes) || observation.peakRssBytes <= 0) missing.push("peakRssBytes");
+  if (
+    observation.peakRssBytes === undefined ||
+    !Number.isFinite(observation.peakRssBytes) ||
+    observation.peakRssBytes <= 0
+  ) {
+    missing.push("peakRssBytes");
+  }
+  if (
+    observation.processResources?.averageCpuPercent === undefined ||
+    observation.processResources.peakCpuPercent === undefined
+  ) {
+    missing.push("processCpuPercent");
+  }
   if (observation.gpuMemoryBytes === undefined) missing.push("gpuMemoryBytes");
+  if (observation.decoderTelemetry === undefined) missing.push("decoderTelemetry");
   return { complete: missing.length === 0, missing };
 }
 
@@ -65,6 +103,20 @@ export function aggregateRuntimeMetrics(observations: readonly RuntimeObservatio
   const cancellation = observations.flatMap((observation) =>
     observation.cancelLatencyMs === undefined ? [] : [observation.cancelLatencyMs],
   );
+  const rss = observations.flatMap((observation) =>
+    observation.peakRssBytes === undefined ? [] : [observation.peakRssBytes],
+  );
+  const processResources = observations.flatMap((observation) =>
+    observation.processResources === undefined ? [] : [observation.processResources],
+  );
+  const averageCpuPercent = processResources.flatMap((resources) =>
+    resources.averageCpuPercent === undefined ? [] : [resources.averageCpuPercent],
+  );
+  const peakCpuPercent = processResources.flatMap((resources) =>
+    resources.peakCpuPercent === undefined ? [] : [resources.peakCpuPercent],
+  );
+  const decoderPages = observations.flatMap((observation) => observation.decoderTelemetry?.pages ?? []);
+  const workerTelemetry = observations.flatMap((observation) => observation.decoderTelemetry?.workerRequests ?? []);
   return {
     cases: observations.length,
     capabilities: {
@@ -81,20 +133,87 @@ export function aggregateRuntimeMetrics(observations: readonly RuntimeObservatio
         distribution(observations.map((observation) => observation.stageWallTimeMs[stage])),
       ]),
     ) as Record<BenchmarkStage, Distribution>,
-    peakRssBytes: distribution(observations.map((observation) => observation.peakRssBytes)),
+    ...(rss.length === 0 ? {} : { peakRssBytes: distribution(rss) }),
+    ...(processResources.length === 0
+      ? {}
+      : {
+          processResources: {
+            scope: "process-group" as const,
+            sampleIntervalMs: Math.max(...processResources.map((resources) => resources.sampleIntervalMs)),
+            sampleCount: sum(processResources.map((resources) => resources.sampleCount)),
+            ...(averageCpuPercent.length === 0 ? {} : { averageCpuPercent: distribution(averageCpuPercent) }),
+            ...(peakCpuPercent.length === 0 ? {} : { peakCpuPercent: distribution(peakCpuPercent) }),
+          },
+        }),
     ...(gpu.length === 0 ? {} : { gpuMemoryBytes: distribution(gpu) }),
     ...(cancellation.length === 0 ? {} : { cancelLatencyMs: distribution(cancellation) }),
+    ...(decoderPages.length === 0
+      ? {}
+      : {
+          decoder: {
+            pageCount: decoderPages.length,
+            outputTokens: distribution(decoderPages.map((page) => page.outputTokenCount)),
+            maxLengthHitCount: decoderPages.filter((page) => page.termination === "max-length").length,
+            terminationCounts: {
+              eos: decoderPages.filter((page) => page.termination === "eos").length,
+              "max-length": decoderPages.filter((page) => page.termination === "max-length").length,
+              other: decoderPages.filter((page) => page.termination === "other").length,
+            },
+            ...(workerTelemetry.length === 0
+              ? {}
+              : {
+                  worker: {
+                    ...(workerTelemetry.some((worker) => worker.modelLoadMs !== undefined)
+                      ? {
+                          modelLoadMs: distribution(
+                            workerTelemetry.flatMap((worker) =>
+                              worker.modelLoadMs === undefined ? [] : [worker.modelLoadMs],
+                            ),
+                          ),
+                        }
+                      : {}),
+                    ...(workerTelemetry.some((worker) => !worker.warm)
+                      ? {
+                          coldRequestMs: distribution(
+                            workerTelemetry.filter((worker) => !worker.warm).map((worker) => worker.requestDurationMs),
+                          ),
+                        }
+                      : {}),
+                    ...(workerTelemetry.some((worker) => worker.warm)
+                      ? {
+                          warmRequestMs: distribution(
+                            workerTelemetry.filter((worker) => worker.warm).map((worker) => worker.requestDurationMs),
+                          ),
+                        }
+                      : {}),
+                  },
+                }),
+          },
+        }),
     metricsAvailability: {
       stageWallTimeMs: observations.every(
         (observation) => assessRuntimeObservation(observation).missing.includes("stageWallTimeMs") === false,
       ),
       cancelLatencyMs: observations.every((observation) => observation.cancelLatencyMs !== undefined),
       peakRssBytes: observations.every(
-        (observation) => Number.isFinite(observation.peakRssBytes) && observation.peakRssBytes > 0,
+        (observation) =>
+          observation.peakRssBytes !== undefined &&
+          Number.isFinite(observation.peakRssBytes) &&
+          observation.peakRssBytes > 0,
       ),
       gpuMemoryBytes: observations.every((observation) => observation.gpuMemoryBytes !== undefined),
+      processCpuPercent: observations.every(
+        (observation) =>
+          observation.processResources?.averageCpuPercent !== undefined &&
+          observation.processResources.peakCpuPercent !== undefined,
+      ),
+      decoderTelemetry: observations.every((observation) => observation.decoderTelemetry !== undefined),
     },
   };
+}
+
+function sum(values: readonly number[]): number {
+  return values.reduce((total, value) => total + value, 0);
 }
 
 function rate<T>(values: readonly T[], predicate: (value: T) => boolean): number {

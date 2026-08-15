@@ -125,6 +125,22 @@ mixed bfloat16/float32 Metal crash。64 GB M2 Max 对三页 `flower_day.pdf` 的
 2048-token 本地运行用时约 637 秒，峰值 RSS 约 5.31 GB；不得通过降低 beam、截短输出或替换量化模型
 来静默规避。
 
+development-only 的 decoder 筛选会顺序运行 `beam=1/2/4`。每个 variant 在一个串行 worker 中只加载一次模型，
+`comparison.json` 记录测量值和评测集合是否一致，不自动作 promotion 决策：
+
+```bash
+PDF_OMR_LEGATO_PYTHON=/absolute/path/to/legato-venv/bin/python \
+PDF_OMR_LEGATO_REPOSITORY=/absolute/path/to/legato-demo \
+PDF_OMR_LEGATO_MODEL=/absolute/path/to/legato-model \
+PDF_OMR_LEGATO_BASE_MODEL=/absolute/path/to/llama-3.2-11b-vision \
+  pnpm exec vite-node tools/pdf-omr-cli/scripts/run_legato_ablation.ts \
+    --manifest tools/pdf-omr-cli/corpus/evaluation/manifest.json \
+    --output tools/pdf-omr-cli/reports/development/legato-ablation
+```
+
+各 variant 子目录必须不存在。它们保留完整 canonical benchmark。普通 `recognize` 使用真实 corpus 筛选后的
+`beam=1 / maxLength=2048` baseline；显式 decoder 配置仍允许 `beam=2..10`。
+
 Rokot 使用明确锁定的 Q8_0 GGUF、F16 vision projector、llama.cpp build 和独立 Python 3.11
 converter environment；recognize 不会自动下载模型。先准备并保留本地模型：
 
@@ -289,7 +305,7 @@ diagnostics.json
 ```
 
 Transcoda run 的 engine artifacts 改为 `raw-output.krn` 与 `converted.musicxml`；LEGATO 改为
-`raw-output.abc` 与 `converted.musicxml`。Rokot 改为 `segmentation.json` 以及
+`raw-output.abc`、`converted.musicxml` 与逐页 decoder telemetry `inference.json`。Rokot 改为 `segmentation.json` 以及
 `systems/page-NNN-system-NNN.{png,abc,musicxml}`。任一 native syntax、spine、conversion 或 Draft
 validation 问题都必须稳定失败，不能静默猜测。
 
@@ -298,8 +314,11 @@ stderr 和 exception stack 不进入 canonical artifacts。已有输出目录不
 
 Benchmark 还会先校验 ground-truth readiness，并以 structural role 对齐 part identity；校验阻断或 part
 mapping 冲突会生成 evaluation limitation，不伪造 symbolic/Harmony metrics。成功 item 的 runtime artifacts
-记录五个 pipeline stage 的 wall time、peak RSS，以及可用的 GPU/cancel probe；holdout gate 对缺失指标
-fail closed。没有可量化 duration 的 grace note 会保留 `MISSING_EVENT_TIMING` warning，不会被当成可用于
+记录五个 pipeline stage 的 wall time，并在 Unix/macOS 运行 engine 时每 250ms 采样独立进程组，报告
+`processResources` 的采样数、平均/峰值 CPU 与 engine process-tree peak RSS；aggregate report 输出
+这些指标的分布。可用的 GPU/cancel probe 仍独立记录。没有探针或没有有效样本时字段保持缺失，并由
+`metricsAvailability` 显式标记，holdout gate 对其 fail closed。没有可量化 duration 的 grace note 会保留
+`MISSING_EVENT_TIMING` warning，不会被当成可用于
 timing 对齐的事件。Benchmark item 还保留 `engine/normalization-output.bin`，即 adapter 的原始 canonical
 normalization payload；Rokot item 另外写出 `joining.json`，其中包含按 page/system 排序的 system span、local
 measure numbers、global measure boundaries 和 normalized measure count。它可与 `segmentation.json`、

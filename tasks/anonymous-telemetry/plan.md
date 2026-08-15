@@ -474,7 +474,7 @@ last.
 - [x] `pnpm format:check`
 - [x] `git diff --check`
 - [x] `git status --short` confirms only intended files.
-- [ ] Manual packaged Desktop and deployed Browser PostHog US smoke pass.
+- [x] Manual packaged Desktop and deployed Browser PostHog US smoke pass.
 - [ ] Public privacy URL and PostHog retention/access owner are recorded.
 - [x] Current Feature Contract and architecture documents match verified runtime behavior; external PostHog governance and deployed URL remain explicit gaps.
 

@@ -1,7 +1,7 @@
 # Anonymous Telemetry Release Dashboard
 
-status: `pending external PostHog setup`
-last_verified: `2026-08-14`
+status: `production smoke passed; governance owner pending`
+last_verified: `2026-08-15`
 
 This document is the repository-side definition of the Product Health dashboard. It does not claim that a remote
 PostHog dashboard has been created. The dashboard must use the anonymous event properties defined by the current
@@ -25,8 +25,8 @@ Feature Contract and must not add person profiles, autocapture, replay, GeoIP, o
 - A tagged release workflow must upload Browser, Desktop Main, Preload, and Renderer source maps with the same
   `TELEMETRY_BUILD_ID` and remove maps from public/package artifacts.
 - The production PostHog US smoke must verify one launch and one semantic event, then verify opt-out stops requests.
-- The public privacy notice URL is `https://zupulse.vercel.app/privacy.html`; deployment of that static page is still
-  an external release step.
+- The public privacy notice URL is `https://zupulse.vercel.app/privacy.html`; it is live and returned HTTP 200 during
+  the 2026-08-15 production smoke.
 - The PostHog event retention policy and named access owner are still `TBD` and must be recorded before release.
 
 ## Current evidence
@@ -37,5 +37,11 @@ Feature Contract and must not add person profiles, autocapture, replay, GeoIP, o
 - Source-map contract: `node scripts/verify-source-map-artifacts.mjs require <build-dir>` plus `resolve <build-id>`
   for Browser/Main/Renderer, and the tagged workflow.
 - Artifact guard: Browser `verify-assets.mjs`; Desktop package verification and source-map guard.
-- External evidence intentionally remains pending until the release owner supplies the PostHog project and access
-  governance details.
+- Release workflow `31890478005` on commit `8464ae76122fe11e4978f92b0588613daf1b478f` passed the Browser and Desktop
+  source-map upload/resolve and public-artifact gates: https://github.com/hikerpig/zupulse/actions/runs/31890478005.
+- Production Browser smoke on `https://zupulse.vercel.app/` observed the compiled `production` release channel, two
+  successful `https://us.i.posthog.com/capture/` requests during a fresh launch/ready flow, HTTP 200 for the privacy
+  notice, and no subsequent capture request after disabling the preference. The preference persisted as
+  `enabled: false` in local browser state.
+- The PostHog retention policy, named access owner, and production dashboard access review remain explicit external
+  gates; no completion claim is made for them.

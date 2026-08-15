@@ -242,6 +242,18 @@ duration、staff measure count、system boundary 或缺失结构 header 阻断�
 也不改写 frozen `STOP`。durable 摘要位于
 `tools/pdf-omr-cli/reports/development/rokot-public-pianoform-v1/`；完整生成式 runs 不进入 Git。
 
+## 2026-08-15 Rokot context memory result
+
+Rokot adapter 原先没有传递 `--ctx-size`，llama.cpp 因而使用模型 metadata 的默认 context。锁定
+`ctxSize=4096` 后，同一个 OLiMPiC scanned system item 的 process-group peak RSS 从 `33.12 GB` 降为
+`3.51 GB`，item wall time 从 `17.81s` 降为 `8.66s`；预测 ABC SHA-256 与 pitch、onset、duration、joint
+及 valid-measure 指标均保持不变。
+
+在三个 synthetic development items 上，peak RSS 从 `33.06 GB` 降为 `3.44 GB`，三项 runtime max
+合计从 `92.06s` 降为 `36.32s`；96 个 joint events、24 个 valid measures 与 3/3 reproducibility
+comparisons 均保持不变。该结果证明当前 `1600` output-token 合同不需要模型默认的超长 context；它不证明
+更长 prompt 或未来更大 output-token 合同也适合 `4096`，修改这些合同时必须重新做 context capacity 与质量评测。
+
 ## 若未来重启
 
 新的 discovery 至少需要：

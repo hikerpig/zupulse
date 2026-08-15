@@ -18,6 +18,13 @@ describe("LEGATO adapter", () => {
     expect(source).toContain('if device in {"cuda", "mps"}:');
   });
 
+  it("streams rendered PDF pages instead of retaining the whole document", async () => {
+    const source = await readFile(runner, "utf8");
+
+    expect(source).toContain("yield image");
+    expect(source).not.toContain("images = []");
+  });
+
   it("verifies the repository revision and model hash", async () => {
     const context = await createContext();
     const adapter = createAdapter(context);
@@ -29,7 +36,7 @@ describe("LEGATO adapter", () => {
       parameters: {
         inferenceTimeoutMs: 3_600_000,
         maxLength: 2048,
-        maxPdfPages: 3,
+        maxPdfPages: 32,
         numBeams: 1,
         repetitionPenalty: 1.1,
       },
@@ -70,28 +77,23 @@ describe("LEGATO adapter", () => {
     await expect(readFile(join(outputDirectory, "raw-output.abc"), "utf8")).resolves.toContain("Fixture");
   });
 
-  it("recognizes multiple pages independently and preserves page evidence", async () => {
+  it("recognizes eight pages independently and preserves page evidence", async () => {
     const context = await createContext();
     const adapter = createLegatoAdapter({
       ...adapterOptions(context),
-      environment: { FAKE_LEGATO_PAGES: "2" },
+      environment: { FAKE_LEGATO_PAGES: "8" },
     });
     const raw = await adapter.recognize({
       inputPath: join(context.directory, "score.pdf"),
-      outputDirectory: join(context.directory, "two-pages"),
+      outputDirectory: join(context.directory, "eight-pages"),
     });
 
-    expect(raw.nativeArtifacts.map((artifact) => artifact.relativePath)).toEqual([
-      "raw-output.abc",
-      "converted.musicxml",
-      "inference.json",
-      "pages/page-001.abc",
-      "pages/page-001.musicxml",
-      "pages/page-002.abc",
-      "pages/page-002.musicxml",
-    ]);
-    expect(new TextDecoder().decode(raw.nativeArtifacts[0]?.bytes)).toContain("X:2");
-    expect(createAdapter(context).normalize(raw).parts[0]?.staves[0]?.measures).toHaveLength(2);
+    const artifacts = raw.nativeArtifacts.map((artifact) => artifact.relativePath);
+    expect(artifacts).toHaveLength(19);
+    expect(artifacts).toContain("pages/page-008.musicxml");
+    expect(new TextDecoder().decode(raw.nativeArtifacts[0]?.bytes)).toContain("X:8");
+    expect(raw.decoderTelemetry?.pages).toHaveLength(8);
+    expect(createAdapter(context).normalize(raw).parts[0]?.staves[0]?.measures).toHaveLength(8);
   });
 
   it("uses an explicit validated decoder configuration", async () => {
@@ -208,11 +210,11 @@ describe("LEGATO adapter", () => {
     ).toThrow("invalid LEGATO decoder configuration");
   });
 
-  it("rejects more than three PDF pages before inference", async () => {
+  it("rejects more than 32 PDF pages before inference", async () => {
     const context = await createContext();
     const adapter = createLegatoAdapter({
       ...adapterOptions(context),
-      environment: { FAKE_LEGATO_PAGES: "4" },
+      environment: { FAKE_LEGATO_PAGES: "33" },
     });
 
     await expect(
@@ -222,7 +224,7 @@ describe("LEGATO adapter", () => {
       }),
     ).rejects.toMatchObject({
       code: "INVALID_INPUT",
-      context: { reason: "unsupported-page-count", pageCount: 4 },
+      context: { reason: "unsupported-page-count", pageCount: 33 },
     });
   });
 

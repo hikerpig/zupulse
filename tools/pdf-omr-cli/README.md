@@ -115,8 +115,8 @@ PDF_OMR_LEGATO_BASE_MODEL=/absolute/path/to/llama-3.2-11b-vision \
   pnpm pdf-omr -- recognize input.pdf --engine legato --output result
 ```
 
-LEGATO 本地 engine 接受一至三页 PDF。每页独立使用官方 Demo 的 padding 语义执行推理，再用锁定的
-`abc2xml.py` 转换；CLI 校验每页每个声明 part 均含音符，然后合并 MusicXML，并保留
+LEGATO 本地 engine 接受一至 32 页 PDF。runner 流式渲染并逐页使用官方 Demo 的 padding 语义执行推理，
+避免同时保留整份 PDF 的页面图像；再用锁定的 `abc2xml.py` 转换。CLI 校验每页每个声明 part 均含音符，然后合并 MusicXML，并保留
 `engine/pages/page-NNN.{abc,musicxml}` 作为证据。模型条款、revision、hash、预处理和 decoder 参数见
 `engines/legato-environment.json`。模型、Llama vision encoder 与外部 repository 不提交到仓库。
 默认 inference timeout 为 60 分钟。CUDA 与 MPS 使用 float16 推理，CPU 按 checkpoint config dtype

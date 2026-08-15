@@ -45,7 +45,7 @@
     "pymupdf": "1.26.3"
   },
   "preprocess": {
-    "maxPdfPages": 3,
+    "maxPdfPages": 32,
     "pageLayout": "independent-page-inference",
     "normalizedWidth": 1050,
     "minimumHeight": 1485,

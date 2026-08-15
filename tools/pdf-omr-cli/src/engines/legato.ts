@@ -41,7 +41,7 @@ const baselineDecoder: LegatoDecoderConfig = {
 };
 
 const maxNumBeams = 10;
-const maxPdfPages = 3;
+const maxPdfPages = 32;
 
 const defaultInferenceTimeoutMs = 3_600_000;
 
@@ -147,7 +147,7 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
       );
       const report = parseInspectReport(inspect.stdout);
       if (report.pageCount < 1 || report.pageCount > maxPdfPages) {
-        throw new PdfOmrError("INVALID_INPUT", "LEGATO supports one to three PDF pages", {
+        throw new PdfOmrError("INVALID_INPUT", `LEGATO supports one to ${maxPdfPages} PDF pages`, {
           context: { reason: "unsupported-page-count", pageCount: report.pageCount },
         });
       }

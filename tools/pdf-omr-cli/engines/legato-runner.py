@@ -21,16 +21,16 @@ def render_pdf_pages(input_path: Path):
     import fitz
     from PIL import Image
 
-    images = []
     with fitz.open(input_path) as document:
+        if not document:
+            raise ValueError("PDF has no pages")
         for page in document:
             pixmap = page.get_pixmap(alpha=False)
-            images.append(
-                Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
+            image = Image.frombytes(
+                "RGB", [pixmap.width, pixmap.height], pixmap.samples
             )
-    if not images:
-        raise ValueError("PDF has no pages")
-    return images
+            del pixmap
+            yield image
 
 
 def load_runtime(args: argparse.Namespace):

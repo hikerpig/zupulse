@@ -78,7 +78,8 @@ export class DesktopLibraryStore implements SheetLibraryRepository, HarmonyAnaly
   }
   async findByIdentity(identity: LibraryScoreIdentity): Promise<LibraryScore | undefined> {
     const row = this.database.prepare("SELECT * FROM library_scores WHERE score_identity = ?").get(identity) as
-      Row | undefined;
+      | Row
+      | undefined;
     return row && score(row);
   }
   async add(draft: ValidatedLibraryScoreDraft): Promise<{ status: "created" | "existing"; score: LibraryScore }> {

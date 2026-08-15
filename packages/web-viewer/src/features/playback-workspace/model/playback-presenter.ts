@@ -118,7 +118,9 @@ export function pianoHandModeLabel(mode: PianoHandMode, t: TFunction<"viewer">):
 
 export function pianoUnavailableReason(
   code:
-    "piano-hand-practice-not-applicable" | "piano-hand-practice-ambiguous" | "piano-hand-practice-audio-unsupported",
+    | "piano-hand-practice-not-applicable"
+    | "piano-hand-practice-ambiguous"
+    | "piano-hand-practice-audio-unsupported",
   t: TFunction<"viewer">,
 ): string {
   if (code === "piano-hand-practice-ambiguous") return t("playback.handAmbiguous");

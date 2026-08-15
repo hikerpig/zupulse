@@ -104,7 +104,8 @@ const providerFields: Record<RecognitionProviderId, readonly RecognitionFieldId[
 };
 
 type RecognitionFieldDraft =
-  { kind: "reference"; reference: RecognitionFieldReference; value: string } | { kind: "path"; value: string };
+  | { kind: "reference"; reference: RecognitionFieldReference; value: string }
+  | { kind: "path"; value: string };
 
 function RecognitionSettings({ port }: { port: RecognitionSettingsPort }) {
   const { t } = useTranslation("common");

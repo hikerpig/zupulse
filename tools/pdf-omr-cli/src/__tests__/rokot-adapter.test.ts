@@ -438,7 +438,14 @@ type ContextOptions = {
   converterMode?: "empty" | "invalid-xml" | "raise" | "sleep";
   converterVersion?: string;
   llamaMode?:
-    "canonical" | "leading-prose" | "non-zero" | "output-limit" | "sleep" | "suffix-prose" | "unvoiced" | "wrapper";
+    | "canonical"
+    | "leading-prose"
+    | "non-zero"
+    | "output-limit"
+    | "sleep"
+    | "suffix-prose"
+    | "unvoiced"
+    | "wrapper";
   llamaVersion?: string;
   staffLayout?: "single-staff" | "grand-staff";
 };

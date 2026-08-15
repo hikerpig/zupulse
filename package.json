@@ -11,12 +11,14 @@
     "check:docs": "node scripts/repository-checks.mjs docs",
     "docs:impact": "node scripts/documentation-impact.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
     "prepare": "[ -f .git ] || simple-git-hooks",
     "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run",
     "typecheck": "tsc -b",
-    "check": "pnpm typecheck && pnpm test",
+    "check": "pnpm lint && pnpm typecheck && pnpm test",
     "verify:fast": "pnpm check:context && pnpm check:arch && pnpm check:design && pnpm check:docs && pnpm check:i18n && pnpm format:check && pnpm check",
     "verify": "pnpm verify:fast && pnpm demo:build && pnpm desktop:build",
     "verify:e2e": "pnpm demo:test:e2e && pnpm desktop:test:e2e",
@@ -63,8 +65,9 @@
     "@types/react-dom": "^19.2.3",
     "jsdom": "^24.1.0",
     "lint-staged": "^16.2.7",
+    "oxfmt": "^0.63.0",
+    "oxlint": "^1.78.0",
     "prettier": "^3.9.0",
-    "prettier-plugin-tailwindcss": "^0.8.1",
     "simple-git-hooks": "^2.13.1",
     "tailwindcss": "^4.3.0",
     "typescript": "^5.5.0",
@@ -74,6 +77,7 @@
     "pre-commit": "pnpm exec lint-staged"
   },
   "lint-staged": {
-    "*.{css,html,js,json,jsx,md,mjs,ts,tsx,yaml,yml}": "prettier --check"
+    "*.{css,html,js,json,jsx,md,mjs,ts,tsx,yaml,yml}": "oxfmt --check",
+    "*.{js,jsx,mjs,ts,tsx}": "oxlint"
   }
 }

@@ -65,7 +65,7 @@ only, never current behavior.
 
 ## Implementation Rules
 
-- Code style: follow `docs/conventions/file-naming.md`; named exports, Prettier double quotes,
+- Code style: follow `docs/conventions/file-naming.md`; named exports, Oxfmt double quotes,
   `__tests__/*.test.ts(x)`, no workspace deep imports. With `exactOptionalPropertyTypes`, omit absent optional
   fields instead of passing `undefined`.
 - Validate cross-process and persisted inputs with Zod. A new Bridge API requires request, response, capability,

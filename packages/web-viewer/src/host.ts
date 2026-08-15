@@ -16,7 +16,10 @@ export class ViewerOpenFailure extends Error {
   }
 }
 export type ViewerHostEvent =
-  { type: "open-score" } | { type: "toggle-playback" } | { type: "suspend" } | { type: "prepare-close" };
+  | { type: "open-score" }
+  | { type: "toggle-playback" }
+  | { type: "suspend" }
+  | { type: "prepare-close" };
 export interface ExternalNavigationHost {
   openExternalUrl(url: string): Promise<void>;
 }

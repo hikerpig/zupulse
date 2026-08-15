@@ -1,7 +1,14 @@
 import type { RecognitionProviderId, RecognitionProviderSummary } from "@zupulse/web-core";
 
 export type RecognitionFieldId =
-  "executable" | "llamaCli" | "model" | "visionProjector" | "python" | "repository" | "baseModel" | "checkpoint";
+  | "executable"
+  | "llamaCli"
+  | "model"
+  | "visionProjector"
+  | "python"
+  | "repository"
+  | "baseModel"
+  | "checkpoint";
 
 export type RecognitionFieldReference = { source: "saved" } | { source: "selection"; selectionToken: string };
 

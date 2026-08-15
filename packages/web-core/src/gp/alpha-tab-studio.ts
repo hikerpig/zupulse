@@ -43,10 +43,14 @@ export type AlphaTabStudioApiLike = {
 };
 
 export type AlphaTabWrittenRangeHighlightResult =
-  { status: "highlighted" } | { status: "unavailable" } | { status: "unrepresentable" };
+  | { status: "highlighted" }
+  | { status: "unavailable" }
+  | { status: "unrepresentable" };
 
 export type AlphaTabHarmonyPreviewResult =
-  { status: "applied"; restore(): void } | { status: "unavailable" } | { status: "unrepresentable" };
+  | { status: "applied"; restore(): void }
+  | { status: "unavailable" }
+  | { status: "unrepresentable" };
 
 export type AlphaTabPreviewTransportResult =
   | { status: "toggled" }

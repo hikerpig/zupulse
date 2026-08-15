@@ -103,7 +103,8 @@ export async function dispatchBridgeRequest(
   }
 
   const handler = options.handlers?.[request.type] as
-    ((value: BridgeRequest) => unknown | Promise<unknown>) | undefined;
+    | ((value: BridgeRequest) => unknown | Promise<unknown>)
+    | undefined;
   if (!handler) {
     throw new BridgeDispatchError("BRIDGE_HANDLER_UNAVAILABLE", `No handler registered for ${request.type}`, true);
   }

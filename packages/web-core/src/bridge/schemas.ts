@@ -23,14 +23,13 @@ const secureExternalUrlSchema = z
       return false;
     }
   }, "External URLs must use HTTPS without embedded credentials");
-export const recognitionProviderIdSchema = z.enum(["audiveris", "rokot", "legato", "transcoda"]);
+export const recognitionProviderIdSchema = z.enum(["audiveris", "rokot", "legato"]);
 export const recognitionProviderIssueCodeSchema = z.enum([
   "missing-configuration",
   "resource-unreadable",
   "executable-version-mismatch",
   "repository-revision-mismatch",
   "model-hash-mismatch",
-  "checkpoint-hash-mismatch",
   "converter-unavailable",
   "inspection-failed",
   "persistence-failed",
@@ -71,13 +70,6 @@ const recognitionResourceSelectionRequestSchema = z.discriminatedUnion("provider
       path: manualResourcePathSchema.optional(),
     })
     .strict(),
-  z
-    .object({
-      providerId: z.literal("transcoda"),
-      fieldId: z.enum(["python", "repository", "checkpoint"]),
-      path: manualResourcePathSchema.optional(),
-    })
-    .strict(),
 ]);
 const recognitionSaveRequestSchema = z.discriminatedUnion("providerId", [
   z
@@ -112,18 +104,6 @@ const recognitionSaveRequestSchema = z.discriminatedUnion("providerId", [
         .strict(),
     })
     .strict(),
-  z
-    .object({
-      providerId: z.literal("transcoda"),
-      fields: z
-        .object({
-          python: recognitionCandidateFieldSchema,
-          repository: recognitionCandidateFieldSchema,
-          checkpoint: recognitionCandidateFieldSchema,
-        })
-        .strict(),
-    })
-    .strict(),
 ]);
 const recognitionProviderSummarySchema = z
   .object({
@@ -147,14 +127,11 @@ const recognitionProviderSummarySchema = z
   })
   .strict();
 const pdfOmrEngineAvailabilityReasonSchema = z.enum([
-  "missing-transcoda-configuration",
   "missing-legato-configuration",
   "missing-rokot-configuration",
   "engine-executable-unavailable",
   "engine-inspection-failed",
-  "checkpoint-unreadable",
   "repository-revision-mismatch",
-  "checkpoint-hash-mismatch",
   "python-version-mismatch",
   "model-unreadable",
   "base-model-unreadable",
@@ -665,7 +642,7 @@ export const bridgeResponseSchemas = {
     })
     .strict(),
   "external.openUrl": z.object({}).strict(),
-  "recognitionSettings.list": z.object({ providers: z.array(recognitionProviderSummarySchema).length(4) }).strict(),
+  "recognitionSettings.list": z.object({ providers: z.array(recognitionProviderSummarySchema).length(3) }).strict(),
   "recognitionSettings.selectResource": z.discriminatedUnion("status", [
     z.object({ status: z.literal("cancelled") }).strict(),
     z

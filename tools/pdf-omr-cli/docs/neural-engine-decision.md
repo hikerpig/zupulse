@@ -1,5 +1,8 @@
 # Neural OMR engine 选型
 
+> Historical record: Transcoda 已从当前实现移除。本文件只保留当时的选型过程与评测证据，不是当前 engine
+> registry、Desktop 配置或 Web UI 的行为规范。
+
 ## 阶段结论
 
 首轮第二引擎唯一选择 **Transcoda 59M zero-shot v1**。这里的“选择”只表示把它接入 CLI

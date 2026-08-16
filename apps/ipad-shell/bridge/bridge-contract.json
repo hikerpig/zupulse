@@ -147,14 +147,11 @@
                   "reason": {
                     "type": "string",
                     "enum": [
-                      "missing-transcoda-configuration",
                       "missing-legato-configuration",
                       "missing-rokot-configuration",
                       "engine-executable-unavailable",
                       "engine-inspection-failed",
-                      "checkpoint-unreadable",
                       "repository-revision-mismatch",
-                      "checkpoint-hash-mismatch",
                       "python-version-mismatch",
                       "model-unreadable",
                       "base-model-unreadable",
@@ -364,14 +361,11 @@
             "reason": {
               "type": "string",
               "enum": [
-                "missing-transcoda-configuration",
                 "missing-legato-configuration",
                 "missing-rokot-configuration",
                 "engine-executable-unavailable",
                 "engine-inspection-failed",
-                "checkpoint-unreadable",
                 "repository-revision-mismatch",
-                "checkpoint-hash-mismatch",
                 "python-version-mismatch",
                 "model-unreadable",
                 "base-model-unreadable",

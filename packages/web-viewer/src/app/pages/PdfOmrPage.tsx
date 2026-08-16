@@ -833,16 +833,12 @@ function engineAvailabilityText(
       return t("pdfOmr.engineAvailability.rokotNotConfigured");
     case "missing-legato-configuration":
       return t("pdfOmr.engineAvailability.legatoNotConfigured");
-    case "missing-transcoda-configuration":
-      return t("pdfOmr.engineAvailability.transcodaNotConfigured");
     case "model-unreadable":
     case "base-model-unreadable":
     case "mmproj-unreadable":
-    case "checkpoint-unreadable":
       return t("pdfOmr.engineAvailability.modelUnreadable");
     case "model-hash-mismatch":
     case "mmproj-hash-mismatch":
-    case "checkpoint-hash-mismatch":
       return t("pdfOmr.engineAvailability.modelMismatch");
     case "repository-revision-mismatch":
     case "python-version-mismatch":

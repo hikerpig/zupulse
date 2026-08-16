@@ -1,5 +1,8 @@
 # PDF OMR CLI evaluation
 
+本文保留历史 frozen protocol 与 Transcoda 评测证据，不描述当前支持的 engine。Transcoda 已于 2026-08-16
+从 CLI 和 Desktop/Web provider functionality 移除；当前 engine set 由 Audiveris、LEGATO 与 Rokot 组成。
+
 ## 当前状态
 
 - Development protocol: completed

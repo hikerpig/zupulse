@@ -13,19 +13,15 @@ export type PdfOmrEngineCapability = {
 
 const engines = [
   { id: "audiveris", inputKinds: ["pdf", "image"] },
-  { id: "transcoda", inputKinds: ["pdf"] },
   { id: "legato", inputKinds: ["pdf"] },
   { id: "rokot", inputKinds: ["pdf"] },
 ] as const;
 type PdfOmrEngineId = (typeof engines)[number]["id"];
 
 const safeReasons = new Set([
-  "missing-transcoda-configuration",
   "missing-legato-configuration",
   "missing-rokot-configuration",
-  "checkpoint-unreadable",
   "repository-revision-mismatch",
-  "checkpoint-hash-mismatch",
   "python-version-mismatch",
   "model-unreadable",
   "base-model-unreadable",

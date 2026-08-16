@@ -11,21 +11,18 @@ const frozenAt = requiredFlag(flags, "--frozen-at");
 const audiverisVersion = requiredFlag(flags, "--audiveris-version");
 const root = process.cwd();
 
-const [manifestBytes, builderSourceBytes, transcodaEnvironment, legatoEnvironment, rokotEnvironment] =
-  await Promise.all([
-    readFile(resolve(root, manifestPath)),
-    readFile(resolve(root, "tools/pdf-omr-cli/scripts/build_public_pianoform_benchmark.py")),
-    readJson(resolve(root, "tools/pdf-omr-cli/engines/transcoda-environment.json")),
-    readJson(resolve(root, "tools/pdf-omr-cli/engines/legato-environment.json")),
-    readJson(resolve(root, "tools/pdf-omr-cli/engines/rokot-environment.json")),
-  ]);
+const [manifestBytes, builderSourceBytes, legatoEnvironment, rokotEnvironment] = await Promise.all([
+  readFile(resolve(root, manifestPath)),
+  readFile(resolve(root, "tools/pdf-omr-cli/scripts/build_public_pianoform_benchmark.py")),
+  readJson(resolve(root, "tools/pdf-omr-cli/engines/legato-environment.json")),
+  readJson(resolve(root, "tools/pdf-omr-cli/engines/rokot-environment.json")),
+]);
 const protocol = createPublicPianoformProtocol({
   manifestBytes,
   benchmarkCommit,
   frozenAt,
   audiverisVersion,
   builderSourceBytes,
-  transcodaEnvironment,
   legatoEnvironment,
   rokotEnvironment,
 });

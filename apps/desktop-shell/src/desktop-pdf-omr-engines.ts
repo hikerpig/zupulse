@@ -13,11 +13,10 @@ export function pdfOmrEngineLabel(engineId: string): string {
     (
       {
         audiveris: "Audiveris",
-        transcoda: "Transcoda",
         legato: "LEGATO",
         rokot: "Rokot",
       } as const
-    )[engineId as "audiveris" | "transcoda" | "legato" | "rokot"] ?? engineId
+    )[engineId as "audiveris" | "legato" | "rokot"] ?? engineId
   );
 }
 

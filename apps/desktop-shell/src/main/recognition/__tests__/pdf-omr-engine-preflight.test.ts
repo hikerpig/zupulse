@@ -65,13 +65,6 @@ describe("Desktop PDF OMR engine preflight", () => {
     expect(engines).toEqual([
       { id: "audiveris", version: "5.11.0", available: true, inputKinds: ["pdf", "image"] },
       {
-        id: "transcoda",
-        version: "unknown",
-        available: false,
-        inputKinds: ["pdf"],
-        reason: "missing-transcoda-configuration",
-      },
-      {
         id: "legato",
         version: "unknown",
         available: false,

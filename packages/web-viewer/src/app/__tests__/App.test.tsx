@@ -323,7 +323,7 @@ describe("App", () => {
     );
     const recognitionSettings = {
       list: vi.fn(async () =>
-        (["audiveris", "rokot", "legato", "transcoda"] as const).map((id) => ({
+        (["audiveris", "rokot", "legato"] as const).map((id) => ({
           id,
           state: "unconfigured" as const,
           inputKinds: id === "audiveris" ? (["pdf", "image"] as const) : (["pdf"] as const),
@@ -345,9 +345,10 @@ describe("App", () => {
     );
 
     expect(await screen.findByRole("heading", { name: "识谱引擎" })).toBeTruthy();
-    for (const name of ["Audiveris", "Rokot", "LEGATO", "Transcoda"]) {
+    for (const name of ["Audiveris", "Rokot", "LEGATO"]) {
       expect(await screen.findByText(name, { selector: "strong" })).toBeTruthy();
     }
+    expect(screen.queryByText("Transcoda", { selector: "strong" })).toBeNull();
     expect(recognitionSettings.list).toHaveBeenCalledOnce();
     await application.destroy();
   });
@@ -378,13 +379,6 @@ describe("App", () => {
         },
         {
           id: "legato" as const,
-          state: "unconfigured" as const,
-          inputKinds: ["pdf"] as const,
-          hasExplicitConfiguration: false,
-          fields: [],
-        },
-        {
-          id: "transcoda" as const,
           state: "unconfigured" as const,
           inputKinds: ["pdf"] as const,
           hasExplicitConfiguration: false,

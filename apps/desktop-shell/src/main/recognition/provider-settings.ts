@@ -31,14 +31,12 @@ const inputKinds = {
   audiveris: ["pdf", "image"],
   rokot: ["pdf"],
   legato: ["pdf"],
-  transcoda: ["pdf"],
 } as const;
 
 const fieldKinds: Record<RecognitionProviderId, Record<string, Selection["kind"]>> = {
   audiveris: { executable: "executable" },
   rokot: { llamaCli: "executable", model: "file", visionProjector: "file", python: "executable" },
   legato: { python: "executable", repository: "directory", model: "file", baseModel: "directory" },
-  transcoda: { python: "executable", repository: "directory", checkpoint: "file" },
 };
 
 export class RecognitionProviderSettings {
@@ -153,7 +151,6 @@ export class RecognitionProviderSettings {
     const audiveris = configurations.audiveris;
     const rokot = configurations.rokot;
     const legato = configurations.legato;
-    const transcoda = configurations.transcoda;
     return createEngineRegistry({
       environmentFallback: false,
       audiverisExecutable:
@@ -178,17 +175,6 @@ export class RecognitionProviderSettings {
               modelSha256: "cdeafc9ab30eba74e1c87f0722f869aa9c00d4c4d5986561d4abfeccd6f9cfcc",
               baseModelPath: legato.baseModel,
               runnerPath: resolveBundledLegatoRunnerPath(),
-            },
-          }
-        : {}),
-      ...(transcoda?.providerId === "transcoda"
-        ? {
-            transcoda: {
-              pythonExecutable: transcoda.python,
-              repositoryPath: transcoda.repository,
-              repositoryRevision: "d4e2e687d5679ae96ca4aa6f01e06a5b338cd488",
-              checkpointPath: transcoda.checkpoint,
-              checkpointSha256: "3ce7387b94776cd0edc4e5b70fbc2e28ac0f4c812d5f978d1ef26e236dccdafc",
             },
           }
         : {}),
@@ -244,7 +230,6 @@ export class RecognitionSettingsError extends Error {
 
 function mapIssue(reason: string | undefined): RecognitionProviderIssueCode {
   if (reason?.includes("revision")) return "repository-revision-mismatch";
-  if (reason?.includes("checkpoint-hash")) return "checkpoint-hash-mismatch";
   if (reason?.includes("hash")) return "model-hash-mismatch";
   if (reason?.includes("unreadable")) return "resource-unreadable";
   if (reason?.includes("version") || reason?.includes("build")) return "executable-version-mismatch";

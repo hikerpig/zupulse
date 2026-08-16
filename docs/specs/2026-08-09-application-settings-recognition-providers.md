@@ -14,7 +14,7 @@ Engine 的设备级配置体验。它扩展
 不代表功能已经实现，也不改变当前 PDF OMR 的实验能力与 Library 隔离边界。
 
 - **仓库事实**：共享 React Router 当前没有 Settings route。Desktop Main 在应用启动时从环境变量构造
-  Audiveris、Transcoda、LEGATO 与 Rokot registry，并执行一次 preflight；Browser 当前没有 PDF OMR
+  Audiveris、LEGATO 与 Rokot registry，并执行一次 preflight；Browser 当前没有 PDF OMR
   route、runtime 或远程识别能力。
 - **实际体验限制**：2026-08-09 无可用的 in-app Browser 实例，因此本轮尚未重新走查 Browser 页面；
   当前信息架构事实来自 runtime、Current Feature Contract 与 UI 测试，最终设计验证仍需补充真实 Browser journey。
@@ -45,7 +45,7 @@ Engine 的设备级配置体验。它扩展
    provider。
 8. Settings 使用 Header 右侧的独立齿轮入口进入 `#/settings`，不占用中央工作表面导航。现有语言与主题
    快捷控件继续保留在 Header；只有未来空间约束实际出现时，才另行决定是否迁入 Settings。
-9. Desktop 首版列出 Audiveris、Rokot、LEGATO 与 Transcoda 全部四种 Local Recognition Engine。列表首层
+9. Desktop 首版列出 Audiveris、Rokot 与 LEGATO 三种 Local Recognition Engine。列表首层
    只显示名称、输入类型、安全状态摘要和“配置”操作；provider-specific fields 按需展开，不提供通用环境变量
    或任意键值编辑器。配置通过只证明 runtime readiness，不表示识别质量达到产品门槛。
 10. executable、repository、model、checkpoint 与 converter 等本地资源统一通过 Main 原生文件或目录选择器
@@ -71,7 +71,7 @@ Engine 的设备级配置体验。它扩展
     provider、category、route 或关闭窗口前请求确认放弃；preflight 失败后的值仍保留为 dirty draft。成功保存后
     清除 dirty 状态并显示最新 `ready` 摘要。
 17. 只有存在显式保存配置时才显示“清除配置”，并在执行前就地确认；操作不影响 active job 且不提供 Undo。
-    Rokot、LEGATO 与 Transcoda 清除后进入 `unconfigured`。Audiveris 清除手动覆盖后立即恢复自动发现，并根据
+    Rokot 与 LEGATO 清除后进入 `unconfigured`。Audiveris 清除手动覆盖后立即恢复自动发现，并根据
     结果进入 `ready` 或 `needs-attention`。
 
 ## 方案
@@ -106,7 +106,6 @@ coral；配置、重新选择、取消、清除和打开文档使用次级或语
 │ 识谱引擎      │ Audiveris   PDF / 图片    可用 5.x        [配置]   │
 │               │ Rokot       PDF           需要处理       [修复]   │
 │               │ LEGATO      PDF           未配置         [配置]   │
-│               │ Transcoda   PDF           检查中                    │
 │               │                                                     │
 │               │ ─ Rokot 配置 ───────────────────────────────────── │
 │               │ llama CLI          llama-cli             [重新选择]│
@@ -132,12 +131,11 @@ coral；配置、重新选择、取消、清除和打开文档使用次级或语
 
 ### Provider 字段
 
-| Provider    | Required user selections                                                       | Automatic / locked facts                                                                  |
-| ----------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `audiveris` | manual mode only: executable                                                   | default mode auto-discovers the executable; supports PDF and image                        |
-| `rokot`     | llama CLI, model file, vision projector file, Python executable                | converter runner, model/hash/build constraints remain application-locked                  |
-| `legato`    | Python 3.11 executable, repository directory, model file, base model directory | runner, repository revision and model hash remain application-locked                      |
-| `transcoda` | Python 3.11 executable, repository directory, checkpoint file                  | Git, `pdftoppm` and converter auto-resolve; locked revision/hash remain application-owned |
+| Provider    | Required user selections                                                       | Automatic / locked facts                                                 |
+| ----------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| `audiveris` | manual mode only: executable                                                   | default mode auto-discovers the executable; supports PDF and image       |
+| `rokot`     | llama CLI, model file, vision projector file, Python executable                | converter runner, model/hash/build constraints remain application-locked |
+| `legato`    | Python 3.11 executable, repository directory, model file, base model directory | runner, repository revision and model hash remain application-locked     |
 
 自动发现失败时，Python、Git 或 `pdftoppm` 的对应 safe diagnostic 可以提供手动 override picker；成功自动发现时
 不显示这些低频字段。timeout、prompt、beam count、hash、revision、environment map 与任意 runner path 不属于产品
@@ -147,7 +145,7 @@ coral；配置、重新选择、取消、清除和打开文档使用次级或语
 
 | State             | Visible behavior                          | Available actions                      | Recovery / exit                                      |
 | ----------------- | ----------------------------------------- | -------------------------------------- | ---------------------------------------------------- |
-| `unconfigured`    | Rokot、LEGATO 或 Transcoda 没有显式配置   | 配置、查看官方文档                     | 验证并保存                                           |
+| `unconfigured`    | Rokot 或 LEGATO 没有显式配置              | 配置、查看官方文档                     | 验证并保存                                           |
 | `checking`        | 显示正在检查，无百分比与 ETA              | 取消 candidate 检查                    | 保留已保存配置与原状态                               |
 | `ready`           | 显示版本、输入类型和可运行说明            | 配置、在 Finder 中显示、清除显式配置   | 每次 start/retry 再次检查                            |
 | `needs-attention` | 显示安全原因；workbench 禁用该 provider   | 修复配置、重新检查、查看文档、清除配置 | 成功 preflight 后进入 `ready`                        |
@@ -163,7 +161,7 @@ Application Settings 是共享 UI composition，不是通用持久化数据库�
 安全评审，不能把 endpoint 或 secret 塞入任意 key-value map。
 
 ```ts
-type RecognitionProviderId = "audiveris" | "rokot" | "legato" | "transcoda";
+type RecognitionProviderId = "audiveris" | "rokot" | "legato";
 
 type RecognitionProviderStatus =
   | { state: "unconfigured" }
@@ -227,7 +225,7 @@ accepted across Bridge.
 
 - Browser and Desktop MUST expose `#/settings` from a Header settings action without removing the existing locale and theme shortcuts.
 - Browser Settings MUST render General settings and MUST NOT render Local Recognition Engine rows or future remote placeholders.
-- Desktop MUST render Recognition settings only when `pdfOmrWorkbench=true`, and MUST list Audiveris, Rokot, LEGATO and Transcoda.
+- Desktop MUST render Recognition settings only when `pdfOmrWorkbench=true`, and MUST list Audiveris, Rokot and LEGATO.
 - Header shortcuts and General settings MUST read and update the same locale and theme state.
 - Each provider MUST expose exactly one typed configuration; the product MUST NOT expose environment-variable names, arbitrary
   key-value fields, multiple profiles or runtime provider plugins.

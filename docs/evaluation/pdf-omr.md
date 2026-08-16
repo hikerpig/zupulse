@@ -1,5 +1,8 @@
 # PDF OMR CLI 冻结评测结论
 
+本文是 2026-07-28 的 frozen historical evidence。Transcoda 已从当前 CLI、Desktop 和 Web provider
+功能中移除；本报告、对应 protocol 与 report 不改写，以保留当时评测的可追溯性。
+
 ## 决策
 
 `STOP`

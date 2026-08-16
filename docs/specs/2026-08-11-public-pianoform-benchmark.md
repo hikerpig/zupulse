@@ -7,7 +7,7 @@ status: implemented
 ## Objective
 
 为隔离的 `pdf-omr-cli` 建立一套当前机器可承担的公开 pianoform benchmark，用于比较
-Audiveris、Transcoda、LEGATO 与 Rokot，区分 engine recognition、conversion、full-page pipeline 与
+Audiveris、LEGATO 与 Rokot，区分 engine recognition、conversion、full-page pipeline 与
 runtime failure。日常 development run 固定为 10 个唯一 item；standard development/holdout run 各固定为
 45 个唯一 item，并在参考机器上以每个 engine 独立运行 60 分钟为总预算。
 
@@ -156,13 +156,13 @@ Invariants:
 ```bash
 pnpm pdf-omr -- benchmark \
   --manifest <manifest.json> \
-  --engine <audiveris|transcoda|legato|rokot> \
+  --engine <audiveris|legato|rokot> \
   --output <result-dir> \
   --mode development
 
 pnpm pdf-omr -- benchmark \
   --manifest <manifest.json> \
-  --engine <audiveris|transcoda|legato|rokot> \
+  --engine <audiveris|legato|rokot> \
   --output <result-dir> \
   --mode holdout \
   --protocol-sha <sha256>

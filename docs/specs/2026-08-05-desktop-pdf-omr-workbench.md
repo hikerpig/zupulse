@@ -209,7 +209,7 @@ Desktop 宽屏采用三仓连续工作区，而非卡片仪表盘：左侧是输
 
 ## 待确认决策
 
-当前冻结评测结论仍要求停止把现有 Audiveris / Transcoda 结果描述为产品能力。本 Spec 默认把页面定位为
+当前冻结评测结论仍要求停止把现有 Audiveris 结果描述为产品能力；Transcoda 已从当前实现移除。本 Spec 默认把页面定位为
 开发者实验工具，并允许 packaged build 在 Gate A 失败时隐藏 capability。若目标改为面向普通用户、默认
 随 Desktop 分发 engine/model，必须先单独批准质量 protocol、许可证、安装体积、硬件要求和支持范围；
 这不是本 Spec 的隐含授权。

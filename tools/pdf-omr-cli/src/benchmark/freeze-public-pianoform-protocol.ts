@@ -3,17 +3,6 @@ import { sha256Bytes } from "../canonical-json";
 import { verifyCorpusManifest } from "./corpus";
 import { frozenProtocolSchema, type FrozenProtocol } from "./verify-protocol";
 
-const transcodaEnvironmentSchema = z.object({
-  engine: z.object({ id: z.literal("transcoda"), revision: z.string().min(1) }),
-  model: z.object({ sha256: z.string().length(64) }),
-  decoder: z.object({
-    grammarConstrained: z.boolean(),
-    layoutNormalization: z.boolean(),
-    maxLength: z.number().int().positive(),
-    repetitionPenalty: z.number().positive(),
-  }),
-});
-
 const legatoEnvironmentSchema = z.object({
   engine: z.object({ id: z.literal("legato"), revision: z.string().min(1) }),
   model: z.object({ sha256: z.string().length(64) }),
@@ -50,7 +39,6 @@ export type PublicPianoformProtocolInput = {
   frozenAt: string;
   audiverisVersion: string;
   builderSourceBytes: Uint8Array;
-  transcodaEnvironment: unknown;
   legatoEnvironment: unknown;
   rokotEnvironment: unknown;
 };
@@ -65,7 +53,6 @@ export function createPublicPianoformProtocol(input: PublicPianoformProtocolInpu
     throw new Error("public pianoform protocol requires a standard holdout manifest");
   }
 
-  const transcoda = transcodaEnvironmentSchema.parse(input.transcodaEnvironment);
   const legato = legatoEnvironmentSchema.parse(input.legatoEnvironment);
   const rokot = rokotEnvironmentSchema.parse(input.rokotEnvironment);
   return frozenProtocolSchema.parse({
@@ -76,12 +63,6 @@ export function createPublicPianoformProtocol(input: PublicPianoformProtocolInpu
     benchmarkCommit: input.benchmarkCommit,
     engines: [
       { id: "audiveris", version: input.audiverisVersion, parameters: {} },
-      {
-        id: "transcoda",
-        version: transcoda.engine.revision,
-        modelSha256: transcoda.model.sha256,
-        parameters: { rasterDpi: 150, ...transcoda.decoder },
-      },
       {
         id: "legato",
         version: legato.engine.revision,

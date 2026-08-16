@@ -113,6 +113,7 @@ async function discoverRecognition(ownerDocument: Document): Promise<RemoteRecog
     const response = await fetch("/api/recognition/v1/capabilities", { signal: AbortSignal.timeout(800) });
     if (!response.ok) return undefined;
     const capabilities = recognitionApiCapabilitiesSchema.parse(await response.json());
+    if (!capabilities.engines.some((engine) => engine.available)) return undefined;
     return new RemoteRecognitionClient({
       engines: capabilities.engines,
       fetch: window.fetch.bind(window),

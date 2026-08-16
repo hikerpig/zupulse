@@ -12,7 +12,10 @@ createServer(async (request, response) => {
   if (request.method === "GET" && url.pathname.endsWith("/capabilities")) {
     return json(response, 200, {
       schemaVersion: "1.0.0",
-      engines: [{ id: "audiveris", version: "5.11.0", available: true, inputKinds: ["pdf", "image"] }],
+      engines:
+        process.env.RECOGNITION_E2E_DISABLED === "1"
+          ? []
+          : [{ id: "audiveris", version: "5.11.0", available: true, inputKinds: ["pdf", "image"] }],
     });
   }
   if (request.method === "GET" && url.pathname === "/api/recognition/v1/jobs") {
@@ -29,6 +32,7 @@ createServer(async (request, response) => {
   if (request.method === "GET" && url.pathname.endsWith("/events")) {
     response.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" });
     writeSnapshot(response);
+    if (status === "succeeded") return;
     setTimeout(() => {
       status = "running";
       writeSnapshot(response, "recognize");

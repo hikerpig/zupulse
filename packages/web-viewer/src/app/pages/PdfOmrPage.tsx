@@ -425,19 +425,6 @@ export function PdfOmrPage({
             ) : null}
           </Panel>
 
-          <MidiCorrectionPanel
-            enabled={snapshot?.status === "succeeded" && result !== null}
-            analysis={midiAnalysis}
-            selections={midiSelections}
-            applied={midiApplied}
-            busy={busy}
-            onAnalyze={() => void analyzeMidi()}
-            onSelect={(proposalId, value) => setMidiSelections((current) => ({ ...current, [proposalId]: value }))}
-            onApply={() => void applyMidiCorrections()}
-            selectedCount={selectedMidiDecisions.length}
-            t={t}
-          />
-
           <Panel className={styles.diagnosticsPanel}>
             <div className={styles.panelTitle}>
               <h2>{t("pdfOmr.diagnostics")}</h2>
@@ -458,6 +445,19 @@ export function PdfOmrPage({
               <p className={styles.muted}>{t("pdfOmr.diagnosticsEmpty")}</p>
             )}
           </Panel>
+
+          <MidiCorrectionPanel
+            enabled={snapshot?.status === "succeeded" && result !== null}
+            analysis={midiAnalysis}
+            selections={midiSelections}
+            applied={midiApplied}
+            busy={busy}
+            onAnalyze={() => void analyzeMidi()}
+            onSelect={(proposalId, value) => setMidiSelections((current) => ({ ...current, [proposalId]: value }))}
+            onApply={() => void applyMidiCorrections()}
+            selectedCount={selectedMidiDecisions.length}
+            t={t}
+          />
         </aside>
       </div>
     </main>
@@ -630,6 +630,16 @@ function EngineEvidence({
   lastProgress?: PdfOmrProgress | undefined;
   t: CommonT;
 }) {
+  const progress =
+    snapshot?.status === "running" || snapshot?.status === "cancelling"
+      ? (snapshot.progress ??
+        (lastProgress?.kind === "engine-progress" &&
+        lastProgress.completed !== undefined &&
+        lastProgress.total !== undefined &&
+        lastProgress.unit !== undefined
+          ? { completed: lastProgress.completed, total: lastProgress.total, unit: lastProgress.unit }
+          : undefined))
+      : undefined;
   return (
     <div className={styles.engineEvidence}>
       <h2>{t("pdfOmr.engineEvidence")}</h2>
@@ -639,15 +649,12 @@ function EngineEvidence({
           {snapshot.engine.id} · {snapshot.engine.version}
         </code>
       ) : null}
-      {lastProgress?.kind === "engine-progress" &&
-      lastProgress.completed !== undefined &&
-      lastProgress.total !== undefined ? (
-        <p className={styles.progressFact}>
-          {t("pdfOmr.progressFact", {
-            completed: lastProgress.completed,
-            total: lastProgress.total,
-            unit: lastProgress.unit === "page" ? t("pdfOmr.unit.page") : t("pdfOmr.unit.system"),
-          })}
+      {progress !== undefined ? (
+        <p className={styles.progressBig}>
+          <strong>
+            {progress.completed} / {progress.total}
+          </strong>
+          <span>{progress.unit === "page" ? t("pdfOmr.unit.page") : t("pdfOmr.unit.system")}</span>
         </p>
       ) : null}
     </div>

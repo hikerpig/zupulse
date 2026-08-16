@@ -161,7 +161,6 @@ export const enUS = {
       engineEvidence: "Intermediate evidence",
       engineEvidenceHint:
         "Only structured progress is shown here; stdout, stderr, and absolute paths are never parsed.",
-      progressFact: "Engine reported {{unit}} {{completed}} / {{total}}",
       stageProgress: "{{unit}} {{completed}} / {{total}}",
       stageElapsed: "Elapsed {{time}}",
       midi: {

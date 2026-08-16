@@ -223,10 +223,18 @@
     color: var(--text-primary);
     font: 12px var(--font-family-technical);
   }
-  .progressFact {
-    margin-top: 18px !important;
-    color: var(--accent-primary) !important;
-    font-weight: 700;
+  .progressBig {
+    margin-top: 24px !important;
+    color: var(--text-primary);
+  }
+  .progressBig strong {
+    font: 700 34px var(--font-family-technical);
+    letter-spacing: 0.02em;
+  }
+  .progressBig span {
+    margin-left: 10px;
+    color: var(--text-secondary);
+    font-size: 13px;
   }
 
   .engineField {

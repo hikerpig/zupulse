@@ -153,7 +153,6 @@ export const zhCN = {
       pdfSelected: "已选择文件 · {{size}} · 原文件不会加入曲谱库。",
       engineEvidence: "中间证据",
       engineEvidenceHint: "这里只显示已提交的结构化进度，不解析 stdout、stderr 或绝对路径。",
-      progressFact: "engine 已提交 {{unit}} {{completed}} / {{total}}",
       stageProgress: "{{unit}} {{completed}} / {{total}}",
       stageElapsed: "已用时 {{time}}",
       midi: {

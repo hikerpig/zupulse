@@ -13,16 +13,11 @@ describe("public benchmark readiness", () => {
     const registry: EngineRegistry = {
       get(engineId) {
         if (engineId === "audiveris") return readyAdapter();
-        if (engineId === "transcoda") {
-          throw new PdfOmrError("ENGINE_UNAVAILABLE", "secret local path", {
-            context: { reason: "missing-transcoda-configuration" },
-          });
-        }
         throw new Error("unexpected secret");
       },
     };
 
-    await expect(assessEngineReadiness(registry, ["audiveris", "transcoda", "rokot"])).resolves.toEqual([
+    await expect(assessEngineReadiness(registry, ["audiveris", "rokot"])).resolves.toEqual([
       {
         engineId: "audiveris",
         status: "ready",
@@ -30,11 +25,6 @@ describe("public benchmark readiness", () => {
           version: "5.11.0",
           inputKinds: ["pdf", "image"],
         },
-      },
-      {
-        engineId: "transcoda",
-        status: "unavailable",
-        failure: { code: "ENGINE_UNAVAILABLE", reason: "missing-transcoda-configuration" },
       },
       {
         engineId: "rokot",

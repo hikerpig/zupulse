@@ -15,7 +15,7 @@ parent: docs/features/contracts/desktop-pdf-omr-workbench.md
 缺失条件，并只允许启动或重试已经通过预检且兼容当前输入的 engine。
 
 macOS Desktop 在没有显式 `PDF_OMR_AUDIVERIS_EXECUTABLE` 时，依次检查用户级与系统级 Audiveris app bundle，最后
-才回退到 `PATH`。Rokot、LEGATO 和 Transcoda 继续使用显式环境配置，不自动下载模型或修改用户环境。
+才回退到 `PATH`。Rokot 与 LEGATO 继续使用显式环境配置，不自动下载模型或修改用户环境。
 
 ## Commands
 

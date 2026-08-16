@@ -9,7 +9,7 @@ const manifestPath = requiredFlag(flags, "--manifest");
 const outputPath = requiredFlag(flags, "--output");
 const absoluteOutputPath = resolve(outputPath);
 const corpus = await verifyProfiledCorpusAssets(manifestPath);
-const engines = await assessEngineReadiness(createEngineRegistry(), ["audiveris", "transcoda", "legato", "rokot"]);
+const engines = await assessEngineReadiness(createEngineRegistry(), ["audiveris", "legato", "rokot"]);
 const report = {
   schemaVersion: "1.0.0",
   corpus,

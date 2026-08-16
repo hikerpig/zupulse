@@ -46,7 +46,7 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
 - 用户可从任意 route 的 Header 齿轮进入共享 `#/settings`；Browser 只显示通用语言与主题，Desktop 额外通过
   `recognitionProviderSettings` capability 显示四种本地识谱 provider。
 - Desktop 不读取 `PDF_OMR_*` 环境变量。没有手动配置 Audiveris 时，Main 依次检查用户级和系统级 app bundle，
-  再回退到 `PATH`；Rokot、LEGATO 与 Transcoda 没有持久化配置时保持未配置。独立 CLI 仍支持环境变量自动化。
+  再回退到 `PATH`；Rokot 与 LEGATO 没有持久化配置时保持未配置。独立 CLI 仍支持环境变量自动化。
 
 ## 当前已实现行为
 
@@ -192,8 +192,8 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
   禁用，并只显示 bounded、path-free 的配置原因。
 - 给定 macOS 标准 Audiveris app bundle 且没有显式 executable 配置，Desktop 必须自动发现并通过预检；Settings
   中已验证并保存的显式配置始终优先，且 Desktop 不读取 `PDF_OMR_*` 环境变量。
-- 给定 Browser，Settings 只显示通用设置；给定 Desktop provider capability，Settings 列出 Audiveris、Rokot、LEGATO
-  与 Transcoda。Main 返回的 Bridge response 与已保存配置 DOM 不包含绝对路径；用户粘贴的路径只允许作为未保存的
+- 给定 Browser，Settings 只显示通用设置；给定 Desktop provider capability，Settings 列出 Audiveris、Rokot 与 LEGATO。
+  Main 返回的 Bridge response 与已保存配置 DOM 不包含绝对路径；用户粘贴的路径只允许作为未保存的
   单向 request 输入，不能由 Main 回显。
 - 给定用户在 provider 字段粘贴绝对路径，保存必须复用与原生选择器相同的 token、preflight 与原子持久化流程；给定
   空值或相对路径，已保存配置保持不变。

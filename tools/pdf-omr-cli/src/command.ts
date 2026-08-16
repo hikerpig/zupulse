@@ -26,11 +26,11 @@ const usage = [
   "  fuse --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --output <run-dir>",
   "  apply-fusion --run <fusion-run-dir> --decisions <decisions.json> --output <run-dir>",
   "  rebuild-from-midi --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --musescore <executable> --output <run-dir>",
-  "  recognize <input.pdf> --engine <audiveris|transcoda|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff>]",
+  "  recognize <input.pdf> --engine <audiveris|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff>]",
   "  validate <draft.json> --output <diagnostics.json>",
   "  analyze <draft.json> --output <harmony.json>",
   "  export-musicxml <draft.json> --output <score.mxl>",
-  "  benchmark --manifest <manifest.json> --engine <audiveris|transcoda|legato|rokot> --output <result-dir>",
+  "  benchmark --manifest <manifest.json> --engine <audiveris|legato|rokot> --output <result-dir>",
 ].join("\n");
 
 export async function runPdfOmrCommand(

@@ -25,9 +25,6 @@ const configurationSchema = z.discriminatedUnion("providerId", [
       baseModel: pathSchema,
     })
     .strict(),
-  z
-    .object({ providerId: z.literal("transcoda"), python: pathSchema, repository: pathSchema, checkpoint: pathSchema })
-    .strict(),
 ]);
 const documentSchema = z.object({ schemaVersion: z.literal("1.0.0"), configuration: configurationSchema }).strict();
 
@@ -53,7 +50,7 @@ export class RecognitionProviderConfigurationStore {
 
   async loadAll(): Promise<Partial<Record<RecognitionProviderId, RecognitionProviderConfiguration>>> {
     const entries = await Promise.all(
-      (["audiveris", "rokot", "legato", "transcoda"] as const).map(
+      (["audiveris", "rokot", "legato"] as const).map(
         async (providerId) => [providerId, await this.load(providerId)] as const,
       ),
     );

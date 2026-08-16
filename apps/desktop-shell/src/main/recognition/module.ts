@@ -234,11 +234,11 @@ function clearHeartbeat(jobId: string, heartbeats: Map<string, ReturnType<typeof
 }
 
 function recognitionResourceKind(
-  providerId: "audiveris" | "rokot" | "legato" | "transcoda",
+  providerId: "audiveris" | "rokot" | "legato",
   fieldId: string,
 ): "executable" | "file" | "directory" {
   if (fieldId === "repository" || fieldId === "baseModel") return "directory";
-  if (["model", "visionProjector", "checkpoint"].includes(fieldId)) return "file";
+  if (["model", "visionProjector"].includes(fieldId)) return "file";
   if (providerId === "audiveris" || fieldId === "python" || fieldId === "llamaCli") return "executable";
   throw new BridgeDispatchError("INVALID_RECOGNITION_RESOURCE_FIELD", "Unknown provider resource field", false);
 }

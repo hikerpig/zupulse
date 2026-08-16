@@ -7,8 +7,7 @@ export type RecognitionFieldId =
   | "visionProjector"
   | "python"
   | "repository"
-  | "baseModel"
-  | "checkpoint";
+  | "baseModel";
 
 export type RecognitionFieldReference = { source: "saved" } | { source: "selection"; selectionToken: string };
 

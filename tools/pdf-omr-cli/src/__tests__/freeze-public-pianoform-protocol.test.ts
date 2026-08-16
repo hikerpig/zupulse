@@ -4,7 +4,7 @@ import { createPublicPianoformProtocol } from "../benchmark/freeze-public-pianof
 import { verifyFrozenProtocol } from "../benchmark/verify-protocol";
 
 describe("public pianoform protocol freezer", () => {
-  it("freezes the standard holdout manifest and all four engine environments", () => {
+  it("freezes the standard holdout manifest and the supported engine environments", () => {
     const manifestBytes = new TextEncoder().encode(canonicalJson(standardHoldoutManifest()));
     const protocol = createPublicPianoformProtocol({
       manifestBytes,
@@ -12,20 +12,19 @@ describe("public pianoform protocol freezer", () => {
       frozenAt: "2026-08-12T12:00:00.000Z",
       audiverisVersion: "5.11.0",
       builderSourceBytes: new TextEncoder().encode("builder source"),
-      transcodaEnvironment: transcodaEnvironment(),
       legatoEnvironment: legatoEnvironment(),
       rokotEnvironment: rokotEnvironment(),
     });
     const protocolBytes = new TextEncoder().encode(canonicalJson(protocol));
 
     expect(protocol.manifestSha256).toBe(sha256Bytes(manifestBytes));
-    expect(protocol.engines.map((engine) => engine.id)).toEqual(["audiveris", "transcoda", "legato", "rokot"]);
+    expect(protocol.engines.map((engine) => engine.id)).toEqual(["audiveris", "legato", "rokot"]);
     expect(protocol.builder).toEqual({
       id: "build_public_pianoform_benchmark.py",
       version: "1.0.0",
       sourceSha256: sha256Bytes(new TextEncoder().encode("builder source")),
     });
-    for (const engineId of ["audiveris", "transcoda", "legato", "rokot"]) {
+    for (const engineId of ["audiveris", "legato", "rokot"]) {
       expect(
         verifyFrozenProtocol(protocolBytes, {
           protocolSha256: sha256Bytes(protocolBytes),
@@ -48,7 +47,6 @@ describe("public pianoform protocol freezer", () => {
         frozenAt: "2026-08-12T12:00:00.000Z",
         audiverisVersion: "5.11.0",
         builderSourceBytes: new Uint8Array(),
-        transcodaEnvironment: transcodaEnvironment(),
         legatoEnvironment: legatoEnvironment(),
         rokotEnvironment: rokotEnvironment(),
       }),
@@ -86,14 +84,6 @@ function items(suite: "contract" | "oracle-system" | "full-page", count: number)
     groundTruth: { path: `${suite}/${index}.musicxml`, sha256: "b".repeat(64), format: "musicxml" as const },
     license: { id: "test", source: "https://example.com" },
   }));
-}
-
-function transcodaEnvironment() {
-  return {
-    engine: { id: "transcoda", revision: "transcoda-revision" },
-    model: { sha256: "c".repeat(64) },
-    decoder: { grammarConstrained: true, layoutNormalization: true, maxLength: 512, repetitionPenalty: 1.1 },
-  };
 }
 
 function legatoEnvironment() {

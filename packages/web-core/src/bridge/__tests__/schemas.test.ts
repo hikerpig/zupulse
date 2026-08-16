@@ -51,7 +51,6 @@ describe("bridge schemas", () => {
           },
           { id: "rokot", state: "unconfigured", inputKinds: ["pdf"], hasExplicitConfiguration: false, fields: [] },
           { id: "legato", state: "unconfigured", inputKinds: ["pdf"], hasExplicitConfiguration: false, fields: [] },
-          { id: "transcoda", state: "unconfigured", inputKinds: ["pdf"], hasExplicitConfiguration: false, fields: [] },
         ],
       }),
     ).toBeTruthy();
@@ -65,6 +64,21 @@ describe("bridge schemas", () => {
             inputKinds: ["pdf", "image"],
             hasExplicitConfiguration: true,
             fields: [{ id: "executable", label: "/Applications/Audiveris" }],
+          },
+          { id: "rokot", state: "unconfigured", inputKinds: ["pdf"], hasExplicitConfiguration: false, fields: [] },
+          { id: "legato", state: "unconfigured", inputKinds: ["pdf"], hasExplicitConfiguration: false, fields: [] },
+        ],
+      }),
+    ).toThrow();
+    expect(() =>
+      parseBridgeResponse("recognitionSettings.list", {
+        providers: [
+          {
+            id: "audiveris",
+            state: "unconfigured",
+            inputKinds: ["pdf", "image"],
+            hasExplicitConfiguration: false,
+            fields: [],
           },
           { id: "rokot", state: "unconfigured", inputKinds: ["pdf"], hasExplicitConfiguration: false, fields: [] },
           { id: "legato", state: "unconfigured", inputKinds: ["pdf"], hasExplicitConfiguration: false, fields: [] },

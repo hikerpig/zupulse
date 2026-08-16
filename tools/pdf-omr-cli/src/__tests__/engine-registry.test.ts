@@ -2,6 +2,12 @@ import { describe, expect, it } from "vitest";
 import { createEngineRegistry } from "../engine-registry";
 
 describe("engine registry", () => {
+  it("rejects removed engines as unknown arguments", () => {
+    expect(() => createEngineRegistry().get("transcoda")).toThrow(
+      expect.objectContaining({ code: "INVALID_CLI_ARGUMENT", context: { engineId: "transcoda" } }),
+    );
+  });
+
   it("returns a stable unavailable error when Rokot is not configured", () => {
     const names = [
       "PDF_OMR_ROKOT_LLAMA_CLI",

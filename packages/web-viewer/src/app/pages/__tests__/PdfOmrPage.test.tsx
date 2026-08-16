@@ -341,13 +341,6 @@ describe("PdfOmrPage", () => {
     port.engines = [
       { id: "audiveris", version: "5.11.0", label: "Audiveris", available: true, inputKinds: ["pdf", "image"] },
       {
-        id: "transcoda",
-        version: "d4e2e687d5679ae96ca4aa6f01e06a5b338cd488",
-        label: "Transcoda",
-        available: true,
-        inputKinds: ["pdf"],
-      },
-      {
         id: "rokot",
         version: "unknown",
         label: "Rokot",
@@ -364,7 +357,6 @@ describe("PdfOmrPage", () => {
     );
 
     expect(screen.getByText("已就绪 · 5.11.0")).toBeTruthy();
-    expect(screen.getByText("已就绪 · d4e2e687")).toBeTruthy();
     expect(screen.getByText("需要配置 llama.cpp、Rokot 模型、vision projector 和 ABC 转换器。")).toBeTruthy();
     expect(screen.getByRole("option", { name: /Rokot/ })).toHaveProperty("disabled", true);
   });

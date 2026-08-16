@@ -100,7 +100,6 @@ const providerFields: Record<RecognitionProviderId, readonly RecognitionFieldId[
   audiveris: ["executable"],
   rokot: ["llamaCli", "model", "visionProjector", "python"],
   legato: ["python", "repository", "model", "baseModel"],
-  transcoda: ["python", "repository", "checkpoint"],
 };
 
 type RecognitionFieldDraft =
@@ -311,7 +310,7 @@ function RecognitionSettings({ port }: { port: RecognitionSettingsPort }) {
 }
 
 function providerName(providerId: RecognitionProviderId): string {
-  return { audiveris: "Audiveris", rokot: "Rokot", legato: "LEGATO", transcoda: "Transcoda" }[providerId];
+  return { audiveris: "Audiveris", rokot: "Rokot", legato: "LEGATO" }[providerId];
 }
 
 function isSafeReturnPath(state: unknown): state is { from: string } {

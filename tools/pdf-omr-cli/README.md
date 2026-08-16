@@ -12,11 +12,11 @@ pnpm pdf-omr -- import-midi <input.mid> --output <run-dir>
 pnpm pdf-omr -- fuse --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --output <run-dir>
 pnpm pdf-omr -- apply-fusion --run <fusion-run-dir> --decisions <decisions.json> --output <run-dir>
 pnpm pdf-omr -- rebuild-from-midi --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --musescore <executable> --output <run-dir>
-pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|transcoda|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff>]
+pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff>]
 pnpm pdf-omr -- validate <draft.json> --output <diagnostics.json>
 pnpm pdf-omr -- analyze <draft.json> --output <harmony.json>
 pnpm pdf-omr -- export-musicxml <draft.json> --output <score.mxl>
-pnpm benchmark:pdf-omr -- --manifest <manifest.json> --engine <audiveris|transcoda|legato|rokot> --output <result-dir>
+pnpm benchmark:pdf-omr -- --manifest <manifest.json> --engine <audiveris|legato|rokot> --output <result-dir>
 ```
 
 `inspect` 使用 PDF.js，输出 page count、page dimensions 和 vector/raster operator signals。
@@ -44,9 +44,8 @@ MusicXML。命令仅在重建 Draft 无 blocking diagnostic、可 view/playback�
 `scoreCoverage=1`、`midiCoverage=1`、`pitchAgreement=1` 时发布新文件。它不会覆盖原文件，也不会把
 真人演奏 MIDI 当作制谱真值；重建会舍弃 OMR 的排版细节和文本。
 
-`recognize` 通过可替换 adapter 调用 Audiveris、Transcoda、LEGATO 或 Rokot，再规范化为
-engine-neutral Draft。Audiveris 保留原始 MXL/OMR；Transcoda 保留原始 `**kern`；LEGATO 保留原始
-ABC。后两者同时保留转换后的 MusicXML。Rokot 处理印刷体 single staff 与 piano grand staff，保留逐 system
+`recognize` 通过可替换 adapter 调用 Audiveris、LEGATO 或 Rokot，再规范化为 engine-neutral Draft。
+Audiveris 保留原始 MXL/OMR；LEGATO 保留原始 ABC 并同时保留转换后的 MusicXML。Rokot 处理印刷体 single staff 与 piano grand staff，保留逐 system
 crop、ABC、MusicXML fragment 和包含 `staffLayout`/`staffCount` 的 segmentation metadata；它是隔离的本地研究 engine，不代表 App
 已经支持 PDF 导入。
 
@@ -56,18 +55,6 @@ Audiveris executable 默认从 `PATH` 查找。开发或 CI 可以显式指定�
 PDF_OMR_AUDIVERIS_EXECUTABLE=/absolute/path/to/audiveris \
   pnpm pdf-omr -- recognize input.pdf --engine audiveris --output result
 ```
-
-Transcoda 必须显式提供锁定的 repository、checkpoint 和 Python 3.11 environment：
-
-```bash
-PDF_OMR_TRANSCODA_PYTHON=/absolute/path/to/python \
-PDF_OMR_TRANSCODA_REPOSITORY=/absolute/path/to/transcoda \
-PDF_OMR_TRANSCODA_CHECKPOINT=/absolute/path/to/transcoda-59M-zeroshot-v1.ckpt \
-  pnpm pdf-omr -- recognize input.pdf --engine transcoda --output result
-```
-
-固定 revision、model hash、decoder 参数和 Python dependencies 见
-`engines/transcoda-environment.json`。模型及外部 repository 不提交到本仓库。
 
 LEGATO 需要分别取得 `guangyangmusic/legato` 与
 `meta-llama/Llama-3.2-11B-Vision` 的 gated access。安装时锁定模型和 Demo revision：
@@ -305,8 +292,8 @@ draft.json
 diagnostics.json
 ```
 
-Transcoda run 的 engine artifacts 改为 `raw-output.krn` 与 `converted.musicxml`；LEGATO 改为
-`raw-output.abc`、`converted.musicxml` 与逐页 decoder telemetry `inference.json`。Rokot 改为 `segmentation.json` 以及
+LEGATO run 的 engine artifacts 为 `raw-output.abc`、`converted.musicxml` 与逐页 decoder telemetry
+`inference.json`。Rokot 改为 `segmentation.json` 以及
 `systems/page-NNN-system-NNN.{png,abc,musicxml}`。任一 native syntax、spine、conversion 或 Draft
 validation 问题都必须稳定失败，不能静默猜测。
 

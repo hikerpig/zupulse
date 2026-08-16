@@ -18,7 +18,6 @@ import type {
   PlaybackTimelineMap,
   PlaybackTrack,
   TrackMixState,
-  TrackPlaybackState,
 } from "./types";
 import { resolvePianoHandMapping } from "./pianoHandMapping";
 

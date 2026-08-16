@@ -73,7 +73,7 @@ export function createTranscodaAdapter(options: TranscodaAdapterOptions): OmrEng
           context: { reason: "checkpoint-hash-mismatch" },
         });
       }
-      if (!/^Python 3\.11\./.test(`${python.stdout}\n${python.stderr}`)) {
+      if (!`${python.stdout}\n${python.stderr}`.startsWith("Python 3.11.")) {
         throw new PdfOmrError("ENGINE_UNAVAILABLE", "Transcoda requires the locked Python 3.11 runtime", {
           context: { reason: "python-version-mismatch" },
         });

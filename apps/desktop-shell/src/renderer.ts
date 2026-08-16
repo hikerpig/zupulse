@@ -17,7 +17,6 @@ import {
   type HarmonyAnalysisDocument,
   type HarmonyAnalysisRepository,
   type HarmonyAnalysisSaveResult,
-  type ScoreImportSource,
   type PlaybackPersistence,
   type RecognitionProviderSummary,
   type TelemetryPort,

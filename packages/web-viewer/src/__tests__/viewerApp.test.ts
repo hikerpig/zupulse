@@ -331,7 +331,7 @@ describe("createDefaultOpenSession cleanup", () => {
 
     Object.defineProperty(scrollElement, "scrollHeight", { configurable: true, value: 1200 });
     api.boundsLookup.staffSystems[0]!.realBounds.y = 350;
-    for (const handler of [...renderHandlers]) handler();
+    for (const handler of renderHandlers) handler();
 
     expect(scrollElement.scrollTop).toBe(100);
     expect(api.settings.display.scale).toBe(1.2);
@@ -339,7 +339,7 @@ describe("createDefaultOpenSession cleanup", () => {
 
     Object.defineProperty(scrollElement, "scrollHeight", { configurable: true, value: 1400 });
     api.boundsLookup.staffSystems[0]!.realBounds.y = 500;
-    for (const handler of [...renderHandlers]) handler();
+    for (const handler of renderHandlers) handler();
 
     expect(scrollElement.scrollTop).toBe(400);
     detach();
@@ -356,7 +356,7 @@ describe("createDefaultOpenSession cleanup", () => {
       settings: { display: { scale: 1 } },
       updateSettings: vi.fn(),
       render: vi.fn(() => {
-        for (const handler of [...renderHandlers]) handler();
+        for (const handler of renderHandlers) handler();
       }),
       postRenderFinished: {
         on(handler: () => void) {
@@ -407,7 +407,7 @@ describe("createDefaultOpenSession cleanup", () => {
     document.dispatchEvent(new CustomEvent("zupulse:score-layout-commit", { detail: { reason: "width" } }));
     Object.defineProperty(scrollElement, "scrollHeight", { configurable: true, value: 1400 });
     api.boundsLookup.staffSystems[0]!.realBounds.y = 500;
-    for (const handler of [...renderHandlers]) handler();
+    for (const handler of renderHandlers) handler();
 
     expect(scrollElement.scrollTop).toBe(400);
     detach();

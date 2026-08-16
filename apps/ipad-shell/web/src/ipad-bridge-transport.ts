@@ -100,9 +100,10 @@ export async function bootstrapIpadApplication(options: {
   mount: (transport: IpadBridgeTransport) => void | Promise<void>;
   timeoutMs?: number;
 }): Promise<boolean> {
-  const transport = new IpadBridgeTransport(options.handler, {
-    ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
-  });
+  const transport = new IpadBridgeTransport(
+    options.handler,
+    options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs },
+  );
 
   try {
     if (options.metadata.bridgeVersion !== BRIDGE_SCHEMA_VERSION) throw new Error("BRIDGE_VERSION_MISMATCH");

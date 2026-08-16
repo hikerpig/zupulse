@@ -17,7 +17,7 @@ describe("iPad web asset manifest", () => {
     const manifest = await createWebAssetManifest(root, { appVersion: "0.1.0", bridgeVersion: "3.0.0" });
 
     expect(manifest.buildHash).toMatch(/^[a-f0-9]{64}$/);
-    expect(manifest.assets.map((asset) => asset.path)).toEqual([...manifest.assets.map((asset) => asset.path)].sort());
+    expect(manifest.assets.map((asset) => asset.path)).toEqual(manifest.assets.map((asset) => asset.path).sort());
     await expect(createWebAssetManifest(root, { appVersion: "0.1.0", bridgeVersion: "3.0.0" })).resolves.toEqual(
       manifest,
     );

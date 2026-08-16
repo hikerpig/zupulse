@@ -30,9 +30,10 @@ export function evaluatePaperSemiCrfRecords(input: {
   predictions: Array<{ id: string; segments: PaperSemiCrfSegment[] }>;
   recordPerformance: Array<{ id: string; eventCount: number; runtimeMs: number }>;
 } {
-  const records = parsePaperSemiCrfEvaluationRecords(input.records, {
-    ...(input.allowFinal === undefined ? {} : { allowFinal: input.allowFinal }),
-  });
+  const records = parsePaperSemiCrfEvaluationRecords(
+    input.records,
+    input.allowFinal === undefined ? {} : { allowFinal: input.allowFinal },
+  );
   const model = parsePaperSemiCrfLinearModel(input.model);
   if (
     model.labels.length !== records.labels.length ||

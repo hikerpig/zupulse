@@ -309,16 +309,14 @@ describe("alphaTab playback cursor styles", () => {
   });
 
   it("keeps third-party score layers below viewer controls through shared stacking tokens", async () => {
-    const [tokensCss, tailwindThemeCss, overlaySource, scoreCss, workspaceCss, libraryCss, alphaTabCss] =
-      await Promise.all([
-        source("../styles/tokens.css"),
-        source("../styles/tailwind-theme.css"),
-        source("../components/ui/overlay.tsx"),
-        source("../components/ScoreViewer.module.css"),
-        source("../features/PlaybackWorkspace.module.css"),
-        source("../features/SheetLibrary.module.css"),
-        source("../styles/vendors/alphaTab.css"),
-      ]);
+    const [tokensCss, tailwindThemeCss, overlaySource, scoreCss, workspaceCss, alphaTabCss] = await Promise.all([
+      source("../styles/tokens.css"),
+      source("../styles/tailwind-theme.css"),
+      source("../components/ui/overlay.tsx"),
+      source("../components/ScoreViewer.module.css"),
+      source("../features/PlaybackWorkspace.module.css"),
+      source("../styles/vendors/alphaTab.css"),
+    ]);
 
     expect(tokensCss).toMatch(/--z-index-score:\s*0;/);
     expect(tokensCss).toMatch(/--z-index-score-cursor:\s*10;/);

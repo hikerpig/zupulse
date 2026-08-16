@@ -147,9 +147,10 @@ export async function evaluatePaperSemiCrfFile(options: {
   if (rawRecords.role === "final" && options.allowFinal !== true) {
     throw new Error("final records require --allow-final");
   }
-  const records = parsePaperSemiCrfEvaluationRecords(rawRecords, {
-    ...(options.allowFinal === undefined ? {} : { allowFinal: options.allowFinal }),
-  });
+  const records = parsePaperSemiCrfEvaluationRecords(
+    rawRecords,
+    options.allowFinal === undefined ? {} : { allowFinal: options.allowFinal },
+  );
   const modelBytes = await readFile(options.modelPath);
   const model = parsePaperSemiCrfLinearModel(JSON.parse(modelBytes.toString("utf8")));
   const rssBefore = process.memoryUsage.rss();

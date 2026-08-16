@@ -643,7 +643,7 @@ function parseFrontmatter(contents, path) {
       frontmatter[key] = [];
       continue;
     }
-    if (/^[\[{\]|>]/.test(value)) {
+    if (/^[[{\]|>]/.test(value)) {
       errors.push(`${path}:${lineNumber}: unsupported frontmatter value for ${key}`);
       continue;
     }

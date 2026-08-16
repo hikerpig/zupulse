@@ -1,11 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createHash } from "node:crypto";
-import type {
-  HarmonyAnalysisDocument,
-  HarmonyAnalysisRepository,
-  ScoreFormatAdapter,
-  SheetLibraryRepository,
-} from "@zupulse/web-core";
+import type { HarmonyAnalysisDocument, HarmonyAnalysisRepository, SheetLibraryRepository } from "@zupulse/web-core";
 import { StudioApplication } from "../StudioApplication";
 
 function studioRuntime({

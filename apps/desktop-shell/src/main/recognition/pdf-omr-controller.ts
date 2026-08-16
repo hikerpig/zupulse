@@ -1,7 +1,6 @@
 import type { PdfOmrJobSnapshot } from "@zupulse/web-core";
 import {
   PdfOmrError,
-  type PdfOmrPipelineRequest,
   type PdfOmrPipelineResult,
   type PdfOmrPipelineProgressEvent,
 } from "@zupulse/pdf-omr-cli/pipeline";

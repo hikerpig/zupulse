@@ -674,7 +674,7 @@ class ManualSchedule {
 
   advanceBy(delayMs: number): void {
     this.now += delayMs;
-    for (const [id, task] of [...this.tasks]) {
+    for (const [id, task] of this.tasks) {
       if (task.dueAt <= this.now) {
         this.tasks.delete(id);
         task.callback();

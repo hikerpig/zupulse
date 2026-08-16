@@ -13,6 +13,7 @@
     "@zupulse/pdf-omr-cli": "workspace:*",
     "@zupulse/web-core": "workspace:*",
     "busboy": "1.6.0",
+    "dotenv": "^17.4.2",
     "zod": "4.4.3"
   },
   "devDependencies": {

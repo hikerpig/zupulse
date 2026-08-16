@@ -3,12 +3,15 @@ import { mkdir, rm } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { createEngineRegistry, PdfOmrError, runPdfOmrPipeline } from "@zupulse/pdf-omr-cli/pipeline";
 import type { RecognitionEngineOption } from "@zupulse/web-core";
+import { config as loadEnvironment } from "dotenv";
 import { createRecognitionHttpServer } from "./http-server";
 import { RecognitionJobStore } from "./job-store";
 import { reconcileRecognitionStorage } from "./maintenance";
 import { RecognitionEventHub } from "./recognition-events";
 import { RecognitionWorker } from "./recognition-worker";
 import { createS3RecognitionObjectStore } from "./s3-object-store";
+
+loadEnvironment({ quiet: true });
 
 const databasePath = resolve(process.env.RECOGNITION_DATABASE_PATH ?? "data/recognition.sqlite");
 const tempRoot = resolve(process.env.RECOGNITION_TEMP_ROOT ?? "data/tmp");

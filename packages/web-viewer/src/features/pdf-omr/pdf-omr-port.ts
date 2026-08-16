@@ -9,17 +9,19 @@ export type PdfOmrEngineOption = {
   reason?: string;
 };
 
+export type PdfOmrValidationView = {
+  readiness: {
+    harmony: "blocked" | "ready-with-warnings" | "ready";
+    musicXml: "blocked" | "ready-with-warnings" | "ready";
+  };
+  diagnostics: readonly { code: string; severity: "blocking" | "warning" | "info" }[];
+};
+
 export type PdfOmrResult = {
   fileName: string;
   bytes: Uint8Array;
   outputSha256: string;
-  validation: {
-    readiness: {
-      harmony: "blocked" | "ready-with-warnings" | "ready";
-      musicXml: "blocked" | "ready-with-warnings" | "ready";
-    };
-    diagnostics: readonly { code: string; severity: "blocking" | "warning" | "info" }[];
-  };
+  validation: PdfOmrValidationView;
 };
 
 export type PdfOmrWrittenPitch = {
@@ -64,6 +66,7 @@ export type PdfOmrWorkbenchPort = {
   cancel(jobId: string): Promise<void>;
   getSnapshot(): Promise<PdfOmrJobSnapshot | null>;
   readResult(jobId: string): Promise<PdfOmrResult | null>;
+  readFailedValidation(jobId: string): Promise<PdfOmrValidationView | null>;
   selectMidi(): Promise<
     { status: "cancelled" } | { status: "selected"; fileToken: string; fileName: string; sizeBytes: number }
   >;

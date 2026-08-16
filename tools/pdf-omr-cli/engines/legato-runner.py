@@ -93,6 +93,10 @@ def recognize(args: argparse.Namespace, runtime=None) -> None:
         eos_token_ids = [eos_token_ids]
     eos_token_ids = set(eos_token_ids or [])
     args.page_output_directory.mkdir(parents=True, exist_ok=True)
+    import fitz
+
+    with fitz.open(args.input) as document:
+        total_pages = len(document)
     for page_number, page in enumerate(render_pdf_pages(args.input), start=1):
         image = pad_to_portrait_letter(page)
         inputs = processor(images=[image], truncation=True, return_tensors="pt").to(device)
@@ -143,6 +147,14 @@ def recognize(args: argparse.Namespace, runtime=None) -> None:
         del inputs, output
         if device == "mps":
             torch.mps.empty_cache()
+        print(
+            json.dumps(
+                {"type": "progress", "completed": page_number, "total": total_pages},
+                separators=(",", ":"),
+            ),
+            file=sys.stderr,
+            flush=True,
+        )
     args.telemetry_output.write_text(
         json.dumps(
             {"schemaVersion": "1.0.0", "pages": telemetry_pages},

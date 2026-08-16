@@ -138,6 +138,24 @@
     border-radius: var(--radius-round);
     font: 11px var(--font-family-technical);
   }
+  @media (prefers-reduced-motion: no-preference) {
+    .stageList li[data-state="active"] .stageMarker {
+      animation: pdfOmrStagePulse 1.6s ease-in-out infinite;
+    }
+  }
+  @keyframes pdfOmrStagePulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
+  .stageActivity {
+    color: var(--text-tertiary);
+    font-family: var(--font-family-technical);
+  }
 
   .evidence {
     display: grid;

@@ -9,6 +9,7 @@ export type EngineProcessRequest = {
   env?: Readonly<Record<string, string>>;
   timeoutMs?: number;
   maxOutputBytes?: number;
+  onStderrLine?: (line: string) => void;
 };
 
 export type EngineProcessResult = {
@@ -101,8 +102,26 @@ export function runEngineProcess(request: EngineProcessRequest, signal?: AbortSi
     );
 
     signal?.addEventListener("abort", onAbort, { once: true });
+    const stderrDecoder = new TextDecoder("utf-8");
+    let stderrLineBuffer = "";
+    const acceptStderr = (chunk: Buffer) => {
+      capture(stderr, chunk);
+      if (request.onStderrLine === undefined) return;
+      stderrLineBuffer += stderrDecoder.decode(chunk, { stream: true });
+      let newline = stderrLineBuffer.indexOf("\n");
+      while (newline >= 0) {
+        const line = stderrLineBuffer.slice(0, newline);
+        stderrLineBuffer = stderrLineBuffer.slice(newline + 1);
+        try {
+          request.onStderrLine(line);
+        } catch {
+          // Stream observers must not change engine execution.
+        }
+        newline = stderrLineBuffer.indexOf("\n");
+      }
+    };
     child.stdout.on("data", (chunk: Buffer) => capture(stdout, chunk));
-    child.stderr.on("data", (chunk: Buffer) => capture(stderr, chunk));
+    child.stderr.on("data", acceptStderr);
     child.on("error", (error: NodeJS.ErrnoException) => {
       if (error.code === "ENOENT") {
         settleReject(

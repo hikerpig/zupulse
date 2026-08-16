@@ -34,6 +34,31 @@ describe("engine process runner", () => {
     expect(result.resourceUsage.peakCpuPercent).toBeGreaterThanOrEqual(0);
   });
 
+  it("streams stderr lines to the observer while capturing them", async () => {
+    const lines: string[] = [];
+    const result = await runEngineProcess({
+      command: process.execPath,
+      args: [fakeEngine, "success"],
+      maxOutputBytes: 1024,
+      onStderrLine: (line) => lines.push(line),
+    });
+
+    expect(lines).toEqual(["diagnostic"]);
+    expect(result.stderr).toBe("diagnostic\n");
+  });
+
+  it("ignores observer errors and keeps executing", async () => {
+    await expect(
+      runEngineProcess({
+        command: process.execPath,
+        args: [fakeEngine, "success"],
+        onStderrLine: () => {
+          throw new Error("observer failure");
+        },
+      }),
+    ).resolves.toMatchObject({ exitCode: 0 });
+  });
+
   it("distinguishes a missing executable from engine failure", async () => {
     await expect(
       runEngineProcess({ command: "definitely-missing-pdf-omr-engine", args: [] }),

@@ -200,6 +200,51 @@ describe("LEGATO adapter", () => {
     ).rejects.toMatchObject({ code: "ENGINE_OUTPUT_INVALID" });
   });
 
+  it("reports per-page engine progress during one-shot inference", async () => {
+    const context = await createContext();
+    const adapter = createLegatoAdapter({
+      ...adapterOptions(context),
+      environment: { FAKE_LEGATO_PAGES: "3" },
+    });
+    const progress: { unit: string; completed: number; total: number }[] = [];
+
+    await adapter.recognize({
+      inputPath: join(context.directory, "score.pdf"),
+      outputDirectory: join(context.directory, "progress-one-shot"),
+      onProgress: (event) => progress.push(event),
+    });
+
+    expect(progress).toEqual([
+      { unit: "page", completed: 0, total: 3 },
+      { unit: "page", completed: 1, total: 3 },
+      { unit: "page", completed: 2, total: 3 },
+      { unit: "page", completed: 3, total: 3 },
+    ]);
+  });
+
+  it("reports per-page engine progress in worker mode", async () => {
+    const context = await createContext();
+    const adapter = createLegatoAdapter({
+      ...adapterOptions(context),
+      workerMode: true,
+      environment: { FAKE_LEGATO_PAGES: "2" },
+    });
+    const progress: { unit: string; completed: number; total: number }[] = [];
+
+    await adapter.recognize({
+      inputPath: join(context.directory, "score.pdf"),
+      outputDirectory: join(context.directory, "progress-worker"),
+      onProgress: (event) => progress.push(event),
+    });
+    await adapter.close?.();
+
+    expect(progress).toEqual([
+      { unit: "page", completed: 0, total: 2 },
+      { unit: "page", completed: 1, total: 2 },
+      { unit: "page", completed: 2, total: 2 },
+    ]);
+  });
+
   it("rejects decoder values outside the experiment boundary", async () => {
     const context = await createContext();
     expect(() =>

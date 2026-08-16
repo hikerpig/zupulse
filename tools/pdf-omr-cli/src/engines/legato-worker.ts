@@ -1,6 +1,7 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { z } from "zod";
 import { PdfOmrError } from "../errors";
+import { parseLegatoProgressLine, type LegatoPageProgress } from "./legato-progress";
 import {
   combineProcessResourceUsage,
   startMonotonicTimer,
@@ -20,6 +21,7 @@ export type LegatoWorkerRequest = {
   pageOutputDirectory: string;
   telemetryOutputPath: string;
   signal?: AbortSignal;
+  onProgress?: (progress: LegatoPageProgress) => void;
 };
 
 export type LegatoWorkerResult = {
@@ -47,6 +49,8 @@ export class LegatoWorker {
   readonly #options: LegatoWorkerOptions;
   #child: ChildProcessWithoutNullStreams | undefined;
   #buffer = "";
+  #stderrBuffer = "";
+  #progressListener: ((progress: LegatoPageProgress) => void) | undefined;
   #messageWaiter: { resolve: (message: WorkerMessage) => void; reject: (error: PdfOmrError) => void } | undefined;
   #requestId = 0;
   #running = false;
@@ -58,6 +62,7 @@ export class LegatoWorker {
   async run(request: LegatoWorkerRequest): Promise<LegatoWorkerResult> {
     if (this.#running) throw new PdfOmrError("ENGINE_EXECUTION_FAILED", "LEGATO worker is busy");
     this.#running = true;
+    this.#progressListener = request.onProgress;
     const totalTimer = startMonotonicTimer();
     try {
       const startup = this.#child === undefined ? await this.#start(request.signal) : undefined;
@@ -103,6 +108,7 @@ export class LegatoWorker {
       throw error;
     } finally {
       this.#running = false;
+      this.#progressListener = undefined;
     }
   }
 
@@ -111,6 +117,8 @@ export class LegatoWorker {
     this.#child = undefined;
     this.#messageWaiter = undefined;
     this.#buffer = "";
+    this.#stderrBuffer = "";
+    this.#progressListener = undefined;
     if (child === undefined || child.exitCode !== null) return;
     child.stdin.write(`${JSON.stringify({ type: "shutdown" })}\n`);
     child.stdin.end();
@@ -131,7 +139,8 @@ export class LegatoWorker {
     });
     this.#child = child;
     child.stdin.on("error", () => undefined);
-    child.stderr.resume();
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", (chunk: string) => this.#acceptStderr(chunk));
     child.stdout.setEncoding("utf8");
     child.stdout.on("data", (chunk: string) => this.#acceptOutput(chunk));
     child.on("error", () => this.#fail(new PdfOmrError("ENGINE_UNAVAILABLE", "LEGATO worker could not start")));
@@ -189,6 +198,24 @@ export class LegatoWorker {
       this.#messageWaiter?.resolve(workerMessageSchema.parse(JSON.parse(line)));
     } catch {
       this.#fail(new PdfOmrError("ENGINE_OUTPUT_INVALID", "LEGATO worker emitted an invalid protocol message"));
+    }
+  }
+
+  #acceptStderr(chunk: string): void {
+    this.#stderrBuffer += chunk;
+    let newline = this.#stderrBuffer.indexOf("\n");
+    while (newline >= 0) {
+      const line = this.#stderrBuffer.slice(0, newline);
+      this.#stderrBuffer = this.#stderrBuffer.slice(newline + 1);
+      const progress = parseLegatoProgressLine(line);
+      if (progress !== undefined) {
+        try {
+          this.#progressListener?.(progress);
+        } catch {
+          // Progress observers must not change engine execution.
+        }
+      }
+      newline = this.#stderrBuffer.indexOf("\n");
     }
   }
 

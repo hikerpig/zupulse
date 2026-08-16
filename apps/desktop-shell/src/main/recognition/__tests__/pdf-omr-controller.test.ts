@@ -96,6 +96,52 @@ describe("PdfOmrJobController", () => {
     expect(controller.getSnapshot()).toMatchObject({ status: "succeeded" });
   });
 
+  it("exposes the failed validation directory only for blocked draft validation", async () => {
+    const runtime: PdfOmrRuntimePort = {
+      async run() {
+        throw new PdfOmrError("DRAFT_VALIDATION_FAILED", "blocked");
+      },
+      cancel() {},
+    };
+    const controller = new PdfOmrJobController(runtime);
+    const started = controller.start({
+      inputPath: "/private/score.pdf",
+      fileName: "score.pdf",
+      sizeBytes: 42,
+      inputKind: "pdf",
+      engineId: "fake",
+      outputDirectory: "/private/failed-run",
+    });
+    await controller.waitForIdle();
+
+    expect(controller.getFailedValidationDirectory(started.jobId)).toBe("/private/failed-run");
+    expect(controller.getFailedValidationDirectory("other-job")).toBeUndefined();
+
+    controller.retry(started.jobId, "fake", "/private/retry-run");
+    expect(controller.getFailedValidationDirectory(started.jobId)).toBeUndefined();
+    await controller.waitForIdle();
+  });
+
+  it("hides the validation directory for non-validation failures", async () => {
+    const controller = new PdfOmrJobController({
+      async run() {
+        throw new PdfOmrError("ENGINE_EXECUTION_FAILED", "engine crashed");
+      },
+      cancel() {},
+    });
+    const started = controller.start({
+      inputPath: "/private/score.pdf",
+      fileName: "score.pdf",
+      sizeBytes: 42,
+      inputKind: "pdf",
+      engineId: "fake",
+      outputDirectory: "/private/failed-run",
+    });
+    await controller.waitForIdle();
+
+    expect(controller.getFailedValidationDirectory(started.jobId)).toBeUndefined();
+  });
+
   it("emits a terminal failed event when the runtime fails before reporting one", async () => {
     const events: PdfOmrPipelineProgressEvent[] = [];
     const controller = new PdfOmrJobController({

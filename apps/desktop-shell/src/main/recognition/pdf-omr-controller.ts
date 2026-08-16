@@ -98,6 +98,17 @@ export class PdfOmrJobController {
     return { outputDirectory: this.completed.outputDirectory, result: this.completed.result };
   }
 
+  getFailedValidationDirectory(jobId: string): string | undefined {
+    if (
+      this.snapshot?.jobId !== jobId ||
+      this.snapshot.status !== "failed" ||
+      this.snapshot.error?.code !== "DRAFT_VALIDATION_FAILED"
+    ) {
+      return undefined;
+    }
+    return this.input?.outputDirectory;
+  }
+
   private async execute(jobId: string, input: PdfOmrJobInput): Promise<void> {
     let terminalEvent: Extract<PdfOmrPipelineProgressEvent, { kind: "terminal" }> | undefined;
     let lastSequence = -1;

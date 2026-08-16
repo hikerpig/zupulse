@@ -384,4 +384,37 @@ describe("bridge schemas", () => {
       }),
     ).toThrow();
   });
+
+  it("exposes failed draft validation without result bytes", () => {
+    expect(
+      parseBridgeResponse("pdfOmr.readResult", {
+        status: "failed-validation",
+        validation: {
+          readiness: { harmony: "blocked", musicXml: "blocked" },
+          diagnostics: [{ code: "VOICE_DURATION_MISMATCH", severity: "blocking" }],
+        },
+      }),
+    ).toMatchObject({
+      status: "failed-validation",
+      validation: { readiness: { harmony: "blocked" } },
+    });
+    expect(() =>
+      parseBridgeResponse("pdfOmr.readResult", {
+        status: "failed-validation",
+        validation: {
+          readiness: { harmony: "unknown", musicXml: "blocked" },
+          diagnostics: [],
+        },
+      }),
+    ).toThrow();
+    expect(() =>
+      parseBridgeResponse("pdfOmr.readResult", {
+        status: "failed-validation",
+        validation: {
+          readiness: { harmony: "blocked", musicXml: "blocked" },
+          diagnostics: [{ code: "VOICE_DURATION_MISMATCH", severity: "blocking", path: "/private/draft.json" }],
+        },
+      }),
+    ).toThrow();
+  });
 });

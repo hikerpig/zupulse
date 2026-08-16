@@ -154,6 +154,8 @@ export const zhCN = {
       engineEvidence: "中间证据",
       engineEvidenceHint: "这里只显示已提交的结构化进度，不解析 stdout、stderr 或绝对路径。",
       progressFact: "engine 已提交 {{unit}} {{completed}} / {{total}}",
+      stageProgress: "{{unit}} {{completed}} / {{total}}",
+      stageElapsed: "已用时 {{time}}",
       midi: {
         title: "MIDI 修正",
         requiresResult: "初步识别成功后可导入同曲的 score-export MIDI。",

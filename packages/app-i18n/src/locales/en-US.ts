@@ -162,6 +162,8 @@ export const enUS = {
       engineEvidenceHint:
         "Only structured progress is shown here; stdout, stderr, and absolute paths are never parsed.",
       progressFact: "Engine reported {{unit}} {{completed}} / {{total}}",
+      stageProgress: "{{unit}} {{completed}} / {{total}}",
+      stageElapsed: "Elapsed {{time}}",
       midi: {
         title: "MIDI correction",
         requiresResult: "Import a matching score-export MIDI after the initial recognition succeeds.",

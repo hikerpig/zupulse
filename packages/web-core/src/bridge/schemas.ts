@@ -422,6 +422,21 @@ const pdfOmrMidiAnalysisSchema = z
       .max(512),
   })
   .strict();
+const pdfOmrValidationViewSchema = z
+  .object({
+    readiness: z.object({ harmony: pdfOmrReadinessSchema, musicXml: pdfOmrReadinessSchema }).strict(),
+    diagnostics: z
+      .array(
+        z
+          .object({
+            code: z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/),
+            severity: z.enum(["blocking", "warning", "info"]),
+          })
+          .strict(),
+      )
+      .max(512),
+  })
+  .strict();
 const pdfOmrResultSchema = z.discriminatedUnion("status", [
   z.object({ status: z.literal("unavailable") }).strict(),
   z
@@ -430,21 +445,13 @@ const pdfOmrResultSchema = z.discriminatedUnion("status", [
       fileName: z.string().min(1),
       bytes: z.instanceof(Uint8Array),
       outputSha256: z.string().regex(/^[a-f0-9]{64}$/),
-      validation: z
-        .object({
-          readiness: z.object({ harmony: pdfOmrReadinessSchema, musicXml: pdfOmrReadinessSchema }).strict(),
-          diagnostics: z
-            .array(
-              z
-                .object({
-                  code: z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/),
-                  severity: z.enum(["blocking", "warning", "info"]),
-                })
-                .strict(),
-            )
-            .max(512),
-        })
-        .strict(),
+      validation: pdfOmrValidationViewSchema,
+    })
+    .strict(),
+  z
+    .object({
+      status: z.literal("failed-validation"),
+      validation: pdfOmrValidationViewSchema,
     })
     .strict(),
 ]);

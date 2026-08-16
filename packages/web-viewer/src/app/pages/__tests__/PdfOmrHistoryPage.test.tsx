@@ -45,4 +45,40 @@ describe("PdfOmrHistoryPage", () => {
     expect(history.delete).toHaveBeenCalledWith("job-1");
     await waitFor(() => expect(history.list).toHaveBeenCalledTimes(2));
   });
+
+  it("disables active-job deletion and reports deletion failures", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const history = {
+      list: vi.fn(async () => ({
+        items: [jobSummary("active", "queued"), jobSummary("failed", "failed")],
+      })),
+      create: vi.fn(),
+      open: vi.fn(),
+      delete: vi.fn(async () => Promise.reject(new Error("delete failed"))),
+    };
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <MemoryRouter>
+          <PdfOmrHistoryPage history={history} />
+        </MemoryRouter>
+      </I18nextProvider>,
+    );
+
+    expect(((await screen.findByRole("button", { name: "删除 active.pdf" })) as HTMLButtonElement).disabled).toBe(true);
+    await userEvent.setup().click(screen.getByRole("button", { name: "删除 failed.pdf" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("无法删除识谱任务，请重试。");
+  });
 });
+
+function jobSummary(jobId: string, status: "queued" | "failed") {
+  return {
+    jobId,
+    status,
+    input: { fileName: `${jobId}.pdf`, sizeBytes: 4096, inputKind: "pdf" as const },
+    attemptCount: 1,
+    engineId: "audiveris",
+    createdAt: "2026-08-16T00:00:00.000Z",
+    updatedAt: "2026-08-16T00:01:00.000Z",
+    expiresAt: "2026-09-15T00:00:00.000Z",
+  };
+}

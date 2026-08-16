@@ -44,4 +44,13 @@ describe("S3RecognitionObjectStore", () => {
       objects.materialize("jobs/job-1/input.pdf", join(directory, "input.pdf"), "a".repeat(64)),
     ).rejects.toThrow("RESULT_INTEGRITY_FAILED");
   });
+
+  it("rejects partial deletion failures", async () => {
+    const objects = new S3RecognitionObjectStore({
+      bucket: "scores",
+      send: async () => ({ Errors: [{ Key: "jobs/job-1/input.pdf", Code: "AccessDenied" }] }),
+    });
+
+    await expect(objects.delete(["jobs/job-1/input.pdf"])).rejects.toThrow("STORAGE_UNAVAILABLE");
+  });
 });

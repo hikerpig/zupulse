@@ -50,7 +50,14 @@ export class RecognitionWorker {
     if (claimed === undefined || claimed.attemptId === undefined) return false;
     await mkdir(this.tempRoot, { recursive: true });
     const runDirectory = await mkdtemp(join(this.tempRoot, "attempt-"));
-    const inputPath = join(runDirectory, claimed.input?.inputKind === "image" ? "input.png" : "input.pdf");
+    const inputPath = join(
+      runDirectory,
+      claimed.input?.inputKind === "image"
+        ? claimed.input.fileName.toLowerCase().endsWith(".png")
+          ? "input.png"
+          : "input.jpg"
+        : "input.pdf",
+    );
     const outputDirectory = join(runDirectory, "output");
     const resultObjectKey = `jobs/${claimed.jobId}/result.mxl`;
     const manifestObjectKey = `jobs/${claimed.jobId}/result.json`;

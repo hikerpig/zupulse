@@ -11,6 +11,8 @@ export function PdfOmrHistoryPage({ history }: { history: RecognitionHistoryPort
   const [jobs, setJobs] = useState<readonly RecognitionJobSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -23,6 +25,23 @@ export function PdfOmrHistoryPage({ history }: { history: RecognitionHistoryPort
       setLoading(false);
     }
   }, [history]);
+
+  const deleteJob = useCallback(
+    async (job: RecognitionJobSummary) => {
+      if (!window.confirm(t("pdfOmr.history.deleteConfirm", { fileName: job.input.fileName }))) return;
+      setDeletingJobId(job.jobId);
+      setDeleteError(false);
+      try {
+        await history.delete(job.jobId);
+        await load();
+      } catch {
+        setDeleteError(true);
+      } finally {
+        setDeletingJobId(null);
+      }
+    },
+    [history, load, t],
+  );
 
   useEffect(() => void load(), [load]);
 
@@ -49,6 +68,7 @@ export function PdfOmrHistoryPage({ history }: { history: RecognitionHistoryPort
         </div>
       ) : null}
       {!loading && !error && jobs.length === 0 ? <p>{t("pdfOmr.history.empty")}</p> : null}
+      {deleteError ? <p role="alert">{t("pdfOmr.history.deleteFailed")}</p> : null}
       <ul className={styles.list}>
         {jobs.map((job) => (
           <li className={styles.job} key={job.jobId}>
@@ -73,11 +93,8 @@ export function PdfOmrHistoryPage({ history }: { history: RecognitionHistoryPort
               tone="danger"
               size="sm"
               aria-label={t("pdfOmr.history.deleteLabel", { fileName: job.input.fileName })}
-              onClick={() => {
-                if (window.confirm(t("pdfOmr.history.deleteConfirm", { fileName: job.input.fileName }))) {
-                  void history.delete(job.jobId).then(load);
-                }
-              }}
+              disabled={!canDelete(job.status) || deletingJobId === job.jobId}
+              onClick={() => void deleteJob(job)}
             >
               {t("pdfOmr.history.delete")}
             </Button>
@@ -86,6 +103,10 @@ export function PdfOmrHistoryPage({ history }: { history: RecognitionHistoryPort
       </ul>
     </main>
   );
+}
+
+function canDelete(status: RecognitionJobSummary["status"]): boolean {
+  return status === "cancelled" || status === "failed" || status === "interrupted" || status === "succeeded";
 }
 
 function statusLabel(

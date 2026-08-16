@@ -103,6 +103,7 @@ export const zhCN = {
         delete: "删除",
         deleteLabel: "删除 {{fileName}}",
         deleteConfirm: "确认删除 {{fileName}} 的输入、结果和任务历史吗？",
+        deleteFailed: "无法删除识谱任务，请重试。",
         attempts: "{{count}} 次尝试",
         expires: "保留至 {{date}}",
         status: {

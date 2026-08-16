@@ -108,6 +108,7 @@ export const enUS = {
         delete: "Delete",
         deleteLabel: "Delete {{fileName}}",
         deleteConfirm: "Delete the input, result, and job history for {{fileName}}?",
+        deleteFailed: "The recognition job could not be deleted. Try again.",
         attempts: "{{count}} attempts",
         expires: "Retained until {{date}}",
         status: {

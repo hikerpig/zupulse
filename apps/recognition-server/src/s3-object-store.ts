@@ -47,12 +47,13 @@ export class S3RecognitionObjectStore implements RecognitionObjectStore {
   async delete(keys: readonly string[]): Promise<void> {
     if (keys.length === 0) return;
     for (const key of keys) assertObjectKey(key);
-    await this.send(
+    const response = (await this.send(
       new DeleteObjectsCommand({
         Bucket: this.bucket,
         Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true },
       }),
-    );
+    )) as { Errors?: unknown[] };
+    if ((response.Errors?.length ?? 0) > 0) throw new RecognitionObjectStoreError("STORAGE_UNAVAILABLE");
   }
 }
 

@@ -52,6 +52,24 @@ describe("RecognitionWorker", () => {
     store.close();
   });
 
+  it("materializes JPEG uploads with a JPEG extension", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "zupulse-recognition-worker-"));
+    const store = new RecognitionJobStore(join(directory, "recognition.sqlite"));
+    store.createJob(job("photo.jpeg", "image"));
+    const worker = new RecognitionWorker({
+      store,
+      objects: new FakeObjectStore(),
+      tempRoot: join(directory, "runs"),
+      runPipeline: async (request) => {
+        expect(request.inputPath).toMatch(/input\.jpg$/);
+        return successfulPipeline(request);
+      },
+    });
+
+    expect(await worker.runNext()).toBe(true);
+    store.close();
+  });
+
   it("aborts a running pipeline and records cancellation", async () => {
     const directory = await mkdtemp(join(tmpdir(), "zupulse-recognition-worker-"));
     const store = new RecognitionJobStore(join(directory, "recognition.sqlite"));
@@ -140,13 +158,14 @@ async function successfulPipeline(request: PdfOmrPipelineRequest): Promise<PdfOm
   };
 }
 
-function job() {
+function job(fileName = "score.pdf", inputKind: "pdf" | "image" = "pdf") {
+  const extension = inputKind === "pdf" ? "pdf" : fileName.toLowerCase().endsWith(".png") ? "png" : "jpg";
   return {
     jobId: "job-1",
     attemptId: "attempt-1",
     engineId: "rokot",
-    input: { fileName: "score.pdf", sizeBytes: 42, inputKind: "pdf" as const },
-    inputObjectKey: "jobs/job-1/input.pdf",
+    input: { fileName, sizeBytes: 42, inputKind },
+    inputObjectKey: `jobs/job-1/input.${extension}`,
     inputSha256: "a".repeat(64),
     createdAt,
     expiresAt: "2026-09-15T00:00:00.000Z",

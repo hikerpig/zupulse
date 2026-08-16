@@ -91,13 +91,12 @@ identity，并由 Main 为本次运行创建新的 application session。损坏�
 
 ## 进行中的目标差异
 
-以下内容尚未作为发布治理事实落地：
+Product Health dashboard 的九项指标已在仓库中定义，但远端 dashboard 尚未创建。PostHog event retention
+policy、named access owner 和 production dashboard access review 仍是发布前必须完成的外部治理门禁。
 
-- source-map upload 已接入 tagged/manual release workflow，并在上传成功后删除 public/package artifacts 中的
-  source maps；真实 PostHog release smoke 仍待 provider credentials 与 release owner 执行。
-- Browser/Desktop 本地 fake-ingestion E2E 已覆盖刷新、relaunch、allowlist 与 opt-out；PostHog US smoke、远端
-  dashboard、公开隐私 URL 的部署、retention policy 与 named access owner 仍是外部 release gates。
-- native crash dump、durable offline queue 和 iPad telemetry 明确不在当前承诺范围。
+Tagged release 的 source-map upload、public/package artifact 清理、Browser/Desktop fake-ingestion E2E、
+PostHog US production smoke 和公开隐私 URL 均已有验证记录；详见
+[`docs/validation/anonymous-telemetry-dashboard.md`](../../validation/anonymous-telemetry-dashboard.md)。
 
 ## 明确非目标
 
@@ -138,4 +137,4 @@ identity，并由 Main 为本次运行创建新的 application session。损坏�
 发布 dashboard 的九项指标定义与尚未完成的外部治理门槛见
 [`docs/validation/anonymous-telemetry-dashboard.md`](../../validation/anonymous-telemetry-dashboard.md)。公开隐私
 告知页的仓库内容位于 [`apps/web-demo/public/privacy.html`](../../../apps/web-demo/public/privacy.html)，部署 URL
-在外部发布前仍需验证。
+为 `https://zupulse.vercel.app/privacy.html`，并已在生产 smoke 中验证。

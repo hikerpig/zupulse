@@ -11,6 +11,8 @@ apps/ipad-shell/Zupulse.xcodeproj/xcuserdata/
 .serena/
 
 .envrc
+.env
+
 
 # Local PDF OMR development runs. Commit only curated README/summary artifacts.
 tools/pdf-omr-cli/reports/development/rokot-evaluation-*/

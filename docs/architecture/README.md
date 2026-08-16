@@ -31,6 +31,8 @@ flowchart LR
 - Desktop Renderer 不可信；本地能力只由 Main 经严格 Bridge 提供。
 - iPad Shell 是薄原生宿主：共享 React Library/Viewer，经版本化 Bridge 访问文件、生命周期与音频；
   个人原型复用 IndexedDB，正式产品化前重新评审持久化、迁移与性能。
+- 只有 Browser 与 Desktop 分发构建可通过宿主 adapter 发送可退出的匿名遥测；shared application 仅依赖
+  `TelemetryPort`，Internal Acceptance、开发测试构建与 iPad 保持 No-op。
 
 ## 当前文档
 
@@ -46,6 +48,8 @@ flowchart LR
 - Desktop 打包与人工构建：`desktop-packaging.md`
 - Desktop Main Process：`desktop-main-process.md`
 - Desktop Diagnostics 当前行为：`../features/contracts/desktop-diagnostics.md`
+- Anonymous Telemetry 当前行为与发布治理边界：`../features/contracts/anonymous-telemetry.md`
+- 匿名遥测宿主与 release artifact 边界：`implementation-foundation.md`
 - 应用国际化：`application-i18n.md`
 - Viewer 键盘与播放控制：`viewer-keyboard-and-transport-controls.md`
 - Browser alphaTab DOM 边界：`browser-demo-alphatab-dom-rendering.md`

@@ -6,6 +6,7 @@ import { fillVoiceGapsWithRests } from "../draft-gap-fill";
 import { runEngineProcess } from "../engine-runner";
 import { normalizeAudiverisMusicXml } from "../normalizers/audiveris";
 import { combineProcessResourceUsage } from "../resource-metrics";
+import { buildLegatoPageContextPrefix } from "./legato-page-context";
 import { mergeLegatoPageAbc, mergeLegatoPageMusicXml } from "./legato-page-merge";
 import { parseLegatoProgressLine } from "./legato-progress";
 import { LegatoWorker } from "./legato-worker";
@@ -30,6 +31,7 @@ export type LegatoAdapterOptions = {
   timeoutMs?: number;
   decoder?: LegatoDecoderConfig;
   workerMode?: boolean;
+  pageContextMode?: "none" | "previous-page-abc";
 };
 
 type InspectReport = {
@@ -52,6 +54,7 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
   validateDecoderConfig(decoder);
   const gitExecutable = options.gitExecutable ?? "git";
   const inferenceTimeoutMs = options.timeoutMs ?? defaultInferenceTimeoutMs;
+  const pageContextMode = options.pageContextMode ?? "none";
   const processOptions = {
     ...(options.environment === undefined ? {} : { env: options.environment }),
     ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
@@ -75,6 +78,8 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
             String(decoder.numBeams),
             "--repetition-penalty",
             String(decoder.repetitionPenalty),
+            "--page-context-mode",
+            pageContextMode,
           ],
           ...(options.environment === undefined ? {} : { environment: options.environment }),
           timeoutMs: inferenceTimeoutMs,
@@ -117,7 +122,7 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
         version: actualRevision,
         executable: basename(options.pythonExecutable),
         modelSha256: actualModelSha256,
-        parameters: { ...decoder, maxPdfPages, inferenceTimeoutMs },
+        parameters: { ...decoder, maxPdfPages, inferenceTimeoutMs, pageContextMode },
         commandTemplate: [
           "legato-runner.py",
           "recognize",
@@ -193,6 +198,8 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
                   String(decoder.numBeams),
                   "--repetition-penalty",
                   String(decoder.repetitionPenalty),
+                  "--page-context-mode",
+                  pageContextMode,
                 ],
                 ...processOptions,
                 timeoutMs: inferenceTimeoutMs,
@@ -234,6 +241,7 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
         }),
       ]);
       const parsedTelemetry = parseDecoderTelemetry(telemetryBytes, report.pageCount, decoder.maxLength);
+      verifyPageContextProvenance(pageArtifacts, parsedTelemetry, pageContextMode);
       const decoderTelemetry: DecoderTelemetry =
         "warm" in inference
           ? {
@@ -331,6 +339,13 @@ function parseDecoderTelemetry(bytes: Uint8Array, pageCount: number, maxLength: 
       ) {
         throw new Error("invalid-page");
       }
+      const contextPrefixSha256 = record.contextPrefixSha256;
+      if (
+        contextPrefixSha256 !== undefined &&
+        (typeof contextPrefixSha256 !== "string" || !/^[0-9a-f]{64}$/u.test(contextPrefixSha256))
+      ) {
+        throw new Error("invalid-page-context-prefix-hash");
+      }
       return {
         pageNumber: record.pageNumber as number,
         outputTokenCount: record.outputTokenCount as number,
@@ -338,11 +353,30 @@ function parseDecoderTelemetry(bytes: Uint8Array, pageCount: number, maxLength: 
         termination: record.termination as "eos" | "max-length" | "other",
         device: record.device,
         dtype: record.dtype,
+        ...(contextPrefixSha256 === undefined ? {} : { contextPrefixSha256 }),
       };
     });
     return { schemaVersion: "1.0.0", pages };
   } catch (error) {
     throw invalidOutput("invalid-inference-telemetry", error);
+  }
+}
+
+function verifyPageContextProvenance(
+  pages: readonly { abc: string }[],
+  telemetry: DecoderTelemetry,
+  mode: "none" | "previous-page-abc",
+): void {
+  for (let pageIndex = 0; pageIndex < pages.length; pageIndex += 1) {
+    const expectedPrefix =
+      mode === "previous-page-abc" && pageIndex > 0
+        ? buildLegatoPageContextPrefix(pages[pageIndex - 1]!.abc)
+        : undefined;
+    const expectedSha256 =
+      expectedPrefix === undefined ? undefined : createHash("sha256").update(expectedPrefix).digest("hex");
+    if (telemetry.pages[pageIndex]?.contextPrefixSha256 !== expectedSha256) {
+      throw invalidOutput("page-context-provenance-mismatch", undefined, { pageNumber: pageIndex + 1 });
+    }
   }
 }
 
@@ -371,9 +405,9 @@ function unavailable(reason: string, cause?: unknown): PdfOmrError {
   });
 }
 
-function invalidOutput(reason: string, cause?: unknown): PdfOmrError {
+function invalidOutput(reason: string, cause?: unknown, context: Readonly<Record<string, unknown>> = {}): PdfOmrError {
   return new PdfOmrError("ENGINE_OUTPUT_INVALID", "LEGATO output is invalid", {
-    context: { reason },
+    context: { reason, ...context },
     ...(cause === undefined ? {} : { cause }),
   });
 }

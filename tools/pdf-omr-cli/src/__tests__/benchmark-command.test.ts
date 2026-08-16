@@ -7,7 +7,7 @@ import { runPdfOmrCommand } from "../command";
 import { benchmarkCommand } from "../commands/benchmark";
 import { PdfOmrError } from "../errors";
 import { buildBenchmarkReport, readBenchmarkItemResults, type BenchmarkGateThresholds } from "../benchmark/report";
-import { runBenchmark, type BenchmarkItemResult } from "../benchmark/run-benchmark";
+import { legatoPageContextModeForPreprocess, runBenchmark, type BenchmarkItemResult } from "../benchmark/run-benchmark";
 import { sha256Bytes } from "../canonical-json";
 import { computeSymbolicMetrics } from "../benchmark/symbolic-metrics";
 import { generateMusicXml } from "../generate-musicxml";
@@ -424,6 +424,69 @@ describe("benchmark orchestrator", () => {
     await expect(
       readFile(join(setup.outputDirectory, "items", "item-1", "failure-debug", "raw-response.txt"), "utf8"),
     ).resolves.toBe("bounded model output");
+  });
+
+  it("accepts the materialized system-pages preprocess only for LEGATO", async () => {
+    const setup = await corpusSetup("development", 1);
+    const adapter = {
+      inspectEnvironment: async () => ({
+        id: "legato",
+        version: "test",
+        executable: "fake",
+        commandTemplate: [],
+        license: { id: "MIT", source: "https://example.test/license" },
+      }),
+      recognize: async () => ({
+        normalizationBytes: new Uint8Array(),
+        nativeArtifacts: [],
+        diagnostics: [],
+        durationMs: 1,
+      }),
+      normalize: () => musicXmlReadyDraft(),
+    };
+
+    const accepted = await runBenchmark(
+      {
+        manifestPath: setup.manifestPath,
+        engineId: "legato",
+        preprocess: "legato-system-pages-v1",
+        outputDirectory: setup.outputDirectory,
+        mode: "development",
+      },
+      { engineRegistry: { get: () => adapter } },
+    );
+
+    expect(accepted.report.items).toEqual({ total: 1, succeeded: 1, failed: 0 });
+
+    const contextSetup = await corpusSetup("development", 1);
+    const contextAccepted = await runBenchmark(
+      {
+        manifestPath: contextSetup.manifestPath,
+        engineId: "legato",
+        preprocess: "legato-system-pages-context-v1",
+        outputDirectory: contextSetup.outputDirectory,
+        mode: "development",
+      },
+      { engineRegistry: { get: () => adapter } },
+    );
+    expect(contextAccepted.report.items).toEqual({ total: 1, succeeded: 1, failed: 0 });
+    expect(legatoPageContextModeForPreprocess("legato-system-pages-context-v1")).toBe("previous-page-abc");
+    expect(legatoPageContextModeForPreprocess("legato-system-pages-v1")).toBe("none");
+
+    const rejectedSetup = await corpusSetup("development", 1);
+    const rejected = await runBenchmark(
+      {
+        manifestPath: rejectedSetup.manifestPath,
+        engineId: "rokot",
+        preprocess: "legato-system-pages-v1",
+        outputDirectory: rejectedSetup.outputDirectory,
+        mode: "development",
+      },
+      { engineRegistry: { get: () => adapter } },
+    );
+    expect(rejected.report.failures).toEqual([
+      expect.objectContaining({ itemId: "item-1", code: "INVALID_CLI_ARGUMENT" }),
+    ]);
   });
 
   it("repeats only the six items declared by a standard execution profile", async () => {

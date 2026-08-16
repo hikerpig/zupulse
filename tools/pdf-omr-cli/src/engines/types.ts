@@ -42,6 +42,7 @@ export type DecoderPageTelemetry = {
   termination: DecoderTermination;
   device: string;
   dtype: string;
+  contextPrefixSha256?: string;
 };
 
 export type DecoderTelemetry = {

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createInterface } from "node:readline";
 
@@ -19,12 +20,14 @@ if (args[0]?.endsWith("legato-runner.py") && args[1] === "recognize") {
   const pageOutputDirectory = args[args.indexOf("--page-output-directory") + 1];
   const telemetryOutput = args[args.indexOf("--telemetry-output") + 1];
   const maxLength = Number(args[args.indexOf("--max-length") + 1]);
+  const pageContextMode = args[args.indexOf("--page-context-mode") + 1];
   if (process.env.FAKE_LEGATO_CONVERSION_FAILURE === "1") process.exit(17);
-  await emitOutputs(pageOutputDirectory, telemetryOutput, maxLength);
+  await emitOutputs(pageOutputDirectory, telemetryOutput, maxLength, pageContextMode);
   process.exit(0);
 }
 if (args[0]?.endsWith("legato-runner.py") && args[1] === "worker") {
   const maxLength = Number(args[args.indexOf("--max-length") + 1]);
+  const pageContextMode = args[args.indexOf("--page-context-mode") + 1];
   const stderrBytes = Number(process.env.FAKE_LEGATO_WORKER_STDERR_BYTES ?? "0");
   if (stderrBytes > 0) {
     await new Promise((resolve) => process.stderr.write("x".repeat(stderrBytes), resolve));
@@ -41,7 +44,7 @@ if (args[0]?.endsWith("legato-runner.py") && args[1] === "worker") {
     try {
       const delayMs = Number(process.env.FAKE_LEGATO_WORKER_DELAY_MS ?? "0");
       if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
-      await emitOutputs(request.pageOutputDirectory, request.telemetryOutputPath, maxLength);
+      await emitOutputs(request.pageOutputDirectory, request.telemetryOutputPath, maxLength, pageContextMode);
       process.stdout.write(
         `${JSON.stringify({
           type: "result",
@@ -64,7 +67,7 @@ if (args[0] === "hash-model") {
 }
 process.exit(2);
 
-async function emitOutputs(pageOutputDirectory, telemetryOutput, maxLength) {
+async function emitOutputs(pageOutputDirectory, telemetryOutput, maxLength, pageContextMode) {
   const pageCount = Number(process.env.FAKE_LEGATO_PAGES ?? "1");
   if (process.env.FAKE_LEGATO_CONVERSION_FAILURE === "1") throw new Error("fixture failure");
   await mkdir(pageOutputDirectory, { recursive: true });
@@ -113,6 +116,13 @@ async function emitOutputs(pageOutputDirectory, telemetryOutput, maxLength) {
         termination: process.env.FAKE_LEGATO_TERMINATION ?? "eos",
         device: process.env.FAKE_LEGATO_DEVICE ?? "mps",
         dtype: process.env.FAKE_LEGATO_DTYPE ?? "float16",
+        ...(pageContextMode === "previous-page-abc" && pageIndex > 0
+          ? {
+              contextPrefixSha256:
+                process.env.FAKE_LEGATO_CONTEXT_HASH ??
+                createHash("sha256").update("X:1\nL:1/4\nM:4/4\nK:C\n").digest("hex"),
+            }
+          : {}),
       })),
     })}\n`,
   );

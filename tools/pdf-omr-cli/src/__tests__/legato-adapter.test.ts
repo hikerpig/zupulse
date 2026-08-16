@@ -113,6 +113,57 @@ describe("LEGATO adapter", () => {
     expect(raw.decoderTelemetry?.pages[0]).toMatchObject({ maxLength: 1536 });
   });
 
+  it("carries validated ABC header context between system pages with hash provenance", async () => {
+    const context = await createContext();
+    const adapter = createLegatoAdapter({
+      ...adapterOptions(context),
+      pageContextMode: "previous-page-abc",
+      environment: { FAKE_LEGATO_PAGES: "2" },
+    });
+
+    await expect(adapter.inspectEnvironment()).resolves.toMatchObject({
+      parameters: { pageContextMode: "previous-page-abc" },
+    });
+    const raw = await adapter.recognize({
+      inputPath: join(context.directory, "score.pdf"),
+      outputDirectory: join(context.directory, "page-context"),
+    });
+    const prefix = "X:1\nL:1/4\nM:4/4\nK:C\n";
+    expect(raw.decoderTelemetry?.pages).toEqual([
+      expect.not.objectContaining({ contextPrefixSha256: expect.anything() }),
+      expect.objectContaining({
+        contextPrefixSha256: createHash("sha256").update(prefix).digest("hex"),
+      }),
+    ]);
+    const source = await readFile(runner, "utf8");
+    expect(source).toContain("prefixes=[page_context]");
+    expect(source).toContain("if not decoded.startswith(page_context)");
+    expect(source).toContain("abc = page_context + continuation");
+    expect(source).toContain("build_page_context_prefix(abc)");
+  });
+
+  it("rejects page context provenance that does not match the previous raw ABC", async () => {
+    const context = await createContext();
+    const adapter = createLegatoAdapter({
+      ...adapterOptions(context),
+      pageContextMode: "previous-page-abc",
+      environment: {
+        FAKE_LEGATO_PAGES: "2",
+        FAKE_LEGATO_CONTEXT_HASH: "0".repeat(64),
+      },
+    });
+
+    await expect(
+      adapter.recognize({
+        inputPath: join(context.directory, "score.pdf"),
+        outputDirectory: join(context.directory, "invalid-page-context"),
+      }),
+    ).rejects.toMatchObject({
+      code: "ENGINE_OUTPUT_INVALID",
+      context: { reason: "page-context-provenance-mismatch", pageNumber: 2 },
+    });
+  });
+
   it("reuses one sequential worker and closes it explicitly", async () => {
     const context = await createContext();
     const marker = join(context.directory, "worker-loads.txt");

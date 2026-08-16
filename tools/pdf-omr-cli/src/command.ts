@@ -8,6 +8,7 @@ import type { MidiRebuildReport } from "./fusion/midi-rebuild-schemas";
 import type { MidiImportReport } from "./midi/schemas";
 import {
   type PdfOmrBenchmarkReport,
+  type PdfOmrCompareEnginesReport,
   pdfOmrHelpReportSchema,
   type PdfOmrAnalyzeReport,
   type PdfOmrExportReport,
@@ -31,6 +32,7 @@ const usage = [
   "  analyze <draft.json> --output <harmony.json>",
   "  export-musicxml <draft.json> --output <score.mxl>",
   "  benchmark --manifest <manifest.json> --engine <audiveris|legato|rokot> --output <result-dir>",
+  "  compare-engines --primary <benchmark-run-dir> --secondary <benchmark-run-dir> --output <comparison-run-dir>",
 ].join("\n");
 
 export async function runPdfOmrCommand(
@@ -49,6 +51,7 @@ export async function runPdfOmrCommand(
   | PdfOmrValidateReport
   | PdfOmrExportReport
   | PdfOmrBenchmarkReport
+  | PdfOmrCompareEnginesReport
   | MidiImportReport
   | FusionReport
   | ApplyFusionReport
@@ -290,6 +293,26 @@ export async function runPdfOmrCommand(
       },
       context.benchmarkDependencies ?? {},
     );
+  }
+  if (normalized[0] === "compare-engines") {
+    const flags = parseFlags(normalized.slice(1), new Set(["--primary", "--secondary", "--output"]));
+    const primaryDirectory = flags.get("--primary");
+    const secondaryDirectory = flags.get("--secondary");
+    const output = flags.get("--output");
+    if (primaryDirectory === undefined || secondaryDirectory === undefined || output === undefined) {
+      throw new PdfOmrError(
+        "INVALID_CLI_ARGUMENT",
+        "compare-engines requires --primary <run> --secondary <run> --output <comparison-run-dir>",
+        { context: { command: "compare-engines" } },
+      );
+    }
+    const { compareEnginesCommand } = await import("./commands/compare-engines");
+    return compareEnginesCommand({
+      primaryDirectory,
+      secondaryDirectory,
+      output,
+      cwd: context.cwd ?? process.cwd(),
+    });
   }
   throw new PdfOmrError("INVALID_CLI_ARGUMENT", `unknown command: ${normalized[0]}`, {
     context: { command: normalized[0] },

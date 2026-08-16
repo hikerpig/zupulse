@@ -6,7 +6,16 @@ describe("pdf OMR CLI", () => {
     await expect(runPdfOmrCommand(["--help"])).resolves.toEqual({
       schemaVersion: "1.0.0",
       command: "help",
-      usage: expect.stringMatching(/pdf-omr[\s\S]+audiveris\|legato\|rokot/),
+      usage: expect.stringMatching(/pdf-omr[\s\S]+audiveris\|legato\|rokot[\s\S]+compare-engines/),
+    });
+  });
+
+  it("validates cross-engine comparison arguments before reading run artifacts", async () => {
+    await expect(
+      runPdfOmrCommand(["compare-engines", "--primary", "primary", "--output", "comparison"]),
+    ).rejects.toMatchObject({
+      code: "INVALID_CLI_ARGUMENT",
+      context: { command: "compare-engines" },
     });
   });
 

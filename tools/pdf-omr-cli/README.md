@@ -17,6 +17,7 @@ pnpm pdf-omr -- validate <draft.json> --output <diagnostics.json>
 pnpm pdf-omr -- analyze <draft.json> --output <harmony.json>
 pnpm pdf-omr -- export-musicxml <draft.json> --output <score.mxl>
 pnpm benchmark:pdf-omr -- --manifest <manifest.json> --engine <audiveris|legato|rokot> --output <result-dir>
+pnpm pdf-omr -- compare-engines --primary <benchmark-run-dir> --secondary <benchmark-run-dir> --output <comparison-run-dir>
 ```
 
 `inspect` 使用 PDF.js，输出 page count、page dimensions 和 vector/raster operator signals。
@@ -108,9 +109,7 @@ LEGATO 本地 engine 接受一至 32 页 PDF。runner 流式渲染并逐页使�
 `engines/legato-environment.json`。模型、Llama vision encoder 与外部 repository 不提交到仓库。
 默认 inference timeout 为 60 分钟。CUDA 与 MPS 使用 float16 推理，CPU 按 checkpoint config dtype
 加载；这与官方 Demo 的 GPU half-precision 路径一致，同时避免 MPS 上的 float32 attention OOM 和
-mixed bfloat16/float32 Metal crash。64 GB M2 Max 对三页 `flower_day.pdf` 的逐页固定 10-beam、
-2048-token 本地运行用时约 637 秒，峰值 RSS 约 5.31 GB；不得通过降低 beam、截短输出或替换量化模型
-来静默规避。
+mixed bfloat16/float32 Metal crash。
 
 development-only 的 decoder 筛选会顺序运行 `beam=1/2/4`。每个 variant 在一个串行 worker 中只加载一次模型，
 `comparison.json` 记录测量值和评测集合是否一致，不自动作 promotion 决策：
@@ -127,6 +126,49 @@ PDF_OMR_LEGATO_BASE_MODEL=/absolute/path/to/llama-3.2-11b-vision \
 
 各 variant 子目录必须不存在。它们保留完整 canonical benchmark。普通 `recognize` 使用真实 corpus 筛选后的
 `beam=1 / maxLength=2048` baseline；显式 decoder 配置仍允许 `beam=2..10`。
+
+当 full-page LEGATO 出现稳定的整小节遗漏时，可在 development split 上物化确定性的 system-page 输入。该过程
+读取现有 staff-system detector，生成每页一个 system 的派生 PDF、development-only manifest 和
+`materialization.json`；它不读取 source manifest 的 holdout assets：
+
+```bash
+pnpm exec vite-node tools/pdf-omr-cli/scripts/materialize-legato-system-pages.ts \
+  --manifest tools/pdf-omr-cli/corpus/evaluation/manifest.json \
+  --output /absolute/path/to/legato-system-pages
+
+pnpm benchmark:pdf-omr -- \
+  --manifest /absolute/path/to/legato-system-pages/manifest.json \
+  --engine legato \
+  --preprocess legato-system-pages-v1 \
+  --output /absolute/path/to/legato-system-pages-run \
+  --mode development
+
+pnpm benchmark:pdf-omr -- \
+  --manifest /absolute/path/to/legato-system-pages/manifest.json \
+  --engine legato \
+  --preprocess legato-system-pages-context-v1 \
+  --output /absolute/path/to/legato-system-pages-context-run \
+  --mode development
+```
+
+两个 system-page preprocess 只允许用于 LEGATO；未知 preprocess 或其他 engine 会 fail closed。
+`legato-system-pages-context-v1` 额外使用上一页唯一且合法的 ABC `L/M/K` header 作为
+`LegatoSegmentProcessor` context，并在 telemetry 中记录可复算的 prefix hash。派生输入不得替换原
+full-page report，只能作为 development ablation。
+
+两个相同 corpus manifest、mode 与 item set 的全成功 benchmark run 可以生成 report-only comparison：
+
+```bash
+pnpm pdf-omr -- compare-engines \
+  --primary /absolute/path/to/primary-run \
+  --secondary /absolute/path/to/secondary-run \
+  --output /absolute/path/to/comparison-run
+```
+
+comparison 对单 part Draft 做 global measure sequence alignment，将完整小节遗漏压缩为
+`measure-missing-in-primary` / `measure-missing-in-secondary`，内容差异记录为
+`measure-content-disagreement`。所有 proposal 固定 `autoApplicable: false`；多 part 缺少显式跨引擎 identity、
+topology 不一致、run identity 不一致或不完整 run 都会 fail closed。命令不读取 ground truth，也不修改输入 run。
 
 Rokot 使用明确锁定的 Q8_0 GGUF、F16 vision projector、llama.cpp build 和独立 Python 3.11
 converter environment；recognize 不会自动下载模型。推理固定 `maxNewTokens=1600` 与 `ctxSize=4096`，避免

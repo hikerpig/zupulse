@@ -115,8 +115,8 @@ PDF_OMR_LEGATO_BASE_MODEL=/absolute/path/to/llama-3.2-11b-vision \
   pnpm pdf-omr -- recognize input.pdf --engine legato --output result
 ```
 
-LEGATO 本地 engine 接受一至三页 PDF。每页独立使用官方 Demo 的 padding 语义执行推理，再用锁定的
-`abc2xml.py` 转换；CLI 校验每页每个声明 part 均含音符，然后合并 MusicXML，并保留
+LEGATO 本地 engine 接受一至 32 页 PDF。runner 流式渲染并逐页使用官方 Demo 的 padding 语义执行推理，
+避免同时保留整份 PDF 的页面图像；再用锁定的 `abc2xml.py` 转换。CLI 校验每页每个声明 part 均含音符，然后合并 MusicXML，并保留
 `engine/pages/page-NNN.{abc,musicxml}` 作为证据。模型条款、revision、hash、预处理和 decoder 参数见
 `engines/legato-environment.json`。模型、Llama vision encoder 与外部 repository 不提交到仓库。
 默认 inference timeout 为 60 分钟。CUDA 与 MPS 使用 float16 推理，CPU 按 checkpoint config dtype
@@ -142,7 +142,8 @@ PDF_OMR_LEGATO_BASE_MODEL=/absolute/path/to/llama-3.2-11b-vision \
 `beam=1 / maxLength=2048` baseline；显式 decoder 配置仍允许 `beam=2..10`。
 
 Rokot 使用明确锁定的 Q8_0 GGUF、F16 vision projector、llama.cpp build 和独立 Python 3.11
-converter environment；recognize 不会自动下载模型。先准备并保留本地模型：
+converter environment；recognize 不会自动下载模型。推理固定 `maxNewTokens=1600` 与 `ctxSize=4096`，避免
+llama.cpp 按模型 metadata 分配远超单个 system transcription 所需的默认 KV cache。先准备并保留本地模型：
 
 ```bash
 rokot_snapshot=$(HF_XET_HIGH_PERFORMANCE=1 hf download rokotmidi/rokot-omr-2b \

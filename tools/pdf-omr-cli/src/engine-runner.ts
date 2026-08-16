@@ -9,6 +9,12 @@ export type EngineProcessRequest = {
   env?: Readonly<Record<string, string>>;
   timeoutMs?: number;
   maxOutputBytes?: number;
+  onStderrLine?: (line: string) => void;
+  /**
+   * Inspects captured engine output after a non-zero exit and may return a semantic
+   * PdfOmrError. The raw output never leaves this process; only the returned error does.
+   */
+  classifyFailure?: (output: { stdout: string; stderr: string; exitCode: number | null }) => PdfOmrError | undefined;
 };
 
 export type EngineProcessResult = {
@@ -101,8 +107,26 @@ export function runEngineProcess(request: EngineProcessRequest, signal?: AbortSi
     );
 
     signal?.addEventListener("abort", onAbort, { once: true });
+    const stderrDecoder = new TextDecoder("utf-8");
+    let stderrLineBuffer = "";
+    const acceptStderr = (chunk: Buffer) => {
+      capture(stderr, chunk);
+      if (request.onStderrLine === undefined) return;
+      stderrLineBuffer += stderrDecoder.decode(chunk, { stream: true });
+      let newline = stderrLineBuffer.indexOf("\n");
+      while (newline >= 0) {
+        const line = stderrLineBuffer.slice(0, newline);
+        stderrLineBuffer = stderrLineBuffer.slice(newline + 1);
+        try {
+          request.onStderrLine(line);
+        } catch {
+          // Stream observers must not change engine execution.
+        }
+        newline = stderrLineBuffer.indexOf("\n");
+      }
+    };
     child.stdout.on("data", (chunk: Buffer) => capture(stdout, chunk));
-    child.stderr.on("data", (chunk: Buffer) => capture(stderr, chunk));
+    child.stderr.on("data", acceptStderr);
     child.on("error", (error: NodeJS.ErrnoException) => {
       if (error.code === "ENOENT") {
         settleReject(
@@ -127,10 +151,21 @@ export function runEngineProcess(request: EngineProcessRequest, signal?: AbortSi
         return;
       }
       if (exitCode !== 0) {
+        let classified: PdfOmrError | undefined;
+        try {
+          classified = request.classifyFailure?.({
+            stdout: Buffer.concat(stdout).toString("utf8"),
+            stderr: Buffer.concat(stderr).toString("utf8"),
+            exitCode,
+          });
+        } catch {
+          classified = undefined;
+        }
         settleReject(
-          new PdfOmrError("ENGINE_EXECUTION_FAILED", "engine process exited unsuccessfully", {
-            context: { reason: "non-zero-exit", exitCode },
-          }),
+          classified ??
+            new PdfOmrError("ENGINE_EXECUTION_FAILED", "engine process exited unsuccessfully", {
+              context: { reason: "non-zero-exit", exitCode },
+            }),
         );
         return;
       }

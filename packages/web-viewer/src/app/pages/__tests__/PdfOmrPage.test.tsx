@@ -67,6 +67,71 @@ describe("PdfOmrPage", () => {
     expect(port.retry).toHaveBeenCalledWith("job-1", "audiveris");
   });
 
+  it("shows blocking draft diagnostics when validation fails", async () => {
+    const port = createPort();
+    port.readFailedValidation.mockResolvedValue({
+      readiness: { harmony: "blocked", musicXml: "blocked" },
+      diagnostics: [
+        { code: "VOICE_DURATION_MISMATCH", severity: "blocking" },
+        { code: "MISSING_EVENT_TIMING", severity: "warning" },
+      ],
+    });
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+    await user.click(screen.getByRole("button", { name: "开始提取" }));
+
+    port.setSnapshot({
+      ...runningSnapshot,
+      status: "failed",
+      error: { code: "DRAFT_VALIDATION_FAILED", recoverable: true },
+    });
+    port.emit({
+      schemaVersion: "1.0.0",
+      sequence: 6,
+      kind: "terminal",
+      status: "failed",
+      errorCode: "DRAFT_VALIDATION_FAILED",
+    });
+
+    expect(await screen.findByText("VOICE_DURATION_MISMATCH")).toBeTruthy();
+    expect(screen.getByText("MISSING_EVENT_TIMING")).toBeTruthy();
+    expect(screen.getAllByText("阻塞").length).toBeGreaterThanOrEqual(2);
+    expect(port.readFailedValidation).toHaveBeenCalledWith("job-1");
+  });
+
+  it("shows a specific reason when the engine rejects an oversized scan", async () => {
+    const port = createPort();
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+    await user.click(screen.getByRole("button", { name: "开始提取" }));
+
+    port.setSnapshot({
+      ...runningSnapshot,
+      status: "failed",
+      error: { code: "INVALID_INPUT", recoverable: true, reason: "input-image-too-large" },
+    });
+    port.emit({
+      schemaVersion: "1.0.0",
+      sequence: 6,
+      kind: "terminal",
+      status: "failed",
+      errorCode: "INVALID_INPUT",
+    });
+
+    expect(await screen.findByText(/超过了 engine 的尺寸上限/)).toBeTruthy();
+    expect(screen.getByText(/INVALID_INPUT/)).toBeTruthy();
+  });
+
   it("keeps the failed snapshot retryable when retry cannot start", async () => {
     const port = createPort();
     port.retry.mockRejectedValueOnce(new Error("provider unavailable"));
@@ -115,6 +180,36 @@ describe("PdfOmrPage", () => {
     expect(await screen.findByText("sonata.pdf")).toBeTruthy();
     await user.click(await screen.findByRole("button", { name: "重试" }));
     expect(port.retry).toHaveBeenCalledWith("job-1", "audiveris");
+  });
+
+  it("shows live engine progress and elapsed time on the active stage", async () => {
+    const port = createPort();
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+    await user.click(screen.getByRole("button", { name: "开始提取" }));
+
+    expect(await screen.findByText(/已用时 0:0\d/)).toBeTruthy();
+
+    port.setSnapshot({
+      ...runningSnapshot,
+      progress: { unit: "page", completed: 2, total: 5 },
+    });
+    port.emit({
+      schemaVersion: "1.0.0",
+      sequence: 2,
+      kind: "engine-progress",
+      stage: "recognize",
+      unit: "page",
+      completed: 2,
+      total: 5,
+    });
+
+    expect(await screen.findByText(/页 2 \/ 5 · 已用时 0:0\d/)).toBeTruthy();
   });
 
   it("keeps the active input fixed while recognition is running", async () => {
@@ -358,6 +453,7 @@ function createPort(): PdfOmrWorkbenchPort & {
         diagnostics: [],
       },
     })),
+    readFailedValidation: vi.fn(async () => null),
     exportResult: vi.fn(async () => "saved" as const),
     selectMidi: vi.fn(async () => ({
       status: "selected" as const,

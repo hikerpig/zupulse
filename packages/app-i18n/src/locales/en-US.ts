@@ -148,6 +148,10 @@ export const enUS = {
         engineUnavailable: "The selected engine is unavailable or not configured.",
         engineExecutionFailed: "The engine process failed during execution.",
         engineOutputInvalid: "The engine output is invalid, so recognition cannot continue.",
+        inputImageTooLarge:
+          "The engine rejected this scan because its rendered image exceeds the engine's size limit. Try a lower-resolution scan or another engine.",
+        engineStepTimeout:
+          "The engine exceeded its per-step time limit on this input. Try a simpler scan or another engine.",
         draftValidationFailed: "The recognized draft did not pass structural validation.",
         invalidInput: "The input file or job parameters are invalid.",
         interrupted: "The recognition job was cancelled.",
@@ -161,7 +165,8 @@ export const enUS = {
       engineEvidence: "Intermediate evidence",
       engineEvidenceHint:
         "Only structured progress is shown here; stdout, stderr, and absolute paths are never parsed.",
-      progressFact: "Engine reported {{unit}} {{completed}} / {{total}}",
+      stageProgress: "{{unit}} {{completed}} / {{total}}",
+      stageElapsed: "Elapsed {{time}}",
       midi: {
         title: "MIDI correction",
         requiresResult: "Import a matching score-export MIDI after the initial recognition succeeds.",

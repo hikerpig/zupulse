@@ -28,6 +28,7 @@ const defaultModelSha256 = "df53948ada1a4a584b4c7c81cc7e3293d3457f2e5ec968827169
 const defaultMmprojSha256 = "1074d47f6fd864bffa9d8843bbae30e6aa696ad0d55535ebd77053d81c699bd0";
 const defaultLlamaBuild = "b10200-5f55650a7";
 const abcConverterVersion = "1.0.1";
+const contextSize = 4096;
 const prompt = "Transcribe this staff to rokot-ABC.";
 
 export type RokotAdapterOptions = {
@@ -107,6 +108,7 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           abcConverterPackage: "abc-xml-converter",
           abcConverterVersion,
           concurrency: 1,
+          contextSize,
           llamaCppBuild: actualLlamaBuild,
           maxNewTokens: 1600,
           modelRevision: configuration.modelRevision,
@@ -147,6 +149,8 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           prompt,
           "-n",
           "1600",
+          "--ctx-size",
+          String(contextSize),
           "--temp",
           "0",
           "--single-turn",
@@ -232,6 +236,8 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
               prompt,
               "-n",
               "1600",
+              "--ctx-size",
+              String(contextSize),
               "--temp",
               "0",
               "--single-turn",

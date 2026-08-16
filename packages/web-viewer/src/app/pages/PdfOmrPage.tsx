@@ -7,7 +7,12 @@ import { Button, Field, Panel, Select, Status } from "../../components/ui";
 import { ScoreViewer } from "../../components/ScoreViewer";
 import type { ViewerDomBindings, ViewerFile } from "../../host";
 import type { ViewerSessionPort } from "../../viewer-session/viewer-session-types";
-import type { PdfOmrMidiAnalysis, PdfOmrWorkbenchPort, PdfOmrWrittenPitch } from "../../features/pdf-omr/pdf-omr-port";
+import type {
+  PdfOmrMidiAnalysis,
+  PdfOmrValidationView,
+  PdfOmrWorkbenchPort,
+  PdfOmrWrittenPitch,
+} from "../../features/pdf-omr/pdf-omr-port";
 import styles from "./PdfOmrPage.module.css";
 
 type EvidenceTab = "pdf" | "engine" | "score";
@@ -33,6 +38,7 @@ export function PdfOmrPage({
   const [snapshot, setSnapshot] = useState<PdfOmrJobSnapshot>();
   const [lastProgress, setLastProgress] = useState<PdfOmrProgress>();
   const [result, setResult] = useState<Awaited<ReturnType<PdfOmrWorkbenchPort["readResult"]>>>(null);
+  const [failedValidation, setFailedValidation] = useState<PdfOmrValidationView | null>(null);
   const [selectedEngine, setSelectedEngine] = useState("");
   const [tab, setTab] = useState<EvidenceTab>("pdf");
   const [busy, setBusy] = useState<"select" | "start" | "cancel" | "export" | "midi" | "apply-midi" | undefined>();
@@ -41,6 +47,8 @@ export function PdfOmrPage({
   const [midiAnalysis, setMidiAnalysis] = useState<PdfOmrMidiAnalysis>();
   const [midiSelections, setMidiSelections] = useState<Record<string, string>>({});
   const [midiApplied, setMidiApplied] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  const stageStartedAtRef = useRef<Partial<Record<(typeof STAGES)[number], number>>>({});
 
   const engines = port?.engines ?? [];
   const input = file ?? snapshot?.input;
@@ -62,6 +70,8 @@ export function PdfOmrPage({
           const nextResult = await port.readResult(next.jobId);
           setResult(nextResult);
           if (nextResult) setTab("score");
+        } else if (next.status === "failed") {
+          setFailedValidation(await port.readFailedValidation(next.jobId));
         }
       }
     },
@@ -84,6 +94,21 @@ export function PdfOmrPage({
   }, [port, syncSnapshot]);
 
   const activeJob = snapshot?.status === "running" || snapshot?.status === "cancelling";
+  const activeStage = activeJob ? snapshot?.stage : undefined;
+
+  useEffect(() => {
+    stageStartedAtRef.current = {};
+  }, [snapshot?.jobId]);
+
+  if (activeStage !== undefined && stageStartedAtRef.current[activeStage] === undefined) {
+    stageStartedAtRef.current[activeStage] = now;
+  }
+
+  useEffect(() => {
+    if (activeStage === undefined) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [activeStage]);
 
   const selectPdf = async () => {
     if (!port || activeJob) return;
@@ -101,6 +126,7 @@ export function PdfOmrPage({
         });
         setSnapshot(undefined);
         setResult(null);
+        setFailedValidation(null);
         setExported(false);
         setMidiAnalysis(undefined);
         setMidiSelections({});
@@ -122,6 +148,7 @@ export function PdfOmrPage({
       const started = await port.start(file.token, selectedEngine);
       setSnapshot(started.snapshot);
       setResult(null);
+      setFailedValidation(null);
       setExported(false);
       setTab("engine");
     } catch {
@@ -153,6 +180,7 @@ export function PdfOmrPage({
       const retried = await port.retry(previousJobId, selectedEngine);
       setSnapshot(retried.snapshot);
       setResult(null);
+      setFailedValidation(null);
       setExported(false);
       setTab("engine");
     } catch {
@@ -277,6 +305,11 @@ export function PdfOmrPage({
                     <span>
                       <strong>{t(`pdfOmr.stage.${stage}.title`)}</strong>
                       <small>{t(`pdfOmr.stage.${stage}.${state}`)}</small>
+                      {state === "active" ? (
+                        <small className={styles.stageActivity} role="status">
+                          {stageActivityLabel(t, stage, snapshot, stageStartedAtRef.current[stage], now)}
+                        </small>
+                      ) : null}
                     </span>
                   </li>
                 );
@@ -392,6 +425,27 @@ export function PdfOmrPage({
             ) : null}
           </Panel>
 
+          <Panel className={styles.diagnosticsPanel}>
+            <div className={styles.panelTitle}>
+              <h2>{t("pdfOmr.diagnostics")}</h2>
+              <span className={styles.count}>{(result?.validation ?? failedValidation)?.diagnostics.length ?? 0}</span>
+            </div>
+            {snapshot?.error ? (
+              <div className={styles.errorSummary} role="alert" data-pdf-omr-error>
+                <strong>{t("pdfOmr.errorTitle")}</strong>
+                <code>{t("pdfOmr.errorCode", { code: snapshot.error.code })}</code>
+                <p>{pdfOmrErrorReason(t, snapshot.error.code, snapshot.error.reason)}</p>
+              </div>
+            ) : null}
+            {result ? (
+              <ValidationView validation={result.validation} t={t} />
+            ) : failedValidation ? (
+              <ValidationView validation={failedValidation} t={t} />
+            ) : (
+              <p className={styles.muted}>{t("pdfOmr.diagnosticsEmpty")}</p>
+            )}
+          </Panel>
+
           <MidiCorrectionPanel
             enabled={snapshot?.status === "succeeded" && result !== null}
             analysis={midiAnalysis}
@@ -404,43 +458,6 @@ export function PdfOmrPage({
             selectedCount={selectedMidiDecisions.length}
             t={t}
           />
-
-          <Panel className={styles.diagnosticsPanel}>
-            <div className={styles.panelTitle}>
-              <h2>{t("pdfOmr.diagnostics")}</h2>
-              <span className={styles.count}>{result?.validation.diagnostics.length ?? 0}</span>
-            </div>
-            {snapshot?.error ? (
-              <div className={styles.errorSummary} role="alert" data-pdf-omr-error>
-                <strong>{t("pdfOmr.errorTitle")}</strong>
-                <code>{t("pdfOmr.errorCode", { code: snapshot.error.code })}</code>
-                <p>{pdfOmrErrorReason(t, snapshot.error.code)}</p>
-              </div>
-            ) : null}
-            {result ? (
-              <>
-                <div className={styles.readinessGrid}>
-                  <Readiness label={t("pdfOmr.musicXml")} value={result.validation.readiness.musicXml} t={t} />
-                  <Readiness label={t("pdfOmr.harmony")} value={result.validation.readiness.harmony} t={t} />
-                </div>
-                <ul className={styles.diagnosticList}>
-                  {result.validation.diagnostics.slice(0, 6).map((diagnostic) => (
-                    <li key={`${diagnostic.severity}-${diagnostic.code}`} data-severity={diagnostic.severity}>
-                      <details>
-                        <summary>
-                          <code>{diagnostic.code}</code>
-                          <span>{t(`pdfOmr.severity.${diagnostic.severity}`)}</span>
-                        </summary>
-                        <p>{t("pdfOmr.diagnosticDetail", { code: diagnostic.code })}</p>
-                      </details>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            ) : (
-              <p className={styles.muted}>{t("pdfOmr.diagnosticsEmpty")}</p>
-            )}
-          </Panel>
         </aside>
       </div>
     </main>
@@ -613,6 +630,16 @@ function EngineEvidence({
   lastProgress?: PdfOmrProgress | undefined;
   t: CommonT;
 }) {
+  const progress =
+    snapshot?.status === "running" || snapshot?.status === "cancelling"
+      ? (snapshot.progress ??
+        (lastProgress?.kind === "engine-progress" &&
+        lastProgress.completed !== undefined &&
+        lastProgress.total !== undefined &&
+        lastProgress.unit !== undefined
+          ? { completed: lastProgress.completed, total: lastProgress.total, unit: lastProgress.unit }
+          : undefined))
+      : undefined;
   return (
     <div className={styles.engineEvidence}>
       <h2>{t("pdfOmr.engineEvidence")}</h2>
@@ -622,15 +649,12 @@ function EngineEvidence({
           {snapshot.engine.id} · {snapshot.engine.version}
         </code>
       ) : null}
-      {lastProgress?.kind === "engine-progress" &&
-      lastProgress.completed !== undefined &&
-      lastProgress.total !== undefined ? (
-        <p className={styles.progressFact}>
-          {t("pdfOmr.progressFact", {
-            completed: lastProgress.completed,
-            total: lastProgress.total,
-            unit: lastProgress.unit === "page" ? t("pdfOmr.unit.page") : t("pdfOmr.unit.system"),
-          })}
+      {progress !== undefined ? (
+        <p className={styles.progressBig}>
+          <strong>
+            {progress.completed} / {progress.total}
+          </strong>
+          <span>{progress.unit === "page" ? t("pdfOmr.unit.page") : t("pdfOmr.unit.system")}</span>
         </p>
       ) : null}
     </div>
@@ -720,6 +744,31 @@ function stageState(
   return "pending";
 }
 
+function stageActivityLabel(
+  t: CommonT,
+  stage: (typeof STAGES)[number],
+  snapshot: PdfOmrJobSnapshot | undefined,
+  startedAt: number | undefined,
+  now: number,
+): string {
+  const elapsed =
+    startedAt === undefined ? undefined : t("pdfOmr.stageElapsed", { time: formatElapsed(now - startedAt) });
+  if (stage === "recognize" && snapshot?.progress !== undefined) {
+    const progress = t("pdfOmr.stageProgress", {
+      completed: snapshot.progress.completed,
+      total: snapshot.progress.total,
+      unit: snapshot.progress.unit === "page" ? t("pdfOmr.unit.page") : t("pdfOmr.unit.system"),
+    });
+    return elapsed === undefined ? progress : `${progress} · ${elapsed}`;
+  }
+  return elapsed ?? t(`pdfOmr.stage.${stage}.active`);
+}
+
+function formatElapsed(ms: number): string {
+  const seconds = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
 function statusLabel(t: CommonT, status: PdfOmrJobSnapshot["status"] | undefined, exported: boolean): string {
   if (exported) return t("pdfOmr.status.exported");
   return t(`pdfOmr.status.${status ?? "empty"}`);
@@ -734,7 +783,15 @@ function snapshotStatusTone(
   return "neutral";
 }
 
-function pdfOmrErrorReason(t: CommonT, code: string): string {
+function pdfOmrErrorReason(t: CommonT, code: string, reason?: string | undefined): string {
+  switch (reason) {
+    case "input-image-too-large":
+      return t("pdfOmr.errorReason.inputImageTooLarge");
+    case "engine-step-timeout":
+      return t("pdfOmr.errorReason.engineStepTimeout");
+    default:
+      break;
+  }
   switch (code) {
     case "ENGINE_UNAVAILABLE":
       return t("pdfOmr.errorReason.engineUnavailable");
@@ -846,6 +903,30 @@ function formatWrittenPitch(pitch: PdfOmrWrittenPitch | undefined): string {
   if (pitch === undefined) return "—";
   const accidental = ({ "-2": "𝄫", "-1": "♭", "0": "", "1": "♯", "2": "𝄪" } as const)[pitch.alter];
   return `${pitch.step}${accidental}${pitch.octave}`;
+}
+
+function ValidationView({ validation, t }: { validation: PdfOmrValidationView; t: CommonT }) {
+  return (
+    <>
+      <div className={styles.readinessGrid}>
+        <Readiness label={t("pdfOmr.musicXml")} value={validation.readiness.musicXml} t={t} />
+        <Readiness label={t("pdfOmr.harmony")} value={validation.readiness.harmony} t={t} />
+      </div>
+      <ul className={styles.diagnosticList}>
+        {validation.diagnostics.slice(0, 6).map((diagnostic, index) => (
+          <li key={`${diagnostic.severity}-${diagnostic.code}-${index}`} data-severity={diagnostic.severity}>
+            <details>
+              <summary>
+                <code>{diagnostic.code}</code>
+                <span>{t(`pdfOmr.severity.${diagnostic.severity}`)}</span>
+              </summary>
+              <p>{t("pdfOmr.diagnosticDetail", { code: diagnostic.code })}</p>
+            </details>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
 }
 
 function Readiness({

@@ -3,7 +3,7 @@ feature: desktop-pdf-omr-workbench
 title: Desktop PDF 识谱实验工作台
 status: current
 delivery: partial
-last_verified: 2026-08-14
+last_verified: 2026-08-16
 hosts:
   - desktop
 implementation_paths:
@@ -19,6 +19,7 @@ implementation_paths:
   - packages/web-viewer/src/app/pages/PdfOmrPage.tsx
   - packages/web-viewer/src/features/pdf-omr
   - packages/web-viewer/src/features/application-settings
+  - tools/pdf-omr-cli/src/draft-gap-fill.ts
 supersedes: []
 ---
 
@@ -64,7 +65,10 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
 - Main 将 job start、heartbeat、stage、engine progress 和 terminal status 以不含绝对路径或原始 stderr 的安全字段
   输出到 Electron 主进程日志，并追加写入 `desktop.log`。
 - pipeline 依次发出 `inspect`、`recognize`、`validate`、`export` stage 事件，并转发 engine 提供的 page/system
-  `completed / total` 计数；Renderer 不解析 stdout、stderr 或绝对路径。
+  `completed / total` 计数；LEGATO runner 每完成一页就在 stderr 提交一条结构化 progress 行，adapter 解析后按
+  `engine-progress` 上报（一次性与 worker 模式一致）。Renderer 不解析 stdout、stderr 或绝对路径。
+- 页面的活动阶段会显示 engine 提交的单调计数（如 `页 2 / 5`）；engine 尚未提交计数时显示本地已用时间，
+  活动标记带脉冲动画（`prefers-reduced-motion` 下退化静态）。UI 不根据日志推断百分比或 ETA。
 - Desktop 页面以宽屏三仓工作区呈现输入/阶段、证据面和结果/诊断；`620–899px` 折叠为纵向工作区，
   `<620px` 使用单一 document scroll，保留文件选择、阶段、证据标签、engine 和主操作。
 - pipeline 成功后 Main 只返回受 schema 约束的 MXL bytes、hash、readiness 和 bounded diagnostic summary；
@@ -85,7 +89,13 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
   已提交阶段并进入 `cancelled`。`running` 与 `cancelling` 期间输入选择保持禁用，避免页面文件与 Main active job
   错位。
 - `ENGINE_UNAVAILABLE`、`DRAFT_VALIDATION_FAILED` 等 semantic error code 进入安全失败快照，不把原始 exception、
-  stack、stderr 或路径写入 Renderer。
+  stack、stderr 或路径写入 Renderer。`DRAFT_VALIDATION_FAILED` 失败时，`pdfOmr.readResult` 额外返回
+  `failed-validation` variant（readiness + bounded diagnostics，不含 MXL bytes），页面在诊断区展示具体阻塞项。
+- Main 侧的 engine runner 只在进程内检查引擎输出，把 Audiveris 的已知失败模式（超大扫描图像、单步超时）翻译为
+  bounded `reason`（如 `input-image-too-large`、`engine-step-timeout`）并随失败快照展示为用户可读原因；原始日志
+  不进入 Renderer。
+- LEGATO 归一化会用 implicit rest 填补 voice 中未被解释的间隙或未满小节（OMR 丢拍），每处填补记录一条
+  `IMPLICIT_REST_FILL` warning diagnostic；重叠等结构性冲突仍保持 blocking 并阻断导出。
 - Runtime 未自行提交 terminal event 时，Main 会补发带 semantic `errorCode` 的 terminal failed event，确保页面从
   running 恢复到可重试状态，并在诊断区展示错误代码和用户可读原因。
 - `failed` 或 `cancelled` 可在重新选择兼容 engine 后对当前输入重试；成功结果尚未导出时重新选择输入会先请求确认。

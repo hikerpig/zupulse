@@ -2,10 +2,12 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { PdfOmrError } from "../errors";
+import { fillVoiceGapsWithRests } from "../draft-gap-fill";
 import { runEngineProcess } from "../engine-runner";
 import { normalizeAudiverisMusicXml } from "../normalizers/audiveris";
 import { combineProcessResourceUsage } from "../resource-metrics";
 import { mergeLegatoPageAbc, mergeLegatoPageMusicXml } from "./legato-page-merge";
+import { parseLegatoProgressLine } from "./legato-progress";
 import { LegatoWorker } from "./legato-worker";
 import type { DecoderTelemetry, OmrEngineAdapter } from "./types";
 
@@ -41,7 +43,7 @@ const baselineDecoder: LegatoDecoderConfig = {
 };
 
 const maxNumBeams = 10;
-const maxPdfPages = 3;
+const maxPdfPages = 32;
 
 const defaultInferenceTimeoutMs = 3_600_000;
 
@@ -147,15 +149,24 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
       );
       const report = parseInspectReport(inspect.stdout);
       if (report.pageCount < 1 || report.pageCount > maxPdfPages) {
-        throw new PdfOmrError("INVALID_INPUT", "LEGATO supports one to three PDF pages", {
+        throw new PdfOmrError("INVALID_INPUT", `LEGATO supports one to ${maxPdfPages} PDF pages`, {
           context: { reason: "unsupported-page-count", pageCount: report.pageCount },
         });
       }
+      // Publish the total immediately so hosts can show "0 / N" during the first page's inference.
+      request.onProgress?.({ unit: "page", completed: 0, total: report.pageCount });
 
       const abcPath = join(request.outputDirectory, "raw-output.abc");
       const musicXmlPath = join(request.outputDirectory, "converted.musicxml");
       const telemetryPath = join(request.outputDirectory, "inference.json");
       const pageOutputDirectory = join(request.outputDirectory, "pages");
+      const forwardProgress = (progress: { completed: number; total: number }) => {
+        request.onProgress?.({ unit: "page", completed: progress.completed, total: progress.total });
+      };
+      const onStderrLine = (line: string) => {
+        const progress = parseLegatoProgressLine(line);
+        if (progress !== undefined) forwardProgress(progress);
+      };
       const inference =
         worker === undefined
           ? await runEngineProcess(
@@ -185,6 +196,7 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
                 ],
                 ...processOptions,
                 timeoutMs: inferenceTimeoutMs,
+                onStderrLine,
               },
               request.signal,
             )
@@ -193,6 +205,7 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
               pageOutputDirectory,
               telemetryOutputPath: telemetryPath,
               ...(request.signal === undefined ? {} : { signal: request.signal }),
+              ...(request.onProgress === undefined ? {} : { onProgress: forwardProgress }),
             });
       const [pageArtifacts, telemetryBytes] = await Promise.all([
         Promise.all(
@@ -269,7 +282,7 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
           context: { reason: "empty-part", partId: emptyPart.id },
         });
       }
-      return draft;
+      return fillVoiceGapsWithRests(draft);
     },
     ...(worker === undefined ? {} : { close: () => worker.close() }),
   };

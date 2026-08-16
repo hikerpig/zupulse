@@ -16,6 +16,21 @@ const commandTemplate = [
   "<input.pdf>",
 ] as const;
 
+function classifyAudiverisFailure(output: { stdout: string; stderr: string }): PdfOmrError | undefined {
+  const log = `${output.stdout}\n${output.stderr}`;
+  if (/Too large image/.test(log)) {
+    return new PdfOmrError("INVALID_INPUT", "Audiveris rejected the oversized sheet image", {
+      context: { reason: "input-image-too-large" },
+    });
+  }
+  if (/Timeout \d+ seconds for step/.test(log)) {
+    return new PdfOmrError("ENGINE_EXECUTION_FAILED", "Audiveris exceeded its per-step time limit", {
+      context: { reason: "engine-step-timeout" },
+    });
+  }
+  return undefined;
+}
+
 export function createAudiverisAdapter(options: {
   executable?: string;
   environment?: Readonly<Record<string, string>>;
@@ -57,6 +72,7 @@ export function createAudiverisAdapter(options: {
         {
           command: executable,
           args: ["-batch", "-transcribe", "-export", "-save", "-output", request.outputDirectory, request.inputPath],
+          classifyFailure: classifyAudiverisFailure,
           ...processOptions,
         },
         request.signal,

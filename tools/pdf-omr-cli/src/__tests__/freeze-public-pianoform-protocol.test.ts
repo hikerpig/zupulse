@@ -102,7 +102,7 @@ function legatoEnvironment() {
     model: { sha256: "d".repeat(64) },
     visionEncoder: { revision: "vision-revision" },
     runtime: { inferenceDtype: { mps: "float16" } },
-    preprocess: { maxPdfPages: 3, normalizedWidth: 1050, minimumHeight: 1485 },
+    preprocess: { maxPdfPages: 32, normalizedWidth: 1050, minimumHeight: 1485 },
     decoder: { maxLength: 2048, numBeams: 10, repetitionPenalty: 1.1 },
   };
 }

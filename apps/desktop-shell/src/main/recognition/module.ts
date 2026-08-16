@@ -260,6 +260,15 @@ async function assertRecognitionProviderReady(settings: RecognitionProviderSetti
   });
 }
 
+type PdfOmrValidationReadiness = {
+  harmony: "blocked" | "ready-with-warnings" | "ready";
+  musicXml: "blocked" | "ready-with-warnings" | "ready";
+};
+type PdfOmrValidationView = {
+  readiness: PdfOmrValidationReadiness;
+  diagnostics: readonly { code: string; severity: "blocking" | "warning" | "info" }[];
+};
+
 async function readPdfOmrResult(
   controller: PdfOmrJobController,
   corrections: PdfOmrMidiCorrectionController,
@@ -271,17 +280,19 @@ async function readPdfOmrResult(
       fileName: string;
       bytes: Uint8Array;
       outputSha256: string;
-      validation: {
-        readiness: {
-          harmony: "blocked" | "ready-with-warnings" | "ready";
-          musicXml: "blocked" | "ready-with-warnings" | "ready";
-        };
-        diagnostics: readonly { code: string; severity: "blocking" | "warning" | "info" }[];
-      };
+      validation: PdfOmrValidationView;
     }
+  | { status: "failed-validation"; validation: PdfOmrValidationView }
 > {
   const completed = controller.getCompletedResult(jobId);
-  if (completed === undefined) return { status: "unavailable" };
+  if (completed === undefined) {
+    const failedDirectory = controller.getFailedValidationDirectory(jobId);
+    if (failedDirectory === undefined) return { status: "unavailable" };
+    const failedValidation = await readPdfOmrValidation(path.join(failedDirectory, "validation.json"));
+    return failedValidation === undefined
+      ? { status: "unavailable" }
+      : { status: "failed-validation", validation: failedValidation };
+  }
   const corrected = corrections.getCorrectedResult(jobId);
   const bytes = new Uint8Array(
     await readFile(corrected?.path ?? path.join(completed.outputDirectory, completed.result.artifacts.musicXml)),
@@ -289,22 +300,49 @@ async function readPdfOmrResult(
   if (bytes.byteLength > 64 * 1024 * 1024) {
     throw new BridgeDispatchError("FILE_TOO_LARGE", "PDF OMR result is too large", false);
   }
-  const raw = JSON.parse(
-    await readFile(path.join(completed.outputDirectory, completed.result.artifacts.validation), "utf8"),
-  ) as { readiness?: unknown; diagnostics?: unknown };
-  const diagnostics = Array.isArray(raw.diagnostics)
-    ? raw.diagnostics
-        .slice(0, 512)
-        .filter(isSafePdfOmrDiagnostic)
-        .map((diagnostic) => ({ code: diagnostic.code, severity: diagnostic.severity }))
-    : [];
+  const validation = (await readPdfOmrValidation(
+    path.join(completed.outputDirectory, completed.result.artifacts.validation),
+  )) ?? { readiness: completed.result.validation.readiness, diagnostics: [] };
   return {
     status: "available",
     fileName: corrected?.fileName ?? "score.mxl",
     bytes,
     outputSha256: corrected?.outputSha256 ?? completed.result.outputSha256,
-    validation: { readiness: completed.result.validation.readiness, diagnostics },
+    validation,
   };
+}
+
+async function readPdfOmrValidation(filePath: string): Promise<PdfOmrValidationView | undefined> {
+  const text = await readFile(filePath, "utf8").catch(() => undefined);
+  if (text === undefined) return undefined;
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+  if (typeof raw !== "object" || raw === null) return undefined;
+  const readiness = parsePdfOmrReadiness((raw as { readiness?: unknown }).readiness);
+  if (readiness === undefined) return undefined;
+  const rawDiagnostics = (raw as { diagnostics?: unknown }).diagnostics;
+  const diagnostics = Array.isArray(rawDiagnostics)
+    ? rawDiagnostics
+        .slice(0, 512)
+        .filter(isSafePdfOmrDiagnostic)
+        .map((diagnostic) => ({ code: diagnostic.code, severity: diagnostic.severity }))
+    : [];
+  return { readiness, diagnostics };
+}
+
+function parsePdfOmrReadiness(value: unknown): PdfOmrValidationReadiness | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  const readiness = value as { harmony?: unknown; musicXml?: unknown };
+  if (!isPdfOmrReadinessValue(readiness.harmony) || !isPdfOmrReadinessValue(readiness.musicXml)) return undefined;
+  return { harmony: readiness.harmony, musicXml: readiness.musicXml };
+}
+
+function isPdfOmrReadinessValue(value: unknown): value is "blocked" | "ready-with-warnings" | "ready" {
+  return value === "blocked" || value === "ready-with-warnings" || value === "ready";
 }
 
 function isSafePdfOmrDiagnostic(value: unknown): value is { code: string; severity: "blocking" | "warning" | "info" } {

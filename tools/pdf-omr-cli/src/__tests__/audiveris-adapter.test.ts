@@ -45,6 +45,38 @@ describe("Audiveris adapter", () => {
     expect(result.durationMs).toBeGreaterThanOrEqual(0);
   });
 
+  it("maps Audiveris oversized-image rejection to a semantic input error", async () => {
+    await chmod(fixture, 0o755);
+    const directory = await mkdtemp(join(tmpdir(), "audiveris-too-large-"));
+    const inputPath = join(directory, "score.pdf");
+    await writeFile(inputPath, "%PDF-fake");
+    const adapter = createAudiverisAdapter({
+      executable: fixture,
+      environment: { FAKE_AUDIVERIS_FAILURE: "too-large" },
+    });
+
+    await expect(adapter.recognize({ inputPath, outputDirectory: join(directory, "raw") })).rejects.toMatchObject({
+      code: "INVALID_INPUT",
+      context: { reason: "input-image-too-large" },
+    });
+  });
+
+  it("maps an Audiveris per-step timeout to a semantic reason", async () => {
+    await chmod(fixture, 0o755);
+    const directory = await mkdtemp(join(tmpdir(), "audiveris-timeout-"));
+    const inputPath = join(directory, "score.pdf");
+    await writeFile(inputPath, "%PDF-fake");
+    const adapter = createAudiverisAdapter({
+      executable: fixture,
+      environment: { FAKE_AUDIVERIS_FAILURE: "step-timeout" },
+    });
+
+    await expect(adapter.recognize({ inputPath, outputDirectory: join(directory, "raw") })).rejects.toMatchObject({
+      code: "ENGINE_EXECUTION_FAILED",
+      context: { reason: "engine-step-timeout" },
+    });
+  });
+
   it("maps a missing executable to ENGINE_UNAVAILABLE", async () => {
     const adapter = createAudiverisAdapter({ executable: "/missing/audiveris" });
 

@@ -242,6 +242,29 @@ duration、staff measure count、system boundary 或缺失结构 header 阻断�
 也不改写 frozen `STOP`。durable 摘要位于
 `tools/pdf-omr-cli/reports/development/rokot-public-pianoform-v1/`；完整生成式 runs 不进入 Git。
 
+## 2026-08-15 Rokot context memory result
+
+Rokot adapter 原先没有传递 `--ctx-size`，llama.cpp 因而使用模型 metadata 的默认 context。锁定
+`ctxSize=4096` 后，同一个 OLiMPiC scanned system item 的 process-group peak RSS 从 `33.12 GB` 降为
+`3.51 GB`，item wall time 从 `17.81s` 降为 `8.66s`；预测 ABC SHA-256 与 pitch、onset、duration、joint
+及 valid-measure 指标均保持不变。
+
+在三个 synthetic development items 上，peak RSS 从 `33.06 GB` 降为 `3.44 GB`，三项 runtime max
+合计从 `92.06s` 降为 `36.32s`；96 个 joint events、24 个 valid measures 与 3/3 reproducibility
+comparisons 均保持不变。该结果证明当前 `1600` output-token 合同不需要模型默认的超长 context；它不证明
+更长 prompt 或未来更大 output-token 合同也适合 `4096`，修改这些合同时必须重新做 context capacity 与质量评测。
+
+## 2026-08-15 LEGATO multi-page result
+
+LEGATO adapter 的 PDF 安全上限从 3 页提高到 32 页，bundled runner 改为逐页流式 render，既有逐页
+ABC、MusicXML、decoder telemetry 与跨页 measure merge 合同保持不变。由 `melody-clean.pdf` 重复组成的
+8 页 PDF 在 MPS/float16、beam 1 下完成真实端到端 recognize：8/8 pages 以 EOS 结束，生成 16 个逐页
+artifacts，合并 Draft 含 56 measures 且无 diagnostics，总墙钟约 48 秒。
+
+8 页 OLiMPiC dense full-score 输入也已越过原有 page-count guard 并完成第一页，但单页生成耗时达到数分钟，
+因此中止了该次 development probe。该结果证明 8 页输入合同与流式执行可用，不证明复杂 8 页整谱能在当前
+一小时 timeout 内完成；复杂度和 max-length 仍需由真实 corpus 单独评估。
+
 ## 若未来重启
 
 新的 discovery 至少需要：

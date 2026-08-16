@@ -100,6 +100,7 @@ async function emitOutputs(pageOutputDirectory, telemetryOutput, maxLength) {
   </measure></part>
 </score-partwise>`,
     );
+    process.stderr.write(`${JSON.stringify({ type: "progress", completed: pageNumber, total: pageCount })}\n`);
   }
   await writeFile(
     telemetryOutput,

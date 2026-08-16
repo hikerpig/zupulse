@@ -821,10 +821,7 @@ function EngineEvidence({
   now: number;
   t: CommonT;
 }) {
-  const progress =
-    snapshot?.status === "running" || snapshot?.status === "cancelling"
-      ? snapshot.progress
-      : undefined;
+  const progress = snapshot?.status === "running" || snapshot?.status === "cancelling" ? snapshot.progress : undefined;
   const elapsedMs = stageStartedAt === undefined ? undefined : Math.max(0, now - stageStartedAt);
   const etaMs =
     progress !== undefined && elapsedMs !== undefined && progress.completed > 0 && progress.completed < progress.total

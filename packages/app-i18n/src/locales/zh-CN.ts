@@ -141,6 +141,9 @@ export const zhCN = {
         engineUnavailable: "当前 engine 不可用或未配置。",
         engineExecutionFailed: "engine 进程执行失败。",
         engineOutputInvalid: "engine 输出无效，无法继续生成乐谱。",
+        inputImageTooLarge:
+          "这份扫描件渲染后的图片超过了 engine 的尺寸上限，被 engine 拒绝。可以换用更低分辨率的扫描件或其他 engine。",
+        engineStepTimeout: "engine 在这份输入上超过了单步处理时限。可以换用更简单的扫描件或其他 engine。",
         draftValidationFailed: "识别结果未通过结构校验。",
         invalidInput: "输入文件或任务参数无效。",
         interrupted: "识别任务已取消。",

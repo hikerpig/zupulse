@@ -10,6 +10,11 @@ export type EngineProcessRequest = {
   timeoutMs?: number;
   maxOutputBytes?: number;
   onStderrLine?: (line: string) => void;
+  /**
+   * Inspects captured engine output after a non-zero exit and may return a semantic
+   * PdfOmrError. The raw output never leaves this process; only the returned error does.
+   */
+  classifyFailure?: (output: { stdout: string; stderr: string; exitCode: number | null }) => PdfOmrError | undefined;
 };
 
 export type EngineProcessResult = {
@@ -146,10 +151,21 @@ export function runEngineProcess(request: EngineProcessRequest, signal?: AbortSi
         return;
       }
       if (exitCode !== 0) {
+        let classified: PdfOmrError | undefined;
+        try {
+          classified = request.classifyFailure?.({
+            stdout: Buffer.concat(stdout).toString("utf8"),
+            stderr: Buffer.concat(stderr).toString("utf8"),
+            exitCode,
+          });
+        } catch {
+          classified = undefined;
+        }
         settleReject(
-          new PdfOmrError("ENGINE_EXECUTION_FAILED", "engine process exited unsuccessfully", {
-            context: { reason: "non-zero-exit", exitCode },
-          }),
+          classified ??
+            new PdfOmrError("ENGINE_EXECUTION_FAILED", "engine process exited unsuccessfully", {
+              context: { reason: "non-zero-exit", exitCode },
+            }),
         );
         return;
       }

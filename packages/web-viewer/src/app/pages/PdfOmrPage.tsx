@@ -434,7 +434,7 @@ export function PdfOmrPage({
               <div className={styles.errorSummary} role="alert" data-pdf-omr-error>
                 <strong>{t("pdfOmr.errorTitle")}</strong>
                 <code>{t("pdfOmr.errorCode", { code: snapshot.error.code })}</code>
-                <p>{pdfOmrErrorReason(t, snapshot.error.code)}</p>
+                <p>{pdfOmrErrorReason(t, snapshot.error.code, snapshot.error.reason)}</p>
               </div>
             ) : null}
             {result ? (
@@ -783,7 +783,15 @@ function snapshotStatusTone(
   return "neutral";
 }
 
-function pdfOmrErrorReason(t: CommonT, code: string): string {
+function pdfOmrErrorReason(t: CommonT, code: string, reason?: string | undefined): string {
+  switch (reason) {
+    case "input-image-too-large":
+      return t("pdfOmr.errorReason.inputImageTooLarge");
+    case "engine-step-timeout":
+      return t("pdfOmr.errorReason.engineStepTimeout");
+    default:
+      break;
+  }
   switch (code) {
     case "ENGINE_UNAVAILABLE":
       return t("pdfOmr.errorReason.engineUnavailable");

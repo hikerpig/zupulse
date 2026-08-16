@@ -142,6 +142,54 @@ describe("PdfOmrJobController", () => {
     expect(controller.getFailedValidationDirectory(started.jobId)).toBeUndefined();
   });
 
+  it("attaches a safe engine reason to the failed snapshot", async () => {
+    const controller = new PdfOmrJobController({
+      async run() {
+        throw new PdfOmrError("INVALID_INPUT", "oversized", { context: { reason: "input-image-too-large" } });
+      },
+      cancel() {},
+    });
+    const started = controller.start({
+      inputPath: "/private/big.pdf",
+      fileName: "big.pdf",
+      sizeBytes: 42,
+      inputKind: "pdf",
+      engineId: "audiveris",
+      outputDirectory: "/private/run",
+    });
+    await controller.waitForIdle();
+
+    expect(controller.getSnapshot()).toMatchObject({
+      jobId: started.jobId,
+      status: "failed",
+      error: { code: "INVALID_INPUT", reason: "input-image-too-large" },
+    });
+  });
+
+  it("drops an unsafe error reason", async () => {
+    const controller = new PdfOmrJobController({
+      async run() {
+        throw new PdfOmrError("ENGINE_EXECUTION_FAILED", "crash", {
+          context: { reason: "/private/leaked path" },
+        });
+      },
+      cancel() {},
+    });
+    controller.start({
+      inputPath: "/private/score.pdf",
+      fileName: "score.pdf",
+      sizeBytes: 42,
+      inputKind: "pdf",
+      engineId: "audiveris",
+      outputDirectory: "/private/run",
+    });
+    await controller.waitForIdle();
+
+    const error = controller.getSnapshot()?.error;
+    expect(error).toMatchObject({ code: "ENGINE_EXECUTION_FAILED" });
+    expect(error && "reason" in error).toBe(false);
+  });
+
   it("emits a terminal failed event when the runtime fails before reporting one", async () => {
     const events: PdfOmrPipelineProgressEvent[] = [];
     const controller = new PdfOmrJobController({

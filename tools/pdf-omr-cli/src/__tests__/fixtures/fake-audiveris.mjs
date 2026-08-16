@@ -10,6 +10,16 @@ if (process.argv.includes("-version")) {
   process.exit(0);
 }
 
+const failure = process.env.FAKE_AUDIVERIS_FAILURE;
+if (failure === "too-large") {
+  process.stderr.write("WARN [input] SheetStub | Too large image: 27,746,510 pixels (vs 20,000,000 max)\n");
+  process.exit(1);
+}
+if (failure === "step-timeout") {
+  process.stderr.write("WARN [input] SheetStub | Timeout 120 seconds for step BEAMS\n");
+  process.exit(1);
+}
+
 const delay = Number(process.env.FAKE_AUDIVERIS_DELAY_MS ?? 0);
 if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
 const outputIndex = process.argv.indexOf("-output");

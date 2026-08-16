@@ -379,7 +379,14 @@ const pdfOmrJobSnapshotSchema = z
       .strict()
       .optional(),
     error: z
-      .object({ code: z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/), recoverable: z.boolean() })
+      .object({
+        code: z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/),
+        recoverable: z.boolean(),
+        reason: z
+          .string()
+          .regex(/^[a-z][a-z0-9-]{0,63}$/)
+          .optional(),
+      })
       .strict()
       .optional(),
   })

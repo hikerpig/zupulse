@@ -91,6 +91,9 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
 - `ENGINE_UNAVAILABLE`、`DRAFT_VALIDATION_FAILED` 等 semantic error code 进入安全失败快照，不把原始 exception、
   stack、stderr 或路径写入 Renderer。`DRAFT_VALIDATION_FAILED` 失败时，`pdfOmr.readResult` 额外返回
   `failed-validation` variant（readiness + bounded diagnostics，不含 MXL bytes），页面在诊断区展示具体阻塞项。
+- Main 侧的 engine runner 只在进程内检查引擎输出，把 Audiveris 的已知失败模式（超大扫描图像、单步超时）翻译为
+  bounded `reason`（如 `input-image-too-large`、`engine-step-timeout`）并随失败快照展示为用户可读原因；原始日志
+  不进入 Renderer。
 - LEGATO 归一化会用 implicit rest 填补 voice 中未被解释的间隙或未满小节（OMR 丢拍），每处填补记录一条
   `IMPLICIT_REST_FILL` warning diagnostic；重叠等结构性冲突仍保持 blocking 并阻断导出。
 - Runtime 未自行提交 terminal event 时，Main 会补发带 semantic `errorCode` 的 terminal failed event，确保页面从

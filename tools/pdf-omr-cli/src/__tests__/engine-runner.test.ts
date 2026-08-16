@@ -78,6 +78,31 @@ describe("engine process runner", () => {
     );
   });
 
+  it("lets the engine classify a non-zero exit into a semantic error", async () => {
+    await expect(
+      runEngineProcess({
+        command: process.execPath,
+        args: [fakeEngine, "fail"],
+        classifyFailure: ({ stderr }) =>
+          stderr.includes("sensitive stderr")
+            ? new PdfOmrError("INVALID_INPUT", "classified failure", { context: { reason: "classified" } })
+            : undefined,
+      }),
+    ).rejects.toMatchObject<PdfOmrError>({ code: "INVALID_INPUT", context: { reason: "classified" } });
+    await expect(
+      runEngineProcess({
+        command: process.execPath,
+        args: [fakeEngine, "fail"],
+        classifyFailure: () => {
+          throw new Error("classifier bug");
+        },
+      }),
+    ).rejects.toMatchObject<PdfOmrError>({
+      code: "ENGINE_EXECUTION_FAILED",
+      context: { reason: "non-zero-exit", exitCode: 7 },
+    });
+  });
+
   it("terminates a hanging process when the timeout expires", async () => {
     await expect(
       runEngineProcess({

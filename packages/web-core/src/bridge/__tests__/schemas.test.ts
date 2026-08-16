@@ -383,6 +383,28 @@ describe("bridge schemas", () => {
         },
       }),
     ).toThrow();
+    expect(
+      parseBridgeResponse("pdfOmr.start", {
+        jobId: "job-1",
+        snapshot: {
+          jobId: "job-1",
+          status: "failed",
+          input: { fileName: "score.pdf", sizeBytes: 42, inputKind: "pdf" },
+          error: { code: "INVALID_INPUT", recoverable: true, reason: "input-image-too-large" },
+        },
+      }).snapshot,
+    ).toMatchObject({ error: { reason: "input-image-too-large" } });
+    expect(() =>
+      parseBridgeResponse("pdfOmr.start", {
+        jobId: "job-1",
+        snapshot: {
+          jobId: "job-1",
+          status: "failed",
+          input: { fileName: "score.pdf", sizeBytes: 42, inputKind: "pdf" },
+          error: { code: "INVALID_INPUT", recoverable: true, reason: "/private/leaked" },
+        },
+      }),
+    ).toThrow();
   });
 
   it("exposes failed draft validation without result bytes", () => {

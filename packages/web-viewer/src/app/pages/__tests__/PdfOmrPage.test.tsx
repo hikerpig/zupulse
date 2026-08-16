@@ -104,6 +104,34 @@ describe("PdfOmrPage", () => {
     expect(port.readFailedValidation).toHaveBeenCalledWith("job-1");
   });
 
+  it("shows a specific reason when the engine rejects an oversized scan", async () => {
+    const port = createPort();
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+    await user.click(screen.getByRole("button", { name: "开始提取" }));
+
+    port.setSnapshot({
+      ...runningSnapshot,
+      status: "failed",
+      error: { code: "INVALID_INPUT", recoverable: true, reason: "input-image-too-large" },
+    });
+    port.emit({
+      schemaVersion: "1.0.0",
+      sequence: 6,
+      kind: "terminal",
+      status: "failed",
+      errorCode: "INVALID_INPUT",
+    });
+
+    expect(await screen.findByText(/超过了 engine 的尺寸上限/)).toBeTruthy();
+    expect(screen.getByText(/INVALID_INPUT/)).toBeTruthy();
+  });
+
   it("keeps the failed snapshot retryable when retry cannot start", async () => {
     const port = createPort();
     port.retry.mockRejectedValueOnce(new Error("provider unavailable"));

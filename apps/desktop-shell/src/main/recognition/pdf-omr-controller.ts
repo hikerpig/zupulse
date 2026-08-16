@@ -157,6 +157,12 @@ export class PdfOmrJobController {
           ...(code === "INTERRUPTED" ? {} : { errorCode: code }),
         });
       }
+      const reason = safeErrorReason(error instanceof PdfOmrError ? error.context?.reason : undefined);
+      const failed = this.snapshot;
+      if (reason !== undefined && failed?.status === "failed" && failed.error !== undefined) {
+        this.snapshot = { ...failed, error: { ...failed.error, reason } };
+        this.publish();
+      }
     } finally {
       if (this.active?.jobId === jobId) this.active = undefined;
     }
@@ -190,4 +196,8 @@ export class PdfOmrJobController {
     if (this.snapshot === undefined) return;
     for (const listener of this.listeners) listener(this.snapshot);
   }
+}
+
+function safeErrorReason(reason: unknown): string | undefined {
+  return typeof reason === "string" && /^[a-z][a-z0-9-]{0,63}$/.test(reason) ? reason : undefined;
 }

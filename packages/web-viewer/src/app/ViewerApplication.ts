@@ -25,6 +25,7 @@ import { ApplicationFailure, applicationIssue, type ApplicationIssue } from "./a
 import { createDefaultHarmonyAnalysisRunner, StudioApplication } from "../features/harmony-studio/StudioApplication";
 import type { HarmonyAnalysisRunner } from "../harmony-analysis-worker-client";
 import { WorkspaceCoordinator } from "./workspace-coordinator";
+import type { ViewerInitialSurface } from "./initial-surface";
 
 export type ViewerApplicationSnapshot = {
   currentSessionId?: string;
@@ -85,7 +86,7 @@ export class ViewerApplication implements ViewerAppHandle {
     openStudioRuntime?: (file: ViewerFile) => Promise<StudioScoreRuntime>,
     harmonyAnalysisRunner: HarmonyAnalysisRunner = createDefaultHarmonyAnalysisRunner(),
     telemetryControl?: TelemetryControl,
-    private readonly initialSurface: "library" | "viewer" | "studio" | "not-found" = "library",
+    private readonly initialSurface: ViewerInitialSurface = "library",
   ) {
     if (telemetryControl !== undefined) this.telemetryControl = telemetryControl;
     this.telemetry = host.telemetry ?? createNoopTelemetryPort();

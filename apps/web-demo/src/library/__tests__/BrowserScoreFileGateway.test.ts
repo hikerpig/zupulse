@@ -29,13 +29,16 @@ describe("BrowserScoreFileGateway", () => {
       multiple: false,
       accept: "",
       files: null,
+      style: {},
       addEventListener: (type: string, listener: EventListenerOrEventListenerObject) => {
         if (typeof listener === "function") listeners.set(type, listener);
       },
       click: () => listeners.get("cancel")?.(new Event("cancel")),
+      remove: () => undefined,
     } as unknown as HTMLInputElement;
     const ownerDocument = {
       createElement: () => input,
+      body: { appendChild: () => undefined },
     } as unknown as Document;
 
     await expect(new BrowserScoreFileGateway(ownerDocument).selectForImport({ multiple: true })).resolves.toEqual([]);

@@ -1,5 +1,6 @@
 import { CopyRspackPlugin, DefinePlugin } from "@rspack/core";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { alphaTabDist, createWebRspackConfig } from "../../tools/builder/rspack.mjs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
@@ -8,7 +9,9 @@ const demoRoot = fileURLToPath(new URL(".", import.meta.url));
 const isE2e = process.env.PLAYWRIGHT_TEST === "1";
 const telemetryE2e = process.env.TELEMETRY_E2E === "1";
 const emitSourceMaps = process.env.TELEMETRY_SOURCE_MAPS === "1";
-const appVersion = "0.1.0";
+/** @type {{ version: string }} */
+const packageJson = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
+const appVersion = packageJson.version;
 const buildId = process.env.TELEMETRY_BUILD_ID ?? createHash("sha256").update(`${appVersion}:browser`).digest("hex");
 
 const createConfig = (_env, argv) => {
@@ -54,10 +57,6 @@ const createConfig = (_env, argv) => {
     lazyCompilation: false,
     devtool: emitSourceMaps ? "source-map" : false,
     experiments: { outputModule: true },
-    watchOptions: {
-      ignored: ["**/node_modules/**", "**/dist/**"],
-      poll: 1000,
-    },
     devServer: {
       host: "127.0.0.1",
       port: 5173,

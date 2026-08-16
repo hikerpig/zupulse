@@ -18,19 +18,32 @@ export class BrowserScoreFileGateway implements ScoreFileGateway {
     input.type = "file";
     input.multiple = options.multiple;
     input.accept = ".gp3,.gp4,.gp5,.gpx,.gp,.musicxml,.mxl";
-    const files = await new Promise<readonly File[]>((resolve) => {
-      input.addEventListener("change", () => resolve(Array.from(input.files ?? [])), { once: true });
-      input.addEventListener("cancel", () => resolve([]), { once: true });
-      input.click();
-    });
-    return createBrowserImportSources(files, "picker");
+    // Detached file inputs fail to open the picker in some engines; keep the input in the DOM until settled.
+    input.style.display = "none";
+    this.ownerDocument.body.appendChild(input);
+    try {
+      const files = await new Promise<readonly File[]>((resolve) => {
+        input.addEventListener("change", () => resolve(Array.from(input.files ?? [])), { once: true });
+        input.addEventListener("cancel", () => resolve([]), { once: true });
+        input.click();
+      });
+      return createBrowserImportSources(files, "picker");
+    } finally {
+      input.remove();
+    }
   }
   async saveExport(file: StoredScoreFile): Promise<"saved" | "cancelled"> {
     const link = this.ownerDocument.createElement("a");
-    link.href = URL.createObjectURL(new Blob([file.bytes.slice().buffer]));
+    const url = URL.createObjectURL(new Blob([file.bytes.slice().buffer]));
+    link.href = url;
     link.download = file.fileName;
+    // Detached anchors fail to trigger downloads in some engines.
+    link.style.display = "none";
+    this.ownerDocument.body.appendChild(link);
     link.click();
-    URL.revokeObjectURL(link.href);
+    link.remove();
+    // Revoking the blob URL synchronously after click() can abort the download; defer it briefly.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     return "saved";
   }
 }

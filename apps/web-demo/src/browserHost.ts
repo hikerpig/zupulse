@@ -1,6 +1,7 @@
 import { isLocalePreference, resolveLocale, type LocalePreference, type LocaleState } from "@zupulse/app-i18n";
 import { MockNativeBridge } from "@zupulse/web-core";
 import type { LocaleHost, ViewerHost } from "@zupulse/web-viewer";
+import { getLocalStorage } from "./local-storage";
 
 const localeStorageKey = "zupulse-locale";
 
@@ -8,7 +9,7 @@ export function createBrowserLocaleHost(
   ownerDocument: Document,
   systemLocales: readonly string[] = ownerDocument.defaultView?.navigator.languages ?? [],
 ): LocaleHost {
-  const storage = getStorage(ownerDocument);
+  const storage = getLocalStorage(ownerDocument);
   const storedPreference = readStoredPreference(storage);
   const initialPreference = storedPreference ?? "system";
   const initialState: LocaleState = {
@@ -42,14 +43,6 @@ export function createBrowserHost(ownerDocument: Document): ViewerHost & { bridg
 
 export { createBrowserTelemetry } from "./telemetry/browser-telemetry";
 export type { BrowserTelemetry } from "./telemetry/browser-telemetry";
-
-function getStorage(ownerDocument: Document): Storage | undefined {
-  try {
-    return ownerDocument.defaultView?.localStorage;
-  } catch {
-    return undefined;
-  }
-}
 
 function readStoredPreference(storage: Storage | undefined): LocalePreference | undefined {
   if (!storage) return undefined;

@@ -100,7 +100,7 @@ export function createLegatoAdapter(options: LegatoAdapterOptions): OmrEngineAda
           throw unavailable("base-model-unreadable", error);
         }),
       ]);
-      if (!/^Python 3\.11\./.test(`${python.stdout}\n${python.stderr}`)) {
+      if (!`${python.stdout}\n${python.stderr}`.startsWith("Python 3.11.")) {
         throw unavailable("python-version-mismatch");
       }
       const actualRevision = revision.stdout.trim();

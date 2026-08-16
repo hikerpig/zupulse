@@ -564,7 +564,7 @@ function canonicalizeUnvoicedSingleStaffAbc(abc: string): string {
     !headersValid ||
     contentLines.length === 0 ||
     contentLines.some((line) => /^(?:V:|\[V:)/.test(line)) ||
-    contentLines.some((line) => !/^w:/.test(line) && !/(?:\||:\||\|\])\s*$/.test(line))
+    contentLines.some((line) => !line.startsWith("w:") && !/(?:\||:\||\|\])\s*$/.test(line))
   ) {
     return abc;
   }

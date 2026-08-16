@@ -174,7 +174,7 @@ export function normalizeRokotOutput(bytes: Uint8Array): OmrScoreDraft {
       throw invalidOutput("invalid-rokot-musicxml");
     }
     const rawParts = childElements(root, "part");
-    if (rawParts.length === 0 || rawParts.every((part) => childElements(part, "measure").length === 0)) {
+    if (rawParts.every((part) => childElements(part, "measure").length === 0)) {
       throw invalidOutput("empty-rokot-musicxml");
     }
 

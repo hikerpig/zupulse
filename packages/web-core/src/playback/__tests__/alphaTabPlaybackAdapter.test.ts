@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { AlphaTabApiLike, AlphaTabBrowserScoreLike, AlphaTabBrowserTrackLike } from "../../gp/alphaTabBrowser";
+import type { AlphaTabApiLike, AlphaTabBrowserScoreLike } from "../../gp/alphaTabBrowser";
 import {
   extractAlphaTabPlaybackOccurrences,
   AlphaTabPlaybackAdapter,

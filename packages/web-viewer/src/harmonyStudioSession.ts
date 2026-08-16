@@ -42,7 +42,7 @@ export class HarmonyStudioSession {
       if (saved.status === "conflict")
         return this.set({ status: "error", document: null, errorCode: "version-conflict" });
       return this.set({ status: "ready", document: saved.document });
-    } catch (error) {
+    } catch {
       if (controller) this.finishAnalysis(controller);
       return this.set({ status: "error", document: null, errorCode: "analysis-failed" });
     }
@@ -128,7 +128,7 @@ export class HarmonyStudioSession {
       if (saved.status === "conflict")
         return this.set({ status: "conflict", document: this.state.document, errorCode: "version-conflict" });
       return this.set({ status: "ready", document: saved.document });
-    } catch (error) {
+    } catch {
       this.finishAnalysis(controller);
       if (intent !== this.intent) return this.state;
       return this.set({
@@ -186,7 +186,7 @@ export class HarmonyStudioSession {
         if (saved.status === "conflict")
           return this.set({ status: "conflict", document, errorCode: "version-conflict" });
         return this.set({ status: "ready", document: saved.document });
-      } catch (error) {
+      } catch {
         return this.set({ status: "error", document, errorCode: "save-failed" });
       }
     };

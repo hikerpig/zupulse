@@ -9,7 +9,6 @@ import {
   toggleAlphaTabPreviewPlayback,
   createAlphaTabApi,
   waitForAlphaTabScore,
-  type AlphaTabApiLike,
   type AlphaTabHarmonyPreviewResult,
   type AlphaTabPreviewTransportResult,
   type AlphaTabStudioApiLike,

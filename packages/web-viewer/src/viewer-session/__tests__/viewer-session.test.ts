@@ -84,7 +84,7 @@ function makeController() {
   const previewSeek = vi.fn();
   const destroy = vi.fn(async () => undefined);
   const emit = (state: unknown) => {
-    for (const listener of [...listeners]) listener(state);
+    for (const listener of listeners) listener(state);
   };
   const controller = {
     initialize: async () => undefined,

@@ -1,3 +1,4 @@
+// oxlint-disable-next-line typescript/triple-slash-reference
 /// <reference path="./styles.d.ts" />
 
 export * from "./host";

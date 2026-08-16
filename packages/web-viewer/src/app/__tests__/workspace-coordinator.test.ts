@@ -59,7 +59,7 @@ const file = { fileName: "score.gp", bytes: new Uint8Array([1]) };
 describe("WorkspaceCoordinator", () => {
   it("releases the previous Studio runtime before opening a Viewer session", async () => {
     const events: string[] = [];
-    const { coordinator, studio, openSession } = createCoordinator(events);
+    const { coordinator, openSession } = createCoordinator(events);
 
     await coordinator.openViewer("score-1", async () => file);
 

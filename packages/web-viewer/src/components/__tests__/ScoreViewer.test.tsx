@@ -42,13 +42,13 @@ describe("ScoreViewer", () => {
 
     expect(screen.getByText("110%")).toBeTruthy();
     expect(commits).toHaveBeenCalledTimes(1);
-    expect((commits.mock.calls[0]?.[0] as CustomEvent).detail).toEqual({ zoom: 1.1 });
+    expect((commits.mock.calls[0]![0] as CustomEvent).detail).toEqual({ zoom: 1.1 });
 
     await userEvent.setup().click(screen.getByRole("button", { name: "放大谱面" }));
 
     expect(screen.getByText("120%")).toBeTruthy();
     expect(commits).toHaveBeenCalledTimes(2);
-    expect((commits.mock.calls[1]?.[0] as CustomEvent).detail).toEqual({ zoom: 1.2 });
+    expect((commits.mock.calls[1]![0] as CustomEvent).detail).toEqual({ zoom: 1.2 });
     document.removeEventListener("zupulse:score-zoom-commit", commits);
   });
 
@@ -67,7 +67,7 @@ describe("ScoreViewer", () => {
 
     await userEvent.setup().click(screen.getByRole("button", { name: "重置谱面缩放" }));
     expect(screen.getByText("100%")).toBeTruthy();
-    expect((commits.mock.calls[0]?.[0] as CustomEvent).detail).toEqual({ zoom: 1 });
+    expect((commits.mock.calls[0]![0] as CustomEvent).detail).toEqual({ zoom: 1 });
 
     fireEvent.keyDown(window, { key: "+", ctrlKey: true });
     expect(screen.getByText("110%")).toBeTruthy();
@@ -90,7 +90,7 @@ describe("ScoreViewer", () => {
     expect(restore.getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByRole("region", { name: "乐谱工作区" }).getAttribute("data-score-width")).toBe("full");
     expect(relayouts).toHaveBeenCalledOnce();
-    expect((relayouts.mock.calls[0]?.[0] as CustomEvent).detail).toEqual({ reason: "width" });
+    expect((relayouts.mock.calls[0]![0] as CustomEvent).detail).toEqual({ reason: "width" });
     document.removeEventListener("zupulse:score-layout-commit", relayouts);
   });
 
@@ -126,7 +126,7 @@ describe("ScoreViewer", () => {
     fireEvent.touchEnd(stage, { touches: [] });
 
     expect(commits).toHaveBeenCalledTimes(1);
-    expect((commits.mock.calls[0]?.[0] as CustomEvent).detail).toEqual({ zoom: 1.4 });
+    expect((commits.mock.calls[0]![0] as CustomEvent).detail).toEqual({ zoom: 1.4 });
     expect(viewer.style.transform).toBe("");
     document.removeEventListener("zupulse:score-zoom-commit", commits);
   });

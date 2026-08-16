@@ -611,7 +611,7 @@ function notesInSegment(events: readonly PaperSemiCrfEvent[]): PaperSemiCrfEvent
   return events.flatMap((event, index) => event.notes.filter((note) => index === 0 || !note.heldFromPrevious));
 }
 
-function notesWithoutFiguration(
+function _notesWithoutFiguration(
   allEvents: readonly PaperSemiCrfEvent[],
   segment: PaperSemiCrfSegment,
   chordPitchClasses: ReadonlySet<number>,
@@ -770,7 +770,7 @@ function removeMatchingNote(notes: PaperSemiCrfEventNote[], target: PaperSemiCrf
   if (index >= 0) notes.splice(index, 1);
 }
 
-function lowestNote(notes: readonly PaperSemiCrfEventNote[]): PaperSemiCrfEventNote | undefined {
+function _lowestNote(notes: readonly PaperSemiCrfEventNote[]): PaperSemiCrfEventNote | undefined {
   return notes.reduce<PaperSemiCrfEventNote | undefined>((bass, note) => {
     if (!bass) return note;
     if (note.soundingMidi !== undefined && bass.soundingMidi !== undefined) {

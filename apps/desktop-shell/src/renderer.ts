@@ -340,7 +340,15 @@ function createDesktopPdfOmrPort(
     subscribe(listener) {
       return bridge.subscribe((value) => {
         const event = bridgeEventSchema.parse(value);
-        if (event.type === "pdfOmr.progress") listener(event.payload.jobId, event.payload.event);
+        if (event.type !== "pdfOmr.progress") return;
+        const request = createBridgeRequest("pdfOmr.getSnapshot", crypto.randomUUID(), {});
+        void bridge
+          .request(request)
+          .then((value) => {
+            const response = parseBridgeResponse(request.type, value);
+            if (response.snapshot?.jobId === event.payload.jobId) listener(response.snapshot);
+          })
+          .catch(() => undefined);
       });
     },
   };

@@ -15,5 +15,12 @@ export * from "./features/playback-workspace/model/playback-presenter";
 export * from "./gpDemoPresenter";
 export * from "./playbackAssets";
 export * from "./features/SheetLibrary";
-export type { PdfOmrWorkbenchPort, PdfOmrEngineOption, PdfOmrResult } from "./features/pdf-omr/pdf-omr-port";
+export type {
+  PdfOmrWorkbenchPort,
+  PdfOmrEngineOption,
+  PdfOmrMidiCorrectionPort,
+  PdfOmrResult,
+  RecognitionJobPort,
+  RecognitionHistoryPort,
+} from "./features/pdf-omr/pdf-omr-port";
 export type { RecognitionSettingsPort } from "./features/application-settings/recognition-settings-port";

@@ -10,6 +10,7 @@ flowchart LR
   Core["web-core<br/>领域、schema、用例、端口"]
   Viewer["web-viewer<br/>React 路由与 UI"]
   Browser["web-demo<br/>IndexedDB 与 Browser 文件能力"]
+  Recognition["Recognition Server<br/>SQLite + S3 + single worker"]
   iPad["iPad Shell<br/>SwiftUI/WKWebView + IndexedDB"]
   Renderer["Desktop Renderer"]
   Preload["Preload 窄桥"]
@@ -18,6 +19,7 @@ flowchart LR
   Viewer --> Core
   Browser --> Viewer
   Browser --> Core
+  Browser -->|"same-origin HTTP + SSE"| Recognition --> Core
   iPad --> Viewer
   iPad --> Core
   Renderer --> Viewer
@@ -28,6 +30,7 @@ flowchart LR
 - `web-core` 不依赖 UI 或宿主平台。
 - `web-viewer` 只通过领域端口访问 Library 和文件能力。
 - Browser 与 Desktop 共享领域契约和 React UI，但使用互相独立的本地曲谱库。
+- Browser 可在同源 Remote Recognition capability 存在时使用 Server 识谱；任务历史不进入 IndexedDB 或曲谱库。
 - Desktop Renderer 不可信；本地能力只由 Main 经严格 Bridge 提供。
 - iPad Shell 是薄原生宿主：共享 React Library/Viewer，经版本化 Bridge 访问文件、生命周期与音频；
   个人原型复用 IndexedDB，正式产品化前重新评审持久化、迁移与性能。
@@ -50,6 +53,7 @@ flowchart LR
 - Desktop Diagnostics 当前行为：`../features/contracts/desktop-diagnostics.md`
 - Anonymous Telemetry 当前行为与发布治理边界：`../features/contracts/anonymous-telemetry.md`
 - 匿名遥测宿主与 release artifact 边界：`implementation-foundation.md`
+- Browser Remote PDF 识谱：`../features/contracts/remote-pdf-omr-service.md`
 - 应用国际化：`application-i18n.md`
 - Viewer 键盘与播放控制：`viewer-keyboard-and-transport-controls.md`
 - Browser alphaTab DOM 边界：`browser-demo-alphatab-dom-rendering.md`

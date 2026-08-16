@@ -67,6 +67,12 @@ const createConfig = (_env, argv) => {
           publicPath: "/alphatab/",
         },
       ],
+      proxy: [
+        {
+          context: ["/api/recognition"],
+          target: process.env.RECOGNITION_SERVER_URL ?? "http://127.0.0.1:4174",
+        },
+      ],
     },
   };
 };

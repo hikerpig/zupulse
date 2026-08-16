@@ -672,7 +672,7 @@ function createPort(): PdfOmrWorkbenchPort & {
   setSnapshot(snapshot: PdfOmrJobSnapshot): void;
 } {
   let snapshot: PdfOmrJobSnapshot | null = null;
-  const listeners = new Set<(jobId: string, event: PdfOmrProgressEvent) => void>();
+  const listeners = new Set<(snapshot: PdfOmrJobSnapshot) => void>();
   const port = {
     engines: [{ id: "audiveris", version: "1.0.0", label: "Audiveris", available: true, inputKinds: ["pdf", "image"] }],
     select: vi.fn(async () => ({
@@ -726,12 +726,18 @@ function createPort(): PdfOmrWorkbenchPort & {
       ],
     })),
     applyMidiCorrections: vi.fn(async () => ({ appliedCount: 1 })),
-    subscribe(listener: (jobId: string, event: PdfOmrProgressEvent) => void) {
+    subscribe(listener: (snapshot: PdfOmrJobSnapshot) => void) {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
     emit(event: PdfOmrProgressEvent) {
-      listeners.forEach((listener) => listener("job-1", event));
+      if (snapshot === null) return;
+      snapshot = {
+        ...snapshot,
+        ...(event.kind === "stage" ? { stage: event.stage, progress: event } : {}),
+        ...(event.kind === "terminal" ? { status: event.status } : {}),
+      };
+      listeners.forEach((listener) => listener(snapshot!));
     },
     setSnapshot(next: PdfOmrJobSnapshot) {
       snapshot = next;

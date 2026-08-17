@@ -17,8 +17,9 @@ def materialize(
     inventory: dict[str, Any],
     selection: dict[str, Any],
     output_root: Path,
+    profile_names: tuple[str, ...] = ("standard-development", "standard-holdout"),
 ) -> dict[str, Any]:
-    selected_strata = _selected_strata(selection)
+    selected_strata = _selected_strata(selection, profile_names)
     selected_ids = set(selected_strata)
     by_id = {entry["item"]["id"]: entry for entry in inventory["oracleSystems"]}
     missing = sorted(selected_ids - by_id.keys())
@@ -56,12 +57,31 @@ def materialize(
     }
 
 
-def _selected_strata(selection: dict[str, Any]) -> dict[str, str]:
+def build_manifest(materialized: dict[str, Any], corpus_id: str, protocol_version: str) -> dict[str, Any]:
+    items = []
+    for entry in materialized["oracleSystems"]:
+        item = copy.deepcopy(entry["item"])
+        if item["split"] != "development":
+            raise ValueError(f"non-development item cannot enter repair evaluation: {item['id']}")
+        item["benchmarkSuite"] = "oracle-system"
+        items.append(item)
+    return {
+        "schemaVersion": "1.0.0",
+        "corpusId": corpus_id,
+        "protocolVersion": protocol_version,
+        "items": items,
+    }
+
+
+def _selected_strata(selection: dict[str, Any], profile_names: tuple[str, ...]) -> dict[str, str]:
     profiles = selection.get("profiles", {})
+    missing = [profile_name for profile_name in profile_names if profile_name not in profiles]
+    if missing:
+        raise ValueError(f"missing OLiMPiC selection profile: {missing[0]}")
     selected = {
         item["itemId"]: item["stratum"]
-        for profile_name in ("standard-development", "standard-holdout")
-        for item in profiles.get(profile_name, {}).get("items", [])
+        for profile_name in profile_names
+        for item in profiles[profile_name].get("items", [])
     }
     if not selected:
         raise ValueError("OLiMPiC selection contains no standard items")
@@ -89,12 +109,23 @@ def main() -> None:
     parser.add_argument("--selection", type=Path, required=True)
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--output-inventory", type=Path, required=True)
+    parser.add_argument("--output-manifest", type=Path)
+    parser.add_argument("--corpus-id")
+    parser.add_argument("--protocol-version", default="1.0.0")
+    parser.add_argument("--profile", action="append", dest="profiles")
     args = parser.parse_args()
     inventory = json.loads(args.inventory.read_text(encoding="utf-8"))
     selection = json.loads(args.selection.read_text(encoding="utf-8"))
-    result = materialize(args.source_root, inventory, selection, args.output_root)
+    profile_names = tuple(args.profiles or ("standard-development", "standard-holdout"))
+    result = materialize(args.source_root, inventory, selection, args.output_root, profile_names)
     args.output_inventory.parent.mkdir(parents=True, exist_ok=True)
     args.output_inventory.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if args.output_manifest is not None:
+        if not args.corpus_id:
+            raise SystemExit("--corpus-id is required with --output-manifest")
+        manifest = build_manifest(result, args.corpus_id, args.protocol_version)
+        args.output_manifest.parent.mkdir(parents=True, exist_ok=True)
+        args.output_manifest.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

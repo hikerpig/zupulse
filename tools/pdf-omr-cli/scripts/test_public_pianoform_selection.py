@@ -30,6 +30,14 @@ class PublicPianoformSelectionTest(unittest.TestCase):
             self.assertEqual(olimpic["profiles"][profile]["counts"]["items"], expected[1])
             self.assertEqual(fp["profiles"][profile]["counts"]["items"], expected[2])
 
+        supplement = olimpic["profiles"]["position-supplement-development"]
+        self.assertEqual(supplement["counts"]["items"], 10)
+        self.assertEqual(supplement["counts"]["systemPositions"], {
+            "first": 0,
+            "middle": 10,
+            "last": 0,
+        })
+
         self.assertEqual(contract["qualityClaim"], "excluded")
         for profile in ("standard-development", "standard-holdout"):
             self.assertEqual(olimpic["profiles"][profile]["counts"]["strata"], {

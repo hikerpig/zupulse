@@ -19,8 +19,9 @@ index `0`、`1` 外，还包括 `olimpic-dev-5023603-p4-s2` 的 measure index `0
 - Joint F1：`0.1873 -> 0.2105`
 - Valid measure rate：`0.0385 -> 0.0769`
 
-推荐集合 assessment 为 `improved`、`nonRegressive: true`。这证明多 engine 结果可以辅助小节级修复，但必须先做
-candidate-level precision filtering；结果仍是 report-only development evidence，不自动 promotion 或写回。
+Oracle 集合 assessment 为 `improved`、`nonRegressive: true`。这证明多 engine 结果可以辅助小节级修复，但必须先做
+candidate-level precision filtering；这里的筛选读取了 GT，只是 `oracleRecommended` 标签，不是可部署 selector。
+结果仍是 report-only development evidence，不自动 promotion 或写回。
 
 结构化指标与所有输入/report hash 见 [`summary.json`](summary.json)。完整 runs、派生 PDF、ABC、MXL、模型与
 cache 不进入 Git。

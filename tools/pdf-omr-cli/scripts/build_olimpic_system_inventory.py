@@ -101,6 +101,10 @@ def build_selection_document(
                 selector.group_oracle_by_stratum(representative, strata),
                 repeat_item_ids=[],
             )
+    profiles["position-supplement-development"] = build_position_supplement_profile(
+        development,
+        profiles["standard-development"],
+    )
     return {
         "schemaVersion": "1.0.0",
         "corpusId": "public-pianoform-v1",
@@ -117,6 +121,7 @@ def build_selection_document(
             "complexityTuple": list(selector.COMPLEXITY_FIELDS),
             "standardStrata": {"easy": 12, "medium": 12, "hard": 12},
             "systemPositionPolicy": "within each stratum select up to four last, then up to four middle, then fill by stable work/sample ID",
+            "positionSupplementPolicy": "unselected middle and last systems from standard-development works",
         },
         "profiles": {name: profiles[name] for name in sorted(profiles)},
     }
@@ -141,16 +146,7 @@ def _selection_profile(
     selected = [entry for stratum in ("easy", "medium", "hard") for entry in strata[stratum]]
     return {
         "items": [
-            {
-                "itemId": entry["item"]["id"],
-                "workId": entry["item"]["workId"],
-                "sourceSampleId": entry["item"]["provenance"]["sampleId"],
-                "stratum": stratum,
-                "systemPosition": entry["systemPosition"],
-                "complexity": entry["complexity"],
-                "sourceImageSha256": entry["source"]["imageSha256"],
-                "groundTruthSha256": entry["item"]["groundTruth"]["sha256"],
-            }
+            _selection_item(entry, stratum)
             for stratum in ("easy", "medium", "hard")
             for entry in strata[stratum]
         ],
@@ -164,6 +160,42 @@ def _selection_profile(
                 for position in ("first", "middle", "last")
             },
         },
+    }
+
+
+def build_position_supplement_profile(
+    development: list[dict[str, Any]],
+    standard_profile: dict[str, Any],
+) -> dict[str, Any]:
+    selected_ids = {item["itemId"] for item in standard_profile["items"]}
+    stratum_by_work = {item["workId"]: item["stratum"] for item in standard_profile["items"]}
+    strata = {
+        stratum: sorted(
+            (
+                entry
+                for entry in development
+                if entry["item"]["id"] not in selected_ids
+                and entry["item"]["workId"] in stratum_by_work
+                and stratum_by_work[entry["item"]["workId"]] == stratum
+                and entry["systemPosition"] in ("middle", "last")
+            ),
+            key=lambda entry: (entry["item"]["workId"], entry["item"]["id"]),
+        )
+        for stratum in ("easy", "medium", "hard")
+    }
+    return _selection_profile(strata, repeat_item_ids=[])
+
+
+def _selection_item(entry: dict[str, Any], stratum: str) -> dict[str, Any]:
+    return {
+        "itemId": entry["item"]["id"],
+        "workId": entry["item"]["workId"],
+        "sourceSampleId": entry["item"]["provenance"]["sampleId"],
+        "stratum": stratum,
+        "systemPosition": entry["systemPosition"],
+        "complexity": entry["complexity"],
+        "sourceImageSha256": entry["source"]["imageSha256"],
+        "groundTruthSha256": entry["item"]["groundTruth"]["sha256"],
     }
 
 

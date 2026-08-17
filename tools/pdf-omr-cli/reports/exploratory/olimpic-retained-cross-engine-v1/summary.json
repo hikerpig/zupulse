@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "status": "completed-recommended-set-non-regressive",
+  "status": "completed-oracle-set-non-regressive",
   "decision": "INVESTIGATE",
   "corpus": {
     "id": "olimpic-retained-system-development-v1",
@@ -33,12 +33,12 @@
   },
   "candidates": {
     "total": 13,
-    "recommended": 3,
+    "oracleRecommended": 3,
     "improved": 3,
     "mixed": 9,
     "regressed": 1,
     "unchanged": 0,
-    "recommendedCandidates": [
+    "oracleRecommendedCandidates": [
       {
         "itemId": "olimpic-dev-5023603-p4-s2",
         "operation": "replace",
@@ -59,7 +59,7 @@
       }
     ]
   },
-  "recommendedSet": {
+  "oracleRecommendedSet": {
     "assessment": "improved",
     "nonRegressive": true,
     "before": {

@@ -94,6 +94,41 @@ class OlimpicSystemInventoryTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "does not match inventory"):
             MODULE.filter_ready_entries(entries, {"items": [{"itemId": "ready", "ready": True}]})
 
+    def test_position_supplement_keeps_unselected_middle_and_last_items_from_standard_works(self) -> None:
+        def entry(item_id: str, work_id: str, position: str) -> dict:
+            return {
+                "item": {
+                    "id": item_id,
+                    "workId": work_id,
+                    "provenance": {"sampleId": item_id},
+                    "groundTruth": {"sha256": "b" * 64},
+                },
+                "source": {"imageSha256": "a" * 64},
+                "systemPosition": position,
+                "complexity": {"noteCount": 1},
+            }
+
+        standard = {
+            "items": [
+                {"itemId": "work-a-last", "workId": "work-a", "stratum": "easy"},
+                {"itemId": "work-b-first", "workId": "work-b", "stratum": "hard"},
+            ]
+        }
+
+        profile = MODULE.build_position_supplement_profile(
+            [
+                entry("work-a-last", "work-a", "last"),
+                entry("work-a-middle", "work-a", "middle"),
+                entry("work-b-first", "work-b", "first"),
+                entry("outside-middle", "outside", "middle"),
+            ],
+            standard,
+        )
+
+        self.assertEqual([item["itemId"] for item in profile["items"]], ["work-a-middle"])
+        self.assertEqual(profile["items"][0]["stratum"], "easy")
+        self.assertEqual(profile["counts"]["systemPositions"], {"first": 0, "middle": 1, "last": 0})
+
 
 if __name__ == "__main__":
     unittest.main()

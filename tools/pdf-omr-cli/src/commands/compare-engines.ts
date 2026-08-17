@@ -44,6 +44,7 @@ type RunFacts = {
   directory: string;
   reportSha256: string;
   metadata: z.infer<typeof benchmarkMetadataSchema>;
+  attempted: number;
   itemIds: string[];
 };
 
@@ -61,7 +62,7 @@ export async function compareEnginesCommand(input: {
   ]);
   requireCompatibleRuns(primary, secondary);
   const comparisons = await Promise.all(
-    primary.itemIds.map(async (itemId) => {
+    comparableItemIds(primary, secondary).map(async (itemId) => {
       const [primaryDraft, secondaryDraft] = await Promise.all([
         readPredictedDraft(primary.directory, itemId),
         readPredictedDraft(secondary.directory, itemId),
@@ -92,7 +93,10 @@ export async function compareEnginesCommand(input: {
       reportSha256: secondary.reportSha256,
     },
     items: {
-      total: comparisons.length,
+      attempted: primary.attempted,
+      primarySucceeded: primary.itemIds.length,
+      secondarySucceeded: secondary.itemIds.length,
+      comparable: comparisons.length,
       agreements: comparisons.filter((comparison) => comparison.agreement).length,
       disagreements: comparisons.filter((comparison) => !comparison.agreement).length,
       ambiguousAlignments: comparisons.filter((comparison) => comparison.alignmentAmbiguous).length,
@@ -136,19 +140,25 @@ async function readRun(directory: string): Promise<RunFacts> {
     throw invalidRun("benchmark-report-invalid", error);
   }
   if (metadata.mode !== "development") throw incompatibleRuns();
-  if (items.failed !== 0 || items.succeeded !== items.total) {
-    throw invalidRun("benchmark-run-incomplete");
-  }
+  const failures = Array.isArray(record.failures) ? record.failures : [];
+  const failedItemIds = new Set(
+    failures.flatMap((failure) => {
+      if (typeof failure !== "object" || failure === null || Array.isArray(failure)) return [];
+      const itemId = (failure as Record<string, unknown>).itemId;
+      return typeof itemId === "string" ? [itemId] : [];
+    }),
+  );
+  if (failedItemIds.size !== items.failed) throw invalidRun("benchmark-failure-count-mismatch");
   const itemIds = (
     await readdir(join(directory, "items"), { withFileTypes: true }).catch((error: unknown) => {
       throw invalidRun("benchmark-items-unreadable", error);
     })
   )
-    .filter((entry) => entry.isDirectory())
+    .filter((entry) => entry.isDirectory() && !failedItemIds.has(entry.name))
     .map((entry) => entry.name)
     .sort();
-  if (itemIds.length !== items.total) throw invalidRun("benchmark-item-count-mismatch");
-  return { directory, reportSha256: sha256Bytes(reportBytes), metadata, itemIds };
+  if (itemIds.length !== items.succeeded) throw invalidRun("benchmark-item-count-mismatch");
+  return { directory, reportSha256: sha256Bytes(reportBytes), metadata, attempted: items.total, itemIds };
 }
 
 async function readPredictedDraft(directory: string, itemId: string) {
@@ -168,9 +178,13 @@ function requireCompatibleRuns(primary: RunFacts, secondary: RunFacts): void {
     primary.metadata.protocolVersion === secondary.metadata.protocolVersion &&
     primary.metadata.manifestSha256 === secondary.metadata.manifestSha256 &&
     primary.metadata.mode === secondary.metadata.mode &&
-    primary.itemIds.length === secondary.itemIds.length &&
-    primary.itemIds.every((itemId, index) => itemId === secondary.itemIds[index]);
+    primary.attempted === secondary.attempted;
   if (!sameIdentity) throw incompatibleRuns();
+}
+
+function comparableItemIds(primary: RunFacts, secondary: RunFacts): string[] {
+  const secondaryItems = new Set(secondary.itemIds);
+  return primary.itemIds.filter((itemId) => secondaryItems.has(itemId));
 }
 
 function incompatibleRuns(): PdfOmrError {

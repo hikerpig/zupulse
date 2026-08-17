@@ -34,6 +34,16 @@ const metricDeltaSchema = z
   .strict();
 
 const assessmentSchema = z.enum(["improved", "regressed", "mixed", "unchanged"]);
+const assessmentCountsSchema = z
+  .object({
+    total: z.number().int().nonnegative(),
+    oracleRecommended: z.number().int().nonnegative(),
+    improved: z.number().int().nonnegative(),
+    regressed: z.number().int().nonnegative(),
+    mixed: z.number().int().nonnegative(),
+    unchanged: z.number().int().nonnegative(),
+  })
+  .strict();
 
 export const repairCandidateEvaluationReportSchema = z
   .object({
@@ -51,7 +61,7 @@ export const repairCandidateEvaluationReportSchema = z
     primaryReportSha256: sha256Schema,
     items: z
       .object({
-        total: z.number().int().nonnegative(),
+        comparable: z.number().int().nonnegative(),
         appliedCandidates: z.number().int().nonnegative(),
         improved: z.number().int().nonnegative(),
         regressed: z.number().int().nonnegative(),
@@ -59,14 +69,31 @@ export const repairCandidateEvaluationReportSchema = z
         unchanged: z.number().int().nonnegative(),
       })
       .strict(),
+    coverage: z
+      .object({
+        attempted: z.number().int().nonnegative(),
+        primarySucceeded: z.number().int().nonnegative(),
+        secondarySucceeded: z.number().int().nonnegative(),
+        comparable: z.number().int().nonnegative(),
+        itemsWithCandidates: z.number().int().nonnegative(),
+        candidates: z.number().int().nonnegative(),
+      })
+      .strict(),
     candidates: z
       .object({
         total: z.number().int().nonnegative(),
-        recommended: z.number().int().nonnegative(),
+        oracleRecommended: z.number().int().nonnegative(),
         improved: z.number().int().nonnegative(),
         regressed: z.number().int().nonnegative(),
         mixed: z.number().int().nonnegative(),
         unchanged: z.number().int().nonnegative(),
+      })
+      .strict(),
+    operations: z
+      .object({
+        insert: assessmentCountsSchema,
+        replace: assessmentCountsSchema,
+        delete: assessmentCountsSchema,
       })
       .strict(),
     overall: z
@@ -78,7 +105,7 @@ export const repairCandidateEvaluationReportSchema = z
         nonRegressive: z.boolean(),
       })
       .strict(),
-    recommendedSet: z
+    oracleRecommendedSet: z
       .object({
         appliedCandidates: z.number().int().nonnegative(),
         before: metricSummarySchema,
@@ -112,7 +139,7 @@ export const repairCandidateEvaluationReportSchema = z
           delta: metricDeltaSchema,
           assessment: assessmentSchema,
           nonRegressive: z.boolean(),
-          recommended: z.boolean(),
+          oracleRecommended: z.boolean(),
         })
         .strict(),
     ),
@@ -146,32 +173,33 @@ export async function evaluateRepairCandidatesCommand(input: {
         readDraft(join(primaryDirectory, "items", itemId, "predicted-draft.json"), "predicted-draft-invalid"),
         readDraft(join(primaryDirectory, "items", itemId, "ground-truth-draft.json"), "ground-truth-draft-invalid"),
       ]);
-      const result = evaluateRepairCandidates(primary, expected, engineDraftComparisonSchema.parse(draftComparison));
+      const comparison = engineDraftComparisonSchema.parse(draftComparison);
+      const result = evaluateRepairCandidates(primary, expected, comparison);
       const before = summarize(result.before);
       const after = summarize(result.after);
-      const candidateEvaluations = evaluateRepairCandidatesIndividually(
+      const candidateEvaluations = evaluateRepairCandidatesIndividually(primary, expected, comparison).map(
+        (candidate) => {
+          const candidateBefore = summarize(candidate.before);
+          const candidateAfter = summarize(candidate.after);
+          const candidateAssessment = assess(candidateBefore, candidateAfter);
+          return {
+            itemId,
+            candidateSha256: candidate.candidateSha256,
+            operation: candidate.operation,
+            before: candidateBefore,
+            after: candidateAfter,
+            ...candidateAssessment,
+            oracleRecommended: candidateAssessment.assessment === "improved" && candidateAssessment.nonRegressive,
+          };
+        },
+      );
+      const oracleRecommended = evaluateRepairCandidateSelection(
         primary,
         expected,
-        engineDraftComparisonSchema.parse(draftComparison),
-      ).map((candidate) => {
-        const candidateBefore = summarize(candidate.before);
-        const candidateAfter = summarize(candidate.after);
-        const candidateAssessment = assess(candidateBefore, candidateAfter);
-        return {
-          itemId,
-          candidateSha256: candidate.candidateSha256,
-          operation: candidate.operation,
-          before: candidateBefore,
-          after: candidateAfter,
-          ...candidateAssessment,
-          recommended: candidateAssessment.assessment === "improved" && candidateAssessment.nonRegressive,
-        };
-      });
-      const recommended = evaluateRepairCandidateSelection(
-        primary,
-        expected,
-        engineDraftComparisonSchema.parse(draftComparison),
-        candidateEvaluations.filter((candidate) => candidate.recommended).map((candidate) => candidate.candidateSha256),
+        comparison,
+        candidateEvaluations
+          .filter((candidate) => candidate.oracleRecommended)
+          .map((candidate) => candidate.candidateSha256),
       );
       return {
         itemId,
@@ -182,9 +210,9 @@ export async function evaluateRepairCandidatesCommand(input: {
         beforeMetrics: result.before,
         afterMetrics: result.after,
         candidateEvaluations,
-        recommendedAppliedCandidates: recommended.appliedCandidateCount,
-        recommendedBeforeMetrics: recommended.before,
-        recommendedAfterMetrics: recommended.after,
+        oracleRecommendedAppliedCandidates: oracleRecommended.appliedCandidateCount,
+        oracleRecommendedBeforeMetrics: oracleRecommended.before,
+        oracleRecommendedAfterMetrics: oracleRecommended.after,
       };
     }),
   );
@@ -192,11 +220,11 @@ export async function evaluateRepairCandidatesCommand(input: {
   const after = summarize(aggregateSymbolicMetrics(evaluations.map((evaluation) => evaluation.afterMetrics)));
   const overallAssessment = assess(before, after);
   const candidateEvaluations = evaluations.flatMap((evaluation) => evaluation.candidateEvaluations);
-  const recommendedBefore = summarize(
-    aggregateSymbolicMetrics(evaluations.map((evaluation) => evaluation.recommendedBeforeMetrics)),
+  const oracleRecommendedBefore = summarize(
+    aggregateSymbolicMetrics(evaluations.map((evaluation) => evaluation.oracleRecommendedBeforeMetrics)),
   );
-  const recommendedAfter = summarize(
-    aggregateSymbolicMetrics(evaluations.map((evaluation) => evaluation.recommendedAfterMetrics)),
+  const oracleRecommendedAfter = summarize(
+    aggregateSymbolicMetrics(evaluations.map((evaluation) => evaluation.oracleRecommendedAfterMetrics)),
   );
   const report = repairCandidateEvaluationReportSchema.parse({
     schemaVersion: "1.0.0",
@@ -204,37 +232,46 @@ export async function evaluateRepairCandidatesCommand(input: {
     identity: comparison.identity,
     comparisonSha256: sha256Bytes(comparisonBytes),
     primaryReportSha256,
+    coverage: {
+      attempted: comparison.items.attempted,
+      primarySucceeded: comparison.items.primarySucceeded,
+      secondarySucceeded: comparison.items.secondarySucceeded,
+      comparable: evaluations.length,
+      itemsWithCandidates: new Set(candidateEvaluations.map((evaluation) => evaluation.itemId)).size,
+      candidates: candidateEvaluations.length,
+    },
     items: {
-      total: evaluations.length,
+      comparable: evaluations.length,
       appliedCandidates: evaluations.reduce((sum, evaluation) => sum + evaluation.appliedCandidates, 0),
       improved: evaluations.filter((evaluation) => evaluation.assessment === "improved").length,
       regressed: evaluations.filter((evaluation) => evaluation.assessment === "regressed").length,
       mixed: evaluations.filter((evaluation) => evaluation.assessment === "mixed").length,
       unchanged: evaluations.filter((evaluation) => evaluation.assessment === "unchanged").length,
     },
-    candidates: {
-      total: candidateEvaluations.length,
-      recommended: candidateEvaluations.filter((evaluation) => evaluation.recommended).length,
-      improved: candidateEvaluations.filter((evaluation) => evaluation.assessment === "improved").length,
-      regressed: candidateEvaluations.filter((evaluation) => evaluation.assessment === "regressed").length,
-      mixed: candidateEvaluations.filter((evaluation) => evaluation.assessment === "mixed").length,
-      unchanged: candidateEvaluations.filter((evaluation) => evaluation.assessment === "unchanged").length,
+    candidates: countAssessments(candidateEvaluations),
+    operations: {
+      insert: countAssessments(candidateEvaluations.filter((evaluation) => evaluation.operation === "insert")),
+      replace: countAssessments(candidateEvaluations.filter((evaluation) => evaluation.operation === "replace")),
+      delete: countAssessments(candidateEvaluations.filter((evaluation) => evaluation.operation === "delete")),
     },
     overall: { before, after, ...overallAssessment },
-    recommendedSet: {
-      appliedCandidates: evaluations.reduce((sum, evaluation) => sum + evaluation.recommendedAppliedCandidates, 0),
-      before: recommendedBefore,
-      after: recommendedAfter,
-      ...assess(recommendedBefore, recommendedAfter),
+    oracleRecommendedSet: {
+      appliedCandidates: evaluations.reduce(
+        (sum, evaluation) => sum + evaluation.oracleRecommendedAppliedCandidates,
+        0,
+      ),
+      before: oracleRecommendedBefore,
+      after: oracleRecommendedAfter,
+      ...assess(oracleRecommendedBefore, oracleRecommendedAfter),
     },
     evaluations: evaluations.map(
       ({
         beforeMetrics: _beforeMetrics,
         afterMetrics: _afterMetrics,
         candidateEvaluations: _candidateEvaluations,
-        recommendedAppliedCandidates: _recommendedAppliedCandidates,
-        recommendedBeforeMetrics: _recommendedBeforeMetrics,
-        recommendedAfterMetrics: _recommendedAfterMetrics,
+        oracleRecommendedAppliedCandidates: _oracleRecommendedAppliedCandidates,
+        oracleRecommendedBeforeMetrics: _oracleRecommendedBeforeMetrics,
+        oracleRecommendedAfterMetrics: _oracleRecommendedAfterMetrics,
         ...evaluation
       }) => evaluation,
     ),
@@ -283,6 +320,19 @@ function assess(
     delta: changes,
     assessment: positive && negative ? "mixed" : positive ? "improved" : negative ? "regressed" : "unchanged",
     nonRegressive: !negative,
+  };
+}
+
+function countAssessments(
+  evaluations: readonly { assessment: z.infer<typeof assessmentSchema>; oracleRecommended: boolean }[],
+): z.infer<typeof assessmentCountsSchema> {
+  return {
+    total: evaluations.length,
+    oracleRecommended: evaluations.filter((evaluation) => evaluation.oracleRecommended).length,
+    improved: evaluations.filter((evaluation) => evaluation.assessment === "improved").length,
+    regressed: evaluations.filter((evaluation) => evaluation.assessment === "regressed").length,
+    mixed: evaluations.filter((evaluation) => evaluation.assessment === "mixed").length,
+    unchanged: evaluations.filter((evaluation) => evaluation.assessment === "unchanged").length,
   };
 }
 

@@ -316,3 +316,16 @@ baseline；readiness 仍是 1 个 ready-with-warnings、2 个 blocked。携带�
 
 小型 durable evidence 见 `reports/exploratory/legato-system-pages-v1/`。完整 run、派生 PDF、模型与 cache
 保持在仓库外。
+
+## OLiMPiC source-independent expanded cross-engine result
+
+2026-08-17 从锁定 OLiMPiC scanned archive 物化 36 个 standard-development systems，并补入同 work 的
+10 个 middle systems；全部为 original source images，不来自任何 engine artifact。位置覆盖由
+first/middle/last `31/1/4` 扩为 `31/11/4`；release 中 4 个 GT-ready last systems 已被标准集穷尽。
+
+Rokot 完成 45/46，LEGATO 完成 26/46，成功交集为 26/46。comparison 在保留 attempted 与两侧 success
+分母后生成 81 个 `replace` candidates。全部应用为 mixed；GT oracle 标出的 28 个候选联合后，Joint F1 从
+`0.2690` 升到 `0.3369`，其余四项也均提升。但锁定 work-disjoint GT-free selector gate 要求至少 35 个
+候选、零回归、95% Wilson lower bound 不低于 0.90；28/28 的 oracle upper bound 也只有 `0.8794`。
+因此当前仍为 `INVESTIGATE / NOT_ELIGIBLE`，不得自动应用。完整结构化证据见
+`reports/exploratory/olimpic-source-independent-cross-engine-v1/`。

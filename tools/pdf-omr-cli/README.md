@@ -172,15 +172,19 @@ comparison 对单 part Draft 做 global measure sequence alignment，将完整�
 `replace` 或 `delete` repair candidate；`insert`/`replace` 携带移除 event ID、confidence 与 source anchor 后的
 规范化小节事实和可复算 SHA-256。所有 proposal 与 candidate 固定 `autoApplicable: false`，candidate 固定
 `reviewRequired: true`。alignment ambiguity 时不生成 candidate；多 part 缺少显式跨引擎 identity、topology
-不一致、run identity 不一致或不完整 run 都会 fail closed。命令不读取 ground truth，也不修改输入 run。
+不一致或 run identity 不一致会 fail closed。不完整 development run 只比较双方成功 item 的交集，并在报告中分别
+记录 `attempted`、两侧 `succeeded` 与 `comparable`，不再要求人工复制 comparable 子集。命令不读取 ground truth，
+也不修改输入 run。
 当同一钢琴谱被一个 engine 表示为多个单谱表 part、另一个表示为单个多谱表 part 时，必须显式传
 `--topology ordered-staves`；该模式只按 Draft 中 part/staff 的声明顺序建立 comparison view，不猜测或持久化
 part identity。默认 `strict` 仍会拒绝这种拓扑差异。
 
 候选效果只能通过显式的 development-only 模拟评分命令评估。该命令校验 comparison 与 primary report hash，
 先在内存中应用全部 candidate，再逐个候选相对未修改 primary 独立评分。只有单候选 assessment 为 `improved`
-且 `nonRegressive: true` 时才标为 `recommended`；报告还会联合应用这些推荐候选并输出 `recommendedSet`，验证组合后
-仍满足 non-regression。推荐只代表 development evidence，不改变 `autoApplicable: false` / `reviewRequired: true`。
+且 `nonRegressive: true` 时才标为 `oracleRecommended`；报告还会联合应用这些 GT-derived 候选并输出
+`oracleRecommendedSet`，验证组合后仍满足 non-regression。该标签只代表 development oracle evidence，不是可部署
+selector，也不改变 `autoApplicable: false` / `reviewRequired: true`。报告同时给出 attempted/comparable/candidate
+分母，以及 insert/replace/delete 分项统计。
 命令只写 `evaluation.json`，不会写 simulated Draft：
 
 ```bash

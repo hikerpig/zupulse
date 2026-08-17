@@ -25,7 +25,13 @@ describe("evaluateRepairCandidatesCommand", () => {
     expect(result).toMatchObject({ command: "evaluate-repair-candidates", status: "succeeded" });
     const report = JSON.parse(await readFile(join(root, "evaluation/evaluation.json"), "utf8"));
     expect(report).toMatchObject({
-      items: { total: 1, appliedCandidates: 1, improved: 1, regressed: 0, mixed: 0, unchanged: 0 },
+      coverage: { attempted: 1, comparable: 1, itemsWithCandidates: 1, candidates: 1 },
+      items: { comparable: 1, appliedCandidates: 1, improved: 1, regressed: 0, mixed: 0, unchanged: 0 },
+      operations: {
+        insert: { total: 1, improved: 1, regressed: 0, mixed: 0, unchanged: 0 },
+        replace: { total: 0, improved: 0, regressed: 0, mixed: 0, unchanged: 0 },
+        delete: { total: 0, improved: 0, regressed: 0, mixed: 0, unchanged: 0 },
+      },
       overall: {
         after: { jointF1: 1, validMeasureRate: 1 },
         assessment: "improved",
@@ -53,24 +59,23 @@ describe("evaluateRepairCandidatesCommand", () => {
     const report = JSON.parse(await readFile(join(root, "evaluation/evaluation.json"), "utf8"));
     expect(report.candidates).toMatchObject({
       total: 2,
-      recommended: 1,
+      oracleRecommended: 1,
       improved: 1,
       regressed: 1,
       mixed: 0,
       unchanged: 0,
     });
     expect(report.candidateEvaluations).toHaveLength(2);
-    expect(report.candidateEvaluations.map((evaluation: { recommended: boolean }) => evaluation.recommended)).toEqual([
-      true,
-      false,
-    ]);
+    expect(
+      report.candidateEvaluations.map((evaluation: { oracleRecommended: boolean }) => evaluation.oracleRecommended),
+    ).toEqual([true, false]);
     expect(report.candidateEvaluations[0].candidateSha256).toMatch(/^[a-f0-9]{64}$/);
-    expect(report.recommendedSet).toMatchObject({
+    expect(report.oracleRecommendedSet).toMatchObject({
       appliedCandidates: 1,
       assessment: "improved",
       nonRegressive: true,
     });
-    expect(report.recommendedSet.delta.pitchF1).toBeGreaterThan(0);
+    expect(report.oracleRecommendedSet.delta.pitchF1).toBeGreaterThan(0);
   });
 });
 

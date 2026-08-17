@@ -181,7 +181,10 @@ export const engineComparisonReportSchema = z
     secondary: benchmarkRunReferenceSchema,
     items: z
       .object({
-        total: z.number().int().nonnegative(),
+        attempted: z.number().int().nonnegative(),
+        primarySucceeded: z.number().int().nonnegative(),
+        secondarySucceeded: z.number().int().nonnegative(),
+        comparable: z.number().int().nonnegative(),
         agreements: z.number().int().nonnegative(),
         disagreements: z.number().int().nonnegative(),
         ambiguousAlignments: z.number().int().nonnegative(),

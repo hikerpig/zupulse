@@ -205,6 +205,14 @@ export const enUS = {
       pdfPlaceholder: "Waiting for an input file",
       pdfHint: "Choose a PDF or image to keep its input summary in this session.",
       pdfSelected: "Selected file · {{size}} · The original will not enter the Library.",
+      pdfPreview: {
+        loading: "Rendering the input preview…",
+        unavailable: "The input preview is unavailable",
+        pageLabel: "Page {{page}} of {{total}}",
+        previous: "Previous page",
+        next: "Next page",
+        imageAlt: "{{fileName}} page {{page}}",
+      },
       engineEvidence: "Intermediate evidence",
       engineEvidenceHint:
         "Only structured progress is shown here; stdout, stderr, and absolute paths are never parsed.",

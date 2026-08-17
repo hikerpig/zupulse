@@ -11,6 +11,7 @@ import { omrRunManifestSchema, type PdfOmrValidateReport } from "./schemas";
 
 export { PdfOmrError } from "./errors";
 export { runEngineProcess } from "./engine-runner";
+export { renderPdfPages, encodeRgbaPng } from "./render-pdf-pages";
 export { createEngineRegistry, resolveBundledLegatoRunnerPath } from "./engine-registry";
 export type { EngineRegistry } from "./engine-registry";
 export type { OmrEngineAdapter } from "./engines/types";

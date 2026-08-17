@@ -8,6 +8,7 @@ import { ScoreViewer } from "../../components/ScoreViewer";
 import type { ViewerDomBindings, ViewerFile } from "../../host";
 import type { ViewerSessionPort } from "../../viewer-session/viewer-session-types";
 import type {
+  PdfOmrInputPreview,
   PdfOmrMidiAnalysis,
   PdfOmrValidationView,
   PdfOmrWorkbenchPort,
@@ -260,6 +261,13 @@ export function PdfOmrPage({
     }
   };
 
+  const jobId = snapshot?.jobId;
+  const loadInputPreview = useCallback(
+    (pageIndex: number) =>
+      port !== undefined && jobId !== undefined ? port.readInputPreview(jobId, pageIndex) : Promise.resolve(null),
+    [port, jobId],
+  );
+
   const statusTone =
     snapshot?.status === undefined && input !== undefined ? "ready" : snapshotStatusTone(snapshot?.status);
   const hasJob = snapshot !== undefined;
@@ -386,7 +394,7 @@ export function PdfOmrPage({
                 t={t}
               />
             ) : (
-              <PdfEvidence file={input} t={t} />
+              <PdfEvidence file={input} loadPreview={jobId === undefined ? undefined : loadInputPreview} t={t} />
             )}
           </div>
         </section>
@@ -697,12 +705,94 @@ function EvidenceTabButton({
   );
 }
 
-function PdfEvidence({ file, t }: { file?: { fileName: string; sizeBytes: number } | undefined; t: CommonT }) {
+function PdfEvidence({
+  file,
+  loadPreview,
+  t,
+}: {
+  file?: { fileName: string; sizeBytes: number } | undefined;
+  loadPreview?: ((pageIndex: number) => Promise<PdfOmrInputPreview | null>) | undefined;
+  t: CommonT;
+}) {
+  const [pageIndex, setPageIndex] = useState(0);
+  const [preview, setPreview] = useState<{ url: string; pageCount: number } | null>(null);
+  const [state, setState] = useState<"idle" | "loading" | "ready" | "unavailable">("idle");
+  useEffect(() => {
+    if (loadPreview === undefined) {
+      setPreview(null);
+      setState("idle");
+      return;
+    }
+    let active = true;
+    let url: string | undefined;
+    setState("loading");
+    loadPreview(pageIndex)
+      .then((result) => {
+        if (!active) return;
+        if (result === null) {
+          setPreview(null);
+          setState("unavailable");
+          return;
+        }
+        url = URL.createObjectURL(new Blob([Uint8Array.from(result.bytes)], { type: result.contentType }));
+        setPreview({ url, pageCount: result.pageCount });
+        setState("ready");
+      })
+      .catch(() => {
+        if (active) {
+          setPreview(null);
+          setState("unavailable");
+        }
+      });
+    return () => {
+      active = false;
+      if (url !== undefined) URL.revokeObjectURL(url);
+    };
+  }, [loadPreview, pageIndex]);
+
+  if (state === "idle" || file === undefined) {
+    return (
+      <div className={styles.emptyEvidence}>
+        <FileText aria-hidden="true" size={44} strokeWidth={1.2} />
+        <h2>{file ? file.fileName : t("pdfOmr.pdfPlaceholder")}</h2>
+        <p>{file ? t("pdfOmr.pdfSelected", { size: formatBytes(file.sizeBytes) }) : t("pdfOmr.pdfHint")}</p>
+      </div>
+    );
+  }
   return (
-    <div className={styles.emptyEvidence}>
-      <FileText aria-hidden="true" size={44} strokeWidth={1.2} />
-      <h2>{file ? file.fileName : t("pdfOmr.pdfPlaceholder")}</h2>
-      <p>{file ? t("pdfOmr.pdfSelected", { size: formatBytes(file.sizeBytes) }) : t("pdfOmr.pdfHint")}</p>
+    <div className={styles.pdfPreview}>
+      <div className={styles.pdfPreviewHeader}>
+        <strong>{file.fileName}</strong>
+        {preview !== null && preview.pageCount > 1 ? (
+          <span className={styles.pdfPreviewPager}>
+            <button
+              type="button"
+              aria-label={t("pdfOmr.pdfPreview.previous")}
+              disabled={pageIndex === 0 || state === "loading"}
+              onClick={() => setPageIndex((current) => Math.max(0, current - 1))}
+            >
+              ‹
+            </button>
+            <span>{t("pdfOmr.pdfPreview.pageLabel", { page: pageIndex + 1, total: preview.pageCount })}</span>
+            <button
+              type="button"
+              aria-label={t("pdfOmr.pdfPreview.next")}
+              disabled={pageIndex + 1 >= preview.pageCount || state === "loading"}
+              onClick={() => setPageIndex((current) => current + 1)}
+            >
+              ›
+            </button>
+          </span>
+        ) : null}
+      </div>
+      {state === "loading" ? <p className={styles.muted}>{t("pdfOmr.pdfPreview.loading")}</p> : null}
+      {state === "unavailable" ? <p className={styles.muted}>{t("pdfOmr.pdfPreview.unavailable")}</p> : null}
+      {preview !== null ? (
+        <img
+          src={preview.url}
+          alt={t("pdfOmr.pdfPreview.imageAlt", { fileName: file.fileName, page: pageIndex + 1 })}
+        />
+      ) : null}
     </div>
   );
 }

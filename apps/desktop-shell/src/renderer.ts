@@ -281,6 +281,11 @@ function createDesktopPdfOmrPort(
       const response = parseBridgeResponse(request.type, await bridge.request(request));
       return response.status === "failed-validation" ? response.validation : null;
     },
+    async readInputPreview(jobId, pageIndex) {
+      const request = createBridgeRequest("pdfOmr.readInputPreview", crypto.randomUUID(), { jobId, pageIndex });
+      const response = parseBridgeResponse(request.type, await bridge.request(request));
+      return response.status === "available" ? response : null;
+    },
     async selectMidi() {
       const request = createBridgeRequest("pdfOmr.selectMidi", crypto.randomUUID(), {});
       return parseBridgeResponse(request.type, await bridge.request(request));

@@ -221,6 +221,38 @@ describe("PdfOmrPage", () => {
     expect(port.select).toHaveBeenCalledTimes(2);
   });
 
+  it("renders the original input preview with paging once a job exists", async () => {
+    const port = createPort();
+    port.readInputPreview.mockImplementation(async (_jobId, pageIndex) => ({
+      pageIndex,
+      pageCount: 2,
+      contentType: "image/png" as const,
+      bytes: new Uint8Array([137, 80, 78, 71]),
+    }));
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: vi.fn(() => "blob:preview"),
+      revokeObjectURL: vi.fn(),
+    });
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+    await user.click(screen.getByRole("button", { name: "开始提取" }));
+    await user.click(screen.getByRole("tab", { name: "原始输入" }));
+
+    const image = await screen.findByRole("img", { name: "sonata.pdf 第 1 页" });
+    expect(image.getAttribute("src")).toBe("blob:preview");
+    expect(screen.getByText("第 1 / 2 页")).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "下一页" }));
+    expect(await screen.findByText("第 2 / 2 页")).toBeTruthy();
+    expect(port.readInputPreview).toHaveBeenLastCalledWith("job-1", 1);
+  });
+
   it("keeps PDF recognition session-scoped and exposes the real run stages", async () => {
     const port = createPort();
     const user = userEvent.setup();
@@ -656,6 +688,7 @@ function createPort(): PdfOmrWorkbenchPort & {
       },
     })),
     readFailedValidation: vi.fn(async () => null),
+    readInputPreview: vi.fn(async () => null),
     exportResult: vi.fn(async () => "saved" as const),
     selectMidi: vi.fn(async () => ({
       status: "selected" as const,

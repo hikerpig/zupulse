@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { createBridgeEvent, type BridgeEvent, type PdfOmrProgressEvent } from "@zupulse/web-core";
+import { encodeRgbaPng, renderPdfPages } from "@zupulse/pdf-omr-cli/pipeline";
 import type { SupportedLocale } from "@zupulse/app-i18n";
 import { dialog } from "electron";
 import { BridgeDispatchError, type RequiredBridgeHandlers } from "../bridge/dispatcher";
@@ -26,6 +27,7 @@ type RecognitionHandlers = RequiredBridgeHandlers<
   | "pdfOmr.cancel"
   | "pdfOmr.getSnapshot"
   | "pdfOmr.readResult"
+  | "pdfOmr.readInputPreview"
   | "pdfOmr.selectMidi"
   | "pdfOmr.analyzeMidi"
   | "pdfOmr.applyMidiCorrections"
@@ -54,6 +56,7 @@ export async function createRecognitionModule(options: {
   });
   const controller = new PdfOmrJobController(runtime);
   const corrections = new PdfOmrMidiCorrectionController(controller);
+  const previewCache = new Map<string, Promise<readonly Uint8Array[]>>();
   const startedAt = new Map<string, number>();
   const heartbeats = new Map<string, ReturnType<typeof setInterval>>();
   const loggedTerminals = new Set<string>();
@@ -195,6 +198,8 @@ export async function createRecognitionModule(options: {
     },
     "pdfOmr.getSnapshot": () => ({ snapshot: controller.getSnapshot() ?? null }),
     "pdfOmr.readResult": (request) => readPdfOmrResult(controller, corrections, request.payload.jobId),
+    "pdfOmr.readInputPreview": (request) =>
+      readPdfOmrInputPreview(controller, runtime, previewCache, request.payload.jobId, request.payload.pageIndex),
     "pdfOmr.selectMidi": () => selectMidiFile(options.fileTokens, undefined, options.getLocale()),
     "pdfOmr.analyzeMidi": (request) => {
       const midi = options.fileTokens.consume(request.payload.fileToken);
@@ -258,6 +263,67 @@ async function assertRecognitionProviderReady(settings: RecognitionProviderSetti
   throw new BridgeDispatchError("PDF_OMR_ENGINE_UNAVAILABLE", "Recognition provider preflight failed", true, {
     reason: provider?.reason ?? "missing-configuration",
   });
+}
+
+type PdfOmrInputPreview =
+  | { status: "unavailable" }
+  | {
+      status: "available";
+      pageIndex: number;
+      pageCount: number;
+      contentType: "image/png" | "image/jpeg";
+      bytes: Uint8Array;
+    };
+
+async function readPdfOmrInputPreview(
+  controller: PdfOmrJobController,
+  runtime: DesktopPdfOmrRuntime,
+  cache: Map<string, Promise<readonly Uint8Array[]>>,
+  jobId: string,
+  pageIndex: number,
+): Promise<PdfOmrInputPreview> {
+  const input = controller.getJobInput(jobId);
+  if (input === undefined) return { status: "unavailable" };
+  if (input.inputKind === "image") {
+    const bytes = new Uint8Array(await readFile(input.inputPath).catch(() => new ArrayBuffer(0)));
+    if (bytes.byteLength === 0 || bytes.byteLength > 64 * 1024 * 1024 || pageIndex !== 0) {
+      return { status: "unavailable" };
+    }
+    return {
+      status: "available",
+      pageIndex: 0,
+      pageCount: 1,
+      contentType: /\.jpe?g$/i.test(input.fileName) ? "image/jpeg" : "image/png",
+      bytes,
+    };
+  }
+  for (const key of [...cache.keys()]) {
+    if (key !== jobId) cache.delete(key);
+  }
+  let pages = cache.get(jobId);
+  if (pages === undefined) {
+    const source = new Uint8Array(await readFile(input.inputPath).catch(() => new ArrayBuffer(0)));
+    if (source.byteLength === 0) return { status: "unavailable" };
+    pages = renderPdfPages(source, {
+      targetWidth: 1000,
+      allowLandscape: true,
+      ...runtime.pdfjsAssetDirectories(),
+    }).then((rendered) =>
+      rendered.map((page) => encodeRgbaPng(page.pixelWidth, page.pixelHeight, Uint8Array.from(page.pixels))),
+    );
+    cache.set(
+      jobId,
+      pages.catch(() => {
+        cache.delete(jobId);
+        return [];
+      }),
+    );
+    pages = cache.get(jobId)!;
+  }
+  const rendered = await pages.catch(() => [] as const);
+  const bytes = rendered[pageIndex];
+  if (bytes === undefined) return { status: "unavailable" };
+  return { status: "available", pageIndex, pageCount: rendered.length, contentType: "image/png", bytes };
 }
 
 type PdfOmrValidationReadiness = {

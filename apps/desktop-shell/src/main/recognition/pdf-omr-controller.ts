@@ -92,6 +92,11 @@ export class PdfOmrJobController {
     await this.active?.operation;
   }
 
+  getJobInput(jobId: string): PdfOmrJobInput | undefined {
+    if (this.snapshot?.jobId !== jobId) return undefined;
+    return this.input;
+  }
+
   getCompletedResult(jobId: string): { outputDirectory: string; result: PdfOmrPipelineResult } | undefined {
     if (this.completed?.jobId !== jobId) return undefined;
     return { outputDirectory: this.completed.outputDirectory, result: this.completed.result };

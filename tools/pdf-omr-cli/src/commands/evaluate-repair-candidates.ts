@@ -189,7 +189,7 @@ export async function evaluateRepairCandidatesCommand(input: {
             before: candidateBefore,
             after: candidateAfter,
             ...candidateAssessment,
-            oracleRecommended: candidateAssessment.assessment === "improved" && candidateAssessment.nonRegressive,
+            oracleEligible: candidateAssessment.assessment === "improved" && candidateAssessment.nonRegressive,
           };
         },
       );
@@ -198,7 +198,7 @@ export async function evaluateRepairCandidatesCommand(input: {
         expected,
         comparison,
         candidateEvaluations
-          .filter((candidate) => candidate.oracleRecommended)
+          .filter((candidate) => candidate.oracleEligible)
           .map((candidate) => candidate.candidateSha256),
       );
       return {
@@ -219,13 +219,36 @@ export async function evaluateRepairCandidatesCommand(input: {
   const before = summarize(aggregateSymbolicMetrics(evaluations.map((evaluation) => evaluation.beforeMetrics)));
   const after = summarize(aggregateSymbolicMetrics(evaluations.map((evaluation) => evaluation.afterMetrics)));
   const overallAssessment = assess(before, after);
-  const candidateEvaluations = evaluations.flatMap((evaluation) => evaluation.candidateEvaluations);
+  const provisionalCandidateEvaluations = evaluations.flatMap((evaluation) => evaluation.candidateEvaluations);
   const oracleRecommendedBefore = summarize(
     aggregateSymbolicMetrics(evaluations.map((evaluation) => evaluation.oracleRecommendedBeforeMetrics)),
   );
   const oracleRecommendedAfter = summarize(
     aggregateSymbolicMetrics(evaluations.map((evaluation) => evaluation.oracleRecommendedAfterMetrics)),
   );
+  const proposedOracleAssessment = assess(oracleRecommendedBefore, oracleRecommendedAfter);
+  const acceptOracleRecommendedSet =
+    proposedOracleAssessment.assessment === "improved" && proposedOracleAssessment.nonRegressive;
+  const candidateEvaluations = provisionalCandidateEvaluations.map(({ oracleEligible, ...evaluation }) => ({
+    ...evaluation,
+    oracleRecommended: acceptOracleRecommendedSet && oracleEligible,
+  }));
+  const oracleRecommendedSet = acceptOracleRecommendedSet
+    ? {
+        appliedCandidates: evaluations.reduce(
+          (sum, evaluation) => sum + evaluation.oracleRecommendedAppliedCandidates,
+          0,
+        ),
+        before: oracleRecommendedBefore,
+        after: oracleRecommendedAfter,
+        ...proposedOracleAssessment,
+      }
+    : {
+        appliedCandidates: 0,
+        before: oracleRecommendedBefore,
+        after: oracleRecommendedBefore,
+        ...assess(oracleRecommendedBefore, oracleRecommendedBefore),
+      };
   const report = repairCandidateEvaluationReportSchema.parse({
     schemaVersion: "1.0.0",
     command: "evaluate-repair-candidates",
@@ -255,15 +278,7 @@ export async function evaluateRepairCandidatesCommand(input: {
       delete: countAssessments(candidateEvaluations.filter((evaluation) => evaluation.operation === "delete")),
     },
     overall: { before, after, ...overallAssessment },
-    oracleRecommendedSet: {
-      appliedCandidates: evaluations.reduce(
-        (sum, evaluation) => sum + evaluation.oracleRecommendedAppliedCandidates,
-        0,
-      ),
-      before: oracleRecommendedBefore,
-      after: oracleRecommendedAfter,
-      ...assess(oracleRecommendedBefore, oracleRecommendedAfter),
-    },
+    oracleRecommendedSet,
     evaluations: evaluations.map(
       ({
         beforeMetrics: _beforeMetrics,

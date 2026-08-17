@@ -2,7 +2,7 @@ import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { canonicalJson } from "../canonical-json";
+import { canonicalJson, sha256Bytes } from "../canonical-json";
 import { compareEnginesCommand } from "../commands/compare-engines";
 import { evaluateRepairCandidatesCommand } from "../commands/evaluate-repair-candidates";
 import type { OmrScoreDraft } from "../schemas";
@@ -77,7 +77,101 @@ describe("evaluateRepairCandidatesCommand", () => {
     });
     expect(report.oracleRecommendedSet.delta.pitchF1).toBeGreaterThan(0);
   });
+
+  it("rejects individually beneficial candidates when their combined result regresses", async () => {
+    const root = await mkdtemp(join(tmpdir(), "repair-candidate-combination-"));
+    const expected = draft([60, 62]);
+    const primary = await benchmarkRun(root, "primary", "legato", draft([60]), expected);
+    const secondary = await benchmarkRun(root, "secondary", "rokot", expected, expected);
+    const comparison = join(root, "comparison");
+    await compareEnginesCommand({ primaryDirectory: primary, secondaryDirectory: secondary, output: comparison });
+
+    const comparisonPath = join(comparison, "comparison.json");
+    const comparisonReport = JSON.parse(await readFile(comparisonPath, "utf8"));
+    comparisonReport.items = {
+      ...comparisonReport.items,
+      agreements: 0,
+      disagreements: 1,
+      repairCandidates: 4,
+    };
+    comparisonReport.comparisons = [
+      {
+        itemId: "score",
+        schemaVersion: "1.0.0",
+        topologyMode: "strict",
+        agreement: false,
+        alignmentAmbiguous: false,
+        primaryMeasureCount: 1,
+        secondaryMeasureCount: 5,
+        alignedMeasureCount: 1,
+        proposals: Array.from({ length: 4 }, (_, index) => duplicateInsertProposal(index)),
+      },
+    ];
+    await writeFile(comparisonPath, canonicalJson(comparisonReport));
+
+    await evaluateRepairCandidatesCommand({
+      comparisonDirectory: comparison,
+      primaryDirectory: primary,
+      output: join(root, "evaluation"),
+    });
+
+    const report = JSON.parse(await readFile(join(root, "evaluation/evaluation.json"), "utf8"));
+    expect(report.candidates.oracleRecommended).toBe(0);
+    expect(
+      report.candidateEvaluations.map((evaluation: { oracleRecommended: boolean }) => evaluation.oracleRecommended),
+    ).toEqual([false, false, false, false]);
+    expect(report.oracleRecommendedSet).toMatchObject({
+      appliedCandidates: 0,
+      assessment: "unchanged",
+      nonRegressive: true,
+    });
+    expect(report.oracleRecommendedSet.after).toEqual(report.oracleRecommendedSet.before);
+  });
 });
+
+function duplicateInsertProposal(index: number) {
+  const sourceFingerprint = `${index + 1}`.repeat(64);
+  const facts = {
+    operation: "insert" as const,
+    targetMeasureIndex: 1,
+    sourceMeasureIndex: index + 1,
+    sourceFingerprint,
+    measure: {
+      staves: [
+        {
+          staffIndex: 0,
+          duration: { numerator: 1, denominator: 1 },
+          voices: [
+            {
+              index: 1,
+              events: [
+                {
+                  type: "note" as const,
+                  onset: { numerator: 0, denominator: 1 },
+                  duration: { numerator: 1, denominator: 1 },
+                  soundingMidi: 62,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    reviewRequired: true as const,
+    autoApplicable: false as const,
+  };
+  return {
+    kind: "measure-missing-in-primary" as const,
+    primaryMeasureIndex: null,
+    secondaryMeasureIndex: index + 1,
+    secondaryFingerprint: sourceFingerprint,
+    repairCandidate: {
+      ...facts,
+      candidateSha256: sha256Bytes(new TextEncoder().encode(canonicalJson(facts))),
+    },
+    autoApplicable: false as const,
+  };
+}
 
 async function benchmarkRun(
   root: string,

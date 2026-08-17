@@ -117,8 +117,9 @@ const proposal = {
 11. Development-only candidate evaluation reports before/after metrics without writing a simulated Draft。
 12. Ordered-staff topology is explicit, deterministic, and never inferred by the default comparison mode。
 13. Evaluation reports `improved`、`regressed`、`mixed` or `unchanged` and a non-regression decision。
-14. Evaluation scores each candidate independently against the unchanged primary Draft, labels only improved
-    non-regressive candidates as `oracleRecommended`, and reports the combined oracle-set outcome。
+14. Evaluation scores each candidate independently against the unchanged primary Draft, but labels individually improved
+    non-regressive candidates as `oracleRecommended` only when their combined set is also improved and non-regressive;
+    otherwise the reported recommended set is empty。
 15. A known predicted Harmony projection limitation records `omrBlocked` without discarding valid symbolic metrics or
     misclassifying recognition as an engine failure; unknown analysis errors still fail the item。
 16. Partial development runs preserve attempted and per-engine success denominators, then compare only the successful

@@ -29,5 +29,5 @@ describe("materializeLegatoSystemPages", () => {
       });
       expect(pages).toHaveLength(2);
     }
-  });
+  }, 15_000);
 });

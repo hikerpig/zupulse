@@ -12,6 +12,195 @@
     }
   },
   "profiles": {
+    "position-supplement-development": {
+      "counts": {
+        "items": 10,
+        "strata": {
+          "easy": 0,
+          "hard": 2,
+          "medium": 8
+        },
+        "systemPositions": {
+          "first": 0,
+          "last": 0,
+          "middle": 10
+        },
+        "works": 4
+      },
+      "items": [
+        {
+          "complexity": {
+            "chordCount": 7,
+            "noteCount": 26,
+            "repeatCount": 0,
+            "tieCount": 2,
+            "tupletCount": 12,
+            "voiceCount": 2
+          },
+          "groundTruthSha256": "6c85dbfb7db93faa5449caac64f0eb531c53ec1d0e15067c9348d3461a2cbc25",
+          "itemId": "olimpic-dev-5079442-p1-s2",
+          "sourceImageSha256": "f26d69d6e72aa2585d1c62455ef2a9cb2d57c7a0aa8582d6bb23276b53a3b42f",
+          "sourceSampleId": "5079442/p1-s2",
+          "stratum": "medium",
+          "systemPosition": "middle",
+          "workId": "olimpic-5079442"
+        },
+        {
+          "complexity": {
+            "chordCount": 6,
+            "noteCount": 66,
+            "repeatCount": 0,
+            "tieCount": 3,
+            "tupletCount": 51,
+            "voiceCount": 4
+          },
+          "groundTruthSha256": "351bc18f778c15ae5559aa20fdb73bb59330a9971e6b34b0bc5d04d20fa850bf",
+          "itemId": "olimpic-dev-5079442-p3-s3",
+          "sourceImageSha256": "74ce07e054359c9980ee4a85eaa3ef2594cf4e8176bedd9f826e69060f258b6a",
+          "sourceSampleId": "5079442/p3-s3",
+          "stratum": "medium",
+          "systemPosition": "middle",
+          "workId": "olimpic-5079442"
+        },
+        {
+          "complexity": {
+            "chordCount": 24,
+            "noteCount": 39,
+            "repeatCount": 0,
+            "tieCount": 0,
+            "tupletCount": 27,
+            "voiceCount": 3
+          },
+          "groundTruthSha256": "3b0b58c864a0cdecf1b85b659b831730410f479518eadfb28f39092874adafa3",
+          "itemId": "olimpic-dev-5079442-p4-s3",
+          "sourceImageSha256": "c7402e939dfc6811c07ea29e4012e2dae0b842b4385842146e2835a401cc6f42",
+          "sourceSampleId": "5079442/p4-s3",
+          "stratum": "medium",
+          "systemPosition": "middle",
+          "workId": "olimpic-5079442"
+        },
+        {
+          "complexity": {
+            "chordCount": 13,
+            "noteCount": 37,
+            "repeatCount": 0,
+            "tieCount": 0,
+            "tupletCount": 0,
+            "voiceCount": 3
+          },
+          "groundTruthSha256": "a2e178b20921f0fd1f0199e94a961d677f832df7c446064a6f049f4062a31064",
+          "itemId": "olimpic-dev-5989993-p1-s3",
+          "sourceImageSha256": "dfe22cf5e3ec045784454a601e5b49308feefe15f6bd1cd5d8e4f61c844acf5e",
+          "sourceSampleId": "5989993/p1-s3",
+          "stratum": "medium",
+          "systemPosition": "middle",
+          "workId": "olimpic-5989993"
+        },
+        {
+          "complexity": {
+            "chordCount": 14,
+            "noteCount": 42,
+            "repeatCount": 0,
+            "tieCount": 6,
+            "tupletCount": 0,
+            "voiceCount": 4
+          },
+          "groundTruthSha256": "1045dcde5c7d587a6a93e5c13c833d713d02bfad1600b31d947b4d4ab049296d",
+          "itemId": "olimpic-dev-6001354-p3-s3",
+          "sourceImageSha256": "680bf547dbfaaad59c034cc5dc66bb0d44c393ff602fb54b9639af10585dcc76",
+          "sourceSampleId": "6001354/p3-s3",
+          "stratum": "medium",
+          "systemPosition": "middle",
+          "workId": "olimpic-6001354"
+        },
+        {
+          "complexity": {
+            "chordCount": 42,
+            "noteCount": 75,
+            "repeatCount": 0,
+            "tieCount": 10,
+            "tupletCount": 0,
+            "voiceCount": 2
+          },
+          "groundTruthSha256": "81885bba03af6b045a5e99e474a16f7a2e14c17c3e7df46d96d3a764b857afec",
+          "itemId": "olimpic-dev-6001354-p4-s2",
+          "sourceImageSha256": "98506af7c89dd134e1b1969f6f49df1467c13568762993bfa692467362a2edfe",
+          "sourceSampleId": "6001354/p4-s2",
+          "stratum": "medium",
+          "systemPosition": "middle",
+          "workId": "olimpic-6001354"
+        },
+        {
+          "complexity": {
+            "chordCount": 33,
+            "noteCount": 65,
+            "repeatCount": 0,
+            "tieCount": 0,
+            "tupletCount": 0,
+            "voiceCount": 2
+          },
+          "groundTruthSha256": "2258423cd1acff38a86a6bc4a6e7c3587ecd348203504822c0c354ea483fd507",
+          "itemId": "olimpic-dev-6001354-p5-s2",
+          "sourceImageSha256": "cc905b35a43b2d2de45e4f9fa60655b0722c51030f97b748b521fe6e4f49e8f3",
+          "sourceSampleId": "6001354/p5-s2",
+          "stratum": "medium",
+          "systemPosition": "middle",
+          "workId": "olimpic-6001354"
+        },
+        {
+          "complexity": {
+            "chordCount": 11,
+            "noteCount": 42,
+            "repeatCount": 0,
+            "tieCount": 3,
+            "tupletCount": 22,
+            "voiceCount": 4
+          },
+          "groundTruthSha256": "7ae1e0f5f61716fd85c2afa3fa9186032b4d8ad4c0e0b63b2fd5c3501f74ee37",
+          "itemId": "olimpic-dev-6001354-p5-s3",
+          "sourceImageSha256": "acf3b613e9e3251cac8fbbd516021e6e8e2ce32ba6764c2e0facadfc50fdb2d6",
+          "sourceSampleId": "6001354/p5-s3",
+          "stratum": "medium",
+          "systemPosition": "middle",
+          "workId": "olimpic-6001354"
+        },
+        {
+          "complexity": {
+            "chordCount": 36,
+            "noteCount": 63,
+            "repeatCount": 0,
+            "tieCount": 4,
+            "tupletCount": 0,
+            "voiceCount": 4
+          },
+          "groundTruthSha256": "7a2f137fddea3ce6ba70a049fedaa80dfc5170935009e990a905fc1b0a4e2bb9",
+          "itemId": "olimpic-dev-5661740-p4-s2",
+          "sourceImageSha256": "80cd9769990832b1cf8d8f29591e7ed9516ba6c8af875e6a23ce775bc0df7754",
+          "sourceSampleId": "5661740/p4-s2",
+          "stratum": "hard",
+          "systemPosition": "middle",
+          "workId": "olimpic-5661740"
+        },
+        {
+          "complexity": {
+            "chordCount": 6,
+            "noteCount": 12,
+            "repeatCount": 0,
+            "tieCount": 4,
+            "tupletCount": 0,
+            "voiceCount": 2
+          },
+          "groundTruthSha256": "7e90d108ba5d195b5f1bbb8c3514482439d77498eb57ce027b3d03fb5edafd08",
+          "itemId": "olimpic-dev-5661740-p6-s2",
+          "sourceImageSha256": "89db86cfc591f65248f733df4ee08eab4a4f3cb06b1111267d600fc9b18a3fbe",
+          "sourceSampleId": "5661740/p6-s2",
+          "stratum": "hard",
+          "systemPosition": "middle",
+          "workId": "olimpic-5661740"
+        }
+      ],
+      "repeatItemIds": []
+    },
     "quick-development": {
       "counts": {
         "items": 6,
@@ -1426,6 +1615,7 @@
       "tupletCount",
       "repeatCount"
     ],
+    "positionSupplementPolicy": "unselected middle and last systems from standard-development works",
     "standardStrata": {
       "easy": 12,
       "hard": 12,

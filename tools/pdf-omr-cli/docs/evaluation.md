@@ -264,3 +264,68 @@ joining/timing diagnostics，同时当前 K331 ground-truth Draft 本身也不�
 `rokot-evaluation-*` / `rokot-quick-*` runs 是本地调试产物，不进入 Git；它们不能替代 summary，也不能用于
 改写 frozen gate。最终结果为 recognition admission 10/10、Harmony/MusicXML ready 4/10，决策仍为
 `INVESTIGATE`。
+
+## LEGATO system-page 与跨引擎 development follow-up
+
+2026-08-16 在 `corpus/evaluation/manifest.json` 的三个 development fixture 上重跑当前 LEGATO baseline。
+full-page run 为 3/3 admission，Pitch/Onset/Duration/Joint F1 分别为
+`0.8333 / 0.9333 / 0.9333 / 0.5333`，valid measure rate 为 `0.5`。三种图像 variant 都稳定遗漏同一个
+中间小节；`beam=1/2/4` 输出一致，因此该问题不是 beam search 不足或 max-length 截断。
+
+同一输入上的 Rokot development run 为 3/3 admission，核心 F1 与 valid measure rate 都是 `1.0`。新的
+`compare-engines` report 在不读取 ground truth 的情况下，对三个 item 都定位出唯一、无 ambiguity 的
+`measure-missing-in-primary`，secondary measure index 均为 `4`。2026-08-17 的 report-only follow-up 为三个
+item 各生成一个 Rokot-to-LEGATO `insert` candidate，target/source measure index 均为 `4`，规范化小节事实的
+candidate SHA-256 均为 `a8b901074f9c4d983085d6dd14444556e0382c7a38bc2373f228c1962dd2befe`；comparison
+SHA-256 为 `4c35b76737e585023201b33dd4dad02e9133b23ad5d43e93e8422a36953de15c`。这些 candidate
+均为 `reviewRequired: true`、`autoApplicable: false`，不构成 ground-truth correctness 或自动写回依据。
+
+显式运行 development-only `evaluate-repair-candidates` 后，三个候选仅在内存中模拟应用，并使用 primary
+benchmark run 已保存的 ground-truth Draft 评分。整体 Pitch/Onset/Duration/Joint F1 从
+`0.8333 / 0.9333 / 0.9333 / 0.5333` 提升到 `1.0 / 1.0 / 1.0 / 1.0`，valid measure rate 从
+`0.5` 提升到 `1.0`。evaluation SHA-256 为
+`5ffd9e0e9bf30e3702bbc94ae2c616d84f611856cb2f31aa137367bc80d35c47`。三个 item 均分类为
+`improved`、`nonRegressive: true`；该结果只证明这三个 synthetic
+development variants 上的候选上界，不允许 promotion、自动写回或 holdout 结论。
+
+## OLiMPiC real scanned system cross-engine follow-up
+
+2026-08-17 使用 `olimpic-scanned-system-v1` 唯一 development item `openscore-6586696-p1-s1` 分别运行
+LEGATO 与 Rokot。两者均完成 recognition，但 LEGATO Draft 为 `2 parts × 1 staff`，Rokot 为
+`1 part × 2 staves`；默认 strict comparison 正确拒绝。显式 `ordered-staves` view 后得到一个无歧义的 measure 2
+`replace` candidate。
+
+development-only 模拟评分将 Joint F1 从 `0.7500` 提升到 `0.7660`，但 Pitch F1 从 `1.0` 降至
+`0.9892`，Onset/Duration F1 从 `1.0` 降至 `0.9787`，valid measure rate 仍为 `0.5`。因此结果分类为
+`mixed`、`nonRegressive: false`，明确否决自动 promotion。小型证据见
+`reports/exploratory/olimpic-cross-engine-v1/`；该单项结果仍不足以估算候选 precision。
+
+随后使用 `legato-system-pages-v1` 将每个 full-page fixture 确定性物化为两个 system pages。LEGATO 的
+Pitch F1 提升到 `0.9841`，Joint F1 提升到 `0.8333`，valid measure rate 提升到 `0.75`，完整恢复 8 个
+measure；这证明 full-page layout/scale 是主要误差来源。但第二个 system 缺少继承 meter，并在首 measure
+产生 duration 误读：三个 item 中两个仍被 readiness 阻断，一个仅为 ready-with-warnings。因此本轮决策仍为
+`INVESTIGATE`，不得用无图像证据的 duration rescale 自动修复，也不得用该 synthetic 结果改写 App gate。
+
+后续 `legato-system-pages-context-v1` 使用 LEGATO repository 自带的 `LegatoSegmentProcessor`，只把上一
+system 唯一、可解析的 ABC `L/M/K` header 作为下一 system 的 generation context；不读取 ground truth、
+Rokot output 或 confidence。context prefix hash 写入逐页 telemetry，并由 adapter 从上一页原始 ABC 重新计算
+校验。该变体达到 Pitch/Onset/Duration/Joint F1
+`0.9895 / 0.9271 / 0.8542 / 0.8542`，valid measure rate `0.8333`，高于无 context system-page
+baseline；readiness 仍是 1 个 ready-with-warnings、2 个 blocked。携带上一完整小节会令模型提前结束，已被
+否决；最终实现只传播 header，不做 duration rescale 或 note insertion。
+
+小型 durable evidence 见 `reports/exploratory/legato-system-pages-v1/`。完整 run、派生 PDF、模型与 cache
+保持在仓库外。
+
+## OLiMPiC source-independent expanded cross-engine result
+
+2026-08-17 从锁定 OLiMPiC scanned archive 物化 36 个 standard-development systems，并补入同 work 的
+10 个 middle systems；全部为 original source images，不来自任何 engine artifact。位置覆盖由
+first/middle/last `31/1/4` 扩为 `31/11/4`；release 中 4 个 GT-ready last systems 已被标准集穷尽。
+
+Rokot 完成 45/46，LEGATO 完成 26/46，成功交集为 26/46。comparison 在保留 attempted 与两侧 success
+分母后生成 81 个 `replace` candidates。全部应用为 mixed；GT oracle 标出的 28 个候选联合后，Joint F1 从
+`0.2690` 升到 `0.3369`，其余四项也均提升。但锁定 work-disjoint GT-free selector gate 要求至少 35 个
+候选、零回归、95% Wilson lower bound 不低于 0.90；28/28 的 oracle upper bound 也只有 `0.8794`。
+因此当前仍为 `INVESTIGATE / NOT_ELIGIBLE`，不得自动应用。完整结构化证据见
+`reports/exploratory/olimpic-source-independent-cross-engine-v1/`。

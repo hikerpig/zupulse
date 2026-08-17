@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "1.0.0",
+  "protocolId": "olimpic-repair-selector-development-v1",
+  "status": "locked-development",
+  "scope": "report-only",
+  "input": {
+    "corpusId": "public-pianoform-v1",
+    "selectionSha256": "a9051360e8dcbd4f6ca182719cbdf4e01e122c0736241ed8c82a2180e8fbe9f8",
+    "profiles": [
+      "standard-development",
+      "position-supplement-development"
+    ],
+    "positionCoverage": {
+      "first": 31,
+      "middle": 11,
+      "last": 4
+    },
+    "positionLimitation": "All four ground-truth-ready development last systems are already included in standard-development."
+  },
+  "partition": {
+    "unit": "workId",
+    "algorithm": "ascending-sha256-work-id-then-equal-halves-v1",
+    "calibrationWorks": [
+      "olimpic-5079442",
+      "olimpic-5098678",
+      "olimpic-4985990",
+      "olimpic-6409323",
+      "olimpic-6165152",
+      "olimpic-6259568",
+      "olimpic-5986599",
+      "olimpic-5013969",
+      "olimpic-6007571",
+      "olimpic-5862368",
+      "olimpic-5187781",
+      "olimpic-6218737",
+      "olimpic-6577688",
+      "olimpic-5098732",
+      "olimpic-5023603",
+      "olimpic-6236150",
+      "olimpic-6010916",
+      "olimpic-6632270"
+    ],
+    "validationWorks": [
+      "olimpic-6177220",
+      "olimpic-6151337",
+      "olimpic-5935864",
+      "olimpic-6404150",
+      "olimpic-5661740",
+      "olimpic-5071629",
+      "olimpic-6196782",
+      "olimpic-5079378",
+      "olimpic-6245974",
+      "olimpic-5098715",
+      "olimpic-5987937",
+      "olimpic-5989993",
+      "olimpic-6389103",
+      "olimpic-5026077",
+      "olimpic-6001354",
+      "olimpic-6264558",
+      "olimpic-5987851",
+      "olimpic-5077675"
+    ]
+  },
+  "selector": {
+    "allowedFeatures": [
+      "operation",
+      "targetMeasureIndex",
+      "primaryMeasureCount",
+      "secondaryMeasureCount",
+      "alignedMeasureCount",
+      "topologyMode",
+      "alignmentAmbiguous",
+      "primaryFingerprint",
+      "secondaryFingerprint",
+      "normalizedCandidateMeasureFacts"
+    ],
+    "forbiddenFeatures": [
+      "groundTruthDraft",
+      "symbolicMetrics",
+      "candidateMetricDelta",
+      "oracleRecommended",
+      "itemId",
+      "workId",
+      "engineConfidence"
+    ],
+    "calibrationGroundTruthPolicy": "Ground truth may label calibration candidates after engine reports are frozen.",
+    "validationGroundTruthPolicy": "Freeze the canonical selected-candidate hash before reading validation labels or metrics."
+  },
+  "gate": {
+    "minimumSelectedCandidates": 35,
+    "maximumRegressedCandidates": 0,
+    "minimumWilsonLowerBound": 0.9,
+    "confidenceLevel": 0.95,
+    "interval": "two-sided-wilson-score",
+    "combinedNonRegressive": true,
+    "automaticApplicationAllowed": false,
+    "passingOutcome": "eligible-for-separate-runtime-design-review"
+  }
+}

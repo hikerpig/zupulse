@@ -8,6 +8,8 @@ import type { MidiRebuildReport } from "./fusion/midi-rebuild-schemas";
 import type { MidiImportReport } from "./midi/schemas";
 import {
   type PdfOmrBenchmarkReport,
+  type PdfOmrCompareEnginesReport,
+  type PdfOmrEvaluateRepairCandidatesReport,
   pdfOmrHelpReportSchema,
   type PdfOmrAnalyzeReport,
   type PdfOmrExportReport,
@@ -31,6 +33,8 @@ const usage = [
   "  analyze <draft.json> --output <harmony.json>",
   "  export-musicxml <draft.json> --output <score.mxl>",
   "  benchmark --manifest <manifest.json> --engine <audiveris|legato|rokot> --output <result-dir>",
+  "  compare-engines --primary <benchmark-run-dir> --secondary <benchmark-run-dir> --output <comparison-run-dir> [--topology <strict|ordered-staves>]",
+  "  evaluate-repair-candidates --comparison <comparison-run-dir> --primary <benchmark-run-dir> --output <evaluation-run-dir>",
 ].join("\n");
 
 export async function runPdfOmrCommand(
@@ -49,6 +53,8 @@ export async function runPdfOmrCommand(
   | PdfOmrValidateReport
   | PdfOmrExportReport
   | PdfOmrBenchmarkReport
+  | PdfOmrCompareEnginesReport
+  | PdfOmrEvaluateRepairCandidatesReport
   | MidiImportReport
   | FusionReport
   | ApplyFusionReport
@@ -290,6 +296,53 @@ export async function runPdfOmrCommand(
       },
       context.benchmarkDependencies ?? {},
     );
+  }
+  if (normalized[0] === "compare-engines") {
+    const flags = parseFlags(normalized.slice(1), new Set(["--primary", "--secondary", "--output", "--topology"]));
+    const primaryDirectory = flags.get("--primary");
+    const secondaryDirectory = flags.get("--secondary");
+    const output = flags.get("--output");
+    if (primaryDirectory === undefined || secondaryDirectory === undefined || output === undefined) {
+      throw new PdfOmrError(
+        "INVALID_CLI_ARGUMENT",
+        "compare-engines requires --primary <run> --secondary <run> --output <comparison-run-dir>",
+        { context: { command: "compare-engines" } },
+      );
+    }
+    const topologyMode = flags.get("--topology") ?? "strict";
+    if (topologyMode !== "strict" && topologyMode !== "ordered-staves") {
+      throw new PdfOmrError("INVALID_CLI_ARGUMENT", "compare-engines topology mode is invalid", {
+        context: { command: "compare-engines", topologyMode },
+      });
+    }
+    const { compareEnginesCommand } = await import("./commands/compare-engines");
+    return compareEnginesCommand({
+      primaryDirectory,
+      secondaryDirectory,
+      output,
+      topologyMode,
+      cwd: context.cwd ?? process.cwd(),
+    });
+  }
+  if (normalized[0] === "evaluate-repair-candidates") {
+    const flags = parseFlags(normalized.slice(1), new Set(["--comparison", "--primary", "--output"]));
+    const comparisonDirectory = flags.get("--comparison");
+    const primaryDirectory = flags.get("--primary");
+    const output = flags.get("--output");
+    if (comparisonDirectory === undefined || primaryDirectory === undefined || output === undefined) {
+      throw new PdfOmrError(
+        "INVALID_CLI_ARGUMENT",
+        "evaluate-repair-candidates requires --comparison <run> --primary <run> --output <evaluation-run-dir>",
+        { context: { command: "evaluate-repair-candidates" } },
+      );
+    }
+    const { evaluateRepairCandidatesCommand } = await import("./commands/evaluate-repair-candidates");
+    return evaluateRepairCandidatesCommand({
+      comparisonDirectory,
+      primaryDirectory,
+      output,
+      cwd: context.cwd ?? process.cwd(),
+    });
   }
   throw new PdfOmrError("INVALID_CLI_ARGUMENT", `unknown command: ${normalized[0]}`, {
     context: { command: normalized[0] },

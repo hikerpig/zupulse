@@ -270,6 +270,12 @@ artifacts，合并 Draft 含 56 measures 且无 diagnostics，总墙钟约 48 �
 
 ## 若未来重启
 
+2026-08-17 的 source-independent system-crop 扩样已经执行：46 attempted 中 Rokot 45 success、LEGATO 26
+success，双侧 comparable 为 26；81 个候选的 GT oracle upper bound 仅 28 个，仍达不到预先锁定的 35-candidate
+GT-free selector gate。该结果把下一优先级收敛为 LEGATO part/topology admission，而不是继续增加 beam、堆叠
+engine 投票或编写更多 selector 规则。证据位于
+`tools/pdf-omr-cli/reports/exploratory/olimpic-source-independent-cross-engine-v1/`，不改写 frozen holdout `STOP`。
+
 新的 discovery 至少需要：
 
 1. 在已完成的 6-work OLiMPiC real-corpus quick screening 基础上，扩充许可明确、包含更多真实印刷扫描与目标

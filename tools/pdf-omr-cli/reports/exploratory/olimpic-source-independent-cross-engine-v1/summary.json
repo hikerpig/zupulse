@@ -1,0 +1,155 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "completed-not-selector-eligible",
+  "decision": "INVESTIGATE",
+  "corpus": {
+    "id": "olimpic-source-independent-expanded-development-v1",
+    "role": "source-independent-development",
+    "manifestSha256": "19582a711c210bc13c95b7560dfcf319b38988dc85540666f7c50ae83048d925",
+    "selectionSha256": "a9051360e8dcbd4f6ca182719cbdf4e01e122c0736241ed8c82a2180e8fbe9f8",
+    "attemptedItems": 46,
+    "works": 36,
+    "systemPositions": {
+      "first": 31,
+      "middle": 11,
+      "last": 4
+    },
+    "positionLimitation": "All four ground-truth-ready development last systems are already included in standard-development."
+  },
+  "runs": {
+    "rokot": {
+      "reportSha256": "b11b25a1a7048b69ba459d23f34cbe13e3eaf9b5d00464e5c27e29d57c832a87",
+      "succeeded": 45,
+      "failed": 1,
+      "failureReasons": {
+        "invalid-rokot-abc-envelope": 1
+      },
+      "metrics": {
+        "pitchF1": 0.6669636890175986,
+        "onsetF1": 0.5994303903501423,
+        "durationF1": 0.5853576813536606,
+        "jointF1": 0.22851398894287148,
+        "validMeasureRate": 0.14
+      }
+    },
+    "legato": {
+      "reportSha256": "f794d717131ac99588ace47d46973cb256ece04eff05de18b33c2bda5a00a413",
+      "succeeded": 26,
+      "failed": 20,
+      "failureReasons": {
+        "part-count-mismatch": 15,
+        "empty-page-part": 1,
+        "ENGINE_EXECUTION_FAILED": 4
+      },
+      "metrics": {
+        "pitchF1": 0.735326688815061,
+        "onsetF1": 0.7671319796954317,
+        "durationF1": 0.7468274111675127,
+        "jointF1": 0.2690355329949239,
+        "validMeasureRate": 0.12222222222222222
+      }
+    }
+  },
+  "comparison": {
+    "sha256": "09032a94f96e8a7e909309b0afcfb9d098ae8e53433cd98e6bc7dc36ba9a75b4",
+    "topologyMode": "ordered-staves",
+    "attempted": 46,
+    "primarySucceeded": 26,
+    "secondarySucceeded": 45,
+    "comparable": 26,
+    "itemsWithCandidates": 23,
+    "candidates": 81,
+    "ambiguousAlignments": 3
+  },
+  "evaluation": {
+    "sha256": "bf2411cbc573a412bb59e0989aae1853eb1c0c5c7551edb54bbdd11c67de25d6",
+    "operations": {
+      "insert": {
+        "total": 0,
+        "oracleRecommended": 0
+      },
+      "replace": {
+        "total": 81,
+        "improved": 28,
+        "regressed": 14,
+        "mixed": 36,
+        "unchanged": 3,
+        "oracleRecommended": 28
+      },
+      "delete": {
+        "total": 0,
+        "oracleRecommended": 0
+      }
+    },
+    "allCandidates": {
+      "assessment": "mixed",
+      "nonRegressive": false,
+      "jointF1": {
+        "before": 0.2690355329949239,
+        "after": 0.29019823788546256,
+        "delta": 0.021162704890538675
+      },
+      "onsetF1Delta": -0.1448852836601895,
+      "durationF1Delta": -0.13834723495605894
+    },
+    "oracleRecommendedSet": {
+      "appliedCandidates": 28,
+      "assessment": "improved",
+      "nonRegressive": true,
+      "before": {
+        "pitchF1": 0.735326688815061,
+        "onsetF1": 0.7671319796954317,
+        "durationF1": 0.7468274111675127,
+        "jointF1": 0.2690355329949239,
+        "validMeasureRate": 0.12222222222222222
+      },
+      "after": {
+        "pitchF1": 0.7988032909498879,
+        "onsetF1": 0.8217660475724993,
+        "durationF1": 0.8178559791463018,
+        "jointF1": 0.33691756272401435,
+        "validMeasureRate": 0.2
+      }
+    }
+  },
+  "workDisjointEvidence": {
+    "calibration": {
+      "attemptedItems": 21,
+      "comparableItems": 15,
+      "itemsWithCandidates": 13,
+      "candidates": 49,
+      "oracleRecommended": 17
+    },
+    "validation": {
+      "attemptedItems": 25,
+      "comparableItems": 11,
+      "itemsWithCandidates": 10,
+      "candidates": 32,
+      "oracleRecommended": 11
+    }
+  },
+  "selectorGate": {
+    "protocolId": "olimpic-repair-selector-development-v1",
+    "decision": "NOT_ELIGIBLE",
+    "gtFreeSelectorEvaluated": false,
+    "minimumSelectedCandidates": 35,
+    "maximumRegressedCandidates": 0,
+    "minimumWilsonLowerBound": 0.9,
+    "oracleUpperBound": {
+      "successfulCandidates": 28,
+      "selectedCandidates": 28,
+      "wilsonLowerBound": 0.8793566952341543
+    },
+    "validationOracleUpperBound": {
+      "successfulCandidates": 11,
+      "selectedCandidates": 11,
+      "wilsonLowerBound": 0.7411670330319683
+    },
+    "reasons": [
+      "gt-free-selector-not-implemented",
+      "oracle-candidate-count-below-minimum",
+      "oracle-wilson-lower-bound-below-minimum"
+    ],
+    "automaticApplicationAllowed": false
+  }
+}

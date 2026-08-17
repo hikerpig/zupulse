@@ -1,4 +1,10 @@
-import { analyzeHarmony, BUNDLED_PAPER_SEMI_CRF_ALGORITHM_VERSION, createDefaultHarmonyScope } from "@zupulse/web-core";
+import {
+  analyzeHarmony,
+  BUNDLED_PAPER_SEMI_CRF_ALGORITHM_VERSION,
+  createDefaultHarmonyScope,
+  PaperSemiCrfEventProjectionError,
+} from "@zupulse/web-core";
+import { PdfOmrError } from "../errors";
 import { projectDraftHarmony } from "../project-harmony";
 import type { OmrScoreDraft } from "../schemas";
 import { validateDraft } from "../validate-draft";
@@ -28,13 +34,27 @@ export function analyzeHarmonyImpactDrafts(
       }),
     };
   }
-  const predictedInput = projectDraftHarmony(predicted);
-  const predictedScope = createDefaultHarmonyScope(predictedInput).includedTrackIds;
-  const predictedSegments = analyzeHarmony(predictedInput, {
-    includedTrackIds: predictedScope,
-    decisionThreshold: options.decisionThreshold,
-    topK: 3,
-  });
+  let predictedSegments;
+  try {
+    const predictedInput = projectDraftHarmony(predicted);
+    const predictedScope = createDefaultHarmonyScope(predictedInput).includedTrackIds;
+    predictedSegments = analyzeHarmony(predictedInput, {
+      includedTrackIds: predictedScope,
+      decisionThreshold: options.decisionThreshold,
+      topK: 3,
+    });
+  } catch (error) {
+    if (!isPredictedHarmonyBlocked(error)) throw error;
+    return {
+      algorithmVersion: BUNDLED_PAPER_SEMI_CRF_ALGORITHM_VERSION,
+      metrics: calculateHarmonyImpactMetrics({
+        input: expectedInput,
+        goldSegments,
+        omr: { status: "blocked" },
+        confidenceThreshold: options.confidenceThreshold,
+      }),
+    };
+  }
   return {
     algorithmVersion: BUNDLED_PAPER_SEMI_CRF_ALGORITHM_VERSION,
     metrics: calculateHarmonyImpactMetrics({
@@ -44,4 +64,11 @@ export function analyzeHarmonyImpactDrafts(
       confidenceThreshold: options.confidenceThreshold,
     }),
   };
+}
+
+function isPredictedHarmonyBlocked(error: unknown): boolean {
+  return (
+    error instanceof PaperSemiCrfEventProjectionError ||
+    (error instanceof PdfOmrError && error.code === "PROJECTION_OR_EXPORT_FAILED")
+  );
 }

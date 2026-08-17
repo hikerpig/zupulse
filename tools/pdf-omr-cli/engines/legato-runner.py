@@ -3,11 +3,38 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import re
 import subprocess
 import sys
 import time
 from pathlib import Path
+
+
+UNIT_LENGTH_PATTERN = re.compile(r"^[1-9]\d*/[1-9]\d*$")
+METER_PATTERN = re.compile(r"^(?:C\|?|[1-9]\d*/[1-9]\d*)$")
+KEY_PATTERN = re.compile(r"^[A-G](?:#|b)?(?:maj|min|m|mix|dor|phr|lyd|loc)?$")
+
+
+def build_page_context_prefix(abc: str) -> str | None:
+    fields = {}
+    for name in ("L", "M", "K"):
+        values = [
+            line[2:].strip()
+            for line in abc.splitlines()
+            if line.startswith(f"{name}:")
+        ]
+        if len(values) != 1 or not values[0]:
+            return None
+        fields[name] = values[0]
+    if not UNIT_LENGTH_PATTERN.fullmatch(fields["L"]):
+        return None
+    if not METER_PATTERN.fullmatch(fields["M"]):
+        return None
+    if not KEY_PATTERN.fullmatch(fields["K"]):
+        return None
+    return f'X:1\nL:{fields["L"]}\nM:{fields["M"]}\nK:{fields["K"]}\n'
 
 
 def inspect_pdf(input_path: Path) -> None:
@@ -39,11 +66,16 @@ def load_runtime(args: argparse.Namespace):
 
     sys.path.insert(0, str(args.repository))
     from image_utils import pad_to_portrait_letter
-    from legato.models import LegatoModel
+    from legato.models import LegatoModel, LegatoSegmentProcessor
 
     config = AutoConfig.from_pretrained(args.model, local_files_only=True)
     config.encoder_pretrained_model_name_or_path = str(args.base_model)
     processor = AutoProcessor.from_pretrained(args.model, local_files_only=True)
+    segment_processor = (
+        LegatoSegmentProcessor.from_pretrained(args.model, local_files_only=True)
+        if args.page_context_mode == "previous-page-abc"
+        else None
+    )
     model = LegatoModel.from_pretrained(
         args.model,
         config=config,
@@ -68,6 +100,7 @@ def load_runtime(args: argparse.Namespace):
     return {
         "torch": torch,
         "processor": processor,
+        "segment_processor": segment_processor,
         "model": model,
         "device": device,
         "generation": generation,
@@ -80,6 +113,7 @@ def recognize(args: argparse.Namespace, runtime=None) -> None:
     runtime = runtime or load_runtime(args)
     torch = runtime["torch"]
     processor = runtime["processor"]
+    segment_processor = runtime["segment_processor"]
     model = runtime["model"]
     device = runtime["device"]
     generation = runtime["generation"]
@@ -93,22 +127,44 @@ def recognize(args: argparse.Namespace, runtime=None) -> None:
         eos_token_ids = [eos_token_ids]
     eos_token_ids = set(eos_token_ids or [])
     args.page_output_directory.mkdir(parents=True, exist_ok=True)
+    page_context = None
     import fitz
 
     with fitz.open(args.input) as document:
         total_pages = len(document)
     for page_number, page in enumerate(render_pdf_pages(args.input), start=1):
         image = pad_to_portrait_letter(page)
-        inputs = processor(images=[image], truncation=True, return_tensors="pt").to(device)
+        active_processor = segment_processor if page_context is not None else processor
+        inputs = (
+            active_processor(
+                images=[image],
+                prefixes=[page_context],
+                truncation=True,
+                return_tensors="pt",
+            ).to(device)
+            if page_context is not None
+            else processor(images=[image], truncation=True, return_tensors="pt").to(
+                device
+            )
+        )
         with torch.no_grad():
             output = model.generate(
                 **inputs,
                 generation_config=generation,
                 use_model_defaults=False,
             )
-        abc = processor.batch_decode(output, skip_special_tokens=True)[0].replace(
+        decoded = active_processor.batch_decode(
+            output, skip_special_tokens=True
+        )[0].replace(
             "<|text|>", "text"
         )
+        if page_context is not None:
+            if not decoded.startswith(page_context):
+                raise RuntimeError("LEGATO page context prefix was not preserved")
+            continuation = decoded[len(page_context) :].lstrip("\r\n")
+            abc = page_context + continuation
+        else:
+            abc = decoded
         output_token_count = int(output.shape[-1])
         if output_token_count >= args.max_length:
             termination = "max-length"
@@ -124,6 +180,15 @@ def recognize(args: argparse.Namespace, runtime=None) -> None:
                 "termination": termination,
                 "device": device,
                 "dtype": dtype,
+                **(
+                    {
+                        "contextPrefixSha256": hashlib.sha256(
+                            page_context.encode("utf-8")
+                        ).hexdigest()
+                    }
+                    if page_context is not None
+                    else {}
+                ),
             }
         )
         prefix = f"page-{page_number:03d}"
@@ -147,6 +212,11 @@ def recognize(args: argparse.Namespace, runtime=None) -> None:
         del inputs, output
         if device == "mps":
             torch.mps.empty_cache()
+        page_context = (
+            build_page_context_prefix(abc)
+            if args.page_context_mode == "previous-page-abc"
+            else None
+        )
         print(
             json.dumps(
                 {"type": "progress", "completed": page_number, "total": total_pages},
@@ -223,6 +293,11 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--max-length", type=int, required=True)
     run.add_argument("--num-beams", type=int, required=True)
     run.add_argument("--repetition-penalty", type=float, required=True)
+    run.add_argument(
+        "--page-context-mode",
+        choices=("none", "previous-page-abc"),
+        default="none",
+    )
     worker = commands.add_parser("worker")
     worker.add_argument("--repository", type=Path, required=True)
     worker.add_argument("--model", type=Path, required=True)
@@ -230,6 +305,11 @@ def parser() -> argparse.ArgumentParser:
     worker.add_argument("--max-length", type=int, required=True)
     worker.add_argument("--num-beams", type=int, required=True)
     worker.add_argument("--repetition-penalty", type=float, required=True)
+    worker.add_argument(
+        "--page-context-mode",
+        choices=("none", "previous-page-abc"),
+        default="none",
+    )
     return root
 
 

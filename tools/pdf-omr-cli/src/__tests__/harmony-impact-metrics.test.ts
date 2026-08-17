@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { musicXmlReadyDraft } from "./fixtures/musicxml-ready-draft";
 import { analyzeHarmonyImpactDrafts } from "../benchmark/harmony-ground-truth";
 import { calculateHarmonyImpactMetrics } from "../benchmark/harmony-impact-metrics";
+import { validateDraft } from "../validate-draft";
 
 const input: HarmonyAnalysisInput = {
   schemaVersion: "1.0.0",
@@ -65,5 +66,33 @@ describe("Harmony impact metrics", () => {
 
     expect(result.metrics.falseConfidentChord.wrong).toBe(0);
     expect(result.algorithmVersion).toMatch(/^paper-semi-crf-/);
+  });
+
+  it("records an OMR-blocked metric when predicted tracks exceed the reference written timeline", () => {
+    const expected = musicXmlReadyDraft();
+    const predicted = structuredClone(expected);
+    const sourcePart = structuredClone(predicted.parts[0]!);
+    const sourceStaff = sourcePart.staves[0]!;
+    const extraMeasure = structuredClone(sourceStaff.measures[0]!);
+    extraMeasure.index = 2;
+    delete extraMeasure.repeat;
+    for (const voice of extraMeasure.voices) {
+      for (const event of voice.events) {
+        event.id = `extra-${event.id}`;
+        if (event.type === "note") delete event.tie;
+      }
+    }
+    sourcePart.id = predicted.parts[0]!.id;
+    sourcePart.staves = [{ ...sourceStaff, measures: [...sourceStaff.measures, extraMeasure] }];
+    predicted.parts.push(sourcePart);
+    expect(validateDraft(predicted).readiness.harmony).toBe("ready");
+
+    const result = analyzeHarmonyImpactDrafts(expected, predicted, {
+      decisionThreshold: 0.6,
+      confidenceThreshold: 0.8,
+    });
+
+    expect(result.metrics.status.omrBlocked).toBe(1);
+    expect(result.metrics.overlap.resolvedCoverage).toBe(0);
   });
 });

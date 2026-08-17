@@ -126,7 +126,12 @@ export async function runBenchmark(
       cause: error,
     });
   }
-  const engineRegistry = dependencies.engineRegistry ?? createEngineRegistry({ legatoWorkerMode: true });
+  const engineRegistry =
+    dependencies.engineRegistry ??
+    createEngineRegistry({
+      legatoWorkerMode: true,
+      legatoPageContextMode: legatoPageContextModeForPreprocess(request.preprocess),
+    });
   let engineAdapter: ReturnType<EngineRegistry["get"]> | undefined;
   const benchmarkEngineRegistry: EngineRegistry = {
     get(engineId) {
@@ -333,7 +338,13 @@ async function runBenchmarkItem(
     signal?: AbortSignal;
   },
 ): Promise<BenchmarkItemResult> {
-  if (context.preprocess !== "none") {
+  if (
+    context.preprocess !== "none" &&
+    !(
+      context.engineId === "legato" &&
+      ["legato-system-pages-v1", "legato-system-pages-context-v1"].includes(context.preprocess)
+    )
+  ) {
     throw new PdfOmrError("INVALID_CLI_ARGUMENT", "unknown preprocessing variant", {
       context: { preprocess: context.preprocess },
     });
@@ -489,6 +500,10 @@ async function runBenchmarkItem(
     },
     reproducibility: calculateReproducibilityMetrics(hashes),
   };
+}
+
+export function legatoPageContextModeForPreprocess(preprocess: string): "none" | "previous-page-abc" {
+  return preprocess === "legato-system-pages-context-v1" ? "previous-page-abc" : "none";
 }
 
 async function preserveFailureEvidence(workDirectory: string, itemOutputDirectory: string): Promise<void> {

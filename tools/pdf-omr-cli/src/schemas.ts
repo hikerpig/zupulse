@@ -101,6 +101,26 @@ export const pdfOmrBenchmarkReportSchema = z
   .strict();
 export type PdfOmrBenchmarkReport = z.infer<typeof pdfOmrBenchmarkReportSchema>;
 
+export const pdfOmrCompareEnginesReportSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    command: z.literal("compare-engines"),
+    status: z.literal("succeeded"),
+    outputSha256: sha256Schema,
+  })
+  .strict();
+export type PdfOmrCompareEnginesReport = z.infer<typeof pdfOmrCompareEnginesReportSchema>;
+
+export const pdfOmrEvaluateRepairCandidatesReportSchema = z
+  .object({
+    schemaVersion: z.literal("1.0.0"),
+    command: z.literal("evaluate-repair-candidates"),
+    status: z.literal("succeeded"),
+    outputSha256: sha256Schema,
+  })
+  .strict();
+export type PdfOmrEvaluateRepairCandidatesReport = z.infer<typeof pdfOmrEvaluateRepairCandidatesReportSchema>;
+
 export const pdfOmrErrorReportSchema = z
   .object({
     schemaVersion: z.literal("1.0.0"),

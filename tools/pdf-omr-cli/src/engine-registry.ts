@@ -20,6 +20,7 @@ export function createEngineRegistry(
     audiverisEnvironment?: Readonly<Record<string, string>>;
     legato?: LegatoAdapterOptions;
     legatoWorkerMode?: boolean;
+    legatoPageContextMode?: "none" | "previous-page-abc";
     rokot?: RokotAdapterOptions;
     environmentFallback?: boolean;
   } = {},
@@ -46,6 +47,7 @@ export function createEngineRegistry(
         return createLegatoAdapter({
           ...configured,
           ...(options.legatoWorkerMode === undefined ? {} : { workerMode: options.legatoWorkerMode }),
+          ...(options.legatoPageContextMode === undefined ? {} : { pageContextMode: options.legatoPageContextMode }),
         });
       }
       if (engineId === "rokot") {

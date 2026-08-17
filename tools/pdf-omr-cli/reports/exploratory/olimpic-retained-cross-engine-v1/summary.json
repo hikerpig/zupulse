@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "completed-oracle-set-non-regressive",
+  "decision": "INVESTIGATE",
+  "corpus": {
+    "id": "olimpic-retained-system-development-v1",
+    "role": "derived-controlled-development",
+    "sourceItemCount": 6,
+    "comparableItemCount": 4,
+    "sourceManifestSha256": "92e5dfeaf08c36e4b7dfc5e6135c4f1cd7d31ac68c7112bdc1de4eca883b06ff",
+    "comparableManifestSha256": "23cab810d5743360e377537196248a18b652a81b8eb2ab388efb537c242b19fb",
+    "sourceLimitation": "Inputs are retained Rokot system PNG artifacts and cannot establish source-independent engine ranking."
+  },
+  "initialSourceRun": {
+    "legatoReportSha256": "5d04512de56720f4d6b70b2e4aa6ea50720fb2e9c9f6065ef43c60dc8e52ac31",
+    "rokotReportSha256": "ab00a18637ca12d0655ab98708dc24a24c1c837e342983e8460c0fb5c05f05cb",
+    "legatoSucceeded": 3,
+    "legatoFailed": 3,
+    "rokotSucceeded": 6,
+    "rokotFailed": 0,
+    "legatoFailureReasons": {
+      "misclassified-harmony-projection": 1,
+      "part-count-mismatch": 2
+    }
+  },
+  "comparableRun": {
+    "topologyMode": "ordered-staves",
+    "legatoReportSha256": "776d0984fc16152b433b1d1f97014c4cf908e23b9daa8685b098621c9fc6812d",
+    "rokotReportSha256": "adad7e2c8fd07929e86ab0c5691c10cdbaf2cef8fdabf943deb6d81e418de188",
+    "comparisonSha256": "0dbd93329c34b0760009e2fd19c5fd46cf6abe98cf8b9f0b36644800a6c7e2a0",
+    "evaluationSha256": "06530375978c01846cea716b868a8d14ce2283faac7ac88b545f13495a1ab356",
+    "harmonyBlockedItems": 1
+  },
+  "candidates": {
+    "total": 13,
+    "oracleRecommended": 3,
+    "improved": 3,
+    "mixed": 9,
+    "regressed": 1,
+    "unchanged": 0,
+    "oracleRecommendedCandidates": [
+      {
+        "itemId": "olimpic-dev-5023603-p4-s2",
+        "operation": "replace",
+        "targetMeasureIndex": 0,
+        "candidateSha256": "fa6b6a529986d08083eb763605d9c1198f5b5277378293c9e062e42192085cb0"
+      },
+      {
+        "itemId": "olimpic-dev-5026077-p1-s1",
+        "operation": "replace",
+        "targetMeasureIndex": 0,
+        "candidateSha256": "9540725de244b50688c2f72f2bdb71e1e2ccaf0ee8e910e832b361d0776acf9c"
+      },
+      {
+        "itemId": "olimpic-dev-5026077-p1-s1",
+        "operation": "replace",
+        "targetMeasureIndex": 1,
+        "candidateSha256": "174a61a54425daffc4d877ecd93496849a6d43053b4724125b55b103a7ef32d7"
+      }
+    ]
+  },
+  "oracleRecommendedSet": {
+    "assessment": "improved",
+    "nonRegressive": true,
+    "before": {
+      "pitchF1": 0.8842105263157896,
+      "onsetF1": 0.6217228464419475,
+      "durationF1": 0.5168539325842697,
+      "jointF1": 0.18726591760299624,
+      "validMeasureRate": 0.038461538461538464
+    },
+    "after": {
+      "pitchF1": 0.9130434782608696,
+      "onsetF1": 0.6510721247563352,
+      "durationF1": 0.5302144249512671,
+      "jointF1": 0.21052631578947367,
+      "validMeasureRate": 0.07692307692307693
+    }
+  }
+}

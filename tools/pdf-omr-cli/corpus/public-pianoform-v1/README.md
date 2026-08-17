@@ -12,3 +12,11 @@ python3 tools/pdf-omr-cli/scripts/build_public_pianoform_benchmark.py \
 
 同一 inventory 重复执行必须产生 byte-identical 输出。生成后的 manifest 仍会在 benchmark 启动前逐项验证
 相对路径与 SHA-256；selection 成功不表示 assets、ground truth 或 engine 已 ready。
+
+`olimpic-selection.json` 还包含 report-only 的 `position-supplement-development`：它选择
+`standard-development` works 中尚未覆盖的 10 个 ready middle systems。锁定 release 的 4 个 ready last
+systems 已全部进入标准集，因此无法继续增加 last 样本；标准集与补充集并集为 first 31、middle 11、last 4。
+
+候选 selector 的 development-only 协议见 `repair-selector-protocol.json`。它按 `workId` 锁定 18/18
+calibration/validation split，validation selection 在冻结 candidate hash 前不得读取 GT；即使通过至少 35 个候选、
+零回归、95% Wilson lower bound 不低于 0.90 的 gate，也只允许进入独立 runtime design review，不允许自动应用。

@@ -19,6 +19,41 @@ INVENTORY_SPEC.loader.exec_module(INVENTORY_MODULE)
 
 
 class MaterializeOlimpicSelectionTest(unittest.TestCase):
+    def test_materializes_only_explicit_profiles(self) -> None:
+        selection = {
+            "profiles": {
+                "standard-development": {"items": [{"itemId": "dev", "stratum": "easy"}]},
+                "standard-holdout": {"items": [{"itemId": "holdout", "stratum": "hard"}]},
+            }
+        }
+
+        self.assertEqual(
+            MODULE._selected_strata(selection, ("standard-development",)),
+            {"dev": "easy"},
+        )
+
+    def test_rejects_unknown_explicit_profile(self) -> None:
+        with self.assertRaisesRegex(ValueError, "missing OLiMPiC selection profile"):
+            MODULE._selected_strata({"profiles": {}}, ("standard-development",))
+
+    def test_builds_a_development_oracle_manifest_from_materialized_items(self) -> None:
+        materialized = {
+            "oracleSystems": [
+                {
+                    "item": {
+                        "id": "dev",
+                        "split": "development",
+                        "category": "olimpic-scanned-system",
+                    }
+                }
+            ]
+        }
+
+        manifest = MODULE.build_manifest(materialized, "expanded", "1.0.0")
+
+        self.assertEqual(manifest["corpusId"], "expanded")
+        self.assertEqual(manifest["items"][0]["benchmarkSuite"], "oracle-system")
+
     def test_writes_hash_verified_pdf_and_musicxml_assets(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -6,7 +6,43 @@ describe("pdf OMR CLI", () => {
     await expect(runPdfOmrCommand(["--help"])).resolves.toEqual({
       schemaVersion: "1.0.0",
       command: "help",
-      usage: expect.stringMatching(/pdf-omr[\s\S]+audiveris\|legato\|rokot/),
+      usage: expect.stringMatching(
+        /pdf-omr[\s\S]+audiveris\|legato\|rokot[\s\S]+compare-engines[\s\S]+evaluate-repair-candidates/,
+      ),
+    });
+  });
+
+  it("validates cross-engine comparison arguments before reading run artifacts", async () => {
+    await expect(
+      runPdfOmrCommand(["compare-engines", "--primary", "primary", "--output", "comparison"]),
+    ).rejects.toMatchObject({
+      code: "INVALID_CLI_ARGUMENT",
+      context: { command: "compare-engines" },
+    });
+    await expect(
+      runPdfOmrCommand([
+        "compare-engines",
+        "--primary",
+        "primary",
+        "--secondary",
+        "secondary",
+        "--output",
+        "comparison",
+        "--topology",
+        "guessed",
+      ]),
+    ).rejects.toMatchObject({
+      code: "INVALID_CLI_ARGUMENT",
+      context: { command: "compare-engines", topologyMode: "guessed" },
+    });
+  });
+
+  it("validates repair candidate evaluation arguments before reading artifacts", async () => {
+    await expect(
+      runPdfOmrCommand(["evaluate-repair-candidates", "--comparison", "comparison", "--output", "evaluation"]),
+    ).rejects.toMatchObject({
+      code: "INVALID_CLI_ARGUMENT",
+      context: { command: "evaluate-repair-candidates" },
     });
   });
 

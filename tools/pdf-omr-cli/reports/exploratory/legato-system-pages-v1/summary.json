@@ -25,8 +25,10 @@
     "autoApplicable": false
   },
   "repairCandidateEvaluation": {
-    "reportSha256": "aeac78e68032abcfd84a723a331af348946834f39fbc019bdda70d1c175d39bb",
+    "reportSha256": "5ffd9e0e9bf30e3702bbc94ae2c616d84f611856cb2f31aa137367bc80d35c47",
     "appliedCandidates": 3,
+    "assessment": "improved",
+    "nonRegressive": true,
     "before": {
       "pitchF1": 0.8333333333333334,
       "onsetF1": 0.9333333333333333,

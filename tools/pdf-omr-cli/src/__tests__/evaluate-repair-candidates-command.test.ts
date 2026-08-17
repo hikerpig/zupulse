@@ -25,9 +25,11 @@ describe("evaluateRepairCandidatesCommand", () => {
     expect(result).toMatchObject({ command: "evaluate-repair-candidates", status: "succeeded" });
     const report = JSON.parse(await readFile(join(root, "evaluation/evaluation.json"), "utf8"));
     expect(report).toMatchObject({
-      items: { total: 1, appliedCandidates: 1 },
+      items: { total: 1, appliedCandidates: 1, improved: 1, regressed: 0, mixed: 0, unchanged: 0 },
       overall: {
         after: { jointF1: 1, validMeasureRate: 1 },
+        assessment: "improved",
+        nonRegressive: true,
       },
     });
     expect(report.overall.delta.jointF1).toBeGreaterThan(0);

@@ -29,6 +29,17 @@ describe("evaluateRepairCandidates", () => {
     expect(result.appliedCandidateCount).toBe(0);
     expect(result.after).toEqual(result.before);
   });
+
+  it("scores candidates against an ordered-staff comparison view", () => {
+    const primary = splitPianoDraft([60, 64], [48, 52]);
+    const expected = mergedPianoDraft([60, 62, 64], [48, 50, 52]);
+    const comparison = compareEngineDrafts(primary, expected, { topologyMode: "ordered-staves" });
+
+    const result = evaluateRepairCandidates(primary, expected, comparison);
+
+    expect(result.appliedCandidateCount).toBe(1);
+    expect(result.after.joint.f1).toBe(1);
+  });
 });
 
 function draft(pitches: readonly number[]): OmrScoreDraft {
@@ -65,4 +76,18 @@ function draft(pitches: readonly number[]): OmrScoreDraft {
     ],
     diagnostics: [],
   };
+}
+
+function splitPianoDraft(upper: readonly number[], lower: readonly number[]): OmrScoreDraft {
+  const result = draft(upper);
+  const lowerPart = draft(lower).parts[0]!;
+  result.parts.push({ ...lowerPart, id: "P2", name: "Lower" });
+  return result;
+}
+
+function mergedPianoDraft(upper: readonly number[], lower: readonly number[]): OmrScoreDraft {
+  const result = draft(upper);
+  const lowerStaff = draft(lower).parts[0]!.staves[0]!;
+  result.parts[0]!.staves.push({ ...lowerStaff, index: 1 });
+  return result;
 }

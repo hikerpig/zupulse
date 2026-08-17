@@ -29,6 +29,8 @@ const metricDeltaSchema = z
   })
   .strict();
 
+const assessmentSchema = z.enum(["improved", "regressed", "mixed", "unchanged"]);
+
 export const repairCandidateEvaluationReportSchema = z
   .object({
     schemaVersion: z.literal("1.0.0"),
@@ -47,9 +49,21 @@ export const repairCandidateEvaluationReportSchema = z
       .object({
         total: z.number().int().nonnegative(),
         appliedCandidates: z.number().int().nonnegative(),
+        improved: z.number().int().nonnegative(),
+        regressed: z.number().int().nonnegative(),
+        mixed: z.number().int().nonnegative(),
+        unchanged: z.number().int().nonnegative(),
       })
       .strict(),
-    overall: z.object({ before: metricSummarySchema, after: metricSummarySchema, delta: metricDeltaSchema }).strict(),
+    overall: z
+      .object({
+        before: metricSummarySchema,
+        after: metricSummarySchema,
+        delta: metricDeltaSchema,
+        assessment: assessmentSchema,
+        nonRegressive: z.boolean(),
+      })
+      .strict(),
     evaluations: z.array(
       z
         .object({
@@ -58,6 +72,8 @@ export const repairCandidateEvaluationReportSchema = z
           before: metricSummarySchema,
           after: metricSummarySchema,
           delta: metricDeltaSchema,
+          assessment: assessmentSchema,
+          nonRegressive: z.boolean(),
         })
         .strict(),
     ),
@@ -99,7 +115,7 @@ export async function evaluateRepairCandidatesCommand(input: {
         appliedCandidates: result.appliedCandidateCount,
         before,
         after,
-        delta: delta(before, after),
+        ...assess(before, after),
         beforeMetrics: result.before,
         afterMetrics: result.after,
       };
@@ -107,6 +123,7 @@ export async function evaluateRepairCandidatesCommand(input: {
   );
   const before = summarize(aggregateSymbolicMetrics(evaluations.map((evaluation) => evaluation.beforeMetrics)));
   const after = summarize(aggregateSymbolicMetrics(evaluations.map((evaluation) => evaluation.afterMetrics)));
+  const overallAssessment = assess(before, after);
   const report = repairCandidateEvaluationReportSchema.parse({
     schemaVersion: "1.0.0",
     command: "evaluate-repair-candidates",
@@ -116,8 +133,12 @@ export async function evaluateRepairCandidatesCommand(input: {
     items: {
       total: evaluations.length,
       appliedCandidates: evaluations.reduce((sum, evaluation) => sum + evaluation.appliedCandidates, 0),
+      improved: evaluations.filter((evaluation) => evaluation.assessment === "improved").length,
+      regressed: evaluations.filter((evaluation) => evaluation.assessment === "regressed").length,
+      mixed: evaluations.filter((evaluation) => evaluation.assessment === "mixed").length,
+      unchanged: evaluations.filter((evaluation) => evaluation.assessment === "unchanged").length,
     },
-    overall: { before, after, delta: delta(before, after) },
+    overall: { before, after, ...overallAssessment },
     evaluations: evaluations.map(
       ({ beforeMetrics: _beforeMetrics, afterMetrics: _afterMetrics, ...evaluation }) => evaluation,
     ),
@@ -150,6 +171,21 @@ function delta(before: MetricSummary, after: MetricSummary): z.infer<typeof metr
     durationF1: after.durationF1 - before.durationF1,
     jointF1: after.jointF1 - before.jointF1,
     validMeasureRate: after.validMeasureRate - before.validMeasureRate,
+  };
+}
+
+function assess(
+  before: MetricSummary,
+  after: MetricSummary,
+): { delta: z.infer<typeof metricDeltaSchema>; assessment: z.infer<typeof assessmentSchema>; nonRegressive: boolean } {
+  const changes = delta(before, after);
+  const values = Object.values(changes);
+  const positive = values.some((value) => value > 1e-12);
+  const negative = values.some((value) => value < -1e-12);
+  return {
+    delta: changes,
+    assessment: positive && negative ? "mixed" : positive ? "improved" : negative ? "regressed" : "unchanged",
+    nonRegressive: !negative,
   };
 }
 

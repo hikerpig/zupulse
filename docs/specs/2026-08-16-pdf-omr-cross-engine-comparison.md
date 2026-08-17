@@ -22,6 +22,11 @@ header，则把这些字段作为下一 system 的生成前缀，让模型在缺
 后的规范化小节事实及其 canonical hash。候选始终要求人工复核，不能自动应用；alignment ambiguity 时完全不生成
 候选。
 
+第四阶段用真实扫描 OLiMPiC system 验证候选泛化。对于 LEGATO `2 parts × 1 staff` 与 Rokot
+`1 part × 2 staves` 的显式结构差异，只允许调用方选择 `ordered-staves` comparison view；默认 strict 模式继续
+fail closed。候选评分必须同时检查 Pitch、Onset、Duration、Joint 与 valid measure rate，任何正负指标并存的结果
+都分类为 `mixed`，不得 promotion。
+
 ## Commands
 
 ```bash
@@ -107,6 +112,8 @@ const proposal = {
 9. The same three-item development corpus is rerun in a new output directory and reported without overwriting the baseline。
 10. Unique alignments emit deterministic `insert`/`replace`/`delete` repair candidates; ambiguous alignments emit none。
 11. Development-only candidate evaluation reports before/after metrics without writing a simulated Draft。
+12. Ordered-staff topology is explicit, deterministic, and never inferred by the default comparison mode。
+13. Evaluation reports `improved`、`regressed`、`mixed` or `unchanged` and a non-regression decision。
 
 ## Non-goals
 

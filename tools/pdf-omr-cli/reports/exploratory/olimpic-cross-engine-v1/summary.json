@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "completed-mixed-non-regressive-failed",
+  "decision": "INVESTIGATE",
+  "corpus": {
+    "id": "olimpic-scanned-system-v1",
+    "role": "development",
+    "itemId": "openscore-6586696-p1-s1",
+    "manifestSha256": "00395444a460136f9a35bb443af24a986d85fbcedeeffce20eb4a7bf978f0816"
+  },
+  "runs": {
+    "legatoReportSha256": "8be24fd18f0fe092199afc9480caf3f4ac63fd3c103116616f4e74be79bb25e7",
+    "rokotReportSha256": "1e76fcd0ce40cecd38684b3bf196ce3b51b7f35488f9d133389e4b2fb092259b",
+    "comparisonSha256": "bdf3e43564713b6dc07564c845114153f1413da993684250d41dae0c40bf953d",
+    "evaluationSha256": "8a2523c94c4335493de510bdce2872cec7f08998cc2e6ca04f08711dbf855d44"
+  },
+  "candidate": {
+    "topologyMode": "ordered-staves",
+    "alignmentAmbiguous": false,
+    "operation": "replace",
+    "targetMeasureIndex": 2,
+    "sourceMeasureIndex": 2,
+    "candidateSha256": "d0e2372a8560418d9f47d6509292dd060d53742f7417b7c002abd2b00f7dabe7",
+    "reviewRequired": true,
+    "autoApplicable": false
+  },
+  "evaluation": {
+    "assessment": "mixed",
+    "nonRegressive": false,
+    "before": {
+      "pitchF1": 1,
+      "onsetF1": 1,
+      "durationF1": 1,
+      "jointF1": 0.75,
+      "validMeasureRate": 0.5
+    },
+    "after": {
+      "pitchF1": 0.989247311827957,
+      "onsetF1": 0.9787234042553191,
+      "durationF1": 0.9787234042553191,
+      "jointF1": 0.7659574468085107,
+      "validMeasureRate": 0.5
+    }
+  }
+}

@@ -284,8 +284,21 @@ SHA-256 为 `4c35b76737e585023201b33dd4dad02e9133b23ad5d43e93e8422a36953de15c`�
 benchmark run 已保存的 ground-truth Draft 评分。整体 Pitch/Onset/Duration/Joint F1 从
 `0.8333 / 0.9333 / 0.9333 / 0.5333` 提升到 `1.0 / 1.0 / 1.0 / 1.0`，valid measure rate 从
 `0.5` 提升到 `1.0`。evaluation SHA-256 为
-`aeac78e68032abcfd84a723a331af348946834f39fbc019bdda70d1c175d39bb`。该结果只证明这三个 synthetic
+`5ffd9e0e9bf30e3702bbc94ae2c616d84f611856cb2f31aa137367bc80d35c47`。三个 item 均分类为
+`improved`、`nonRegressive: true`；该结果只证明这三个 synthetic
 development variants 上的候选上界，不允许 promotion、自动写回或 holdout 结论。
+
+## OLiMPiC real scanned system cross-engine follow-up
+
+2026-08-17 使用 `olimpic-scanned-system-v1` 唯一 development item `openscore-6586696-p1-s1` 分别运行
+LEGATO 与 Rokot。两者均完成 recognition，但 LEGATO Draft 为 `2 parts × 1 staff`，Rokot 为
+`1 part × 2 staves`；默认 strict comparison 正确拒绝。显式 `ordered-staves` view 后得到一个无歧义的 measure 2
+`replace` candidate。
+
+development-only 模拟评分将 Joint F1 从 `0.7500` 提升到 `0.7660`，但 Pitch F1 从 `1.0` 降至
+`0.9892`，Onset/Duration F1 从 `1.0` 降至 `0.9787`，valid measure rate 仍为 `0.5`。因此结果分类为
+`mixed`、`nonRegressive: false`，明确否决自动 promotion。小型证据见
+`reports/exploratory/olimpic-cross-engine-v1/`；该单项结果仍不足以估算候选 precision。
 
 随后使用 `legato-system-pages-v1` 将每个 full-page fixture 确定性物化为两个 system pages。LEGATO 的
 Pitch F1 提升到 `0.9841`，Joint F1 提升到 `0.8333`，valid measure rate 提升到 `0.75`，完整恢复 8 个

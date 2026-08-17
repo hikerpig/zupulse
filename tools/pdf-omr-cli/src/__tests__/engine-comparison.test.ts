@@ -173,6 +173,17 @@ describe("compareEngineDrafts", () => {
       }),
     );
   });
+
+  it("compares explicitly ordered logical staves across split and merged piano parts", () => {
+    const primary = splitPianoDraft([60, 62], [48, 50]);
+    const secondary = mergedPianoDraft([60, 62], [48, 50]);
+
+    expect(compareEngineDrafts(primary, secondary, { topologyMode: "ordered-staves" })).toMatchObject({
+      topologyMode: "ordered-staves",
+      agreement: true,
+      proposals: [],
+    });
+  });
 });
 
 function draft(pitches: readonly number[]): OmrScoreDraft {
@@ -210,4 +221,18 @@ function draft(pitches: readonly number[]): OmrScoreDraft {
     ],
     diagnostics: [],
   };
+}
+
+function splitPianoDraft(upper: readonly number[], lower: readonly number[]): OmrScoreDraft {
+  const result = draft(upper);
+  const lowerPart = draft(lower).parts[0]!;
+  result.parts.push({ ...lowerPart, id: "P2", name: "Lower" });
+  return result;
+}
+
+function mergedPianoDraft(upper: readonly number[], lower: readonly number[]): OmrScoreDraft {
+  const result = draft(upper);
+  const lowerStaff = draft(lower).parts[0]!.staves[0]!;
+  result.parts[0]!.staves.push({ ...lowerStaff, index: 1 });
+  return result;
 }

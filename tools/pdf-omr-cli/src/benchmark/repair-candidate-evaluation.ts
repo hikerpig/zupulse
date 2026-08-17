@@ -1,6 +1,11 @@
 import { PdfOmrError } from "../errors";
 import { omrScoreDraftSchema, type OmrScoreDraft } from "../schemas";
-import { engineDraftComparisonSchema, fingerprintDraftMeasures, type EngineDraftComparison } from "./engine-comparison";
+import {
+  createComparisonView,
+  engineDraftComparisonSchema,
+  fingerprintDraftMeasures,
+  type EngineDraftComparison,
+} from "./engine-comparison";
 import { alignDraftParts } from "./part-identity";
 import { computeSymbolicMetrics, type SymbolicMetrics } from "./symbolic-metrics";
 
@@ -23,11 +28,13 @@ export function evaluateRepairCandidates(
   const primary = omrScoreDraftSchema.parse(primaryInput);
   const expected = omrScoreDraftSchema.parse(expectedInput);
   const comparison = engineDraftComparisonSchema.parse(comparisonInput);
-  const simulated = simulateRepairCandidates(primary, comparison);
+  const primaryView = createComparisonView(primary, comparison.topologyMode);
+  const expectedView = createComparisonView(expected, comparison.topologyMode);
+  const simulated = simulateRepairCandidates(primaryView, comparison);
   return {
     appliedCandidateCount: comparison.proposals.filter((proposal) => proposal.repairCandidate !== undefined).length,
-    before: computeSymbolicMetrics(alignDraftParts(primary, expected).draft, expected),
-    after: computeSymbolicMetrics(alignDraftParts(simulated, expected).draft, expected),
+    before: computeSymbolicMetrics(alignDraftParts(primaryView, expectedView).draft, expectedView),
+    after: computeSymbolicMetrics(alignDraftParts(simulated, expectedView).draft, expectedView),
   };
 }
 

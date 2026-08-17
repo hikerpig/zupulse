@@ -51,6 +51,7 @@ export async function compareEnginesCommand(input: {
   primaryDirectory: string;
   secondaryDirectory: string;
   output: string;
+  topologyMode?: "strict" | "ordered-staves";
   cwd?: string;
 }): Promise<PdfOmrCompareEnginesReport> {
   const cwd = input.cwd ?? process.cwd();
@@ -65,7 +66,10 @@ export async function compareEnginesCommand(input: {
         readPredictedDraft(primary.directory, itemId),
         readPredictedDraft(secondary.directory, itemId),
       ]);
-      return { itemId, ...compareEngineDrafts(primaryDraft, secondaryDraft) };
+      return {
+        itemId,
+        ...compareEngineDrafts(primaryDraft, secondaryDraft, { topologyMode: input.topologyMode ?? "strict" }),
+      };
     }),
   );
   const report = engineComparisonReportSchema.parse({

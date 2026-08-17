@@ -142,6 +142,7 @@ export const engineComparisonProposalSchema = z
 
 const engineDraftComparisonFields = {
   schemaVersion: z.literal("1.0.0"),
+  topologyMode: z.enum(["strict", "ordered-staves"]).default("strict"),
   agreement: z.boolean(),
   alignmentAmbiguous: z.boolean(),
   primaryMeasureCount: z.number().int().nonnegative(),
@@ -239,9 +240,14 @@ type AlignmentStep =
   | { kind: "delete"; primary: MeasureSlice }
   | { kind: "insert"; secondary: MeasureSlice };
 
-export function compareEngineDrafts(primaryInput: OmrScoreDraft, secondaryInput: OmrScoreDraft): EngineDraftComparison {
-  const primary = omrScoreDraftSchema.parse(primaryInput);
-  const secondary = omrScoreDraftSchema.parse(secondaryInput);
+export function compareEngineDrafts(
+  primaryInput: OmrScoreDraft,
+  secondaryInput: OmrScoreDraft,
+  options: { topologyMode?: "strict" | "ordered-staves" } = {},
+): EngineDraftComparison {
+  const topologyMode = options.topologyMode ?? "strict";
+  const primary = createComparisonView(primaryInput, topologyMode);
+  const secondary = createComparisonView(secondaryInput, topologyMode);
   requireCompatibleTopology(primary, secondary);
   const primaryMeasures = projectMeasureSlices(primary);
   const secondaryMeasures = projectMeasureSlices(secondary);
@@ -310,6 +316,7 @@ export function compareEngineDrafts(primaryInput: OmrScoreDraft, secondaryInput:
   }
   return engineDraftComparisonSchema.parse({
     schemaVersion: "1.0.0",
+    topologyMode,
     agreement: proposals.length === 0,
     alignmentAmbiguous: alignment.ambiguous,
     primaryMeasureCount: primaryMeasures.length,
@@ -319,14 +326,29 @@ export function compareEngineDrafts(primaryInput: OmrScoreDraft, secondaryInput:
   });
 }
 
-export function fingerprintDraftMeasures(input: OmrScoreDraft): string[] {
-  const draft = omrScoreDraftSchema.parse(input);
+export function fingerprintDraftMeasures(
+  input: OmrScoreDraft,
+  topologyMode: "strict" | "ordered-staves" = "strict",
+): string[] {
+  const draft = createComparisonView(input, topologyMode);
   if (draft.parts.length !== 1) {
     throw new PdfOmrError("BENCHMARK_EVALUATION_LIMITATION", "cross-engine part identity is unavailable", {
       context: { reason: "cross-engine-part-identity-unavailable" },
     });
   }
   return projectMeasureSlices(draft).map((measure) => measure.fingerprint);
+}
+
+export function createComparisonView(input: OmrScoreDraft, topologyMode: "strict" | "ordered-staves"): OmrScoreDraft {
+  const draft = omrScoreDraftSchema.parse(input);
+  if (topologyMode === "strict") return draft;
+  const staves = draft.parts.flatMap((part) => part.staves).map((staff, index) => ({ ...staff, index }));
+  return omrScoreDraftSchema.parse({
+    schemaVersion: "1.0.0",
+    ...(draft.provenance === undefined ? {} : { provenance: draft.provenance }),
+    parts: [{ id: "ordered-staves", name: "Ordered staves", staves }],
+    diagnostics: draft.diagnostics,
+  });
 }
 
 function requireCompatibleTopology(primary: OmrScoreDraft, secondary: OmrScoreDraft): void {

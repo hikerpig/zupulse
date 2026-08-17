@@ -19,6 +19,22 @@ describe("pdf OMR CLI", () => {
       code: "INVALID_CLI_ARGUMENT",
       context: { command: "compare-engines" },
     });
+    await expect(
+      runPdfOmrCommand([
+        "compare-engines",
+        "--primary",
+        "primary",
+        "--secondary",
+        "secondary",
+        "--output",
+        "comparison",
+        "--topology",
+        "guessed",
+      ]),
+    ).rejects.toMatchObject({
+      code: "INVALID_CLI_ARGUMENT",
+      context: { command: "compare-engines", topologyMode: "guessed" },
+    });
   });
 
   it("validates repair candidate evaluation arguments before reading artifacts", async () => {

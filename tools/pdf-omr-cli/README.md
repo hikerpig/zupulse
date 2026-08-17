@@ -162,7 +162,8 @@ full-page report，只能作为 development ablation。
 pnpm pdf-omr -- compare-engines \
   --primary /absolute/path/to/primary-run \
   --secondary /absolute/path/to/secondary-run \
-  --output /absolute/path/to/comparison-run
+  --output /absolute/path/to/comparison-run \
+  --topology strict
 ```
 
 comparison 对单 part Draft 做 global measure sequence alignment，将完整小节遗漏压缩为
@@ -172,6 +173,9 @@ comparison 对单 part Draft 做 global measure sequence alignment，将完整�
 规范化小节事实和可复算 SHA-256。所有 proposal 与 candidate 固定 `autoApplicable: false`，candidate 固定
 `reviewRequired: true`。alignment ambiguity 时不生成 candidate；多 part 缺少显式跨引擎 identity、topology
 不一致、run identity 不一致或不完整 run 都会 fail closed。命令不读取 ground truth，也不修改输入 run。
+当同一钢琴谱被一个 engine 表示为多个单谱表 part、另一个表示为单个多谱表 part 时，必须显式传
+`--topology ordered-staves`；该模式只按 Draft 中 part/staff 的声明顺序建立 comparison view，不猜测或持久化
+part identity。默认 `strict` 仍会拒绝这种拓扑差异。
 
 候选效果只能通过显式的 development-only 模拟评分命令评估。该命令校验 comparison 与 primary report hash，
 在内存中应用 candidate，再读取 benchmark 已保存的 ground-truth Draft 计算前后指标；只写 `evaluation.json`，

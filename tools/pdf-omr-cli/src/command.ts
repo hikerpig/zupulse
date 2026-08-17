@@ -33,7 +33,7 @@ const usage = [
   "  analyze <draft.json> --output <harmony.json>",
   "  export-musicxml <draft.json> --output <score.mxl>",
   "  benchmark --manifest <manifest.json> --engine <audiveris|legato|rokot> --output <result-dir>",
-  "  compare-engines --primary <benchmark-run-dir> --secondary <benchmark-run-dir> --output <comparison-run-dir>",
+  "  compare-engines --primary <benchmark-run-dir> --secondary <benchmark-run-dir> --output <comparison-run-dir> [--topology <strict|ordered-staves>]",
   "  evaluate-repair-candidates --comparison <comparison-run-dir> --primary <benchmark-run-dir> --output <evaluation-run-dir>",
 ].join("\n");
 
@@ -298,7 +298,7 @@ export async function runPdfOmrCommand(
     );
   }
   if (normalized[0] === "compare-engines") {
-    const flags = parseFlags(normalized.slice(1), new Set(["--primary", "--secondary", "--output"]));
+    const flags = parseFlags(normalized.slice(1), new Set(["--primary", "--secondary", "--output", "--topology"]));
     const primaryDirectory = flags.get("--primary");
     const secondaryDirectory = flags.get("--secondary");
     const output = flags.get("--output");
@@ -309,11 +309,18 @@ export async function runPdfOmrCommand(
         { context: { command: "compare-engines" } },
       );
     }
+    const topologyMode = flags.get("--topology") ?? "strict";
+    if (topologyMode !== "strict" && topologyMode !== "ordered-staves") {
+      throw new PdfOmrError("INVALID_CLI_ARGUMENT", "compare-engines topology mode is invalid", {
+        context: { command: "compare-engines", topologyMode },
+      });
+    }
     const { compareEnginesCommand } = await import("./commands/compare-engines");
     return compareEnginesCommand({
       primaryDirectory,
       secondaryDirectory,
       output,
+      topologyMode,
       cwd: context.cwd ?? process.cwd(),
     });
   }

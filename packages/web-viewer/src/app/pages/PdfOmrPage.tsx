@@ -266,6 +266,7 @@ export function PdfOmrPage({
   const canStart = file !== undefined && selectedEngine !== "" && !hasJob;
   const canRetry = snapshot?.status === "failed" || snapshot?.status === "cancelled";
   const validationView = result?.validation ?? failedValidation;
+  const statusDetail = statusDetailText(t, snapshot, exported, input !== undefined);
 
   return (
     <main className={styles.shell} aria-labelledby="pdf-omr-title">
@@ -275,7 +276,10 @@ export function PdfOmrPage({
           <h1 id="pdf-omr-title">{t("pdfOmr.title")}</h1>
           <p>{t("pdfOmr.description")}</p>
         </div>
-        <Status tone={statusTone}>{statusLabel(t, snapshot?.status, exported, input !== undefined)}</Status>
+        <div className={styles.statusBlock}>
+          <Status tone={statusTone}>{statusLabel(t, snapshot?.status, exported, input !== undefined)}</Status>
+          {statusDetail ? <small>{statusDetail}</small> : null}
+        </div>
       </header>
 
       <div className={styles.workbench}>
@@ -285,10 +289,20 @@ export function PdfOmrPage({
               <FileText aria-hidden="true" size={16} />
               <h2>{t("pdfOmr.input")}</h2>
             </div>
-            {file ? (
+            {input ? (
               <div className={styles.fileSummary}>
-                <strong>{file.fileName}</strong>
-                <span>{formatBytes(file.sizeBytes)}</span>
+                <strong>{input.fileName}</strong>
+                <span>
+                  {[
+                    formatBytes(input.sizeBytes),
+                    t(`pdfOmr.inputKind.${input.inputKind}`),
+                    snapshot?.input?.pageCount === undefined
+                      ? undefined
+                      : t("pdfOmr.inputPages", { count: snapshot.input.pageCount }),
+                  ]
+                    .filter((part) => part !== undefined)
+                    .join(" · ")}
+                </span>
               </div>
             ) : (
               <p className={styles.muted}>{t("pdfOmr.noFile")}</p>
@@ -383,31 +397,41 @@ export function PdfOmrPage({
                   disabled={(hasJob && !canRetry) || availableEngines.length === 0}
                 >
                   {availableEngines.length === 0 ? <option value="">{t("pdfOmr.noEngines")}</option> : null}
-                  {engines.map((engine) => (
-                    <option
-                      key={engine.id}
-                      value={engine.id}
-                      disabled={
-                        !engine.available || (input !== undefined && !engine.inputKinds.includes(input.inputKind))
-                      }
-                    >
-                      {engine.label} · {formatEngineVersion(engine.version)}
-                      {engine.available && (input === undefined || engine.inputKinds.includes(input.inputKind))
-                        ? ""
-                        : ` — ${t("pdfOmr.unavailable")}`}
-                    </option>
-                  ))}
+                  {engines.map((engine) => {
+                    const compatible = input === undefined || engine.inputKinds.includes(input.inputKind);
+                    const disabled = !engine.available || !compatible;
+                    return (
+                      <option
+                        key={engine.id}
+                        value={engine.id}
+                        disabled={disabled}
+                        title={disabled ? engineAvailabilityText(t, engine, compatible) : undefined}
+                      >
+                        {engine.label} · {formatEngineVersion(engine.version)}
+                        {disabled ? ` — ${t("pdfOmr.unavailable")}` : ""}
+                      </option>
+                    );
+                  })}
                 </Select>
               </Field>
               <ul className={styles.engineStatusList} aria-label={t("pdfOmr.engineAvailability.label")}>
                 {engines.map((engine) => {
                   const compatible = input === undefined || engine.inputKinds.includes(input.inputKind);
                   return (
-                    <li key={engine.id} data-available={engine.available && compatible}>
+                    <li
+                      key={engine.id}
+                      data-available={engine.available && compatible}
+                      data-tier={engineAvailabilityTier(engine)}
+                    >
                       <span className={styles.engineStatusDot} aria-hidden="true" />
                       <span>
                         <strong>{engine.label}</strong>
                         <small>{engineAvailabilityText(t, engine, compatible)}</small>
+                        {!engine.available ? (
+                          <a className={styles.engineSettingsLink} href="#/settings">
+                            {t("pdfOmr.engineAvailability.configure")}
+                          </a>
+                        ) : null}
                       </span>
                     </li>
                   );
@@ -963,6 +987,48 @@ function engineAvailabilityText(
     default:
       return t("pdfOmr.engineAvailability.inspectFailed");
   }
+}
+
+function engineAvailabilityTier(
+  engine: PdfOmrWorkbenchPort["engines"][number],
+): "ready" | "unconfigured" | "mismatch" | "error" {
+  if (engine.available) return "ready";
+  switch (engine.reason) {
+    case "missing-rokot-configuration":
+    case "missing-legato-configuration":
+      return "unconfigured";
+    case "model-unreadable":
+    case "base-model-unreadable":
+    case "mmproj-unreadable":
+    case "model-hash-mismatch":
+    case "mmproj-hash-mismatch":
+    case "repository-revision-mismatch":
+    case "python-version-mismatch":
+    case "llama-build-mismatch":
+    case "abc-converter-unavailable":
+    case "base-model-config-empty":
+      return "mismatch";
+    default:
+      return "error";
+  }
+}
+
+function statusDetailText(
+  t: CommonT,
+  snapshot: PdfOmrJobSnapshot | undefined,
+  exported: boolean,
+  hasInput: boolean,
+): string | undefined {
+  if (exported) return t("pdfOmr.statusDetail.exported");
+  const status = snapshot?.status;
+  if (status === "succeeded") return t("pdfOmr.statusDetail.succeeded");
+  if (status === "failed") return t("pdfOmr.statusDetail.failed");
+  if (status === "cancelled") return t("pdfOmr.statusDetail.cancelled");
+  if ((status === "running" || status === "cancelling") && snapshot?.stage !== undefined) {
+    return t("pdfOmr.statusDetail.running", { stage: t(`pdfOmr.stage.${snapshot.stage}.title`) });
+  }
+  if (status === undefined && hasInput) return t("pdfOmr.statusDetail.ready");
+  return undefined;
 }
 
 function formatEngineVersion(version: string): string {

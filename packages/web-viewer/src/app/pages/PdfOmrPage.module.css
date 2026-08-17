@@ -19,6 +19,19 @@
     margin: 0 auto;
   }
 
+  .statusBlock {
+    display: grid;
+    justify-items: end;
+    gap: 6px;
+    max-width: 340px;
+    text-align: right;
+  }
+  .statusBlock small {
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
   .header h1 {
     margin: 3px 0 5px;
     font-size: clamp(26px, 3vw, 38px);
@@ -303,6 +316,18 @@
   }
   .engineStatusList li[data-available="true"] .engineStatusDot {
     background: var(--status-ready-text);
+  }
+  .engineStatusList li[data-tier="unconfigured"] .engineStatusDot,
+  .engineStatusList li[data-tier="mismatch"] .engineStatusDot {
+    background: var(--status-warning-text);
+  }
+  .engineSettingsLink {
+    display: inline-block;
+    margin-top: 3px;
+    color: var(--text-primary);
+    font-size: 10px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
   .primaryActions {
     display: flex;

@@ -107,6 +107,64 @@ describe("PdfOmrPage", () => {
     expect((await screen.findAllByText(/用时 0:0\d/)).length).toBeGreaterThanOrEqual(1);
   });
 
+  it("shows input kind and page count once metadata is available", async () => {
+    const port = createPort();
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+    expect(screen.getByText("4 KiB · PDF")).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "开始提取" }));
+    port.setSnapshot({ ...runningSnapshot, status: "succeeded", stage: "export" });
+    port.emit({ schemaVersion: "1.0.0", sequence: 4, kind: "terminal", status: "succeeded" });
+
+    expect(await screen.findByText(/PDF · 1 页/)).toBeTruthy();
+    expect(await screen.findByText(/识别完成，可以预览、导出 MXL 或应用 MIDI 修正。/)).toBeTruthy();
+  });
+
+  it("shows the running stage in the status summary", async () => {
+    const port = createPort();
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+    await user.click(screen.getByRole("button", { name: "开始提取" }));
+
+    expect(await screen.findByText("当前阶段 · 识谱")).toBeTruthy();
+  });
+
+  it("tiers unavailable engines and links them to settings", async () => {
+    const port = createPort();
+    port.engines = [
+      { id: "audiveris", version: "5.11.0", label: "Audiveris", available: true, inputKinds: ["pdf", "image"] },
+      {
+        id: "rokot",
+        version: "unknown",
+        label: "Rokot",
+        available: false,
+        inputKinds: ["pdf"],
+        reason: "missing-rokot-configuration",
+      },
+    ];
+
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+
+    const link = screen.getByRole("link", { name: "在设置中配置" });
+    expect(link.getAttribute("href")).toBe("#/settings");
+    expect(link.closest("li")?.getAttribute("data-tier")).toBe("unconfigured");
+  });
+
   it("keeps PDF recognition session-scoped and exposes the real run stages", async () => {
     const port = createPort();
     const user = userEvent.setup();
@@ -273,7 +331,7 @@ describe("PdfOmrPage", () => {
       </I18nextProvider>,
     );
 
-    expect(await screen.findByText("sonata.pdf")).toBeTruthy();
+    expect((await screen.findAllByText("sonata.pdf")).length).toBeGreaterThanOrEqual(1);
     await user.click(await screen.findByRole("button", { name: "重试" }));
     expect(port.retry).toHaveBeenCalledWith("job-1", "audiveris");
   });

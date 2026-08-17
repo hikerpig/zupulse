@@ -165,6 +165,25 @@ describe("PdfOmrPage", () => {
     expect(link.closest("li")?.getAttribute("data-tier")).toBe("unconfigured");
   });
 
+  it("offers a next-file action and a validation summary after success", async () => {
+    const port = createPort();
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+    await user.click(screen.getByRole("button", { name: "开始提取" }));
+    port.setSnapshot({ ...runningSnapshot, status: "succeeded", stage: "export" });
+    port.emit({ schemaVersion: "1.0.0", sequence: 4, kind: "terminal", status: "succeeded" });
+
+    expect(await screen.findByText("0 阻塞 · 0 警告")).toBeTruthy();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    await user.click(screen.getByRole("button", { name: "识别下一份" }));
+    expect(port.select).toHaveBeenCalledTimes(2);
+  });
+
   it("keeps PDF recognition session-scoped and exposes the real run stages", async () => {
     const port = createPort();
     const user = userEvent.setup();

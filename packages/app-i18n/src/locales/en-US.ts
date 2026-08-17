@@ -124,6 +124,7 @@ export const enUS = {
       engineAvailability: {
         label: "Local engine availability",
         ready: "Ready · {{version}}",
+        readyShort: "Ready",
         unsupportedInput: "Does not support the current input type.",
         executableUnavailable:
           "Executable not found. Install Audiveris or configure its executable before Desktop starts.",
@@ -136,6 +137,7 @@ export const enUS = {
         configure: "Configure in Settings",
       },
       start: "Start extraction",
+      selectNext: "Recognize another file",
       cancel: "Cancel processing",
       retry: "Retry",
       export: "Export MXL",
@@ -193,6 +195,7 @@ export const enUS = {
       stageElapsed: "Elapsed {{time}}",
       stageEta: "About {{time}} left",
       stageDuration: "Took {{time}}",
+      stageValidation: "{{blocking}} blocking · {{warning}} warnings",
       midi: {
         title: "MIDI correction",
         requiresResult: "Import a matching score-export MIDI after the initial recognition succeeds.",

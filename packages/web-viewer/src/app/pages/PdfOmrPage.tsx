@@ -346,6 +346,14 @@ export function PdfOmrPage({
                           {t("pdfOmr.stageDuration", { time: formatElapsed(duration) })}
                         </small>
                       ) : null}
+                      {stage === "validate" && state === "completed" && validationView ? (
+                        <small className={styles.stageActivity}>
+                          {t("pdfOmr.stageValidation", {
+                            blocking: validationView.diagnostics.filter((d) => d.severity === "blocking").length,
+                            warning: validationView.diagnostics.filter((d) => d.severity === "warning").length,
+                          })}
+                        </small>
+                      ) : null}
                     </span>
                   </li>
                 );
@@ -414,35 +422,59 @@ export function PdfOmrPage({
                   })}
                 </Select>
               </Field>
-              <ul className={styles.engineStatusList} aria-label={t("pdfOmr.engineAvailability.label")}>
-                {engines.map((engine) => {
-                  const compatible = input === undefined || engine.inputKinds.includes(input.inputKind);
-                  return (
-                    <li
-                      key={engine.id}
-                      data-available={engine.available && compatible}
-                      data-tier={engineAvailabilityTier(engine)}
-                    >
-                      <span className={styles.engineStatusDot} aria-hidden="true" />
-                      <span>
-                        <strong>{engine.label}</strong>
-                        <small>{engineAvailabilityText(t, engine, compatible)}</small>
-                        {!engine.available ? (
-                          <a className={styles.engineSettingsLink} href="#/settings">
-                            {t("pdfOmr.engineAvailability.configure")}
-                          </a>
-                        ) : null}
+              <details className={styles.engineAvailability}>
+                <summary>
+                  {t("pdfOmr.engineAvailability.label")}
+                  {(() => {
+                    const current = engines.find((engine) => engine.id === selectedEngine);
+                    if (current === undefined) return null;
+                    const compatible = input === undefined || current.inputKinds.includes(input.inputKind);
+                    return (
+                      <span className={styles.engineAvailabilitySummary}>
+                        {current.label} ·{" "}
+                        {current.available && compatible
+                          ? t("pdfOmr.engineAvailability.readyShort")
+                          : t("pdfOmr.unavailable")}
                       </span>
-                    </li>
-                  );
-                })}
-              </ul>
+                    );
+                  })()}
+                </summary>
+                <ul className={styles.engineStatusList} aria-label={t("pdfOmr.engineAvailability.label")}>
+                  {engines.map((engine) => {
+                    const compatible = input === undefined || engine.inputKinds.includes(input.inputKind);
+                    return (
+                      <li
+                        key={engine.id}
+                        data-available={engine.available && compatible}
+                        data-tier={engineAvailabilityTier(engine)}
+                      >
+                        <span className={styles.engineStatusDot} aria-hidden="true" />
+                        <span>
+                          <strong>{engine.label}</strong>
+                          <small>{engineAvailabilityText(t, engine, compatible)}</small>
+                          {!engine.available ? (
+                            <a className={styles.engineSettingsLink} href="#/settings">
+                              {t("pdfOmr.engineAvailability.configure")}
+                            </a>
+                          ) : null}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </details>
             </div>
             <div className={styles.primaryActions}>
               {snapshot?.status === "succeeded" ? (
-                <Button tone="primary" size="lg" onClick={() => void exportResult()} loading={busy === "export"}>
-                  {exported ? t("pdfOmr.exported") : t("pdfOmr.export")}
-                </Button>
+                <>
+                  <Button tone="primary" size="lg" onClick={() => void exportResult()} loading={busy === "export"}>
+                    {exported ? t("pdfOmr.exported") : t("pdfOmr.export")}
+                  </Button>
+                  <Button tone="secondary" onClick={() => void selectPdf()} loading={busy === "select"}>
+                    <Upload aria-hidden="true" size={15} />
+                    {t("pdfOmr.selectNext")}
+                  </Button>
+                </>
               ) : snapshot?.status === "running" || snapshot?.status === "cancelling" ? (
                 <Button
                   tone="secondary"

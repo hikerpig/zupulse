@@ -118,6 +118,7 @@ export const zhCN = {
       engineAvailability: {
         label: "本地 engine 可用状态",
         ready: "已就绪 · {{version}}",
+        readyShort: "已就绪",
         unsupportedInput: "不支持当前输入类型。",
         executableUnavailable: "未找到可执行程序。请安装 Audiveris，或在启动 Desktop 前配置其可执行文件。",
         rokotNotConfigured: "需要配置 llama.cpp、Rokot 模型、vision projector 和 ABC 转换器。",
@@ -129,6 +130,7 @@ export const zhCN = {
         configure: "在设置中配置",
       },
       start: "开始提取",
+      selectNext: "识别下一份",
       cancel: "取消处理",
       retry: "重试",
       export: "导出 MXL",
@@ -182,6 +184,7 @@ export const zhCN = {
       stageElapsed: "已用时 {{time}}",
       stageEta: "预计还需 {{time}}",
       stageDuration: "用时 {{time}}",
+      stageValidation: "{{blocking}} 阻塞 · {{warning}} 警告",
       midi: {
         title: "MIDI 修正",
         requiresResult: "初步识别成功后可导入同曲的 score-export MIDI。",

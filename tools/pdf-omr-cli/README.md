@@ -363,8 +363,11 @@ validation 问题都必须稳定失败，不能静默猜测。
 stderr 和 exception stack 不进入 canonical artifacts。已有输出目录不会被覆盖。
 
 Benchmark 还会先校验 ground-truth readiness，并以 structural role 对齐 part identity；校验阻断或 part
-mapping 冲突会生成 evaluation limitation，不伪造 symbolic/Harmony metrics。成功 item 的 runtime artifacts
-记录五个 pipeline stage 的 wall time，并在 Unix/macOS 运行 engine 时每 250ms 采样独立进程组，报告
+mapping 冲突会生成 evaluation limitation，不伪造 symbolic/Harmony metrics。成功 item 仍会保留 symbolic
+metrics；若 predicted Draft 在附加 Harmony analysis 中触发已知的 exact-tick 或 written-moment
+projection limitation，则 Harmony impact 记录 `omrBlocked`，不会把已完成的 recognition 误记为 engine failure。
+未知 analyzer 异常仍会向外抛出。成功 item 的 runtime artifacts 记录五个 pipeline stage 的 wall time，并在
+Unix/macOS 运行 engine 时每 250ms 采样独立进程组，报告
 `processResources` 的采样数、平均/峰值 CPU 与 engine process-tree peak RSS；aggregate report 输出
 这些指标的分布。可用的 GPU/cancel probe 仍独立记录。没有探针或没有有效样本时字段保持缺失，并由
 `metricsAvailability` 显式标记，holdout gate 对其 fail closed。没有可量化 duration 的 grace note 会保留

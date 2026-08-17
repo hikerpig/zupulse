@@ -45,6 +45,17 @@ describe("evaluateRepairCandidates", () => {
     expect(result.after.joint.f1).toBe(1);
   });
 
+  it("repairs a measure missing from only one ordered staff", () => {
+    const primary = mergedPianoDraft([60, 62], [48, 50, 52]);
+    const expected = mergedPianoDraft([60, 62, 64], [48, 50, 52]);
+    const comparison = compareEngineDrafts(primary, expected, { topologyMode: "ordered-staves" });
+
+    const result = evaluateRepairCandidates(primary, expected, comparison);
+
+    expect(result.appliedCandidateCount).toBe(1);
+    expect(result.after.joint.f1).toBe(1);
+  });
+
   it("scores every candidate independently against the unchanged primary Draft", () => {
     const primary = draft([60, 64]);
     const secondary = draft([62, 65]);

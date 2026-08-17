@@ -118,6 +118,8 @@ const proposal = {
 13. Evaluation reports `improved`、`regressed`、`mixed` or `unchanged` and a non-regression decision。
 14. Evaluation scores each candidate independently against the unchanged primary Draft, recommends only improved
     non-regressive candidates, and reports the combined recommended-set outcome。
+15. A known predicted Harmony projection limitation records `omrBlocked` without discarding valid symbolic metrics or
+    misclassifying recognition as an engine failure; unknown analysis errors still fail the item。
 
 ## Non-goals
 

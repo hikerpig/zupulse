@@ -110,7 +110,6 @@ function simulateRepairCandidates(primary: OmrScoreDraft, comparison: EngineDraf
   const fingerprints = fingerprintDraftMeasures(primary);
   if (fingerprints.length !== comparison.primaryMeasureCount) throw incompatiblePrimary();
   const staves = primary.parts[0]!.staves;
-  if (staves.some((staff) => staff.measures.length !== comparison.primaryMeasureCount)) throw incompatiblePrimary();
   const staffIndexes = staves.map((staff) => staff.index);
   for (const candidate of candidates) {
     if (candidate.operation === "insert") {

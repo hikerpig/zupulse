@@ -35,6 +35,27 @@ describe("PdfOmrJobController", () => {
     expect(snapshots.some((snapshot) => JSON.stringify(snapshot).includes("/private/"))).toBe(false);
   });
 
+  it("marks a succeeded job as exported and republishes the snapshot", async () => {
+    const runtime = new FakeRuntime();
+    const controller = new PdfOmrJobController(runtime);
+    const started = controller.start({
+      inputPath: "/private/score.pdf",
+      fileName: "score.pdf",
+      sizeBytes: 42,
+      inputKind: "pdf",
+      engineId: "fake",
+      outputDirectory: "/private/run",
+    });
+    await controller.waitForIdle();
+
+    controller.setExported(started.jobId, true);
+    expect(controller.getSnapshot()?.exported).toBe(true);
+    controller.setExported(started.jobId, false);
+    expect(controller.getSnapshot()?.exported).toBe(false);
+    controller.setExported("other-job", true);
+    expect(controller.getSnapshot()?.exported).toBe(false);
+  });
+
   it("exposes the job input only while its snapshot is current", async () => {
     const runtime = new FakeRuntime();
     const controller = new PdfOmrJobController(runtime);

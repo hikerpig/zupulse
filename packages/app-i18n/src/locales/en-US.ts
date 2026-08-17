@@ -138,6 +138,7 @@ export const enUS = {
       },
       start: "Start extraction",
       selectNext: "Recognize another file",
+      cancelWait: "Cancelling… waiting for the recognition engine to exit",
       cancel: "Cancel processing",
       retry: "Retry",
       export: "Export MXL",
@@ -202,6 +203,8 @@ export const enUS = {
       },
       musicXml: "MusicXML",
       harmony: "Harmony",
+      readinessHint:
+        "Checks whether the recognized draft meets the structural requirements for MusicXML generation and harmony analysis.",
       pdfPlaceholder: "Waiting for an input file",
       pdfHint: "Choose a PDF or image to keep its input summary in this session.",
       pdfSelected: "Selected file · {{size}} · The original will not enter the Library.",

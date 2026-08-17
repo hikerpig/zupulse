@@ -68,6 +68,7 @@ export function PdfOmrPage({
       const next = await port.getSnapshot();
       if (next && (jobId === undefined || next.jobId === jobId)) {
         setSnapshot(next);
+        setExported(next.exported === true);
         if (next.status === "succeeded") {
           const nextResult = await port.readResult(next.jobId);
           setResult(nextResult);
@@ -488,10 +489,10 @@ export function PdfOmrPage({
                   tone="secondary"
                   onClick={() => void cancel()}
                   disabled={snapshot.status === "cancelling"}
-                  loading={busy === "cancel"}
+                  loading={busy === "cancel" || snapshot.status === "cancelling"}
                 >
                   <Square aria-hidden="true" size={14} />
-                  {t("pdfOmr.cancel")}
+                  {snapshot.status === "cancelling" ? t("pdfOmr.cancelWait") : t("pdfOmr.cancel")}
                 </Button>
               ) : canRetry ? (
                 <Button tone="primary" onClick={() => void retry()} loading={busy === "start"}>
@@ -1260,6 +1261,7 @@ function ValidationView({ validation, t }: { validation: PdfOmrValidationView; t
         <Readiness label={t("pdfOmr.musicXml")} value={validation.readiness.musicXml} t={t} />
         <Readiness label={t("pdfOmr.harmony")} value={validation.readiness.harmony} t={t} />
       </div>
+      <p className={styles.muted}>{t("pdfOmr.readinessHint")}</p>
       <ul className={styles.diagnosticList}>{visible.map(renderItem)}</ul>
       {rest.length > 0 ? (
         <details className={styles.diagnosticsMore}>

@@ -370,7 +370,7 @@ describe("PdfOmrPage", () => {
       errorCode: "INVALID_INPUT",
     });
 
-    expect(await screen.findByText(/超过了 engine 的尺寸上限/)).toBeTruthy();
+    expect(await screen.findByText(/超过了引擎的尺寸上限/)).toBeTruthy();
     expect(screen.getByText(/INVALID_INPUT/)).toBeTruthy();
   });
 
@@ -514,7 +514,7 @@ describe("PdfOmrPage", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "重试" })).toBeTruthy());
     expect(screen.getByText("识别失败")).toBeTruthy();
     expect(screen.getByText(/ENGINE_UNAVAILABLE/)).toBeTruthy();
-    expect(screen.getByText("当前 engine 不可用或未配置。")).toBeTruthy();
+    expect(screen.getByText("当前引擎不可用或未配置。")).toBeTruthy();
   });
 
   it("allows selecting another engine before retrying a failed job", async () => {
@@ -545,7 +545,7 @@ describe("PdfOmrPage", () => {
       errorCode: "ENGINE_UNAVAILABLE",
     });
 
-    const engineSelect = await screen.findByRole("combobox", { name: "识谱 engine" });
+    const engineSelect = await screen.findByRole("combobox", { name: "识谱引擎" });
     expect(engineSelect).toHaveProperty("disabled", false);
     await user.selectOptions(engineSelect, "rokot");
     await user.click(screen.getByRole("button", { name: "重试" }));
@@ -628,6 +628,20 @@ describe("PdfOmrPage", () => {
       { proposalId: "proposal-1", writtenPitch: { step: "C", alter: 1, octave: 4 } },
     ]);
     expect(await screen.findByText("已生成 MIDI 修正版 MXL")).toBeTruthy();
+  });
+
+  it("restores the exported state when reopening the workbench", async () => {
+    const port = createPort();
+    port.setSnapshot({ ...runningSnapshot, status: "succeeded", stage: "export", exported: true });
+
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+
+    expect(await screen.findByRole("button", { name: "已导出 MXL" })).toBeTruthy();
+    expect(screen.getByText("已导出")).toBeTruthy();
   });
 
   it("restores a succeeded result when reopening the workbench", async () => {

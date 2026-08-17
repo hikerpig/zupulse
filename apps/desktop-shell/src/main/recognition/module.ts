@@ -25,6 +25,7 @@ type RecognitionHandlers = RequiredBridgeHandlers<
   | "pdfOmr.start"
   | "pdfOmr.retry"
   | "pdfOmr.cancel"
+  | "pdfOmr.markExported"
   | "pdfOmr.getSnapshot"
   | "pdfOmr.readResult"
   | "pdfOmr.readInputPreview"
@@ -196,6 +197,10 @@ export async function createRecognitionModule(options: {
       controller.cancel(request.payload.jobId);
       return {};
     },
+    "pdfOmr.markExported": (request) => {
+      controller.setExported(request.payload.jobId, true);
+      return {};
+    },
     "pdfOmr.getSnapshot": () => ({ snapshot: controller.getSnapshot() ?? null }),
     "pdfOmr.readResult": (request) => readPdfOmrResult(controller, corrections, request.payload.jobId),
     "pdfOmr.readInputPreview": (request) =>
@@ -211,11 +216,16 @@ export async function createRecognitionModule(options: {
       });
     },
     "pdfOmr.applyMidiCorrections": (request) =>
-      corrections.apply({
-        jobId: request.payload.jobId,
-        decisions: request.payload.decisions,
-        outputDirectory: path.join(options.userData, "pdf-omr", randomUUID(), "midi-writeback"),
-      }),
+      corrections
+        .apply({
+          jobId: request.payload.jobId,
+          decisions: request.payload.decisions,
+          outputDirectory: path.join(options.userData, "pdf-omr", randomUUID(), "midi-writeback"),
+        })
+        .then((result) => {
+          controller.setExported(request.payload.jobId, false);
+          return result;
+        }),
   };
 
   return {

@@ -327,6 +327,7 @@ const pdfOmrJobSnapshotSchema = z
     jobId: idSchema,
     status: z.enum(["ready", "running", "cancelling", "cancelled", "failed", "succeeded"]),
     stage: pdfOmrStageSchema.optional(),
+    exported: z.boolean().optional(),
     input: z
       .object({
         fileName: z.string().min(1),
@@ -479,6 +480,7 @@ export const bridgeRequestSchema = z.discriminatedUnion("type", [
   envelope("pdfOmr.start", z.object({ fileToken: idSchema, engineId: idSchema }).strict()),
   envelope("pdfOmr.retry", z.object({ jobId: idSchema, engineId: idSchema }).strict()),
   envelope("pdfOmr.cancel", z.object({ jobId: idSchema }).strict()),
+  envelope("pdfOmr.markExported", z.object({ jobId: idSchema }).strict()),
   envelope("pdfOmr.getSnapshot", z.object({}).strict()),
   envelope("pdfOmr.readResult", z.object({ jobId: idSchema }).strict()),
   envelope(
@@ -696,6 +698,7 @@ export const bridgeResponseSchemas = {
   "pdfOmr.start": z.object({ jobId: idSchema, snapshot: pdfOmrJobSnapshotSchema }).strict(),
   "pdfOmr.retry": z.object({ jobId: idSchema, snapshot: pdfOmrJobSnapshotSchema }).strict(),
   "pdfOmr.cancel": z.object({}).strict(),
+  "pdfOmr.markExported": z.object({}).strict(),
   "pdfOmr.getSnapshot": z.object({ snapshot: pdfOmrJobSnapshotSchema.nullable() }).strict(),
   "pdfOmr.readResult": pdfOmrResultSchema,
   "pdfOmr.readInputPreview": z.discriminatedUnion("status", [

@@ -330,7 +330,12 @@ function createDesktopPdfOmrPort(
         fileName: result.fileName,
         bytes: Uint8Array.from(result.bytes),
       });
-      return parseBridgeResponse(request.type, await bridge.request(request)).status;
+      const status = parseBridgeResponse(request.type, await bridge.request(request)).status;
+      if (status === "saved") {
+        const mark = createBridgeRequest("pdfOmr.markExported", crypto.randomUUID(), { jobId });
+        parseBridgeResponse(mark.type, await bridge.request(mark));
+      }
+      return status;
     },
     subscribe(listener) {
       return bridge.subscribe((value) => {

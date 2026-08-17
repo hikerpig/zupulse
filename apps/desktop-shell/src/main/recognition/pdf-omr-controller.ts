@@ -97,6 +97,12 @@ export class PdfOmrJobController {
     return this.input;
   }
 
+  setExported(jobId: string, exported: boolean): void {
+    if (this.snapshot?.jobId !== jobId || this.snapshot.status !== "succeeded") return;
+    this.snapshot = { ...this.snapshot, exported };
+    this.publish();
+  }
+
   getCompletedResult(jobId: string): { outputDirectory: string; result: PdfOmrPipelineResult } | undefined {
     if (this.completed?.jobId !== jobId) return undefined;
     return { outputDirectory: this.completed.outputDirectory, result: this.completed.result };

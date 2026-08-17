@@ -15,6 +15,13 @@ export type RepairCandidateEvaluation = {
   after: SymbolicMetrics;
 };
 
+export type IndividualRepairCandidateEvaluation = {
+  candidateSha256: string;
+  operation: RepairCandidate["operation"];
+  before: SymbolicMetrics;
+  after: SymbolicMetrics;
+};
+
 type RepairCandidate = NonNullable<EngineDraftComparison["proposals"][number]["repairCandidate"]>;
 type ContentRepairCandidate = Extract<RepairCandidate, { operation: "insert" | "replace" }>;
 type CandidateStaff = ContentRepairCandidate["measure"]["staves"][number];
@@ -25,17 +32,75 @@ export function evaluateRepairCandidates(
   expectedInput: OmrScoreDraft,
   comparisonInput: EngineDraftComparison,
 ): RepairCandidateEvaluation {
+  const comparison = engineDraftComparisonSchema.parse(comparisonInput);
+  return evaluateRepairCandidateSelection(
+    primaryInput,
+    expectedInput,
+    comparison,
+    comparison.proposals.flatMap((proposal) =>
+      proposal.repairCandidate === undefined ? [] : [proposal.repairCandidate.candidateSha256],
+    ),
+  );
+}
+
+export function evaluateRepairCandidateSelection(
+  primaryInput: OmrScoreDraft,
+  expectedInput: OmrScoreDraft,
+  comparisonInput: EngineDraftComparison,
+  candidateSha256s: readonly string[],
+): RepairCandidateEvaluation {
   const primary = omrScoreDraftSchema.parse(primaryInput);
   const expected = omrScoreDraftSchema.parse(expectedInput);
   const comparison = engineDraftComparisonSchema.parse(comparisonInput);
+  const selected = new Set(candidateSha256s);
+  const available = new Set(
+    comparison.proposals.flatMap((proposal) =>
+      proposal.repairCandidate === undefined ? [] : [proposal.repairCandidate.candidateSha256],
+    ),
+  );
+  if (
+    selected.size !== candidateSha256s.length ||
+    [...selected].some((candidateSha256) => !available.has(candidateSha256))
+  ) {
+    throw incompatiblePrimary();
+  }
+  const selectedComparison = engineDraftComparisonSchema.parse({
+    ...comparison,
+    proposals: comparison.proposals.filter(
+      (proposal) => proposal.repairCandidate !== undefined && selected.has(proposal.repairCandidate.candidateSha256),
+    ),
+  });
   const primaryView = createComparisonView(primary, comparison.topologyMode);
   const expectedView = createComparisonView(expected, comparison.topologyMode);
-  const simulated = simulateRepairCandidates(primaryView, comparison);
+  const simulated = simulateRepairCandidates(primaryView, selectedComparison);
   return {
-    appliedCandidateCount: comparison.proposals.filter((proposal) => proposal.repairCandidate !== undefined).length,
+    appliedCandidateCount: selected.size,
     before: computeSymbolicMetrics(alignDraftParts(primaryView, expectedView).draft, expectedView),
     after: computeSymbolicMetrics(alignDraftParts(simulated, expectedView).draft, expectedView),
   };
+}
+
+export function evaluateRepairCandidatesIndividually(
+  primaryInput: OmrScoreDraft,
+  expectedInput: OmrScoreDraft,
+  comparisonInput: EngineDraftComparison,
+): readonly IndividualRepairCandidateEvaluation[] {
+  const comparison = engineDraftComparisonSchema.parse(comparisonInput);
+  return comparison.proposals.flatMap((proposal) => {
+    const candidate = proposal.repairCandidate;
+    if (candidate === undefined) return [];
+    const result = evaluateRepairCandidateSelection(primaryInput, expectedInput, comparison, [
+      candidate.candidateSha256,
+    ]);
+    return [
+      {
+        candidateSha256: candidate.candidateSha256,
+        operation: candidate.operation,
+        before: result.before,
+        after: result.after,
+      },
+    ];
+  });
 }
 
 function simulateRepairCandidates(primary: OmrScoreDraft, comparison: EngineDraftComparison): OmrScoreDraft {

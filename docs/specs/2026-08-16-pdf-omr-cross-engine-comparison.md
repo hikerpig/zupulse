@@ -93,6 +93,8 @@ const proposal = {
 - Always: immutable input runs, report-only proposals, engine/version/report hash provenance, fail-closed topology checks。
 - Always: repair candidate targets primary Draft, uses only secondary Draft musical facts, and remains review-required。
 - Always: context comes only from the immediately preceding LEGATO page and is recorded in decoder provenance。
+- Always: development recommendation requires independent improvement, per-metric non-regression, and a non-regressive
+  combined recommended set; it never changes candidate review/writeback policy。
 - Ask first: App/Desktop/Bridge integration, dependency additions, automatic Draft selection or writeback。
 - Never: use ground truth during runtime comparison, compare raw confidence across engines, read holdout for tuning, mutate
   engine artifacts, or claim product readiness from synthetic fixtures。
@@ -114,6 +116,8 @@ const proposal = {
 11. Development-only candidate evaluation reports before/after metrics without writing a simulated Draft。
 12. Ordered-staff topology is explicit, deterministic, and never inferred by the default comparison mode。
 13. Evaluation reports `improved`、`regressed`、`mixed` or `unchanged` and a non-regression decision。
+14. Evaluation scores each candidate independently against the unchanged primary Draft, recommends only improved
+    non-regressive candidates, and reports the combined recommended-set outcome。
 
 ## Non-goals
 

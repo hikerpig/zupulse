@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { compareEngineDrafts } from "../benchmark/engine-comparison";
-import { evaluateRepairCandidates } from "../benchmark/repair-candidate-evaluation";
+import {
+  evaluateRepairCandidates,
+  evaluateRepairCandidateSelection,
+  evaluateRepairCandidatesIndividually,
+} from "../benchmark/repair-candidate-evaluation";
 import type { OmrScoreDraft } from "../schemas";
 
 describe("evaluateRepairCandidates", () => {
@@ -39,6 +43,25 @@ describe("evaluateRepairCandidates", () => {
 
     expect(result.appliedCandidateCount).toBe(1);
     expect(result.after.joint.f1).toBe(1);
+  });
+
+  it("scores every candidate independently against the unchanged primary Draft", () => {
+    const primary = draft([60, 64]);
+    const secondary = draft([62, 65]);
+    const expected = draft([62, 64]);
+    const comparison = compareEngineDrafts(primary, secondary);
+
+    const results = evaluateRepairCandidatesIndividually(primary, expected, comparison);
+
+    expect(results).toHaveLength(2);
+    expect(results.map((result) => result.operation)).toEqual(["replace", "replace"]);
+    expect(results[0]!.before).toEqual(results[1]!.before);
+    expect(results[0]!.after.pitch.f1).toBeGreaterThan(results[0]!.before.pitch.f1);
+    expect(results[1]!.after.pitch.f1).toBeLessThan(results[1]!.before.pitch.f1);
+
+    const selected = evaluateRepairCandidateSelection(primary, expected, comparison, [results[0]!.candidateSha256]);
+    expect(selected.appliedCandidateCount).toBe(1);
+    expect(selected.after.pitch.f1).toBeGreaterThan(selected.before.pitch.f1);
   });
 });
 

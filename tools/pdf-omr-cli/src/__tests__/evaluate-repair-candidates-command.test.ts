@@ -35,6 +35,43 @@ describe("evaluateRepairCandidatesCommand", () => {
     expect(report.overall.delta.jointF1).toBeGreaterThan(0);
     await expect(readFile(join(root, "evaluation/simulated-draft.json"))).rejects.toThrow();
   });
+
+  it("recommends only independently improved non-regressive candidates", async () => {
+    const root = await mkdtemp(join(tmpdir(), "repair-candidate-precision-"));
+    const expected = draft([62, 64]);
+    const primary = await benchmarkRun(root, "primary", "legato", draft([60, 64]), expected);
+    const secondary = await benchmarkRun(root, "secondary", "rokot", draft([62, 65]), expected);
+    const comparison = join(root, "comparison");
+    await compareEnginesCommand({ primaryDirectory: primary, secondaryDirectory: secondary, output: comparison });
+
+    await evaluateRepairCandidatesCommand({
+      comparisonDirectory: comparison,
+      primaryDirectory: primary,
+      output: join(root, "evaluation"),
+    });
+
+    const report = JSON.parse(await readFile(join(root, "evaluation/evaluation.json"), "utf8"));
+    expect(report.candidates).toMatchObject({
+      total: 2,
+      recommended: 1,
+      improved: 1,
+      regressed: 1,
+      mixed: 0,
+      unchanged: 0,
+    });
+    expect(report.candidateEvaluations).toHaveLength(2);
+    expect(report.candidateEvaluations.map((evaluation: { recommended: boolean }) => evaluation.recommended)).toEqual([
+      true,
+      false,
+    ]);
+    expect(report.candidateEvaluations[0].candidateSha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(report.recommendedSet).toMatchObject({
+      appliedCandidates: 1,
+      assessment: "improved",
+      nonRegressive: true,
+    });
+    expect(report.recommendedSet.delta.pitchF1).toBeGreaterThan(0);
+  });
 });
 
 async function benchmarkRun(

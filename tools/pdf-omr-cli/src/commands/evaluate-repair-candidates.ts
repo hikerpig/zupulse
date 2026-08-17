@@ -2,7 +2,11 @@ import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { z } from "zod";
 import { engineComparisonReportSchema, engineDraftComparisonSchema } from "../benchmark/engine-comparison";
-import { evaluateRepairCandidates } from "../benchmark/repair-candidate-evaluation";
+import {
+  evaluateRepairCandidates,
+  evaluateRepairCandidateSelection,
+  evaluateRepairCandidatesIndividually,
+} from "../benchmark/repair-candidate-evaluation";
 import { aggregateSymbolicMetrics, type SymbolicMetrics } from "../benchmark/symbolic-metrics";
 import { sha256Bytes } from "../canonical-json";
 import { PdfOmrError } from "../errors";
@@ -55,8 +59,28 @@ export const repairCandidateEvaluationReportSchema = z
         unchanged: z.number().int().nonnegative(),
       })
       .strict(),
+    candidates: z
+      .object({
+        total: z.number().int().nonnegative(),
+        recommended: z.number().int().nonnegative(),
+        improved: z.number().int().nonnegative(),
+        regressed: z.number().int().nonnegative(),
+        mixed: z.number().int().nonnegative(),
+        unchanged: z.number().int().nonnegative(),
+      })
+      .strict(),
     overall: z
       .object({
+        before: metricSummarySchema,
+        after: metricSummarySchema,
+        delta: metricDeltaSchema,
+        assessment: assessmentSchema,
+        nonRegressive: z.boolean(),
+      })
+      .strict(),
+    recommendedSet: z
+      .object({
+        appliedCandidates: z.number().int().nonnegative(),
         before: metricSummarySchema,
         after: metricSummarySchema,
         delta: metricDeltaSchema,
@@ -74,6 +98,21 @@ export const repairCandidateEvaluationReportSchema = z
           delta: metricDeltaSchema,
           assessment: assessmentSchema,
           nonRegressive: z.boolean(),
+        })
+        .strict(),
+    ),
+    candidateEvaluations: z.array(
+      z
+        .object({
+          itemId: z.string().min(1),
+          candidateSha256: sha256Schema,
+          operation: z.enum(["insert", "replace", "delete"]),
+          before: metricSummarySchema,
+          after: metricSummarySchema,
+          delta: metricDeltaSchema,
+          assessment: assessmentSchema,
+          nonRegressive: z.boolean(),
+          recommended: z.boolean(),
         })
         .strict(),
     ),
@@ -110,6 +149,30 @@ export async function evaluateRepairCandidatesCommand(input: {
       const result = evaluateRepairCandidates(primary, expected, engineDraftComparisonSchema.parse(draftComparison));
       const before = summarize(result.before);
       const after = summarize(result.after);
+      const candidateEvaluations = evaluateRepairCandidatesIndividually(
+        primary,
+        expected,
+        engineDraftComparisonSchema.parse(draftComparison),
+      ).map((candidate) => {
+        const candidateBefore = summarize(candidate.before);
+        const candidateAfter = summarize(candidate.after);
+        const candidateAssessment = assess(candidateBefore, candidateAfter);
+        return {
+          itemId,
+          candidateSha256: candidate.candidateSha256,
+          operation: candidate.operation,
+          before: candidateBefore,
+          after: candidateAfter,
+          ...candidateAssessment,
+          recommended: candidateAssessment.assessment === "improved" && candidateAssessment.nonRegressive,
+        };
+      });
+      const recommended = evaluateRepairCandidateSelection(
+        primary,
+        expected,
+        engineDraftComparisonSchema.parse(draftComparison),
+        candidateEvaluations.filter((candidate) => candidate.recommended).map((candidate) => candidate.candidateSha256),
+      );
       return {
         itemId,
         appliedCandidates: result.appliedCandidateCount,
@@ -118,12 +181,23 @@ export async function evaluateRepairCandidatesCommand(input: {
         ...assess(before, after),
         beforeMetrics: result.before,
         afterMetrics: result.after,
+        candidateEvaluations,
+        recommendedAppliedCandidates: recommended.appliedCandidateCount,
+        recommendedBeforeMetrics: recommended.before,
+        recommendedAfterMetrics: recommended.after,
       };
     }),
   );
   const before = summarize(aggregateSymbolicMetrics(evaluations.map((evaluation) => evaluation.beforeMetrics)));
   const after = summarize(aggregateSymbolicMetrics(evaluations.map((evaluation) => evaluation.afterMetrics)));
   const overallAssessment = assess(before, after);
+  const candidateEvaluations = evaluations.flatMap((evaluation) => evaluation.candidateEvaluations);
+  const recommendedBefore = summarize(
+    aggregateSymbolicMetrics(evaluations.map((evaluation) => evaluation.recommendedBeforeMetrics)),
+  );
+  const recommendedAfter = summarize(
+    aggregateSymbolicMetrics(evaluations.map((evaluation) => evaluation.recommendedAfterMetrics)),
+  );
   const report = repairCandidateEvaluationReportSchema.parse({
     schemaVersion: "1.0.0",
     command: "evaluate-repair-candidates",
@@ -138,10 +212,33 @@ export async function evaluateRepairCandidatesCommand(input: {
       mixed: evaluations.filter((evaluation) => evaluation.assessment === "mixed").length,
       unchanged: evaluations.filter((evaluation) => evaluation.assessment === "unchanged").length,
     },
+    candidates: {
+      total: candidateEvaluations.length,
+      recommended: candidateEvaluations.filter((evaluation) => evaluation.recommended).length,
+      improved: candidateEvaluations.filter((evaluation) => evaluation.assessment === "improved").length,
+      regressed: candidateEvaluations.filter((evaluation) => evaluation.assessment === "regressed").length,
+      mixed: candidateEvaluations.filter((evaluation) => evaluation.assessment === "mixed").length,
+      unchanged: candidateEvaluations.filter((evaluation) => evaluation.assessment === "unchanged").length,
+    },
     overall: { before, after, ...overallAssessment },
+    recommendedSet: {
+      appliedCandidates: evaluations.reduce((sum, evaluation) => sum + evaluation.recommendedAppliedCandidates, 0),
+      before: recommendedBefore,
+      after: recommendedAfter,
+      ...assess(recommendedBefore, recommendedAfter),
+    },
     evaluations: evaluations.map(
-      ({ beforeMetrics: _beforeMetrics, afterMetrics: _afterMetrics, ...evaluation }) => evaluation,
+      ({
+        beforeMetrics: _beforeMetrics,
+        afterMetrics: _afterMetrics,
+        candidateEvaluations: _candidateEvaluations,
+        recommendedAppliedCandidates: _recommendedAppliedCandidates,
+        recommendedBeforeMetrics: _recommendedBeforeMetrics,
+        recommendedAfterMetrics: _recommendedAfterMetrics,
+        ...evaluation
+      }) => evaluation,
     ),
+    candidateEvaluations,
   });
   const outputSha256 = await writeCanonicalNew(join(input.output, "evaluation.json"), report, cwd);
   return pdfOmrEvaluateRepairCandidatesReportSchema.parse({

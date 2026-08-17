@@ -178,8 +178,10 @@ comparison 对单 part Draft 做 global measure sequence alignment，将完整�
 part identity。默认 `strict` 仍会拒绝这种拓扑差异。
 
 候选效果只能通过显式的 development-only 模拟评分命令评估。该命令校验 comparison 与 primary report hash，
-在内存中应用 candidate，再读取 benchmark 已保存的 ground-truth Draft 计算前后指标；只写 `evaluation.json`，
-不会写 simulated Draft：
+先在内存中应用全部 candidate，再逐个候选相对未修改 primary 独立评分。只有单候选 assessment 为 `improved`
+且 `nonRegressive: true` 时才标为 `recommended`；报告还会联合应用这些推荐候选并输出 `recommendedSet`，验证组合后
+仍满足 non-regression。推荐只代表 development evidence，不改变 `autoApplicable: false` / `reviewRequired: true`。
+命令只写 `evaluation.json`，不会写 simulated Draft：
 
 ```bash
 pnpm pdf-omr -- evaluate-repair-candidates \

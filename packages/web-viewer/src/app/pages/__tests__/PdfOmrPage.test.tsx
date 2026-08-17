@@ -11,6 +11,102 @@ import type { PdfOmrWorkbenchPort } from "../../../features/pdf-omr/pdf-omr-port
 afterEach(cleanup);
 
 describe("PdfOmrPage", () => {
+  it("shows ready status once an input file is selected", async () => {
+    const port = createPort();
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+
+    expect(screen.getByText("等待选择输入")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+    expect(await screen.findByText("可以开始")).toBeTruthy();
+  });
+
+  it("explains a segmentation failure with stage, advice, and skipped later stages", async () => {
+    const port = createPort();
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+    await user.click(screen.getByRole("button", { name: "开始提取" }));
+
+    port.setSnapshot({
+      ...runningSnapshot,
+      status: "failed",
+      stage: "recognize",
+      error: { code: "ENGINE_OUTPUT_INVALID", recoverable: true, reason: "ambiguous-system-segmentation" },
+    });
+    port.emit({
+      schemaVersion: "1.0.0",
+      sequence: 6,
+      kind: "terminal",
+      status: "failed",
+      errorCode: "ENGINE_OUTPUT_INVALID",
+    });
+
+    expect(await screen.findByText(/无法确定这份乐谱的谱表系统分割/)).toBeTruthy();
+    expect(screen.getByText("失败阶段 · 识谱")).toBeTruthy();
+    expect(screen.getByText(/同样的输入重试通常会再次失败/)).toBeTruthy();
+    expect(screen.getAllByText("已跳过")).toHaveLength(2);
+  });
+
+  it("shows an ETA while recognition progresses", async () => {
+    const port = createPort();
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+    await user.click(screen.getByRole("button", { name: "开始提取" }));
+
+    port.setSnapshot({
+      ...runningSnapshot,
+      progress: { unit: "page", completed: 2, total: 5 },
+    });
+    port.emit({
+      schemaVersion: "1.0.0",
+      sequence: 2,
+      kind: "engine-progress",
+      stage: "recognize",
+      unit: "page",
+      completed: 2,
+      total: 5,
+    });
+
+    expect((await screen.findAllByText(/预计还需 0:0\d/)).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole("progressbar")).toHaveProperty("ariaValueNow", "2");
+  });
+
+  it("shows per-stage durations after the job succeeds", async () => {
+    const port = createPort();
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+    await user.click(screen.getByRole("button", { name: "开始提取" }));
+
+    port.setSnapshot({
+      ...runningSnapshot,
+      status: "succeeded",
+      stage: "export",
+      engine: { id: "audiveris", version: "1.0.0" },
+    });
+    port.emit({ schemaVersion: "1.0.0", sequence: 4, kind: "terminal", status: "succeeded" });
+
+    expect((await screen.findAllByText(/用时 0:0\d/)).length).toBeGreaterThanOrEqual(1);
+  });
+
   it("keeps PDF recognition session-scoped and exposes the real run stages", async () => {
     const port = createPort();
     const user = userEvent.setup();

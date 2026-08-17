@@ -142,6 +142,9 @@ export const enUS = {
       diagnosticDetail: "Semantic diagnostic {{code}}. Review the run evidence or retry with another engine.",
       errorTitle: "Recognition stopped",
       errorCode: "Error code · {{code}}",
+      errorStage: "Failed at stage · {{stage}}",
+      errorActionHint:
+        "Retrying with the same input will usually fail again. Try another recognition engine, or choose a different input file.",
       errorReason: {
         engineUnavailable: "The selected engine is unavailable or not configured.",
         engineExecutionFailed: "The engine process failed during execution.",
@@ -153,7 +156,27 @@ export const enUS = {
         draftValidationFailed: "The recognized draft did not pass structural validation.",
         invalidInput: "The input file or job parameters are invalid.",
         interrupted: "The recognition job was cancelled.",
+        ambiguousSystemSegmentation:
+          "The staff systems of this score could not be segmented; no valid staff group was found. This is common for multi-page scans or complex layouts. Try another engine or a clearer input.",
+        encryptedPdf: "This PDF is encrypted and cannot be read. Remove the encryption and try again.",
+        malformedPdf: "This PDF could not be parsed; the file may be corrupted.",
+        malformedImage: "This image could not be parsed; the file may be corrupted.",
+        unreadablePdf: "The pages of this PDF could not be read.",
+        timeout: "The engine timed out. Try a simpler input or another engine.",
+        nonZeroExit: "The engine process exited abnormally. Check the engine configuration or try another engine.",
+        outputLimit: "The engine output exceeded the size limit and was aborted.",
+        zeroPagePdf: "This PDF contains no pages.",
+        unsupportedPageOrientation: "This PDF contains pages with an unsupported orientation.",
+        unsupportedEngineInputKind: "The selected engine does not support this input type. Try another engine.",
+        unsupportedPageCount: "This input has more pages than the selected engine supports.",
+        musicxmlReadinessBlocked:
+          "The recognized draft does not meet the structural requirements for MusicXML generation.",
+        harmonyReadinessBlocked: "The recognized draft does not meet the structural requirements for harmony analysis.",
+        missingArtifact: "The engine did not produce the expected result file.",
+        normalizationFailed: "The engine output could not be converted into the standard structure.",
+        invalidMusicxml: "The generated MusicXML is invalid.",
         unknown: "The recognition job stopped with an unknown error: {{code}}.",
+        unknownReason: "The recognition job stopped: {{code}} ({{reason}}).",
       },
       musicXml: "MusicXML",
       harmony: "Harmony",
@@ -165,6 +188,8 @@ export const enUS = {
         "Only structured progress is shown here; stdout, stderr, and absolute paths are never parsed.",
       stageProgress: "{{unit}} {{completed}} / {{total}}",
       stageElapsed: "Elapsed {{time}}",
+      stageEta: "About {{time}} left",
+      stageDuration: "Took {{time}}",
       midi: {
         title: "MIDI correction",
         requiresResult: "Import a matching score-export MIDI after the initial recognition succeeds.",
@@ -207,6 +232,7 @@ export const enUS = {
           active: "In progress",
           completed: "Complete",
           failed: "Failed",
+          skipped: "Skipped",
         },
         recognize: {
           title: "Recognize",
@@ -214,6 +240,7 @@ export const enUS = {
           active: "In progress",
           completed: "Complete",
           failed: "Failed",
+          skipped: "Skipped",
         },
         validate: {
           title: "Validate draft",
@@ -221,6 +248,7 @@ export const enUS = {
           active: "In progress",
           completed: "Complete",
           failed: "Blocked",
+          skipped: "Skipped",
         },
         export: {
           title: "Generate MXL",
@@ -228,6 +256,7 @@ export const enUS = {
           active: "In progress",
           completed: "Complete",
           failed: "Failed",
+          skipped: "Skipped",
         },
       },
     },

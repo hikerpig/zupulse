@@ -117,6 +117,9 @@
   .stageList li[data-state="failed"] {
     color: var(--status-error-text);
   }
+  .stageList li[data-state="skipped"] {
+    color: var(--text-tertiary);
+  }
   .stageList strong,
   .stageList small {
     display: block;
@@ -228,13 +231,37 @@
     color: var(--text-primary);
   }
   .progressBig strong {
-    font: 700 34px var(--font-family-technical);
+    font: 700 24px var(--font-family-technical);
+    font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;
   }
   .progressBig span {
     margin-left: 10px;
     color: var(--text-secondary);
     font-size: 13px;
+  }
+  .progressTrack {
+    width: min(320px, 100%);
+    height: 4px;
+    margin-top: 14px;
+    overflow: hidden;
+    border-radius: var(--radius-round);
+    background: var(--bg-panel-muted);
+  }
+  .progressFill {
+    height: 100%;
+    border-radius: var(--radius-round);
+    background: var(--status-ready-text);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .progressFill {
+      transition: width 300ms ease;
+    }
+  }
+  .progressMeta {
+    margin-top: 10px !important;
+    font-family: var(--font-family-technical);
+    font-variant-numeric: tabular-nums;
   }
 
   .engineField {

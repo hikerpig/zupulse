@@ -49,6 +49,13 @@ export type PdfOmrMidiAnalysis = {
   }[];
 };
 
+export type PdfOmrInputPreview = {
+  pageIndex: number;
+  pageCount: number;
+  contentType: "image/png" | "image/jpeg";
+  bytes: Uint8Array;
+};
+
 export type PdfOmrWorkbenchPort = {
   engines: readonly PdfOmrEngineOption[];
   select(): Promise<
@@ -67,6 +74,7 @@ export type PdfOmrWorkbenchPort = {
   getSnapshot(): Promise<PdfOmrJobSnapshot | null>;
   readResult(jobId: string): Promise<PdfOmrResult | null>;
   readFailedValidation(jobId: string): Promise<PdfOmrValidationView | null>;
+  readInputPreview(jobId: string, pageIndex: number): Promise<PdfOmrInputPreview | null>;
   selectMidi(): Promise<
     { status: "cancelled" } | { status: "selected"; fileToken: string; fileName: string; sizeBytes: number }
   >;

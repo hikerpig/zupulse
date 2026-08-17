@@ -19,6 +19,19 @@
     margin: 0 auto;
   }
 
+  .statusBlock {
+    display: grid;
+    justify-items: end;
+    gap: 6px;
+    max-width: 340px;
+    text-align: right;
+  }
+  .statusBlock small {
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
   .header h1 {
     margin: 3px 0 5px;
     font-size: clamp(26px, 3vw, 38px);
@@ -40,7 +53,7 @@
 
   .workbench {
     display: grid;
-    grid-template-columns: minmax(210px, 240px) minmax(0, 1fr) minmax(250px, 290px);
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(280px, 320px);
     gap: 12px;
     width: 100%;
     max-width: 1480px;
@@ -61,6 +74,10 @@
   .midiPanel,
   .diagnosticsPanel {
     padding: 16px;
+  }
+  .controlPanel {
+    position: sticky;
+    top: 12px;
   }
   .panelTitle {
     display: flex;
@@ -116,6 +133,9 @@
   }
   .stageList li[data-state="failed"] {
     color: var(--status-error-text);
+  }
+  .stageList li[data-state="skipped"] {
+    color: var(--text-tertiary);
   }
   .stageList strong,
   .stageList small {
@@ -206,6 +226,55 @@
     text-align: center;
     color: var(--text-secondary);
   }
+  .pdfPreview {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    height: 100%;
+    padding: 16px;
+    overflow: auto;
+  }
+  .pdfPreviewHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--text-primary);
+    font-size: 13px;
+  }
+  .pdfPreviewPager {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font: 12px var(--font-family-technical);
+    font-variant-numeric: tabular-nums;
+  }
+  .pdfPreviewPager button {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-control);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+  }
+  .pdfPreviewPager button:disabled {
+    cursor: default;
+    opacity: 0.4;
+  }
+  .pdfPreview img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--border-default);
+    background: #ffffff;
+  }
+
   .emptyEvidence h2,
   .engineEvidence h2 {
     margin: 16px 0 6px;
@@ -228,13 +297,37 @@
     color: var(--text-primary);
   }
   .progressBig strong {
-    font: 700 34px var(--font-family-technical);
+    font: 700 24px var(--font-family-technical);
+    font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;
   }
   .progressBig span {
     margin-left: 10px;
     color: var(--text-secondary);
     font-size: 13px;
+  }
+  .progressTrack {
+    width: min(320px, 100%);
+    height: 4px;
+    margin-top: 14px;
+    overflow: hidden;
+    border-radius: var(--radius-round);
+    background: var(--bg-panel-muted);
+  }
+  .progressFill {
+    height: 100%;
+    border-radius: var(--radius-round);
+    background: var(--status-ready-text);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .progressFill {
+      transition: width 300ms ease;
+    }
+  }
+  .progressMeta {
+    margin-top: 10px !important;
+    font-family: var(--font-family-technical);
+    font-variant-numeric: tabular-nums;
   }
 
   .engineField {
@@ -276,6 +369,39 @@
   }
   .engineStatusList li[data-available="true"] .engineStatusDot {
     background: var(--status-ready-text);
+  }
+  .engineStatusList li[data-tier="unconfigured"] .engineStatusDot,
+  .engineStatusList li[data-tier="mismatch"] .engineStatusDot {
+    background: var(--status-warning-text);
+  }
+  .engineSettingsLink {
+    display: inline-block;
+    margin-top: 3px;
+    color: var(--text-primary);
+    font-size: 10px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .engineAvailability {
+    margin-top: 12px;
+  }
+  .diagnosticsMore {
+    margin-top: 8px;
+  }
+  .diagnosticsMore summary {
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 11px;
+  }
+  .engineAvailability summary {
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 11px;
+    list-style-position: inside;
+  }
+  .engineAvailabilitySummary {
+    color: var(--text-primary);
+    margin-left: 4px;
   }
   .primaryActions {
     display: flex;

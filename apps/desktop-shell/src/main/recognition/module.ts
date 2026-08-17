@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { createBridgeEvent, type BridgeEvent, type PdfOmrProgressEvent } from "@zupulse/web-core";
+import { encodeRgbaPng, readPdfPageCount, renderPdfPages } from "@zupulse/pdf-omr-cli/pipeline";
 import type { SupportedLocale } from "@zupulse/app-i18n";
 import { dialog } from "electron";
 import { BridgeDispatchError, type RequiredBridgeHandlers } from "../bridge/dispatcher";
@@ -24,8 +25,10 @@ type RecognitionHandlers = RequiredBridgeHandlers<
   | "pdfOmr.start"
   | "pdfOmr.retry"
   | "pdfOmr.cancel"
+  | "pdfOmr.markExported"
   | "pdfOmr.getSnapshot"
   | "pdfOmr.readResult"
+  | "pdfOmr.readInputPreview"
   | "pdfOmr.selectMidi"
   | "pdfOmr.analyzeMidi"
   | "pdfOmr.applyMidiCorrections"
@@ -54,6 +57,7 @@ export async function createRecognitionModule(options: {
   });
   const controller = new PdfOmrJobController(runtime);
   const corrections = new PdfOmrMidiCorrectionController(controller);
+  const previewCache = new Map<string, Map<number, Promise<Uint8Array | undefined>>>();
   const startedAt = new Map<string, number>();
   const heartbeats = new Map<string, ReturnType<typeof setInterval>>();
   const loggedTerminals = new Set<string>();
@@ -193,8 +197,14 @@ export async function createRecognitionModule(options: {
       controller.cancel(request.payload.jobId);
       return {};
     },
+    "pdfOmr.markExported": (request) => {
+      controller.setExported(request.payload.jobId, true);
+      return {};
+    },
     "pdfOmr.getSnapshot": () => ({ snapshot: controller.getSnapshot() ?? null }),
     "pdfOmr.readResult": (request) => readPdfOmrResult(controller, corrections, request.payload.jobId),
+    "pdfOmr.readInputPreview": (request) =>
+      readPdfOmrInputPreview(controller, runtime, previewCache, request.payload.jobId, request.payload.pageIndex),
     "pdfOmr.selectMidi": () => selectMidiFile(options.fileTokens, undefined, options.getLocale()),
     "pdfOmr.analyzeMidi": (request) => {
       const midi = options.fileTokens.consume(request.payload.fileToken);
@@ -206,11 +216,16 @@ export async function createRecognitionModule(options: {
       });
     },
     "pdfOmr.applyMidiCorrections": (request) =>
-      corrections.apply({
-        jobId: request.payload.jobId,
-        decisions: request.payload.decisions,
-        outputDirectory: path.join(options.userData, "pdf-omr", randomUUID(), "midi-writeback"),
-      }),
+      corrections
+        .apply({
+          jobId: request.payload.jobId,
+          decisions: request.payload.decisions,
+          outputDirectory: path.join(options.userData, "pdf-omr", randomUUID(), "midi-writeback"),
+        })
+        .then((result) => {
+          controller.setExported(request.payload.jobId, false);
+          return result;
+        }),
   };
 
   return {
@@ -258,6 +273,72 @@ async function assertRecognitionProviderReady(settings: RecognitionProviderSetti
   throw new BridgeDispatchError("PDF_OMR_ENGINE_UNAVAILABLE", "Recognition provider preflight failed", true, {
     reason: provider?.reason ?? "missing-configuration",
   });
+}
+
+type PdfOmrInputPreview =
+  | { status: "unavailable" }
+  | {
+      status: "available";
+      pageIndex: number;
+      pageCount: number;
+      contentType: "image/png" | "image/jpeg";
+      bytes: Uint8Array;
+    };
+
+const PDF_OMR_PREVIEW_MAX_PAGES = 64;
+
+async function readPdfOmrInputPreview(
+  controller: PdfOmrJobController,
+  runtime: DesktopPdfOmrRuntime,
+  cache: Map<string, Map<number, Promise<Uint8Array | undefined>>>,
+  jobId: string,
+  pageIndex: number,
+): Promise<PdfOmrInputPreview> {
+  const input = controller.getJobInput(jobId);
+  if (input === undefined) return { status: "unavailable" };
+  if (input.inputKind === "image") {
+    const bytes = new Uint8Array(await readFile(input.inputPath).catch(() => new ArrayBuffer(0)));
+    if (bytes.byteLength === 0 || bytes.byteLength > 64 * 1024 * 1024 || pageIndex !== 0) {
+      return { status: "unavailable" };
+    }
+    return {
+      status: "available",
+      pageIndex: 0,
+      pageCount: 1,
+      contentType: /\.jpe?g$/i.test(input.fileName) ? "image/jpeg" : "image/png",
+      bytes,
+    };
+  }
+  for (const key of [...cache.keys()]) {
+    if (key !== jobId) cache.delete(key);
+  }
+  const source = new Uint8Array(await readFile(input.inputPath).catch(() => new ArrayBuffer(0)));
+  if (source.byteLength === 0) return { status: "unavailable" };
+  const assets = runtime.pdfjsAssetDirectories();
+  const pageCount = await readPdfPageCount(source, assets).catch(() => undefined);
+  if (pageCount === undefined || pageCount > PDF_OMR_PREVIEW_MAX_PAGES || pageIndex >= pageCount) {
+    return { status: "unavailable" };
+  }
+  let jobCache = cache.get(jobId);
+  if (jobCache === undefined) {
+    jobCache = new Map();
+    cache.set(jobId, jobCache);
+  }
+  let page = jobCache.get(pageIndex);
+  if (page === undefined) {
+    page = renderPdfPages(source, { targetWidth: 1000, allowLandscape: true, pageIndex, ...assets })
+      .then((pages) => {
+        const rendered = pages[0];
+        return rendered === undefined
+          ? undefined
+          : encodeRgbaPng(rendered.pixelWidth, rendered.pixelHeight, Uint8Array.from(rendered.pixels));
+      })
+      .catch(() => undefined);
+    jobCache.set(pageIndex, page);
+  }
+  const bytes = await page;
+  if (bytes === undefined) return { status: "unavailable" };
+  return { status: "available", pageIndex, pageCount, contentType: "image/png", bytes };
 }
 
 type PdfOmrValidationReadiness = {

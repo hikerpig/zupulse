@@ -68,7 +68,9 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
   `completed / total` 计数；LEGATO runner 每完成一页就在 stderr 提交一条结构化 progress 行，adapter 解析后按
   `engine-progress` 上报（一次性与 worker 模式一致）。Renderer 不解析 stdout、stderr 或绝对路径。
 - 页面的活动阶段会显示 engine 提交的单调计数（如 `页 2 / 5`）；engine 尚未提交计数时显示本地已用时间，
-  活动标记带脉冲动画（`prefers-reduced-motion` 下退化静态）。UI 不根据日志推断百分比或 ETA。
+  活动标记带脉冲动画（`prefers-reduced-motion` 下退化静态）。UI 不根据日志推断百分比或 ETA；允许基于
+  engine 提交的单调计数与本地已用时间给出明确标注为估算的剩余时间（"预计还需"），进度条只映射 engine
+  计数本身。
 - Desktop 页面以宽屏三仓工作区呈现输入/阶段、证据面和结果/诊断；`620–899px` 折叠为纵向工作区，
   `<620px` 使用单一 document scroll，保留文件选择、阶段、证据标签、engine 和主操作。
 - pipeline 成功后 Main 只返回受 schema 约束的 MXL bytes、hash、readiness 和 bounded diagnostic summary；
@@ -152,7 +154,8 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 2. PDF/image/MIDI is never registered as a `ScoreFormat` and never enters the Sheet Library import pipeline.
 3. Main owns the active process, cancellation and session run directory; Renderer owns only presentation state and a
    narrow `PdfOmrWorkbenchPort`.
-4. Structured progress is engine/CLI supplied only; UI MUST NOT infer percentage or ETA from logs.
+4. Structured progress is engine/CLI supplied only; UI MUST NOT infer percentage or ETA from logs. A remaining-time
+   estimate derived from engine-supplied counters and local elapsed time is allowed only when labeled as an estimate.
 5. Only a validated, round-trip-passing MXL may be previewed or exported.
 6. A transient result MUST NOT create Library, managed bytes, practice, resume or Harmony facts.
 7. MIDI correction MUST preserve source bytes, require explicit written pitch, and publish only a newly validated artifact.
@@ -184,7 +187,8 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 
 - 给定 Desktop handshake 未声明 capability，主导航和 `#/pdf-omr` route 不得加载 PDF OMR UI。
 - 给定用户选择 PDF，Renderer payload 不得包含绝对路径，Library facts 不得变化。
-- 给定 pipeline progress，页面只能显示离散 stage 和 engine 提供的 monotonic counters，不显示伪造百分比/ETA。
+- 给定 pipeline progress，页面只能显示离散 stage 和 engine 提供的 monotonic counters，不从日志推断百分比/ETA；
+  允许显示由 engine 计数与本地耗时推导、且标注为估算的剩余时间。
 - 给定取消或 semantic failure，页面不得显示 succeeded manifest、preview 或 exportable score。
 - 给定 validated MXL，页面允许 transient preview 和 native export；取消保存不得清空结果。
 - 给定 PNG/JPEG，页面只允许选择声明 image capability 的 engine，并可完成同一识别 pipeline。

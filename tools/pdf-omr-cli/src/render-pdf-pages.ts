@@ -38,12 +38,18 @@ export async function renderPdfPages(
     readonly standardFontDirectory?: string;
     readonly wasmDirectory?: string;
     readonly allowLandscape?: boolean;
+    readonly pageIndex?: number;
   } = {},
 ): Promise<readonly RenderedPdfPage[]> {
   const targetWidth = options.targetWidth ?? 1400;
   if (!Number.isInteger(targetWidth) || targetWidth <= 0) {
     throw new PdfOmrError("INVALID_INPUT", "PDF render target width must be a positive integer", {
       context: { reason: "invalid-render-target-width" },
+    });
+  }
+  if (options.pageIndex !== undefined && (!Number.isInteger(options.pageIndex) || options.pageIndex < 0)) {
+    throw new PdfOmrError("INVALID_INPUT", "PDF render page index must be a non-negative integer", {
+      context: { reason: "invalid-render-page-index" },
     });
   }
 
@@ -61,9 +67,15 @@ export async function renderPdfPages(
         context: { reason: "zero-page-pdf" },
       });
     }
+    const pageIndices =
+      options.pageIndex === undefined
+        ? Array.from({ length: document.numPages }, (_, index) => index)
+        : options.pageIndex < document.numPages
+          ? [options.pageIndex]
+          : [];
 
     const pages: RenderedPdfPage[] = [];
-    for (let pageIndex = 0; pageIndex < document.numPages; pageIndex += 1) {
+    for (const pageIndex of pageIndices) {
       const page = await document.getPage(pageIndex + 1);
       const pdfViewport = page.getViewport({ scale: 1 });
       if (!options.allowLandscape && pdfViewport.width > pdfViewport.height) {
@@ -106,6 +118,23 @@ export async function renderPdfPages(
       }
     }
     return pages;
+  } finally {
+    await loadingTask.destroy();
+  }
+}
+
+export async function readPdfPageCount(
+  bytes: Uint8Array,
+  options: { readonly standardFontDirectory?: string; readonly wasmDirectory?: string } = {},
+): Promise<number> {
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const loadingTask = pdfjs.getDocument({
+    data: Uint8Array.from(bytes),
+    ...createPdfJsOptions(options),
+  });
+  const document = await loadingTask.promise.catch((error: unknown) => mapPdfLoadError(error, "input.pdf"));
+  try {
+    return document.numPages;
   } finally {
     await loadingTask.destroy();
   }

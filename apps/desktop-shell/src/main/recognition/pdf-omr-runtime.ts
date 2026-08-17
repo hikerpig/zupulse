@@ -37,6 +37,10 @@ export class DesktopPdfOmrRuntime {
     return this.active !== undefined;
   }
 
+  pdfjsAssetDirectories(): { standardFontDirectory: string; wasmDirectory: string } {
+    return { standardFontDirectory: this.standardFontDirectory, wasmDirectory: this.wasmDirectory };
+  }
+
   async run(
     request: Omit<PdfOmrPipelineRequest, "signal" | "standardFontDirectory" | "wasmDirectory">,
   ): Promise<PdfOmrPipelineResult> {

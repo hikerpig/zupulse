@@ -274,7 +274,11 @@ full-page run 为 3/3 admission，Pitch/Onset/Duration/Joint F1 分别为
 
 同一输入上的 Rokot development run 为 3/3 admission，核心 F1 与 valid measure rate 都是 `1.0`。新的
 `compare-engines` report 在不读取 ground truth 的情况下，对三个 item 都定位出唯一、无 ambiguity 的
-`measure-missing-in-primary`，secondary measure index 均为 `4`；proposal 不可自动应用。
+`measure-missing-in-primary`，secondary measure index 均为 `4`。2026-08-17 的 report-only follow-up 为三个
+item 各生成一个 Rokot-to-LEGATO `insert` candidate，target/source measure index 均为 `4`，规范化小节事实的
+candidate SHA-256 均为 `a8b901074f9c4d983085d6dd14444556e0382c7a38bc2373f228c1962dd2befe`；comparison
+SHA-256 为 `4c35b76737e585023201b33dd4dad02e9133b23ad5d43e93e8422a36953de15c`。这些 candidate
+均为 `reviewRequired: true`、`autoApplicable: false`，不构成 ground-truth correctness 或自动写回依据。
 
 随后使用 `legato-system-pages-v1` 将每个 full-page fixture 确定性物化为两个 system pages。LEGATO 的
 Pitch F1 提升到 `0.9841`，Joint F1 提升到 `0.8333`，valid measure rate 提升到 `0.75`，完整恢复 8 个

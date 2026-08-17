@@ -21,11 +21,23 @@ describe("compareEnginesCommand", () => {
       identity: { corpusId: "comparison-corpus", mode: "development" },
       primary: { engineId: "legato" },
       secondary: { engineId: "rokot" },
-      items: { total: 1, agreements: 0, disagreements: 1 },
+      items: { total: 1, agreements: 0, disagreements: 1, repairCandidates: 1 },
       comparisons: [
         {
           itemId: "score",
-          proposals: [{ kind: "measure-missing-in-primary", secondaryMeasureIndex: 1 }],
+          proposals: [
+            {
+              kind: "measure-missing-in-primary",
+              secondaryMeasureIndex: 1,
+              repairCandidate: {
+                operation: "insert",
+                targetMeasureIndex: 1,
+                sourceMeasureIndex: 1,
+                reviewRequired: true,
+                autoApplicable: false,
+              },
+            },
+          ],
         },
       ],
     });

@@ -17,6 +17,11 @@ fixture 中稳定遗漏一个完整小节，而 Rokot 在同一输入上保留�
 header，则把这些字段作为下一 system 的生成前缀，让模型在缺少重复拍号的视觉输入上延续谱面上下文。该行为只由
 `legato-system-pages-context-v1` preprocess 启用，不根据 ground truth 或其他 engine 输出生成 context。
 
+第三阶段在唯一、非歧义的小节 alignment 上生成 secondary-to-primary 的 report-only repair candidate。候选只表达
+`insert`、`replace` 或 `delete`，其中 `insert`/`replace` 携带去除 engine event ID、confidence 与 source anchor
+后的规范化小节事实及其 canonical hash。候选始终要求人工复核，不能自动应用；alignment ambiguity 时完全不生成
+候选。
+
 ## Commands
 
 ```bash
@@ -74,6 +79,7 @@ const proposal = {
 ## Boundaries
 
 - Always: immutable input runs, report-only proposals, engine/version/report hash provenance, fail-closed topology checks。
+- Always: repair candidate targets primary Draft, uses only secondary Draft musical facts, and remains review-required。
 - Always: context comes only from the immediately preceding LEGATO page and is recorded in decoder provenance。
 - Ask first: App/Desktop/Bridge integration, dependency additions, automatic Draft selection or writeback。
 - Never: use ground truth during runtime comparison, compare raw confidence across engines, read holdout for tuning, mutate
@@ -92,10 +98,11 @@ const proposal = {
 8. `legato-system-pages-context-v1` uses a validated previous-page ABC prefix, while `none` and
    `legato-system-pages-v1` preserve the current independent-page behavior。
 9. The same three-item development corpus is rerun in a new output directory and reported without overwriting the baseline。
+10. Unique alignments emit deterministic `insert`/`replace`/`delete` repair candidates; ambiguous alignments emit none。
 
 ## Non-goals
 
-- 本轮不自动选择 engine、不拼接 MusicXML、不写回 `OmrScoreDraft`。
+- 本轮不自动选择 engine、不拼接 MusicXML、不写回 `OmrScoreDraft`；repair candidate 只存在于 comparison report。
 - 本轮不按小节总时值缩放、补写或删除模型输出的 note durations。
 - 本轮不实现第三 engine 投票、confidence calibration、LLM repair 或 App 集成。
 - 不实现任意 profiled manifest 的 system-page 物化；当前 materializer 只接受非 profiled manifest，并只读取

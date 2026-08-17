@@ -167,8 +167,11 @@ pnpm pdf-omr -- compare-engines \
 
 comparison 对单 part Draft 做 global measure sequence alignment，将完整小节遗漏压缩为
 `measure-missing-in-primary` / `measure-missing-in-secondary`，内容差异记录为
-`measure-content-disagreement`。所有 proposal 固定 `autoApplicable: false`；多 part 缺少显式跨引擎 identity、
-topology 不一致、run identity 不一致或不完整 run 都会 fail closed。命令不读取 ground truth，也不修改输入 run。
+`measure-content-disagreement`。唯一、非歧义的 alignment 会额外生成 secondary-to-primary 的 `insert`、
+`replace` 或 `delete` repair candidate；`insert`/`replace` 携带移除 event ID、confidence 与 source anchor 后的
+规范化小节事实和可复算 SHA-256。所有 proposal 与 candidate 固定 `autoApplicable: false`，candidate 固定
+`reviewRequired: true`。alignment ambiguity 时不生成 candidate；多 part 缺少显式跨引擎 identity、topology
+不一致、run identity 不一致或不完整 run 都会 fail closed。命令不读取 ground truth，也不修改输入 run。
 
 Rokot 使用明确锁定的 Q8_0 GGUF、F16 vision projector、llama.cpp build 和独立 Python 3.11
 converter environment；recognize 不会自动下载模型。推理固定 `maxNewTokens=1600` 与 `ctxSize=4096`，避免

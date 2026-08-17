@@ -9,6 +9,125 @@ const measureDisagreementKindSchema = z.enum([
   "measure-content-disagreement",
 ]);
 
+const candidateEventSchema = z.discriminatedUnion("type", [
+  z
+    .object({
+      type: z.literal("note"),
+      onset: z.object({ numerator: z.number().int(), denominator: z.number().int().positive() }).strict(),
+      duration: z.object({ numerator: z.number().int(), denominator: z.number().int().positive() }).strict(),
+      writtenPitch: z
+        .object({
+          step: z.enum(["A", "B", "C", "D", "E", "F", "G"]),
+          alter: z.number().int().min(-2).max(2),
+          octave: z.number().int().min(-1).max(9),
+        })
+        .strict()
+        .optional(),
+      soundingMidi: z.number().int().min(0).max(127).optional(),
+      tie: z.enum(["start", "continue", "end"]).optional(),
+      tuplet: z
+        .object({ actualNotes: z.number().int().positive(), normalNotes: z.number().int().positive() })
+        .strict()
+        .optional(),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("rest"),
+      onset: z.object({ numerator: z.number().int(), denominator: z.number().int().positive() }).strict(),
+      duration: z.object({ numerator: z.number().int(), denominator: z.number().int().positive() }).strict(),
+    })
+    .strict(),
+]);
+
+const candidateMeasureSchema = z
+  .object({
+    staves: z
+      .array(
+        z
+          .object({
+            staffIndex: z.number().int().nonnegative(),
+            timeSignature: z
+              .object({ numerator: z.number().int().positive(), denominator: z.number().int().positive() })
+              .strict()
+              .optional(),
+            duration: z
+              .object({ numerator: z.number().int(), denominator: z.number().int().positive() })
+              .strict()
+              .optional(),
+            keySignature: z
+              .object({ fifths: z.number().int().min(-7).max(7) })
+              .strict()
+              .optional(),
+            clef: z
+              .object({
+                sign: z.enum(["G", "F", "C", "percussion", "TAB", "none"]),
+                line: z.number().int().positive().optional(),
+              })
+              .strict()
+              .optional(),
+            repeat: z.object({ forward: z.boolean(), backward: z.boolean() }).strict().optional(),
+            voices: z.array(
+              z
+                .object({
+                  index: z.number().int().positive(),
+                  events: z.array(candidateEventSchema),
+                })
+                .strict(),
+            ),
+          })
+          .strict(),
+      )
+      .min(1),
+  })
+  .strict();
+
+const repairCandidateCommon = {
+  targetMeasureIndex: z.number().int().nonnegative(),
+  candidateSha256: sha256Schema,
+  reviewRequired: z.literal(true),
+  autoApplicable: z.literal(false),
+};
+
+export const engineRepairCandidateSchema = z
+  .discriminatedUnion("operation", [
+    z
+      .object({
+        operation: z.literal("insert"),
+        ...repairCandidateCommon,
+        sourceMeasureIndex: z.number().int().nonnegative(),
+        sourceFingerprint: sha256Schema,
+        measure: candidateMeasureSchema,
+      })
+      .strict(),
+    z
+      .object({
+        operation: z.literal("replace"),
+        ...repairCandidateCommon,
+        sourceMeasureIndex: z.number().int().nonnegative(),
+        sourceFingerprint: sha256Schema,
+        targetFingerprint: sha256Schema,
+        measure: candidateMeasureSchema,
+      })
+      .strict(),
+    z
+      .object({
+        operation: z.literal("delete"),
+        ...repairCandidateCommon,
+        targetFingerprint: sha256Schema,
+      })
+      .strict(),
+  ])
+  .superRefine((candidate, context) => {
+    const { candidateSha256, ...facts } = candidate;
+    if (candidateSha256 === hashCanonical(facts)) return;
+    context.addIssue({
+      code: "custom",
+      path: ["candidateSha256"],
+      message: "repair candidate hash does not match its musical facts",
+    });
+  });
+
 export const engineComparisonProposalSchema = z
   .object({
     kind: measureDisagreementKindSchema,
@@ -16,21 +135,24 @@ export const engineComparisonProposalSchema = z
     secondaryMeasureIndex: z.number().int().nonnegative().nullable(),
     primaryFingerprint: sha256Schema.optional(),
     secondaryFingerprint: sha256Schema.optional(),
+    repairCandidate: engineRepairCandidateSchema.optional(),
     autoApplicable: z.literal(false),
   })
   .strict();
 
-export const engineDraftComparisonSchema = z
-  .object({
-    schemaVersion: z.literal("1.0.0"),
-    agreement: z.boolean(),
-    alignmentAmbiguous: z.boolean(),
-    primaryMeasureCount: z.number().int().nonnegative(),
-    secondaryMeasureCount: z.number().int().nonnegative(),
-    alignedMeasureCount: z.number().int().nonnegative(),
-    proposals: z.array(engineComparisonProposalSchema),
-  })
-  .strict();
+const engineDraftComparisonFields = {
+  schemaVersion: z.literal("1.0.0"),
+  agreement: z.boolean(),
+  alignmentAmbiguous: z.boolean(),
+  primaryMeasureCount: z.number().int().nonnegative(),
+  secondaryMeasureCount: z.number().int().nonnegative(),
+  alignedMeasureCount: z.number().int().nonnegative(),
+  proposals: z.array(engineComparisonProposalSchema),
+};
+
+const engineDraftComparisonObjectSchema = z.object(engineDraftComparisonFields).strict();
+
+export const engineDraftComparisonSchema = engineDraftComparisonObjectSchema.superRefine(validateRepairCandidates);
 
 export type EngineDraftComparison = z.infer<typeof engineDraftComparisonSchema>;
 
@@ -62,17 +184,54 @@ export const engineComparisonReportSchema = z
         agreements: z.number().int().nonnegative(),
         disagreements: z.number().int().nonnegative(),
         ambiguousAlignments: z.number().int().nonnegative(),
+        repairCandidates: z.number().int().nonnegative(),
       })
       .strict(),
-    comparisons: z.array(engineDraftComparisonSchema.extend({ itemId: z.string().min(1) }).strict()),
+    comparisons: z.array(
+      z
+        .object({ itemId: z.string().min(1), ...engineDraftComparisonFields })
+        .strict()
+        .superRefine(validateRepairCandidates),
+    ),
   })
   .strict();
 
 export type EngineComparisonReport = z.infer<typeof engineComparisonReportSchema>;
 
+function validateRepairCandidates(
+  comparison: z.infer<typeof engineDraftComparisonObjectSchema>,
+  context: z.RefinementCtx,
+): void {
+  comparison.proposals.forEach((proposal, index) => {
+    const candidate = proposal.repairCandidate;
+    if (candidate === undefined) return;
+    if (comparison.alignmentAmbiguous) {
+      context.addIssue({
+        code: "custom",
+        path: ["proposals", index, "repairCandidate"],
+        message: "ambiguous alignment cannot carry a repair candidate",
+      });
+    }
+    const expectedOperation =
+      proposal.kind === "measure-missing-in-primary"
+        ? "insert"
+        : proposal.kind === "measure-missing-in-secondary"
+          ? "delete"
+          : "replace";
+    if (candidate.operation !== expectedOperation) {
+      context.addIssue({
+        code: "custom",
+        path: ["proposals", index, "repairCandidate", "operation"],
+        message: "repair operation does not match disagreement kind",
+      });
+    }
+  });
+}
+
 type MeasureSlice = {
   index: number;
   fingerprint: string;
+  candidateMeasure: z.infer<typeof candidateMeasureSchema>;
 };
 
 type AlignmentStep =
@@ -88,8 +247,12 @@ export function compareEngineDrafts(primaryInput: OmrScoreDraft, secondaryInput:
   const secondaryMeasures = projectMeasureSlices(secondary);
   const alignment = alignMeasures(primaryMeasures, secondaryMeasures);
   const proposals: EngineDraftComparison["proposals"] = [];
+  let primaryCursor = 0;
   for (const step of alignment.steps) {
-    if (step.kind === "match") continue;
+    if (step.kind === "match") {
+      primaryCursor += 1;
+      continue;
+    }
     if (step.kind === "substitute") {
       proposals.push({
         kind: "measure-content-disagreement",
@@ -97,8 +260,19 @@ export function compareEngineDrafts(primaryInput: OmrScoreDraft, secondaryInput:
         secondaryMeasureIndex: step.secondary.index,
         primaryFingerprint: step.primary.fingerprint,
         secondaryFingerprint: step.secondary.fingerprint,
+        ...(alignment.ambiguous
+          ? {}
+          : {
+              repairCandidate: createContentCandidate({
+                operation: "replace",
+                targetMeasureIndex: step.primary.index,
+                targetFingerprint: step.primary.fingerprint,
+                source: step.secondary,
+              }),
+            }),
         autoApplicable: false,
       });
+      primaryCursor += 1;
       continue;
     }
     if (step.kind === "delete") {
@@ -107,8 +281,14 @@ export function compareEngineDrafts(primaryInput: OmrScoreDraft, secondaryInput:
         primaryMeasureIndex: step.primary.index,
         secondaryMeasureIndex: null,
         primaryFingerprint: step.primary.fingerprint,
+        ...(alignment.ambiguous
+          ? {}
+          : {
+              repairCandidate: createDeleteCandidate(step.primary),
+            }),
         autoApplicable: false,
       });
+      primaryCursor += 1;
       continue;
     }
     proposals.push({
@@ -116,6 +296,15 @@ export function compareEngineDrafts(primaryInput: OmrScoreDraft, secondaryInput:
       primaryMeasureIndex: null,
       secondaryMeasureIndex: step.secondary.index,
       secondaryFingerprint: step.secondary.fingerprint,
+      ...(alignment.ambiguous
+        ? {}
+        : {
+            repairCandidate: createContentCandidate({
+              operation: "insert",
+              targetMeasureIndex: primaryCursor,
+              source: step.secondary,
+            }),
+          }),
       autoApplicable: false,
     });
   }
@@ -165,9 +354,71 @@ function projectMeasureSlices(draft: OmrScoreDraft): MeasureSlice[] {
         };
       }),
     );
+    const candidateMeasure = candidateMeasureSchema.parse({
+      staves: draft.parts[0]!.staves.map((staff) => {
+        const measure = staff.measures[index];
+        if (measure === undefined) {
+          return { staffIndex: staff.index, voices: [] };
+        }
+        return {
+          staffIndex: staff.index,
+          ...(measure.timeSignature === undefined ? {} : { timeSignature: measure.timeSignature }),
+          ...(measure.duration === undefined ? {} : { duration: measure.duration }),
+          ...(measure.keySignature === undefined ? {} : { keySignature: measure.keySignature }),
+          ...(measure.clef === undefined ? {} : { clef: measure.clef }),
+          ...(measure.repeat === undefined ? {} : { repeat: measure.repeat }),
+          voices: [...measure.voices]
+            .sort((left, right) => left.index - right.index)
+            .map((voice) => ({
+              index: voice.index,
+              events: voice.events.map(projectEvent).sort((left, right) => compareCanonical(left, right)),
+            })),
+        };
+      }),
+    });
     const bytes = new TextEncoder().encode(canonicalJson(facts));
-    return { index, fingerprint: sha256Bytes(bytes) };
+    return { index, fingerprint: sha256Bytes(bytes), candidateMeasure };
   });
+}
+
+function createContentCandidate(input: {
+  operation: "insert" | "replace";
+  targetMeasureIndex: number;
+  targetFingerprint?: string;
+  source: MeasureSlice;
+}): z.infer<typeof engineRepairCandidateSchema> {
+  const facts = {
+    operation: input.operation,
+    targetMeasureIndex: input.targetMeasureIndex,
+    sourceMeasureIndex: input.source.index,
+    sourceFingerprint: input.source.fingerprint,
+    ...(input.targetFingerprint === undefined ? {} : { targetFingerprint: input.targetFingerprint }),
+    measure: input.source.candidateMeasure,
+    reviewRequired: true as const,
+    autoApplicable: false as const,
+  };
+  return engineRepairCandidateSchema.parse({
+    ...facts,
+    candidateSha256: hashCanonical(facts),
+  });
+}
+
+function createDeleteCandidate(target: MeasureSlice): z.infer<typeof engineRepairCandidateSchema> {
+  const facts = {
+    operation: "delete" as const,
+    targetMeasureIndex: target.index,
+    targetFingerprint: target.fingerprint,
+    reviewRequired: true as const,
+    autoApplicable: false as const,
+  };
+  return engineRepairCandidateSchema.parse({
+    ...facts,
+    candidateSha256: hashCanonical(facts),
+  });
+}
+
+function hashCanonical(value: unknown): string {
+  return sha256Bytes(new TextEncoder().encode(canonicalJson(value)));
 }
 
 function compareCanonical(left: unknown, right: unknown): number {

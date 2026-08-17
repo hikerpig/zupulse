@@ -92,6 +92,11 @@ export async function compareEnginesCommand(input: {
       agreements: comparisons.filter((comparison) => comparison.agreement).length,
       disagreements: comparisons.filter((comparison) => !comparison.agreement).length,
       ambiguousAlignments: comparisons.filter((comparison) => comparison.alignmentAmbiguous).length,
+      repairCandidates: comparisons.reduce(
+        (count, comparison) =>
+          count + comparison.proposals.filter((proposal) => proposal.repairCandidate !== undefined).length,
+        0,
+      ),
     },
     comparisons,
   });

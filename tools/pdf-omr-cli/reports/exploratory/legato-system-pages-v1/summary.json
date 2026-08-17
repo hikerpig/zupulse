@@ -12,10 +12,17 @@
   "comparison": {
     "primaryEngineId": "legato",
     "secondaryEngineId": "rokot",
-    "outputSha256": "5b22375fe2ee82cb1f4956dcfb4a14a8c0c20383fb5f27b9c55ef344be80d704",
+    "outputSha256": "4c35b76737e585023201b33dd4dad02e9133b23ad5d43e93e8422a36953de15c",
     "itemDisagreements": 3,
     "missingPrimaryMeasures": 3,
-    "ambiguousAlignments": 0
+    "ambiguousAlignments": 0,
+    "repairCandidates": 3,
+    "repairOperation": "insert",
+    "targetMeasureIndex": 4,
+    "sourceMeasureIndex": 4,
+    "candidateSha256": "a8b901074f9c4d983085d6dd14444556e0382c7a38bc2373f228c1962dd2befe",
+    "reviewRequired": true,
+    "autoApplicable": false
   },
   "baseline": {
     "reportSha256": "a3e9461d4d1da6809dcc381703b9a57d7410208b208016d0e26fbca16ee8beda",

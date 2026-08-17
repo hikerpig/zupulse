@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compareEngineDrafts } from "../benchmark/engine-comparison";
+import { compareEngineDrafts, engineDraftComparisonSchema } from "../benchmark/engine-comparison";
 import type { OmrScoreDraft } from "../schemas";
 
 describe("compareEngineDrafts", () => {
@@ -41,8 +41,40 @@ describe("compareEngineDrafts", () => {
           primaryMeasureIndex: null,
           secondaryMeasureIndex: 1,
           autoApplicable: false,
+          repairCandidate: {
+            operation: "insert",
+            targetMeasureIndex: 1,
+            sourceMeasureIndex: 1,
+            reviewRequired: true,
+            autoApplicable: false,
+            measure: {
+              staves: [
+                {
+                  staffIndex: 0,
+                  duration: { numerator: 1, denominator: 1 },
+                  voices: [
+                    {
+                      index: 1,
+                      events: [
+                        {
+                          type: "note",
+                          onset: { numerator: 0, denominator: 1 },
+                          duration: { numerator: 1, denominator: 1 },
+                          soundingMidi: 62,
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
         },
       ],
+    });
+    expect(comparison.proposals[0]!.repairCandidate).toMatchObject({
+      sourceFingerprint: comparison.proposals[0]!.secondaryFingerprint,
+      candidateSha256: expect.stringMatching(/^[0-9a-f]{64}$/),
     });
   });
 
@@ -58,9 +90,62 @@ describe("compareEngineDrafts", () => {
           primaryMeasureIndex: 1,
           secondaryMeasureIndex: 1,
           autoApplicable: false,
+          repairCandidate: {
+            operation: "replace",
+            targetMeasureIndex: 1,
+            sourceMeasureIndex: 1,
+            reviewRequired: true,
+            autoApplicable: false,
+          },
         },
       ],
     });
+  });
+
+  it("proposes deleting a primary-only measure without fabricating replacement content", () => {
+    const comparison = compareEngineDrafts(draft([60, 62, 64]), draft([60, 64]));
+
+    expect(comparison.proposals).toEqual([
+      expect.objectContaining({
+        kind: "measure-missing-in-secondary",
+        primaryMeasureIndex: 1,
+        secondaryMeasureIndex: null,
+        repairCandidate: expect.objectContaining({
+          operation: "delete",
+          targetMeasureIndex: 1,
+          reviewRequired: true,
+          autoApplicable: false,
+        }),
+      }),
+    ]);
+    expect(comparison.proposals[0]!.repairCandidate).not.toHaveProperty("measure");
+  });
+
+  it("suppresses repair candidates when repeated measures make alignment ambiguous", () => {
+    const comparison = compareEngineDrafts(draft([60]), draft([60, 60]));
+
+    expect(comparison.alignmentAmbiguous).toBe(true);
+    expect(comparison.proposals).toHaveLength(1);
+    expect(comparison.proposals[0]).not.toHaveProperty("repairCandidate");
+  });
+
+  it("rejects a repair candidate whose hashed musical facts were modified", () => {
+    const comparison = compareEngineDrafts(draft([60, 64]), draft([60, 62, 64]));
+    const tampered = structuredClone(comparison);
+    const candidate = tampered.proposals[0]!.repairCandidate;
+    if (candidate?.operation !== "insert") throw new Error("expected insert candidate");
+    const event = candidate.measure.staves[0]!.voices[0]!.events[0]!;
+    if (event.type !== "note") throw new Error("expected note candidate");
+    event.soundingMidi = 99;
+
+    expect(() => engineDraftComparisonSchema.parse(tampered)).toThrow();
+  });
+
+  it("rejects repair candidates on ambiguous alignments even if their hashes are valid", () => {
+    const comparison = compareEngineDrafts(draft([60, 64]), draft([60, 62, 64]));
+    const invalid = { ...comparison, alignmentAmbiguous: true };
+
+    expect(() => engineDraftComparisonSchema.parse(invalid)).toThrow();
   });
 
   it("fails closed when part and staff topology differs", () => {

@@ -6,6 +6,12 @@
 full-page LEGATO 稳定把 8 个 measure 识别成 7 个。Rokot 在相同 manifest 上达到 8/8 measure；report-only
 跨引擎 alignment 对三个 variant 都定位到 secondary measure index `4`，没有 alignment ambiguity。
 
+2026-08-17 的 report-only candidate follow-up 将这三个唯一 alignment 分别物化为 Rokot-to-LEGATO
+`insert` candidate，target/source measure index 都是 `4`。三个 variant 的规范化候选小节事实相同，candidate
+SHA-256 均为 `a8b901074f9c4d983085d6dd14444556e0382c7a38bc2373f228c1962dd2befe`；comparison SHA-256
+为 `4c35b76737e585023201b33dd4dad02e9133b23ad5d43e93e8422a36953de15c`。candidate 只用于人工复核，固定
+`reviewRequired: true`、`autoApplicable: false`，没有修改任一 engine Draft。
+
 将同一 PDF 用锁定的 `rokot-staff-system-v2` detector 物化为两个 system pages 后，LEGATO 恢复全部 8 个
 measure，Joint F1 从 `0.5333` 提升到 `0.8333`，Pitch F1 从 `0.8333` 提升到 `0.9841`。但第二个 system
 首 measure 的 duration 仍不稳定，两个 item 被 readiness 阻断，一个 ready-with-warnings。因此结论是

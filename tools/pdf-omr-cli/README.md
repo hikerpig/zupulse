@@ -173,6 +173,17 @@ comparison 对单 part Draft 做 global measure sequence alignment，将完整�
 `reviewRequired: true`。alignment ambiguity 时不生成 candidate；多 part 缺少显式跨引擎 identity、topology
 不一致、run identity 不一致或不完整 run 都会 fail closed。命令不读取 ground truth，也不修改输入 run。
 
+候选效果只能通过显式的 development-only 模拟评分命令评估。该命令校验 comparison 与 primary report hash，
+在内存中应用 candidate，再读取 benchmark 已保存的 ground-truth Draft 计算前后指标；只写 `evaluation.json`，
+不会写 simulated Draft：
+
+```bash
+pnpm pdf-omr -- evaluate-repair-candidates \
+  --comparison /absolute/path/to/comparison-run \
+  --primary /absolute/path/to/primary-run \
+  --output /absolute/path/to/evaluation-run
+```
+
 Rokot 使用明确锁定的 Q8_0 GGUF、F16 vision projector、llama.cpp build 和独立 Python 3.11
 converter environment；recognize 不会自动下载模型。推理固定 `maxNewTokens=1600` 与 `ctxSize=4096`，避免
 llama.cpp 按模型 metadata 分配远超单个 system transcription 所需的默认 KV cache。先准备并保留本地模型：

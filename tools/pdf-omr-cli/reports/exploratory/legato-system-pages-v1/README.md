@@ -12,6 +12,12 @@ SHA-256 均为 `a8b901074f9c4d983085d6dd14444556e0382c7a38bc2373f228c1962dd2befe
 为 `4c35b76737e585023201b33dd4dad02e9133b23ad5d43e93e8422a36953de15c`。candidate 只用于人工复核，固定
 `reviewRequired: true`、`autoApplicable: false`，没有修改任一 engine Draft。
 
+development-only 模拟评分在内存中应用这三个候选，整体 Pitch/Onset/Duration/Joint F1 从
+`0.8333 / 0.9333 / 0.9333 / 0.5333` 提升到 `1.0 / 1.0 / 1.0 / 1.0`，valid measure rate 从
+`0.5` 提升到 `1.0`。evaluation SHA-256 为
+`aeac78e68032abcfd84a723a331af348946834f39fbc019bdda70d1c175d39bb`。评分没有写出 simulated Draft；该
+结果仍只是三个 synthetic variants 的 development upper bound。
+
 将同一 PDF 用锁定的 `rokot-staff-system-v2` detector 物化为两个 system pages 后，LEGATO 恢复全部 8 个
 measure，Joint F1 从 `0.5333` 提升到 `0.8333`，Pitch F1 从 `0.8333` 提升到 `0.9841`。但第二个 system
 首 measure 的 duration 仍不稳定，两个 item 被 readiness 阻断，一个 ready-with-warnings。因此结论是

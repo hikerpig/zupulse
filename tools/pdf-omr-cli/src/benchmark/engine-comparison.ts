@@ -319,6 +319,16 @@ export function compareEngineDrafts(primaryInput: OmrScoreDraft, secondaryInput:
   });
 }
 
+export function fingerprintDraftMeasures(input: OmrScoreDraft): string[] {
+  const draft = omrScoreDraftSchema.parse(input);
+  if (draft.parts.length !== 1) {
+    throw new PdfOmrError("BENCHMARK_EVALUATION_LIMITATION", "cross-engine part identity is unavailable", {
+      context: { reason: "cross-engine-part-identity-unavailable" },
+    });
+  }
+  return projectMeasureSlices(draft).map((measure) => measure.fingerprint);
+}
+
 function requireCompatibleTopology(primary: OmrScoreDraft, secondary: OmrScoreDraft): void {
   if (primary.parts.length !== 1 || secondary.parts.length !== 1) {
     throw new PdfOmrError("BENCHMARK_EVALUATION_LIMITATION", "cross-engine part identity is unavailable", {

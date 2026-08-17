@@ -9,6 +9,7 @@ import type { MidiImportReport } from "./midi/schemas";
 import {
   type PdfOmrBenchmarkReport,
   type PdfOmrCompareEnginesReport,
+  type PdfOmrEvaluateRepairCandidatesReport,
   pdfOmrHelpReportSchema,
   type PdfOmrAnalyzeReport,
   type PdfOmrExportReport,
@@ -33,6 +34,7 @@ const usage = [
   "  export-musicxml <draft.json> --output <score.mxl>",
   "  benchmark --manifest <manifest.json> --engine <audiveris|legato|rokot> --output <result-dir>",
   "  compare-engines --primary <benchmark-run-dir> --secondary <benchmark-run-dir> --output <comparison-run-dir>",
+  "  evaluate-repair-candidates --comparison <comparison-run-dir> --primary <benchmark-run-dir> --output <evaluation-run-dir>",
 ].join("\n");
 
 export async function runPdfOmrCommand(
@@ -52,6 +54,7 @@ export async function runPdfOmrCommand(
   | PdfOmrExportReport
   | PdfOmrBenchmarkReport
   | PdfOmrCompareEnginesReport
+  | PdfOmrEvaluateRepairCandidatesReport
   | MidiImportReport
   | FusionReport
   | ApplyFusionReport
@@ -310,6 +313,26 @@ export async function runPdfOmrCommand(
     return compareEnginesCommand({
       primaryDirectory,
       secondaryDirectory,
+      output,
+      cwd: context.cwd ?? process.cwd(),
+    });
+  }
+  if (normalized[0] === "evaluate-repair-candidates") {
+    const flags = parseFlags(normalized.slice(1), new Set(["--comparison", "--primary", "--output"]));
+    const comparisonDirectory = flags.get("--comparison");
+    const primaryDirectory = flags.get("--primary");
+    const output = flags.get("--output");
+    if (comparisonDirectory === undefined || primaryDirectory === undefined || output === undefined) {
+      throw new PdfOmrError(
+        "INVALID_CLI_ARGUMENT",
+        "evaluate-repair-candidates requires --comparison <run> --primary <run> --output <evaluation-run-dir>",
+        { context: { command: "evaluate-repair-candidates" } },
+      );
+    }
+    const { evaluateRepairCandidatesCommand } = await import("./commands/evaluate-repair-candidates");
+    return evaluateRepairCandidatesCommand({
+      comparisonDirectory,
+      primaryDirectory,
       output,
       cwd: context.cwd ?? process.cwd(),
     });

@@ -24,6 +24,25 @@
     "reviewRequired": true,
     "autoApplicable": false
   },
+  "repairCandidateEvaluation": {
+    "reportSha256": "aeac78e68032abcfd84a723a331af348946834f39fbc019bdda70d1c175d39bb",
+    "appliedCandidates": 3,
+    "before": {
+      "pitchF1": 0.8333333333333334,
+      "onsetF1": 0.9333333333333333,
+      "durationF1": 0.9333333333333333,
+      "jointF1": 0.5333333333333333,
+      "validMeasureRate": 0.5
+    },
+    "after": {
+      "pitchF1": 1,
+      "onsetF1": 1,
+      "durationF1": 1,
+      "jointF1": 1,
+      "validMeasureRate": 1
+    },
+    "writesSimulatedDraft": false
+  },
   "baseline": {
     "reportSha256": "a3e9461d4d1da6809dcc381703b9a57d7410208b208016d0e26fbca16ee8beda",
     "pitchF1": 0.8333333333333334,

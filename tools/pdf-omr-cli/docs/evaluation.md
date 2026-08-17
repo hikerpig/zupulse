@@ -280,6 +280,13 @@ candidate SHA-256 均为 `a8b901074f9c4d983085d6dd14444556e0382c7a38bc2373f228c1
 SHA-256 为 `4c35b76737e585023201b33dd4dad02e9133b23ad5d43e93e8422a36953de15c`。这些 candidate
 均为 `reviewRequired: true`、`autoApplicable: false`，不构成 ground-truth correctness 或自动写回依据。
 
+显式运行 development-only `evaluate-repair-candidates` 后，三个候选仅在内存中模拟应用，并使用 primary
+benchmark run 已保存的 ground-truth Draft 评分。整体 Pitch/Onset/Duration/Joint F1 从
+`0.8333 / 0.9333 / 0.9333 / 0.5333` 提升到 `1.0 / 1.0 / 1.0 / 1.0`，valid measure rate 从
+`0.5` 提升到 `1.0`。evaluation SHA-256 为
+`aeac78e68032abcfd84a723a331af348946834f39fbc019bdda70d1c175d39bb`。该结果只证明这三个 synthetic
+development variants 上的候选上界，不允许 promotion、自动写回或 holdout 结论。
+
 随后使用 `legato-system-pages-v1` 将每个 full-page fixture 确定性物化为两个 system pages。LEGATO 的
 Pitch F1 提升到 `0.9841`，Joint F1 提升到 `0.8333`，valid measure rate 提升到 `0.75`，完整恢复 8 个
 measure；这证明 full-page layout/scale 是主要误差来源。但第二个 system 缺少继承 meter，并在首 measure

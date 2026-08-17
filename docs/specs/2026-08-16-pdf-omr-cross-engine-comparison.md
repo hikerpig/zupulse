@@ -30,6 +30,11 @@ pnpm pdf-omr -- compare-engines \
   --secondary <benchmark-run-dir> \
   --output <comparison-run-dir>
 
+pnpm pdf-omr -- evaluate-repair-candidates \
+  --comparison <comparison-run-dir> \
+  --primary <benchmark-run-dir> \
+  --output <evaluation-run-dir>
+
 pnpm vitest run --root . tools/pdf-omr-cli/src/__tests__/engine-comparison.test.ts
 pnpm --filter @zupulse/pdf-omr-cli typecheck
 pnpm format:check
@@ -44,7 +49,9 @@ full-page benchmark report 或读取 holdout。
 ```text
 tools/pdf-omr-cli/src/benchmark/engine-comparison.ts       pure comparison and schemas
 tools/pdf-omr-cli/src/commands/compare-engines.ts          run artifact orchestration
+tools/pdf-omr-cli/src/commands/evaluate-repair-candidates.ts  development-only simulated scoring
 tools/pdf-omr-cli/src/benchmark/legato-system-pages.ts     development materialization
+tools/pdf-omr-cli/src/benchmark/repair-candidate-evaluation.ts  in-memory candidate application
 tools/pdf-omr-cli/src/raster-pdf.ts                        deterministic derived PDFs
 tools/pdf-omr-cli/src/engines/legato-page-context.ts       validated ABC continuation prefix
 tools/pdf-omr-cli/src/__tests__/engine-comparison.test.ts  deterministic alignment tests
@@ -99,6 +106,7 @@ const proposal = {
    `legato-system-pages-v1` preserve the current independent-page behavior。
 9. The same three-item development corpus is rerun in a new output directory and reported without overwriting the baseline。
 10. Unique alignments emit deterministic `insert`/`replace`/`delete` repair candidates; ambiguous alignments emit none。
+11. Development-only candidate evaluation reports before/after metrics without writing a simulated Draft。
 
 ## Non-goals
 

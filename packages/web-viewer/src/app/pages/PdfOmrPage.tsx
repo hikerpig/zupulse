@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { FileCog, FileOutput, FileText, RotateCcw, Square, Upload } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileCog, FileOutput, FileText, RotateCcw, Square, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import type { PdfOmrJobSnapshot } from "@zupulse/web-core";
@@ -772,7 +772,7 @@ function PdfEvidence({
               disabled={pageIndex === 0 || state === "loading"}
               onClick={() => setPageIndex((current) => Math.max(0, current - 1))}
             >
-              ‹
+              <ChevronLeft aria-hidden="true" size={16} />
             </button>
             <span>{t("pdfOmr.pdfPreview.pageLabel", { page: pageIndex + 1, total: preview.pageCount })}</span>
             <button
@@ -781,7 +781,7 @@ function PdfEvidence({
               disabled={pageIndex + 1 >= preview.pageCount || state === "loading"}
               onClick={() => setPageIndex((current) => current + 1)}
             >
-              ›
+              <ChevronRight aria-hidden="true" size={16} />
             </button>
           </span>
         ) : null}

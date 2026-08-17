@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderPdfPages } from "../render-pdf-pages";
+import { readPdfPageCount, renderPdfPages } from "../render-pdf-pages";
 
 describe("renderPdfPages", () => {
   it("renders ordered 1400px opaque RGBA pages deterministically", async () => {
@@ -29,6 +29,33 @@ describe("renderPdfPages", () => {
     expect(first[0]!.renderSha256).toBe(second[0]!.renderSha256);
     expect(first[0]!.pixels).toHaveLength(1400 * 1680 * 4);
     expect(first[0]!.pixels.every((value, index) => index % 4 !== 3 || value === 255)).toBe(true);
+  });
+
+  it("renders only the requested page when pageIndex is given", async () => {
+    const bytes = pdf([
+      { width: 200, height: 240, content: "" },
+      { width: 200, height: 240, content: "" },
+    ]);
+
+    const pages = await renderPdfPages(bytes, { pageIndex: 1 });
+
+    expect(pages).toHaveLength(1);
+    expect(pages[0]).toMatchObject({ pageIndex: 1 });
+    await expect(renderPdfPages(bytes, { pageIndex: 2 })).resolves.toHaveLength(0);
+    await expect(renderPdfPages(bytes, { pageIndex: -1 })).rejects.toMatchObject({
+      code: "INVALID_INPUT",
+      context: { reason: "invalid-render-page-index" },
+    });
+  });
+
+  it("reads the page count without rendering pages", async () => {
+    const bytes = pdf([
+      { width: 200, height: 240, content: "" },
+      { width: 200, height: 240, content: "" },
+      { width: 200, height: 240, content: "" },
+    ]);
+
+    await expect(readPdfPageCount(bytes)).resolves.toBe(3);
   });
 
   it("maps malformed, empty, and landscape PDFs to stable structured errors", async () => {

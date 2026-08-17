@@ -165,6 +165,43 @@ describe("PdfOmrPage", () => {
     expect(link.closest("li")?.getAttribute("data-tier")).toBe("unconfigured");
   });
 
+  it("sorts diagnostics by severity and folds entries beyond six", async () => {
+    const port = createPort();
+    port.readResult.mockResolvedValue({
+      fileName: "score.mxl",
+      bytes: new Uint8Array([1, 2, 3]),
+      outputSha256: "a".repeat(64),
+      validation: {
+        readiness: { harmony: "ready" as const, musicXml: "ready" as const },
+        diagnostics: [
+          { code: "MISSING_EVENT_TIMING", severity: "warning" as const },
+          ...Array.from({ length: 6 }, (_, index) => ({
+            code: index % 2 === 0 ? "VOICE_DURATION_MISMATCH" : "MISSING_CLEF",
+            severity: "blocking" as const,
+          })),
+        ],
+      },
+    });
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+    await user.click(screen.getByRole("button", { name: "开始提取" }));
+    port.setSnapshot({ ...runningSnapshot, status: "succeeded", stage: "export" });
+    port.emit({ schemaVersion: "1.0.0", sequence: 4, kind: "terminal", status: "succeeded" });
+
+    expect((await screen.findAllByText("声部总时值与拍号不一致。")).length).toBeGreaterThanOrEqual(1);
+    const more = screen.getByText("展开其余 1 条").closest("details");
+    expect(more).not.toBeNull();
+    expect(more?.hasAttribute("open")).toBe(false);
+    expect(more?.textContent).toContain("部分音符缺少时间信息");
+    await user.click(screen.getByText("展开其余 1 条"));
+    expect(more?.hasAttribute("open")).toBe(true);
+  });
+
   it("offers a next-file action and a validation summary after success", async () => {
     const port = createPort();
     const user = userEvent.setup();
@@ -271,8 +308,8 @@ describe("PdfOmrPage", () => {
       errorCode: "DRAFT_VALIDATION_FAILED",
     });
 
-    expect(await screen.findByText("VOICE_DURATION_MISMATCH")).toBeTruthy();
-    expect(screen.getByText("MISSING_EVENT_TIMING")).toBeTruthy();
+    expect(await screen.findByText("声部总时值与拍号不一致。")).toBeTruthy();
+    expect(screen.getByText("部分音符缺少时间信息，已按上下文推断。")).toBeTruthy();
     expect(screen.getAllByText("阻塞").length).toBeGreaterThanOrEqual(2);
     expect(port.readFailedValidation).toHaveBeenCalledWith("job-1");
   });

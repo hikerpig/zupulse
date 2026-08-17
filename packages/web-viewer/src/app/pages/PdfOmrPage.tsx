@@ -1113,26 +1113,70 @@ function formatWrittenPitch(pitch: PdfOmrWrittenPitch | undefined): string {
   return `${pitch.step}${accidental}${pitch.octave}`;
 }
 
+function diagnosticText(t: CommonT, code: string): string {
+  switch (code) {
+    case "VOICE_EVENT_OVERLAP":
+      return t("pdfOmr.diagnosticCode.VOICE_EVENT_OVERLAP");
+    case "VOICE_DURATION_MISMATCH":
+      return t("pdfOmr.diagnosticCode.VOICE_DURATION_MISMATCH");
+    case "MISSING_CLEF":
+      return t("pdfOmr.diagnosticCode.MISSING_CLEF");
+    case "MISSING_KEY_SIGNATURE":
+      return t("pdfOmr.diagnosticCode.MISSING_KEY_SIGNATURE");
+    case "MISSING_DIVISIONS":
+      return t("pdfOmr.diagnosticCode.MISSING_DIVISIONS");
+    case "MISSING_TIME_SIGNATURE":
+      return t("pdfOmr.diagnosticCode.MISSING_TIME_SIGNATURE");
+    case "MISSING_PITCH":
+      return t("pdfOmr.diagnosticCode.MISSING_PITCH");
+    case "MISSING_EVENT_TIMING":
+      return t("pdfOmr.diagnosticCode.MISSING_EVENT_TIMING");
+    case "IMPLICIT_REST_FILL":
+      return t("pdfOmr.diagnosticCode.IMPLICIT_REST_FILL");
+    case "ROKOT_STAFF_MEASURE_COUNT_MISMATCH":
+      return t("pdfOmr.diagnosticCode.ROKOT_STAFF_MEASURE_COUNT_MISMATCH");
+    case "ROKOT_MEASURE_DURATION_MISMATCH":
+      return t("pdfOmr.diagnosticCode.ROKOT_MEASURE_DURATION_MISMATCH");
+    case "ROKOT_UNSUPPORTED_VOICE":
+      return t("pdfOmr.diagnosticCode.ROKOT_UNSUPPORTED_VOICE");
+    case "ROKOT_UNSUPPORTED_STAFF_TOPOLOGY":
+      return t("pdfOmr.diagnosticCode.ROKOT_UNSUPPORTED_STAFF_TOPOLOGY");
+    case "ROKOT_SYSTEM_BOUNDARY_AMBIGUOUS":
+      return t("pdfOmr.diagnosticCode.ROKOT_SYSTEM_BOUNDARY_AMBIGUOUS");
+    default:
+      return code;
+  }
+}
+
 function ValidationView({ validation, t }: { validation: PdfOmrValidationView; t: CommonT }) {
+  const severityRank = { blocking: 0, warning: 1, info: 2 } as const;
+  const sorted = [...validation.diagnostics].sort((a, b) => severityRank[a.severity] - severityRank[b.severity]);
+  const visible = sorted.slice(0, 6);
+  const rest = sorted.slice(6);
+  const renderItem = (diagnostic: PdfOmrValidationView["diagnostics"][number], index: number) => (
+    <li key={`${diagnostic.severity}-${diagnostic.code}-${index}`} data-severity={diagnostic.severity}>
+      <details>
+        <summary>
+          <span>{diagnosticText(t, diagnostic.code)}</span>
+          <span>{t(`pdfOmr.severity.${diagnostic.severity}`)}</span>
+        </summary>
+        <p>{t("pdfOmr.diagnosticDetail", { code: diagnostic.code })}</p>
+      </details>
+    </li>
+  );
   return (
     <>
       <div className={styles.readinessGrid}>
         <Readiness label={t("pdfOmr.musicXml")} value={validation.readiness.musicXml} t={t} />
         <Readiness label={t("pdfOmr.harmony")} value={validation.readiness.harmony} t={t} />
       </div>
-      <ul className={styles.diagnosticList}>
-        {validation.diagnostics.slice(0, 6).map((diagnostic, index) => (
-          <li key={`${diagnostic.severity}-${diagnostic.code}-${index}`} data-severity={diagnostic.severity}>
-            <details>
-              <summary>
-                <code>{diagnostic.code}</code>
-                <span>{t(`pdfOmr.severity.${diagnostic.severity}`)}</span>
-              </summary>
-              <p>{t("pdfOmr.diagnosticDetail", { code: diagnostic.code })}</p>
-            </details>
-          </li>
-        ))}
-      </ul>
+      <ul className={styles.diagnosticList}>{visible.map(renderItem)}</ul>
+      {rest.length > 0 ? (
+        <details className={styles.diagnosticsMore}>
+          <summary>{t("pdfOmr.diagnosticsMore", { count: rest.length })}</summary>
+          <ul className={styles.diagnosticList}>{rest.map(renderItem)}</ul>
+        </details>
+      ) : null}
     </>
   );
 }

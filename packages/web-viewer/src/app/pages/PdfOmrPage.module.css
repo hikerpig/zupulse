@@ -336,6 +336,14 @@
   .engineAvailability {
     margin-top: 12px;
   }
+  .diagnosticsMore {
+    margin-top: 8px;
+  }
+  .diagnosticsMore summary {
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 11px;
+  }
   .engineAvailability summary {
     color: var(--text-secondary);
     cursor: pointer;

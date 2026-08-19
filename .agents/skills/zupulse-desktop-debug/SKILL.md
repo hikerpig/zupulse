@@ -13,7 +13,7 @@ Product behavior: `docs/features/contracts/` (not this skill).
 
 ## When not to use
 
-- Browser or iPad. This skill launches Electron only.
+- Browser or iPad. This skill launches Electron only. For the Browser demo, use `zupulse-web-debug`.
 - Unit tests, schema tests, or `pnpm desktop:test:e2e` journeys that already assert the same outcome.
 - Reading code or Feature Contracts without driving the running app.
 
@@ -22,24 +22,26 @@ If a playbook's steps become stable assertions, add them to `e2e/desktop.spec.ts
 ## Launch
 
 1. `pnpm desktop:build`
-2. Choose a workdir (e.g. `tasks/<initiative>/debug/`). Seed `userdata/` **before** first launch (`apps/desktop-shell/AGENTS.md`). Default locale is `en-US` so e2e role names match.
-3. Start the driver (OMR jobs run longer than a single shell call):
+2. Choose a workdir under `tmp-run/<slug>/` (e.g. `tmp-run/pdf-omr-happy-path/`). Put driver logs, `userdata/`, `shots/`, exports, and cmd/res files there. Do **not** use `tasks/` — that directory is for initiative execution state, not debug runs. `tmp-run/` is gitignored.
+3. Seed `userdata/` **before** first launch (`apps/desktop-shell/AGENTS.md`). Default locale is `en-US` so e2e role names match.
+4. Start the driver (OMR jobs run longer than a single shell call):
 
 ```bash
-W=<abs workdir>
+W="$(pwd)/tmp-run/<slug>"
+mkdir -p "$W"
 cd apps/desktop-shell
 nohup node ../../.agents/skills/zupulse-desktop-debug/scripts/driver.mjs "$W" > "$W/driver.log" 2>&1 &
 for i in $(seq 1 40); do [ -f "$W/driver.ready" ] && break; sleep 1; done
 [ -f "$W/driver.ready" ] || { echo "driver failed to start"; cat "$W/driver.log"; exit 1; }
 ```
 
-4. Send commands from `apps/desktop-shell`:
+5. Send commands from `apps/desktop-shell`:
 
 ```bash
 node ../../.agents/skills/zupulse-desktop-debug/scripts/cmd.mjs "$W" '{"action":"shot","name":"01-home"}'
 ```
 
-5. Cleanup (always): `kill "$(cat "$W/driver.pid")"` then `pkill -f "user-data-dir=$W/userdata"`. Never leave Electron running.
+6. Cleanup (always): `kill "$(cat "$W/driver.pid")"` then `pkill -f "user-data-dir=$W/userdata"`. Never leave Electron running.
 
 `driver.mjs <workdir> [repoRoot]` — repoRoot defaults to the repository containing the skill. Ready signal is `$W/driver.ready` (not `driver.log`; file-redirected stdout may buffer). If `$W/driver.window-closed` appears, restart the driver; userdata persists.
 

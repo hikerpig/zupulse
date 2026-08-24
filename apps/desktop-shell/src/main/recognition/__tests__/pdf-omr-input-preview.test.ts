@@ -87,6 +87,26 @@ describe("readPdfOmrInputPreview", () => {
     ).resolves.toEqual({ status: "unavailable" });
   });
 
+  it("rejects previewing a selected file that changed after selection", async () => {
+    const filePath = await stageFile("score.png", new Uint8Array([1, 2, 3]));
+    const fileTokens = new FileTokenStore();
+    const token = fileTokens.issue(filePath, { fileName: "score.png", sizeBytes: 3 });
+    await writeFile(filePath, new Uint8Array([1, 2, 3, 4, 5]));
+
+    await expect(
+      readPdfOmrInputPreview({
+        controller: { getJobInput: () => undefined },
+        runtime,
+        fileTokens,
+        cache: createCache(),
+        fileToken: token,
+        pageIndex: 0,
+      }),
+    ).resolves.toEqual({ status: "unavailable" });
+    // The failed preview must not consume the token; starting the job can still consume it.
+    expect(fileTokens.consume(token).fileName).toBe("score.png");
+  });
+
   it("previews a job's materialized image input and rejects later pages", async () => {
     const filePath = await stageFile("score.png", new Uint8Array([4, 5]));
     const controller = {

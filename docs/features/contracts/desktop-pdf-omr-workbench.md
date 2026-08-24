@@ -76,8 +76,9 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
   `<620px` 使用单一 document scroll，保留文件选择、阶段、证据标签、engine 和主操作。
 - “原始输入”证据面在选中文件后即可预览：Renderer 用未消费的选择 token 请求 `pdfOmr.readInputPreview`
   （Main `peek` 而不消费 token），图片直接回 bytes，PDF 由 Main 端 pdfjs 逐页渲染为 PNG 并缓存分页；
-  任务开始后同一证据面切换为 job 物化输入的同一渲染路径。输入 token 有效期为 30 分钟，覆盖选中、预览
-  到开始识别的完整间隔；开始识别仍走 `materializePdfOmrInput` 的消费与 identity 复核。
+  任务开始后同一证据面切换为 job 物化输入的同一渲染路径。token 预览路径与开始识别一样，通过已打开的
+  文件描述符复核文件类型、大小与 identity，任何不匹配都使预览不可用且不消费 token。输入 token 有效期为
+  30 分钟，覆盖选中、预览到开始识别的完整间隔；开始识别仍走 `materializePdfOmrInput` 的消费与复核。
 - pipeline 成功后 Main 只返回受 schema 约束的 MXL bytes、hash、readiness 和 bounded diagnostic summary；
   Renderer 使用现有只读 score runtime 做 transient preview，并通过 Main 原生保存 Dialog 导出。
 - 结果不会调用 Library repository、Managed Score Copy、Practice Sidecar、resume 或 Harmony Analysis

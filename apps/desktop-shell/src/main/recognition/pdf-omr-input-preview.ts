@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { encodeRgbaPng, readPdfPageCount, renderPdfPages } from "@zupulse/pdf-omr-cli/pipeline";
 import type { FileTokenStore } from "../file-access/file-token-store";
+import { readTokenEntryBytes } from "../file-access/score-files";
 import type { PdfOmrJobController } from "./pdf-omr-controller";
 import type { DesktopPdfOmrRuntime } from "./pdf-omr-runtime";
 
@@ -19,9 +20,9 @@ export type PdfOmrInputPreviewResponse =
 export type PdfOmrInputPreviewCache = Map<string, Map<number, Promise<Uint8Array | undefined>>>;
 
 type PdfOmrInputPreviewSource = {
-  inputPath: string;
   fileName: string;
   inputKind: "pdf" | "image";
+  bytes: Uint8Array;
 };
 
 // Preview resolves either a started job's materialized input or a not-yet-consumed selection
@@ -36,12 +37,11 @@ export async function readPdfOmrInputPreview(options: {
   fileToken?: string;
 }): Promise<PdfOmrInputPreviewResponse> {
   const cacheKey = options.jobId ?? options.fileToken;
-  const input = resolvePreviewSource(options);
+  const input = await resolvePreviewSource(options);
   if (cacheKey === undefined || input === undefined) return { status: "unavailable" };
   const pageIndex = options.pageIndex;
   if (input.inputKind === "image") {
-    const bytes = new Uint8Array(await readFile(input.inputPath).catch(() => new ArrayBuffer(0)));
-    if (bytes.byteLength === 0 || bytes.byteLength > 64 * 1024 * 1024 || pageIndex !== 0) {
+    if (input.bytes.byteLength === 0 || input.bytes.byteLength > 64 * 1024 * 1024 || pageIndex !== 0) {
       return { status: "unavailable" };
     }
     return {
@@ -49,17 +49,16 @@ export async function readPdfOmrInputPreview(options: {
       pageIndex: 0,
       pageCount: 1,
       contentType: /\.jpe?g$/i.test(input.fileName) ? "image/jpeg" : "image/png",
-      bytes,
+      bytes: input.bytes,
     };
   }
   const cache = options.cache;
   for (const key of cache.keys()) {
     if (key !== cacheKey) cache.delete(key);
   }
-  const source = new Uint8Array(await readFile(input.inputPath).catch(() => new ArrayBuffer(0)));
-  if (source.byteLength === 0) return { status: "unavailable" };
+  if (input.bytes.byteLength === 0) return { status: "unavailable" };
   const assets = options.runtime.pdfjsAssetDirectories();
-  const pageCount = await readPdfPageCount(source, assets).catch(() => undefined);
+  const pageCount = await readPdfPageCount(input.bytes, assets).catch(() => undefined);
   if (pageCount === undefined || pageCount > PDF_OMR_PREVIEW_MAX_PAGES || pageIndex >= pageCount) {
     return { status: "unavailable" };
   }
@@ -70,7 +69,7 @@ export async function readPdfOmrInputPreview(options: {
   }
   let page = jobCache.get(pageIndex);
   if (page === undefined) {
-    page = renderPdfPages(source, { targetWidth: 1000, allowLandscape: true, pageIndex, ...assets })
+    page = renderPdfPages(input.bytes, { targetWidth: 1000, allowLandscape: true, pageIndex, ...assets })
       .then((pages) => {
         const rendered = pages[0];
         return rendered === undefined
@@ -85,27 +84,33 @@ export async function readPdfOmrInputPreview(options: {
   return { status: "available", pageIndex, pageCount, contentType: "image/png", bytes };
 }
 
-function resolvePreviewSource(options: {
+async function resolvePreviewSource(options: {
   controller: Pick<PdfOmrJobController, "getJobInput">;
   fileTokens: Pick<FileTokenStore, "peek">;
   jobId?: string;
   fileToken?: string;
-}): PdfOmrInputPreviewSource | undefined {
+}): Promise<PdfOmrInputPreviewSource | undefined> {
   if (options.jobId !== undefined) {
     const input = options.controller.getJobInput(options.jobId);
-    return input === undefined
-      ? undefined
-      : { inputPath: input.inputPath, fileName: input.fileName, inputKind: input.inputKind };
+    if (input === undefined) return undefined;
+    // Job inputs are Main-owned materialized copies; no external-file revalidation is needed.
+    const bytes = new Uint8Array(await readFile(input.inputPath).catch(() => new ArrayBuffer(0)));
+    return { fileName: input.fileName, inputKind: input.inputKind, bytes };
   }
   if (options.fileToken === undefined) return undefined;
+  let entry: ReturnType<Pick<FileTokenStore, "peek">["peek"]>;
   try {
-    const entry = options.fileTokens.peek(options.fileToken);
-    return {
-      inputPath: entry.path,
-      fileName: entry.fileName,
-      inputKind: /\.(png|jpe?g)$/i.test(entry.fileName) ? "image" : "pdf",
-    };
+    entry = options.fileTokens.peek(options.fileToken);
   } catch {
     return undefined;
   }
+  // A peeked token still revalidates the external file through an open descriptor (type, size,
+  // captured identity) before any byte reaches the preview, matching the job-start boundary.
+  const bytes = await readTokenEntryBytes(entry).catch(() => undefined);
+  if (bytes === undefined) return undefined;
+  return {
+    fileName: entry.fileName,
+    inputKind: /\.(png|jpe?g)$/i.test(entry.fileName) ? "image" : "pdf",
+    bytes,
+  };
 }

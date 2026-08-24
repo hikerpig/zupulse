@@ -137,7 +137,7 @@ export const zhCN = {
       startFailed: "无法启动识谱任务，请检查引擎配置后重试。",
       cancelUpload: "取消上传",
       uploading: "正在上传输入文件…",
-      uploadCancelled: "上传已取消，未创建识谱任务。",
+      uploadCancelled: "已停止等待上传结果。任务可能已创建，请在识谱历史中确认。",
       cancelFailed: "无法取消当前任务，请稍后重试。",
       connection: {
         reconnecting: "实时连接已中断，正在自动重连。任务仍会在服务器继续运行。",

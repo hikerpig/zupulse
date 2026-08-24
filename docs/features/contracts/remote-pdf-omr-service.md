@@ -34,8 +34,8 @@ supersedes: []
 - Browser 最多等待 800 ms 探测同源能力。握手失败时不声明 `pdfOmrWorkbench` / `pdfOmrHistory`，导航不显示入口，
   直接访问 route 仍进入 not-found；Desktop 继续使用本地 transient workbench。
 - `#/pdf-omr` 显示实例共享历史；`#/pdf-omr/new` 新建任务；`#/pdf-omr/:jobId` 从 Server 恢复详情。历史首次读取
-  20 项并通过 opaque cursor 继续加载，按 `jobId` 去重；每项显示文件名、输入类型、最新状态、engine、Attempt 数、
-  最近更新时间与到期日，并对删除做确认。
+  20 项并通过基于 immutable `createdAt + jobId` 的 opaque cursor 继续加载，按 `jobId` 去重；每项显示文件名、输入
+  类型、最新状态、engine、Attempt 数、最近更新时间与到期日，并对删除做确认。
 - Browser adapter 通过 native file picker 保存页面内 `File` reference，以单个 multipart request 上传；Server
   流式解析且在 boundary 验证 64 MiB 上限、扩展名与 PDF/PNG/JPEG magic bytes、engine capability 和 mutation
   `Origin`。Browser 不接触 bucket key、Server path 或 credentials。
@@ -49,8 +49,9 @@ supersedes: []
   Browser adapter 暴露 `connecting / connected / reconnecting`；重连时页面保留最后一份 snapshot，显示持久提示和
   手动刷新。合法 snapshot 恢复 connected。页面不显示 queue position、上传百分比、stdout、stderr、绝对路径或
   raw exception。
-- multipart 上传显示不确定进度并允许在 Job 创建前通过 `AbortController` 取消；取消不会创建 Job，也不会显示
-  通用启动失败。Remote detail 展示所有 persisted Attempts 的序号、engine、状态、时间与 semantic error code。
+- multipart 上传显示不确定进度并允许通过 `AbortController` 中止 request；因为 Server 可能已完成持久化，UI 提醒
+  用户在历史中确认任务是否创建，而不作“未创建”保证。Remote detail 展示所有 persisted Attempts 的序号、engine、
+  状态、时间与 semantic error code，并在 attempt/status/stage 变化时重新同步。
 - succeeded result 使用受约束 metadata 和 Server 回读校验后的 bytes；Browser 尝试用现有 transient score runtime
   预览，并通过 native download 保存 MXL。预览解析失败时不影响下载。
 
@@ -92,7 +93,7 @@ Zupulse account、用户级授权、CORS、公开 object URL、横向扩容或�
 - 给定刷新 detail route，Browser 必须从 Server snapshot 恢复；任何 Remote flow 都不得写入 Sheet Library。
 - 给定 SSE error，Browser 必须显示重连状态并允许手动刷新；给定合法 snapshot，重连提示必须消失。
 - 给定历史 `nextCursor`，Browser 必须可继续加载且不得重复 `jobId`；给定 Remote detail，必须显示返回的 Attempts。
-- 给定尚未创建 Job 的进行中上传，用户必须可取消 request，且不得显示伪造的上传百分比。
+- 给定进行中上传，用户必须可中止 request，且不得显示伪造的上传百分比或承诺 Server 未创建 Job。
 
 ## 证据地图
 

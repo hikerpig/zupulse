@@ -14,8 +14,9 @@ feature: web-remote-pdf-omr-p1
 
 ## 范围与交互
 
-- Browser 上传期间显示明确的进行中状态，并允许在 Job 尚未创建时取消当前 HTTP request。由于 native `fetch`
-  不提供可靠的上传进度事件，UI MUST NOT 显示伪造百分比。
+- Browser 上传期间显示明确的进行中状态，并允许中止当前 HTTP request。由于 abort 可能发生在 Server 已经持久化
+  Job 之后，UI MUST 提醒用户在历史中确认，不得承诺 Job 未创建。由于 native `fetch` 不提供可靠的上传进度事件，
+  UI MUST NOT 显示伪造百分比。
 - Remote adapter 暴露 `connecting / connected / reconnecting` 连接状态。详情页在重连时保留最后一份已验证
   snapshot，显示持久提示和手动刷新操作；收到下一份合法 snapshot 后恢复 connected。
 - 历史页首次读取 20 项；存在 `nextCursor` 时显示“加载更多”，追加结果并按 `jobId` 去重。重新加载或删除后
@@ -41,7 +42,7 @@ feature: web-remote-pdf-omr-p1
 
 ## 验收标准
 
-- 上传中取消会 abort request、回到可再次开始的状态，且不显示通用失败。
+- 上传中取消会 abort request、回到可再次开始的状态，不显示通用失败，并提示任务可能已创建。
 - SSE error 后显示“正在重新连接”和手动刷新；合法 snapshot 到达后提示消失。
 - 历史列表可连续读取所有 cursor page，不重复行，并正确处理加载更多失败。
 - Remote detail 显示所有已返回 Attempts；Desktop 不受影响。

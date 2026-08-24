@@ -60,6 +60,7 @@ export function PdfOmrPage({
   const [now, setNow] = useState(() => Date.now());
   const stageStartedAtRef = useRef<Partial<Record<(typeof STAGES)[number], number>>>({});
   const stageDurationsRef = useRef<Partial<Record<(typeof STAGES)[number], number>>>({});
+  const attemptStateRef = useRef<string | undefined>(undefined);
 
   const engines = port?.engines ?? [];
   const input = file ?? snapshot?.input;
@@ -77,7 +78,10 @@ export function PdfOmrPage({
       try {
         const detail = remote && port.getDetail ? await port.getDetail() : null;
         const next = detail?.snapshot ?? (detail === null ? await port.getSnapshot() : null);
-        if (detail !== null) setAttempts(detail.attempts);
+        if (detail !== null) {
+          setAttempts(detail.attempts);
+          attemptStateRef.current = attemptStateKey(detail.snapshot);
+        }
         if (!next || (jobId !== undefined && next.jobId !== jobId)) return;
         setSnapshot(next);
         setExported(next.exported === true);
@@ -102,14 +106,22 @@ export function PdfOmrPage({
     void syncSnapshot();
     const detach = port.subscribe((next) => {
       if (!active) return;
+      const attemptChanged = attemptStateRef.current !== attemptStateKey(next);
+      attemptStateRef.current = attemptStateKey(next);
       setSnapshot(next);
-      if (next.status === "succeeded" || next.status === "failed") void syncSnapshot(next.jobId);
+      if (
+        (remote && port.getDetail !== undefined && attemptChanged) ||
+        next.status === "succeeded" ||
+        next.status === "failed"
+      ) {
+        void syncSnapshot(next.jobId);
+      }
     });
     return () => {
       active = false;
       detach();
     };
-  }, [port, syncSnapshot]);
+  }, [port, remote, syncSnapshot]);
 
   useEffect(() => {
     if (!remote || port?.subscribeConnection === undefined) return;
@@ -162,6 +174,8 @@ export function PdfOmrPage({
           inputKind: selected.inputKind,
         });
         setSnapshot(undefined);
+        setAttempts(undefined);
+        attemptStateRef.current = undefined;
         setResult(null);
         setFailedValidation(null);
         setExported(false);
@@ -221,6 +235,7 @@ export function PdfOmrPage({
       setFailedValidation(null);
       setExported(false);
       setTab("engine");
+      await syncSnapshot(retried.jobId);
     } catch {
       setNotice(t("pdfOmr.startFailed"));
     } finally {
@@ -1153,6 +1168,10 @@ function pdfOmrErrorReason(t: CommonT, code: string, reason?: string | undefined
 
 function errorCode(error: unknown): string | undefined {
   return error instanceof Error ? error.message : undefined;
+}
+
+function attemptStateKey(snapshot: PdfOmrJobSnapshot): string {
+  return [snapshot.attemptId ?? "", snapshot.attemptNumber ?? "", snapshot.status, snapshot.stage ?? ""].join(":");
 }
 
 function remoteRecoveryMessage(t: CommonT, error: unknown): string {

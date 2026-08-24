@@ -736,7 +736,7 @@ describe("PdfOmrPage", () => {
     await user.click(screen.getByRole("button", { name: "取消上传" }));
 
     expect(port.cancelPendingStart).toHaveBeenCalledOnce();
-    expect(await screen.findByText("上传已取消，未创建识谱任务。")).toBeTruthy();
+    expect(await screen.findByText("已停止等待上传结果。任务可能已创建，请在识谱历史中确认。")).toBeTruthy();
     expect(screen.queryByText("无法启动识谱任务，请检查引擎配置后重试。")).toBeNull();
   });
 
@@ -754,6 +754,51 @@ describe("PdfOmrPage", () => {
     );
     expect(screen.queryByText("JOB_NOT_FOUND")).toBeNull();
   });
+
+  it("refreshes a remote attempt when its SSE state changes", async () => {
+    const port = createPort();
+    const queued = { ...runningSnapshot, status: "queued" as const, stage: undefined };
+    port.setSnapshot(queued);
+    port.getDetail
+      .mockResolvedValueOnce({
+        snapshot: queued,
+        attempts: [attemptSummary("queued")],
+      })
+      .mockResolvedValue({
+        snapshot: runningSnapshot,
+        attempts: [attemptSummary("running")],
+      });
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} remote />
+      </I18nextProvider>,
+    );
+
+    expect(await screen.findByText("第 1 次 · 排队中")).toBeTruthy();
+    port.emitSnapshot(runningSnapshot);
+    expect(await screen.findByText("第 1 次 · 识别中")).toBeTruthy();
+  });
+
+  it("loads the new attempt immediately after a remote retry", async () => {
+    const port = createPort();
+    const failed = { ...runningSnapshot, status: "failed" as const };
+    port.setSnapshot(failed);
+    port.getDetail.mockResolvedValueOnce({ snapshot: failed, attempts: [attemptSummary("failed")] }).mockResolvedValue({
+      snapshot: runningSnapshot,
+      attempts: [attemptSummary("failed"), { ...attemptSummary("queued"), attemptId: "attempt-2", attemptNumber: 2 }],
+    });
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} remote />
+      </I18nextProvider>,
+    );
+
+    expect(await screen.findByText("第 1 次 · 失败")).toBeTruthy();
+    await userEvent.setup().click(screen.getByRole("button", { name: "重试" }));
+    await waitFor(() => expect(port.retry).toHaveBeenCalledOnce());
+    await waitFor(() => expect(port.getDetail.mock.calls.length).toBeGreaterThanOrEqual(2));
+    expect(await screen.findByText("第 2 次 · 排队中")).toBeTruthy();
+  });
 });
 
 const runningSnapshot: PdfOmrJobSnapshot = {
@@ -765,6 +810,7 @@ const runningSnapshot: PdfOmrJobSnapshot = {
 
 function createPort(): PdfOmrWorkbenchPort & {
   emit(event: PdfOmrProgressEvent): void;
+  emitSnapshot(snapshot: PdfOmrJobSnapshot): void;
   emitConnection(state: "connecting" | "connected" | "reconnecting"): void;
   setSnapshot(snapshot: PdfOmrJobSnapshot): void;
   getDetail: ReturnType<typeof vi.fn>;
@@ -846,6 +892,10 @@ function createPort(): PdfOmrWorkbenchPort & {
       };
       listeners.forEach((listener) => listener(snapshot!));
     },
+    emitSnapshot(next: PdfOmrJobSnapshot) {
+      snapshot = next;
+      listeners.forEach((listener) => listener(next));
+    },
     emitConnection(state: "connecting" | "connected" | "reconnecting") {
       connectionListeners.forEach((listener) => listener(state));
     },
@@ -854,8 +904,19 @@ function createPort(): PdfOmrWorkbenchPort & {
     },
   } satisfies PdfOmrWorkbenchPort & {
     emit(event: PdfOmrProgressEvent): void;
+    emitSnapshot(snapshot: PdfOmrJobSnapshot): void;
     emitConnection(state: "connecting" | "connected" | "reconnecting"): void;
     setSnapshot(next: PdfOmrJobSnapshot): void;
   };
   return port;
+}
+
+function attemptSummary(status: "queued" | "running" | "failed") {
+  return {
+    attemptId: "attempt-1",
+    attemptNumber: 1,
+    status,
+    engineId: "audiveris",
+    createdAt: "2026-08-16T00:00:00.000Z",
+  };
 }

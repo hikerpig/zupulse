@@ -144,7 +144,7 @@ export const enUS = {
       startFailed: "The recognition job could not start. Check the engine configuration and try again.",
       cancelUpload: "Cancel upload",
       uploading: "Uploading the input file…",
-      uploadCancelled: "Upload cancelled. No recognition job was created.",
+      uploadCancelled: "Stopped waiting for the upload result. A job may have been created; check recognition history.",
       cancelFailed: "The current job could not be cancelled. Try again shortly.",
       connection: {
         reconnecting: "The live connection was interrupted and is reconnecting. The job will continue on the server.",

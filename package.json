@@ -13,7 +13,7 @@
     "check:i18n": "node scripts/check-i18n.mjs",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "lint": "oxlint",
+    "lint": "oxlint --deny-warnings",
     "lint:fix": "oxlint --fix",
     "prepare": "[ -f .git ] || simple-git-hooks",
     "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run",

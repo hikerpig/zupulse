@@ -309,7 +309,7 @@ async function readPdfOmrInputPreview(
       bytes,
     };
   }
-  for (const key of [...cache.keys()]) {
+  for (const key of cache.keys()) {
     if (key !== jobId) cache.delete(key);
   }
   const source = new Uint8Array(await readFile(input.inputPath).catch(() => new ArrayBuffer(0)));

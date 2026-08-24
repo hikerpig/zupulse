@@ -17,6 +17,7 @@ import {
   type PlaybackTimelineMap,
 } from "@zupulse/web-core";
 import { createAppI18n, resolveLocale } from "@zupulse/app-i18n";
+import type { TFunction } from "i18next";
 import { ViewerOpenFailure, type ViewerDomBindings, type ViewerFile, type ViewerOpenFailureStage } from "../host";
 import type {
   ViewerPianoKeyVisualization,
@@ -440,10 +441,7 @@ export function renderViewerState(status: HTMLElement, summary: HTMLElement, sta
   summary.textContent = state.summary.title;
 }
 
-function demoIssueMessage(
-  issueCode: DemoState["issueCode"],
-  t: ReturnType<ReturnType<typeof createAppI18n>["getFixedT"]>,
-): string {
+function demoIssueMessage(issueCode: DemoState["issueCode"], t: TFunction<"viewer">): string {
   if (issueCode === "gp-file-required") return t("page.gpRequired");
   if (issueCode === "alpha-tab-load-failed") return t("page.alphaTabFailed");
   return t("page.loadFailed");

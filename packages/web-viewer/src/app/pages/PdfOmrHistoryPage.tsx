@@ -6,6 +6,8 @@ import type { RecognitionHistoryPort } from "../../features/pdf-omr/pdf-omr-port
 import { Button } from "../../components/ui";
 import styles from "./PdfOmrHistoryPage.module.css";
 
+const PAGE_SIZE = 20;
+
 export function PdfOmrHistoryPage({ history }: { history: RecognitionHistoryPort }) {
   const { t, i18n } = useTranslation("common");
   const [jobs, setJobs] = useState<readonly RecognitionJobSummary[]>([]);
@@ -13,18 +15,38 @@ export function PdfOmrHistoryPage({ history }: { history: RecognitionHistoryPort
   const [error, setError] = useState(false);
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(false);
     try {
-      setJobs((await history.list({ limit: 50 })).items);
+      const page = await history.list({ limit: PAGE_SIZE });
+      setJobs(page.items);
+      setNextCursor(page.nextCursor ?? null);
     } catch {
       setError(true);
     } finally {
       setLoading(false);
     }
   }, [history]);
+
+  const loadMore = useCallback(async () => {
+    if (nextCursor === null) return;
+    setLoadingMore(true);
+    setLoadMoreError(false);
+    try {
+      const page = await history.list({ cursor: nextCursor, limit: PAGE_SIZE });
+      setJobs((current) => mergeJobs(current, page.items));
+      setNextCursor(page.nextCursor ?? null);
+    } catch {
+      setLoadMoreError(true);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [history, nextCursor]);
 
   const deleteJob = useCallback(
     async (job: RecognitionJobSummary) => {
@@ -101,8 +123,25 @@ export function PdfOmrHistoryPage({ history }: { history: RecognitionHistoryPort
           </li>
         ))}
       </ul>
+      {loadMoreError ? <p role="alert">{t("pdfOmr.history.loadMoreFailed")}</p> : null}
+      {nextCursor !== null ? (
+        <div className={styles.loadMore}>
+          <Button type="button" disabled={loadingMore} onClick={() => void loadMore()}>
+            {loadingMore ? t("pdfOmr.history.loadingMore") : t("pdfOmr.history.loadMore")}
+          </Button>
+        </div>
+      ) : null}
     </main>
   );
+}
+
+function mergeJobs(
+  current: readonly RecognitionJobSummary[],
+  incoming: readonly RecognitionJobSummary[],
+): readonly RecognitionJobSummary[] {
+  const jobs = new Map(current.map((job) => [job.jobId, job]));
+  incoming.forEach((job) => jobs.set(job.jobId, job));
+  return [...jobs.values()];
 }
 
 function canDelete(status: RecognitionJobSummary["status"]): boolean {

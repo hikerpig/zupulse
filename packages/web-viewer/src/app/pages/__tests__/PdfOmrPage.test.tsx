@@ -658,6 +658,102 @@ describe("PdfOmrPage", () => {
     expect(port.readResult).toHaveBeenCalledWith("job-1");
     expect(screen.getByRole("button", { name: "选择 MIDI 并分析" })).toBeTruthy();
   });
+
+  it("shows remote reconnection state and lets the user refresh immediately", async () => {
+    const port = createPort();
+    port.setSnapshot(runningSnapshot);
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} remote />
+      </I18nextProvider>,
+    );
+
+    port.emitConnection("reconnecting");
+    expect(await screen.findByText("实时连接已中断，正在自动重连。任务仍会在服务器继续运行。")).toBeTruthy();
+    const callsBeforeRefresh = port.getDetail.mock.calls.length;
+    await userEvent.setup().click(screen.getByRole("button", { name: "立即刷新" }));
+    await waitFor(() => expect(port.getDetail).toHaveBeenCalledTimes(callsBeforeRefresh + 1));
+  });
+
+  it("renders the attempt timeline for a remote job", async () => {
+    const port = createPort();
+    port.setSnapshot({ ...runningSnapshot, status: "failed", error: { code: "ENGINE_FAILED", recoverable: true } });
+    port.getDetail.mockResolvedValue({
+      snapshot: { ...runningSnapshot, status: "failed", error: { code: "ENGINE_FAILED", recoverable: true } },
+      attempts: [
+        {
+          attemptId: "attempt-1",
+          attemptNumber: 1,
+          status: "failed",
+          engineId: "audiveris",
+          errorCode: "ENGINE_FAILED",
+          createdAt: "2026-08-16T00:00:00.000Z",
+          startedAt: "2026-08-16T00:00:01.000Z",
+          finishedAt: "2026-08-16T00:00:05.000Z",
+        },
+        {
+          attemptId: "attempt-2",
+          attemptNumber: 2,
+          status: "running",
+          engineId: "audiveris",
+          stage: "recognize",
+          createdAt: "2026-08-16T00:01:00.000Z",
+          startedAt: "2026-08-16T00:01:01.000Z",
+        },
+      ],
+    });
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} remote />
+      </I18nextProvider>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "尝试记录" })).toBeTruthy();
+    expect(screen.getByText("第 1 次 · 失败")).toBeTruthy();
+    expect(screen.getByText("错误码 · ENGINE_FAILED")).toBeTruthy();
+    expect(screen.getByText("第 2 次 · 识别中")).toBeTruthy();
+  });
+
+  it("cancels a remote upload without reporting a start failure", async () => {
+    const port = createPort();
+    let rejectUpload: ((reason: Error) => void) | undefined;
+    port.start.mockImplementation(
+      () =>
+        new Promise((_, reject) => {
+          rejectUpload = reject;
+        }),
+    );
+    port.cancelPendingStart.mockImplementation(() => rejectUpload?.(new Error("UPLOAD_CANCELLED")));
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} remote />
+      </I18nextProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+    await user.click(screen.getByRole("button", { name: "开始提取" }));
+    expect(screen.getByText("正在上传输入文件…")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "取消上传" }));
+
+    expect(port.cancelPendingStart).toHaveBeenCalledOnce();
+    expect(await screen.findByText("上传已取消，未创建识谱任务。")).toBeTruthy();
+    expect(screen.queryByText("无法启动识谱任务，请检查引擎配置后重试。")).toBeNull();
+  });
+
+  it("turns remote API failures into safe recovery guidance", async () => {
+    const port = createPort();
+    port.getDetail.mockRejectedValue(new Error("JOB_NOT_FOUND"));
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} remote />
+      </I18nextProvider>,
+    );
+
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "此识谱任务不存在或已过期。请返回识谱历史查看现有任务。",
+    );
+    expect(screen.queryByText("JOB_NOT_FOUND")).toBeNull();
+  });
 });
 
 const runningSnapshot: PdfOmrJobSnapshot = {
@@ -669,10 +765,14 @@ const runningSnapshot: PdfOmrJobSnapshot = {
 
 function createPort(): PdfOmrWorkbenchPort & {
   emit(event: PdfOmrProgressEvent): void;
+  emitConnection(state: "connecting" | "connected" | "reconnecting"): void;
   setSnapshot(snapshot: PdfOmrJobSnapshot): void;
+  getDetail: ReturnType<typeof vi.fn>;
+  cancelPendingStart: ReturnType<typeof vi.fn>;
 } {
   let snapshot: PdfOmrJobSnapshot | null = null;
   const listeners = new Set<(snapshot: PdfOmrJobSnapshot) => void>();
+  const connectionListeners = new Set<(state: "connecting" | "connected" | "reconnecting") => void>();
   const port = {
     engines: [{ id: "audiveris", version: "1.0.0", label: "Audiveris", available: true, inputKinds: ["pdf", "image"] }],
     select: vi.fn(async () => ({
@@ -691,7 +791,9 @@ function createPort(): PdfOmrWorkbenchPort & {
       return { jobId: "job-1", snapshot: runningSnapshot };
     }),
     cancel: vi.fn(async () => undefined),
+    cancelPendingStart: vi.fn(),
     getSnapshot: vi.fn(async () => snapshot),
+    getDetail: vi.fn(async () => (snapshot === null ? null : { snapshot, attempts: [] })),
     readResult: vi.fn(async () => ({
       fileName: "score.mxl",
       bytes: new Uint8Array([1, 2, 3]),
@@ -730,6 +832,11 @@ function createPort(): PdfOmrWorkbenchPort & {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+    subscribeConnection(listener: (state: "connecting" | "connected" | "reconnecting") => void) {
+      connectionListeners.add(listener);
+      listener("connected");
+      return () => connectionListeners.delete(listener);
+    },
     emit(event: PdfOmrProgressEvent) {
       if (snapshot === null) return;
       snapshot = {
@@ -739,11 +846,15 @@ function createPort(): PdfOmrWorkbenchPort & {
       };
       listeners.forEach((listener) => listener(snapshot!));
     },
+    emitConnection(state: "connecting" | "connected" | "reconnecting") {
+      connectionListeners.forEach((listener) => listener(state));
+    },
     setSnapshot(next: PdfOmrJobSnapshot) {
       snapshot = next;
     },
   } satisfies PdfOmrWorkbenchPort & {
     emit(event: PdfOmrProgressEvent): void;
+    emitConnection(state: "connecting" | "connected" | "reconnecting"): void;
     setSnapshot(next: PdfOmrJobSnapshot): void;
   };
   return port;

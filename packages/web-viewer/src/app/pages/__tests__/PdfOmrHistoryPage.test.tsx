@@ -68,6 +68,62 @@ describe("PdfOmrHistoryPage", () => {
     await userEvent.setup().click(screen.getByRole("button", { name: "删除 failed.pdf" }));
     expect((await screen.findByRole("alert")).textContent).toBe("无法删除识谱任务，请重试。");
   });
+
+  it("loads cursor pages and does not duplicate a job at the page boundary", async () => {
+    const history = {
+      list: vi
+        .fn()
+        .mockResolvedValueOnce({
+          items: [jobSummary("first", "failed")],
+          nextCursor: "next-page",
+        })
+        .mockResolvedValueOnce({
+          items: [jobSummary("first", "failed"), jobSummary("second", "failed")],
+        }),
+      create: vi.fn(),
+      open: vi.fn(),
+      delete: vi.fn(),
+    };
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <MemoryRouter>
+          <PdfOmrHistoryPage history={history} />
+        </MemoryRouter>
+      </I18nextProvider>,
+    );
+
+    expect(await screen.findByRole("link", { name: "first.pdf" })).toBeTruthy();
+    await userEvent.setup().click(screen.getByRole("button", { name: "加载更多" }));
+
+    expect(await screen.findByRole("link", { name: "second.pdf" })).toBeTruthy();
+    expect(screen.getAllByRole("link", { name: "first.pdf" })).toHaveLength(1);
+    expect(history.list).toHaveBeenNthCalledWith(1, { limit: 20 });
+    expect(history.list).toHaveBeenNthCalledWith(2, { cursor: "next-page", limit: 20 });
+    expect(screen.queryByRole("button", { name: "加载更多" })).toBeNull();
+  });
+
+  it("keeps cursor pagination recoverable when loading the next page fails", async () => {
+    const history = {
+      list: vi
+        .fn()
+        .mockResolvedValueOnce({ items: [jobSummary("first", "failed")], nextCursor: "retry-page" })
+        .mockRejectedValueOnce(new Error("offline")),
+      create: vi.fn(),
+      open: vi.fn(),
+      delete: vi.fn(),
+    };
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <MemoryRouter>
+          <PdfOmrHistoryPage history={history} />
+        </MemoryRouter>
+      </I18nextProvider>,
+    );
+
+    await userEvent.setup().click(await screen.findByRole("button", { name: "加载更多" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("无法加载更多识谱任务，请重试。");
+    expect(screen.getByRole("button", { name: "加载更多" })).toBeTruthy();
+  });
 });
 
 function jobSummary(jobId: string, status: "queued" | "failed") {

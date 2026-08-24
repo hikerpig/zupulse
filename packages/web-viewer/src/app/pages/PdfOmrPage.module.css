@@ -72,7 +72,8 @@
   .stagePanel,
   .controlPanel,
   .midiPanel,
-  .diagnosticsPanel {
+  .diagnosticsPanel,
+  .attemptPanel {
     padding: 16px;
   }
   .controlPanel {
@@ -410,10 +411,62 @@
   .primaryActions > button {
     width: 100%;
   }
+  .uploadingActions {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+  }
+  .uploadingActions p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+  .uploadingActions button {
+    width: 100%;
+  }
   .notice {
     margin: 12px 0 0;
     color: var(--status-error-text);
     font-size: 12px;
+  }
+  .connectionNotice {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-default);
+  }
+  .connectionNotice p {
+    margin: 0;
+    color: var(--status-warning-text);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .attemptList {
+    display: grid;
+    gap: 10px;
+    padding: 0;
+    margin: 14px 0 0;
+    list-style: none;
+  }
+  .attemptList li {
+    display: grid;
+    gap: 3px;
+    padding-left: 10px;
+    border-left: 2px solid var(--border-default);
+  }
+  .attemptList li[data-status="failed"] {
+    border-left-color: var(--status-error-text);
+  }
+  .attemptList li[data-status="succeeded"] {
+    border-left-color: var(--status-ready-text);
+  }
+  .attemptList strong {
+    font-size: 12px;
+  }
+  .attemptList small {
+    color: var(--text-secondary);
+    font: 11px var(--font-family-technical);
   }
   .midiReview {
     display: grid;

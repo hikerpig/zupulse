@@ -20,6 +20,7 @@ export type {
   PdfOmrEngineOption,
   PdfOmrMidiCorrectionPort,
   PdfOmrResult,
+  RecognitionConnectionState,
   RecognitionJobPort,
   RecognitionHistoryPort,
 } from "./features/pdf-omr/pdf-omr-port";

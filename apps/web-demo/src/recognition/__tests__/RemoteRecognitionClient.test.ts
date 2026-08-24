@@ -34,8 +34,52 @@ describe("RemoteRecognitionClient", () => {
     expect(requests[0]?.url).toBe("/api/recognition/v1/jobs");
     expect(requests[0]?.init?.body).toBeInstanceOf(FormData);
 
-    source.emit({ kind: "snapshot", snapshot: { ...snapshot, status: "running", stage: "recognize" } });
+    source.emit("snapshot", { kind: "snapshot", snapshot: { ...snapshot, status: "running", stage: "recognize" } });
     expect(listener).toHaveBeenCalledWith(expect.objectContaining({ status: "running", stage: "recognize" }));
+  });
+
+  it("reports connection recovery and returns to connected after a snapshot", async () => {
+    const source = new FakeEventSource();
+    const client = new RemoteRecognitionClient({
+      engines: [],
+      selectFile: async () => null,
+      fetch: vi.fn(),
+      createEventSource: () => source,
+      save: vi.fn(),
+    });
+    const port = client.open(jobId);
+    const listener = vi.fn();
+
+    port.subscribeConnection?.(listener);
+    expect(listener).toHaveBeenLastCalledWith("connecting");
+
+    source.emit("error");
+    expect(listener).toHaveBeenLastCalledWith("reconnecting");
+
+    source.emit("snapshot", { kind: "snapshot", snapshot });
+    expect(listener).toHaveBeenLastCalledWith("connected");
+  });
+
+  it("can cancel an upload before the job is created", async () => {
+    const client = new RemoteRecognitionClient({
+      engines: [{ id: "audiveris", version: "1", available: true, inputKinds: ["pdf"] }],
+      selectFile: async () => new File(["%PDF"], "sonata.pdf", { type: "application/pdf" }),
+      fetch: vi.fn(
+        (_url: string | URL | Request, init?: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+          }),
+      ),
+      createEventSource: () => new FakeEventSource(),
+      save: vi.fn(),
+    });
+    const port = client.create();
+    await port.select();
+
+    const upload = port.start("selected-file", "audiveris");
+    port.cancelPendingStart?.();
+
+    await expect(upload).rejects.toThrow("UPLOAD_CANCELLED");
   });
 
   it("opens history jobs and reads their persisted result", async () => {
@@ -77,15 +121,16 @@ describe("RemoteRecognitionClient", () => {
 });
 
 class FakeEventSource {
-  private listener?: (event: MessageEvent<string>) => void;
+  private readonly listeners = new Map<string, EventListener>();
 
-  addEventListener(_type: string, listener: EventListener): void {
-    this.listener = listener as (event: MessageEvent<string>) => void;
+  addEventListener(type: string, listener: EventListener): void {
+    this.listeners.set(type, listener);
   }
 
   close(): void {}
 
-  emit(value: unknown): void {
-    this.listener?.({ data: JSON.stringify(value) } as MessageEvent<string>);
+  emit(type: string, value?: unknown): void {
+    const event = value === undefined ? new Event(type) : ({ data: JSON.stringify(value) } as MessageEvent<string>);
+    this.listeners.get(type)?.(event);
   }
 }

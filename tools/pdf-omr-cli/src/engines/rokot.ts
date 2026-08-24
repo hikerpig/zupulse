@@ -7,7 +7,9 @@ import { DOMParser } from "@xmldom/xmldom";
 import { canonicalJson, sha256Bytes } from "../canonical-json";
 import { PdfOmrError } from "../errors";
 import { runEngineProcess, type EngineProcessResult } from "../engine-runner";
+import { findBlankPdfPages } from "../inspect-pdf";
 import { combineProcessResourceUsage, type ProcessResourceUsage } from "../resource-metrics";
+import type { OmrScoreDraft } from "../schemas";
 import {
   normalizeRokotOutput,
   parseRokotSystemBundle,
@@ -135,6 +137,7 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
             STAFF_SYSTEM_SEGMENTATION_PARAMETERS.minimumGrandStaffGapMultiplier,
           segmentationMinimumStaffSpacingPx: STAFF_SYSTEM_SEGMENTATION_PARAMETERS.minimumStaffSpacingPx,
           segmentationSpacingToleranceRatio: STAFF_SYSTEM_SEGMENTATION_PARAMETERS.spacingToleranceRatio,
+          segmentationStaffSpacingConsistencyRatio: STAFF_SYSTEM_SEGMENTATION_PARAMETERS.staffSpacingConsistencyRatio,
           temperature: 0,
           visionProjectorSha256: mmprojHash,
         },
@@ -181,7 +184,7 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           cause: error,
         });
       });
-      const pages = await renderPdfPages(inputBytes, {
+      const allPages = await renderPdfPages(inputBytes, {
         targetWidth: 1400,
         allowLandscape: true,
         ...(request.standardFontDirectory === undefined
@@ -189,6 +192,29 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           : { standardFontDirectory: request.standardFontDirectory }),
         ...(request.wasmDirectory === undefined ? {} : { wasmDirectory: request.wasmDirectory }),
       });
+      // Blank pages contain no staff lines and would fail segmentation; skip
+      // them up front and report the skipped page numbers as a diagnostic.
+      const blankPages = await findBlankPdfPages(inputBytes, {
+        fileName: basename(request.inputPath),
+        ...(request.standardFontDirectory === undefined
+          ? {}
+          : { standardFontDirectory: request.standardFontDirectory }),
+        ...(request.wasmDirectory === undefined ? {} : { wasmDirectory: request.wasmDirectory }),
+      }).catch(() => [] as number[]);
+      const skipBlankPages = blankPages.length < allPages.length ? blankPages : [];
+      const pages = allPages.filter((page) => !skipBlankPages.includes(page.pageIndex));
+      const blankPageDiagnostics: OmrScoreDraft["diagnostics"] =
+        skipBlankPages.length === 0
+          ? []
+          : [
+              {
+                code: "ROKOT_BLANK_PAGES_SKIPPED",
+                severity: "warning",
+                message: `Blank PDF pages were skipped before recognition: ${skipBlankPages
+                  .map((pageIndex) => pageIndex + 1)
+                  .join(", ")}`,
+              },
+            ];
       const inputScope = request.inputScope ?? "full-page";
       let segmentation: StaffSystemSegmentation;
       try {
@@ -331,14 +357,14 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
       return {
         normalizationBytes: bundleBytes,
         nativeArtifacts: [{ relativePath: "segmentation.json", bytes: segmentationBytes }, ...artifacts],
-        diagnostics: [],
+        diagnostics: blankPageDiagnostics,
         durationMs,
         ...(resourceUsage === undefined ? {} : { resourceUsage }),
       };
     },
 
     normalize(recognition) {
-      return normalizeRokotOutput(recognition.normalizationBytes);
+      return normalizeRokotOutput(recognition.normalizationBytes, recognition.diagnostics);
     },
   };
 }

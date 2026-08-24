@@ -224,8 +224,11 @@ topology，同页同时出现已配对 grand staff 与未配对 single staff 时
 `--input-scope system-crop --staff-layout <single-staff|grand-staff>` 直接送入模型，避免二次 segmentation。
 公开 benchmark 的 OLiMPiC oracle items 使用 `system-crop`；contract 与 FP-GrandStaff 使用 `full-page`。
 full-page detector v2 合并 continuous-first 与 fragmented-first 候选，并按 connector evidence 选择
-grand-staff pairing。对已确认的 single staff，adapter 还可将严格 header-valid、以 barline 结束的 unvoiced
-ABC 确定性规范化为 `V:1`；grand staff 仍 fail closed。
+grand-staff pairing。两条检测路径对同一谱表产生错位一行内的重复候选时按共享谱线去重，偏离页面
+主导 staff spacing 一半的伪谱表（如密集符尾构成的假五线）会被丢弃。完全空白的页面（PDF.js
+operator signals 均为 0）在 segmentation 前跳过，页码以 `ROKOT_BLANK_PAGES_SKIPPED` warning
+记录到 draft diagnostics。对已确认的 single staff，adapter 还可将严格 header-valid、以 barline 结束的
+unvoiced ABC 确定性规范化为 `V:1`；grand staff 仍 fail closed。
 
 converter environment 必须安装 `abc-xml-converter==1.0.1`。完整 revision、hash、decoder 参数和
 license provenance 见 `engines/rokot-environment.json`；模型和 Python environment 不提交到仓库。

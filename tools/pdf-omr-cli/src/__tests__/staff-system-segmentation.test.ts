@@ -141,6 +141,24 @@ describe("segmentGrandStaffSystems", () => {
     ]);
   });
 
+  it("drops shifted duplicate and dense-notation decoy staves in the piano/violin fixture", async () => {
+    const fixture = fileURLToPath(
+      new URL("../../../../test-fixtures/pdfs/if_i_aint_got_you/If_I_Aint_Got_You_Alicia_Keys_.pdf", import.meta.url),
+    );
+    const pages = await renderPdfPages(await readFile(fixture), { targetWidth: 1400, allowLandscape: true });
+
+    const firstPage = segmentStaffSystems([pages[0]!], { allowFragmentedRuns: true, staffLayout: "single-staff" });
+    const densePage = segmentStaffSystems([pages[6]!], { allowFragmentedRuns: true, staffLayout: "single-staff" });
+
+    expect(firstPage.systems.map((system) => system.staffLineYs[0])).toEqual([
+      264, 387, 509, 731, 853, 976, 1197, 1320, 1442,
+    ]);
+    expect(densePage.systems.map((system) => system.staffLineYs[0])).toEqual([
+      147, 270, 392, 614, 737, 859, 1081, 1203, 1326,
+    ]);
+    expect(densePage.systems.every((system) => system.localStaffSpacingPx > 5)).toBe(true);
+  });
+
   it("segments the real scanned OLiMPiC system crop with landscape rendering enabled", async () => {
     const fixture = fileURLToPath(new URL("../../corpus/olimpic-scanned-v1/dev/6586696/input.pdf", import.meta.url));
     const pages = await renderPdfPages(await readFile(fixture), { allowLandscape: true });

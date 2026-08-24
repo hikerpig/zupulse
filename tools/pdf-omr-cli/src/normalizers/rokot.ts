@@ -156,13 +156,16 @@ const voiceMapping: Readonly<Record<RokotVoice, { staffIndex: number; voiceIndex
   "2b": { staffIndex: 1, voiceIndex: 2 },
 };
 
-export function normalizeRokotOutput(bytes: Uint8Array): OmrScoreDraft {
+export function normalizeRokotOutput(
+  bytes: Uint8Array,
+  extraDiagnostics: OmrScoreDraft["diagnostics"] = [],
+): OmrScoreDraft {
   const bundle = parseRokotSystemBundle(bytes);
   const staffCount = bundle.systems[0]!.source.staffCount;
   if (bundle.systems.some((system) => system.source.staffCount !== staffCount)) {
     throw invalidOutput("inconsistent-system-staff-layout");
   }
-  const diagnostics: Diagnostic[] = [];
+  const diagnostics: Diagnostic[] = [...extraDiagnostics];
   const measuresByStaff: DraftMeasure[][] = Array.from({ length: staffCount }, () => []);
   let globalMeasureIndex = 0;
 

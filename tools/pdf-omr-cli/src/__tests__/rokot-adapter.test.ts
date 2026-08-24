@@ -50,6 +50,7 @@ describe("Rokot adapter environment", () => {
         segmentationMinimumStaffSpacingPx: 3,
         segmentationSpacingToleranceRatio: 0.25,
         segmentationStaffLayout: "auto",
+        segmentationStaffSpacingConsistencyRatio: 0.5,
         temperature: 0,
         visionProjectorSha256: context.mmprojSha256,
       },
@@ -248,6 +249,35 @@ describe("Rokot recognition adapter", () => {
     expect(draft.parts[0]).toMatchObject({ id: "score", name: "Score" });
     expect(draft.parts[0]!.staves).toHaveLength(1);
     expect(draft.diagnostics).not.toContainEqual(expect.objectContaining({ code: "ROKOT_UNSUPPORTED_STAFF_TOPOLOGY" }));
+  });
+
+  it("skips fully blank PDF pages before segmentation", async () => {
+    const context = await createContext({ staffLayout: "single-staff" });
+    const inputPath = join(context.directory, "with-blank.pdf");
+    const staff = [220, 216, 212, 208, 204].map((y) => `10 ${y} m 190 ${y} l S`).join(" ");
+    await writeFile(
+      inputPath,
+      pdf([
+        { width: 200, height: 260, content: `0 0 0 RG 0.3 w ${staff}` },
+        { width: 200, height: 260, content: "" },
+      ]),
+    );
+    const adapter = createAdapter(context);
+
+    const recognition = await adapter.recognize({
+      inputPath,
+      outputDirectory: join(context.directory, "out"),
+      staffLayout: "single-staff",
+    });
+
+    const bundle = parseRokotSystemBundle(recognition.normalizationBytes);
+    expect(bundle.systems.map((system) => system.pageIndex)).toEqual([0]);
+    expect(recognition.diagnostics).toEqual([
+      expect.objectContaining({ code: "ROKOT_BLANK_PAGES_SKIPPED", severity: "warning" }),
+    ]);
+    expect(adapter.normalize(recognition).diagnostics).toContainEqual(
+      expect.objectContaining({ code: "ROKOT_BLANK_PAGES_SKIPPED" }),
+    );
   });
 
   it("renders, segments, transcribes, converts, and returns deterministic system artifacts", async () => {

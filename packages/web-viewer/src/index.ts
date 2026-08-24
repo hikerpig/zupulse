@@ -18,6 +18,7 @@ export * from "./features/SheetLibrary";
 export type {
   PdfOmrWorkbenchPort,
   PdfOmrEngineOption,
+  PdfOmrInputPreview,
   PdfOmrMidiCorrectionPort,
   PdfOmrResult,
   RecognitionConnectionState,

@@ -404,7 +404,16 @@ export const bridgeRequestSchema = z.discriminatedUnion("type", [
   envelope("pdfOmr.readResult", z.object({ jobId: idSchema }).strict()),
   envelope(
     "pdfOmr.readInputPreview",
-    z.object({ jobId: idSchema, pageIndex: z.number().int().nonnegative() }).strict(),
+    z
+      .object({
+        jobId: idSchema.optional(),
+        fileToken: idSchema.optional(),
+        pageIndex: z.number().int().nonnegative(),
+      })
+      .strict()
+      .refine((payload) => payload.jobId !== undefined || payload.fileToken !== undefined, {
+        message: "jobId or fileToken is required",
+      }),
   ),
   envelope("pdfOmr.selectMidi", z.object({}).strict()),
   envelope("pdfOmr.analyzeMidi", z.object({ jobId: idSchema, fileToken: idSchema }).strict()),

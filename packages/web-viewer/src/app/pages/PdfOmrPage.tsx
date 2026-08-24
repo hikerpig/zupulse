@@ -301,12 +301,20 @@ export function PdfOmrPage({
 
   const jobId = snapshot?.jobId;
   const loadInputPreview = useCallback(
-    (pageIndex: number) =>
-      port?.readInputPreview !== undefined && jobId !== undefined
-        ? port.readInputPreview(jobId, pageIndex)
-        : Promise.resolve(null),
-    [port, jobId],
+    (pageIndex: number) => {
+      if (port?.readInputPreview !== undefined && jobId !== undefined) {
+        return port.readInputPreview(jobId, pageIndex);
+      }
+      if (port?.readSelectedInputPreview !== undefined && file !== undefined) {
+        return port.readSelectedInputPreview(file.token, pageIndex);
+      }
+      return Promise.resolve(null);
+    },
+    [port, jobId, file],
   );
+  const inputPreviewAvailable =
+    (port?.readInputPreview !== undefined && jobId !== undefined) ||
+    (port?.readSelectedInputPreview !== undefined && file !== undefined);
 
   const statusTone =
     snapshot?.status === undefined && input !== undefined ? "ready" : snapshotStatusTone(snapshot?.status);
@@ -434,7 +442,12 @@ export function PdfOmrPage({
                 t={t}
               />
             ) : (
-              <PdfEvidence file={input} loadPreview={jobId === undefined ? undefined : loadInputPreview} t={t} />
+              <PdfEvidence
+                key={file?.token ?? jobId ?? "empty"}
+                file={input}
+                loadPreview={inputPreviewAvailable ? loadInputPreview : undefined}
+                t={t}
+              />
             )}
           </div>
         </section>
@@ -822,7 +835,11 @@ function PdfEvidence({
   t: CommonT;
 }) {
   const [pageIndex, setPageIndex] = useState(0);
-  const [preview, setPreview] = useState<{ url: string; pageCount: number } | null>(null);
+  const [preview, setPreview] = useState<{
+    url: string;
+    pageCount: number;
+    contentType: PdfOmrInputPreview["contentType"];
+  } | null>(null);
   const [state, setState] = useState<"idle" | "loading" | "ready" | "unavailable">("idle");
   useEffect(() => {
     if (loadPreview === undefined) {
@@ -842,7 +859,7 @@ function PdfEvidence({
           return;
         }
         url = URL.createObjectURL(new Blob([Uint8Array.from(result.bytes)], { type: result.contentType }));
-        setPreview({ url, pageCount: result.pageCount });
+        setPreview({ url, pageCount: result.pageCount, contentType: result.contentType });
         setState("ready");
       })
       .catch(() => {
@@ -866,11 +883,12 @@ function PdfEvidence({
       </div>
     );
   }
+  const isDocument = preview?.contentType === "application/pdf";
   return (
-    <div className={styles.pdfPreview}>
+    <div className={isDocument ? `${styles.pdfPreview} ${styles.pdfPreviewDocument}` : styles.pdfPreview}>
       <div className={styles.pdfPreviewHeader}>
         <strong>{file.fileName}</strong>
-        {preview !== null && preview.pageCount > 1 ? (
+        {preview !== null && !isDocument && preview.pageCount > 1 ? (
           <span className={styles.pdfPreviewPager}>
             <button
               type="button"
@@ -895,10 +913,14 @@ function PdfEvidence({
       {state === "loading" ? <p className={styles.muted}>{t("pdfOmr.pdfPreview.loading")}</p> : null}
       {state === "unavailable" ? <p className={styles.muted}>{t("pdfOmr.pdfPreview.unavailable")}</p> : null}
       {preview !== null ? (
-        <img
-          src={preview.url}
-          alt={t("pdfOmr.pdfPreview.imageAlt", { fileName: file.fileName, page: pageIndex + 1 })}
-        />
+        isDocument ? (
+          <iframe src={preview.url} title={t("pdfOmr.pdfPreview.documentTitle", { fileName: file.fileName })} />
+        ) : (
+          <img
+            src={preview.url}
+            alt={t("pdfOmr.pdfPreview.imageAlt", { fileName: file.fileName, page: pageIndex + 1 })}
+          />
+        )
       ) : null}
     </div>
   );

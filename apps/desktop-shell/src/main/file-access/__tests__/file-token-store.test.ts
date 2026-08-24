@@ -20,4 +20,23 @@ describe("FileTokenStore", () => {
     store.clear();
     expect(() => store.consume(cleared)).toThrow("FILE_TOKEN_INVALID");
   });
+
+  it("peeks a token without consuming it", () => {
+    const store = new FileTokenStore({ now: () => 1000, ttlMs: 60_000 });
+    const token = store.issue("/tmp/score.pdf", { fileName: "score.pdf", sizeBytes: 42 });
+    expect(store.peek(token).fileName).toBe("score.pdf");
+    expect(store.peek(token).fileName).toBe("score.pdf");
+    expect(store.consume(token).fileName).toBe("score.pdf");
+    expect(() => store.peek(token)).toThrow("FILE_TOKEN_INVALID");
+  });
+
+  it("rejects peeking an expired token and honors a per-token TTL", () => {
+    let now = 1000;
+    const store = new FileTokenStore({ now: () => now, ttlMs: 60_000 });
+    const longLived = store.issue("/tmp/score.pdf", { fileName: "score.pdf", sizeBytes: 42 }, 30 * 60_000);
+    now = 61_001;
+    expect(store.peek(longLived).fileName).toBe("score.pdf");
+    now = 1000 + 30 * 60_000 + 1;
+    expect(() => store.peek(longLived)).toThrow("FILE_TOKEN_INVALID");
+  });
 });

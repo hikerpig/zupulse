@@ -21,14 +21,23 @@ export class FileTokenStore {
   issue(
     path: string,
     metadata: { fileName: string; sizeBytes: number; identity?: { dev: number; ino: number; mtimeMs: number } },
+    ttlMs?: number,
   ): string {
     const token = randomUUID();
     this.entries.set(token, {
       path,
       ...metadata,
-      expiresAt: this.options.now() + this.options.ttlMs,
+      expiresAt: this.options.now() + (ttlMs ?? this.options.ttlMs),
     });
     return token;
+  }
+
+  peek(token: string): FileTokenEntry {
+    const entry = this.entries.get(token);
+    if (!entry || entry.expiresAt < this.options.now()) {
+      throw new Error("FILE_TOKEN_INVALID");
+    }
+    return entry;
   }
 
   consume(token: string): FileTokenEntry {

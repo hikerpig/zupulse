@@ -54,7 +54,7 @@ export type PdfOmrMidiAnalysis = {
 export type PdfOmrInputPreview = {
   pageIndex: number;
   pageCount: number;
-  contentType: "image/png" | "image/jpeg";
+  contentType: "image/png" | "image/jpeg" | "application/pdf";
   bytes: Uint8Array;
 };
 
@@ -79,6 +79,7 @@ export type RecognitionJobPort = {
   readResult(jobId: string): Promise<PdfOmrResult | null>;
   readFailedValidation(jobId: string): Promise<PdfOmrValidationView | null>;
   readInputPreview?(jobId: string, pageIndex: number): Promise<PdfOmrInputPreview | null>;
+  readSelectedInputPreview?(fileToken: string, pageIndex: number): Promise<PdfOmrInputPreview | null>;
   exportResult(jobId: string): Promise<"saved" | "cancelled">;
   subscribe(listener: (snapshot: PdfOmrJobSnapshot) => void): () => void;
   subscribeConnection?(listener: (state: RecognitionConnectionState) => void): () => void;

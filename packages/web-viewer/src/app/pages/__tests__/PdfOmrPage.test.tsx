@@ -253,6 +253,39 @@ describe("PdfOmrPage", () => {
     expect(port.readInputPreview).toHaveBeenLastCalledWith("job-1", 1);
   });
 
+  it("previews the selected PDF in a document frame before a job starts", async () => {
+    const port = createPort();
+    port.readSelectedInputPreview.mockImplementation(async (_token, pageIndex) =>
+      pageIndex === 0
+        ? {
+            pageIndex: 0,
+            pageCount: 1,
+            contentType: "application/pdf" as const,
+            bytes: new Uint8Array([37, 80, 68, 70]),
+          }
+        : null,
+    );
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: vi.fn(() => "blob:selected"),
+      revokeObjectURL: vi.fn(),
+    });
+    const user = userEvent.setup();
+    render(
+      <I18nextProvider i18n={createAppI18n("zh-CN")}>
+        <PdfOmrPage port={port} />
+      </I18nextProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "选择 PDF 或图片" }));
+
+    const frame = await screen.findByTitle("sonata.pdf 文档预览");
+    expect(frame.getAttribute("src")).toBe("blob:selected");
+    expect(port.readSelectedInputPreview).toHaveBeenCalledWith("file-token", 0);
+    expect(screen.queryByRole("button", { name: "下一页" })).toBeNull();
+    expect(port.start).not.toHaveBeenCalled();
+  });
+
   it("keeps PDF recognition session-scoped and exposes the real run stages", async () => {
     const port = createPort();
     const user = userEvent.setup();
@@ -851,6 +884,7 @@ function createPort(): PdfOmrWorkbenchPort & {
     })),
     readFailedValidation: vi.fn(async () => null),
     readInputPreview: vi.fn(async () => null),
+    readSelectedInputPreview: vi.fn(async () => null),
     exportResult: vi.fn(async () => "saved" as const),
     selectMidi: vi.fn(async () => ({
       status: "selected" as const,

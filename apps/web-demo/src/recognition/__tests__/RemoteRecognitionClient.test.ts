@@ -118,6 +118,51 @@ describe("RemoteRecognitionClient", () => {
     expect(await port.exportResult(jobId)).toBe("saved");
     expect(save).toHaveBeenCalledWith("score.mxl", new Uint8Array([1, 2, 3]));
   });
+
+  it("previews the selected PDF before and after the job starts", async () => {
+    const client = new RemoteRecognitionClient({
+      engines: [{ id: "audiveris", version: "1", available: true, inputKinds: ["pdf", "image"] }],
+      selectFile: async () => new File(["%PDF-1.7"], "sonata.pdf", { type: "application/pdf" }),
+      fetch: vi.fn(async () => Response.json(snapshot, { status: 201 })),
+      createEventSource: () => new FakeEventSource(),
+      save: vi.fn(),
+    });
+    const port = client.create();
+    expect(await port.readSelectedInputPreview?.("missing", 0)).toBeNull();
+
+    await port.select();
+    const selected = await port.readSelectedInputPreview?.("selected-file", 0);
+    expect(selected).toMatchObject({ pageIndex: 0, pageCount: 1, contentType: "application/pdf" });
+    expect(Array.from(selected?.bytes ?? [])).toEqual(Array.from(new TextEncoder().encode("%PDF-1.7")));
+    expect(await port.readSelectedInputPreview?.("selected-file", 1)).toBeNull();
+
+    await port.start("selected-file", "audiveris");
+    // Starting a job navigates to a fresh port opened by jobId; the input stays previewable.
+    const reopened = client.open(snapshot.jobId);
+    expect(await reopened.readInputPreview?.(snapshot.jobId, 0)).toMatchObject({ contentType: "application/pdf" });
+  });
+
+  it("previews selected images and reports unknown jobs as unavailable", async () => {
+    const client = new RemoteRecognitionClient({
+      engines: [],
+      selectFile: async () => new File([1, 2, 3], "score.png", { type: "image/png" }),
+      fetch: vi.fn(async () => Response.json(snapshot, { status: 201 })),
+      createEventSource: () => new FakeEventSource(),
+      save: vi.fn(),
+    });
+    const port = client.create();
+    await port.select();
+
+    expect(await port.readSelectedInputPreview?.("selected-file", 0)).toMatchObject({
+      pageCount: 1,
+      contentType: "image/png",
+    });
+    expect(
+      await client
+        .open("00000000-0000-4000-8000-000000000099")
+        .readInputPreview?.("00000000-0000-4000-8000-000000000099", 0),
+    ).toBeNull();
+  });
 });
 
 class FakeEventSource {

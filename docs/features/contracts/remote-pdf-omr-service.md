@@ -54,6 +54,9 @@ supersedes: []
   状态、时间与 semantic error code，并在 attempt/status/stage 变化时重新同步。
 - succeeded result 使用受约束 metadata 和 Server 回读校验后的 bytes；Browser 尝试用现有 transient score runtime
   预览，并通过 native download 保存 MXL。预览解析失败时不影响下载。
+- “原始输入”tab 用本会话保存的 `File` reference 在本地渲染预览：PDF 以原始 bytes 交给浏览器内置查看器
+  （翻页/缩放由其负责），PNG/JPEG 直接显示。预览只覆盖当前会话选中并上传的输入；刷新后打开的历史任务
+  不再持有 `File`，显示“预览不可用”。
 
 ## 状态与边界
 

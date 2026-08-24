@@ -74,6 +74,11 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
   计数本身。
 - Desktop 页面以宽屏三仓工作区呈现输入/阶段、证据面和结果/诊断；`620–899px` 折叠为纵向工作区，
   `<620px` 使用单一 document scroll，保留文件选择、阶段、证据标签、engine 和主操作。
+- “原始输入”证据面在选中文件后即可预览：Renderer 用未消费的选择 token 请求 `pdfOmr.readInputPreview`
+  （Main `peek` 而不消费 token），图片直接回 bytes，PDF 由 Main 端 pdfjs 逐页渲染为 PNG 并缓存分页；
+  任务开始后同一证据面切换为 job 物化输入的同一渲染路径。token 预览路径与开始识别一样，通过已打开的
+  文件描述符复核文件类型、大小与 identity，任何不匹配都使预览不可用且不消费 token。输入 token 有效期为
+  30 分钟，覆盖选中、预览到开始识别的完整间隔；开始识别仍走 `materializePdfOmrInput` 的消费与复核。
 - pipeline 成功后 Main 只返回受 schema 约束的 MXL bytes、hash、readiness 和 bounded diagnostic summary；
   Renderer 使用现有只读 score runtime 做 transient preview，并通过 Main 原生保存 Dialog 导出。
 - 结果不会调用 Library repository、Managed Score Copy、Practice Sidecar、resume 或 Harmony Analysis
@@ -171,8 +176,7 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 
 以下内容不得被 AI 当作已经实现的行为：
 
-- 部分落地：`原 PDF` 证据面当前显示安全的文件摘要，没有在页面中绘制 PDF 原页；中间 evidence 也只显示结构化
-  facts，不展开未知二进制 artifact。
+- 部分落地：中间 evidence 只显示结构化 facts，不展开未知二进制 artifact。
 - 自动化边界：Desktop E2E 使用临时 fake Audiveris executable 覆盖 stage observation、validated MXL、transient
   preview 和 native export；它不代表真实 external engine 的质量或环境可用性，CI 仍不绑定任何外部 engine。
 
@@ -215,6 +219,7 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | Programmatic pipeline 与 canonical result           | [`tools/pdf-omr-cli/src/pipeline.ts`](../../../tools/pdf-omr-cli/src/pipeline.ts)                                                                                                                                                                                                                           | `tools/pdf-omr-cli/src/__tests__/pipeline.test.ts`                                                    |
 | Main runtime、token 与 job lifecycle                | [`pdf-omr-controller.ts`](../../../apps/desktop-shell/src/main/recognition/pdf-omr-controller.ts)、[`score-files.ts`](../../../apps/desktop-shell/src/main/file-access/score-files.ts)                                                                                                                      | `recognition/__tests__/pdf-omr-controller.test.ts`、`file-access/__tests__/pdf-files.test.ts`         |
+| 原始输入预览（选中 token peek / job 分页渲染）      | [`pdf-omr-input-preview.ts`](../../../apps/desktop-shell/src/main/recognition/pdf-omr-input-preview.ts)                                                                                                                                                                                                     | `recognition/__tests__/pdf-omr-input-preview.test.ts`                                                 |
 | Engine discovery、settings 与 job registry snapshot | [`pdf-omr-engine-preflight.ts`](../../../apps/desktop-shell/src/main/recognition/pdf-omr-engine-preflight.ts)、[`provider-settings.ts`](../../../apps/desktop-shell/src/main/recognition/provider-settings.ts)、[`pdf-omr-runtime.ts`](../../../apps/desktop-shell/src/main/recognition/pdf-omr-runtime.ts) | `provider-configuration-store.test.ts`、`pdf-omr-engine-preflight.test.ts`、`pdf-omr-runtime.test.ts` |
 | MIDI fusion 与 reviewed writeback                   | [`pdf-omr-midi-correction-controller.ts`](../../../apps/desktop-shell/src/main/recognition/pdf-omr-midi-correction-controller.ts)、[`tools/pdf-omr-cli/src/midi-correction.ts`](../../../tools/pdf-omr-cli/src/midi-correction.ts)                                                                          | `pdf-omr-midi-correction-controller.test.ts`、`fuse-command.test.ts`、`apply-fusion-command.test.ts`  |
 | Bridge capability、request/response/event isolation | [`packages/web-core/src/bridge/schemas.ts`](../../../packages/web-core/src/bridge/schemas.ts)                                                                                                                                                                                                               | `packages/web-core/src/bridge/__tests__/schemas.test.ts`、`contract-manifest.test.ts`                 |

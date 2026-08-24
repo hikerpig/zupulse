@@ -6,6 +6,9 @@ import { basename, join } from "node:path";
 import type { FileTokenEntry, FileTokenStore } from "./file-token-store";
 
 export const MAX_SCORE_BYTES = 64 * 1024 * 1024;
+// PDF OMR inputs bridge select → preview → start, which can take minutes; the default 60s
+// token TTL would expire while the user reviews the preview.
+export const PDF_OMR_INPUT_TOKEN_TTL_MS = 30 * 60_000;
 export type ReadableScoreMetadata = {
   fileName: string;
   sizeBytes: number;
@@ -89,7 +92,11 @@ export async function selectPdfFile(
   assertReadableScore({ fileName, sizeBytes: info.size, isFile: info.isFile() });
   return {
     status: "selected",
-    fileToken: tokens.issue(path, { fileName, sizeBytes: info.size, ...fileIdentity(info) }),
+    fileToken: tokens.issue(
+      path,
+      { fileName, sizeBytes: info.size, ...fileIdentity(info) },
+      PDF_OMR_INPUT_TOKEN_TTL_MS,
+    ),
     fileName,
     sizeBytes: info.size,
     inputKind: extension === "pdf" ? "pdf" : "image",
@@ -169,6 +176,17 @@ export async function materializePdfOmrInput(
   directory: string,
 ): Promise<FileTokenEntry> {
   const entry = tokens.consume(token);
+  const bytes = await readTokenEntryBytes(entry);
+  await mkdir(directory, { recursive: true, mode: 0o700 });
+  const stablePath = join(directory, entry.fileName);
+  await writeFile(stablePath, bytes, { mode: 0o600, flag: "wx" });
+  return { ...entry, path: stablePath };
+}
+
+// Reads a token-issued external file through an open descriptor, revalidating type, size and
+// captured identity against the token metadata. Used by preview paths that peek the token and
+// by `materializePdfOmrInput` after consuming it.
+export async function readTokenEntryBytes(entry: FileTokenEntry): Promise<Uint8Array> {
   const source = await open(entry.path, "r");
   const bytes = await (async () => {
     try {
@@ -189,10 +207,7 @@ export async function materializePdfOmrInput(
     }
   })();
   if (bytes.byteLength !== entry.sizeBytes) throw new Error("FILE_CHANGED");
-  await mkdir(directory, { recursive: true, mode: 0o700 });
-  const stablePath = join(directory, entry.fileName);
-  await writeFile(stablePath, bytes, { mode: 0o600, flag: "wx" });
-  return { ...entry, path: stablePath };
+  return bytes;
 }
 
 function fileIdentity(info: { dev?: number; ino?: number; mtimeMs?: number }): Pick<FileTokenEntry, "identity"> {

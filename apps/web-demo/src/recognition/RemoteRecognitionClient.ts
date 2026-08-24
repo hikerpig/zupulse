@@ -9,6 +9,7 @@ import {
   type RecognitionJobSnapshot,
 } from "@zupulse/web-core";
 import type {
+  PdfOmrInputPreview,
   PdfOmrResult,
   RecognitionConnectionState,
   RecognitionHistoryPort,
@@ -32,6 +33,7 @@ type Dependencies = {
 
 export class RemoteRecognitionClient implements RecognitionHistoryPort {
   private readonly dependencies: Dependencies;
+  private readonly selectedInputs = new Map<string, File>();
 
   constructor(dependencies: Dependencies) {
     this.dependencies = dependencies;
@@ -44,15 +46,16 @@ export class RemoteRecognitionClient implements RecognitionHistoryPort {
   }
 
   create(): RecognitionJobPort {
-    return new RemoteRecognitionJob(this.dependencies);
+    return new RemoteRecognitionJob(this.dependencies, this.selectedInputs);
   }
 
   open(jobId: string): RecognitionJobPort {
-    return new RemoteRecognitionJob(this.dependencies, jobId);
+    return new RemoteRecognitionJob(this.dependencies, this.selectedInputs, jobId);
   }
 
   async delete(jobId: string): Promise<void> {
     await expectOk(this.dependencies.fetch, `${API}/jobs/${jobId}`, { method: "DELETE" });
+    this.selectedInputs.delete(jobId);
   }
 }
 
@@ -68,6 +71,7 @@ class RemoteRecognitionJob implements RecognitionJobPort {
 
   constructor(
     private readonly dependencies: Dependencies,
+    private readonly selectedInputs: Map<string, File>,
     jobId?: string,
   ) {
     this.jobId = jobId;
@@ -111,6 +115,7 @@ class RemoteRecognitionJob implements RecognitionJobPort {
         }),
       );
       this.jobId = snapshot.jobId;
+      this.selectedInputs.set(snapshot.jobId, this.selected);
       this.connect();
       return { jobId: snapshot.jobId, snapshot };
     } catch (error) {
@@ -169,6 +174,15 @@ class RemoteRecognitionJob implements RecognitionJobPort {
   async readFailedValidation(jobId: string) {
     const detail = recognitionJobDetailSchema.parse(await readJson(this.dependencies.fetch, `${API}/jobs/${jobId}`));
     return detail.result?.validation ?? null;
+  }
+
+  async readInputPreview(jobId: string, pageIndex: number): Promise<PdfOmrInputPreview | null> {
+    const file = this.selected ?? this.selectedInputs.get(jobId);
+    return file === undefined ? null : readSelectedFilePreview(file, pageIndex);
+  }
+
+  async readSelectedInputPreview(_fileToken: string, pageIndex: number): Promise<PdfOmrInputPreview | null> {
+    return this.selected === undefined ? null : readSelectedFilePreview(this.selected, pageIndex);
   }
 
   async exportResult(jobId: string): Promise<"saved" | "cancelled"> {
@@ -258,6 +272,21 @@ function detectInputKind(file: File): "pdf" | "image" {
   if (name.endsWith(".pdf")) return "pdf";
   if (/\.(png|jpe?g)$/.test(name)) return "image";
   throw new Error("UNSUPPORTED_INPUT");
+}
+
+async function readSelectedFilePreview(file: File, pageIndex: number): Promise<PdfOmrInputPreview | null> {
+  if (pageIndex !== 0) return null;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (detectInputKind(file) === "pdf") {
+    // The raw document is rendered by the browser's built-in PDF viewer, which owns paging.
+    return { pageIndex: 0, pageCount: 1, contentType: "application/pdf", bytes };
+  }
+  return {
+    pageIndex: 0,
+    pageCount: 1,
+    contentType: file.name.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg",
+    bytes,
+  };
 }
 
 async function readJson(fetcher: typeof globalThis.fetch, input: string, init?: RequestInit): Promise<unknown> {

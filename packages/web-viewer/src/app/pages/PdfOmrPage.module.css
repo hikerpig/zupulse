@@ -275,6 +275,17 @@
     border: 1px solid var(--border-default);
     background: #ffffff;
   }
+  .pdfPreviewDocument {
+    grid-template-rows: auto minmax(0, 1fr);
+    align-content: stretch;
+    overflow: hidden;
+  }
+  .pdfPreview iframe {
+    width: 100%;
+    height: 100%;
+    border: 1px solid var(--border-default);
+    background: #ffffff;
+  }
 
   .emptyEvidence h2,
   .engineEvidence h2 {

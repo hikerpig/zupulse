@@ -453,4 +453,14 @@ describe("bridge schemas", () => {
       }),
     ).toThrow();
   });
+
+  it("accepts an input preview request by job or by selected file token", () => {
+    expect(
+      createBridgeRequest("pdfOmr.readInputPreview", "preview-1", { jobId: "job-1", pageIndex: 0 }).payload,
+    ).toEqual({ jobId: "job-1", pageIndex: 0 });
+    expect(
+      createBridgeRequest("pdfOmr.readInputPreview", "preview-2", { fileToken: "token-1", pageIndex: 0 }).payload,
+    ).toEqual({ fileToken: "token-1", pageIndex: 0 });
+    expect(() => createBridgeRequest("pdfOmr.readInputPreview", "preview-3", { pageIndex: 0 })).toThrow();
+  });
 });

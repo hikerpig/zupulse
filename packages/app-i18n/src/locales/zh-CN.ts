@@ -247,7 +247,7 @@ export const zhCN = {
       harmony: "和声",
       readinessHint: "校验识别结果是否满足生成 MusicXML 与和声分析的结构要求。",
       pdfPlaceholder: "等待输入文件",
-      pdfHint: "选择一份 PDF 或图片后，这里会保留当前会话的输入摘要。",
+      pdfHint: "选择一份 PDF 或图片后，这里会直接预览输入内容。",
       pdfSelected: "已选择文件 · {{size}} · 原文件不会加入曲谱库。",
       pdfPreview: {
         loading: "正在渲染原始输入预览…",
@@ -256,6 +256,7 @@ export const zhCN = {
         previous: "上一页",
         next: "下一页",
         imageAlt: "{{fileName}} 第 {{page}} 页",
+        documentTitle: "{{fileName}} 文档预览",
       },
       engineEvidence: "中间证据",
       engineEvidenceHint: "这里只显示已提交的结构化进度，不解析 stdout、stderr 或绝对路径。",

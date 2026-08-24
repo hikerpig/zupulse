@@ -260,7 +260,7 @@ export const enUS = {
       readinessHint:
         "Checks whether the recognized draft meets the structural requirements for MusicXML generation and harmony analysis.",
       pdfPlaceholder: "Waiting for an input file",
-      pdfHint: "Choose a PDF or image to keep its input summary in this session.",
+      pdfHint: "Choose a PDF or image to preview the input right here.",
       pdfSelected: "Selected file · {{size}} · The original will not enter the Library.",
       pdfPreview: {
         loading: "Rendering the input preview…",
@@ -269,6 +269,7 @@ export const enUS = {
         previous: "Previous page",
         next: "Next page",
         imageAlt: "{{fileName}} page {{page}}",
+        documentTitle: "{{fileName}} document preview",
       },
       engineEvidence: "Intermediate evidence",
       engineEvidenceHint:

@@ -6,6 +6,9 @@ import { basename, join } from "node:path";
 import type { FileTokenEntry, FileTokenStore } from "./file-token-store";
 
 export const MAX_SCORE_BYTES = 64 * 1024 * 1024;
+// PDF OMR inputs bridge select → preview → start, which can take minutes; the default 60s
+// token TTL would expire while the user reviews the preview.
+export const PDF_OMR_INPUT_TOKEN_TTL_MS = 30 * 60_000;
 export type ReadableScoreMetadata = {
   fileName: string;
   sizeBytes: number;
@@ -89,7 +92,11 @@ export async function selectPdfFile(
   assertReadableScore({ fileName, sizeBytes: info.size, isFile: info.isFile() });
   return {
     status: "selected",
-    fileToken: tokens.issue(path, { fileName, sizeBytes: info.size, ...fileIdentity(info) }),
+    fileToken: tokens.issue(
+      path,
+      { fileName, sizeBytes: info.size, ...fileIdentity(info) },
+      PDF_OMR_INPUT_TOKEN_TTL_MS,
+    ),
     fileName,
     sizeBytes: info.size,
     inputKind: extension === "pdf" ? "pdf" : "image",

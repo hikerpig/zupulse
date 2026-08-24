@@ -254,6 +254,33 @@ describe("App", () => {
     await application.destroy();
   });
 
+  it("uses the server-backed PDF route as a history page", async () => {
+    window.history.replaceState(null, "", "#/pdf-omr");
+    const application = new ViewerApplication({ subscribe: () => () => undefined }, async () => viewerSession());
+    const history = {
+      list: vi.fn(async () => ({ items: [] })),
+      create: vi.fn(() => {
+        throw new Error("unused");
+      }),
+      open: vi.fn(() => {
+        throw new Error("unused");
+      }),
+      delete: vi.fn(async () => undefined),
+    };
+
+    render(
+      <App
+        application={application}
+        capabilities={{ harmonyAnalysis: false, pdfOmrWorkbench: true, pdfOmrHistory: true }}
+        pdfOmrHistory={history}
+      />,
+    );
+
+    expect(await screen.findByRole("heading", { name: "识谱历史" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "新建识谱任务" })).toBeTruthy();
+    await application.destroy();
+  });
+
   it("opens shared application settings from the Header and keeps Browser settings limited to General", async () => {
     window.history.replaceState(null, "", "#/settings");
     const application = new ViewerApplication(

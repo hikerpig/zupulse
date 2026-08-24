@@ -37,7 +37,8 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
 ## 用户入口
 
 - 只有 Desktop Main handshake 声明 `pdfOmrWorkbench` 时，主导航才显示 `PDF 识谱`，route 为 `#/pdf-omr`。
-- Browser、iPad 的 capability 默认不包含该入口，iPad Bridge manifest 也拒绝 PDF OMR 请求和事件。
+- Browser 只有在同源 Remote Recognition Service 握手成功时才包含该入口，并使用独立的共享历史 route；iPad
+  capability 默认不包含该入口，Bridge manifest 也拒绝 PDF OMR 请求和事件。
 - 页面要求用户通过 Main 原生 picker 选择一份 `.pdf`、`.png`、`.jpg` 或 `.jpeg`；Renderer 只收到一次性 token、
   文件名、大小和输入类型。
 - PNG/JPEG 输入只启用声明 `inputKinds` 包含 `image` 的 Audiveris；其他 engine 在开始任务前禁用。
@@ -138,22 +139,22 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 
 ## 平台能力矩阵
 
-| 能力                                  | Browser                 | Desktop                             | iPad                  |
-| ------------------------------------- | ----------------------- | ----------------------------------- | --------------------- |
-| PDF OMR capability / route            | 不支持，不加载 route UI | 支持，`pdfOmrWorkbench` gating      | 不支持，manifest 拒绝 |
-| Application Settings                  | 通用语言与主题          | 通用 + 四种本地识谱 provider        | 通用                  |
-| PDF picker / process runtime          | 无                      | Main 原生 picker + programmatic CLI | 无                    |
-| PNG/JPEG picker / recognition         | 无                      | 单页图片，Audiveris only            | 无                    |
-| score-export MIDI reviewed correction | 无                      | pitch-only，显式书面拼写与校验回写  | 无                    |
-| transient MXL preview / native export | 无                      | 支持（session-scoped）              | 无                    |
-| Library mutation                      | 不适用                  | 不允许                              | 不适用                |
+| 能力                                  | Browser                  | Desktop                             | iPad                  |
+| ------------------------------------- | ------------------------ | ----------------------------------- | --------------------- |
+| PDF OMR capability / route            | Remote 握手后支持        | 支持，`pdfOmrWorkbench` gating      | 不支持，manifest 拒绝 |
+| Application Settings                  | 通用语言与主题           | 通用 + 四种本地识谱 provider        | 通用                  |
+| PDF picker / process runtime          | Browser picker + Server  | Main 原生 picker + programmatic CLI | 无                    |
+| PNG/JPEG picker / recognition         | Server capability 决定   | 单页图片，Audiveris only            | 无                    |
+| score-export MIDI reviewed correction | 无                       | pitch-only，显式书面拼写与校验回写  | 无                    |
+| transient MXL preview / native export | transient preview + 下载 | 支持（session-scoped）              | 无                    |
+| Library mutation                      | 不适用                   | 不允许                              | 不适用                |
 
 ## 领域不变量
 
 1. Renderer never receives an absolute path; Main revalidates and consumes every one-time file token.
 2. PDF/image/MIDI is never registered as a `ScoreFormat` and never enters the Sheet Library import pipeline.
-3. Main owns the active process, cancellation and session run directory; Renderer owns only presentation state and a
-   narrow `PdfOmrWorkbenchPort`.
+3. Main owns the Desktop active process, cancellation and session run directory; React presentation depends on the
+   host-neutral `RecognitionJobPort`, while Desktop composes optional `PdfOmrMidiCorrectionPort`.
 4. Structured progress is engine/CLI supplied only; UI MUST NOT infer percentage or ETA from logs. A remaining-time
    estimate derived from engine-supplied counters and local elapsed time is allowed only when labeled as an estimate.
 5. Only a validated, round-trip-passing MXL may be previewed or exported.
@@ -177,7 +178,8 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 
 ## 明确非目标
 
-- Browser backend、iPad、云端上传、批量任务、benchmark、任务历史、模型下载或环境编辑 UI。
+- iPad、批量任务、benchmark、模型下载或 Browser 端 engine 环境编辑 UI。Browser Remote 能力的当前边界见
+  [`remote-pdf-omr-service.md`](remote-pdf-omr-service.md)。
 - 无人审核自动修复、missing-note insertion、note deletion、真人演奏 MIDI、自动加入 Library、修改 Managed Score
   Copy 或注册 PDF/image/MIDI `ScoreFormat`。
 - 多页 TIFF、HEIC、多张图片自动合并、云端 alignment 或远程模型处理。
@@ -185,7 +187,8 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 
 ## 验收契约
 
-- 给定 Desktop handshake 未声明 capability，主导航和 `#/pdf-omr` route 不得加载 PDF OMR UI。
+- 给定 Desktop handshake 未声明 capability，主导航和 `#/pdf-omr` route 不得加载 PDF OMR UI；给定 Browser Remote
+  handshake 失败，同样不得加载该 route。
 - 给定用户选择 PDF，Renderer payload 不得包含绝对路径，Library facts 不得变化。
 - 给定 pipeline progress，页面只能显示离散 stage 和 engine 提供的 monotonic counters，不从日志推断百分比/ETA；
   允许显示由 engine 计数与本地耗时推导、且标注为估算的剩余时间。

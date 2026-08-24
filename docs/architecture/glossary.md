@@ -69,8 +69,8 @@ App Shell 记录的一条隐私安全、结构化运行事实，用于离线排�
 
 ## Recognition Provider
 
-为 PDF 识谱提供运行能力及可验证配置状态的宿主能力。当前只有 Desktop 的 Local Recognition Engine；未来
-Web Remote Recognition Service 必须通过独立能力与安全契约接入。
+为 PDF 识谱提供运行能力及可验证配置状态的宿主能力。当前包括 Desktop 的 Local Recognition Engine，以及通过
+同源 HTTP/SSE 接入 Browser 的 Remote Recognition Service。
 
 ## Recognition Provider Configuration
 
@@ -84,8 +84,8 @@ Web Remote Recognition Service 必须通过独立能力与安全契约接入。
 
 ## Remote Recognition Service
 
-规划中的、通过网络提供 PDF 识谱的 Recognition Provider。它不是当前 Browser 能力，认证、隐私、上传和
-服务端处理边界必须在接入前另行定义。
+通过同源网络为 Browser 提供 PDF 识谱的 Recognition Provider。当前形态是受信任、自托管、单租户实例：反向代理
+负责 TLS 与访问控制，实例内用户共享 SQLite 历史，private S3-compatible store 保存 30 天对象，单 worker 排队运行。
 
 ## iPad Practice Player
 

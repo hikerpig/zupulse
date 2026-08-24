@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { createHashRouter, Outlet, useNavigate } from "react-router";
+import { createHashRouter, Outlet, useNavigate, useParams } from "react-router";
 import type { LocaleHost } from "../i18n/locale-controller";
 import type { ExternalNavigationHost } from "../host";
 import { AppHeader } from "./AppHeader";
@@ -8,7 +8,11 @@ import type { ViewerProductCapabilities } from "./App";
 import type { ViewerApplication } from "./ViewerApplication";
 import { HomePage } from "./pages/HomePage";
 import styles from "./App.module.css";
-import type { PdfOmrWorkbenchPort } from "../features/pdf-omr/pdf-omr-port";
+import type {
+  PdfOmrMidiCorrectionPort,
+  RecognitionHistoryPort,
+  RecognitionJobPort,
+} from "../features/pdf-omr/pdf-omr-port";
 import type { ViewerSessionPort } from "../viewer-session/viewer-session-types";
 import type { RecognitionSettingsPort } from "../features/application-settings/recognition-settings-port";
 
@@ -20,6 +24,8 @@ export function createAppRouter({
   capabilities,
   externalNavigationHost,
   pdfOmr,
+  pdfOmrHistory,
+  pdfOmrMidi,
   openPdfOmrPreview,
   recognitionSettings,
 }: {
@@ -27,7 +33,9 @@ export function createAppRouter({
   localeHost: LocaleHost;
   capabilities: ViewerProductCapabilities;
   externalNavigationHost?: ExternalNavigationHost;
-  pdfOmr?: PdfOmrWorkbenchPort | undefined;
+  pdfOmr?: RecognitionJobPort | undefined;
+  pdfOmrHistory?: RecognitionHistoryPort | undefined;
+  pdfOmrMidi?: PdfOmrMidiCorrectionPort | undefined;
   recognitionSettings?: RecognitionSettingsPort | undefined;
   openPdfOmrPreview?:
     | ((
@@ -64,17 +72,49 @@ export function createAppRouter({
             };
           },
         },
-        ...(capabilities.pdfOmrWorkbench
+        ...(capabilities.pdfOmrHistory && pdfOmrHistory
           ? [
               {
                 path: "/pdf-omr",
                 lazy: async () => {
-                  const { PdfOmrPage } = await import("./pages/PdfOmrPage");
-                  return { Component: () => <PdfOmrPage port={pdfOmr} openPreviewSession={openPdfOmrPreview} /> };
+                  const { PdfOmrHistoryPage } = await import("./pages/PdfOmrHistoryPage");
+                  return { Component: () => <PdfOmrHistoryPage history={pdfOmrHistory} /> };
                 },
               },
+              {
+                path: "/pdf-omr/new",
+                element: (
+                  <RecognitionJobRoute
+                    createPort={() => pdfOmrHistory.create()}
+                    {...(openPdfOmrPreview === undefined ? {} : { openPdfOmrPreview })}
+                  />
+                ),
+              },
+              {
+                path: "/pdf-omr/:jobId",
+                element: (
+                  <RecognitionJobRoute
+                    createPort={(jobId) => pdfOmrHistory.open(jobId)}
+                    {...(openPdfOmrPreview === undefined ? {} : { openPdfOmrPreview })}
+                  />
+                ),
+              },
             ]
-          : []),
+          : capabilities.pdfOmrWorkbench
+            ? [
+                {
+                  path: "/pdf-omr",
+                  lazy: async () => {
+                    const { PdfOmrPage } = await import("./pages/PdfOmrPage");
+                    return {
+                      Component: () => (
+                        <PdfOmrPage port={pdfOmr} midiPort={pdfOmrMidi} openPreviewSession={openPdfOmrPreview} />
+                      ),
+                    };
+                  },
+                },
+              ]
+            : []),
         {
           path: "/library",
           hydrateFallbackElement: <main aria-busy="true" />,
@@ -125,6 +165,37 @@ export function createAppRouter({
       ],
     },
   ]);
+}
+
+function RecognitionJobRoute({
+  createPort,
+  openPdfOmrPreview,
+}: {
+  createPort(jobId: string): RecognitionJobPort;
+  openPdfOmrPreview?: (
+    file: import("../host").ViewerFile,
+    domBindings?: import("../host").ViewerDomBindings,
+  ) => Promise<ViewerSessionPort>;
+}) {
+  const { jobId = "" } = useParams();
+  const navigate = useNavigate();
+  const port = useMemo(() => createPort(jobId), [createPort, jobId]);
+  const [Page, setPage] = useState<typeof import("./pages/PdfOmrPage").PdfOmrPage>();
+  useEffect(() => {
+    void import("./pages/PdfOmrPage").then((module) => setPage(() => module.PdfOmrPage));
+  }, []);
+  return Page ? (
+    <Page
+      port={port}
+      remote
+      {...(jobId === ""
+        ? { onJobStarted: (startedJobId: string) => void navigate(`/pdf-omr/${startedJobId}`, { replace: true }) }
+        : {})}
+      {...(openPdfOmrPreview === undefined ? {} : { openPreviewSession: openPdfOmrPreview })}
+    />
+  ) : (
+    <main aria-busy="true" />
+  );
 }
 
 function ApplicationNavigation({

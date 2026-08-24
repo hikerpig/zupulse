@@ -13,6 +13,8 @@
     { "path": "./apps/ipad-shell" },
     { "path": "./apps/desktop-shell" },
     { "path": "./apps/desktop-shell/tsconfig.test.json" },
+    { "path": "./apps/recognition-server" },
+    { "path": "./apps/recognition-server/tsconfig.test.json" },
     { "path": "./tools/harmony-cli" },
     { "path": "./tools/harmony-cli/tsconfig.test.json" },
     { "path": "./tools/pdf-omr-cli" },

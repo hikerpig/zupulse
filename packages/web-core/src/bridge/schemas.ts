@@ -8,6 +8,12 @@ import {
   libraryScoreIdentitySchema,
 } from "../library/schemas";
 import { harmonyAnalysisDocumentSchema } from "../harmony/schemas";
+import {
+  recognitionJobSnapshotSchema,
+  recognitionProgressEventSchema,
+  type RecognitionJobSnapshot,
+  type RecognitionProgressEvent,
+} from "../recognition/schemas";
 
 export const BRIDGE_SCHEMA_VERSION = "3.0.0" as const;
 const idSchema = z.string().min(1).max(128);
@@ -282,93 +288,6 @@ export const hostDiagnosticOperationSchema = z.enum([
   "viewer.operation",
 ]);
 
-const pdfOmrStageSchema = z.enum(["inspect", "recognize", "validate", "export"]);
-const pdfOmrProgressSchema = z
-  .object({
-    schemaVersion: z.literal("1.0.0"),
-    sequence: z.number().int().nonnegative(),
-    kind: z.enum(["stage", "engine-progress", "terminal"]),
-    stage: pdfOmrStageSchema.optional(),
-    status: z.enum(["started", "completed", "succeeded", "cancelled", "failed"]).optional(),
-    unit: z.enum(["page", "system"]).optional(),
-    completed: z.number().int().nonnegative().optional(),
-    total: z.number().int().positive().optional(),
-    errorCode: z
-      .string()
-      .regex(/^[A-Z][A-Z0-9_]{0,63}$/)
-      .optional(),
-  })
-  .strict()
-  .superRefine((event, context) => {
-    if (
-      event.kind === "stage" &&
-      (event.stage === undefined || !["started", "completed"].includes(event.status ?? ""))
-    ) {
-      context.addIssue({ code: "custom", message: "stage event requires stage and stage status" });
-    }
-    if (
-      event.kind === "engine-progress" &&
-      (event.stage !== "recognize" ||
-        event.unit === undefined ||
-        event.completed === undefined ||
-        event.total === undefined)
-    ) {
-      context.addIssue({ code: "custom", message: "engine progress requires recognize counters" });
-    }
-    if (event.kind === "terminal" && !["succeeded", "cancelled", "failed"].includes(event.status ?? "")) {
-      context.addIssue({ code: "custom", message: "terminal event requires terminal status" });
-    }
-    if (event.completed !== undefined && event.total !== undefined && event.completed > event.total) {
-      context.addIssue({ code: "custom", message: "completed cannot exceed total" });
-    }
-  });
-const pdfOmrJobSnapshotSchema = z
-  .object({
-    jobId: idSchema,
-    status: z.enum(["ready", "running", "cancelling", "cancelled", "failed", "succeeded"]),
-    stage: pdfOmrStageSchema.optional(),
-    exported: z.boolean().optional(),
-    input: z
-      .object({
-        fileName: z.string().min(1),
-        sizeBytes: z.number().int().nonnegative(),
-        inputKind: z.enum(["pdf", "image"]),
-        pageCount: z.number().int().positive().optional(),
-      })
-      .strict()
-      .optional(),
-    engine: z
-      .object({
-        id: idSchema,
-        version: z.string().min(1),
-        modelSha256: z
-          .string()
-          .regex(/^[a-f0-9]{64}$/)
-          .optional(),
-      })
-      .strict()
-      .optional(),
-    progress: z
-      .object({
-        unit: z.enum(["page", "system"]),
-        completed: z.number().int().nonnegative(),
-        total: z.number().int().positive(),
-      })
-      .strict()
-      .optional(),
-    error: z
-      .object({
-        code: z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/),
-        recoverable: z.boolean(),
-        reason: z
-          .string()
-          .regex(/^[a-z][a-z0-9-]{0,63}$/)
-          .optional(),
-      })
-      .strict()
-      .optional(),
-  })
-  .strict();
 const pdfOmrReadinessSchema = z.enum(["blocked", "ready-with-warnings", "ready"]);
 const pdfOmrWrittenPitchSchema = z
   .object({
@@ -586,7 +505,7 @@ export const bridgeEventSchema = z.discriminatedUnion("type", [
       })
       .strict(),
   ),
-  envelope("pdfOmr.progress", z.object({ jobId: idSchema, event: pdfOmrProgressSchema }).strict()),
+  envelope("pdfOmr.progress", z.object({ jobId: idSchema, event: recognitionProgressEventSchema }).strict()),
 ]);
 
 export const IPAD_BRIDGE_REQUEST_TYPES = [
@@ -695,11 +614,11 @@ export const bridgeResponseSchemas = {
       })
       .strict(),
   ]),
-  "pdfOmr.start": z.object({ jobId: idSchema, snapshot: pdfOmrJobSnapshotSchema }).strict(),
-  "pdfOmr.retry": z.object({ jobId: idSchema, snapshot: pdfOmrJobSnapshotSchema }).strict(),
+  "pdfOmr.start": z.object({ jobId: idSchema, snapshot: recognitionJobSnapshotSchema }).strict(),
+  "pdfOmr.retry": z.object({ jobId: idSchema, snapshot: recognitionJobSnapshotSchema }).strict(),
   "pdfOmr.cancel": z.object({}).strict(),
   "pdfOmr.markExported": z.object({}).strict(),
-  "pdfOmr.getSnapshot": z.object({ snapshot: pdfOmrJobSnapshotSchema.nullable() }).strict(),
+  "pdfOmr.getSnapshot": z.object({ snapshot: recognitionJobSnapshotSchema.nullable() }).strict(),
   "pdfOmr.readResult": pdfOmrResultSchema,
   "pdfOmr.readInputPreview": z.discriminatedUnion("status", [
     z.object({ status: z.literal("unavailable") }).strict(),
@@ -753,8 +672,8 @@ export type BridgeRequest = z.infer<typeof bridgeRequestSchema>;
 export type BridgeEvent = z.infer<typeof bridgeEventSchema>;
 export type Capabilities = z.infer<typeof capabilitiesSchema>;
 export type BridgeError = z.infer<typeof bridgeErrorSchema>;
-export type PdfOmrProgressEvent = z.infer<typeof pdfOmrProgressSchema>;
-export type PdfOmrJobSnapshot = z.infer<typeof pdfOmrJobSnapshotSchema>;
+export type PdfOmrProgressEvent = RecognitionProgressEvent;
+export type PdfOmrJobSnapshot = RecognitionJobSnapshot;
 export type RecognitionProviderId = z.infer<typeof recognitionProviderIdSchema>;
 export type RecognitionProviderIssueCode = z.infer<typeof recognitionProviderIssueCodeSchema>;
 export type RecognitionProviderSummary = z.infer<typeof recognitionProviderSummarySchema>;

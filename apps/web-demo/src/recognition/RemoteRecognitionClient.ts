@@ -1,0 +1,211 @@
+import {
+  recognitionApiErrorSchema,
+  recognitionHistoryPageSchema,
+  recognitionJobDetailSchema,
+  recognitionJobSnapshotSchema,
+  recognitionSseEventSchema,
+  type RecognitionEngineOption,
+  type RecognitionJobSnapshot,
+} from "@zupulse/web-core";
+import type { PdfOmrResult, RecognitionHistoryPort, RecognitionJobPort } from "@zupulse/web-viewer";
+
+const API = "/api/recognition/v1";
+
+type EventSourceLike = {
+  addEventListener(type: string, listener: EventListener): void;
+  close(): void;
+};
+
+type Dependencies = {
+  engines: readonly RecognitionEngineOption[];
+  fetch: typeof globalThis.fetch;
+  selectFile(): Promise<File | null>;
+  createEventSource(url: string): EventSourceLike;
+  save(fileName: string, bytes: Uint8Array): void;
+};
+
+export class RemoteRecognitionClient implements RecognitionHistoryPort {
+  private readonly dependencies: Dependencies;
+
+  constructor(dependencies: Dependencies) {
+    this.dependencies = dependencies;
+  }
+
+  async list(input: { cursor?: string; limit: number }) {
+    const query = new URLSearchParams({ limit: String(input.limit) });
+    if (input.cursor !== undefined) query.set("cursor", input.cursor);
+    return recognitionHistoryPageSchema.parse(await readJson(this.dependencies.fetch, `${API}/jobs?${query}`));
+  }
+
+  create(): RecognitionJobPort {
+    return new RemoteRecognitionJob(this.dependencies);
+  }
+
+  open(jobId: string): RecognitionJobPort {
+    return new RemoteRecognitionJob(this.dependencies, jobId);
+  }
+
+  async delete(jobId: string): Promise<void> {
+    await expectOk(this.dependencies.fetch, `${API}/jobs/${jobId}`, { method: "DELETE" });
+  }
+}
+
+class RemoteRecognitionJob implements RecognitionJobPort {
+  readonly engines: RecognitionJobPort["engines"];
+  private selected?: File;
+  private jobId: string | undefined;
+  private source: EventSourceLike | undefined;
+  private readonly listeners = new Set<(snapshot: RecognitionJobSnapshot) => void>();
+
+  constructor(
+    private readonly dependencies: Dependencies,
+    jobId?: string,
+  ) {
+    this.jobId = jobId;
+    this.engines = dependencies.engines.map((engine) => ({
+      id: engine.id,
+      version: engine.version,
+      available: engine.available,
+      inputKinds: engine.inputKinds,
+      label: engine.id,
+      ...(engine.reason === undefined ? {} : { reason: engine.reason }),
+    }));
+  }
+
+  async select() {
+    const file = await this.dependencies.selectFile();
+    if (file === null) return { status: "cancelled" as const };
+    const inputKind = detectInputKind(file);
+    this.selected = file;
+    return {
+      status: "selected" as const,
+      fileToken: "selected-file",
+      fileName: file.name,
+      sizeBytes: file.size,
+      inputKind,
+    };
+  }
+
+  async start(fileToken: string, engineId: string) {
+    if (fileToken !== "selected-file" || this.selected === undefined) throw new Error("INVALID_REQUEST");
+    const body = new FormData();
+    body.append("engineId", engineId);
+    body.append("input", this.selected);
+    const snapshot = recognitionJobSnapshotSchema.parse(
+      await readJson(this.dependencies.fetch, `${API}/jobs`, { method: "POST", body }),
+    );
+    this.jobId = snapshot.jobId;
+    this.connect();
+    return { jobId: snapshot.jobId, snapshot };
+  }
+
+  async retry(jobId: string, engineId: string) {
+    const snapshot = recognitionJobSnapshotSchema.parse(
+      await readJson(this.dependencies.fetch, `${API}/jobs/${jobId}/retries`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ engineId }),
+      }),
+    );
+    this.jobId = snapshot.jobId;
+    this.connect();
+    return { jobId: snapshot.jobId, snapshot };
+  }
+
+  async cancel(jobId: string): Promise<void> {
+    await expectOk(this.dependencies.fetch, `${API}/jobs/${jobId}/cancel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+  }
+
+  async getSnapshot(): Promise<RecognitionJobSnapshot | null> {
+    if (this.jobId === undefined) return null;
+    const detail = recognitionJobDetailSchema.parse(
+      await readJson(this.dependencies.fetch, `${API}/jobs/${this.jobId}`),
+    );
+    this.connect();
+    return detail.snapshot;
+  }
+
+  async readResult(jobId: string): Promise<PdfOmrResult | null> {
+    const detail = recognitionJobDetailSchema.parse(await readJson(this.dependencies.fetch, `${API}/jobs/${jobId}`));
+    if (detail.result === undefined) return null;
+    const response = await expectOk(this.dependencies.fetch, `${API}/jobs/${jobId}/result`);
+    return { ...detail.result, bytes: new Uint8Array(await response.arrayBuffer()) };
+  }
+
+  async readFailedValidation(jobId: string) {
+    const detail = recognitionJobDetailSchema.parse(await readJson(this.dependencies.fetch, `${API}/jobs/${jobId}`));
+    return detail.result?.validation ?? null;
+  }
+
+  async exportResult(jobId: string): Promise<"saved" | "cancelled"> {
+    const result = await this.readResult(jobId);
+    if (result === null) return "cancelled";
+    this.dependencies.save(result.fileName, result.bytes);
+    return "saved";
+  }
+
+  subscribe(listener: (snapshot: RecognitionJobSnapshot) => void): () => void {
+    this.listeners.add(listener);
+    this.connect();
+    return () => {
+      this.listeners.delete(listener);
+      if (this.listeners.size === 0) {
+        this.source?.close();
+        this.source = undefined;
+      }
+    };
+  }
+
+  private connect(): void {
+    if (this.jobId === undefined || this.source !== undefined || this.listeners.size === 0) return;
+    this.source = this.dependencies.createEventSource(`${API}/jobs/${this.jobId}/events`);
+    this.source.addEventListener("snapshot", ((message: MessageEvent<string>) => {
+      const event = recognitionSseEventSchema.parse(JSON.parse(message.data));
+      if (event.kind === "snapshot") this.listeners.forEach((listener) => listener(event.snapshot));
+    }) as EventListener);
+  }
+}
+
+export function selectRecognitionFile(ownerDocument: Document): Promise<File | null> {
+  return new Promise((resolve) => {
+    const input = ownerDocument.createElement("input");
+    input.type = "file";
+    input.accept = ".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg";
+    input.addEventListener("change", () => resolve(input.files?.[0] ?? null), { once: true });
+    input.click();
+  });
+}
+
+export function saveRecognitionResult(ownerDocument: Document, fileName: string, bytes: Uint8Array): void {
+  const blobBytes = new Uint8Array(bytes.byteLength);
+  blobBytes.set(bytes);
+  const url = URL.createObjectURL(new Blob([blobBytes], { type: "application/vnd.recordare.musicxml" }));
+  const anchor = ownerDocument.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function detectInputKind(file: File): "pdf" | "image" {
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".pdf")) return "pdf";
+  if (/\.(png|jpe?g)$/.test(name)) return "image";
+  throw new Error("UNSUPPORTED_INPUT");
+}
+
+async function readJson(fetcher: typeof globalThis.fetch, input: string, init?: RequestInit): Promise<unknown> {
+  const response = await expectOk(fetcher, input, init);
+  return response.json();
+}
+
+async function expectOk(fetcher: typeof globalThis.fetch, input: string, init?: RequestInit): Promise<Response> {
+  const response = await fetcher(input, init);
+  if (response.ok) return response;
+  const parsed = recognitionApiErrorSchema.safeParse(await response.json().catch(() => null));
+  throw new Error(parsed.success ? parsed.data.error.code : "INVALID_REQUEST");
+}

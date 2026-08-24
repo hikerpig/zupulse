@@ -10,26 +10,33 @@ import type { ViewerSessionPort } from "../../viewer-session/viewer-session-type
 import type {
   PdfOmrInputPreview,
   PdfOmrMidiAnalysis,
+  PdfOmrMidiCorrectionPort,
   PdfOmrValidationView,
-  PdfOmrWorkbenchPort,
   PdfOmrWrittenPitch,
+  RecognitionJobPort,
 } from "../../features/pdf-omr/pdf-omr-port";
 import styles from "./PdfOmrPage.module.css";
 
 type EvidenceTab = "pdf" | "engine" | "score";
 type CommonT = TFunction<"common">;
-type PdfOmrProgress = Parameters<Parameters<PdfOmrWorkbenchPort["subscribe"]>[0]>[1];
 
 const STAGES = ["inspect", "recognize", "validate", "export"] as const;
 
 export function PdfOmrPage({
   port,
+  midiPort,
+  remote = false,
+  onJobStarted,
   openPreviewSession,
 }: {
-  port?: PdfOmrWorkbenchPort | undefined;
+  port?: RecognitionJobPort | undefined;
+  midiPort?: PdfOmrMidiCorrectionPort | undefined;
+  remote?: boolean;
+  onJobStarted?: (jobId: string) => void;
   openPreviewSession?: ((file: ViewerFile, domBindings?: ViewerDomBindings) => Promise<ViewerSessionPort>) | undefined;
 }) {
   const { t } = useTranslation("common");
+  const effectiveMidiPort = midiPort ?? asMidiPort(port);
   const [file, setFile] = useState<{
     token: string;
     fileName: string;
@@ -37,8 +44,7 @@ export function PdfOmrPage({
     inputKind: "pdf" | "image";
   }>();
   const [snapshot, setSnapshot] = useState<PdfOmrJobSnapshot>();
-  const [lastProgress, setLastProgress] = useState<PdfOmrProgress>();
-  const [result, setResult] = useState<Awaited<ReturnType<PdfOmrWorkbenchPort["readResult"]>>>(null);
+  const [result, setResult] = useState<Awaited<ReturnType<RecognitionJobPort["readResult"]>>>(null);
   const [failedValidation, setFailedValidation] = useState<PdfOmrValidationView | null>(null);
   const [selectedEngine, setSelectedEngine] = useState("");
   const [tab, setTab] = useState<EvidenceTab>("pdf");
@@ -85,10 +91,10 @@ export function PdfOmrPage({
     if (!port) return;
     let active = true;
     void syncSnapshot();
-    const detach = port.subscribe((jobId, event) => {
+    const detach = port.subscribe((next) => {
       if (!active) return;
-      setLastProgress(event);
-      void syncSnapshot(jobId);
+      setSnapshot(next);
+      if (next.status === "succeeded" || next.status === "failed") void syncSnapshot(next.jobId);
     });
     return () => {
       active = false;
@@ -96,7 +102,8 @@ export function PdfOmrPage({
     };
   }, [port, syncSnapshot]);
 
-  const activeJob = snapshot?.status === "running" || snapshot?.status === "cancelling";
+  const activeJob =
+    snapshot?.status === "queued" || snapshot?.status === "running" || snapshot?.status === "cancelling";
   const activeStage = activeJob ? snapshot?.stage : undefined;
 
   useEffect(() => {
@@ -167,6 +174,7 @@ export function PdfOmrPage({
       setFailedValidation(null);
       setExported(false);
       setTab("engine");
+      onJobStarted?.(started.jobId);
     } catch {
       setNotice(t("pdfOmr.startFailed"));
     } finally {
@@ -175,7 +183,7 @@ export function PdfOmrPage({
   };
 
   const cancel = async () => {
-    if (!port || !snapshot || !["running", "cancelling"].includes(snapshot.status)) return;
+    if (!port || !snapshot || !["queued", "running", "cancelling"].includes(snapshot.status)) return;
     setBusy("cancel");
     try {
       await port.cancel(snapshot.jobId);
@@ -220,13 +228,13 @@ export function PdfOmrPage({
   };
 
   const analyzeMidi = async () => {
-    if (!port || snapshot?.status !== "succeeded") return;
+    if (!effectiveMidiPort || snapshot?.status !== "succeeded") return;
     setBusy("midi");
     setNotice(undefined);
     try {
-      const selected = await port.selectMidi();
+      const selected = await effectiveMidiPort.selectMidi();
       if (selected.status === "cancelled") return;
-      const analysis = await port.analyzeMidi(snapshot.jobId, selected.fileToken);
+      const analysis = await effectiveMidiPort.analyzeMidi(snapshot.jobId, selected.fileToken);
       setMidiAnalysis(analysis);
       setMidiSelections({});
       setMidiApplied(false);
@@ -244,11 +252,11 @@ export function PdfOmrPage({
     }) ?? [];
 
   const applyMidiCorrections = async () => {
-    if (!port || snapshot?.status !== "succeeded" || selectedMidiDecisions.length === 0) return;
+    if (!port || !effectiveMidiPort || snapshot?.status !== "succeeded" || selectedMidiDecisions.length === 0) return;
     setBusy("apply-midi");
     setNotice(undefined);
     try {
-      await port.applyMidiCorrections(snapshot.jobId, selectedMidiDecisions);
+      await effectiveMidiPort.applyMidiCorrections(snapshot.jobId, selectedMidiDecisions);
       const corrected = await port.readResult(snapshot.jobId);
       if (corrected === null) throw new Error("corrected-result-unavailable");
       setResult(corrected);
@@ -265,7 +273,9 @@ export function PdfOmrPage({
   const jobId = snapshot?.jobId;
   const loadInputPreview = useCallback(
     (pageIndex: number) =>
-      port !== undefined && jobId !== undefined ? port.readInputPreview(jobId, pageIndex) : Promise.resolve(null),
+      port?.readInputPreview !== undefined && jobId !== undefined
+        ? port.readInputPreview(jobId, pageIndex)
+        : Promise.resolve(null),
     [port, jobId],
   );
 
@@ -273,7 +283,8 @@ export function PdfOmrPage({
     snapshot?.status === undefined && input !== undefined ? "ready" : snapshotStatusTone(snapshot?.status);
   const hasJob = snapshot !== undefined;
   const canStart = file !== undefined && selectedEngine !== "" && !hasJob;
-  const canRetry = snapshot?.status === "failed" || snapshot?.status === "cancelled";
+  const canRetry =
+    snapshot?.status === "failed" || snapshot?.status === "cancelled" || snapshot?.status === "interrupted";
   const validationView = result?.validation ?? failedValidation;
   const statusDetail = statusDetailText(t, snapshot, exported, input !== undefined);
 
@@ -281,9 +292,9 @@ export function PdfOmrPage({
     <main className={styles.shell} aria-labelledby="pdf-omr-title">
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>{t("pdfOmr.badge")}</p>
+          <p className={styles.eyebrow}>{t(remote ? "pdfOmr.remoteBadge" : "pdfOmr.badge")}</p>
           <h1 id="pdf-omr-title">{t("pdfOmr.title")}</h1>
-          <p>{t("pdfOmr.description")}</p>
+          <p>{t(remote ? "pdfOmr.remoteDescription" : "pdfOmr.description")}</p>
         </div>
         <div className={styles.statusBlock}>
           <Status tone={statusTone}>{statusLabel(t, snapshot?.status, exported, input !== undefined)}</Status>
@@ -389,7 +400,6 @@ export function PdfOmrPage({
             ) : tab === "engine" ? (
               <EngineEvidence
                 snapshot={snapshot}
-                lastProgress={lastProgress}
                 stageStartedAt={snapshot?.stage === undefined ? undefined : stageStartedAtRef.current[snapshot.stage]}
                 now={now}
                 t={t}
@@ -484,7 +494,9 @@ export function PdfOmrPage({
                     {t("pdfOmr.selectNext")}
                   </Button>
                 </>
-              ) : snapshot?.status === "running" || snapshot?.status === "cancelling" ? (
+              ) : snapshot?.status === "queued" ||
+                snapshot?.status === "running" ||
+                snapshot?.status === "cancelling" ? (
                 <Button
                   tone="secondary"
                   onClick={() => void cancel()}
@@ -800,27 +812,16 @@ function PdfEvidence({
 
 function EngineEvidence({
   snapshot,
-  lastProgress,
   stageStartedAt,
   now,
   t,
 }: {
   snapshot?: PdfOmrJobSnapshot | undefined;
-  lastProgress?: PdfOmrProgress | undefined;
   stageStartedAt: number | undefined;
   now: number;
   t: CommonT;
 }) {
-  const progress =
-    snapshot?.status === "running" || snapshot?.status === "cancelling"
-      ? (snapshot.progress ??
-        (lastProgress?.kind === "engine-progress" &&
-        lastProgress.completed !== undefined &&
-        lastProgress.total !== undefined &&
-        lastProgress.unit !== undefined
-          ? { completed: lastProgress.completed, total: lastProgress.total, unit: lastProgress.unit }
-          : undefined))
-      : undefined;
+  const progress = snapshot?.status === "running" || snapshot?.status === "cancelling" ? snapshot.progress : undefined;
   const elapsedMs = stageStartedAt === undefined ? undefined : Math.max(0, now - stageStartedAt);
   const etaMs =
     progress !== undefined && elapsedMs !== undefined && progress.completed > 0 && progress.completed < progress.total
@@ -873,7 +874,7 @@ function PdfOmrScorePreview({
   result,
   openPreviewSession,
 }: {
-  result: NonNullable<Awaited<ReturnType<PdfOmrWorkbenchPort["readResult"]>>>;
+  result: NonNullable<Awaited<ReturnType<RecognitionJobPort["readResult"]>>>;
   openPreviewSession?: ((file: ViewerFile, domBindings?: ViewerDomBindings) => Promise<ViewerSessionPort>) | undefined;
 }) {
   const { t } = useTranslation("common");
@@ -1076,9 +1077,18 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MiB`;
 }
 
+function asMidiPort(port: RecognitionJobPort | undefined): PdfOmrMidiCorrectionPort | undefined {
+  const candidate = port as Partial<PdfOmrMidiCorrectionPort> | undefined;
+  return candidate?.selectMidi !== undefined &&
+    candidate.analyzeMidi !== undefined &&
+    candidate.applyMidiCorrections !== undefined
+    ? (candidate as PdfOmrMidiCorrectionPort)
+    : undefined;
+}
+
 function engineAvailabilityText(
   t: CommonT,
-  engine: PdfOmrWorkbenchPort["engines"][number],
+  engine: RecognitionJobPort["engines"][number],
   compatible: boolean,
 ): string {
   if (engine.available && !compatible) return t("pdfOmr.engineAvailability.unsupportedInput");
@@ -1113,7 +1123,7 @@ function engineAvailabilityText(
 }
 
 function engineAvailabilityTier(
-  engine: PdfOmrWorkbenchPort["engines"][number],
+  engine: RecognitionJobPort["engines"][number],
 ): "ready" | "unconfigured" | "mismatch" | "error" {
   if (engine.available) return "ready";
   switch (engine.reason) {

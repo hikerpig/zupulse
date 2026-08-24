@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "rspack serve --mode development",
     "build": "rspack build && node ./scripts/verify-assets.mjs",
-    "test:e2e": "playwright test -c playwright.config.ts",
+    "test:e2e": "playwright test -c playwright.config.ts && playwright test -c e2e/recognition.config.ts",
+    "test:recognition:e2e": "playwright test -c e2e/recognition.config.ts",
     "test:telemetry:e2e": "playwright test -c e2e/telemetry.config.ts"
   },
   "dependencies": {

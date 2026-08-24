@@ -1,0 +1,114 @@
+@layer components {
+  .shell {
+    display: grid;
+    align-content: start;
+    gap: 24px;
+    width: 100%;
+    max-width: 1024px;
+    min-height: 100%;
+    padding: 32px 20px;
+    margin: 0 auto;
+  }
+
+  .header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .header h1 {
+    margin: 3px 0 5px;
+    font-size: clamp(26px, 3vw, 38px);
+    letter-spacing: -0.035em;
+  }
+
+  .header p {
+    max-width: 680px;
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+
+  .eyebrow {
+    color: var(--accent-primary) !important;
+    font-size: 11px !important;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .createLink {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1px solid var(--accent-primary);
+    border-radius: var(--radius-sm);
+    color: var(--text-on-accent);
+    background: var(--accent-primary);
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .createLink:hover {
+    border-color: var(--accent-primary-hover);
+    background: var(--accent-primary-hover);
+  }
+
+  .list {
+    display: grid;
+    gap: 12px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .job {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--bg-panel);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .jobCopy {
+    min-width: 0;
+  }
+
+  .jobLink {
+    color: var(--text-primary);
+    font-weight: 700;
+  }
+
+  .meta,
+  .expires {
+    margin: 5px 0 0;
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+
+  .expires {
+    color: var(--text-tertiary);
+    font-size: 11px;
+  }
+
+  @media (max-width: 619px) {
+    .shell {
+      padding: 20px 14px;
+    }
+
+    .header,
+    .job {
+      align-items: stretch;
+      flex-direction: column;
+    }
+  }
+}

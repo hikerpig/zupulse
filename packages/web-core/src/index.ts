@@ -64,3 +64,4 @@ export * from "./library/types";
 export * from "./library/schemas";
 export * from "./library/ports";
 export * from "./library/importLibraryScores";
+export * from "./recognition/schemas";

@@ -1,4 +1,4 @@
-import type { PdfOmrJobSnapshot, PdfOmrProgressEvent } from "@zupulse/web-core";
+import type { PdfOmrJobSnapshot, RecognitionHistoryPage } from "@zupulse/web-core";
 
 export type PdfOmrEngineOption = {
   id: string;
@@ -56,7 +56,7 @@ export type PdfOmrInputPreview = {
   bytes: Uint8Array;
 };
 
-export type PdfOmrWorkbenchPort = {
+export type RecognitionJobPort = {
   engines: readonly PdfOmrEngineOption[];
   select(): Promise<
     | { status: "cancelled" }
@@ -74,7 +74,19 @@ export type PdfOmrWorkbenchPort = {
   getSnapshot(): Promise<PdfOmrJobSnapshot | null>;
   readResult(jobId: string): Promise<PdfOmrResult | null>;
   readFailedValidation(jobId: string): Promise<PdfOmrValidationView | null>;
-  readInputPreview(jobId: string, pageIndex: number): Promise<PdfOmrInputPreview | null>;
+  readInputPreview?(jobId: string, pageIndex: number): Promise<PdfOmrInputPreview | null>;
+  exportResult(jobId: string): Promise<"saved" | "cancelled">;
+  subscribe(listener: (snapshot: PdfOmrJobSnapshot) => void): () => void;
+};
+
+export type RecognitionHistoryPort = {
+  list(input: { cursor?: string; limit: number }): Promise<RecognitionHistoryPage>;
+  create(): RecognitionJobPort;
+  open(jobId: string): RecognitionJobPort;
+  delete(jobId: string): Promise<void>;
+};
+
+export type PdfOmrMidiCorrectionPort = {
   selectMidi(): Promise<
     { status: "cancelled" } | { status: "selected"; fileToken: string; fileName: string; sizeBytes: number }
   >;
@@ -83,6 +95,6 @@ export type PdfOmrWorkbenchPort = {
     jobId: string,
     decisions: readonly { proposalId: string; writtenPitch: PdfOmrWrittenPitch }[],
   ): Promise<{ appliedCount: number }>;
-  exportResult(jobId: string): Promise<"saved" | "cancelled">;
-  subscribe(listener: (jobId: string, event: PdfOmrProgressEvent) => void): () => void;
 };
+
+export type PdfOmrWorkbenchPort = RecognitionJobPort & PdfOmrMidiCorrectionPort;

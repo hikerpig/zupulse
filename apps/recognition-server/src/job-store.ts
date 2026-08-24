@@ -493,14 +493,14 @@ export class RecognitionJobStore {
                 (SELECT engine_id FROM recognition_attempts a WHERE a.id = j.current_attempt_id) AS engine_id
            FROM recognition_jobs j
           WHERE j.status <> 'uploading'
-            ${position === undefined ? "" : "AND (j.updated_at < ? OR (j.updated_at = ? AND j.id < ?))"}
-          ORDER BY j.updated_at DESC, j.id DESC
+            ${position === undefined ? "" : "AND (j.created_at < ? OR (j.created_at = ? AND j.id < ?))"}
+          ORDER BY j.created_at DESC, j.id DESC
           LIMIT ?`,
       )
       .all(
         ...(position === undefined
           ? [boundedLimit + 1]
-          : [position.updatedAt, position.updatedAt, position.id, boundedLimit + 1]),
+          : [position.createdAt, position.createdAt, position.id, boundedLimit + 1]),
       ) as (JobRow & {
       attempt_count: number;
       engine_id: string | null;
@@ -525,7 +525,7 @@ export class RecognitionJobStore {
       })),
       ...(rows.length <= boundedLimit || last === undefined
         ? {}
-        : { nextCursor: encodeCursor(last.updated_at, last.id) }),
+        : { nextCursor: encodeCursor(last.created_at, last.id) }),
     });
   }
 
@@ -574,11 +574,11 @@ export class RecognitionJobStore {
   }
 }
 
-function encodeCursor(updatedAt: string, id: string): string {
-  return Buffer.from(JSON.stringify([updatedAt, id])).toString("base64url");
+function encodeCursor(createdAt: string, id: string): string {
+  return Buffer.from(JSON.stringify([createdAt, id])).toString("base64url");
 }
 
-function decodeCursor(cursor: string): { updatedAt: string; id: string } {
+function decodeCursor(cursor: string): { createdAt: string; id: string } {
   try {
     const value = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")) as unknown;
     if (
@@ -592,7 +592,7 @@ function decodeCursor(cursor: string): { updatedAt: string; id: string } {
     ) {
       throw new Error();
     }
-    return { updatedAt: value[0], id: value[1] };
+    return { createdAt: value[0], id: value[1] };
   } catch {
     throw new Error("INVALID_REQUEST");
   }

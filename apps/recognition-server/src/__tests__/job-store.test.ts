@@ -6,6 +6,7 @@ import { RecognitionJobStore } from "../job-store";
 
 const firstCreatedAt = "2026-08-16T00:00:00.000Z";
 const secondCreatedAt = "2026-08-16T00:00:01.000Z";
+const thirdCreatedAt = "2026-08-16T00:00:02.000Z";
 
 describe("RecognitionJobStore", () => {
   it("keeps an upload internal until its object is durable", async () => {
@@ -45,6 +46,24 @@ describe("RecognitionJobStore", () => {
     expect(first.items.map((item) => item.jobId)).toEqual(["job-2"]);
     expect(first.nextCursor).toBeTruthy();
     expect(store.list(1, first.nextCursor).items.map((item) => item.jobId)).toEqual(["job-1"]);
+    store.close();
+  });
+
+  it("keeps older jobs traversable when their status changes during pagination", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "zupulse-recognition-store-"));
+    const store = new RecognitionJobStore(join(directory, "recognition.sqlite"));
+    store.createJob(job("job-1", "attempt-1", firstCreatedAt));
+    store.createJob(job("job-2", "attempt-2", secondCreatedAt));
+    store.createJob(job("job-3", "attempt-3", thirdCreatedAt));
+
+    const first = store.list(1);
+    expect(first.items.map((item) => item.jobId)).toEqual(["job-3"]);
+    store.cancel("job-1", "2026-08-16T00:00:03.000Z");
+
+    const second = store.list(1, first.nextCursor);
+    expect(second.nextCursor).toBeTruthy();
+    const third = store.list(1, second.nextCursor);
+    expect([...second.items, ...third.items].map((item) => item.jobId)).toEqual(["job-2", "job-1"]);
     store.close();
   });
 

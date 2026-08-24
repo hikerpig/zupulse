@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type Reac
 import { ChevronLeft, ChevronRight, FileCog, FileOutput, FileText, RotateCcw, Square, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import type { PdfOmrJobSnapshot } from "@zupulse/web-core";
+import type { PdfOmrJobSnapshot, RecognitionAttemptSummary } from "@zupulse/web-core";
 import { Button, Field, Panel, Select, Status } from "../../components/ui";
 import { ScoreViewer } from "../../components/ScoreViewer";
 import type { ViewerDomBindings, ViewerFile } from "../../host";
@@ -13,6 +13,7 @@ import type {
   PdfOmrMidiCorrectionPort,
   PdfOmrValidationView,
   PdfOmrWrittenPitch,
+  RecognitionConnectionState,
   RecognitionJobPort,
 } from "../../features/pdf-omr/pdf-omr-port";
 import styles from "./PdfOmrPage.module.css";
@@ -35,7 +36,7 @@ export function PdfOmrPage({
   onJobStarted?: (jobId: string) => void;
   openPreviewSession?: ((file: ViewerFile, domBindings?: ViewerDomBindings) => Promise<ViewerSessionPort>) | undefined;
 }) {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const effectiveMidiPort = midiPort ?? asMidiPort(port);
   const [file, setFile] = useState<{
     token: string;
@@ -51,12 +52,15 @@ export function PdfOmrPage({
   const [busy, setBusy] = useState<"select" | "start" | "cancel" | "export" | "midi" | "apply-midi" | undefined>();
   const [exported, setExported] = useState(false);
   const [notice, setNotice] = useState<string>();
+  const [attempts, setAttempts] = useState<readonly RecognitionAttemptSummary[]>();
+  const [connectionState, setConnectionState] = useState<RecognitionConnectionState>();
   const [midiAnalysis, setMidiAnalysis] = useState<PdfOmrMidiAnalysis>();
   const [midiSelections, setMidiSelections] = useState<Record<string, string>>({});
   const [midiApplied, setMidiApplied] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const stageStartedAtRef = useRef<Partial<Record<(typeof STAGES)[number], number>>>({});
   const stageDurationsRef = useRef<Partial<Record<(typeof STAGES)[number], number>>>({});
+  const attemptStateRef = useRef<string | undefined>(undefined);
 
   const engines = port?.engines ?? [];
   const input = file ?? snapshot?.input;
@@ -71,8 +75,14 @@ export function PdfOmrPage({
   const syncSnapshot = useCallback(
     async (jobId?: string) => {
       if (!port) return;
-      const next = await port.getSnapshot();
-      if (next && (jobId === undefined || next.jobId === jobId)) {
+      try {
+        const detail = remote && port.getDetail ? await port.getDetail() : null;
+        const next = detail?.snapshot ?? (detail === null ? await port.getSnapshot() : null);
+        if (detail !== null) {
+          setAttempts(detail.attempts);
+          attemptStateRef.current = attemptStateKey(detail.snapshot);
+        }
+        if (!next || (jobId !== undefined && next.jobId !== jobId)) return;
         setSnapshot(next);
         setExported(next.exported === true);
         if (next.status === "succeeded") {
@@ -82,9 +92,12 @@ export function PdfOmrPage({
         } else if (next.status === "failed") {
           setFailedValidation(await port.readFailedValidation(next.jobId));
         }
+        setNotice(undefined);
+      } catch (error) {
+        if (remote) setNotice(remoteRecoveryMessage(t, error));
       }
     },
-    [port],
+    [port, remote, t],
   );
 
   useEffect(() => {
@@ -93,14 +106,27 @@ export function PdfOmrPage({
     void syncSnapshot();
     const detach = port.subscribe((next) => {
       if (!active) return;
+      const attemptChanged = attemptStateRef.current !== attemptStateKey(next);
+      attemptStateRef.current = attemptStateKey(next);
       setSnapshot(next);
-      if (next.status === "succeeded" || next.status === "failed") void syncSnapshot(next.jobId);
+      if (
+        (remote && port.getDetail !== undefined && attemptChanged) ||
+        next.status === "succeeded" ||
+        next.status === "failed"
+      ) {
+        void syncSnapshot(next.jobId);
+      }
     });
     return () => {
       active = false;
       detach();
     };
-  }, [port, syncSnapshot]);
+  }, [port, remote, syncSnapshot]);
+
+  useEffect(() => {
+    if (!remote || port?.subscribeConnection === undefined) return;
+    return port.subscribeConnection(setConnectionState);
+  }, [port, remote]);
 
   const activeJob =
     snapshot?.status === "queued" || snapshot?.status === "running" || snapshot?.status === "cancelling";
@@ -148,6 +174,8 @@ export function PdfOmrPage({
           inputKind: selected.inputKind,
         });
         setSnapshot(undefined);
+        setAttempts(undefined);
+        attemptStateRef.current = undefined;
         setResult(null);
         setFailedValidation(null);
         setExported(false);
@@ -175,8 +203,8 @@ export function PdfOmrPage({
       setExported(false);
       setTab("engine");
       onJobStarted?.(started.jobId);
-    } catch {
-      setNotice(t("pdfOmr.startFailed"));
+    } catch (error) {
+      setNotice(errorCode(error) === "UPLOAD_CANCELLED" ? t("pdfOmr.uploadCancelled") : t("pdfOmr.startFailed"));
     } finally {
       setBusy(undefined);
     }
@@ -207,6 +235,7 @@ export function PdfOmrPage({
       setFailedValidation(null);
       setExported(false);
       setTab("engine");
+      await syncSnapshot(retried.jobId);
     } catch {
       setNotice(t("pdfOmr.startFailed"));
     } finally {
@@ -331,7 +360,7 @@ export function PdfOmrPage({
               tone="secondary"
               size="sm"
               onClick={() => void selectPdf()}
-              disabled={activeJob}
+              disabled={activeJob || busy === "start"}
               loading={busy === "select"}
             >
               <Upload aria-hidden="true" size={15} />
@@ -484,7 +513,15 @@ export function PdfOmrPage({
               </details>
             </div>
             <div className={styles.primaryActions}>
-              {snapshot?.status === "succeeded" ? (
+              {busy === "start" && port?.cancelPendingStart !== undefined && !hasJob ? (
+                <div className={styles.uploadingActions}>
+                  <p role="status">{t("pdfOmr.uploading")}</p>
+                  <Button tone="secondary" onClick={() => port.cancelPendingStart?.()}>
+                    <Square aria-hidden="true" size={14} />
+                    {t("pdfOmr.cancelUpload")}
+                  </Button>
+                </div>
+              ) : snapshot?.status === "succeeded" ? (
                 <>
                   <Button tone="primary" size="lg" onClick={() => void exportResult()} loading={busy === "export"}>
                     {exported ? t("pdfOmr.exported") : t("pdfOmr.export")}
@@ -528,6 +565,14 @@ export function PdfOmrPage({
                 {notice}
               </p>
             ) : null}
+            {remote && connectionState === "reconnecting" ? (
+              <div className={styles.connectionNotice} role="status">
+                <p>{t("pdfOmr.connection.reconnecting")}</p>
+                <Button tone="secondary" size="sm" onClick={() => void syncSnapshot()}>
+                  {t("pdfOmr.connection.refresh")}
+                </Button>
+              </div>
+            ) : null}
           </Panel>
 
           <Panel className={styles.diagnosticsPanel}>
@@ -553,6 +598,10 @@ export function PdfOmrPage({
             )}
           </Panel>
 
+          {remote && attempts !== undefined && attempts.length > 0 ? (
+            <AttemptTimeline attempts={attempts} locale={i18n.language} t={t} />
+          ) : null}
+
           <MidiCorrectionPanel
             enabled={snapshot?.status === "succeeded" && result !== null}
             analysis={midiAnalysis}
@@ -568,6 +617,51 @@ export function PdfOmrPage({
         </aside>
       </div>
     </main>
+  );
+}
+
+function AttemptTimeline({
+  attempts,
+  locale,
+  t,
+}: {
+  attempts: readonly RecognitionAttemptSummary[];
+  locale: string;
+  t: CommonT;
+}) {
+  const dateTime = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" });
+  return (
+    <Panel className={styles.attemptPanel}>
+      <div className={styles.panelTitle}>
+        <h2>{t("pdfOmr.attempts.title")}</h2>
+        <span className={styles.count}>{attempts.length}</span>
+      </div>
+      <ol className={styles.attemptList}>
+        {attempts.map((attempt) => (
+          <li key={attempt.attemptId} data-status={attempt.status}>
+            <strong>
+              {t("pdfOmr.attempts.item", {
+                number: attempt.attemptNumber,
+                status: t(`pdfOmr.history.status.${attempt.status}`),
+              })}
+            </strong>
+            <small>{t("pdfOmr.attempts.engine", { engine: attempt.engineId })}</small>
+            <small>
+              {t("pdfOmr.attempts.time", {
+                start: dateTime.format(new Date(attempt.startedAt ?? attempt.createdAt)),
+                end:
+                  attempt.finishedAt === undefined
+                    ? t("pdfOmr.attempts.now")
+                    : dateTime.format(new Date(attempt.finishedAt)),
+              })}
+            </small>
+            {attempt.errorCode === undefined ? null : (
+              <small>{t("pdfOmr.attempts.errorCode", { code: attempt.errorCode })}</small>
+            )}
+          </li>
+        ))}
+      </ol>
+    </Panel>
   );
 }
 
@@ -1069,6 +1163,27 @@ function pdfOmrErrorReason(t: CommonT, code: string, reason?: string | undefined
       return reason === undefined
         ? t("pdfOmr.errorReason.unknown", { code })
         : t("pdfOmr.errorReason.unknownReason", { code, reason });
+  }
+}
+
+function errorCode(error: unknown): string | undefined {
+  return error instanceof Error ? error.message : undefined;
+}
+
+function attemptStateKey(snapshot: PdfOmrJobSnapshot): string {
+  return [snapshot.attemptId ?? "", snapshot.attemptNumber ?? "", snapshot.status, snapshot.stage ?? ""].join(":");
+}
+
+function remoteRecoveryMessage(t: CommonT, error: unknown): string {
+  switch (errorCode(error)) {
+    case "JOB_NOT_FOUND":
+      return t("pdfOmr.recovery.notFound");
+    case "JOB_DELETING":
+      return t("pdfOmr.recovery.deleting");
+    case "RESULT_INTEGRITY_FAILED":
+      return t("pdfOmr.recovery.integrityFailed");
+    default:
+      return t("pdfOmr.recovery.refreshFailed");
   }
 }
 

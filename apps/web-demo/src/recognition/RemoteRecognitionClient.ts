@@ -5,9 +5,15 @@ import {
   recognitionJobSnapshotSchema,
   recognitionSseEventSchema,
   type RecognitionEngineOption,
+  type RecognitionJobDetail,
   type RecognitionJobSnapshot,
 } from "@zupulse/web-core";
-import type { PdfOmrResult, RecognitionHistoryPort, RecognitionJobPort } from "@zupulse/web-viewer";
+import type {
+  PdfOmrResult,
+  RecognitionConnectionState,
+  RecognitionHistoryPort,
+  RecognitionJobPort,
+} from "@zupulse/web-viewer";
 
 const API = "/api/recognition/v1";
 
@@ -55,7 +61,10 @@ class RemoteRecognitionJob implements RecognitionJobPort {
   private selected?: File;
   private jobId: string | undefined;
   private source: EventSourceLike | undefined;
+  private startController: AbortController | undefined;
   private readonly listeners = new Set<(snapshot: RecognitionJobSnapshot) => void>();
+  private readonly connectionListeners = new Set<(state: RecognitionConnectionState) => void>();
+  private connectionState: RecognitionConnectionState = "connecting";
 
   constructor(
     private readonly dependencies: Dependencies,
@@ -91,12 +100,29 @@ class RemoteRecognitionJob implements RecognitionJobPort {
     const body = new FormData();
     body.append("engineId", engineId);
     body.append("input", this.selected);
-    const snapshot = recognitionJobSnapshotSchema.parse(
-      await readJson(this.dependencies.fetch, `${API}/jobs`, { method: "POST", body }),
-    );
-    this.jobId = snapshot.jobId;
-    this.connect();
-    return { jobId: snapshot.jobId, snapshot };
+    const controller = new AbortController();
+    this.startController = controller;
+    try {
+      const snapshot = recognitionJobSnapshotSchema.parse(
+        await readJson(this.dependencies.fetch, `${API}/jobs`, {
+          method: "POST",
+          body,
+          signal: controller.signal,
+        }),
+      );
+      this.jobId = snapshot.jobId;
+      this.connect();
+      return { jobId: snapshot.jobId, snapshot };
+    } catch (error) {
+      if (controller.signal.aborted) throw new Error("UPLOAD_CANCELLED");
+      throw error;
+    } finally {
+      if (this.startController === controller) this.startController = undefined;
+    }
+  }
+
+  cancelPendingStart(): void {
+    this.startController?.abort();
   }
 
   async retry(jobId: string, engineId: string) {
@@ -121,12 +147,16 @@ class RemoteRecognitionJob implements RecognitionJobPort {
   }
 
   async getSnapshot(): Promise<RecognitionJobSnapshot | null> {
+    return (await this.getDetail())?.snapshot ?? null;
+  }
+
+  async getDetail(): Promise<RecognitionJobDetail | null> {
     if (this.jobId === undefined) return null;
     const detail = recognitionJobDetailSchema.parse(
       await readJson(this.dependencies.fetch, `${API}/jobs/${this.jobId}`),
     );
     this.connect();
-    return detail.snapshot;
+    return detail;
   }
 
   async readResult(jobId: string): Promise<PdfOmrResult | null> {
@@ -153,20 +183,52 @@ class RemoteRecognitionJob implements RecognitionJobPort {
     this.connect();
     return () => {
       this.listeners.delete(listener);
-      if (this.listeners.size === 0) {
-        this.source?.close();
-        this.source = undefined;
-      }
+      this.disconnectIfUnused();
+    };
+  }
+
+  subscribeConnection(listener: (state: RecognitionConnectionState) => void): () => void {
+    this.connectionListeners.add(listener);
+    listener(this.connectionState);
+    this.connect();
+    return () => {
+      this.connectionListeners.delete(listener);
+      this.disconnectIfUnused();
     };
   }
 
   private connect(): void {
-    if (this.jobId === undefined || this.source !== undefined || this.listeners.size === 0) return;
+    if (
+      this.jobId === undefined ||
+      this.source !== undefined ||
+      (this.listeners.size === 0 && this.connectionListeners.size === 0)
+    ) {
+      return;
+    }
+    this.setConnectionState("connecting");
     this.source = this.dependencies.createEventSource(`${API}/jobs/${this.jobId}/events`);
+    this.source.addEventListener("open", () => this.setConnectionState("connected"));
+    this.source.addEventListener("error", () => this.setConnectionState("reconnecting"));
     this.source.addEventListener("snapshot", ((message: MessageEvent<string>) => {
       const event = recognitionSseEventSchema.parse(JSON.parse(message.data));
-      if (event.kind === "snapshot") this.listeners.forEach((listener) => listener(event.snapshot));
+      if (event.kind === "snapshot") {
+        this.setConnectionState("connected");
+        this.listeners.forEach((listener) => listener(event.snapshot));
+      }
     }) as EventListener);
+  }
+
+  private setConnectionState(state: RecognitionConnectionState): void {
+    if (this.connectionState === state) return;
+    this.connectionState = state;
+    this.connectionListeners.forEach((listener) => listener(state));
+  }
+
+  private disconnectIfUnused(): void {
+    if (this.listeners.size > 0 || this.connectionListeners.size > 0) return;
+    this.source?.close();
+    this.source = undefined;
+    this.connectionState = "connecting";
   }
 }
 

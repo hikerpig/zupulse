@@ -1,4 +1,6 @@
-import type { PdfOmrJobSnapshot, RecognitionHistoryPage } from "@zupulse/web-core";
+import type { PdfOmrJobSnapshot, RecognitionHistoryPage, RecognitionJobDetail } from "@zupulse/web-core";
+
+export type RecognitionConnectionState = "connecting" | "connected" | "reconnecting";
 
 export type PdfOmrEngineOption = {
   id: string;
@@ -71,12 +73,15 @@ export type RecognitionJobPort = {
   start(fileToken: string, engineId: string): Promise<{ jobId: string; snapshot: PdfOmrJobSnapshot }>;
   retry(jobId: string, engineId: string): Promise<{ jobId: string; snapshot: PdfOmrJobSnapshot }>;
   cancel(jobId: string): Promise<void>;
+  cancelPendingStart?(): void;
   getSnapshot(): Promise<PdfOmrJobSnapshot | null>;
+  getDetail?(): Promise<RecognitionJobDetail | null>;
   readResult(jobId: string): Promise<PdfOmrResult | null>;
   readFailedValidation(jobId: string): Promise<PdfOmrValidationView | null>;
   readInputPreview?(jobId: string, pageIndex: number): Promise<PdfOmrInputPreview | null>;
   exportResult(jobId: string): Promise<"saved" | "cancelled">;
   subscribe(listener: (snapshot: PdfOmrJobSnapshot) => void): () => void;
+  subscribeConnection?(listener: (state: RecognitionConnectionState) => void): () => void;
 };
 
 export type RecognitionHistoryPort = {

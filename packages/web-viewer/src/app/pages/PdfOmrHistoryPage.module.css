@@ -95,6 +95,11 @@
     font-size: 12px;
   }
 
+  .loadMore {
+    display: flex;
+    justify-content: center;
+  }
+
   .expires {
     color: var(--text-tertiary);
     font-size: 11px;

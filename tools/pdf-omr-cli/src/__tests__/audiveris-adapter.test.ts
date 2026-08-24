@@ -1,11 +1,22 @@
-import { chmod, mkdtemp, writeFile } from "node:fs/promises";
+import { access, chmod, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { PDFDocument, StandardFonts } from "pdf-lib";
 import { describe, expect, it } from "vitest";
 import { createAudiverisAdapter } from "../engines/audiveris";
 
 const fixture = fileURLToPath(new URL("fixtures/fake-audiveris.mjs", import.meta.url));
+
+async function pdfWithPages(blankPageIndexes: number[] = []): Promise<Uint8Array> {
+  const document = await PDFDocument.create();
+  const font = await document.embedFont(StandardFonts.Helvetica);
+  for (let index = 0; index < 3; index += 1) {
+    const page = document.addPage([200, 200]);
+    if (!blankPageIndexes.includes(index)) page.drawText("music", { x: 20, y: 100, size: 12, font });
+  }
+  return document.save();
+}
 
 describe("Audiveris adapter", () => {
   it("inspects a reproducible engine environment", async () => {
@@ -75,6 +86,43 @@ describe("Audiveris adapter", () => {
       code: "ENGINE_EXECUTION_FAILED",
       context: { reason: "engine-step-timeout" },
     });
+  });
+
+  it("removes blank PDF pages before invoking the engine", async () => {
+    await chmod(fixture, 0o755);
+    const directory = await mkdtemp(join(tmpdir(), "audiveris-blank-"));
+    const inputPath = join(directory, "score.pdf");
+    const outputDirectory = join(directory, "raw");
+    await writeFile(inputPath, await pdfWithPages([1, 2]));
+    const adapter = createAudiverisAdapter({ executable: fixture });
+
+    const result = await adapter.recognize({ inputPath, outputDirectory });
+
+    expect(result.diagnostics).toEqual([
+      {
+        code: "AUDIVERIS_BLANK_PAGES_SKIPPED",
+        severity: "warning",
+        message: "Blank PDF pages were removed before recognition: 2, 3",
+      },
+    ]);
+    expect(adapter.normalize(result).diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      "AUDIVERIS_BLANK_PAGES_SKIPPED",
+    );
+    await expect(access(join(outputDirectory, "filtered-input.pdf"))).resolves.toBeUndefined();
+  });
+
+  it("passes PDFs without blank pages through unchanged", async () => {
+    await chmod(fixture, 0o755);
+    const directory = await mkdtemp(join(tmpdir(), "audiveris-noblank-"));
+    const inputPath = join(directory, "score.pdf");
+    const outputDirectory = join(directory, "raw");
+    await writeFile(inputPath, await pdfWithPages());
+    const adapter = createAudiverisAdapter({ executable: fixture });
+
+    const result = await adapter.recognize({ inputPath, outputDirectory });
+
+    expect(result.diagnostics).toEqual([]);
+    await expect(access(join(outputDirectory, "filtered-input.pdf"))).rejects.toThrow();
   });
 
   it("maps a missing executable to ENGINE_UNAVAILABLE", async () => {

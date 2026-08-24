@@ -57,6 +57,11 @@ PDF_OMR_AUDIVERIS_EXECUTABLE=/absolute/path/to/audiveris \
   pnpm pdf-omr -- recognize input.pdf --engine audiveris --output result
 ```
 
+Audiveris 遇到无谱线页面会中断整个 book，因此 adapter 在调用前用 PDF.js operator signals
+检测并移除完全空白的页面（vector 与 raster operator 均为 0），被移除的页码以
+`AUDIVERIS_BLANK_PAGES_SKIPPED` warning 记录到 draft diagnostics。无法解析的输入保持原样，
+由 engine 自身报错。
+
 LEGATO 需要分别取得 `guangyangmusic/legato` 与
 `meta-llama/Llama-3.2-11B-Vision` 的 gated access。安装时锁定模型和 Demo revision：
 

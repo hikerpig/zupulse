@@ -64,6 +64,16 @@ export async function inspectPdfBytes(
   }
 }
 
+export async function findBlankPdfPages(
+  bytes: Uint8Array,
+  options: { fileName: string; standardFontDirectory?: string; wasmDirectory?: string },
+): Promise<number[]> {
+  const report = await inspectPdfBytes(bytes, options);
+  return report.pages
+    .filter((page) => page.vectorOperators === 0 && page.rasterOperators === 0)
+    .map((page) => page.index);
+}
+
 export async function inspectOmrInputBytes(
   bytes: Uint8Array,
   options: { fileName: string; standardFontDirectory?: string; wasmDirectory?: string },

@@ -13,6 +13,8 @@ apps/ipad-shell/Zupulse.xcodeproj/xcuserdata/
 .envrc
 .env
 
+# Desktop-debug / local driver workdirs (userdata, shots, exports).
+tmp-run/
 
 # Local PDF OMR development runs. Commit only curated README/summary artifacts.
 tools/pdf-omr-cli/reports/development/rokot-evaluation-*/

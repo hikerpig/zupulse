@@ -79,3 +79,19 @@ cross-engine selector。
 
 开始模型选择或训练前，需要明确批准：允许评估的模型来源、可接受 license、最大 weights/package size、目标 CPU
 latency/peak RSS，以及是否允许新增 native ONNX 类 runtime。缺少这些输入时，本提案停留在 `status: proposed`。
+
+## 2026-08-26 candidate screening
+
+首个公开候选 `v-dvorak/omr-layout-analysis` 的 OLA v2 与目标版式相符，release asset 为 40,530,853 bytes，
+repository source license 为 MIT；但其固定训练/推理依赖是 `ultralytics==8.3.4`，候选仓库没有单独声明 weights
+license。Ultralytics 官方许可说明将其模型及由其训练得到的模型默认置于 AGPL-3.0，proprietary/private use 需要
+商业许可。因此该候选在下载权重和安装依赖前 `STOP`，没有生成 model identity，也没有执行 29-page experiment。
+
+本轮只实现 framework-independent output boundary：`learned-staff-system-v1` identity schema、ordered normalized
+system bbox、多 staff 五线 topology、page/bounds validation，以及由 CLI 从 immutable RGBA page bytes 生成的
+deterministic non-overlapping crops。它允许真实 system 包含两个以上 staff，但任何页码错配、重叠、越界、line
+乱序或 `staffCount` 不一致都以 `ENGINE_OUTPUT_INVALID` fail closed。该 boundary 不改变 Rokot runtime default。
+
+完整 screening evidence 位于
+`tools/pdf-omr-cli/reports/exploratory/ola-v2-dependency-gate/`。下一候选必须先证明 source、weights、training data
+与 runtime 的 Desktop distribution permission，再允许下载或执行。

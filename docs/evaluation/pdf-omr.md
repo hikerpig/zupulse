@@ -303,6 +303,14 @@ source mapping hashes 与 4 页/15 systems 预期。case evaluator 只接受 exa
 `NOT_EVALUATED / engine-item-failed`，没有 multi-system artifact 或 quality metrics。当前 T09 仍为 `STOP`；该用例
 已经固化了后续 learned layout detector 必须通过的真实 joining admission boundary。
 
+首个 learned candidate screening 随后检查 OLA v2。其公开 source repository 为 MIT，release asset 大小为
+40,530,853 bytes，但固定依赖 `ultralytics==8.3.4`，且候选仓库没有单独声明 weights license；Ultralytics 官方
+许可边界不能直接满足 proprietary Desktop distribution。因此该候选在下载和执行前 `STOP`，没有读取 holdout，
+也没有产生可宣称的 segmentation improvement。与此同时新增 framework-independent validated-output boundary，
+允许真实 mixed-staff system，同时对页码、bbox、顺序、五线 topology 与 deterministic crop fail closed；该代码尚未
+连接任何模型或 Rokot runtime。screening evidence 位于
+`tools/pdf-omr-cli/reports/exploratory/ola-v2-dependency-gate/`。
+
 ## 2026-08-26 LEGATO topology failure audit
 
 既有 46-item OLiMPiC development run 的 20 个 LEGATO failures 已通过 immutable artifacts 审计。分类为

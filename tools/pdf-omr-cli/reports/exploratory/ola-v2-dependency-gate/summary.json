@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "screenedAt": "2026-08-26",
+  "scope": "development-research-only",
+  "status": "stopped-before-artifact-download",
+  "decision": "STOP",
+  "candidate": {
+    "repository": "https://github.com/v-dvorak/omr-layout-analysis",
+    "repositoryLicense": "MIT",
+    "releaseTag": "ola-v2.0",
+    "releaseApi": "https://api.github.com/repos/v-dvorak/omr-layout-analysis/releases/tags/ola-v2.0",
+    "assetName": "ola-layout-analysis-2.0-2025-03-09.pt",
+    "assetSizeBytes": 40530853,
+    "weightsDownloaded": false,
+    "weightsSha256": null,
+    "weightsLicense": "UNDECLARED_BY_CANDIDATE_REPOSITORY",
+    "trainingDependency": {
+      "name": "ultralytics",
+      "version": "8.3.4",
+      "source": "https://github.com/v-dvorak/omr-layout-analysis/blob/main/requirements.txt"
+    }
+  },
+  "licenseEvidence": {
+    "source": "https://www.ultralytics.com/license",
+    "defaultModelLicense": "AGPL-3.0",
+    "proprietaryUseRequiresCommercialLicense": true
+  },
+  "unexecuted": [
+    "transitive-license-inventory",
+    "supported-architecture-probe",
+    "unpacked-size-probe",
+    "cpu-cold-warm-runtime",
+    "peak-rss",
+    "determinism",
+    "offline-execution",
+    "stable-error-probe"
+  ],
+  "reason": "The candidate does not declare a distributable weights license, and its pinned Ultralytics model stack is not acceptable for proprietary Desktop distribution without a commercial license."
+}

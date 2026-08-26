@@ -1,6 +1,7 @@
 # OLiMPiC scanned full-page development corpus v1
 
-状态：`selection-only`，尚未冻结 benchmark protocol，也未生成或提交派生 `input.pdf`。
+状态：development-only。仓库已冻结 manifest、source mapping、派生 `input.pdf` 与 MusicXML truth；它们不得被解释为
+holdout 或产品分发许可已经确认。
 
 本目录记录 C01/C02 的可复查 provenance 和确定性选样。数据来自 OLiMPiC `datasets` release 的 `dev`
 split；原始 source archive 保留在外部 cache，不提交 Git。`6586696` 已确认属于 `samples.test.txt`，
@@ -18,6 +19,10 @@ split；原始 source archive 保留在外部 cache，不提交 Git。`6586696` 
 | large   | `6011095` |     8 |      34 |
 
 合计 6 works、29 pages、121 systems。精确规则和 archive hashes 见 `selection.json`。
+
+`real-multisystem-manifest.json` 将 `6007571` 单独固定为真实 full-page multi-system development case；
+`real-multisystem-case.json` 绑定输入、truth、source mapping hashes，以及 4 页/15 systems 的 evaluation-only
+预期。source mapping 不进入 runtime segmentation。
 
 ## Reproduce selection
 

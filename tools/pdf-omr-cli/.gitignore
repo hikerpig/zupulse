@@ -1,1 +1,2 @@
-reports/development
+reports/development/*
+!reports/development/olimpic-real-multisystem-v1/

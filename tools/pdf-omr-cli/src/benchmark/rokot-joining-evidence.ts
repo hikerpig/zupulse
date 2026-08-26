@@ -44,7 +44,23 @@ export const rokotJoiningEvidenceSchema = z
     rawMeasureBoundaries: z.array(boundarySchema),
     normalizedMeasureBoundaries: z.array(normalizedBoundarySchema),
   })
-  .strict();
+  .strict()
+  .superRefine((evidence, context) => {
+    for (let index = 1; index < evidence.systems.length; index += 1) {
+      const previous = evidence.systems[index - 1]!.source;
+      const current = evidence.systems[index]!.source;
+      const ordered =
+        current.pageIndex > previous.pageIndex ||
+        (current.pageIndex === previous.pageIndex && current.systemIndex > previous.systemIndex);
+      if (!ordered) {
+        context.addIssue({
+          code: "custom",
+          path: ["systems", index, "source"],
+          message: "systems must be unique and ordered by pageIndex and systemIndex",
+        });
+      }
+    }
+  });
 
 export type RokotJoiningEvidence = z.infer<typeof rokotJoiningEvidenceSchema>;
 

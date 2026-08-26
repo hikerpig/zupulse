@@ -295,6 +295,14 @@ denominator 为 0；153 个 raw/normalized boundaries 数量一致且 provenance
 header continuity，故 T09 同样 `STOP`，`normalizeRokotOutput` 不修改。完整结果位于
 `tools/pdf-omr-cli/reports/exploratory/olimpic-quality-optimization-v1/`。
 
+随后新增 `olimpic-6007571-real-multisystem-v1` development case，单独绑定真实扫描派生输入、MusicXML truth、
+source mapping hashes 与 4 页/15 systems 预期。case evaluator 只接受 exact Rokot benchmark item 的
+`joining.json` 和 quality artifacts；ground truth/source mapping 不进入 runtime segmentation，也不能替代失败结果。
+2026-08-26 的真实单-item run 在第 0 页 `staff-system-topology` 以
+`ENGINE_OUTPUT_INVALID / ambiguous-system-segmentation` fail closed，因此结果为
+`NOT_EVALUATED / engine-item-failed`，没有 multi-system artifact 或 quality metrics。当前 T09 仍为 `STOP`；该用例
+已经固化了后续 learned layout detector 必须通过的真实 joining admission boundary。
+
 ## 2026-08-26 LEGATO topology failure audit
 
 既有 46-item OLiMPiC development run 的 20 个 LEGATO failures 已通过 immutable artifacts 审计。分类为

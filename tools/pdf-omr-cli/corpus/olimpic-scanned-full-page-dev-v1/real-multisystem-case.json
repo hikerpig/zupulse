@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "olimpic-6007571-real-multisystem-v1",
+  "corpusId": "olimpic-real-multisystem-dev-v1",
+  "itemId": "olimpic-6007571-full-page",
+  "engineId": "rokot",
+  "source": {
+    "inputSha256": "f89b5ae71c7248a846c09ce3fe70924c67ad16d5a30c62ac043a733c4ccccb9d",
+    "groundTruthSha256": "d822ea6011aa393536f8702c57ac79679129ac8720789793b00cb6bbd2298817",
+    "mappingSha256": "8b88f3975aa3a25f76718504b539493a264a109f0b5a6c9779b081c9b9aaf6c1"
+  },
+  "groundTruthPolicy": "evaluation-only",
+  "expected": {
+    "pageCount": 4,
+    "systemCount": 15,
+    "minimumSystemCount": 2
+  }
+}

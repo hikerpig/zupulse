@@ -8,6 +8,7 @@ import { sha256Bytes } from "../canonical-json";
 import { inspectPdfBytes } from "../inspect-pdf";
 import { normalizeAudiverisMusicXml } from "../normalizers/audiveris";
 import { validateDraft } from "../validate-draft";
+import { realMultiSystemCaseSchema } from "../benchmark/real-multisystem-evaluation";
 
 const manifestPath = fileURLToPath(
   new URL("../../corpus/olimpic-scanned-full-page-dev-v1/manifest.json", import.meta.url),
@@ -79,6 +80,35 @@ describe("OLiMPiC full-page development corpus v1", () => {
         maxGpuMemoryP95Bytes: 17_179_869_184,
       },
     });
+  });
+
+  it("freezes 6007571 as a real multi-system evaluation case without runtime GT segmentation", async () => {
+    const [caseBytes, caseManifestBytes, mappingBytes] = await Promise.all([
+      readFile(resolve(corpusRoot, "real-multisystem-case.json")),
+      readFile(resolve(corpusRoot, "real-multisystem-manifest.json")),
+      readFile(resolve(corpusRoot, "dev/6007571/source-mapping.json")),
+    ]);
+    const caseDefinition = realMultiSystemCaseSchema.parse(JSON.parse(new TextDecoder().decode(caseBytes)));
+    const manifest = verifyCorpusManifest(JSON.parse(new TextDecoder().decode(caseManifestBytes)));
+    const item = manifest.items.find((candidate) => candidate.id === caseDefinition.itemId);
+    const mapping = JSON.parse(new TextDecoder().decode(mappingBytes)) as { pages: Array<{ systems: unknown[] }> };
+
+    expect(caseDefinition).toMatchObject({
+      caseId: "olimpic-6007571-real-multisystem-v1",
+      corpusId: "olimpic-real-multisystem-dev-v1",
+      engineId: "rokot",
+      groundTruthPolicy: "evaluation-only",
+      expected: { pageCount: 4, systemCount: 15, minimumSystemCount: 2 },
+    });
+    expect(item).toMatchObject({
+      inputScope: "full-page",
+      benchmarkSuite: "full-page",
+      input: { sha256: caseDefinition.source.inputSha256 },
+      groundTruth: { sha256: caseDefinition.source.groundTruthSha256 },
+    });
+    expect(sha256Bytes(mappingBytes)).toBe(caseDefinition.source.mappingSha256);
+    expect(mapping.pages).toHaveLength(caseDefinition.expected.pageCount);
+    expect(mapping.pages.flatMap((page) => page.systems)).toHaveLength(caseDefinition.expected.systemCount);
   });
 
   it("retains auditable page-level segmentation failures", async () => {

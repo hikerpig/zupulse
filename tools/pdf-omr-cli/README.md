@@ -392,6 +392,13 @@ measure numbers、global measure boundaries 和 normalized measure count。它�
 每个成功 item 还写出 `predicted-validation.json`，直接记录 Harmony/MusicXML readiness 与诊断。development
 失败 item 可保留有界 `failure-debug/`；holdout 不保留该目录。
 
+真实 multi-system development case 使用
+`corpus/olimpic-scanned-full-page-dev-v1/real-multisystem-{manifest,case}.json`。先运行单-item benchmark，再用
+`scripts/evaluate_real_multisystem_case.ts` 检查 exact corpus/engine/item identity、至少两个且顺序唯一的 systems、
+4 页/15 systems 完整性、normalized source coverage，以及 merged MusicXML parse/structural evidence。engine item
+失败、缺少或损坏 `joining.json`、system/page count 不符时一律输出 `NOT_EVALUATED`；不得用 ground truth 或其他
+engine artifact 补齐。
+
 新的真实扫描 intake 位于 `corpus/olimpic-scanned-v1/`，manifest 记录 OLiMPiC release、source split、
 archive/item hashes 与 CC BY-SA 4.0 provenance；该 v1 明确是 `system-crop` scope，不代表 full-page
 segmentation 或跨 system joining。

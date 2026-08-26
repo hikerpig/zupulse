@@ -39,6 +39,7 @@ export type ViewerAppDependencies = {
     ): readonly ScoreImportSource[] | Promise<readonly ScoreImportSource[]>;
     sampleSources?: readonly BundledSampleSource[];
   };
+  startupStartedAt?: number;
 };
 
 export function mountViewerApp(rootElement: HTMLElement, dependencies: ViewerAppDependencies): ViewerAppHandle {
@@ -51,6 +52,7 @@ export function mountViewerApp(rootElement: HTMLElement, dependencies: ViewerApp
     undefined,
     dependencies.telemetryControl,
     dependencies.initialSurface,
+    dependencies.startupStartedAt === undefined ? undefined : { startedAt: dependencies.startupStartedAt },
   );
   const localeHost: LocaleHost = dependencies.localeHost ?? {
     initialState: { preference: "zh-CN", effectiveLocale: "zh-CN" },

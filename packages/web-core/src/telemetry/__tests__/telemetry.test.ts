@@ -4,7 +4,9 @@ import {
   createNoopTelemetryPort,
   createSafeTelemetryPort,
   sanitizeTelemetryException,
+  TELEMETRY_DURATION_MS_MAX,
   TelemetryExceptionBudget,
+  telemetryDurationMs,
   telemetryEnvelopeSchema,
   telemetryPreferenceStateSchema,
   type TelemetryEnvelope,
@@ -42,6 +44,34 @@ describe("telemetry contracts", () => {
           surface: "library",
           issueCode: "IMPORT_FAILED",
           recoverable: true,
+        },
+      }),
+    ).toThrow();
+  });
+
+  it("accepts optional durationMs on ready events and omits values past the cap", () => {
+    expect(telemetryDurationMs(10, 40)).toBe(30);
+    expect(telemetryDurationMs(0, TELEMETRY_DURATION_MS_MAX + 1)).toBeUndefined();
+    expect(
+      telemetryEnvelopeSchema.parse({
+        ...envelope,
+        event: { name: "application_ready", initialSurface: "library", state: "ready", durationMs: 30 },
+      }).event,
+    ).toEqual({ name: "application_ready", initialSurface: "library", state: "ready", durationMs: 30 });
+    expect(
+      telemetryEnvelopeSchema.parse({
+        ...envelope,
+        event: { name: "workspace_session_started", workspace: "viewer", scoreFormat: "gp" },
+      }).event,
+    ).toEqual({ name: "workspace_session_started", workspace: "viewer", scoreFormat: "gp" });
+    expect(() =>
+      telemetryEnvelopeSchema.parse({
+        ...envelope,
+        event: {
+          name: "application_ready",
+          initialSurface: "library",
+          state: "ready",
+          durationMs: TELEMETRY_DURATION_MS_MAX + 1,
         },
       }),
     ).toThrow();

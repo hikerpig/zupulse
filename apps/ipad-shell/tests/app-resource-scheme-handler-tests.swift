@@ -86,6 +86,8 @@ final class ResourceSchemeTests: XCTestCase {
         XCTAssertTrue(first.requestedResourcePaths.contains("/probes/resource-origin-worklet.mjs"))
         XCTAssertTrue(first.requestedResourcePaths.contains("/alphatab/font/Bravura.woff2"))
         XCTAssertTrue(first.requestedResourcePaths.contains("/alphatab/soundfont/sonivox.sf3"))
+        let applicationReadyMs = try await startupApplicationReadyMs(from: first.webView)
+        XCTAssertGreaterThanOrEqual(applicationReadyMs, 0)
 
         let second = WebViewContainer.Coordinator(entryURL: entryURL)
         let secondResult = try await probeResult(from: second.webView)
@@ -108,6 +110,24 @@ final class ResourceSchemeTests: XCTestCase {
             contentWorld: .page
         )
         return try XCTUnwrap(value as? [String: Any])
+    }
+
+    @MainActor
+    private func startupApplicationReadyMs(from webView: WKWebView) async throws -> Double {
+        for _ in 0..<50 {
+            let value = try await webView.evaluateJavaScript(
+                "window.__zupulseStartupTiming && window.__zupulseStartupTiming.applicationReadyMs"
+            )
+            if let applicationReadyMs = value as? Double {
+                return applicationReadyMs
+            }
+            if let applicationReadyMs = value as? Int {
+                return Double(applicationReadyMs)
+            }
+            try await Task.sleep(for: .milliseconds(100))
+        }
+        XCTFail("startup applicationReadyMs was not published")
+        return -1
     }
 
     private func assertSuccessful(

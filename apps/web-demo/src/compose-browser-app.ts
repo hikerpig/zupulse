@@ -26,6 +26,7 @@ export async function composeBrowserApp(input: {
     projectToken?: string;
     apiHost?: string;
   };
+  startupStartedAt?: number;
 }): Promise<{
   dependencies: ViewerAppDependencies;
   startSession: () => void;
@@ -95,6 +96,7 @@ export async function composeBrowserApp(input: {
       },
       ...(remoteRecognition === undefined ? {} : { pdfOmrHistory: remoteRecognition }),
       openSession: openBrowserSession,
+      ...(input.startupStartedAt === undefined ? {} : { startupStartedAt: input.startupStartedAt }),
       ...(remoteRecognition === undefined
         ? {}
         : { openPdfOmrPreview: (file, domBindings) => openBrowserSession(file, undefined, domBindings) }),

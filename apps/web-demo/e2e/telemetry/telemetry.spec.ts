@@ -25,6 +25,7 @@ const allowedProperties = new Set([
   "$geoip_disable",
   "initialSurface",
   "state",
+  "durationMs",
   "exception_name",
   "exception_message",
   "exception_fingerprint",

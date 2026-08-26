@@ -53,15 +53,15 @@ Acceptance、开发测试构建与 iPad 保持 No-op。遥测不是业务事实�
 
 ### Event catalog
 
-| Event                         | Producer boundary                                 | Cardinality / scope               |
-| ----------------------------- | ------------------------------------------------- | --------------------------------- |
-| `application_session_started` | Shared App Shell after the notice is rendered     | once per application session      |
-| `application_ready`           | first library refresh settles                     | once per application session      |
-| `score_import_completed`      | semantic import terminal result                   | once per completed import         |
-| `workspace_session_started`   | Viewer or Studio runtime becomes ready            | once per workspace runtime        |
-| `viewer_playback_started`     | Viewer playback enters `playing`                  | once per Viewer Session           |
-| `application_issue_presented` | user-visible Application Issue rendering boundary | once per session/surface/code     |
-| `runtime_failure_observed`    | allowlisted Desktop runtime-failure projection    | once per observed runtime failure |
+| Event                         | Producer boundary                                                               | Cardinality / scope               |
+| ----------------------------- | ------------------------------------------------------------------------------- | --------------------------------- |
+| `application_session_started` | Shared App Shell after the notice is rendered                                   | once per application session      |
+| `application_ready`           | first library refresh settles; optional `durationMs` from host Web entry        | once per application session      |
+| `score_import_completed`      | semantic import terminal result                                                 | once per completed import         |
+| `workspace_session_started`   | Viewer or Studio runtime becomes ready; optional `durationMs` from open request | once per workspace runtime        |
+| `viewer_playback_started`     | Viewer playback enters `playing`                                                | once per Viewer Session           |
+| `application_issue_presented` | user-visible Application Issue rendering boundary                               | once per session/surface/code     |
+| `runtime_failure_observed`    | allowlisted Desktop runtime-failure projection                                  | once per observed runtime failure |
 
 The provider envelope and exact event fields remain defined by the strict Zod schemas in `web-core`; this table is
 the host-neutral catalog rather than a second schema source.

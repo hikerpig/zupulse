@@ -8,7 +8,7 @@ import {
   type TelemetryControl,
 } from "../host";
 import type { ViewerSessionPort } from "../viewer-session/viewer-session-types";
-import { createNoopTelemetryPort, importLibraryScores } from "@zupulse/web-core";
+import { createNoopTelemetryPort, importLibraryScores, telemetryDurationMs } from "@zupulse/web-core";
 import type {
   LibraryScore,
   ScoreFileGateway,
@@ -66,6 +66,8 @@ export class ViewerApplication implements ViewerAppHandle {
   private readonly workspaceTelemetryKeys = new Set<string>();
   private studioTelemetrySessionId: string | undefined;
   private readonly telemetryControl?: TelemetryControl;
+  private readonly startupStartedAt?: number;
+  private readonly now: () => number;
 
   constructor(
     private readonly host: ViewerHost,
@@ -87,8 +89,11 @@ export class ViewerApplication implements ViewerAppHandle {
     harmonyAnalysisRunner: HarmonyAnalysisRunner = createDefaultHarmonyAnalysisRunner(),
     telemetryControl?: TelemetryControl,
     private readonly initialSurface: ViewerInitialSurface = "library",
+    startup?: { startedAt: number; now?: () => number },
   ) {
     if (telemetryControl !== undefined) this.telemetryControl = telemetryControl;
+    if (startup?.startedAt !== undefined) this.startupStartedAt = startup.startedAt;
+    this.now = startup?.now ?? readNow;
     this.telemetry = host.telemetry ?? createNoopTelemetryPort();
     this.unsubscribe = host.subscribe((event) => this.onHostEvent(event));
     this.studioApplication = new StudioApplication({
@@ -156,13 +161,14 @@ export class ViewerApplication implements ViewerAppHandle {
     const studioWasActive =
       this.studioApplication.getCurrentStudioSession() !== undefined &&
       this.studioApplication.getSnapshot()?.libraryScoreId === id;
+    const openedAt = this.now();
     await this.coordinator.openStudio(id);
     const studio = this.studioApplication.getSnapshot();
     if (!studio || studio.libraryScoreId !== id || studio.status === "error" || studio.status === "conflict") return;
     const score = await this.library.repository.get(id as LibraryScore["id"]);
     if (!studioWasActive || this.studioTelemetrySessionId === undefined)
       this.studioTelemetrySessionId = crypto.randomUUID();
-    if (score) this.captureWorkspaceSession("studio", id, score.format, this.studioTelemetrySessionId);
+    if (score) this.captureWorkspaceSession("studio", id, score.format, this.studioTelemetrySessionId, openedAt);
   }
 
   async refreshLibrary(): Promise<void> {
@@ -305,6 +311,7 @@ export class ViewerApplication implements ViewerAppHandle {
 
   openLibraryScore(id: string): Promise<void> {
     if (this.destroying) return Promise.reject(new Error("Viewer app is being destroyed"));
+    const openedAt = this.now();
     this.setSnapshot({
       ...this.snapshot,
       viewer: { libraryScoreId: id, status: "loading" },
@@ -320,7 +327,7 @@ export class ViewerApplication implements ViewerAppHandle {
         });
         void this.library.repository.get(id).then((score) => {
           if (score) {
-            this.captureWorkspaceSession("viewer", id, score.format);
+            this.captureWorkspaceSession("viewer", id, score.format, undefined, openedAt);
             this.observeViewerPlayback(id, score.format);
           }
         });
@@ -394,11 +401,17 @@ export class ViewerApplication implements ViewerAppHandle {
     scoreId: string,
     scoreFormat: LibraryScore["format"],
     sessionId?: string,
+    startedAt?: number,
   ): void {
     const sessionKey = `${workspace}:${scoreId}:${sessionId ?? this.snapshot.currentSessionId ?? "unknown"}`;
     if (this.workspaceTelemetryKeys.has(sessionKey)) return;
     this.workspaceTelemetryKeys.add(sessionKey);
-    this.telemetry.capture({ name: "workspace_session_started", workspace, scoreFormat });
+    this.telemetry.capture({
+      name: "workspace_session_started",
+      workspace,
+      scoreFormat,
+      ...durationFields(startedAt, this.now),
+    });
   }
 
   async exportLibraryScore(id: string): Promise<void> {
@@ -458,7 +471,12 @@ export class ViewerApplication implements ViewerAppHandle {
   private captureApplicationReady(state: "ready" | "degraded"): void {
     if (this.applicationReadyCaptured) return;
     this.applicationReadyCaptured = true;
-    this.telemetry.capture({ name: "application_ready", initialSurface: this.initialSurface, state });
+    this.telemetry.capture({
+      name: "application_ready",
+      initialSurface: this.initialSurface,
+      state,
+      ...durationFields(this.startupStartedAt, this.now),
+    });
   }
 
   private observeViewerPlayback(id: string, scoreFormat: "gp" | "musicxml"): void {
@@ -502,4 +520,18 @@ export class ViewerApplication implements ViewerAppHandle {
     this.setSnapshot({});
     if (cleanupError !== undefined) throw cleanupError;
   }
+}
+
+function readNow(): number {
+  try {
+    return performance.now();
+  } catch {
+    return Number.NaN;
+  }
+}
+
+function durationFields(startedAt: number | undefined, now: () => number): { durationMs?: number } {
+  if (startedAt === undefined) return {};
+  const durationMs = telemetryDurationMs(startedAt, now());
+  return durationMs === undefined ? {} : { durationMs };
 }

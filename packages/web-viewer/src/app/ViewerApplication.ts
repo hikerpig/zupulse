@@ -163,12 +163,14 @@ export class ViewerApplication implements ViewerAppHandle {
       this.studioApplication.getSnapshot()?.libraryScoreId === id;
     const openedAt = this.now();
     await this.coordinator.openStudio(id);
+    const readyAt = this.now();
     const studio = this.studioApplication.getSnapshot();
     if (!studio || studio.libraryScoreId !== id || studio.status === "error" || studio.status === "conflict") return;
     const score = await this.library.repository.get(id as LibraryScore["id"]);
     if (!studioWasActive || this.studioTelemetrySessionId === undefined)
       this.studioTelemetrySessionId = crypto.randomUUID();
-    if (score) this.captureWorkspaceSession("studio", id, score.format, this.studioTelemetrySessionId, openedAt);
+    if (score)
+      this.captureWorkspaceSession("studio", id, score.format, this.studioTelemetrySessionId, openedAt, readyAt);
   }
 
   async refreshLibrary(): Promise<void> {
@@ -319,6 +321,7 @@ export class ViewerApplication implements ViewerAppHandle {
     const operation = this.coordinator
       .openViewer(id, () => this.readLibraryScore(id))
       .then(() => {
+        const readyAt = this.now();
         this.setSnapshot({
           ...this.snapshot,
           currentSessionId: crypto.randomUUID(),
@@ -327,7 +330,7 @@ export class ViewerApplication implements ViewerAppHandle {
         });
         void this.library.repository.get(id).then((score) => {
           if (score) {
-            this.captureWorkspaceSession("viewer", id, score.format, undefined, openedAt);
+            this.captureWorkspaceSession("viewer", id, score.format, undefined, openedAt, readyAt);
             this.observeViewerPlayback(id, score.format);
           }
         });
@@ -402,6 +405,7 @@ export class ViewerApplication implements ViewerAppHandle {
     scoreFormat: LibraryScore["format"],
     sessionId?: string,
     startedAt?: number,
+    endedAt?: number,
   ): void {
     const sessionKey = `${workspace}:${scoreId}:${sessionId ?? this.snapshot.currentSessionId ?? "unknown"}`;
     if (this.workspaceTelemetryKeys.has(sessionKey)) return;
@@ -410,7 +414,7 @@ export class ViewerApplication implements ViewerAppHandle {
       name: "workspace_session_started",
       workspace,
       scoreFormat,
-      ...durationFields(startedAt, this.now),
+      ...durationFields(startedAt, endedAt),
     });
   }
 
@@ -475,7 +479,7 @@ export class ViewerApplication implements ViewerAppHandle {
       name: "application_ready",
       initialSurface: this.initialSurface,
       state,
-      ...durationFields(this.startupStartedAt, this.now),
+      ...durationFields(this.startupStartedAt, this.now()),
     });
   }
 
@@ -530,8 +534,8 @@ function readNow(): number {
   }
 }
 
-function durationFields(startedAt: number | undefined, now: () => number): { durationMs?: number } {
-  if (startedAt === undefined) return {};
-  const durationMs = telemetryDurationMs(startedAt, now());
+function durationFields(startedAt: number | undefined, endedAt: number | undefined): { durationMs?: number } {
+  if (startedAt === undefined || endedAt === undefined) return {};
+  const durationMs = telemetryDurationMs(startedAt, endedAt);
   return durationMs === undefined ? {} : { durationMs };
 }

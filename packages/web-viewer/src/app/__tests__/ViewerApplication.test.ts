@@ -705,17 +705,20 @@ describe("ViewerApplication", () => {
     const repository: SheetLibraryRepository = {
       initialize: async () => undefined,
       list: async () => [],
-      get: async () => ({
-        id: scoreId as LibraryScore["id"],
-        scoreIdentity: "a".repeat(64) as LibraryScore["scoreIdentity"],
-        format: "gp",
-        fileName: "score.gp",
-        title: "Score",
-        isFavorite: false,
-        importedAt: "2026-08-01T00:00:00.000Z",
-        practice: { hasLoop: false },
-        metadata: {},
-      }),
+      get: async () => {
+        now = 900;
+        return {
+          id: scoreId as LibraryScore["id"],
+          scoreIdentity: "a".repeat(64) as LibraryScore["scoreIdentity"],
+          format: "gp",
+          fileName: "score.gp",
+          title: "Score",
+          isFavorite: false,
+          importedAt: "2026-08-01T00:00:00.000Z",
+          practice: { hasLoop: false },
+          metadata: {},
+        };
+      },
       findByIdentity: async () => undefined,
       add: async () => {
         throw new Error("unused");

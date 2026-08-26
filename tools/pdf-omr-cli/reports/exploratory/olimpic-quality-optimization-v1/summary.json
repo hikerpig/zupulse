@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "completed-no-runtime-improvement",
+  "decision": "NOT_ELIGIBLE",
+  "preprocessing": {
+    "corpusId": "olimpic-scanned-full-page-dev-v1",
+    "works": 6,
+    "pages": 29,
+    "selectedVariant": "none",
+    "selectionDecision": "STOP",
+    "variants": [
+      {
+        "id": "none",
+        "changedPages": 0,
+        "segmentationSucceeded": 0,
+        "systems": 0,
+        "reportSha256": "6af40c383588446cbeb57f134b5c97a5f23e9aa5414af374633a3f63a53292b9"
+      },
+      {
+        "id": "deskew-v1",
+        "changedPages": 13,
+        "segmentationSucceeded": 0,
+        "systems": 0,
+        "reportSha256": "c1d8310df87f14b91d4e1e7886437af5a4f6e90698599692154cc7dcefa2fc23"
+      },
+      {
+        "id": "local-contrast-v1",
+        "changedPages": 29,
+        "segmentationSucceeded": 0,
+        "systems": 0,
+        "reportSha256": "5cea5ffab76578b623ddbee52c7770554cba46d5162402929cc94f8a9cf32235"
+      },
+      {
+        "id": "adaptive-threshold-v1",
+        "changedPages": 29,
+        "segmentationSucceeded": 0,
+        "systems": 0,
+        "reportSha256": "0696a59e1f836010e7b2c41bbe66357761ac63c9362036f0055aa8799d188550"
+      }
+    ]
+  },
+  "joining": {
+    "decision": "STOP",
+    "auditReportSha256": "156911885844b2b3453be1bf63ed9afb817b5eb6519e6abc631ebbe74af32bab",
+    "sourceReportSha256": "b11b25a1a7048b69ba459d23f34cbe13e3eaf9b5d00464e5c27e29d57c832a87",
+    "artifacts": 45,
+    "singleSystemArtifacts": 45,
+    "multiSystemArtifacts": 0,
+    "rawMeasureBoundaries": 153,
+    "normalizedMeasureBoundaries": 153,
+    "normalizedBoundariesWithoutSource": 0
+  },
+  "selector": {
+    "decision": "NOT_ELIGIBLE",
+    "attempted": 46,
+    "rokotSucceeded": 45,
+    "legatoSucceeded": 26,
+    "comparable": 26,
+    "candidates": 81,
+    "oracleRecommended": 28,
+    "minimumSelectedCandidates": 35,
+    "oracleWilsonLowerBound": 0.8793566952341543,
+    "minimumWilsonLowerBound": 0.9
+  },
+  "nextAction": "Design a separately approved learned full-page layout detector experiment before further joining or selector work."
+}

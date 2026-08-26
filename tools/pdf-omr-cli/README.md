@@ -234,19 +234,20 @@ converter environment 必须安装 `abc-xml-converter==1.0.1`。完整 revision�
 license provenance 见 `engines/rokot-environment.json`；模型和 Python environment 不提交到仓库。
 
 full-page development corpus 的 segmentation pilot 不调用模型，只渲染原始多页 PDF 并逐页运行
-`rokot-staff-system-v1` 的 `grand-staff` mode，用于在 inference 前审计 page/system boundary。该 detector 保留 fragmented-row 检测，
-并允许被密集音符遮断的谱线片段对齐到同一条完整谱线范围；严格直线配对失败后，孤立候选可使用
-曲线花括号覆盖率回退：
+`rokot-staff-system-v2`，用于在 inference 前审计 page/system boundary。schema `3.0.0` 同时记录 immutable render
+SHA 与显式 preprocessing output SHA；可选 variant 为 `none`、`deskew-v1`、`local-contrast-v1` 和
+`adaptive-threshold-v1`：
 
 ```bash
 pnpm exec vite-node tools/pdf-omr-cli/scripts/run_full_page_segmentation_pilot.ts \
   tools/pdf-omr-cli/corpus/olimpic-scanned-full-page-dev-v1/manifest.json \
-  tools/pdf-omr-cli/reports/development/olimpic-scanned-full-page-v1-segmentation-pilot/segmentation.json
+  /tmp/segmentation.json \
+  none
 ```
 
-该脚本保留 render/crop hashes、逐页错误 stage 和 `ambiguous-system-segmentation` context，不写回输入或
-人工修补 crop。full-page protocol、readiness limitation 和两次相同 report hash 见
-`tools/pdf-omr-cli/docs/evaluation.md` 与对应 development report README。
+全量单变量消融使用 `run_full_page_preprocessing_ablation.ts`。两个脚本都保留 render/crop hashes、逐页错误 stage
+和 bounded context，不写回输入或人工修补 crop。full-page protocol、readiness limitation 和 report hash 见
+`tools/pdf-omr-cli/docs/evaluation.md` 与对应 report README。
 
 ## Run artifacts
 

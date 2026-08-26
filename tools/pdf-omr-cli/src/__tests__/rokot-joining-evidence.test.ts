@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRokotJoiningEvidence } from "../benchmark/rokot-joining-evidence";
+import { buildRokotJoiningEvidence, summarizeRokotJoiningEvidence } from "../benchmark/rokot-joining-evidence";
 import { musicXmlReadyDraft } from "./fixtures/musicxml-ready-draft";
 
 const abc = `%%rokot-abc 0.1
@@ -41,5 +41,26 @@ describe("Rokot joining evidence", () => {
     ]);
     expect(evidence.rawMeasureBoundaries.map((item) => item.globalMeasureIndex)).toEqual([0, 1]);
     expect(evidence.normalizedMeasureBoundaries.map((item) => item.globalMeasureIndex)).toEqual([0, 1]);
+  });
+
+  it("summarizes whether immutable artifacts contain multi-system joining evidence", () => {
+    const singleSystem = buildRokotJoiningEvidence(
+      { schemaVersion: "1.0.0", systems: [system(0, "1")] },
+      musicXmlReadyDraft(),
+    );
+    const multiSystem = buildRokotJoiningEvidence(
+      { schemaVersion: "1.0.0", systems: [system(0, "1"), system(1, "2")] },
+      musicXmlReadyDraft(),
+    );
+
+    expect(summarizeRokotJoiningEvidence([singleSystem, multiSystem])).toEqual({
+      artifacts: 2,
+      singleSystemArtifacts: 1,
+      multiSystemArtifacts: 1,
+      systems: 3,
+      rawMeasureBoundaries: 3,
+      normalizedMeasureBoundaries: 4,
+      normalizedBoundariesWithoutSource: 4,
+    });
   });
 });

@@ -268,6 +268,47 @@ artifacts，合并 Draft 含 56 measures 且无 diagnostics，总墙钟约 48 �
 因此中止了该次 development probe。该结果证明 8 页输入合同与流式执行可用，不证明复杂 8 页整谱能在当前
 一小时 timeout 内完成；复杂度和 max-length 仍需由真实 corpus 单独评估。
 
+## 2026-08-26 Detector v2 real full-page baseline
+
+新的 versioned segmentation pilot 使用当前 `rokot-staff-system-v2` 重跑既有
+`olimpic-scanned-full-page-dev-v1` development inputs。两次独立运行生成 byte-identical canonical report，
+SHA-256 为 `41565eb8288278913169109556ec56f29728b1fb3391ddab3d3ded4345772390`。
+
+6/6 works、29/29 pages 均在 `grand-staff-pairing` fail closed，0 systems 发布；每页检测到 9–58 个 staff-group
+candidates，仍有 1–32 个 unpaired groups。结果证明 quick profile 的 synthetic full-page 改善不能外推到真实
+整页扫描。该 pilot 未调用 recognition engine，也未生成 symbolic/Harmony metrics，因此只维持
+real-scanned full-page layout `STOP`，不能解释为 Rokot 或 LEGATO note-level quality。
+
+下一步使用同一 development inputs 做 `none`、deskew、local contrast 与 adaptive threshold 的单变量 ablation。
+不得降低 pairing gate、忽略 unpaired groups、人工 crop 或修改历史 protocol。durable summary 位于
+`tools/pdf-omr-cli/reports/development/olimpic-full-page-detector-v2/`。
+
+### Deterministic preprocessing ablation
+
+上述 ablation 已于 2026-08-26 完成。四个 variant 两次运行均各自生成相同 canonical SHA；但 `none`、deskew、
+local contrast、adaptive threshold 的 segmentation success 都是 0/29，全部仍在 `grand-staff-pairing` fail closed，
+system count 均为 0。deskew 改变 13 pages，local contrast 与 adaptive threshold 各改变 29 pages。由于没有任何
+admission 提升，T08 决策为 `STOP`，runtime default 保持 `none`，不修改 detector 或 Rokot adapter。
+
+同一轮 joining census 读取既有 45 个 Rokot success artifacts：45/45 都是单个 `system-crop`，multi-system
+denominator 为 0；153 个 raw/normalized boundaries 数量一致且 provenance 无缺失。该证据不能评价跨 system
+header continuity，故 T09 同样 `STOP`，`normalizeRokotOutput` 不修改。完整结果位于
+`tools/pdf-omr-cli/reports/exploratory/olimpic-quality-optimization-v1/`。
+
+## 2026-08-26 LEGATO topology failure audit
+
+既有 46-item OLiMPiC development run 的 20 个 LEGATO failures 已通过 immutable artifacts 审计。分类为
+13 个 `contentful-extra-part`、2 个 `duplicate-extra-part`、1 个 `empty-part` 和 4 个 engine failures。
+15 个 `part-count-mismatch` 都以 `1 part × 2 staves` 为 expected topology；LEGATO 产生 14 个
+`3 parts × 1 staff` 和一个 `4 parts × 1 staff`。
+
+13 个 contentful extra-part cases 显然不能通过 adapter 丢弃。两个 duplicate cases 也没有形成唯一无损映射：
+一个剩余 upper part 使用 percussion clef，另一个删除重复 bass 后仍有三个 contentful parts。因此 T05
+adapter-normalization decision 为 `STOP`，`alignDraftParts` 不修改，comparable 仍为 26/46。后续若继续该方向，
+必须作为 LEGATO model/processor output-topology experiment，而不能根据 ground truth、part order 或 pitch range
+选择要删除的 part。durable evidence 位于
+`tools/pdf-omr-cli/reports/exploratory/olimpic-legato-topology-audit-v1/`。
+
 ## 若未来重启
 
 2026-08-17 的 source-independent system-crop 扩样已经执行：46 attempted 中 Rokot 45 success、LEGATO 26

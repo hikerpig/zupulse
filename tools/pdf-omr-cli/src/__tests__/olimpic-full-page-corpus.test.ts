@@ -112,4 +112,31 @@ describe("OLiMPiC full-page development corpus v1", () => {
       ),
     ).toBe(true);
   });
+
+  it("retains the current detector v2 real-page baseline separately from historical evidence", async () => {
+    const summaryPath = resolve(corpusRoot, "../../reports/development/olimpic-full-page-detector-v2/summary.json");
+    const summary = JSON.parse(new TextDecoder().decode(await readFile(summaryPath))) as Record<string, unknown>;
+
+    expect(summary).toMatchObject({
+      schemaVersion: "1.0.0",
+      status: "completed-no-segmentation-admission",
+      decision: "STOP",
+      corpus: {
+        id: "olimpic-scanned-full-page-dev-v1",
+        role: "development",
+        manifestSha256: "4cbd78411f15f73bf548a50f2af125e29c6cc42297b43a8616934a08a2cb0a1f",
+        works: 6,
+        pages: 29,
+      },
+      pilot: {
+        reportSha256: "41565eb8288278913169109556ec56f29728b1fb3391ddab3d3ded4345772390",
+        reproducibilityAgreementRate: 1,
+        items: { attempted: 6, succeeded: 0, failed: 6 },
+        pages: { attempted: 29, succeeded: 0, failed: 29 },
+        systems: 0,
+        failureStages: { "grand-staff-pairing": 29 },
+      },
+    });
+    expect(JSON.stringify(summary)).not.toMatch(/\/(?:Users|private|tmp)\//);
+  });
 });

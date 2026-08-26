@@ -3,13 +3,15 @@ feature: anonymous-telemetry
 title: Anonymous Product Telemetry and Error Tracking
 status: current
 delivery: partial
-last_verified: 2026-08-15
+last_verified: 2026-08-25
 hosts:
   - browser
   - desktop
 implementation_paths:
   - packages/web-core/src/telemetry
+  - packages/web-core/src/telemetry/posthog-port.ts
   - packages/web-viewer/src/app/ViewerApplication.ts
+  - apps/web-demo/src/compose-browser-app.ts
   - apps/web-demo/src/telemetry/browser-telemetry.ts
   - apps/desktop-shell/src/telemetry/desktop-telemetry.ts
   - apps/desktop-shell/src/main/telemetry-preference-store.ts
@@ -41,7 +43,10 @@ Acceptance、开发测试构建与 iPad 保持 No-op。遥测不是业务事实�
 - Browser 使用 localStorage 保存匿名 installation state；Desktop Main 使用私有原子 JSON 文件保存 state，
   Renderer 只能消费 Main 通过 Bridge 提供的 identity/session context。
 - Provider adapter 只向 PostHog Cloud US 的精确 ingestion origin 发送 allowlisted properties，禁用
-  person profile 与 GeoIP enrichment；无效配置和 provider failure 降级为 No-op。
+  person profile 与 GeoIP enrichment；无效配置和 provider failure 降级为 No-op。Browser 与 Desktop 共用
+  `web-core` 的 PostHog capture implementation；Telemetry Preference 与 Anonymous Installation 仍由各宿主拥有。
+- Browser 在 composition 时把 LocaleHost 的 `effectiveLocale` 写入 envelope；该值取自启动时偏好，不随会话内
+  语言切换热更新。
 - 异常在发送前移除路径、URL 参数、UUID、hash、token、cause/custom fields，并受每 session 20 条及
   fingerprint 时间窗限制。
 
@@ -74,7 +79,7 @@ identity，并由 Main 为本次运行创建新的 application session。损坏�
 
 | 能力                          | Browser              | Desktop                    | 当前差异                                                   |
 | ----------------------------- | -------------------- | -------------------------- | ---------------------------------------------------------- |
-| 匿名 semantic events          | 支持（有效分发配置） | 支持（Main-owned context） | Provider adapter 位于各 host                               |
+| 匿名 semantic events          | 支持（有效分发配置） | 支持（Main-owned context） | PostHog capture 共享；Preference 分宿主                    |
 | JavaScript exception tracking | 支持                 | 支持 Renderer/Main         | native crash dump 不在范围内                               |
 | 用户退出与 identity reset     | 支持                 | 支持                       | Desktop preference 由 Bridge 持久化                        |
 | iPad telemetry                | 不适用               | 不适用                     | iPad 保持 No-op 且 Bridge allowlist 不含 telemetry request |

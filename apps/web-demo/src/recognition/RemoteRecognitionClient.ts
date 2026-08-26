@@ -1,4 +1,5 @@
 import {
+  recognitionApiCapabilitiesSchema,
   recognitionApiErrorSchema,
   recognitionHistoryPageSchema,
   recognitionJobDetailSchema,
@@ -15,8 +16,11 @@ import type {
   RecognitionHistoryPort,
   RecognitionJobPort,
 } from "@zupulse/web-viewer";
+import { pickFiles, saveBytes } from "../library/browser-file-transfer";
 
 const API = "/api/recognition/v1";
+const recognitionAccept = ".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg";
+const defaultProbeTimeoutMs = 800;
 
 type EventSourceLike = {
   addEventListener(type: string, listener: EventListener): void;
@@ -30,6 +34,31 @@ type Dependencies = {
   createEventSource(url: string): EventSourceLike;
   save(fileName: string, bytes: Uint8Array): void;
 };
+
+export async function tryCreateRemoteRecognitionClient(input: {
+  fetch: typeof globalThis.fetch;
+  ownerDocument: Document;
+  timeoutMs?: number;
+  createEventSource?: (url: string) => EventSourceLike;
+}): Promise<RemoteRecognitionClient | undefined> {
+  try {
+    const response = await input.fetch(`${API}/capabilities`, {
+      signal: AbortSignal.timeout(input.timeoutMs ?? defaultProbeTimeoutMs),
+    });
+    if (!response.ok) return undefined;
+    const capabilities = recognitionApiCapabilitiesSchema.parse(await response.json());
+    if (!capabilities.engines.some((engine) => engine.available)) return undefined;
+    return new RemoteRecognitionClient({
+      engines: capabilities.engines,
+      fetch: input.fetch,
+      selectFile: () => selectRecognitionFile(input.ownerDocument),
+      createEventSource: input.createEventSource ?? ((url) => new EventSource(url)),
+      save: (fileName, bytes) => saveRecognitionResult(input.ownerDocument, fileName, bytes),
+    });
+  } catch {
+    return undefined;
+  }
+}
 
 export class RemoteRecognitionClient implements RecognitionHistoryPort {
   private readonly dependencies: Dependencies;
@@ -61,7 +90,7 @@ export class RemoteRecognitionClient implements RecognitionHistoryPort {
 
 class RemoteRecognitionJob implements RecognitionJobPort {
   readonly engines: RecognitionJobPort["engines"];
-  private selected?: File;
+  private selected?: { token: string; file: File };
   private jobId: string | undefined;
   private source: EventSourceLike | undefined;
   private startController: AbortController | undefined;
@@ -89,10 +118,11 @@ class RemoteRecognitionJob implements RecognitionJobPort {
     const file = await this.dependencies.selectFile();
     if (file === null) return { status: "cancelled" as const };
     const inputKind = detectInputKind(file);
-    this.selected = file;
+    const fileToken = crypto.randomUUID();
+    this.selected = { token: fileToken, file };
     return {
       status: "selected" as const,
-      fileToken: "selected-file",
+      fileToken,
       fileName: file.name,
       sizeBytes: file.size,
       inputKind,
@@ -100,10 +130,10 @@ class RemoteRecognitionJob implements RecognitionJobPort {
   }
 
   async start(fileToken: string, engineId: string) {
-    if (fileToken !== "selected-file" || this.selected === undefined) throw new Error("INVALID_REQUEST");
+    if (fileToken !== this.selected?.token) throw new Error("INVALID_REQUEST");
     const body = new FormData();
     body.append("engineId", engineId);
-    body.append("input", this.selected);
+    body.append("input", this.selected.file);
     const controller = new AbortController();
     this.startController = controller;
     try {
@@ -115,7 +145,7 @@ class RemoteRecognitionJob implements RecognitionJobPort {
         }),
       );
       this.jobId = snapshot.jobId;
-      this.selectedInputs.set(snapshot.jobId, this.selected);
+      this.selectedInputs.set(snapshot.jobId, this.selected.file);
       this.connect();
       return { jobId: snapshot.jobId, snapshot };
     } catch (error) {
@@ -177,12 +207,14 @@ class RemoteRecognitionJob implements RecognitionJobPort {
   }
 
   async readInputPreview(jobId: string, pageIndex: number): Promise<PdfOmrInputPreview | null> {
-    const file = this.selected ?? this.selectedInputs.get(jobId);
+    const file = this.selected?.file ?? this.selectedInputs.get(jobId);
     return file === undefined ? null : readSelectedFilePreview(file, pageIndex);
   }
 
-  async readSelectedInputPreview(_fileToken: string, pageIndex: number): Promise<PdfOmrInputPreview | null> {
-    return this.selected === undefined ? null : readSelectedFilePreview(this.selected, pageIndex);
+  async readSelectedInputPreview(fileToken: string, pageIndex: number): Promise<PdfOmrInputPreview | null> {
+    return this.selected === undefined || this.selected.token !== fileToken
+      ? null
+      : readSelectedFilePreview(this.selected.file, pageIndex);
   }
 
   async exportResult(jobId: string): Promise<"saved" | "cancelled"> {
@@ -246,25 +278,17 @@ class RemoteRecognitionJob implements RecognitionJobPort {
   }
 }
 
-export function selectRecognitionFile(ownerDocument: Document): Promise<File | null> {
-  return new Promise((resolve) => {
-    const input = ownerDocument.createElement("input");
-    input.type = "file";
-    input.accept = ".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg";
-    input.addEventListener("change", () => resolve(input.files?.[0] ?? null), { once: true });
-    input.click();
-  });
+async function selectRecognitionFile(ownerDocument: Document): Promise<File | null> {
+  const files = await pickFiles(ownerDocument, { accept: recognitionAccept, multiple: false });
+  return files[0] ?? null;
 }
 
-export function saveRecognitionResult(ownerDocument: Document, fileName: string, bytes: Uint8Array): void {
-  const blobBytes = new Uint8Array(bytes.byteLength);
-  blobBytes.set(bytes);
-  const url = URL.createObjectURL(new Blob([blobBytes], { type: "application/vnd.recordare.musicxml" }));
-  const anchor = ownerDocument.createElement("a");
-  anchor.href = url;
-  anchor.download = fileName;
-  anchor.click();
-  URL.revokeObjectURL(url);
+function saveRecognitionResult(ownerDocument: Document, fileName: string, bytes: Uint8Array): void {
+  saveBytes(ownerDocument, {
+    fileName,
+    bytes,
+    mimeType: "application/vnd.recordare.musicxml",
+  });
 }
 
 function detectInputKind(file: File): "pdf" | "image" {

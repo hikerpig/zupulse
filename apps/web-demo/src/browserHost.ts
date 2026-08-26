@@ -1,5 +1,4 @@
 import { isLocalePreference, resolveLocale, type LocalePreference, type LocaleState } from "@zupulse/app-i18n";
-import { MockNativeBridge } from "@zupulse/web-core";
 import type { LocaleHost, ViewerHost } from "@zupulse/web-viewer";
 import { getLocalStorage } from "./local-storage";
 
@@ -29,10 +28,8 @@ export function createBrowserLocaleHost(
   };
 }
 
-export function createBrowserHost(ownerDocument: Document): ViewerHost & { bridge: MockNativeBridge } {
-  const bridge = new MockNativeBridge();
+export function createBrowserHost(ownerDocument: Document): ViewerHost {
   return {
-    bridge,
     subscribe(listener) {
       const handlePageHide = () => listener({ type: "suspend" });
       ownerDocument.defaultView?.addEventListener("pagehide", handlePageHide);
@@ -40,9 +37,6 @@ export function createBrowserHost(ownerDocument: Document): ViewerHost & { bridg
     },
   };
 }
-
-export { createBrowserTelemetry } from "./telemetry/browser-telemetry";
-export type { BrowserTelemetry } from "./telemetry/browser-telemetry";
 
 function readStoredPreference(storage: Storage | undefined): LocalePreference | undefined {
   if (!storage) return undefined;

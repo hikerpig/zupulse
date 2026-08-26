@@ -3,12 +3,14 @@ feature: remote-pdf-omr-service
 title: Browser Remote PDF 识谱
 status: current
 delivery: partial
-last_verified: 2026-08-24
+last_verified: 2026-08-25
 hosts:
   - browser
 implementation_paths:
   - apps/recognition-server/src
   - apps/web-demo/src/recognition
+  - apps/web-demo/src/compose-browser-app.ts
+  - apps/web-demo/src/library/browser-file-transfer.ts
   - packages/web-core/src/recognition
   - packages/web-viewer/src/features/pdf-omr
   - packages/web-viewer/src/app/pages/PdfOmrHistoryPage.tsx
@@ -31,8 +33,9 @@ supersedes: []
 
 ## 当前已实现行为
 
-- Browser 最多等待 800 ms 探测同源能力。握手失败时不声明 `pdfOmrWorkbench` / `pdfOmrHistory`，导航不显示入口，
-  直接访问 route 仍进入 not-found；Desktop 继续使用本地 transient workbench。
+- Remote Recognition Service adapter 最多等待 800 ms 探测同源能力。握手失败时 composition 不声明
+  `pdfOmrWorkbench` / `pdfOmrHistory`，导航不显示入口，直接访问 route 仍进入 not-found；Desktop 继续使用本地
+  transient workbench。选中文件的 `fileToken` 对 Viewer 是 opaque，不暴露 Browser `File` 或固定字面量。
 - `#/pdf-omr` 显示实例共享历史；`#/pdf-omr/new` 新建任务；`#/pdf-omr/:jobId` 从 Server 恢复详情。历史首次读取
   20 项并通过基于 immutable `createdAt + jobId` 的 opaque cursor 继续加载，按 `jobId` 去重；每项显示文件名、输入
   类型、最新状态、engine、Attempt 数、最近更新时间与到期日，并对删除做确认。

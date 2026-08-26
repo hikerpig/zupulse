@@ -95,3 +95,28 @@ deterministic non-overlapping crops。它允许真实 system 包含两个以上 
 完整 screening evidence 位于
 `tools/pdf-omr-cli/reports/exploratory/ola-v2-dependency-gate/`。下一候选必须先证明 source、weights、training data
 与 runtime 的 Desktop distribution permission，再允许下载或执行。
+
+用户随后明确授权继续进行 research-only OLA probe。固定 raw inference 两次产生相同 prediction projection SHA，
+warm CPU 处理 29 pages 合计约 11.3–11.4 秒；但默认 `systems` / `grand_staff` 输出没有完整匹配页。全局
+confidence/NMS ablation 的最佳 `grand_staff` variant 也只有 1 page / 1 work 完整匹配。进一步使用 OLA `staves`
+做固定相邻配对，虽然 13/29 pages 在 system count 上相同，只有 1 page / 1 work 的所有 pair boxes 达到 IoU 0.5，
+且仍没有模型产生的 staff-line polylines、crop hashes 或 joining evidence。
+
+因此 admission gate 仍为 `NOT_ELIGIBLE`，不得把 count coincidence 当成 segmentation success。完整 identity、runtime、
+dependency 与 ablation evidence 位于
+`tools/pdf-omr-cli/reports/exploratory/ola-v2-development-probe-v1/`。继续 OLA 的有效方向是取得适用许可后进行
+target-domain training/fine-tuning 与 topology output 设计，不再继续 threshold-only tuning。
+
+## 2026-08-27 OpenScore Lieder source decision
+
+训练数据方向收敛为 OpenScore Lieder 的 CC0 source，而不是复用 OLA 聚合数据。固定 upstream revision
+`6b2dc542ce2e8aa4b78c8ee62103b210efc07015` 后，source metadata 有 1,356 个 records；4 个缺少对应 `.mscx`，另有
+75 个 score IDs 已被仓库现有 OLiMPiC evaluation evidence 引用。两类均 fail closed 排除，得到 1,277 个 eligible
+scores；按 composer 分组的确定性 split 为 1,144 train、133 validation。
+
+该决策只批准 source eligibility 与 selection plan。尚未批准或执行 MuseScore rendering、annotation generation、
+augmentation、training 或 model/runtime integration。后续 renderer probe 必须固定 MuseScore、fonts、page settings
+与 hashes，并由本仓库独立实现 SVG/layout extraction；不得复制 OLA 中 license 未声明的 annotation extraction code。
+synthetic validation 不能替代现有 real-scanned OLiMPiC admission，frozen holdout 不变。
+
+可复算 plan 位于 `tools/pdf-omr-cli/corpus/openscore-lieder-layout-train-v1/`。

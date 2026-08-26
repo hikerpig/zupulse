@@ -1,0 +1,44 @@
+# OpenScore Lieder layout training source v1
+
+状态：`source-eligible-rendering-not-run`。本目录只固定可用于 learned layout pretraining 的 CC0 source plan；尚未
+渲染页面、生成 layout annotations 或训练模型，也不改变任何 runtime、development protocol 或 frozen holdout。
+
+## Source boundary
+
+- 上游：`OpenScore/Lieder` revision `6b2dc542ce2e8aa4b78c8ee62103b210efc07015`。
+- 许可：`CC0-1.0`；`source-plan.json` 固定 `LICENSE.txt` 与 `data/scores.tsv` 的 SHA-256。
+- 上游 metadata 有 1,356 个 score records；固定 tree 中有 4 个 record 缺少对应 `.mscx`，因此 fail closed 排除。
+- 仓库现有 OLiMPiC evaluation evidence 引用的 75 个 OpenScore score IDs 全部排除，避免训练内容进入当前
+  development/holdout evidence。
+- 最终 1,277 个 eligible scores：1,144 train、133 validation。split 以 composer 为组进行确定性 hash，两个 split
+  不共享 composer。
+
+`source-plan.json` 是 source eligibility 和 selection evidence，不是已生成数据集。它枚举每个 eligible `.mscx`
+source path，便于后续在独立 cache 中逐项校验和渲染；数据 bytes 不提交仓库。
+
+## Reproduce
+
+先从固定 revision 取得 `data/scores.tsv`、`LICENSE.txt` 和全部 `scores/**/*.mscx` path，再执行：
+
+```bash
+python3 tools/pdf-omr-cli/scripts/plan_openscore_lieder_layout_corpus.py \
+  --scores-tsv /path/to/scores.tsv \
+  --source-paths /path/to/source-paths.txt \
+  --protected-work-ids tools/pdf-omr-cli/corpus/openscore-lieder-layout-train-v1/protected-evaluation-work-ids.txt \
+  --source-revision 6b2dc542ce2e8aa4b78c8ee62103b210efc07015 \
+  --scores-tsv-sha256 a45bd0b2772a43dd830054f605dc3da564d57aace02992ee2bd93ee5c8e893a9 \
+  --license-sha256 a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499 \
+  --output tools/pdf-omr-cli/corpus/openscore-lieder-layout-train-v1/source-plan.json
+
+pnpm exec oxfmt tools/pdf-omr-cli/corpus/openscore-lieder-layout-train-v1/source-plan.json
+```
+
+## Next gate
+
+下一阶段只能建立独立 renderer/annotation probe：固定 MuseScore exact version、fonts、page settings 与 output hashes，
+并由本仓库自行实现 SVG/layout extraction。不得复制 OLA 中标记为 `license unspecified` 的 annotation extraction
+实现。只有 probe 能稳定产生 ordered system bbox、staff count 与 staff-line polylines 后，才允许生成完整 synthetic
+training artifacts。
+
+OpenScore Lieder 是 synthetic typeset source。它适合 pretraining 和 topology supervision，但不能替代真实扫描的
+OLiMPiC development admission；任何模型仍须在未参与训练的 real-scanned pages 上通过现有 gate。

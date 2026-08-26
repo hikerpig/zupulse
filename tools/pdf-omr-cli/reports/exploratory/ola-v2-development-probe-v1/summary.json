@@ -1,0 +1,169 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "completed-no-admission",
+  "decision": "NOT_ELIGIBLE",
+  "scope": "development-research-only",
+  "candidate": {
+    "id": "ola-v2.0",
+    "repository": "https://github.com/v-dvorak/omr-layout-analysis",
+    "revision": "f87cf7d8100a0e0fb41ae597433ab25bd45c84fe",
+    "asset": "ola-layout-analysis-2.0-2025-03-09.pt",
+    "weightsBytes": 40530853,
+    "weightsSha256": "f1ae61ea441871e9b6002bfa2e824e8feecc1dbdabe08495a55b3144277133cf",
+    "weightsLicense": "UNDECLARED_BY_CANDIDATE_REPOSITORY",
+    "trainingDataDeclarationSource": "https://github.com/v-dvorak/omr-layout-analysis/blob/ola-v2.0/README.md",
+    "trainingDataDeclarationSha256": "96490cbfd4feb77f041c0a8c018608c096eac7233e33e7191006facf0f57988e"
+  },
+  "corpus": {
+    "id": "olimpic-scanned-full-page-dev-v1",
+    "split": "development",
+    "manifestSha256": "4cbd78411f15f73bf548a50f2af125e29c6cc42297b43a8616934a08a2cb0a1f",
+    "works": 6,
+    "pages": 29,
+    "expectedSystems": 121,
+    "holdoutRead": false
+  },
+  "runtime": {
+    "platform": "macOS-26.5.2-arm64",
+    "python": "3.11.9",
+    "ultralytics": "8.3.4",
+    "torch": "2.13.0",
+    "torchvision": "0.28.0",
+    "numpy": "2.4.6",
+    "opencv": "5.0.0",
+    "environmentSizeKiB": 936980,
+    "peakRssBytes": 1721221120,
+    "coldSmokeInferenceSeconds": 14.992378124996321,
+    "warmRuns": [
+      {
+        "totalInferenceSeconds": 11.327035205991706,
+        "minimumPageSeconds": 0.33213741701911204,
+        "maximumPageSeconds": 0.5128415000217501
+      },
+      {
+        "totalInferenceSeconds": 11.403512626013253,
+        "minimumPageSeconds": 0.35005599999567494,
+        "maximumPageSeconds": 0.4871572909760289
+      }
+    ],
+    "verifiedArchitecture": "macos-arm64",
+    "windowsVerified": false,
+    "offlineNetworkIsolationVerified": false,
+    "stableErrorVerified": false,
+    "productDistributionAllowed": false
+  },
+  "dependencies": {
+    "requirementsSha256": "1a434904efd924710d5098b9e5e2159f5b0cdebbb2c23b8a2a1c98e82f160f1d",
+    "packages": [
+      "certifi==2026.7.22",
+      "charset-normalizer==3.5.1",
+      "contourpy==1.3.3",
+      "cycler==0.12.1",
+      "filelock==3.32.4",
+      "fonttools==4.63.0",
+      "fsspec==2026.7.0",
+      "idna==3.19",
+      "jinja2==3.1.6",
+      "kiwisolver==1.5.0",
+      "markupsafe==3.0.3",
+      "matplotlib==3.11.1",
+      "mpmath==1.3.0",
+      "networkx==3.6.1",
+      "numpy==2.4.6",
+      "opencv-python==5.0.0.93",
+      "packaging==26.3",
+      "pandas==3.0.5",
+      "pillow==12.3.0",
+      "psutil==7.2.2",
+      "py-cpuinfo==9.0.0",
+      "pyparsing==3.3.2",
+      "python-dateutil==2.9.0.post0",
+      "pyyaml==6.0.3",
+      "requests==2.34.2",
+      "scipy==1.17.1",
+      "seaborn==0.13.2",
+      "setuptools==84.0.0",
+      "six==1.17.0",
+      "sympy==1.14.0",
+      "torch==2.13.0",
+      "torchvision==0.28.0",
+      "tqdm==4.70.0",
+      "typing-extensions==4.16.0",
+      "ultralytics==8.3.4",
+      "ultralytics-thop==2.1.6",
+      "urllib3==2.7.0"
+    ],
+    "licenseBlockers": [
+      "ultralytics==8.3.4: AGPL-3.0",
+      "ultralytics-thop==2.1.6: AGPL-3.0",
+      "OLA release weights: no separate license declaration"
+    ]
+  },
+  "determinism": {
+    "runs": 2,
+    "predictionProjectionSha256": "4e3a212f27e7c3fb3e02bbcd5d54aaa33e437955fffceaf02b5ea712c65a132c",
+    "identical": true
+  },
+  "fixedProbe": {
+    "inputWidth": 1400,
+    "effectiveModelImageSize": 1408,
+    "confidenceThreshold": 0.25,
+    "ultralyticsNmsIouThreshold": 0.7,
+    "classes": ["staves", "systems", "grand_staff"],
+    "systems": {
+      "predictions": 62,
+      "exactCountPages": 2,
+      "matchedBoxesAtIou50": 4,
+      "fullyMatchedPagesAtIou50": 0,
+      "validatorOrderPages": 19
+    },
+    "grandStaff": {
+      "predictions": 42,
+      "exactCountPages": 0,
+      "matchedBoxesAtIou50": 16,
+      "fullyMatchedPagesAtIou50": 0,
+      "validatorOrderPages": 23
+    }
+  },
+  "globalAblations": {
+    "layoutBoxVariants": 112,
+    "selectedLayoutBoxVariant": {
+      "class": "grand_staff",
+      "confidenceThreshold": 0.01,
+      "extraNmsIouThreshold": 0.1,
+      "predictions": 81,
+      "exactCountPages": 3,
+      "matchedBoxesAtIou50": 39,
+      "fullyMatchedPagesAtIou50": 1,
+      "fullyMatchedWorksAtIou50": 1,
+      "validatorOrderPages": 27
+    },
+    "staffPairingVariants": 540,
+    "selectedStaffPairingVariant": {
+      "confidenceThreshold": 0.4,
+      "verticalDedupThreshold": 0.25,
+      "horizontalOverlapThreshold": 0.5,
+      "maximumGapRatio": 2,
+      "predictions": 110,
+      "exactCountPages": 13,
+      "exactCountWorks": 5,
+      "matchedBoxesAtIou50": 36,
+      "fullyMatchedPagesAtIou50": 1,
+      "fullyMatchedWorksAtIou50": 1
+    }
+  },
+  "admission": {
+    "nonzeroValidPagesAcrossTwoWorks": false,
+    "exactDevelopmentAnnotations": false,
+    "deterministicCropHashes": false,
+    "validatedStaffLineTopology": false,
+    "acceptedRuntimeAndDistributionLicense": false,
+    "joiningEvidence": false
+  },
+  "artifacts": {
+    "weightsCommitted": false,
+    "environmentCommitted": false,
+    "renderedPagesCommitted": false,
+    "rawInferenceCommitted": false
+  }
+}

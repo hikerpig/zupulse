@@ -311,6 +311,19 @@ source mapping hashes 与 4 页/15 systems 预期。case evaluator 只接受 exa
 连接任何模型或 Rokot runtime。screening evidence 位于
 `tools/pdf-omr-cli/reports/exploratory/ola-v2-dependency-gate/`。
 
+用户明确授权后，OLA v2 又在隔离 research environment 中执行了完整 29-page development probe。raw predictions
+两次 byte-stable projection hash 一致，warm CPU 总 inference 约 11.3–11.4 秒；但默认输出及 112 个全局
+confidence/NMS variants 最多只有 1 page / 1 work 完整匹配。540 个 `staves` pairing variants 的最佳结果虽然有
+13 exact-count pages / 5 works，却仍只有 1 page / 1 work 的全部 boxes 达到 IoU 0.5，并缺少合法 staff-line
+polylines、crop hashes 和 joining evidence。因此结果保持 `NOT_ELIGIBLE`，未接入 Rokot。完整报告位于
+`tools/pdf-omr-cli/reports/exploratory/ola-v2-development-probe-v1/`。
+
+后续训练源已收敛为 OpenScore Lieder CC0，而不是 OLA 聚合数据。固定 upstream revision 后，1,356 个 metadata
+records 中排除 4 个缺失 `.mscx` 的 records，以及 75 个已进入仓库 OLiMPiC evaluation evidence 的 score IDs；
+余下 1,277 个 source records 按 composer 隔离为 1,144 train / 133 validation。当前只生成 source plan，尚未渲染、
+标注或训练。该 synthetic typeset corpus 不替代 real-scanned development admission，也不改变 frozen holdout。
+可复算 evidence 位于 `tools/pdf-omr-cli/corpus/openscore-lieder-layout-train-v1/`。
+
 ## 2026-08-26 LEGATO topology failure audit
 
 既有 46-item OLiMPiC development run 的 20 个 LEGATO failures 已通过 immutable artifacts 审计。分类为

@@ -17,3 +17,9 @@ transitive licenses、architecture、unpacked size、CPU latency/RSS、offline �
 
 机器可读 screening 位于 `summary.json`。它只记录候选淘汰证据，不是可运行的 model identity，也不构成 runtime
 integration approval。
+
+## Subsequent research authorization
+
+用户随后明确要求继续 OLA，因此在不接入产品、不提交 weights/dependency 且不读取 holdout 的边界内完成了
+development probe。结果仍为 `NOT_ELIGIBLE`，详见相邻的 `ola-v2-development-probe-v1/`。本文件保留首次
+distribution screening 的历史结论，不再代表最新实验状态。

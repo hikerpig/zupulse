@@ -4,6 +4,7 @@
   "scope": "development-research-only",
   "status": "stopped-before-artifact-download",
   "decision": "STOP",
+  "subsequentResearchReport": "../ola-v2-development-probe-v1/summary.json",
   "candidate": {
     "repository": "https://github.com/v-dvorak/omr-layout-analysis",
     "repositoryLicense": "MIT",

@@ -34,6 +34,7 @@ test("captures allowlisted desktop events and stops after opt-out", async () => 
       "effective_locale",
       "initialSurface",
       "state",
+      "durationMs",
       "scoreFormat",
       "issueCode",
       "workspace",

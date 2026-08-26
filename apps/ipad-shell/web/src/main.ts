@@ -1,16 +1,19 @@
 import "@zupulse/web-viewer/styles.css";
 import { bootstrapIpadApplication, loadIpadBuildMetadata, type NativeMessageHandler } from "./ipad-bridge-transport";
-import { mountIpadViewerApplication } from "./ipad-viewer-host";
+import { mountIpadViewerApplication, type IpadStartupTiming } from "./ipad-viewer-host";
 import { createDefaultResourceOriginChecks, runResourceOriginProbe } from "./resource-origin-probe";
 
+const startedAt = performance.now();
+const startupTiming: IpadStartupTiming = { startedAt };
 const root = document.getElementById("root");
 if (!root) throw new Error("IPAD_VIEWER_ROOT_MISSING");
 
-(
-  window as typeof window & {
-    __zupulseResourceOriginProbe?: ReturnType<typeof runResourceOriginProbe>;
-  }
-).__zupulseResourceOriginProbe = runResourceOriginProbe(createDefaultResourceOriginChecks());
+const probeWindow = window as typeof window & {
+  __zupulseResourceOriginProbe?: ReturnType<typeof runResourceOriginProbe>;
+  __zupulseStartupTiming?: IpadStartupTiming;
+};
+probeWindow.__zupulseResourceOriginProbe = runResourceOriginProbe(createDefaultResourceOriginChecks());
+probeWindow.__zupulseStartupTiming = startupTiming;
 
 const handler = (
   window as typeof window & {
@@ -38,7 +41,7 @@ void (async () => {
     metadata,
     handler,
     async mount(transport) {
-      await mountIpadViewerApplication(root, transport);
+      await mountIpadViewerApplication(root, transport, { startupStartedAt: startedAt, startupTiming });
     },
   });
 })().catch((error: unknown) => {

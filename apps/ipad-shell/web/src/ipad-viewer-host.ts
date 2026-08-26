@@ -1,3 +1,4 @@
+import type { TelemetryEvent, TelemetryPort } from "@zupulse/web-core";
 import { IndexedDbSheetLibraryRepository } from "@zupulse/web-storage";
 import { createDefaultOpenSession, mountViewerApp, type ViewerAppHandle, type ViewerHost } from "@zupulse/web-viewer";
 import type { IpadBridgeTransport } from "./ipad-bridge-transport";
@@ -7,9 +8,17 @@ import { IpadScoreFileGateway, type IpadFileSelectionClient } from "./ipad-score
 import { IpadLibraryPlaybackPersistence } from "./ipad-library-playback-persistence";
 import { attachExternalOpen } from "./external-open";
 
+export type IpadStartupTiming = {
+  startedAt: number;
+  applicationReadyMs?: number;
+  workspaceReadyMs?: number;
+};
+
 type CompositionDependencies = {
   createRepository(): IndexedDbSheetLibraryRepository;
   mount: typeof mountViewerApp;
+  startupStartedAt?: number;
+  startupTiming?: IpadStartupTiming;
 };
 
 const defaultDependencies: CompositionDependencies = {
@@ -32,7 +41,10 @@ export async function mountIpadViewerApplication(
   if (lifecycleTarget) restoreIpadRoute(lifecycleTarget);
   const application = mount(root, {
     capabilities: { harmonyAnalysis: false },
-    host: createIpadViewerHost(),
+    host: createIpadViewerHost(
+      dependencies.startupTiming === undefined ? undefined : recordStartupTiming(dependencies.startupTiming),
+    ),
+    ...(dependencies.startupStartedAt === undefined ? {} : { startupStartedAt: dependencies.startupStartedAt }),
     openSession: createDefaultOpenSession(root.ownerDocument, persistence),
     library: {
       repository,
@@ -74,10 +86,26 @@ export async function mountIpadViewerApplication(
   return application;
 }
 
-function createIpadViewerHost(): ViewerHost {
+function createIpadViewerHost(telemetry?: TelemetryPort): ViewerHost {
   return {
     subscribe() {
       return () => undefined;
     },
+    ...(telemetry === undefined ? {} : { telemetry }),
+  };
+}
+
+function recordStartupTiming(timing: IpadStartupTiming): TelemetryPort {
+  return {
+    capture(event: TelemetryEvent) {
+      if (event.name === "application_ready" && event.durationMs !== undefined) {
+        timing.applicationReadyMs = event.durationMs;
+      }
+      if (event.name === "workspace_session_started" && event.durationMs !== undefined) {
+        timing.workspaceReadyMs = event.durationMs;
+      }
+    },
+    captureException() {},
+    flush: async () => undefined,
   };
 }

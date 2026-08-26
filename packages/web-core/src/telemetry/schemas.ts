@@ -8,6 +8,15 @@ const platformSchema = z.enum(["browser", "desktop"]);
 const runtimeSchema = z.enum(["browser", "renderer", "main"]);
 
 const telemetryEventBase = z.object({}).strict();
+export const TELEMETRY_DURATION_MS_MAX = 120_000;
+const durationMsSchema = z.number().int().nonnegative().max(TELEMETRY_DURATION_MS_MAX);
+
+export function telemetryDurationMs(startedAt: number, endedAt: number): number | undefined {
+  if (!Number.isFinite(startedAt) || !Number.isFinite(endedAt)) return undefined;
+  const durationMs = Math.round(endedAt - startedAt);
+  if (durationMs < 0 || durationMs > TELEMETRY_DURATION_MS_MAX) return undefined;
+  return durationMs;
+}
 
 const applicationSessionStartedSchema = telemetryEventBase.extend({
   name: z.literal("application_session_started"),
@@ -17,6 +26,7 @@ const applicationReadySchema = telemetryEventBase.extend({
   name: z.literal("application_ready"),
   initialSurface: z.enum(["library", "viewer", "studio", "not-found"]),
   state: z.enum(["ready", "degraded"]),
+  durationMs: durationMsSchema.optional(),
 });
 
 const scoreImportCompletedSchema = telemetryEventBase.extend({
@@ -31,6 +41,7 @@ const workspaceSessionStartedSchema = telemetryEventBase.extend({
   name: z.literal("workspace_session_started"),
   workspace: z.enum(["viewer", "studio"]),
   scoreFormat: scoreFormatSchema,
+  durationMs: durationMsSchema.optional(),
 });
 
 const viewerPlaybackStartedSchema = telemetryEventBase.extend({

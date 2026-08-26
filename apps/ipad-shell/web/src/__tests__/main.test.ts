@@ -25,12 +25,20 @@ describe("iPad viewer composition", () => {
         calls.push("initialize");
       },
     } as unknown as IndexedDbSheetLibraryRepository;
+    const startupTiming = { startedAt: 12 };
     const mount = vi.fn((_root, dependencies) => {
       calls.push("mount");
       expect(dependencies.library?.repository).toBe(repository);
       expect(dependencies.library?.gateway).toBeDefined();
       expect(dependencies.library?.adapters.map((adapter) => adapter.format)).toEqual(["gp", "musicxml"]);
       expect(dependencies.capabilities).toEqual({ harmonyAnalysis: false });
+      expect(dependencies.startupStartedAt).toBe(12);
+      dependencies.host.telemetry?.capture({
+        name: "application_ready",
+        initialSurface: "library",
+        state: "ready",
+        durationMs: 40,
+      });
       return {
         async openScore() {},
         async togglePlayback() {},
@@ -42,8 +50,11 @@ describe("iPad viewer composition", () => {
     await mountIpadViewerApplication(document.createElement("div"), {} as never, {
       createRepository: () => repository,
       mount,
+      startupStartedAt: 12,
+      startupTiming,
     });
 
+    expect(startupTiming.applicationReadyMs).toBe(40);
     expect(calls).toEqual(["initialize", "mount", "external-open-ready"]);
     Reflect.deleteProperty(window, "webkit");
   });

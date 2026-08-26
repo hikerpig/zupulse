@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type {
   HarmonyAnalysisDocument,
   HarmonyAnalysisRepository,
+  LibraryScore,
   ScoreFormatAdapter,
   SheetLibraryRepository,
 } from "@zupulse/web-core";
@@ -694,6 +695,75 @@ describe("ViewerApplication", () => {
       status: "ready",
     });
     expect(application.getSnapshot()).not.toHaveProperty("studio");
+    await application.destroy();
+  });
+
+  it("attaches durationMs to application_ready and workspace_session_started", async () => {
+    const scoreId = "00000000-0000-4000-8000-000000000001";
+    let now = 40;
+    const capture = vi.fn();
+    const repository: SheetLibraryRepository = {
+      initialize: async () => undefined,
+      list: async () => [],
+      get: async () => {
+        now = 900;
+        return {
+          id: scoreId as LibraryScore["id"],
+          scoreIdentity: "a".repeat(64) as LibraryScore["scoreIdentity"],
+          format: "gp",
+          fileName: "score.gp",
+          title: "Score",
+          isFavorite: false,
+          importedAt: "2026-08-01T00:00:00.000Z",
+          practice: { hasLoop: false },
+          metadata: {},
+        };
+      },
+      findByIdentity: async () => undefined,
+      add: async () => {
+        throw new Error("unused");
+      },
+      readScore: async () => ({ fileName: "score.gp", bytes: new Uint8Array([1]) }),
+      updateMetadata: async () => {
+        throw new Error("unused");
+      },
+      setFavorite: async () => undefined,
+      markOpened: async () => undefined,
+      delete: async () => undefined,
+    };
+    const application = new ViewerApplication(
+      {
+        subscribe: () => () => undefined,
+        telemetry: { capture, captureException: () => undefined, flush: async () => undefined },
+      },
+      async () => {
+        now = 175;
+        return viewerSession();
+      },
+      { repository, gateway: { selectForImport: async () => [], saveExport: async () => "cancelled" }, adapters: [] },
+      undefined,
+      undefined,
+      undefined,
+      "library",
+      { startedAt: 10, now: () => now },
+    );
+
+    await application.refreshLibrary();
+    expect(capture).toHaveBeenCalledWith({
+      name: "application_ready",
+      initialSurface: "library",
+      state: "ready",
+      durationMs: 30,
+    });
+
+    now = 100;
+    await application.openLibraryScore(scoreId);
+    expect(capture).toHaveBeenCalledWith({
+      name: "workspace_session_started",
+      workspace: "viewer",
+      scoreFormat: "gp",
+      durationMs: 75,
+    });
     await application.destroy();
   });
 });

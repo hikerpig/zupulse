@@ -38,6 +38,7 @@ import { createDesktopExternalNavigation } from "./desktop-external-navigation";
 import { createDesktopTelemetryPort } from "./telemetry/desktop-telemetry";
 import { pdfOmrEngineLabel, providerEngineOption, synchronizePdfOmrEngine } from "./desktop-pdf-omr-engines";
 
+const startedAt = performance.now();
 document.documentElement.classList.add("desktop-shell");
 installGlobalDragAndDropGuard(document);
 let activeTelemetry: TelemetryPort | undefined;
@@ -153,6 +154,7 @@ async function start(): Promise<void> {
     host: { ...host, telemetry },
     telemetryControl,
     initialSurface: "library",
+    startupStartedAt: startedAt,
     capabilities: {
       harmonyAnalysis: response.capabilities.harmonyAnalysis ?? false,
       pdfOmrWorkbench: response.capabilities.pdfOmrWorkbench ?? false,

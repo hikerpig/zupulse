@@ -15,22 +15,18 @@ const base = {
   buildId: "build-1",
   releaseChannel: "alpha",
   effectiveLocale: "zh-CN" as const,
-  projectToken: "phc_test",
-  apiHost: "https://us.i.posthog.com",
+  createEventId: () => "33333333-3333-4333-8333-333333333333",
 };
 
 describe("createPostHogTelemetryPort", () => {
-  it("posts an allowlisted envelope to the US capture origin", async () => {
-    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response("{}"));
-    const port = createPostHogTelemetryPort({ ...base, fetcher });
+  it("sends an allowlisted envelope through the injected transport", () => {
+    const send = vi.fn();
+    const port = createPostHogTelemetryPort({ ...base, send });
     port?.capture({ name: "application_session_started" });
-    await Promise.resolve();
 
-    expect(fetcher).toHaveBeenCalledOnce();
-    expect(String(fetcher.mock.calls[0]?.[0])).toBe("https://us.i.posthog.com/capture/");
-    const payload = JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body));
-    expect(payload).toMatchObject({ api_key: "phc_test", event: "application_session_started" });
-    expect(payload.properties).toEqual(
+    expect(send).toHaveBeenCalledOnce();
+    expect(send.mock.calls[0]?.[0]).toBe("application_session_started");
+    expect(send.mock.calls[0]?.[1]).toEqual(
       expect.objectContaining({
         distinct_id: identity.getInstallationId(),
         application_session_id: identity.getApplicationSessionId(),
@@ -43,32 +39,32 @@ describe("createPostHogTelemetryPort", () => {
     );
   });
 
-  it("returns undefined for missing token, invalid channel, or disallowed host", () => {
-    expect(createPostHogTelemetryPort({ ...base, projectToken: "" })).toBeUndefined();
-    expect(createPostHogTelemetryPort({ ...base, releaseChannel: "development" })).toBeUndefined();
-    expect(createPostHogTelemetryPort({ ...base, apiHost: "https://evil.example" })).toBeUndefined();
+  it("returns undefined for missing build identity or invalid channel", () => {
+    const send = vi.fn();
+    expect(createPostHogTelemetryPort({ ...base, send, appVersion: "" })).toBeUndefined();
+    expect(createPostHogTelemetryPort({ ...base, send, releaseChannel: "development" })).toBeUndefined();
   });
 
-  it("sanitizes exceptions and suppresses duplicate fingerprints", async () => {
-    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response("{}"));
-    const port = createPostHogTelemetryPort({ ...base, fetcher });
+  it("sanitizes exceptions and suppresses duplicate fingerprints", () => {
+    const send = vi.fn();
+    const port = createPostHogTelemetryPort({ ...base, send });
     const error = new Error("failed at /Users/alice/score.gp token=secret");
     port?.captureException(error, { runtime: "renderer", handled: false, operation: "renderer.load" });
     port?.captureException(error, { runtime: "renderer", handled: false, operation: "renderer.load" });
-    await Promise.resolve();
 
-    expect(fetcher).toHaveBeenCalledOnce();
-    const payload = JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body));
-    expect(payload.event).toBe("$exception");
-    expect(payload.properties.exception_message).not.toContain("/Users/alice");
-    expect(payload.properties.exception_message).not.toContain("token=secret");
+    expect(send).toHaveBeenCalledOnce();
+    expect(send.mock.calls[0]?.[0]).toBe("$exception");
+    expect(String(send.mock.calls[0]?.[1]?.exception_message)).not.toContain("/Users/alice");
+    expect(String(send.mock.calls[0]?.[1]?.exception_message)).not.toContain("token=secret");
   });
 
-  it("does not throw when the provider request fails", async () => {
-    const fetcher = vi.fn<typeof fetch>().mockRejectedValue(new Error("offline"));
-    const port = createPostHogTelemetryPort({ ...base, fetcher });
+  it("does not throw when the injected transport throws", async () => {
+    const send = vi.fn(() => {
+      throw new Error("offline");
+    });
+    const port = createPostHogTelemetryPort({ ...base, send });
     expect(() => port?.capture({ name: "application_session_started" })).not.toThrow();
     await expect(port?.flush(300)).resolves.toBeUndefined();
-    expect(fetcher).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledOnce();
   });
 });

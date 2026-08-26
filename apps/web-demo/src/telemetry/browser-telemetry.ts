@@ -1,7 +1,7 @@
 import {
   createNoopTelemetryPort,
   createPostHogTelemetryPort,
-  isAllowedPostHogHost,
+  POSTHOG_US_ORIGIN,
   telemetryPreferenceStateSchema,
   type TelemetryPort,
   type TelemetryPreferenceState,
@@ -84,9 +84,9 @@ export function createBrowserTelemetry({
         buildId: config.buildId,
         releaseChannel: config.releaseChannel,
         effectiveLocale: config.effectiveLocale ?? "zh-CN",
-        ...(config.projectToken === undefined ? {} : { projectToken: config.projectToken }),
-        ...(config.apiHost === undefined ? {} : { apiHost: config.apiHost }),
-        fetcher,
+        createEventId: randomUuid,
+        send: (eventName, properties, timestamp) =>
+          postPostHogCapture(fetcher, config.projectToken ?? "", eventName, properties, timestamp),
         now,
       }) ?? createNoopTelemetryPort();
   };
@@ -163,6 +163,30 @@ function isSafeConfig(config: BrowserTelemetryConfig): boolean {
   if (!config.projectToken || !config.appVersion || !config.buildId) return false;
   if (!(["alpha", "beta", "production"] as readonly string[]).includes(config.releaseChannel)) return false;
   return isAllowedPostHogHost(config.apiHost);
+}
+
+function isAllowedPostHogHost(apiHost: string | undefined): boolean {
+  try {
+    return new URL(apiHost ?? "").origin === POSTHOG_US_ORIGIN;
+  } catch {
+    return false;
+  }
+}
+
+function postPostHogCapture(
+  fetcher: typeof fetch,
+  projectToken: string,
+  eventName: string,
+  properties: Record<string, unknown>,
+  timestamp: string,
+): void {
+  void fetcher(`${POSTHOG_US_ORIGIN}/capture/`, {
+    method: "POST",
+    credentials: "omit",
+    keepalive: true,
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ api_key: projectToken, event: eventName, properties, timestamp }),
+  }).catch(() => undefined);
 }
 
 function readState(storage: Storage | undefined): { state: TelemetryPreferenceState; valid: boolean } {

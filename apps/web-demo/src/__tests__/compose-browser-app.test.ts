@@ -23,7 +23,7 @@ beforeEach(() => {
 });
 
 describe("composeBrowserApp", () => {
-  it("initializes the Sheet Library and keeps PDF OMR closed when recognition is unavailable", async () => {
+  it("composes the Sheet Library repository and keeps PDF OMR closed when recognition is unavailable", async () => {
     const persistStorage = vi.fn(async () => true);
     const composed = await composeBrowserApp({
       ownerDocument: document,
@@ -41,6 +41,17 @@ describe("composeBrowserApp", () => {
     });
     expect(composed.dependencies.pdfOmrHistory).toBeUndefined();
     expect(persistStorage).toHaveBeenCalledOnce();
+  });
+
+  it("returns mount dependencies when IndexedDB is unavailable", async () => {
+    Object.defineProperty(globalThis, "indexedDB", { configurable: true, value: undefined });
+    const composed = await composeBrowserApp({
+      ownerDocument: document,
+      fetch: vi.fn(async () => new Response("nope", { status: 500 })),
+      telemetryConfig,
+    });
+    expect(composed.dependencies.library.repository).toBeDefined();
+    expect(composed.startSession).toEqual(expect.any(Function));
   });
 
   it("exposes Remote Recognition when an engine is available", async () => {

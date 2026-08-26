@@ -61,7 +61,6 @@ export async function composeBrowserApp(input: {
   view?.addEventListener("error", (event) => captureBrowserException(event.error ?? new Error(event.message), false));
   view?.addEventListener("unhandledrejection", (event) => captureBrowserException(event.reason, false));
   const repository = new IndexedDbSheetLibraryRepository();
-  await repository.initialize();
   void (input.persistStorage ?? (() => view?.navigator.storage?.persist?.() ?? Promise.resolve(false)))().catch(
     () => false,
   );

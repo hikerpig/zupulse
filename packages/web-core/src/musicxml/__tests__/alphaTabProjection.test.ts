@@ -101,4 +101,41 @@ describe("alphaTab MusicXML projection", () => {
       { spelling: { step: "B", alter: -1 } },
     ]);
   });
+
+  it("rounds fractional septuplet beat ticks to integers", () => {
+    const input = projectAlphaTabHarmonyInput({
+      masterBars: [{ duration: 1440.0000001 }],
+      tracks: [
+        {
+          name: "Piano",
+          staves: [
+            {
+              bars: [
+                {
+                  voices: [
+                    {
+                      beats: [
+                        { displayStart: 0, displayDuration: 205.71428571428572, notes: [{ realValue: 60 }] },
+                        {
+                          displayStart: 205.71428571428572,
+                          displayDuration: 205.71428571428572,
+                          notes: [{ realValue: 62 }],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(input.measures[0]?.durationTicks).toBe(1440);
+    const notes = input.tracks[0]?.staves[0]?.notes ?? [];
+    expect(notes.map((note) => note.moment.offsetTicks)).toEqual([0, 206]);
+    // Durations derive from rounded endpoints so successive beats never overlap.
+    expect(notes.map((note) => note.durationTicks)).toEqual([206, 205]);
+  });
 });

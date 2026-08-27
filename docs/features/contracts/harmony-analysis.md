@@ -62,6 +62,10 @@ unresolved range 时默认显示“全部”。用户后续筛选不会被数据
 SHA-256 为 `6fb18d1245aea9d89f5568a9b384b405c5326cb37015cc2caa5ade8dad5f7515`，其 hash
 进入新 Revision 的 `algorithmVersion`。
 
+alphaTab 投影为 Harmony Analysis Input 时把 fractional `displayStart`/`displayDuration`（如七连音产生的
+205.71… tick）四舍五入为整数 tick；measure duration 同样取整后最小为 1。取整只影响分析输入的相对
+时序，不修改 score runtime 本身。
+
 Semi-CRF 路径决定 primary chord 与 boundary。Bundled alternatives adapter 仅在这些冻结 range
 上生成 Top-8 alternatives，并用独立 confidence 与默认 `decisionThreshold=0.6` 决定
 resolved/unresolved；CRF path score 不是 confidence。低于阈值的区间保留为
@@ -87,6 +91,9 @@ Studio 把 Effective Projection 作为临时 alphaTab chord preview 应用到当
 优先挂到同一 Score Written Moment 的 beat；当分析边界来自不可直接挂载的细分事件时，挂到该
 range 内 written moment 最早的实际 beat，不依赖 track、staff 或 voice 的遍历顺序。单个非 beat
 边界不得让整份曲谱预览失败；range 内完全没有 beat 时才报告预览不可表达。
+
+range 高亮只使用有渲染边界的 beat:alphaTab 不为空 rest voice 的 `isEmpty` beat 生成 bounds，它们不参与
+高亮端点选择；range 内过滤后没有任何可高亮 beat 时报告不可表达，而不是把未渲染 beat 交给 alphaTab。
 
 重分析生成新的不可变 active Revision，并把当时最新的 Corrections 与 annotation target 叠加到新
 结果；首版不持久化旧 Revision 历史。导出从不可变 Managed Score Copy 与固化的 Effective

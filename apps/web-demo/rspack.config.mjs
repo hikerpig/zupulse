@@ -60,6 +60,7 @@ const createConfig = (_env, argv) => {
     devServer: {
       host: "127.0.0.1",
       port: 5173,
+      allowedHosts: ["localhost", ".localhost", "127.0.0.1"],
       ...(isE2e ? { hot: false, liveReload: false } : {}),
       static: [
         {

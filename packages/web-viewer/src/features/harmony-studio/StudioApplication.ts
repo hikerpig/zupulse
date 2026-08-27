@@ -572,9 +572,11 @@ export class StudioApplication {
         ? {}
         : {
             error:
-              state.status === "conflict"
+              state.errorCode === "version-conflict"
                 ? applicationIssue("studio-version-conflict")
-                : applicationIssue("studio-save-failed"),
+                : state.errorCode === "analysis-failed"
+                  ? applicationIssue("studio-analysis-failed")
+                  : applicationIssue("studio-save-failed"),
           }),
       ...(previewError === undefined ? {} : { previewError }),
     });

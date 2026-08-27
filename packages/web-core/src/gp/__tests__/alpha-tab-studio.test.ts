@@ -171,6 +171,77 @@ describe("highlightAlphaTabWrittenRange", () => {
       }),
     ).toEqual({ status: "unrepresentable" });
   });
+
+  it("skips unrendered empty voice beats at the range edges", () => {
+    const emptyBeat = { ...beat(0, 12), isEmpty: true };
+    const scoreWithEmptyVoice = {
+      masterBars: score.masterBars,
+      tracks: [
+        {
+          index: 0,
+          staves: [
+            {
+              bars: [
+                {
+                  voices: [{ beats: [beat(0, 0), beat(0, 4)] }, { beats: [emptyBeat] }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const highlighted: unknown[][] = [];
+    const api = {
+      score: scoreWithEmptyVoice,
+      highlightPlaybackRange(start: unknown, end: unknown) {
+        highlighted.push([start, end]);
+      },
+      tickPosition: 0,
+      scrollToCursor() {},
+    };
+
+    expect(
+      highlightAlphaTabWrittenRange(api, {
+        start: { measureIndex: 0, offsetTicks: 0 },
+        end: { measureIndex: 1, offsetTicks: 0 },
+      }),
+    ).toEqual({ status: "highlighted" });
+    const beats = scoreWithEmptyVoice.tracks[0].staves[0].bars[0].voices[0].beats;
+    expect(highlighted).toEqual([[beats[0], beats[1]]]);
+  });
+
+  it("positions the cursor from the measure of the first rendered beat", () => {
+    const laterBeat = beat(1, 0);
+    const scoreWithEmptyStartMeasure = {
+      masterBars: score.masterBars,
+      tracks: [
+        {
+          index: 0,
+          staves: [
+            {
+              bars: [{ voices: [{ beats: [{ ...beat(0, 0), isEmpty: true }] }] }, { voices: [{ beats: [laterBeat] }] }],
+            },
+          ],
+        },
+      ],
+    };
+    const api = {
+      score: scoreWithEmptyStartMeasure,
+      highlightPlaybackRange() {},
+      tickPosition: 0,
+      scrollToCursor() {},
+    };
+
+    expect(
+      highlightAlphaTabWrittenRange(api, {
+        start: { measureIndex: 0, offsetTicks: 0 },
+        end: { measureIndex: 1, offsetTicks: 4 },
+      }),
+    ).toEqual({ status: "highlighted" });
+    // masterBars[1].start (16) + displayStart (0), not masterBars[range.start.measureIndex].start (0).
+    expect(api.tickPosition).toBe(16);
+  });
 });
 
 describe("applyAlphaTabHarmonyPreview", () => {

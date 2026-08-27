@@ -154,7 +154,9 @@ export function highlightAlphaTabWrittenRange(
   const beats = allBeats(score).filter((beat) => beat.isEmpty !== true && contains(range, toScoreWrittenMoment(beat)));
   const start = beats[0];
   const end = beats.at(-1);
-  const masterBar = score.masterBars[range.start.measureIndex];
+  // Position the cursor from the measure that actually owns the first rendered beat;
+  // the range's own start measure may contain only unrendered empty-voice beats.
+  const masterBar = start === undefined ? undefined : score.masterBars[start.voice.bar.index];
   if (!start || !end || !masterBar) return { status: "unrepresentable" };
   api.highlightPlaybackRange(start, end);
   api.tickPosition = masterBar.start + start.displayStart;

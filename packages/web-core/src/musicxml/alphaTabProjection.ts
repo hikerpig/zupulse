@@ -150,13 +150,17 @@ export function projectAlphaTabHarmonyInput(score: HarmonyRuntimeScore): Harmony
                 .filter((note) => note.realValue !== undefined && !note.isTieDestination)
                 .map((note, noteIndex) => {
                   const pitchClass = note.realValue! % 12;
+                  // Round onset and end first, then derive the duration so successive
+                  // fractional-tuplet beats keep their endpoints and never overlap.
+                  const startTicks = Math.round(beat.displayStart ?? 0);
+                  const endTicks = Math.round((beat.displayStart ?? 0) + (beat.displayDuration ?? 0));
                   return {
                     id: `track-${trackIndex + 1}:${measureIndex}:${voiceIndex}:${beatIndex}:${note.id ?? noteIndex}`,
                     moment: {
                       measureIndex: bar.index ?? measureIndex,
-                      offsetTicks: Math.round(beat.displayStart ?? 0),
+                      offsetTicks: startTicks,
                     },
-                    durationTicks: Math.max(1, Math.round(beat.displayDuration ?? 0)),
+                    durationTicks: Math.max(1, endTicks - startTicks),
                     soundingPitchClass: pitchClass,
                     soundingMidi: note.realValue!,
                     spelling: alphaTabSpelling(pitchClass, note.accidentalMode, bar.keySignature),

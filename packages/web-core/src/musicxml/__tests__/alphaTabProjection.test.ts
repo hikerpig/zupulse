@@ -135,6 +135,7 @@ describe("alphaTab MusicXML projection", () => {
     expect(input.measures[0]?.durationTicks).toBe(1440);
     const notes = input.tracks[0]?.staves[0]?.notes ?? [];
     expect(notes.map((note) => note.moment.offsetTicks)).toEqual([0, 206]);
-    expect(notes.map((note) => note.durationTicks)).toEqual([206, 206]);
+    // Durations derive from rounded endpoints so successive beats never overlap.
+    expect(notes.map((note) => note.durationTicks)).toEqual([206, 205]);
   });
 });

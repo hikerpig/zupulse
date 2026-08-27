@@ -324,6 +324,39 @@ records 中排除 4 个缺失 `.mscx` 的 records，以及 75 个已进入仓库
 标注或训练。该 synthetic typeset corpus 不替代 real-scanned development admission，也不改变 frozen holdout。
 可复算 evidence 位于 `tools/pdf-omr-cli/corpus/openscore-lieder-layout-train-v1/`。
 
+## 2026-08-27 Rokot page-scope ablation
+
+在 timing-ready 的 OLiMPiC development work `6007571` 上，使用相同 4 页真实扫描输入与 MusicXML truth 比较了
+整页直接 Rokot 和 15 个 oracle system crops 后逐 system Rokot。整页通过 development-only `system-crop`
+bypass 直接进入模型；oracle crops 使用冻结 `source-mapping.json` bbox 物化，再由现有 normalizer joining。
+
+oracle variant 的每 staff measure count 为 55，接近 truth 的 57；direct-page 为 93。oracle 的 Pitch/Duration/Joint
+F1 为 `0.3622 / 0.2744 / 0.0147`，direct-page 为 `0.1645 / 0.2408 / 0.0043`；diagnostics 从 407 降到 304，
+wall time 从约 107.5 秒降到 76.6 秒，但 Onset F1 从 `0.2870` 降到 `0.1837`。两侧 valid measure rate 均为 0。
+
+后续页面复核确认该 work 的每个 source system 都是 vocal staff + piano grand staff 的 3-staff mixed topology，超出
+当前 Rokot 1–2 staff 合同；本实验两侧却都声明为 `grand-staff`。因此结果降级为 `NOT_ELIGIBLE`，不能隔离证明输入
+粒度优劣，也不提升任一路线为 runtime candidate。后续必须改用合同内纯 single-staff 或 piano grand-staff 页面重跑。
+完整摘要位于 `tools/pdf-omr-cli/reports/exploratory/rokot-page-scope-ablation-v1/`。
+
+同日使用合同内的 K331 纯钢琴 grand-staff fixture 重做配对实验。整页 direct-page 与历史已复核 27 system crops 使用
+相同 Rokot model、prompt 与 decoder。verified-system variant 的 measure count 为 138/138，更接近 truth 的
+137/137；Pitch/Onset/Duration/Joint F1 为 `0.4919 / 0.7632 / 0.7182 / 0.1567`，均高于 direct-page 的
+`0.3407 / 0.5820 / 0.5486 / 0.0750`。valid measures 从 `0/274` 提升到 `19/274`，diagnostics 从 362 降到
+193，但 wall time 从约 129.4 秒增至 200.2 秒。
+
+该结果支持继续 per-system transcription，并把下一优化边界收敛到 system context、measure/staff alignment 与 joining。
+随后在相同 27 crops 上增加无 truth 的 previous-system header context probe：首个 system 保持原 prompt，后续只携带上一
+prediction 中唯一合法的 `L/M/K`。measure count 达到 137/137，diagnostics 降至 148，Pitch/Onset/Duration/Joint F1
+达到 `0.7525 / 0.9162 / 0.9484 / 0.3768`，valid measures 提升至 `57/274`（`20.80%`）。
+
+该 context 已集成到 Rokot runtime：只传播格式安全的 `L/M/K`，任一 header 不安全时回退到基础 prompt。它仍会传播
+音乐上错误但格式合法的 header；本轮中途产生
+`K:G` 后持续传播，因此下一步必须在第二个合同内 work 上以相同协议复现。当前
+`rokot-staff-system-v2 + allowFragmentedRuns=true` 在 K331 第 1 页仍以 `grand-staff-pairing` fail closed；本轮为隔离
+transcription 使用历史 `rokot-grand-staff-v1` 已复核 crops，不宣称当前 full-page detector 已恢复。完整摘要位于
+`tools/pdf-omr-cli/reports/exploratory/k331-page-scope-ablation-v1/`。
+
 ## 2026-08-26 LEGATO topology failure audit
 
 既有 46-item OLiMPiC development run 的 20 个 LEGATO failures 已通过 immutable artifacts 审计。分类为

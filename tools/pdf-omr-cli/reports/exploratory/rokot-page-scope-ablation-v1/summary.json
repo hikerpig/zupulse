@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "development-evidence",
+  "workId": "6007571",
+  "source": {
+    "inputSha256": "f89b5ae71c7248a846c09ce3fe70924c67ad16d5a30c62ac043a733c4ccccb9d",
+    "groundTruthSha256": "d822ea6011aa393536f8702c57ac79679129ac8720789793b00cb6bbd2298817",
+    "mappingSha256": "8b88f3975aa3a25f76718504b539493a264a109f0b5a6c9779b081c9b9aaf6c1",
+    "oracleSystemPdfSha256": "944402dbd782f5dbc799a8bb5645b50bd8eef0e10984de7aceaf4e0e72184015",
+    "pageCount": 4,
+    "systemCount": 15,
+    "truthMeasuresPerStaff": [57, 57]
+  },
+  "engine": {
+    "id": "rokot",
+    "modelRevision": "7add305aade6fb3a64ad4dde77d410fa68381089",
+    "maxNewTokens": 1600,
+    "contextSize": 4096,
+    "prompt": "Transcribe this staff to rokot-ABC."
+  },
+  "variants": {
+    "directPage": {
+      "draftSha256": "e27ec2a01e37c0d5e798165ed58810fbc9374a01a3c6b337454451163a6e4c93",
+      "elapsedMs": 107481,
+      "measuresPerStaff": [93, 93],
+      "eventsPerStaff": [526, 253],
+      "diagnosticCount": 407,
+      "symbolic": {
+        "pitchF1": 0.16451016635859522,
+        "onsetF1": 0.2869502523431867,
+        "durationF1": 0.24080749819754865,
+        "jointF1": 0.004325883201153569,
+        "validMeasureRate": 0
+      }
+    },
+    "oracleSystems": {
+      "draftSha256": "191669e57f0018c93f6e2c526eaa11ba982b13370a6af911be826c51f1b4f0ca",
+      "elapsedMs": 76644,
+      "measuresPerStaff": [55, 55],
+      "eventsPerStaff": [457, 1515],
+      "diagnosticCount": 304,
+      "symbolic": {
+        "pitchF1": 0.36224489795918374,
+        "onsetF1": 0.18372093023255814,
+        "durationF1": 0.2744186046511628,
+        "jointF1": 0.014728682170542637,
+        "validMeasureRate": 0
+      }
+    }
+  },
+  "decision": "not-eligible-mixed-topology-confound",
+  "limitations": [
+    "source systems contain one vocal staff plus a piano grand staff, outside the current Rokot one-to-two-staff contract",
+    "single development work",
+    "direct page routed through system-crop bypass",
+    "oracle crops re-materialized as one PDF page per system",
+    "both variants have zero valid measures"
+  ]
+}

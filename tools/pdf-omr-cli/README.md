@@ -47,8 +47,8 @@ MusicXML。命令仅在重建 Draft 无 blocking diagnostic、可 view/playback�
 
 `recognize` 通过可替换 adapter 调用 Audiveris、LEGATO 或 Rokot，再规范化为 engine-neutral Draft。
 Audiveris 保留原始 MXL/OMR；LEGATO 保留原始 ABC 并同时保留转换后的 MusicXML。Rokot 处理印刷体 single staff 与 piano grand staff，保留逐 system
-crop、ABC、MusicXML fragment 和包含 `staffLayout`/`staffCount` 的 segmentation metadata；它是隔离的本地研究 engine，不代表 App
-已经支持 PDF 导入。
+crop、ABC、MusicXML fragment 和包含 `staffLayout`/`staffCount` 的 segmentation metadata。首个 system 使用基础 prompt；后续 system 会把上一份
+prediction 中格式安全的 `L/M/K` 作为上下文。它是隔离的本地研究 engine，不代表 App 已经支持 PDF 导入。
 
 Audiveris executable 默认从 `PATH` 查找。开发或 CI 可以显式指定：
 

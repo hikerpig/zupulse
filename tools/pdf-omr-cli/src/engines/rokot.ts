@@ -33,6 +33,8 @@ const abcConverterVersion = "1.0.1";
 const contextSize = 4096;
 const prompt = "Transcribe this staff to rokot-ABC.";
 
+type PreviousSystemHeaders = { length: string; meter: string; key: string };
+
 export type RokotAdapterOptions = {
   llamaCliPath?: string;
   modelPath?: string;
@@ -116,6 +118,8 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           modelRevision: configuration.modelRevision,
           prompt,
           reasoning: "off",
+          systemContext: "previous-prediction-headers-v1",
+          systemContextHeaders: "L,M,K",
           segmentationAllowFragmentedRuns: true,
           segmentationAllowLandscape: true,
           segmentationStaffLayout: "auto",
@@ -149,7 +153,7 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           "--image",
           "<system.png>",
           "-p",
-          prompt,
+          "<system-prompt>",
           "-n",
           "1600",
           "--ctx-size",
@@ -239,8 +243,10 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
       const segmentationSystems: Array<Record<string, unknown>> = [];
       let durationMs = 0;
       const resourceUsages: ProcessResourceUsage[] = [];
+      let previousSystemHeaders: PreviousSystemHeaders | undefined;
 
       for (const [systemOffset, system] of systems.entries()) {
+        const systemPrompt = buildSystemPrompt(previousSystemHeaders);
         const stem = systemStem(system.pageIndex, system.systemIndex);
         const pngBytes = encodeRgbaPng(system.pixelBBox.width, system.pixelBBox.height, system.cropPixels);
         const pngPath = join(systemsDirectory, `${stem}.png`);
@@ -259,7 +265,7 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
               "--image",
               pngPath,
               "-p",
-              prompt,
+              systemPrompt,
               "-n",
               "1600",
               "--ctx-size",
@@ -283,12 +289,13 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
         });
         let abc: string;
         try {
-          abc = extractCanonicalAbc(rawAbcBytes, system.staffLayout);
+          abc = extractCanonicalAbc(rawAbcBytes, system.staffLayout, systemPrompt);
         } catch (error) {
           await writeInferenceFailureEvidence(request.outputDirectory, stem, pngBytes, rawAbcBytes, error);
           throw error;
         }
         const abcBytes = new TextEncoder().encode(abc);
+        previousSystemHeaders = parsePreviousSystemHeaders(abc);
         await writeFile(canonicalAbcPath, abcBytes, { flag: "wx" });
         const conversion = await convertRokotAbc(
           {
@@ -562,14 +569,31 @@ function parseConverterVersion(output: string): string {
   return "";
 }
 
-function extractCanonicalAbc(bytes: Uint8Array, staffLayout: "single-staff" | "grand-staff"): string {
+function buildSystemPrompt(previous: PreviousSystemHeaders | undefined): string {
+  return previous === undefined
+    ? prompt
+    : `${prompt} The previous system used L:${previous.length}, M:${previous.meter}, K:${previous.key}. If this crop does not print a new meter or key signature, preserve those headers.`;
+}
+
+function parsePreviousSystemHeaders(abc: string): PreviousSystemHeaders | undefined {
+  const length = /^L:(\d+\/\d+)$/m.exec(abc)?.[1];
+  const meter = /^M:((?:\d+\/\d+)|C\|?)$/m.exec(abc)?.[1];
+  const key = /^K:([A-G](?:#|b)?(?:m|maj|min|dor|phr|lyd|mix|loc)?)$/m.exec(abc)?.[1];
+  return length === undefined || meter === undefined || key === undefined ? undefined : { length, meter, key };
+}
+
+function extractCanonicalAbc(
+  bytes: Uint8Array,
+  staffLayout: "single-staff" | "grand-staff",
+  systemPrompt: string,
+): string {
   let output: string;
   try {
     output = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
     return validateRokotAbc(bytes);
   }
-  const wrapper = `User:\n${prompt}\n\nAssistant:\n`;
+  const wrapper = `User:\n${systemPrompt}\n\nAssistant:\n`;
   const payload = output.startsWith(wrapper) ? output.slice(wrapper.length) : output;
   const canonical = staffLayout === "single-staff" ? canonicalizeUnvoicedSingleStaffAbc(payload) : payload;
   return validateRokotAbc(new TextEncoder().encode(canonical));

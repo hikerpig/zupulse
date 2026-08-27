@@ -62,6 +62,10 @@ unresolved range 时默认显示“全部”。用户后续筛选不会被数据
 SHA-256 为 `6fb18d1245aea9d89f5568a9b384b405c5326cb37015cc2caa5ade8dad5f7515`，其 hash
 进入新 Revision 的 `algorithmVersion`。
 
+alphaTab 投影为 Harmony Analysis Input 时把 fractional `displayStart`/`displayDuration`（如七连音产生的
+205.71… tick）四舍五入为整数 tick；measure duration 同样取整后最小为 1。取整只影响分析输入的相对
+时序，不修改 score runtime 本身。
+
 Semi-CRF 路径决定 primary chord 与 boundary。Bundled alternatives adapter 仅在这些冻结 range
 上生成 Top-8 alternatives，并用独立 confidence 与默认 `decisionThreshold=0.6` 决定
 resolved/unresolved；CRF path score 不是 confidence。低于阈值的区间保留为

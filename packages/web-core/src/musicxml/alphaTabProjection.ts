@@ -129,7 +129,7 @@ export function projectAlphaTabHarmonyInput(score: HarmonyRuntimeScore): Harmony
     const durationTicks = bar.duration ?? bar.calculateDuration?.() ?? 0;
     return {
       index,
-      durationTicks: Math.max(1, durationTicks),
+      durationTicks: Math.max(1, Math.round(durationTicks)),
       timeSignature: { numerator: bar.timeSignatureNumerator ?? 4, denominator: bar.timeSignatureDenominator ?? 4 },
       ...(keySignature === undefined ? {} : { key: `fifths:${keySignature}` }),
     };
@@ -152,8 +152,11 @@ export function projectAlphaTabHarmonyInput(score: HarmonyRuntimeScore): Harmony
                   const pitchClass = note.realValue! % 12;
                   return {
                     id: `track-${trackIndex + 1}:${measureIndex}:${voiceIndex}:${beatIndex}:${note.id ?? noteIndex}`,
-                    moment: { measureIndex: bar.index ?? measureIndex, offsetTicks: beat.displayStart ?? 0 },
-                    durationTicks: Math.max(1, beat.displayDuration ?? 0),
+                    moment: {
+                      measureIndex: bar.index ?? measureIndex,
+                      offsetTicks: Math.round(beat.displayStart ?? 0),
+                    },
+                    durationTicks: Math.max(1, Math.round(beat.displayDuration ?? 0)),
                     soundingPitchClass: pitchClass,
                     soundingMidi: note.realValue!,
                     spelling: alphaTabSpelling(pitchClass, note.accidentalMode, bar.keySignature),

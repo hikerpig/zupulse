@@ -6,6 +6,7 @@ import type { ScoreWrittenMoment } from "../harmony/writtenTime";
 
 export type AlphaTabStudioBeat = {
   displayStart: number;
+  isEmpty?: boolean;
   chordId?: string | null;
   voice: { bar: { index: number; staff?: { addChord(id: string, chord: unknown): void } } };
 };
@@ -149,7 +150,8 @@ export function highlightAlphaTabWrittenRange(
 ): AlphaTabWrittenRangeHighlightResult {
   const score = api.score;
   if (!score || !api.highlightPlaybackRange) return { status: "unavailable" };
-  const beats = allBeats(score).filter((beat) => contains(range, toScoreWrittenMoment(beat)));
+  // alphaTab only renders bounds for non-empty voice beats; empty rest voices have no highlightable bounds.
+  const beats = allBeats(score).filter((beat) => beat.isEmpty !== true && contains(range, toScoreWrittenMoment(beat)));
   const start = beats[0];
   const end = beats.at(-1);
   const masterBar = score.masterBars[range.start.measureIndex];

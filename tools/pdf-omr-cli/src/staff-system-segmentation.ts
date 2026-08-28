@@ -17,6 +17,7 @@ export const STAFF_SYSTEM_SEGMENTATION_PARAMETERS = {
   minimumCurvedConnectorCoverage: 0.85,
   fragmentedRowCoverage: 0.2,
   cropPaddingMultiplier: 4,
+  staffSpacingConsistencyRatio: 0.5,
 } as const;
 
 export type StaffSystem = {
@@ -180,10 +181,18 @@ function detectPageSystems(
   }
   const detectedLines = mergeAdjacentRows(candidateRows, allowFragmentedRuns);
   const legacyDetectedLines = mergeAdjacentRows(legacyCandidateRows, allowFragmentedRuns);
-  const groups = deduplicateStaffGroups([
-    ...extractStaffGroupCandidates(detectedLines, allowFragmentedRuns),
-    ...extractStaffGroupCandidates(legacyDetectedLines, allowFragmentedRuns),
-  ]);
+  const groups = filterConsistentSpacingGroups(
+    deduplicateStaffGroups([
+      ...extractStaffGroupCandidates(detectedLines, allowFragmentedRuns).map((group) => ({
+        group,
+        detection: "continuous-first" as const,
+      })),
+      ...extractStaffGroupCandidates(legacyDetectedLines, allowFragmentedRuns).map((group) => ({
+        group,
+        detection: "fragmented-first" as const,
+      })),
+    ]),
+  );
   if (groups.length === 0) {
     throw ambiguous(page.pageIndex, {
       stage: "staff-groups",
@@ -376,21 +385,53 @@ function extractStaffGroupCandidates(
   return groups;
 }
 
-function deduplicateStaffGroups(groups: readonly StaffGroup[]): StaffGroup[] {
-  const selected: StaffGroup[] = [];
-  for (const candidate of [...groups].sort(compareStaffGroupQuality)) {
-    const candidateTop = candidate.lines[0]!;
-    const candidateBottom = candidate.lines[4]!;
+type StaffGroupCandidate = { group: StaffGroup; detection: "continuous-first" | "fragmented-first" };
+
+function deduplicateStaffGroups(candidates: readonly StaffGroupCandidate[]): StaffGroup[] {
+  const selected: StaffGroupCandidate[] = [];
+  for (const candidate of [...candidates].sort((left, right) => compareStaffGroupQuality(left.group, right.group))) {
+    const candidateTop = candidate.group.lines[0]!;
+    const candidateBottom = candidate.group.lines[4]!;
     const duplicate = selected.some((existing) => {
-      const overlap = Math.min(candidateBottom, existing.lines[4]!) - Math.max(candidateTop, existing.lines[0]!);
-      const minimumHeight = Math.min(candidateBottom - candidateTop, existing.lines[4]! - existing.lines[0]!);
-      return overlap > minimumHeight * 0.75;
+      const overlap =
+        Math.min(candidateBottom, existing.group.lines[4]!) - Math.max(candidateTop, existing.group.lines[0]!);
+      const minimumHeight = Math.min(
+        candidateBottom - candidateTop,
+        existing.group.lines[4]! - existing.group.lines[0]!,
+      );
+      if (overlap > minimumHeight * 0.75) return true;
+      // The two detection passes can find the same staff shifted by one line when
+      // notation breaks the rows differently. Within a single pass, overlapping
+      // candidates (for example ledger-line decoys) are left for grand-staff
+      // pairing to resolve.
+      return candidate.detection !== existing.detection && countSharedStaffLines(candidate.group, existing.group) >= 3;
     });
     if (!duplicate) selected.push(candidate);
   }
   return selected
+    .map(({ group }) => group)
     .sort((left, right) => left.lines[0]! - right.lines[0]!)
     .map((group, index) => ({ ...group, firstIndex: index * 5, lastIndex: index * 5 + 4 }));
+}
+
+function countSharedStaffLines(left: StaffGroup, right: StaffGroup): number {
+  const tolerance = Math.max(
+    1,
+    Math.round(Math.min(left.spacing, right.spacing) * STAFF_SYSTEM_SEGMENTATION_PARAMETERS.spacingToleranceRatio),
+  );
+  return left.lines.filter((y) => right.lines.some((other) => Math.abs(other - y) <= tolerance)).length;
+}
+
+// Dense notation (for example 32nd-note beam stacks) can look like a tiny
+// five-line staff. All real staves on a page share the same print scale, so
+// groups far below the dominant spacing are not staves.
+function filterConsistentSpacingGroups(groups: readonly StaffGroup[]): StaffGroup[] {
+  if (groups.length < 3) return [...groups];
+  const spacings = groups.map((group) => group.spacing).sort((left, right) => left - right);
+  const median = spacings[Math.floor(spacings.length / 2)]!;
+  return groups.filter(
+    (group) => group.spacing >= median * STAFF_SYSTEM_SEGMENTATION_PARAMETERS.staffSpacingConsistencyRatio,
+  );
 }
 
 function compareStaffGroupQuality(left: StaffGroup, right: StaffGroup): number {

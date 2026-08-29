@@ -357,6 +357,36 @@ prediction 中唯一合法的 `L/M/K`。measure count 达到 137/137，diagnosti
 transcription 使用历史 `rokot-grand-staff-v1` 已复核 crops，不宣称当前 full-page detector 已恢复。完整摘要位于
 `tools/pdf-omr-cli/reports/exploratory/k331-page-scope-ablation-v1/`。
 
+## 2026-08-27 Rokot header-context ablation
+
+同一份 K331 27-system crop PDF 上比较了当前 `L/M/K` runtime、只传 `L/M`、冻结首个 `K`、以及 key 跳变后暂停传
+`K` 的 consensus。物化使用 `rokot-staff-system-v2` 且 `allowFragmentedRuns=false`，系统数为 `6/6/1/6/6/2`；
+baseline Joint F1 `0.3768`、valid measures `57/274` 复现了上一轮 `L/M/K` 结果。
+
+`previous-lm-headers-v1` 最优：Pitch/Joint F1 为 `0.9296 / 0.4922`，valid measures `117/274`（`42.70%`），staff /
+voice / tie / tuplet F1 为 `0.8482 / 0.4935 / 0.8460 / 0.8474`。predicted key 从卡住的 `C→G` 变为 `C/A` 交替，
+与 K.331-3 的书面 A 调一致。冻结首个 `K:C` 没有帮助；consensus 介于 baseline 与 L/M-only 之间。onset/duration
+几乎不变。Joint 与 voice F1 始终接近，因此下一优化边界是 voice 归属和双谱表 duration mismatch，而不是继续增加
+header 文本。
+
+合同内第二份 work 只能使用 development `melody-eight`：四个 policy 的 Draft hash 与全部 symbolic F1 均为满分且
+彼此相同。仓库没有第二份 development piano grand-staff truth；`piano-clean` 是 holdout，OLiMPiC full-page
+development 为 mixed topology。因此 L/M-only 还不能替换 runtime default。完整摘要位于
+`tools/pdf-omr-cli/reports/exploratory/rokot-header-context-ablation-v1/`。
+
+## 2026-08-28 DCML Mozart piano header-context
+
+用 DCML Mozart v2.3 `reviewed` MSCX、MuseScore 4.7.4 导出的 derived-controlled PDF/MXL 复现 L/M/K vs 只传
+`L/M`。谱面不进入 Git。
+
+`K310-1`（A 小调）物化 44 个 oracle crops 后，在第 7 个 crop 因 `V:1=1/2` 触发 `unknown-rokot-voice`，整谱
+fail closed，不能进入质量比较。
+
+`K280-1`（F 大调）完成 48 个 crops。`L/M/K` 的 Pitch/Joint/valid 为 `0.7500 / 0.4131 / 48/288`，key 从 `C` 卡住到
+`G`；只传 `L/M` 虽写出 `F`，但三项都下降到 `0.4730 / 0.1929 / 39/288`，小节数还变成 148。因此 K331 的 L/M-only
+收益没有在第二份合同内钢琴谱上复现，runtime default 保持 `L/M/K`。摘要位于
+`tools/pdf-omr-cli/reports/exploratory/rokot-header-context-dcml-piano-v1/`。
+
 ## 2026-08-26 LEGATO topology failure audit
 
 既有 46-item OLiMPiC development run 的 20 个 LEGATO failures 已通过 immutable artifacts 审计。分类为

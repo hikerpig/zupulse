@@ -24,6 +24,12 @@ import {
   type StaffSystemSegmentation,
 } from "../staff-system-segmentation";
 import type { OmrEngineAdapter } from "./types";
+import {
+  BASE_ROKOT_PROMPT,
+  createSystemContextTracker,
+  systemContextParameters,
+  type RokotSystemContextPolicy,
+} from "./rokot-system-context";
 
 const defaultModelRevision = "7add305aade6fb3a64ad4dde77d410fa68381089";
 const defaultModelSha256 = "df53948ada1a4a584b4c7c81cc7e3293d3457f2e5ec9688271693459eb950f25";
@@ -31,9 +37,7 @@ const defaultMmprojSha256 = "1074d47f6fd864bffa9d8843bbae30e6aa696ad0d55535ebd77
 const defaultLlamaBuild = "b10200-5f55650a7";
 const abcConverterVersion = "1.0.1";
 const contextSize = 4096;
-const prompt = "Transcribe this staff to rokot-ABC.";
-
-type PreviousSystemHeaders = { length: string; meter: string; key: string };
+const defaultSystemContextPolicy: RokotSystemContextPolicy = "previous-prediction-headers-v1";
 
 export type RokotAdapterOptions = {
   llamaCliPath?: string;
@@ -48,6 +52,7 @@ export type RokotAdapterOptions = {
   environment?: Readonly<Record<string, string>>;
   timeoutMs?: number;
   maxOutputBytes?: number;
+  systemContextPolicy?: RokotSystemContextPolicy;
 };
 
 export type RokotAbcConversionRequest = {
@@ -61,9 +66,11 @@ export type RokotAbcConversionRequest = {
 };
 
 export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapter {
+  const systemContextPolicy = options.systemContextPolicy ?? defaultSystemContextPolicy;
   return {
     async inspectEnvironment(signal) {
       const configuration = requireConfiguration(options);
+      const contextParameters = systemContextParameters(systemContextPolicy);
       const processOptions = {
         ...(options.environment === undefined ? {} : { env: options.environment }),
         ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
@@ -116,10 +123,9 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           llamaCppBuild: actualLlamaBuild,
           maxNewTokens: 1600,
           modelRevision: configuration.modelRevision,
-          prompt,
+          prompt: BASE_ROKOT_PROMPT,
           reasoning: "off",
-          systemContext: "previous-prediction-headers-v1",
-          systemContextHeaders: "L,M,K",
+          ...contextParameters,
           segmentationAllowFragmentedRuns: true,
           segmentationAllowLandscape: true,
           segmentationStaffLayout: "auto",
@@ -243,10 +249,10 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
       const segmentationSystems: Array<Record<string, unknown>> = [];
       let durationMs = 0;
       const resourceUsages: ProcessResourceUsage[] = [];
-      let previousSystemHeaders: PreviousSystemHeaders | undefined;
+      const systemContext = createSystemContextTracker(systemContextPolicy);
 
       for (const [systemOffset, system] of systems.entries()) {
-        const systemPrompt = buildSystemPrompt(previousSystemHeaders);
+        const systemPrompt = systemContext.prompt();
         const stem = systemStem(system.pageIndex, system.systemIndex);
         const pngBytes = encodeRgbaPng(system.pixelBBox.width, system.pixelBBox.height, system.cropPixels);
         const pngPath = join(systemsDirectory, `${stem}.png`);
@@ -295,7 +301,7 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           throw error;
         }
         const abcBytes = new TextEncoder().encode(abc);
-        previousSystemHeaders = parsePreviousSystemHeaders(abc);
+        systemContext.observe(abc);
         await writeFile(canonicalAbcPath, abcBytes, { flag: "wx" });
         const conversion = await convertRokotAbc(
           {
@@ -567,19 +573,6 @@ function parseConverterVersion(output: string): string {
     // The caller maps malformed inspection output to the stable availability reason.
   }
   return "";
-}
-
-function buildSystemPrompt(previous: PreviousSystemHeaders | undefined): string {
-  return previous === undefined
-    ? prompt
-    : `${prompt} The previous system used L:${previous.length}, M:${previous.meter}, K:${previous.key}. If this crop does not print a new meter or key signature, preserve those headers.`;
-}
-
-function parsePreviousSystemHeaders(abc: string): PreviousSystemHeaders | undefined {
-  const length = /^L:(\d+\/\d+)$/m.exec(abc)?.[1];
-  const meter = /^M:((?:\d+\/\d+)|C\|?)$/m.exec(abc)?.[1];
-  const key = /^K:([A-G](?:#|b)?(?:m|maj|min|dor|phr|lyd|mix|loc)?)$/m.exec(abc)?.[1];
-  return length === undefined || meter === undefined || key === undefined ? undefined : { length, meter, key };
 }
 
 function extractCanonicalAbc(

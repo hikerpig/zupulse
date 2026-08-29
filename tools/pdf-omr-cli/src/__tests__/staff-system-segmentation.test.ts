@@ -36,6 +36,24 @@ describe("segmentGrandStaffSystems", () => {
     );
   });
 
+  it("can pair remaining grand-staff groups adjacently for development crop materialization", () => {
+    const input = page(0, 200, 220, []);
+    [20, 26, 32, 38, 44, 140, 146, 152, 158, 164].forEach((y) => setBlackRange(input, 10, 190, y));
+
+    const result = segmentStaffSystems([input], {
+      staffLayout: "grand-staff",
+      pairAdjacentUnpairedGroups: true,
+    });
+
+    expect(result.systems).toHaveLength(1);
+    expect(result.systems[0]).toMatchObject({
+      staffLayout: "grand-staff",
+      staffCount: 2,
+      pageIndex: 0,
+      systemIndex: 0,
+    });
+  });
+
   it("keeps auto mode fail-closed when a page mixes paired and unpaired staff groups", () => {
     const input = page(0, 200, 220, [20, 26, 32, 38, 44, 68, 74, 80, 86, 92]);
     [150, 156, 162, 168, 174].forEach((y) => setBlackRange(input, 10, 190, y));

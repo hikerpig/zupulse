@@ -43,6 +43,7 @@ export type StaffSystemSegmentation = {
 export type StaffSystemSegmentationOptions = {
   readonly allowFragmentedRuns?: boolean;
   readonly staffLayout?: StaffLayout;
+  readonly pairAdjacentUnpairedGroups?: boolean;
 };
 
 export type StaffLayout = "auto" | "single-staff" | "grand-staff";
@@ -71,7 +72,12 @@ export function segmentStaffSystems(
 ): StaffSystemSegmentation {
   const systems: StaffSystem[] = [];
   for (const page of [...pages].sort((left, right) => left.pageIndex - right.pageIndex)) {
-    const detected = detectPageSystems(page, options.allowFragmentedRuns === true, options.staffLayout ?? "auto");
+    const detected = detectPageSystems(
+      page,
+      options.allowFragmentedRuns === true,
+      options.staffLayout ?? "auto",
+      options.pairAdjacentUnpairedGroups === true,
+    );
     const boundaries = detected.map((system, index) => {
       const previous = detected[index - 1];
       const next = detected[index + 1];
@@ -127,6 +133,7 @@ function detectPageSystems(
   page: RenderedPdfPage,
   allowFragmentedRuns: boolean,
   staffLayout: StaffLayout,
+  pairAdjacentUnpairedGroups: boolean,
 ): PendingSystem[] {
   if (page.format !== "rgba" || page.pixels.length !== page.pixelWidth * page.pixelHeight * 4) {
     throw ambiguous(page.pageIndex, { stage: "invalid-rgba" });
@@ -232,6 +239,19 @@ function detectPageSystems(
   );
   result.sort((left, right) => left.top - right.top);
   unpairedGroups = findUnpairedGroups(groups, selectedGroups);
+  if (
+    pairAdjacentUnpairedGroups &&
+    staffLayout === "grand-staff" &&
+    unpairedGroups.length > 0 &&
+    unpairedGroups.length % 2 === 0
+  ) {
+    const ordered = [...unpairedGroups].sort((left, right) => left.lines[0]! - right.lines[0]!);
+    for (let index = 0; index < ordered.length; index += 2) {
+      appendPairs([{ upper: ordered[index]!, lower: ordered[index + 1]!, connectorCoverage: 0 }]);
+    }
+    result.sort((left, right) => left.top - right.top);
+    unpairedGroups = findUnpairedGroups(groups, selectedGroups);
+  }
   if (staffLayout === "auto" && result.length === 0 && unpairedGroups.length > 0) {
     return unpairedGroups.map(singleStaffSystem);
   }

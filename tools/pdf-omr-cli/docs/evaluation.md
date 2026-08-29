@@ -275,6 +275,17 @@ joining/timing diagnostics，同时当前 K331 ground-truth Draft 本身也不�
 失败状态，不伪造 Harmony delta。小型结构化聚合见
 `reports/development/k331-rokot/summary.json`，解释见同目录 `README.md`；完整 run、模型和 cache 不进入 Git。
 
+## Rokot header-context ablation
+
+2026-08-27 在同一份 27-system K331 crop PDF 上比较了 `L/M/K`、只传 `L/M`、冻结首个 `K` 与 key-consensus。
+`previous-lm-headers-v1` 把 Pitch/Joint F1 从 `0.7525 / 0.3768` 提升到 `0.9296 / 0.4922`，valid measures 从
+`57/274` 提升到 `117/274`；voice F1 与 joint F1 保持接近。melody-eight 四个 policy 结果完全相同。runtime
+default 仍为 `L/M/K`。摘要位于 `reports/exploratory/rokot-header-context-ablation-v1/`。
+
+2026-08-28 用 DCML Mozart derived-controlled 对照：`K310-1` 在 `unknown-rokot-voice` fail closed；`K280-1` 上
+只传 `L/M` 的 Pitch/Joint 从 `0.7500 / 0.4131` 降到 `0.4730 / 0.1929`。K331 的 L/M-only 收益未复现。摘要位于
+`reports/exploratory/rokot-header-context-dcml-piano-v1/`。
+
 ## Rokot public pianoform quick development run
 
 2026-08-13 的 10-item quick development 结果以

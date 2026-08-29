@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "development-evidence",
+  "decision": "use-filtered-musescore-clean-cases-keep-augmented-layout-separate",
+  "runtimeDefault": "previous-prediction-headers-v1",
+  "corpora": {
+    "dcml-mozart-v2.3": {
+      "sourceRevision": "v2.3@5337257a5318711e6302cfe85c3f1a6ade3c6271",
+      "sourceSha256": "70c401e1aa48843326400992c3a61225e4425190d39d64b242a6c1d0fdc3ef87",
+      "decision": "requires-deterministic-analysis-markup-removal"
+    },
+    "asap-v1.1": {
+      "auditedItems": 5,
+      "rawReadyItems": 0,
+      "museScoreReexportReadyItems": 0,
+      "decision": "not-compatible-with-current-readiness-gate"
+    },
+    "musescore-omr-benchmark": {
+      "sourceRevision": "e27f6a8634e80ad0997af8a806c8dc00e45c4a07",
+      "declaredPairCount": 1077,
+      "pilotItems": 12,
+      "pianoGrandStaffItems": 5,
+      "readyPianoGrandStaffItems": 2,
+      "augmentedLayoutAdmission": {
+        "attempted": 2,
+        "succeeded": 0,
+        "failureReason": "ambiguous-system-segmentation/staff-groups=0"
+      },
+      "works": [
+        {
+          "id": "musescore-omr-4-clean",
+          "sourceMsczSha256": "28be22a0a54edb79a2362a32557d9e2fe8cd76649da39b9092c4cbdeeaadc6f3",
+          "sourceAugmentedPdfSha256": "2b1c932b160ddc0b8dfa4801a3c24ed8350bad6ca07b1076ed3f511b3721efcd",
+          "cleanPdfSha256": "9a322fd5b10b842b40b95ed80e033697179b930d08629a3ae6a9089e6ee3e45e",
+          "groundTruthSha256": "f6b3f44e92eadbaa7c1c68903c450bd800c725f290db4c322b9777fdd9830a9f",
+          "systemCount": 15,
+          "systemsPerPage": [6, 6, 3],
+          "variants": {
+            "previous-prediction-headers-v1": {
+              "pitchF1": 0.8686084142394821,
+              "jointF1": 0.4237668161434977,
+              "validMeasures": 46,
+              "validMeasureTotal": 184
+            },
+            "previous-lm-headers-v1": {
+              "pitchF1": 0.9265756985055231,
+              "jointF1": 0.4623172103487064,
+              "validMeasures": 69,
+              "validMeasureTotal": 184
+            }
+          }
+        },
+        {
+          "id": "musescore-omr-9-clean",
+          "sourceMsczSha256": "e4c228bad638a69a61e96b8b85b18f4da4cd21b6a501a0d7b352bf1a747c3aff",
+          "sourceAugmentedPdfSha256": "9260ad1658e675e6267f3caca9d2691de40b13e62626522b42e84a92849de5a5",
+          "cleanPdfSha256": "82af43a67ca32cdfba364cd2ec016e87ded6b3096aae810e536d4abee1e05872",
+          "groundTruthSha256": "f6ef570a73990db7c927c35ae6854beeae0f4c70ead828bdc4e8dc9d7f069fda",
+          "systemCount": 4,
+          "systemsPerPage": [4],
+          "variants": {
+            "previous-prediction-headers-v1": {
+              "pitchF1": 0.952112676056338,
+              "jointF1": 0.36828644501278773,
+              "validMeasures": 10,
+              "validMeasureTotal": 40
+            },
+            "previous-lm-headers-v1": {
+              "pitchF1": 0.952112676056338,
+              "jointF1": 0.35384615384615387,
+              "validMeasures": 10,
+              "validMeasureTotal": 40
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -387,6 +387,23 @@ fail closed，不能进入质量比较。
 收益没有在第二份合同内钢琴谱上复现，runtime default 保持 `L/M/K`。摘要位于
 `tools/pdf-omr-cli/reports/exploratory/rokot-header-context-dcml-piano-v1/`。
 
+## 2026-08-29 Piano corpus suitability 与 MuseScore clean probe
+
+DCML Mozart v2.3 的 `MS3` 渲染带 harmony labels，`reviewed` 还包含红色审校音符，因此不能未经确定性清洗就作为
+普通 clean OMR 页面。仓库已登记的 5 份 ASAP v1.1 piano MusicXML 在当前 ground-truth audit 中为 0/5 ready；
+经 MuseScore 4.7.4 重导 MXL 后仍为 0/5，暂不能直接进入现有 gate。
+
+MuseScore 官方 OMR Benchmark 提供 1,077 对 CC0 augmented PDF + MSCZ。对前 12 个 IDs 的最小 pilot 检出 5 个
+`piano / 1 part × 2 staves`，其中 IDs 4、9 的 MSCZ 经 MuseScore 重导后为 2/5 readiness-ready。两份官方 augmented
+PDF 均在当前 detector 的 `staff-groups=0` fail closed；同源 MSCZ 重渲染 clean PDF 后则分别物化 15 与 4 个 systems，
+并完成 header-context 对照。
+
+ID 4 上只传 `L/M` 把 Pitch/Joint/valid 从 `0.8686 / 0.4238 / 46/184` 提升到
+`0.9266 / 0.4623 / 69/184`；ID 9 的 Pitch 与 valid 不变，Joint 从 `0.3683` 小幅下降到 `0.3538`。结合 K331
+提升与 K280 回归，当前 runtime default 继续保持 `L/M/K`。两个 clean case 作为 development evidence 保留，
+augmented PDF 只记录 layout admission failure，不混入 transcription quality。完整结果位于
+`tools/pdf-omr-cli/reports/exploratory/piano-corpus-suitability-v1/`。
+
 ## 2026-08-26 LEGATO topology failure audit
 
 既有 46-item OLiMPiC development run 的 20 个 LEGATO failures 已通过 immutable artifacts 审计。分类为

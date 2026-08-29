@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0.0",
+  "probeId": "openscore-lieder-layout-renderer-probe-v1",
+  "status": "completed-go",
+  "source": {
+    "corpusId": "openscore-lieder-layout-train-v1",
+    "revision": "6b2dc542ce2e8aa4b78c8ee62103b210efc07015",
+    "sourcePlanSha256": "808893162928fcc434d3b21da81310516ac00aa2fd32213f99371744620ae195"
+  },
+  "renderer": {
+    "id": "musescore-svg-png-batch-v1",
+    "version": "4.7.4",
+    "build": "7688c00",
+    "targetRasterWidth": 1400,
+    "bundledFontFileCount": 22,
+    "bundledFontDeclarationSha256": "b1098f4c89ea17956a82bfdb3cfdb65e23693934bd430a21c9e921208ce84869"
+  },
+  "selection": {
+    "scoreCount": 15,
+    "pageCount": 60,
+    "eligibleMusicPageCount": 59,
+    "excludedPageCount": 1,
+    "systemCount": 207,
+    "observedStaffCounts": [2, 3, 4],
+    "systemsByStaffCount": {
+      "2": 33,
+      "3": 133,
+      "4": 41
+    }
+  },
+  "determinism": {
+    "runCount": 2,
+    "rasterMatchedPageCount": 60,
+    "annotationMatchedPageCount": 59,
+    "rawSvgNonDeterministicPageCount": 10,
+    "renderManifestSha256": "e9de8c807cf1da7937f5a64b4988fad13c5e621e46470e82a082e89637c280bd"
+  },
+  "manualAudit": {
+    "status": "passed",
+    "pageCount": 9,
+    "scoreIdsByStaffCount": {
+      "2": ["6158642", "6158825", "6159273"],
+      "3": ["4904021", "4919673", "4919879"],
+      "4": ["5062143", "5092551", "5093434"]
+    }
+  },
+  "boundaries": {
+    "holdoutRead": false,
+    "evaluationIdsUsed": false,
+    "modelTrainingRun": false,
+    "manualAuditComplete": true
+  },
+  "decision": "go-to-deterministic-dataset-builder"
+}

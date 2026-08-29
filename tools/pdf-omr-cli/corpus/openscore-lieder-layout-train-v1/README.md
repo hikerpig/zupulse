@@ -1,7 +1,7 @@
 # OpenScore Lieder layout training source v1
 
-状态：`source-eligible-rendering-not-run`。本目录只固定可用于 learned layout pretraining 的 CC0 source plan；尚未
-渲染页面、生成 layout annotations 或训练模型，也不改变任何 runtime、development protocol 或 frozen holdout。
+状态：`source-plan-frozen-renderer-probe-passed`。本目录固定可用于 learned layout pretraining 的 CC0 source plan；
+renderer/annotation probe 已通过，但完整数据集尚未生成，也不改变任何 runtime、development protocol 或 frozen holdout。
 
 ## Source boundary
 
@@ -33,12 +33,15 @@ python3 tools/pdf-omr-cli/scripts/plan_openscore_lieder_layout_corpus.py \
 pnpm exec oxfmt tools/pdf-omr-cli/corpus/openscore-lieder-layout-train-v1/source-plan.json
 ```
 
-## Next gate
+## Renderer probe and next gate
 
-下一阶段只能建立独立 renderer/annotation probe：固定 MuseScore exact version、fonts、page settings 与 output hashes，
-并由本仓库自行实现 SVG/layout extraction。不得复制 OLA 中标记为 `license unspecified` 的 annotation extraction
-实现。只有 probe 能稳定产生 ordered system bbox、staff count 与 staff-line polylines 后，才允许生成完整 synthetic
-training artifacts。
+独立 renderer/annotation probe 已固定 MuseScore 4.7.4 build 7688c00、bundled fonts、export settings 与 output
+hashes，并由本仓库自行实现 SVG/layout extraction。15-score probe 的 raster 与 canonical annotations 通过双跑确定性
+检查和 9-page 人工审计；证据见 `reports/exploratory/openscore-lieder-layout-renderer-probe-v1/`。
+
+下一阶段允许生成完整 synthetic training artifacts，但必须保持相同 renderer boundary，并证明 1,144 train / 133
+validation manifest、annotations 与 seeded train augmentations 可重复构建。不得复制 OLA 中标记为 `license
+unspecified` 的 annotation extraction 实现。
 
 OpenScore Lieder 是 synthetic typeset source。它适合 pretraining 和 topology supervision，但不能替代真实扫描的
 OLiMPiC development admission；任何模型仍须在未参与训练的 real-scanned pages 上通过现有 gate。

@@ -8,12 +8,12 @@
 
 ## Checkpoint 1 — truth probe
 
-- [ ] 选取 12–20 个 OpenScore Lieder works，覆盖 1/2/3-staff topology。
-- [ ] 固定 MuseScore 4.7.4 与导出设置，生成 SVG + width-1400 raster。
+- [x] 选取 15 个 OpenScore Lieder works，覆盖实际出现的 2/3/4-staff topology。
+- [x] 固定 MuseScore 4.7.4 build 7688c00、bundled fonts 与导出设置，生成 SVG + width-1400 raster。
 - [x] 实现最小 SVG `StaffLines` truth extraction，并校验 bounds/order/topology。
-- [ ] 人工审计每类至少 3 页。
-- [ ] 两次导出 manifest 与 geometry hashes 一致。
-- [ ] Go/no-go：truth 正确且确定性通过。
+- [x] 人工审计每类至少 3 页。
+- [x] 两次导出的 raster 与 canonical geometry hashes 一致；raw SVG 差异另行记录。
+- [x] Go/no-go：truth 正确且确定性通过。
 
 ## Checkpoint 2 — dataset
 

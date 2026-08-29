@@ -62,7 +62,7 @@ PDF page @ width 1400
 
 ### Stage 1 — renderer and annotation probe
 
-从已固定的 OpenScore Lieder eligible 集合中，按 1/2/3-staff topology 选 12–20 个 works。固定 MuseScore 4.7.4、字体、页面设置与导出参数，同时导出 SVG 和 width-1400 raster。解析 SVG 中的 `StaffLines`，生成 system、staff count、line polyline 与 bbox truth。
+从已固定的 OpenScore Lieder eligible 集合中，按实际出现的 2/3/4-staff topology 选 15 个 works。固定 MuseScore 4.7.4、字体、页面设置与导出参数，同时导出 SVG 和 width-1400 raster。解析 SVG 中的 `StaffLines`，生成 system、staff count、line polyline 与 bbox truth。
 
 人工审计每类 topology 至少 3 页，并连续导出两次比较 manifest 与 geometry hashes。重点检查 hidden empty staves、跨页 system、重复 SVG element、缩放坐标和声乐谱的多 staff grouping。
 

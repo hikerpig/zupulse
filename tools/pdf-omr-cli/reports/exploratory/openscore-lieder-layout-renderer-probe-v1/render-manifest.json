@@ -1,0 +1,1246 @@
+{
+  "boundaries": {
+    "evaluationIdsUsed": false,
+    "holdoutRead": false,
+    "manualAuditComplete": false,
+    "modelTrainingRun": false
+  },
+  "items": [
+    {
+      "pageCount": 1,
+      "pages": [
+        {
+          "annotationPath": "6158642/annotations/page-1.json",
+          "annotationSha256": "8ae68b543c614933de4c2e144738833eec2c7391b3bd5ec6601c9fe4dcf616c9",
+          "eligibleForTraining": true,
+          "pageIndex": 0,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "6158642/first/page-1.png",
+          "rasterSha256": "c9a94f3f7fd1c2def145d3f50bc1e96f279bb686097860ac43604359d1b9f46f",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "dd456c56545901b40087bb2e1bb44513825f5ee8882b7cfd41010c4f9e14f1ec",
+            "dd456c56545901b40087bb2e1bb44513825f5ee8882b7cfd41010c4f9e14f1ec"
+          ],
+          "staffCounts": [2, 2, 2],
+          "svgPath": "6158642/first/page-1.svg",
+          "systemCount": 3
+        }
+      ],
+      "scoreId": "6158642",
+      "sourcePath": "scores/Zumsteeg,_Emilie/5_Lieder/1_Des_Kaufmanns_Liebeswerbung/lc6158642.mscx",
+      "split": "train",
+      "staffCount": 2
+    },
+    {
+      "pageCount": 1,
+      "pages": [
+        {
+          "annotationPath": "6158825/annotations/page-1.json",
+          "annotationSha256": "49c59b15c10ec62a20281f1c17bc37a429f0c8837998f6035d4adf65cd939f71",
+          "eligibleForTraining": true,
+          "pageIndex": 0,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "6158825/first/page-1.png",
+          "rasterSha256": "854be9cfb21e324d49382747f035861de7b4447c246a314077d90459f008c094",
+          "rawSvgDeterministic": false,
+          "rawSvgSha256Runs": [
+            "11c66ef208bd477615a82869156b56f891ba62121951b907c8e990fd16051c83",
+            "cc580fd90c7893557fbfef2c48104cc96002dfc3bb08f224e871bd5312d2643a"
+          ],
+          "staffCounts": [2, 2, 2, 2],
+          "svgPath": "6158825/first/page-1.svg",
+          "systemCount": 4
+        }
+      ],
+      "scoreId": "6158825",
+      "sourcePath": "scores/Zumsteeg,_Emilie/5_Lieder/2_Der_Geburtstag/lc6158825.mscx",
+      "split": "train",
+      "staffCount": 2
+    },
+    {
+      "pageCount": 1,
+      "pages": [
+        {
+          "annotationPath": "6159273/annotations/page-1.json",
+          "annotationSha256": "ddff8db0024bfda75138af18aa6a3ee0a955cb77e06065ac64e3448a43372a10",
+          "eligibleForTraining": true,
+          "pageIndex": 0,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "6159273/first/page-1.png",
+          "rasterSha256": "ff09ca282dba40427f118e38112c526d7fd7b00a3e4729161c50a9bfcb3402b0",
+          "rawSvgDeterministic": false,
+          "rawSvgSha256Runs": [
+            "a9be1a0dddfa5ef9f254e6c4de36c6c3965768297f9c28ebb63cf6b4e69a046a",
+            "c6bdf32edd34f1f84d82b70d5596ecd8fa81826a2b3a7b93a9e6af305a62e91e"
+          ],
+          "staffCounts": [2, 2, 2, 2],
+          "svgPath": "6159273/first/page-1.svg",
+          "systemCount": 4
+        }
+      ],
+      "scoreId": "6159273",
+      "sourcePath": "scores/Zumsteeg,_Emilie/5_Lieder/4_Romanze/lc6159273.mscx",
+      "split": "train",
+      "staffCount": 2
+    },
+    {
+      "pageCount": 1,
+      "pages": [
+        {
+          "annotationPath": "6159296/annotations/page-1.json",
+          "annotationSha256": "08d8d29429c552c307f6592744e1a6fe81d32257b86e46338e80f2b2be7bdff2",
+          "eligibleForTraining": true,
+          "pageIndex": 0,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "6159296/first/page-1.png",
+          "rasterSha256": "b19d4749e4102ef4758a06cc28c355720b2577ff45780a6b0bf8ae86b45af85d",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "e7ec93d91443ad4061d96b2d588b72c39f583c61147cd1c4c06bef9d092a9218",
+            "e7ec93d91443ad4061d96b2d588b72c39f583c61147cd1c4c06bef9d092a9218"
+          ],
+          "staffCounts": [2, 2, 2, 2],
+          "svgPath": "6159296/first/page-1.svg",
+          "systemCount": 4
+        }
+      ],
+      "scoreId": "6159296",
+      "sourcePath": "scores/Zumsteeg,_Emilie/5_Lieder/3_In_das_Stambuch_einer_Freundin/lc6159296.mscx",
+      "split": "train",
+      "staffCount": 2
+    },
+    {
+      "pageCount": 4,
+      "pages": [
+        {
+          "annotationPath": "6163298/annotations/page-1.json",
+          "annotationSha256": "b0de95b15f709a6e8b7cc05f18f2d8338f7067fbc0b5cebacf43e185963ea41d",
+          "eligibleForTraining": true,
+          "pageIndex": 0,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "6163298/first/page-1.png",
+          "rasterSha256": "76e6186c4ce2de0fad18ee8f251ad9ed6763fd164e7c2f40ae86cf031744c2a8",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "607b7d9e083584af3a3421fc0efee683f48934378360ef879c16841143f685b7",
+            "607b7d9e083584af3a3421fc0efee683f48934378360ef879c16841143f685b7"
+          ],
+          "staffCounts": [2, 2, 2, 2],
+          "svgPath": "6163298/first/page-1.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "6163298/annotations/page-2.json",
+          "annotationSha256": "d81c2b9b905e26354de7dd3f65ddb4db9f4a06f5b8b64b682f1dcfbd4519e9c0",
+          "eligibleForTraining": true,
+          "pageIndex": 1,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "6163298/first/page-2.png",
+          "rasterSha256": "ae9d4615e92774b840154c5a1328f56d364708b12ae056804d1c073ac0723008",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "3c4048ba7c8e71850fcc977954407eb8db01ed132290cbdb0ad1fb2afd0b1286",
+            "3c4048ba7c8e71850fcc977954407eb8db01ed132290cbdb0ad1fb2afd0b1286"
+          ],
+          "staffCounts": [2],
+          "svgPath": "6163298/first/page-2.svg",
+          "systemCount": 1
+        },
+        {
+          "annotationPath": "6163298/annotations/page-3.json",
+          "annotationSha256": "a7cf6246aa584a3284b8b15a25da359dc869b93458620c50c2302072b9201e06",
+          "eligibleForTraining": true,
+          "pageIndex": 2,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "6163298/first/page-3.png",
+          "rasterSha256": "fb7c1e6d86875576ba604be7d96c2538988b0d8a75fdbcd1a88ccd6a5260b65a",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "5f673ac39e9423468827df8fd91195547e488149c81692b5e154fdb877fe7439",
+            "5f673ac39e9423468827df8fd91195547e488149c81692b5e154fdb877fe7439"
+          ],
+          "staffCounts": [2, 2, 2, 2, 2],
+          "svgPath": "6163298/first/page-3.svg",
+          "systemCount": 5
+        },
+        {
+          "eligibleForTraining": false,
+          "exclusionReason": "no-staff-lines",
+          "pageIndex": 3,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "6163298/first/page-4.png",
+          "rasterSha256": "fa807d39a31370f624fd45be018b0a45c98aa36aa8dd9d358d2571cd66f00cc9",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "075ca2a866d330f9f15c8e95bf22478571ba26a457ceca6b1e57b97b9edb0061",
+            "075ca2a866d330f9f15c8e95bf22478571ba26a457ceca6b1e57b97b9edb0061"
+          ],
+          "staffCounts": [],
+          "svgPath": "6163298/first/page-4.svg",
+          "systemCount": 0
+        }
+      ],
+      "scoreId": "6163298",
+      "sourcePath": "scores/Zumsteeg,_Emilie/5_Lieder/5_Sehnsucht_der_Liebe/lc6163298.mscx",
+      "split": "train",
+      "staffCount": 2
+    },
+    {
+      "pageCount": 2,
+      "pages": [
+        {
+          "annotationPath": "4904021/annotations/page-1.json",
+          "annotationSha256": "4a2a9bd8e34274babdffa64d3a7d16f864a08a9eaba8a5896bebc0379aa029c0",
+          "eligibleForTraining": true,
+          "pageIndex": 0,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4904021/first/page-1.png",
+          "rasterSha256": "f3550369c0e9edfce0d4126279203d45587e9847865f59a4452e56afc466e774",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "b10342e3ef2d2910d50b45eca1e6ee2610d3375f80668b2881c59f7a9e3c7a98",
+            "b10342e3ef2d2910d50b45eca1e6ee2610d3375f80668b2881c59f7a9e3c7a98"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4904021/first/page-1.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "4904021/annotations/page-2.json",
+          "annotationSha256": "25b49339be72e7beddebd5ff0a67d20fe87602c702a082673c3f8570192b0097",
+          "eligibleForTraining": true,
+          "pageIndex": 1,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4904021/first/page-2.png",
+          "rasterSha256": "f1323d80893fb16e6b5c62866bee2538a10532bfaacf80daab5334f1fdfd7bd8",
+          "rawSvgDeterministic": false,
+          "rawSvgSha256Runs": [
+            "ecfbe858c5797f74bc26a057ce0b98a8c209c04e15042587350a210e195fd85e",
+            "fcf1003bbe9c632b9e958150dac3fb3c64c6b5ac2562d6c002c82d8b82ef9a1f"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4904021/first/page-2.svg",
+          "systemCount": 4
+        }
+      ],
+      "scoreId": "4904021",
+      "sourcePath": "scores/Brahms,_Johannes/6_Songs,_Op.3/2_Liebe_und_Frühling_I/lc4904021.mscx",
+      "split": "train",
+      "staffCount": 3
+    },
+    {
+      "pageCount": 12,
+      "pages": [
+        {
+          "annotationPath": "4919673/annotations/page-1.json",
+          "annotationSha256": "30bd59379cba976069cd621d31b70452da8e9ae48cee44298c5ece90b1ee14a7",
+          "eligibleForTraining": true,
+          "pageIndex": 0,
+          "pixelHeight": 1812,
+          "pixelWidth": 1400,
+          "rasterPath": "4919673/first/page-1.png",
+          "rasterSha256": "20168dd668a6b635dd07a28ba3177b1b72cceee36a5c6fb099bac942db53fef4",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "78b15cd46bd087029d743a9a821f94e87e63a878e52ec15b01c13e2307b665da",
+            "78b15cd46bd087029d743a9a821f94e87e63a878e52ec15b01c13e2307b665da"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4919673/first/page-1.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "4919673/annotations/page-2.json",
+          "annotationSha256": "99e74f4221f02dbde9bc0d8e0cd2872f2866130500e5c5a5da5a9edda6e954f0",
+          "eligibleForTraining": true,
+          "pageIndex": 1,
+          "pixelHeight": 1812,
+          "pixelWidth": 1400,
+          "rasterPath": "4919673/first/page-2.png",
+          "rasterSha256": "1d9c7142448593721f3d345914e61c3d7951d0aa3833fb335c60c4f833aa47dd",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "2bb523be628a33cb8ebf2c3b98fe4b63722ee00ae354868a7113e8454164c721",
+            "2bb523be628a33cb8ebf2c3b98fe4b63722ee00ae354868a7113e8454164c721"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4919673/first/page-2.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "4919673/annotations/page-3.json",
+          "annotationSha256": "6d56d4b757a464f77b7ba7747ece9e5f1bb945ff18fb9b8ae345d2e21805f5cc",
+          "eligibleForTraining": true,
+          "pageIndex": 2,
+          "pixelHeight": 1812,
+          "pixelWidth": 1400,
+          "rasterPath": "4919673/first/page-3.png",
+          "rasterSha256": "1f84a375dc648bb5972a3ed975e25c56d2f0f16bfabfcce245b3d52b726d7d5c",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "208c8b7a245fda0673ffdb9f121c0289b108ff67d13106ec561fa020ed1567de",
+            "208c8b7a245fda0673ffdb9f121c0289b108ff67d13106ec561fa020ed1567de"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4919673/first/page-3.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "4919673/annotations/page-4.json",
+          "annotationSha256": "f9ffc3fe999c82bf41aa18ba82de8e493e86b6016cef78c8086c13c2d057ad4f",
+          "eligibleForTraining": true,
+          "pageIndex": 3,
+          "pixelHeight": 1812,
+          "pixelWidth": 1400,
+          "rasterPath": "4919673/first/page-4.png",
+          "rasterSha256": "7b52f5a0460e28d137a544376917fd64d167991c30907f9f754a7588fa7696a2",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "ad79b23f4923ef8e85ff38312861ba1197a74057c5a8a03f1e78d262325ac681",
+            "ad79b23f4923ef8e85ff38312861ba1197a74057c5a8a03f1e78d262325ac681"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4919673/first/page-4.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "4919673/annotations/page-5.json",
+          "annotationSha256": "a12bb2a8ec43e02e646cf4336380883717f8dfa49c0c025c6c343c0f88210db6",
+          "eligibleForTraining": true,
+          "pageIndex": 4,
+          "pixelHeight": 1812,
+          "pixelWidth": 1400,
+          "rasterPath": "4919673/first/page-5.png",
+          "rasterSha256": "ab0bf322878612aaaafc36b8aa1063cbb8ffefed4a5a2449151d8d2a011a42cd",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "d4feb69e718a41973e3a37695bf1867d92da4bc6c3a1182eec10cb6ea0969ddc",
+            "d4feb69e718a41973e3a37695bf1867d92da4bc6c3a1182eec10cb6ea0969ddc"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4919673/first/page-5.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "4919673/annotations/page-6.json",
+          "annotationSha256": "ce15836cd883ed899a93f2f876d80ae23c4b3ce1d88912a3054763b1a7e4352a",
+          "eligibleForTraining": true,
+          "pageIndex": 5,
+          "pixelHeight": 1812,
+          "pixelWidth": 1400,
+          "rasterPath": "4919673/first/page-6.png",
+          "rasterSha256": "fe3f70af12229254afc7d526047db3dd8d8ab4111950b5c7b932182bfb3c43b7",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "99ddd6543be74db528413126a279ee0340e83f0362e076f5560e694b0cb444b1",
+            "99ddd6543be74db528413126a279ee0340e83f0362e076f5560e694b0cb444b1"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4919673/first/page-6.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "4919673/annotations/page-7.json",
+          "annotationSha256": "ab98cf91e541cb901665a356920e34f6f885f991c4ef378fc8b68601eeb28eb0",
+          "eligibleForTraining": true,
+          "pageIndex": 6,
+          "pixelHeight": 1812,
+          "pixelWidth": 1400,
+          "rasterPath": "4919673/first/page-7.png",
+          "rasterSha256": "3ac712797b918146973d2b83e4dd38bbd9c281813390531fd38840fefb3670db",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "b9dde36ffc0a9522869e7e8b7707614dab9bf1a615d0f82beafaab7e937b1daf",
+            "b9dde36ffc0a9522869e7e8b7707614dab9bf1a615d0f82beafaab7e937b1daf"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4919673/first/page-7.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "4919673/annotations/page-8.json",
+          "annotationSha256": "4ccb6be6aeb1b5780b1dc7b8533c236abd950e774d6b3f2416cb1252a730e7a5",
+          "eligibleForTraining": true,
+          "pageIndex": 7,
+          "pixelHeight": 1812,
+          "pixelWidth": 1400,
+          "rasterPath": "4919673/first/page-8.png",
+          "rasterSha256": "808acf49a6807a8a7005b1858ef3a3e5611dc39cd788179c8d819cc04e446e3c",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "b9fce2733ba6381383557dbcebe5753c0df812b1351d78b65d31d54449ae06b9",
+            "b9fce2733ba6381383557dbcebe5753c0df812b1351d78b65d31d54449ae06b9"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4919673/first/page-8.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "4919673/annotations/page-9.json",
+          "annotationSha256": "16c8d084df87477f9a8ab9fe3bbb39a2bd3d85e0e63cc78afbe44333974a34f8",
+          "eligibleForTraining": true,
+          "pageIndex": 8,
+          "pixelHeight": 1812,
+          "pixelWidth": 1400,
+          "rasterPath": "4919673/first/page-9.png",
+          "rasterSha256": "6be31b90c12545d4da358a9ee0390e118c0b0df0aa236689db05c16bb0cbeb65",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "4422ed8ab09f0521b2acdcd2fd7bd1395fbf61c797234b2fe9e79bb2506cb6d7",
+            "4422ed8ab09f0521b2acdcd2fd7bd1395fbf61c797234b2fe9e79bb2506cb6d7"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4919673/first/page-9.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "4919673/annotations/page-10.json",
+          "annotationSha256": "1983529510eaa8d87355a28b4fc46d7aad8d0dd294663c2de9b8d12b79718d21",
+          "eligibleForTraining": true,
+          "pageIndex": 9,
+          "pixelHeight": 1812,
+          "pixelWidth": 1400,
+          "rasterPath": "4919673/first/page-10.png",
+          "rasterSha256": "716c89b7a42eee76ae35fdffc827bc46a937fc3911a923478e1a01131c18922d",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "ae5ebadefe6d534c406c5a3aa1264433bfb65b2d2691f758d30ff006d8843273",
+            "ae5ebadefe6d534c406c5a3aa1264433bfb65b2d2691f758d30ff006d8843273"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4919673/first/page-10.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "4919673/annotations/page-11.json",
+          "annotationSha256": "4791aeab5a3163e1d614ba0cbb1cf7fd989c1a1c1f803308d4c89aa6448fe16f",
+          "eligibleForTraining": true,
+          "pageIndex": 10,
+          "pixelHeight": 1812,
+          "pixelWidth": 1400,
+          "rasterPath": "4919673/first/page-11.png",
+          "rasterSha256": "14d4f6044414a4dad9996018f8e793591021e47e9640c9ef54bd45ea44e27c33",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "891c07dfa29fff28dfdfb0034f067a91f3b1cf26744f72cfa4f7e68b8674905e",
+            "891c07dfa29fff28dfdfb0034f067a91f3b1cf26744f72cfa4f7e68b8674905e"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4919673/first/page-11.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "4919673/annotations/page-12.json",
+          "annotationSha256": "fd2e7c6cc3f9924fb6c3e97ec3457ec292e2a145987fc4e603b27cc7ee0fe5c9",
+          "eligibleForTraining": true,
+          "pageIndex": 11,
+          "pixelHeight": 1812,
+          "pixelWidth": 1400,
+          "rasterPath": "4919673/first/page-12.png",
+          "rasterSha256": "b2d8f6e49aaf802e60373078d8db87a1e95d523bca8c57299fbc6ce744d07a4e",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "2dbc621081eef84ed88c26ba69dba9f531c36e620e0b2270fc6090de9ef6b011",
+            "2dbc621081eef84ed88c26ba69dba9f531c36e620e0b2270fc6090de9ef6b011"
+          ],
+          "staffCounts": [3, 3],
+          "svgPath": "4919673/first/page-12.svg",
+          "systemCount": 2
+        }
+      ],
+      "scoreId": "4919673",
+      "sourcePath": "scores/Schumann,_Clara/_/Lorelei/lc4919673.mscx",
+      "split": "train",
+      "staffCount": 3
+    },
+    {
+      "pageCount": 6,
+      "pages": [
+        {
+          "annotationPath": "4919879/annotations/page-1.json",
+          "annotationSha256": "744e63f2ee900510a35965ff99d73b32a4f5ac9ac9e41d176fdb33682274153e",
+          "eligibleForTraining": true,
+          "pageIndex": 0,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4919879/first/page-1.png",
+          "rasterSha256": "f1066727ad923120779c853341cd7b7ef00509ad5841b3689a68be7c8ff3f150",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "a46c63d9439c4d7725b041a5f3e23e1c7fcf94b9f354b12210ce18deedd8c7a1",
+            "a46c63d9439c4d7725b041a5f3e23e1c7fcf94b9f354b12210ce18deedd8c7a1"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4919879/first/page-1.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "4919879/annotations/page-2.json",
+          "annotationSha256": "a5496d07935f4de0629d4722050f2528bf99687eb8c16150fc06c11f6f3b0a60",
+          "eligibleForTraining": true,
+          "pageIndex": 1,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4919879/first/page-2.png",
+          "rasterSha256": "a887ab52939487660fcaaa831a01c0c5aba38086b96bfe6d96cc7f36c2cf4e0b",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "137928bc7e07f2df282f4a9032405b27ed0c4e4187d70345eb6d2043ecb54018",
+            "137928bc7e07f2df282f4a9032405b27ed0c4e4187d70345eb6d2043ecb54018"
+          ],
+          "staffCounts": [3, 3],
+          "svgPath": "4919879/first/page-2.svg",
+          "systemCount": 2
+        },
+        {
+          "annotationPath": "4919879/annotations/page-3.json",
+          "annotationSha256": "426f286ae999fbc2bd6537273de118bdde1faa81528de696c5ac7a61ae798408",
+          "eligibleForTraining": true,
+          "pageIndex": 2,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4919879/first/page-3.png",
+          "rasterSha256": "41dc874b3a092c0e12c9a59c093aa8a1409bc66c5bb383e115e8ade37d79631c",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "e335ec829aa70a2ade6430612553a4d338af39393e587d0835137388f03fbf6c",
+            "e335ec829aa70a2ade6430612553a4d338af39393e587d0835137388f03fbf6c"
+          ],
+          "staffCounts": [3, 3, 3, 3, 3],
+          "svgPath": "4919879/first/page-3.svg",
+          "systemCount": 5
+        },
+        {
+          "annotationPath": "4919879/annotations/page-4.json",
+          "annotationSha256": "02a0e439c3f9771ed47c21867288497b1a102274087e709f6066a37c7ce3075f",
+          "eligibleForTraining": true,
+          "pageIndex": 3,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4919879/first/page-4.png",
+          "rasterSha256": "fd3772a7e2705e04fe55b47251142fd0aa9c053e092de2964e0e3cba41108013",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "8c9746ca58fe8e0c67b4ba7bcbaee8328802091de515df773f30c3f769eded15",
+            "8c9746ca58fe8e0c67b4ba7bcbaee8328802091de515df773f30c3f769eded15"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4919879/first/page-4.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "4919879/annotations/page-5.json",
+          "annotationSha256": "fe5a4cd1d9be5c5cc3cf1e6196e5a76f62386a9fee3e97f8700e7e8997fcc379",
+          "eligibleForTraining": true,
+          "pageIndex": 4,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4919879/first/page-5.png",
+          "rasterSha256": "1367357f182e289ec8fd209115c996d5b0d650e7320a2f9568d2270c91f0ffc7",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "dd32f1f3d10e427855bfa3c59ec918ea1fa498fee0b221a6ab0a0d2b36452a00",
+            "dd32f1f3d10e427855bfa3c59ec918ea1fa498fee0b221a6ab0a0d2b36452a00"
+          ],
+          "staffCounts": [3, 3, 3, 3, 3],
+          "svgPath": "4919879/first/page-5.svg",
+          "systemCount": 5
+        },
+        {
+          "annotationPath": "4919879/annotations/page-6.json",
+          "annotationSha256": "53d136e041d3eeccef7b6a1c3d31097872eceb1dda27119a06b83a2282e4bf5c",
+          "eligibleForTraining": true,
+          "pageIndex": 5,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4919879/first/page-6.png",
+          "rasterSha256": "7ad223a1a2c76b23343edf10bafbb653ea87d8099026f49a7339e22ef58e3456",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "3c526c1708d79f7e688d36ec402e4bd58819785fb76ec2f913f01dc816daf38a",
+            "3c526c1708d79f7e688d36ec402e4bd58819785fb76ec2f913f01dc816daf38a"
+          ],
+          "staffCounts": [3],
+          "svgPath": "4919879/first/page-6.svg",
+          "systemCount": 1
+        }
+      ],
+      "scoreId": "4919879",
+      "sourcePath": "scores/Schubert,_Franz/Op.59/3_Du_bist_die_Ruh/lc4919879.mscx",
+      "split": "train",
+      "staffCount": 3
+    },
+    {
+      "pageCount": 10,
+      "pages": [
+        {
+          "annotationPath": "4920211/annotations/page-1.json",
+          "annotationSha256": "ebd6b643954b5921a7e4c54fe858b379eb2a0e674175af32d2ef607b9d15a12c",
+          "eligibleForTraining": true,
+          "pageIndex": 0,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4920211/first/page-1.png",
+          "rasterSha256": "b63f90f2da78a2169b15e88537ef2698dc9605f913ea260160ed1cb650dd0d0d",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "3560e08cd9190e43fa783aeca356a2268d744d85b2fe0cdf72d16c2c7903fd73",
+            "3560e08cd9190e43fa783aeca356a2268d744d85b2fe0cdf72d16c2c7903fd73"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4920211/first/page-1.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "4920211/annotations/page-2.json",
+          "annotationSha256": "333011499c90a2e4844bd0d1436f07a572e622081ddda8ad56f19a87c6d9cf76",
+          "eligibleForTraining": true,
+          "pageIndex": 1,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4920211/first/page-2.png",
+          "rasterSha256": "ebbe6a94ed7b9f9c3ea12e6bc571bd519075a58c334c6541f41b7f584b5513f6",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "712e42e490e17fa74a59214313b2fbae06ea8420edee59784ddc3e08d82de4cb",
+            "712e42e490e17fa74a59214313b2fbae06ea8420edee59784ddc3e08d82de4cb"
+          ],
+          "staffCounts": [3, 2, 3],
+          "svgPath": "4920211/first/page-2.svg",
+          "systemCount": 3
+        },
+        {
+          "annotationPath": "4920211/annotations/page-3.json",
+          "annotationSha256": "d58d8832ceaa5aa46a710668409f54e7b3a8a68d537a9b5b17ecff9bef72cdb6",
+          "eligibleForTraining": true,
+          "pageIndex": 2,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4920211/first/page-3.png",
+          "rasterSha256": "b41f9aa5e897e39ec0f0d9b5c68cb64046d4ec031e11a7c43167c546b675166f",
+          "rawSvgDeterministic": false,
+          "rawSvgSha256Runs": [
+            "42bbbc74e003bc17655b4db45f86e102e0c9eeb9cb4b2e6880d534c84eec2709",
+            "537d087be3e0861516712d4cb7963981137ea9cfa261b7716cfde901001a9f0b"
+          ],
+          "staffCounts": [3, 3, 3, 3, 3],
+          "svgPath": "4920211/first/page-3.svg",
+          "systemCount": 5
+        },
+        {
+          "annotationPath": "4920211/annotations/page-4.json",
+          "annotationSha256": "1429cecc8dfb42b4d5c567f81fb0fbf752a1a4037a21675944792443b09847ca",
+          "eligibleForTraining": true,
+          "pageIndex": 3,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4920211/first/page-4.png",
+          "rasterSha256": "14aa3b8dc7b3e83993640891ac0013b2733a048e597728f38b068254f7fcbc2e",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "42731bab014233e7addf1b5498b997f10d50f089f5878df151c3360a33ff0caf",
+            "42731bab014233e7addf1b5498b997f10d50f089f5878df151c3360a33ff0caf"
+          ],
+          "staffCounts": [2, 2, 3],
+          "svgPath": "4920211/first/page-4.svg",
+          "systemCount": 3
+        },
+        {
+          "annotationPath": "4920211/annotations/page-5.json",
+          "annotationSha256": "01cd25289bad55161f740395c8aea05694987cc6ff061b0d7a28a6ef416a0ecf",
+          "eligibleForTraining": true,
+          "pageIndex": 4,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4920211/first/page-5.png",
+          "rasterSha256": "428ee70f04a94f50aafad05115fda1005b189e3dae18a5bffb55944c000bee9e",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "36981557850514a2def863a72c6fc9ac4ec63ab93d5fce8f5d390c39d64bc383",
+            "36981557850514a2def863a72c6fc9ac4ec63ab93d5fce8f5d390c39d64bc383"
+          ],
+          "staffCounts": [3, 3, 3, 3, 3],
+          "svgPath": "4920211/first/page-5.svg",
+          "systemCount": 5
+        },
+        {
+          "annotationPath": "4920211/annotations/page-6.json",
+          "annotationSha256": "4650adccca66a44b413984c08f6e7df1af1c2431834b17c6e176d0be37bc2d80",
+          "eligibleForTraining": true,
+          "pageIndex": 5,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4920211/first/page-6.png",
+          "rasterSha256": "6d6d1f7d26a02a5edbdb991f59580e6e117da38ec4dae9c9cb0de10e3401be37",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "460a593d0aef579264aff5c72d1b95a3a0b18c664df0c4659dac0274d710fa32",
+            "460a593d0aef579264aff5c72d1b95a3a0b18c664df0c4659dac0274d710fa32"
+          ],
+          "staffCounts": [2, 3, 3],
+          "svgPath": "4920211/first/page-6.svg",
+          "systemCount": 3
+        },
+        {
+          "annotationPath": "4920211/annotations/page-7.json",
+          "annotationSha256": "cd750ebea8546b69d9837f046d207e87ea88c07f131fef6e282e30c333053999",
+          "eligibleForTraining": true,
+          "pageIndex": 6,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4920211/first/page-7.png",
+          "rasterSha256": "4e17762d158cf3a57087ee6681f94da289029bf26faf60c058dd6afae7fa733a",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "182da24013dedf0efb0eec0b039e7a8323327a426fd0fccb9db0ae506b60957c",
+            "182da24013dedf0efb0eec0b039e7a8323327a426fd0fccb9db0ae506b60957c"
+          ],
+          "staffCounts": [3, 3, 3, 2, 2],
+          "svgPath": "4920211/first/page-7.svg",
+          "systemCount": 5
+        },
+        {
+          "annotationPath": "4920211/annotations/page-8.json",
+          "annotationSha256": "159543dfaac49895592dc36e6e7dc6a7ee93d6e395bc9cc6771795db9a6b4f83",
+          "eligibleForTraining": true,
+          "pageIndex": 7,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4920211/first/page-8.png",
+          "rasterSha256": "72bb3da1fc71f2f51e2cb5c15a2ee59960636c570b80bf928814f047c0dbe8c4",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "b03bf0c119cccf9ff7851e13663e2959f2f2be9e0787ecb51d55423fa810fcc7",
+            "b03bf0c119cccf9ff7851e13663e2959f2f2be9e0787ecb51d55423fa810fcc7"
+          ],
+          "staffCounts": [3, 3, 3],
+          "svgPath": "4920211/first/page-8.svg",
+          "systemCount": 3
+        },
+        {
+          "annotationPath": "4920211/annotations/page-9.json",
+          "annotationSha256": "4543ab857ff6eb011dc3811612ef0ac4c923b2a7555a7da45d81d60a1191e621",
+          "eligibleForTraining": true,
+          "pageIndex": 8,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4920211/first/page-9.png",
+          "rasterSha256": "1532476c8cadc4d36621d1f9f1347e98e247ae34d7b86c87cb45f02e04f0e2b4",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "b64d1edb487e6cba2f42ea03d270fa60c4594e5d930fc89b5604e4740fa18afe",
+            "b64d1edb487e6cba2f42ea03d270fa60c4594e5d930fc89b5604e4740fa18afe"
+          ],
+          "staffCounts": [3, 3, 3, 3, 3],
+          "svgPath": "4920211/first/page-9.svg",
+          "systemCount": 5
+        },
+        {
+          "annotationPath": "4920211/annotations/page-10.json",
+          "annotationSha256": "9ffbeba33e78254d92824a2dd3544e0b6e735a45667b41da84f1629d415dcb0c",
+          "eligibleForTraining": true,
+          "pageIndex": 9,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "4920211/first/page-10.png",
+          "rasterSha256": "6ac37f41bb31b0a1183eedf91372647611bfe2fa1e995f13ca4a2076e60395ca",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "7ca371e785bc779bb3642f43cd382f746182f724846149897cca7d11aa3b5422",
+            "7ca371e785bc779bb3642f43cd382f746182f724846149897cca7d11aa3b5422"
+          ],
+          "staffCounts": [3, 3, 3, 2, 2],
+          "svgPath": "4920211/first/page-10.svg",
+          "systemCount": 5
+        }
+      ],
+      "scoreId": "4920211",
+      "sourcePath": "scores/Lang,_Josephine/6_Lieder,_Op.25/4_Lied_(Immer_sich_rein_kindlich_erfreu’n)/lc4920211.mscx",
+      "split": "train",
+      "staffCount": 3
+    },
+    {
+      "pageCount": 4,
+      "pages": [
+        {
+          "annotationPath": "4926375/annotations/page-1.json",
+          "annotationSha256": "2c368639d22474f2d8935b1256ad302faf127a6c9a7a1ba292ff1244b634813b",
+          "eligibleForTraining": true,
+          "pageIndex": 0,
+          "pixelHeight": 1812,
+          "pixelWidth": 1400,
+          "rasterPath": "4926375/first/page-1.png",
+          "rasterSha256": "6dc260462284dd81b940d96a066d264426ecf0eef9b7a25d84fc42769b2daf3f",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "cb836f8157b99a3936132762c4537b0daca4e9895cb1d2fbeb4910606b79415f",
+            "cb836f8157b99a3936132762c4537b0daca4e9895cb1d2fbeb4910606b79415f"
+          ],
+          "staffCounts": [3, 3, 3],
+          "svgPath": "4926375/first/page-1.svg",
+          "systemCount": 3
+        },
+        {
+          "annotationPath": "4926375/annotations/page-2.json",
+          "annotationSha256": "028e18648250217a3d99e361ab9a0fdd69e38b9dc17d378156ddf06cb4a27246",
+          "eligibleForTraining": true,
+          "pageIndex": 1,
+          "pixelHeight": 1812,
+          "pixelWidth": 1400,
+          "rasterPath": "4926375/first/page-2.png",
+          "rasterSha256": "2004407b1f867bb8313573c5db87b97a7186a73a87b95fa9a7a184bbe1c114ba",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "fd8fd60bfcbcdec3c5082aaedac4b37d259f1f0f8ff5baa6ee8e1520d7966151",
+            "fd8fd60bfcbcdec3c5082aaedac4b37d259f1f0f8ff5baa6ee8e1520d7966151"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4926375/first/page-2.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "4926375/annotations/page-3.json",
+          "annotationSha256": "0fb2b501fe1d5969460b25bec12e420530d9e2b24af8313bf54e80ad6f5ff2dd",
+          "eligibleForTraining": true,
+          "pageIndex": 2,
+          "pixelHeight": 1812,
+          "pixelWidth": 1400,
+          "rasterPath": "4926375/first/page-3.png",
+          "rasterSha256": "bc1265411ad69d29154a9301283e7d0f58290308358347a1bd73e20b8e316f26",
+          "rawSvgDeterministic": false,
+          "rawSvgSha256Runs": [
+            "e7a137d4d969fe18bfa3236dc115d00387a89b41eeba7d7993978965a47ad681",
+            "ed3c71a53f9dec93f8eba5e876948b3c0db7d7d0c23db60536edb5c5764c2aea"
+          ],
+          "staffCounts": [3, 3, 3],
+          "svgPath": "4926375/first/page-3.svg",
+          "systemCount": 3
+        },
+        {
+          "annotationPath": "4926375/annotations/page-4.json",
+          "annotationSha256": "be20ac37224d490f508a1be5c4f18586faef34efd0be2675284bf69f5ffdaa1b",
+          "eligibleForTraining": true,
+          "pageIndex": 3,
+          "pixelHeight": 1812,
+          "pixelWidth": 1400,
+          "rasterPath": "4926375/first/page-4.png",
+          "rasterSha256": "93ea37091c37a4c5025bd0e4dd878be38b5dc2e9754109c96943ac1d5d6df312",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "a6dc3740c035e013b6d98d3de8438d4655b4d200b4488861f3e2088e550a67e3",
+            "a6dc3740c035e013b6d98d3de8438d4655b4d200b4488861f3e2088e550a67e3"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "4926375/first/page-4.svg",
+          "systemCount": 4
+        }
+      ],
+      "scoreId": "4926375",
+      "sourcePath": "scores/Brahms,_Johannes/8_Lieder_und_Gesänge,_Op.59/6_Eine_gute,_gute_Nacht/lc4926375.mscx",
+      "split": "train",
+      "staffCount": 3
+    },
+    {
+      "pageCount": 4,
+      "pages": [
+        {
+          "annotationPath": "5062143/annotations/page-1.json",
+          "annotationSha256": "3502eb6f0c01dd37baa6603cf45c0666090e725d54b07484230d6eef67388996",
+          "eligibleForTraining": true,
+          "pageIndex": 0,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5062143/first/page-1.png",
+          "rasterSha256": "3b4c4094de675db111233d0d62c5e45eebd08648a2f4774008a699847af5e661",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "371d87367309604db54cd0d32b188e683fae47299edcfbce7ad4f958bdd542ff",
+            "371d87367309604db54cd0d32b188e683fae47299edcfbce7ad4f958bdd542ff"
+          ],
+          "staffCounts": [4, 4],
+          "svgPath": "5062143/first/page-1.svg",
+          "systemCount": 2
+        },
+        {
+          "annotationPath": "5062143/annotations/page-2.json",
+          "annotationSha256": "963ce4f35a13b67cb0a359cd1743300d80baf7b661c9bfeb113c838479f33463",
+          "eligibleForTraining": true,
+          "pageIndex": 1,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5062143/first/page-2.png",
+          "rasterSha256": "1445c42a398c4897ef930866f1e28229d6746a1d46877223b0442d38bcd0fa09",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "4d305be1677eae6c76411f73d8eebd0dd3782609c0397f5f50354259080bcf6f",
+            "4d305be1677eae6c76411f73d8eebd0dd3782609c0397f5f50354259080bcf6f"
+          ],
+          "staffCounts": [4, 4, 4],
+          "svgPath": "5062143/first/page-2.svg",
+          "systemCount": 3
+        },
+        {
+          "annotationPath": "5062143/annotations/page-3.json",
+          "annotationSha256": "39642d9550309596b8a305809eacc550c4b0069fae10243c50d0f03b0399595d",
+          "eligibleForTraining": true,
+          "pageIndex": 2,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5062143/first/page-3.png",
+          "rasterSha256": "568e59b63c9fd8d8f98dc60c40c91dd77b30e756bc98a345289862e22568bf26",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "029453ca80697a24e7e10d3a5cf175dbe42a2a5073fef649fe6a1e104924e8c1",
+            "029453ca80697a24e7e10d3a5cf175dbe42a2a5073fef649fe6a1e104924e8c1"
+          ],
+          "staffCounts": [4, 4, 4],
+          "svgPath": "5062143/first/page-3.svg",
+          "systemCount": 3
+        },
+        {
+          "annotationPath": "5062143/annotations/page-4.json",
+          "annotationSha256": "e7c75123d3b7c9052f656a09859707836e6230d4195952ce9f903009a8ed77bc",
+          "eligibleForTraining": true,
+          "pageIndex": 3,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5062143/first/page-4.png",
+          "rasterSha256": "89549016fdf1c8391ca5360492fec67a0710408484bf07c19f40fa7204faff6d",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "0f5f6624d021635a138dc8c1c221a9b1cecc57cb96ed82ab4c3ee759f346833b",
+            "0f5f6624d021635a138dc8c1c221a9b1cecc57cb96ed82ab4c3ee759f346833b"
+          ],
+          "staffCounts": [4, 4],
+          "svgPath": "5062143/first/page-4.svg",
+          "systemCount": 2
+        }
+      ],
+      "scoreId": "5062143",
+      "sourcePath": "scores/Reichardt,_Louise/12_Gesänge,_Op.3/12_Duettino/lc5062143.mscx",
+      "split": "validation",
+      "staffCount": 4
+    },
+    {
+      "pageCount": 1,
+      "pages": [
+        {
+          "annotationPath": "5092551/annotations/page-1.json",
+          "annotationSha256": "9f06379c52d1064c9607344ee9ca5c19f920db6766f7cc513c806feb613227a1",
+          "eligibleForTraining": true,
+          "pageIndex": 0,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5092551/first/page-1.png",
+          "rasterSha256": "248a30c76e93e19686561bf9eb25bbb798ac76eb2139a3818edcb3007a895202",
+          "rawSvgDeterministic": false,
+          "rawSvgSha256Runs": [
+            "eda99cc2d9b8af7eb8fa92e1c2a49cc8ebf827a85ba068872632a7ce5650ba17",
+            "a278fc5ecf1d8a0cf52295c7e83ea47890859061d1cb30fb4b45edb3e27a00bf"
+          ],
+          "staffCounts": [4, 4, 4],
+          "svgPath": "5092551/first/page-1.svg",
+          "systemCount": 3
+        }
+      ],
+      "scoreId": "5092551",
+      "sourcePath": "scores/Reichardt,_Louise/6_Lieder_von_Novalis,_Op.4/3b_Geistliches_Lied_(4-part)/lc5092551.mscx",
+      "split": "validation",
+      "staffCount": 4
+    },
+    {
+      "pageCount": 3,
+      "pages": [
+        {
+          "annotationPath": "5093434/annotations/page-1.json",
+          "annotationSha256": "725014cddfc0943195efc608d9f36e2cc6b862793884004e875ecdb4fc004c52",
+          "eligibleForTraining": true,
+          "pageIndex": 0,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5093434/first/page-1.png",
+          "rasterSha256": "999de216494511eaa3b746c789de9b8393a82afd6e0d35655ffc3a3b452e69a1",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "253f5464eb5a9e9956ec7bccb8640eed8993a321b9b45b8e25b51729ca9119f1",
+            "253f5464eb5a9e9956ec7bccb8640eed8993a321b9b45b8e25b51729ca9119f1"
+          ],
+          "staffCounts": [4, 4, 4],
+          "svgPath": "5093434/first/page-1.svg",
+          "systemCount": 3
+        },
+        {
+          "annotationPath": "5093434/annotations/page-2.json",
+          "annotationSha256": "821f8b0c1ea9d0f08d5aa09d13c160a6c7e733a22f35f6f2fee38836b571e366",
+          "eligibleForTraining": true,
+          "pageIndex": 1,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5093434/first/page-2.png",
+          "rasterSha256": "c90efab5ddd56155c6dd83405400579786f22abd84f16868f996de2f235725c8",
+          "rawSvgDeterministic": false,
+          "rawSvgSha256Runs": [
+            "b4baf1b3dd18c9d5d5e2fd973987a9c15ff4710e5b5a35580bc98b3d32e4881d",
+            "9bfe6463da4e10cf7cde6e9ece0627e43df6940aea4566db2ac687e0c4d1a219"
+          ],
+          "staffCounts": [4, 4, 4, 4],
+          "svgPath": "5093434/first/page-2.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "5093434/annotations/page-3.json",
+          "annotationSha256": "04808ccf22d964be38b70bb5adcaaec89155b159bb1ed15c0490729ef567d317",
+          "eligibleForTraining": true,
+          "pageIndex": 2,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5093434/first/page-3.png",
+          "rasterSha256": "094c658fe0f2a6eb4ce6f2cc2da829069d8a886f4503f39a019dc32593ee94c8",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "c62b8c9cf71be29e9e4fac14f703f8fe862f55007908613cf1ecfffbd43d18a7",
+            "c62b8c9cf71be29e9e4fac14f703f8fe862f55007908613cf1ecfffbd43d18a7"
+          ],
+          "staffCounts": [4, 4, 4, 4],
+          "svgPath": "5093434/first/page-3.svg",
+          "systemCount": 4
+        }
+      ],
+      "scoreId": "5093434",
+      "sourcePath": "scores/Schubert,_Franz/4_Gesänge_aus_„Wilhelm_Meister“,_D.877/1_Mignon_und_der_Harfner/lc5093434.mscx",
+      "split": "train",
+      "staffCount": 4
+    },
+    {
+      "pageCount": 3,
+      "pages": [
+        {
+          "annotationPath": "5846139/annotations/page-1.json",
+          "annotationSha256": "408139b80df04ce2b6f65a708033c39bdab57a1a810e0cda5cc9d5984f2647fc",
+          "eligibleForTraining": true,
+          "pageIndex": 0,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5846139/first/page-1.png",
+          "rasterSha256": "21319b95ae7a3dfd72123e74a75c5c159e546832c2b68d95a31ffeb3df2dab20",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "f9f66e38133e4a48c56b4b98e1267950669941e7c35d4fef644e790d1087cc73",
+            "f9f66e38133e4a48c56b4b98e1267950669941e7c35d4fef644e790d1087cc73"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "5846139/first/page-1.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "5846139/annotations/page-2.json",
+          "annotationSha256": "cf3574bf5c5cc0894b755e13ae28fea07a74bd6fbba577a2ac3947cf5d20d01b",
+          "eligibleForTraining": true,
+          "pageIndex": 1,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5846139/first/page-2.png",
+          "rasterSha256": "93802240cd1c3da29226dc22966631a59f1475ed49a8db68600659de6974f769",
+          "rawSvgDeterministic": false,
+          "rawSvgSha256Runs": [
+            "f2915bf55bfa5a482f8b0dcbb7968cdea9f9878a606b17d3f9191710c284fbb0",
+            "01bec153d5c757ed3ea065bec8ab506f94a2c544b5c4c6fbad78009fdceca07e"
+          ],
+          "staffCounts": [3, 4, 3, 3],
+          "svgPath": "5846139/first/page-2.svg",
+          "systemCount": 4
+        },
+        {
+          "annotationPath": "5846139/annotations/page-3.json",
+          "annotationSha256": "18d593d1784a99189fecbb2afd56654a4fb62ade3cbcf4270fc1071cf2673f15",
+          "eligibleForTraining": true,
+          "pageIndex": 2,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5846139/first/page-3.png",
+          "rasterSha256": "d2964ca4d90c1d31b95e36a13a5ec052eaba8371e0e97a210bf060278cdb84e6",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "d7604e418ddddbdd521b398133102bd921cc82db24c001cbae03120edb6e99c1",
+            "d7604e418ddddbdd521b398133102bd921cc82db24c001cbae03120edb6e99c1"
+          ],
+          "staffCounts": [3, 3, 3, 3],
+          "svgPath": "5846139/first/page-3.svg",
+          "systemCount": 4
+        }
+      ],
+      "scoreId": "5846139",
+      "sourcePath": "scores/Brahms,_Johannes/9_Lieder_und_Gesänge,_Op.32/5_Wehe,_so_willst_du_mich_wieder/lc5846139.mscx",
+      "split": "train",
+      "staffCount": 4
+    },
+    {
+      "pageCount": 7,
+      "pages": [
+        {
+          "annotationPath": "5883528/annotations/page-1.json",
+          "annotationSha256": "501eb60c40b3e02ae27fbb5d93f7d9db8c92552acfa6d4d946fbd54a8fd2b4c0",
+          "eligibleForTraining": true,
+          "pageIndex": 0,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5883528/first/page-1.png",
+          "rasterSha256": "80c2f041ba09a232c7fa0a277535dc3e2bde008e69dcf5f0c5d570841d576651",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "9b4c0a2be1c2fc528943f1348e1f90a1e6c8e24061d18239fb523fc09cfba499",
+            "9b4c0a2be1c2fc528943f1348e1f90a1e6c8e24061d18239fb523fc09cfba499"
+          ],
+          "staffCounts": [4, 4, 4],
+          "svgPath": "5883528/first/page-1.svg",
+          "systemCount": 3
+        },
+        {
+          "annotationPath": "5883528/annotations/page-2.json",
+          "annotationSha256": "dfa76605c4c18b671185d57c85adfceb6cf018982f932a430b8b7912e8ada90b",
+          "eligibleForTraining": true,
+          "pageIndex": 1,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5883528/first/page-2.png",
+          "rasterSha256": "2f417d21dc4a45687c2903a61e86f15990ddf6fc5c67c7ea38a3ec2ef36cba34",
+          "rawSvgDeterministic": false,
+          "rawSvgSha256Runs": [
+            "4273e6a7627562c6d69affe68541f5f14bb74025c70837032b7c611dad4d9e76",
+            "648266818fbb56cfc3e543283f3653d4eefa5a313c3a38f4dbe4ebfebbce70d9"
+          ],
+          "staffCounts": [4, 4, 4],
+          "svgPath": "5883528/first/page-2.svg",
+          "systemCount": 3
+        },
+        {
+          "annotationPath": "5883528/annotations/page-3.json",
+          "annotationSha256": "d25cc29342ee8a8f00d7485e278f2eefb4b8a179100dc769d8089acefa60a4b5",
+          "eligibleForTraining": true,
+          "pageIndex": 2,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5883528/first/page-3.png",
+          "rasterSha256": "0228d446ea9921abc930aaa488b343434c86faf540a97bb8d173a7ca43462866",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "9a93376dec9e23ebf73590c5989ccf9dc8567a9ce486211ddab6a96dcd76f81b",
+            "9a93376dec9e23ebf73590c5989ccf9dc8567a9ce486211ddab6a96dcd76f81b"
+          ],
+          "staffCounts": [4],
+          "svgPath": "5883528/first/page-3.svg",
+          "systemCount": 1
+        },
+        {
+          "annotationPath": "5883528/annotations/page-4.json",
+          "annotationSha256": "0dab9793f2d90aaa0e6cef19804ed0046513292acccacfbee39e6dabac53590d",
+          "eligibleForTraining": true,
+          "pageIndex": 3,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5883528/first/page-4.png",
+          "rasterSha256": "a3a363787da02b20e9417dad483bd83bd0ef9f0d55a0fbe6e6035040c304d9c0",
+          "rawSvgDeterministic": false,
+          "rawSvgSha256Runs": [
+            "b65d8cb67b84e52e821376d0c78ae43b000d4906b8e083c8ad1f658c0dc1b273",
+            "8a2feb6cee85981f8fb74d9821d66ddae3c29eb68a2d4c0ef39c1af8bf338d16"
+          ],
+          "staffCounts": [4, 4, 4],
+          "svgPath": "5883528/first/page-4.svg",
+          "systemCount": 3
+        },
+        {
+          "annotationPath": "5883528/annotations/page-5.json",
+          "annotationSha256": "f056e2fad88c25b7adadac4b94bc101822df8a3ec9feea85c63a420a722bfed9",
+          "eligibleForTraining": true,
+          "pageIndex": 4,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5883528/first/page-5.png",
+          "rasterSha256": "720c8d10d894bd0f3f2ee0d43a97215a1e1257de2addb7ee8c35112611e00587",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "64b7eea6cd128890b1a2153511ef90e460b0f403d029992cae5d3d63f9e47dd9",
+            "64b7eea6cd128890b1a2153511ef90e460b0f403d029992cae5d3d63f9e47dd9"
+          ],
+          "staffCounts": [4, 4],
+          "svgPath": "5883528/first/page-5.svg",
+          "systemCount": 2
+        },
+        {
+          "annotationPath": "5883528/annotations/page-6.json",
+          "annotationSha256": "37e79a3c823c317343aa1795db87459eee2b4adaa60c6c6657ac5c2c66789a96",
+          "eligibleForTraining": true,
+          "pageIndex": 5,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5883528/first/page-6.png",
+          "rasterSha256": "fdf879c30256a5886f39a3e93bc7856e412cc930463b1774ca0719d97079ef49",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "13ad1c486c924c92019943801167b275e2f5b9b3feb13709b198f659b644cc41",
+            "13ad1c486c924c92019943801167b275e2f5b9b3feb13709b198f659b644cc41"
+          ],
+          "staffCounts": [4, 4, 4],
+          "svgPath": "5883528/first/page-6.svg",
+          "systemCount": 3
+        },
+        {
+          "annotationPath": "5883528/annotations/page-7.json",
+          "annotationSha256": "f2050a30d1e46a659d1d105ec886a62542eaadf9a7d0052abfb83799a297ef2d",
+          "eligibleForTraining": true,
+          "pageIndex": 6,
+          "pixelHeight": 1979,
+          "pixelWidth": 1400,
+          "rasterPath": "5883528/first/page-7.png",
+          "rasterSha256": "cbdb8b2f505db7bb1e12c782e49f9b804414e60a47434f941a02bf7dc84d85b7",
+          "rawSvgDeterministic": true,
+          "rawSvgSha256Runs": [
+            "46768b36da0d0e95338e2a2528adb09bc534d9a3a0f02e34c5400b2c56ca0b7e",
+            "46768b36da0d0e95338e2a2528adb09bc534d9a3a0f02e34c5400b2c56ca0b7e"
+          ],
+          "staffCounts": [4],
+          "svgPath": "5883528/first/page-7.svg",
+          "systemCount": 1
+        }
+      ],
+      "scoreId": "5883528",
+      "sourcePath": "scores/Le_Beau,_Luise_Adolpha/2_Duette,_Op.6/1_Frühlingsanfang/lc5883528.mscx",
+      "split": "train",
+      "staffCount": 4
+    }
+  ],
+  "probeId": "openscore-lieder-layout-renderer-probe-v1",
+  "renderer": {
+    "doubleRun": true,
+    "id": "musescore-svg-png",
+    "imageResolutionDpi": 169,
+    "targetRasterWidth": 1400,
+    "version": "MuseScore4 4.7.4"
+  },
+  "schemaVersion": "1.0.0",
+  "selection": {
+    "itemCount": 15,
+    "maxItems": 15,
+    "observedStaffCounts": [2, 3, 4],
+    "pageCount": 60,
+    "perStaffCount": 5
+  },
+  "source": {
+    "corpusId": "openscore-lieder-layout-train-v1",
+    "revision": "6b2dc542ce2e8aa4b78c8ee62103b210efc07015",
+    "sourcePlanSha256": "808893162928fcc434d3b21da81310516ac00aa2fd32213f99371744620ae195"
+  },
+  "status": "renderer-annotation-probe-complete-manual-audit-pending"
+}

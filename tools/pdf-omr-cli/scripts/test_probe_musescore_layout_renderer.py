@@ -10,7 +10,13 @@ from pathlib import Path
 from struct import pack
 
 sys.path.insert(0, str(Path(__file__).parent))
-from probe_musescore_layout_renderer import compare_render_runs, exported_pages, select_probe_items
+from probe_musescore_layout_renderer import (
+    build_render_job,
+    compare_render_runs,
+    exported_pages,
+    require_musescore_version,
+    select_probe_items,
+)
 
 
 def _score(staff_count: int) -> str:
@@ -32,6 +38,25 @@ def _png(width: int, height: int) -> bytes:
 
 
 class ProbeMuseScoreLayoutRendererTest(unittest.TestCase):
+    def test_builds_one_batch_job_for_svg_and_raster_outputs(self) -> None:
+        job = build_render_job(Path("/source/score.mscx"), Path("/output/run"))
+
+        self.assertEqual(
+            job,
+            [
+                {
+                    "in": "/source/score.mscx",
+                    "out": ["/output/run/page.svg", "/output/run/page.png"],
+                }
+            ],
+        )
+
+    def test_accepts_only_the_pinned_musescore_version(self) -> None:
+        self.assertEqual(require_musescore_version("MuseScore4 4.7.4\n"), "MuseScore4 4.7.4")
+
+        with self.assertRaisesRegex(ValueError, "requires MuseScore 4.7.4"):
+            require_musescore_version("MuseScore4 4.7.3\n")
+
     def test_selects_a_bounded_number_from_each_observed_staff_count(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             source_root = Path(directory)
@@ -112,6 +137,43 @@ class ProbeMuseScoreLayoutRendererTest(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "raster output is not deterministic"):
                 compare_render_runs(root / "first", root / "second", staff_count=3)
+
+    def test_accepts_raw_svg_reordering_when_staff_geometry_and_raster_are_identical(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            svg = _svg([100, 200, 300])
+            irrelevant = [
+                '<polyline class="LyricsLineSegment" points="1,1 2,1"/>',
+                '<polyline class="LyricsLineSegment" points="3,1 4,1"/>',
+            ]
+            for run_name, elements in [("first", irrelevant), ("second", list(reversed(irrelevant)))]:
+                run_root = root / run_name
+                run_root.mkdir()
+                (run_root / "page.svg").write_text(svg.replace("</svg>", "".join(elements) + "</svg>"), encoding="utf-8")
+                (run_root / "page.png").write_bytes(_png(1400, 2800))
+
+            pages = compare_render_runs(root / "first", root / "second", staff_count=3)
+
+        self.assertEqual(pages[0]["rawSvgDeterministic"], False)
+        self.assertEqual(len(set(pages[0]["rawSvgSha256Runs"])), 2)
+        self.assertEqual(len(pages[0]["annotationSha256"]), 64)
+
+    def test_records_matching_non_music_pages_as_excluded(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 2000"><path class="Text"/></svg>'
+            for run_name in ["first", "second"]:
+                run_root = root / run_name
+                run_root.mkdir()
+                (run_root / "page.svg").write_text(svg, encoding="utf-8")
+                (run_root / "page.png").write_bytes(_png(1400, 2800))
+
+            pages = compare_render_runs(root / "first", root / "second", staff_count=2)
+
+        self.assertEqual(pages[0]["eligibleForTraining"], False)
+        self.assertEqual(pages[0]["exclusionReason"], "no-staff-lines")
+        self.assertEqual(pages[0]["systemCount"], 0)
+        self.assertNotIn("annotation", pages[0])
 
 
 if __name__ == "__main__":

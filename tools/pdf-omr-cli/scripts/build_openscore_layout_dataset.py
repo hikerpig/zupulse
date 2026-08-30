@@ -249,6 +249,83 @@ def _run(argv: list[str]) -> str:
     return result.stdout
 
 
+def preflight_rendered_layouts(
+    items: list[dict[str, str]], source_root: Path, output_root: Path
+) -> dict[str, object]:
+    page_count = 0
+    eligible_page_count = 0
+    system_count = 0
+    systems_by_staff_count: dict[str, int] = {}
+    for item in items:
+        score_id = item["scoreId"]
+        render_root = output_root / "canonical" / item["split"] / score_id / "render"
+        source_text = (source_root / item["sourcePath"]).read_text(encoding="utf-8")
+        declared_staff_count = extract_score_staff_count(source_text)
+        for page_index, svg_path in enumerate(exported_pages(render_root, "svg")):
+            page_count += 1
+            svg_bytes = svg_path.read_bytes()
+            if b'class="StaffLines"' not in svg_bytes:
+                continue
+            try:
+                annotation = extract_layout_page(
+                    svg_bytes.decode("utf-8"), page_index=page_index, staff_count=declared_staff_count
+                )
+            except ValueError as error:
+                raise ValueError(f"layout truth failed for score {score_id} page {page_index + 1}: {error}") from error
+            eligible_page_count += 1
+            for system in annotation["systems"]:
+                system_count += 1
+                staff_count = str(system["staffCount"])
+                systems_by_staff_count[staff_count] = systems_by_staff_count.get(staff_count, 0) + 1
+    return {
+        "pageCount": page_count,
+        "eligiblePageCount": eligible_page_count,
+        "excludedPageCount": page_count - eligible_page_count,
+        "systemCount": system_count,
+        "systemsByStaffCount": systems_by_staff_count,
+    }
+
+
+def verify_manifest_artifacts(manifest: dict[str, object], output_root: Path) -> dict[str, int]:
+    resolved_root = output_root.resolve()
+    verified_file_count = 0
+    eligible_page_count = 0
+    augmented_page_count = 0
+    for item in manifest["items"]:
+        split = item["split"]
+        for page in item["pages"]:
+            if not page["eligibleForTraining"]:
+                if "canonical" in page or "augmented" in page:
+                    raise ValueError("excluded page must not contain training artifacts")
+                continue
+            eligible_page_count += 1
+            variants = [("canonical", page.get("canonical"))]
+            if split == "train":
+                variants.append(("augmented", page.get("augmented")))
+                augmented_page_count += 1
+            elif "augmented" in page:
+                raise ValueError("validation page must not contain augmentation")
+            for variant_name, variant in variants:
+                if not isinstance(variant, dict):
+                    raise ValueError(f"eligible page is missing {variant_name} artifacts")
+                for artifact_name in ["image", "mask", "annotation"]:
+                    relative_path = variant.get(f"{artifact_name}Path")
+                    expected_sha = variant.get(f"{artifact_name}Sha256")
+                    if not isinstance(relative_path, str) or not isinstance(expected_sha, str):
+                        raise ValueError(f"{variant_name} {artifact_name} evidence is invalid")
+                    artifact_path = (output_root / relative_path).resolve()
+                    if not artifact_path.is_relative_to(resolved_root) or not artifact_path.is_file():
+                        raise ValueError(f"artifact is missing or escapes dataset root: {relative_path}")
+                    if sha256(artifact_path.read_bytes()) != expected_sha:
+                        raise ValueError(f"artifact hash mismatch: {relative_path}")
+                    verified_file_count += 1
+    return {
+        "eligiblePageCount": eligible_page_count,
+        "augmentedPageCount": augmented_page_count,
+        "verifiedFileCount": verified_file_count,
+    }
+
+
 def build_dataset(
     *,
     source_plan_path: Path,
@@ -258,9 +335,12 @@ def build_dataset(
     seed: int,
     batch_size: int,
     max_items: int | None,
+    resume_from_rendered: bool = False,
 ) -> dict[str, object]:
-    if output_root.exists():
+    if output_root.exists() and not resume_from_rendered:
         raise ValueError(f"dataset output already exists: {output_root}")
+    if not output_root.exists() and resume_from_rendered:
+        raise ValueError(f"rendered dataset output does not exist: {output_root}")
     if batch_size < 1 or max_items is not None and max_items < 1:
         raise ValueError("build limits must be positive")
     plan_bytes = source_plan_path.read_bytes()
@@ -281,18 +361,22 @@ def build_dataset(
         if not source_path.is_relative_to(resolved_source_root) or not source_path.is_file():
             raise ValueError(f"source score is missing or escapes root: {item['sourcePath']}")
 
-    output_root.mkdir(parents=True)
+    output_root.mkdir(parents=True, exist_ok=resume_from_rendered)
     jobs = build_render_jobs(items, source_root, output_root)
     jobs_root = output_root / "jobs"
-    jobs_root.mkdir()
-    for batch_index in range(0, len(jobs), batch_size):
-        batch = jobs[batch_index : batch_index + batch_size]
-        for job in batch:
-            for output_path in job["out"]:
-                Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-        job_path = jobs_root / f"batch-{batch_index // batch_size + 1:04d}.json"
-        job_path.write_bytes(canonical_json(batch))
-        _run([str(musescore_executable), "-f", "-r", str(RASTER_EXPORT_DPI), "-j", str(job_path)])
+    if not resume_from_rendered:
+        jobs_root.mkdir()
+        for batch_index in range(0, len(jobs), batch_size):
+            batch = jobs[batch_index : batch_index + batch_size]
+            for job in batch:
+                for output_path in job["out"]:
+                    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+            job_path = jobs_root / f"batch-{batch_index // batch_size + 1:04d}.json"
+            job_path.write_bytes(canonical_json(batch))
+            _run([str(musescore_executable), "-f", "-r", str(RASTER_EXPORT_DPI), "-j", str(job_path)])
+
+    preflight = preflight_rendered_layouts(items, source_root, output_root)
+    print(json.dumps({"preflight": preflight}, sort_keys=True), flush=True)
 
     manifest_items = []
     for item in items:
@@ -391,12 +475,15 @@ def build_dataset(
             "validationScoreCount": sum(item["split"] == "validation" for item in items),
             "pageCount": sum(item["pageCount"] for item in manifest_items),
             "eligiblePageCount": sum(page["eligibleForTraining"] for item in manifest_items for page in item["pages"]),
+            "preflight": preflight,
         },
         "boundaries": {"holdoutRead": False, "evaluationIdsUsed": False},
         "items": manifest_items,
     }
     manifest_path = output_root / "manifest.json"
     manifest_path.write_bytes(canonical_json(manifest))
+    verification = verify_manifest_artifacts(manifest, output_root)
+    print(json.dumps({"artifactVerification": verification}, sort_keys=True), flush=True)
     print(json.dumps(manifest["selection"], sort_keys=True), flush=True)
     return manifest
 
@@ -410,6 +497,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--max-items", type=int)
+    parser.add_argument("--resume-from-rendered", action="store_true")
     args = parser.parse_args()
     build_dataset(
         source_plan_path=args.source_plan,
@@ -419,6 +507,7 @@ def main() -> None:
         seed=args.seed,
         batch_size=args.batch_size,
         max_items=args.max_items,
+        resume_from_rendered=args.resume_from_rendered,
     )
 
 

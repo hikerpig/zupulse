@@ -42,10 +42,13 @@ def extract_layout_page(svg_text: str, *, page_index: int, staff_count: int) -> 
         raise ValueError("page index must be non-negative and staff count must be positive")
     root = ET.fromstring(svg_text)
     width, height = _parse_view_box(root.get("viewBox"))
-    lines = [_parse_staff_line(element) for element in root.iter() if element.get("class") == "StaffLines"]
-    if not lines or len(lines) % 5 != 0:
-        raise ValueError(f"{len(lines)} staff lines for {staff_count} visible staves per system")
-    _validate_staff_groups(lines)
+    raw_lines = [_parse_staff_line(element) for element in root.iter() if element.get("class") == "StaffLines"]
+    if not raw_lines or len(raw_lines) % 5 != 0:
+        raise ValueError(f"{len(raw_lines)} staff lines for {staff_count} visible staves per system")
+    _validate_staff_groups(raw_lines)
+    staff_groups = [raw_lines[index : index + 5] for index in range(0, len(raw_lines), 5)]
+    staff_groups.sort(key=lambda group: (group[0].y, group[0].left))
+    lines = [line for staff_group in staff_groups for line in staff_group]
     system_line_groups = _group_visible_systems(root, lines, declared_staff_count=staff_count)
 
     systems = []
@@ -116,39 +119,42 @@ def _validate_staff_groups(lines: list[Line]) -> None:
         mean_gap = sum(gaps) / len(gaps)
         if mean_gap <= 0 or any(abs(gap - mean_gap) / mean_gap > 0.01 for gap in gaps):
             raise ValueError(f"staff {staff_index} does not contain five evenly ordered lines")
-    if any(lines[index + 1].y <= lines[index].y for index in range(len(lines) - 1)):
-        raise ValueError("staff lines must be ordered from top to bottom")
 
 
 def _group_visible_systems(root: ET.Element, lines: list[Line], *, declared_staff_count: int) -> list[list[Line]]:
     staff_groups = [lines[index : index + 5] for index in range(0, len(lines), 5)]
+    staff_centers = [staff_group[2].y for staff_group in staff_groups]
     bracket_elements = [element for element in root.iter() if element.get("class") == "Bracket"]
-    bracket_ranges = []
+    bracket_ranges: list[tuple[float, float]] = []
     for element in bracket_elements:
-        if not element.tag.endswith("polyline"):
-            continue
-        points = []
-        for raw_point in element.get("points", "").split():
-            match = POINT_PATTERN.fullmatch(raw_point)
-            if match is None:
-                raise ValueError("bracket polyline point is invalid")
-            points.append((float(match.group(1)), float(match.group(2))))
-        points = _transform_points(points, element.get("transform"))
-        if len(points) != 2 or abs(points[0][0] - points[1][0]) > 1e-6:
-            raise ValueError("bracket polyline must be one vertical segment")
-        ys = [y for _, y in points]
-        bracket_ranges.append((min(ys), max(ys)))
-    if not bracket_ranges:
-        for element in bracket_elements:
-            if not element.tag.endswith("path"):
+        if element.tag.endswith("polyline"):
+            points = []
+            for raw_point in element.get("points", "").split():
+                match = POINT_PATTERN.fullmatch(raw_point)
+                if match is None:
+                    raise ValueError("bracket polyline point is invalid")
+                points.append((float(match.group(1)), float(match.group(2))))
+            points = _transform_points(points, element.get("transform"))
+            if len(points) != 2 or abs(points[0][0] - points[1][0]) > 1e-6:
                 continue
+        elif element.tag.endswith("path"):
             points = [(float(x), float(y)) for x, y in PATH_POINT_PATTERN.findall(element.get("d", ""))]
             if len(points) < 2:
-                raise ValueError("bracket path does not contain enough coordinates")
+                continue
             points = _transform_points(points, element.get("transform"))
-            ys = [y for _, y in points]
-            bracket_ranges.append((min(ys), max(ys)))
+        else:
+            continue
+        ys = [y for _, y in points]
+        bracket_top, bracket_bottom = min(ys), max(ys)
+        covered_staffs = [
+            index for index, center in enumerate(staff_centers) if bracket_top <= center <= bracket_bottom
+        ]
+        if len(covered_staffs) >= 2:
+            bracket_ranges.append((bracket_top, bracket_bottom))
     if not bracket_ranges:
+        barline_groups = _group_staffs_by_barlines(root, staff_groups)
+        if barline_groups is not None:
+            return [[line for staff_group in group for line in staff_group] for group in barline_groups]
         if len(staff_groups) % declared_staff_count != 0:
             raise ValueError(f"{len(lines)} staff lines for {declared_staff_count} visible staves per system")
         return [
@@ -156,19 +162,108 @@ def _group_visible_systems(root: ET.Element, lines: list[Line], *, declared_staf
             for index in range(0, len(lines), declared_staff_count * 5)
         ]
 
-    grouped_staffs = []
-    next_staff_index = 0
-    for _, bracket_bottom in sorted(bracket_ranges, key=lambda value: value[1]):
-        group = []
-        while next_staff_index < len(staff_groups) and staff_groups[next_staff_index][2].y <= bracket_bottom:
-            group.append(staff_groups[next_staff_index])
-            next_staff_index += 1
-        grouped_staffs.append(group)
-    if next_staff_index != len(staff_groups) or any(
-        not group or len(group) > declared_staff_count for group in grouped_staffs
+    spans = []
+    for bracket_top, bracket_bottom in sorted(bracket_ranges):
+        covered_staffs = [
+            index for index, center in enumerate(staff_centers) if bracket_top <= center <= bracket_bottom
+        ]
+        span = (covered_staffs[0], covered_staffs[-1], bracket_top, bracket_bottom)
+        if not spans or span[:2] != spans[-1][:2]:
+            spans.append(span)
+    first_leading = [index for index, center in enumerate(staff_centers) if center < spans[0][2]]
+    system_starts = [first_leading[0] if first_leading else spans[0][0]]
+    positive_gaps = [staff_centers[index + 1] - staff_centers[index] for index in range(len(staff_centers) - 1)]
+    median_gap = sorted(positive_gaps)[len(positive_gaps) // 2] if positive_gaps else 0
+    previous_span = spans[0]
+    for span in spans[1:]:
+        leading_staffs = [
+            index
+            for index, center in enumerate(staff_centers)
+            if previous_span[3] < center < span[2]
+        ]
+        gap_before_span = staff_centers[span[0]] - staff_centers[previous_span[1]]
+        exceeds_system_capacity = span[1] - system_starts[-1] + 1 > declared_staff_count
+        crosses_large_gap = median_gap > 0 and gap_before_span > median_gap * 1.5
+        if leading_staffs:
+            system_starts.append(leading_staffs[0])
+        elif exceeds_system_capacity or crosses_large_gap:
+            system_starts.append(span[0])
+        previous_span = span
+    if system_starts[0] != 0 or any(
+        system_starts[index + 1] <= system_starts[index] for index in range(len(system_starts) - 1)
     ):
         raise ValueError("brace anchors do not define valid visible system topology")
+    grouped_staffs = [
+        staff_groups[start : system_starts[index + 1] if index + 1 < len(system_starts) else len(staff_groups)]
+        for index, start in enumerate(system_starts)
+    ]
+    split_groups = []
+    for group in grouped_staffs:
+        while len(group) > declared_staff_count:
+            split_groups.append(group[:declared_staff_count])
+            group = group[declared_staff_count:]
+        if len(group) > 1 and all(abs(staff[2].y - group[0][2].y) <= 1e-6 for staff in group):
+            if any(group[index][0].right > group[index + 1][0].left + 1e-6 for index in range(len(group) - 1)):
+                raise ValueError("same-row staffs must not overlap horizontally")
+            split_groups.extend([[staff] for staff in group])
+        elif group:
+            split_groups.append(group)
+    grouped_staffs = split_groups
+    if any(not group or len(group) > declared_staff_count for group in grouped_staffs):
+        raise ValueError("brace anchors do not define valid visible system topology")
     return [[line for staff_group in group for line in staff_group] for group in grouped_staffs]
+
+
+def _group_staffs_by_barlines(root: ET.Element, staff_groups: list[list[Line]]) -> list[list[list[Line]]] | None:
+    parent = list(range(len(staff_groups)))
+    has_barline = False
+
+    def find(index: int) -> int:
+        while parent[index] != index:
+            parent[index] = parent[parent[index]]
+            index = parent[index]
+        return index
+
+    def union(first: int, second: int) -> None:
+        first_root = find(first)
+        second_root = find(second)
+        if first_root != second_root:
+            parent[second_root] = first_root
+
+    for element in root.iter():
+        if element.get("class") != "BarLine" or not element.tag.endswith("polyline"):
+            continue
+        raw_points = element.get("points", "").split()
+        if len(raw_points) != 2:
+            continue
+        points = []
+        for raw_point in raw_points:
+            match = POINT_PATTERN.fullmatch(raw_point)
+            if match is None:
+                points = []
+                break
+            points.append((float(match.group(1)), float(match.group(2))))
+        if len(points) != 2:
+            continue
+        points = _transform_points(points, element.get("transform"))
+        if abs(points[0][0] - points[1][0]) > 1e-6:
+            continue
+        has_barline = True
+        x = points[0][0]
+        top, bottom = sorted([points[0][1], points[1][1]])
+        covered = [
+            index
+            for index, staff in enumerate(staff_groups)
+            if staff[0].left <= x <= staff[0].right and top <= staff[2].y <= bottom
+        ]
+        for index in covered[1:]:
+            union(covered[0], index)
+    if not has_barline:
+        return None
+    components: dict[int, list[list[Line]]] = {}
+    for index, staff in enumerate(staff_groups):
+        components.setdefault(find(index), []).append(staff)
+    return sorted(components.values(), key=lambda group: (group[0][0].y, group[0][0].left))
 
 
 def _transform_points(points: list[tuple[float, float]], transform: str | None) -> list[tuple[float, float]]:

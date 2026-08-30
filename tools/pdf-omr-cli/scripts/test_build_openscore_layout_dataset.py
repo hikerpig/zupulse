@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import tempfile
 import sys
 import unittest
 from pathlib import Path
@@ -18,6 +19,7 @@ from build_openscore_layout_dataset import (
     build_render_jobs,
     canonical_json,
     validate_source_plan,
+    verify_manifest_artifacts,
 )
 
 
@@ -127,6 +129,32 @@ class BuildOpenScoreLayoutDatasetTest(unittest.TestCase):
                 },
             ],
         )
+
+    def test_verifies_artifact_hashes_and_forbids_validation_augmentation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            variant = {}
+            for artifact_name in ["image", "mask", "annotation"]:
+                content = artifact_name.encode()
+                path = root / f"{artifact_name}.bin"
+                path.write_bytes(content)
+                variant[f"{artifact_name}Path"] = path.name
+                variant[f"{artifact_name}Sha256"] = hashlib.sha256(content).hexdigest()
+            manifest = {
+                "items": [
+                    {
+                        "split": "validation",
+                        "pages": [{"eligibleForTraining": True, "canonical": variant}],
+                    }
+                ]
+            }
+
+            result = verify_manifest_artifacts(manifest, root)
+
+            self.assertEqual(result, {"eligiblePageCount": 1, "augmentedPageCount": 0, "verifiedFileCount": 3})
+            manifest["items"][0]["pages"][0]["augmented"] = variant
+            with self.assertRaisesRegex(ValueError, "validation page must not contain augmentation"):
+                verify_manifest_artifacts(manifest, root)
 
 
 if __name__ == "__main__":

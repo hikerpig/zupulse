@@ -115,16 +115,78 @@ class ExtractMuseScoreLayoutTruthTest(unittest.TestCase):
         svg = _svg([100, 200, 300, 400, 600, 700, 800, 900]).replace(
             "</svg>",
             """<polyline class="Bracket" points="50,100 50,440"/>
-            <path class="Bracket" d="M0,0"/>
-            <path class="Bracket" d="M0,0"/>
+            <polyline class="Bracket" points="50,100 80,100"/>
+            <polyline class="Bracket" points="50,440 80,440"/>
             <polyline class="Bracket" points="50,600 50,940"/>
-            <path class="Bracket" d="M0,0"/>
-            <path class="Bracket" d="M0,0"/></svg>""",
+            <polyline class="Bracket" points="50,600 80,600"/>
+            <polyline class="Bracket" points="50,940 80,940"/></svg>""",
         )
 
         page = extract_layout_page(svg, page_index=0, staff_count=4)
 
         self.assertEqual([system["staffCount"] for system in page["systems"]], [4, 4])
+
+    def test_keeps_an_unbracketed_facilitation_staff_in_its_system(self) -> None:
+        svg = _svg([100, 200, 300, 600, 700, 800, 900]).replace(
+            "</svg>",
+            """<path class="Bracket" d="M0,200 L0,340"/>
+            <path class="Bracket" d="M0,700 L0,840"/></svg>""",
+        )
+
+        page = extract_layout_page(svg, page_index=0, staff_count=4)
+
+        self.assertEqual([system["staffCount"] for system in page["systems"]], [3, 4])
+
+    def test_combines_vocal_square_brackets_and_piano_braces_per_system(self) -> None:
+        svg = _svg([100, 200, 300, 400, 700, 800, 900, 1200, 1300, 1400, 1500]).replace(
+            "</svg>",
+            """<polyline class="Bracket" points="0,100 0,240"/>
+            <path class="Bracket" d="M0,300 L0,440"/>
+            <path class="Bracket" d="M0,800 L0,940"/>
+            <polyline class="Bracket" points="0,1200 0,1340"/>
+            <path class="Bracket" d="M0,1400 L0,1540"/></svg>""",
+        )
+
+        page = extract_layout_page(svg, page_index=0, staff_count=4)
+
+        self.assertEqual([system["staffCount"] for system in page["systems"]], [4, 3, 4])
+
+    def test_orders_side_by_side_single_staff_excerpts_after_a_three_staff_system(self) -> None:
+        svg = _svg([100, 200, 300], width=1000, height=1200).replace(
+            "</svg>",
+            """<polyline class="StaffLines" points="100,700 450,700"/>
+            <polyline class="StaffLines" points="100,710 450,710"/>
+            <polyline class="StaffLines" points="100,720 450,720"/>
+            <polyline class="StaffLines" points="100,730 450,730"/>
+            <polyline class="StaffLines" points="100,740 450,740"/>
+            <polyline class="StaffLines" points="550,700 900,700"/>
+            <polyline class="StaffLines" points="550,710 900,710"/>
+            <polyline class="StaffLines" points="550,720 900,720"/>
+            <polyline class="StaffLines" points="550,730 900,730"/>
+            <polyline class="StaffLines" points="550,740 900,740"/>
+            <path class="Bracket" d="M0,200 L0,340"/></svg>""",
+        )
+
+        page = extract_layout_page(svg, page_index=0, staff_count=3)
+
+        self.assertEqual([system["staffCount"] for system in page["systems"]], [3, 1, 1])
+        self.assertLess(
+            page["systems"][1]["normalizedBBox"]["x"],
+            page["systems"][2]["normalizedBBox"]["x"],
+        )
+
+    def test_uses_barline_connectivity_when_declared_staves_are_hidden_without_brackets(self) -> None:
+        svg = _svg([100, 300, 500, 700]).replace(
+            "</svg>",
+            """<polyline class="BarLine" points="900,100 900,140"/>
+            <polyline class="BarLine" points="900,300 900,340"/>
+            <polyline class="BarLine" points="900,500 900,540"/>
+            <polyline class="BarLine" points="900,700 900,740"/></svg>""",
+        )
+
+        page = extract_layout_page(svg, page_index=0, staff_count=3)
+
+        self.assertEqual([system["staffCount"] for system in page["systems"]], [1, 1, 1, 1])
 
 
 if __name__ == "__main__":

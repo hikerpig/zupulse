@@ -78,10 +78,11 @@ validation，不能以论文引用代替实证。
 7. [x] 执行获批的 DocLayNet-pretrained multi-scale Deformable DETR。保持其余 protocol 不变后仅达到 46/128
        topology-exact，class exact 为 `1:0.000 / 2:0.739 / 3:0.673`；结论
        `STOP_DEFORMABLE_DETR_COUNT_CLASS_V1`，没有运行 OLiMPiC。
-8. [ ] 执行获批的 OLA-style `system + staff` Deformable DETR probe：从原始 DocLayNet checkpoint 重新训练两个
+8. [x] 执行获批的 OLA-style `system + staff` Deformable DETR probe：从原始 DocLayNet checkpoint 重新训练两个
        class-agnostic object classes，以 staff center containment/count 恢复每个 system 的 `staffCount`。固定同一 split、
        `0.5` threshold、512/768 image size、AdamW 与 batch size 4；改为 6 epochs，并因 ontology 中已无 rare class 而采用
-       uniform sampling（`rareMultiplier=1`）。只在训练结束后读取一次 balanced validation。
+       uniform sampling（`rareMultiplier=1`）。只在训练结束后读取一次 balanced validation。训练 loss 从 `11.1181` 降至
+       `2.0119`，但固定 threshold 下没有保留任何 validation object，结论 `STOP_DEFORMABLE_DETR_OLA_V1`。
 9. [ ] 若 OLA-style probe 达到 staff-count macro exact >= 0.90 且 1/2/3-staff 各类 >= 0.85，使用同一套冻结全局
        assembly 重跑全部 29 个 OLiMPiC development pages；否则停止并汇报，不搜索 threshold、epoch 或 page-specific 参数。
 10. [ ] 若通过 investment gate，再验证 PyTorch/ONNX canonical output、overlay、materialization 与 ordered crop hashes
@@ -167,12 +168,21 @@ validation，不能以论文引用代替实证。
   `482 systems / 1,297 staffs`，canonical SHA-256
   `f27b8f6833002565fa438770e202db297a0871cb9821446c23b795c1bed189e8`。全部 6,616 个 staff centers 位于所属
   truth system bbox；2-page / 1-epoch CPU smoke 已完成 train、validation、safe serialization 与 summary 输出。
+- OLA formal result：6 epochs 后 validation 为 `0 systems / 0 staffs`，system/staff object exact、staff-count macro exact 与
+  topology-exact 均为 0；未运行 OLiMPiC。summary SHA-256
+  `14cd712b22781434653751f9d30efacbf2eb1a3ff304c3935256f8f30db11c1e`，predictions SHA-256
+  `cd31a641f2550d1d2b5863a077911938a94061a716d86790d988a24033c2d464`，model SHA-256
+  `ea485227d3508decd8e10cd76c66355a6dce6621985303ffb7c33f681e7c13a2`；决策
+  `STOP_DEFORMABLE_DETR_OLA_V1`。
 - durable evidence：`tools/pdf-omr-cli/reports/exploratory/pretrained-layout-detector-selection-v1/`
 
 ## Open decisions
 
 - `staff center` 是否需要独立 spacing head，还是只在 materialization 前从局部图像估计五线 spacing；先由 balanced
   validation 的最小 prototype 决定，不提前扩展模型。
+- OLA-style run 的 0 retained objects 只证明固定 `0.5` protocol 失败，不能在不新增实验边界的前提下区分 confidence
+  calibration、6-epoch under-training 与 ontology/box target 本身失败。后续若继续，应先选择一条可证伪的新边界，而不是在
+  当前 validation 上搜索 threshold 或追加 epochs。
 - 下一阶段采用许可可接受的 pretrained detector；若首选 DETR 在预注册 balanced-validation gate 失败，才重新请求是否扩展到
   multi-scale Deformable DETR，或 rights-cleared 1-staff real/semi-synthetic layout data。当前 1-staff 的尺度条件漏检与
   Deformable DETR 论文针对 single-scale DETR limited spatial resolution / small-object weakness 的动机一致，但这是新的

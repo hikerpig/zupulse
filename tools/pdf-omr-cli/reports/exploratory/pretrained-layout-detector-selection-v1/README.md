@@ -217,6 +217,22 @@ The dependency-free target adapter converted all pages without exclusions. Train
 6,616 staff-box centers lies inside its owning truth system box. A two-page, one-epoch CPU smoke completed training,
 one-time validation, safe serialization, and canonical summary output; its accuracy is not model-quality evidence.
 
+## OLA-style probe result
+
+The approved run completed all 6 epochs. Training loss decreased from `11.1181` to `2.0119`, but the fixed `0.5`
+threshold retained no object on the 128-page validation: `0 / 482` systems and `0 / 1,297` staffs. Consequently all
+three derived staff-count class exact scores, macro exact, object exact scores, and topology-exact pages were zero.
+The gate failed, so OLiMPiC was not evaluated.
+
+This result establishes failure of the registered end-to-end protocol; it does not distinguish confidence
+calibration, 6-epoch under-training, and target-ontology failure. Distinguishing those hypotheses would require a
+new pre-registered experiment. Do not search validation thresholds or append epochs to this run.
+
+- summary SHA-256: `14cd712b22781434653751f9d30efacbf2eb1a3ff304c3935256f8f30db11c1e`
+- validation predictions SHA-256: `cd31a641f2550d1d2b5863a077911938a94061a716d86790d988a24033c2d464`
+- trained safetensors SHA-256: `ea485227d3508decd8e10cd76c66355a6dce6621985303ffb7c33f681e7c13a2`
+- decision: `STOP_DEFORMABLE_DETR_OLA_V1`
+
 ## Stop conditions
 
 - Stop if the exact model artifact lacks an acceptable, recorded distribution license.

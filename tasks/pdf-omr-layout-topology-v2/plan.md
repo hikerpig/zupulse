@@ -71,10 +71,10 @@ validation，不能以论文引用代替实证。
 5. [x] 保留二维 instance context，完成最小 `system/staff object-center` target 与 runtime probe。target 在 640/640 pages
        可表达，但 full-resolution 与 stride-4 compact heads 均未通过 synthetic gate；结论为
        `STOP_CUSTOM_OBJECT_HEAD`，没有运行 OLiMPiC。
-6. [ ] 执行许可可接受的 pretrained object detector target-domain training。只读选型已将
+6. [x] 执行许可可接受的 pretrained object detector target-domain training。只读选型将
        `facebook/detr-resnet-50` 登记为首选：其公开模型卡标注 Apache-2.0，且 bipartite matching 直接针对当前重复局部峰与
-       缺少唯一实例分配的失败。TorchVision Faster R-CNN 仅作 fallback，因为框架 BSD-3-Clause 不自动覆盖 pretrained
-       weight 的数据衍生条款。批准前不安装 detector framework、不下载新 weights。
+       缺少唯一实例分配的失败。固定 10-epoch run 达到 109/128 topology-exact，但 1-staff 为 0/40、macro class exact
+       为 0.624，结论 `STOP_DETR_V1`；没有运行 OLiMPiC。
 7. [ ] 使用一套冻结的全局后处理重跑全部 29 个 OLiMPiC development pages；不允许 per-work/per-page 参数或人工修正。
 8. [ ] 若通过 investment gate，再验证 PyTorch/ONNX canonical output、overlay、materialization 与 ordered crop hashes
        的重复运行一致性；产品 runtime 仍保持 `STOP`。
@@ -140,6 +140,12 @@ validation，不能以论文引用代替实证。
 - dependency-free DETR COCO target adapter 已通过全部 640 pages：train target SHA-256
   `a62d86ec7f983b51c33b20dadb05ba18e7cbfe71bb9ecebd30895cf2577bb93d`，validation target SHA-256
   `85f37998cb021c6eee3d7e2aa32a9ebefa1ec58bf3c3b806a4843cae4ec696ce`
+- pinned DETR run：109/128 topology-exact；class exact `1:0.000 / 2:0.900 / 3:0.973`；macro `0.624`；
+  `STOP_DETR_V1`
+- 1-staff failure 为 scale-conditioned miss：validation bbox median height `0.0209`，40 个 truth 中 39 个漏检；2/3-staff
+  median 分别为 `0.0778 / 0.1403`
+- trained safetensors SHA-256：`3b33d1160ac00a508725d1fab0843bc2541809ff26453ea12df71db67d030061`；raw
+  summary SHA-256：`83a75ea10bad301d458841628a253436638249c026830e29a3934dd898ce49a5`
 - durable evidence：`tools/pdf-omr-cli/reports/exploratory/pretrained-layout-detector-selection-v1/`
 
 ## Open decisions
@@ -147,6 +153,8 @@ validation，不能以论文引用代替实证。
 - `staff center` 是否需要独立 spacing head，还是只在 materialization 前从局部图像估计五线 spacing；先由 balanced
   validation 的最小 prototype 决定，不提前扩展模型。
 - 下一阶段采用许可可接受的 pretrained detector；若首选 DETR 在预注册 balanced-validation gate 失败，才重新请求是否扩展到
-  rights-cleared real/semi-synthetic layout data。当前 OLA/Ultralytics weights/distribution gate 仍未通过，不能默认选择。
+  multi-scale Deformable DETR，或 rights-cleared 1-staff real/semi-synthetic layout data。当前 1-staff 的尺度条件漏检与
+  Deformable DETR 论文针对 single-scale DETR limited spatial resolution / small-object weakness 的动机一致，但这是新的
+  architecture/weights 边界，不能默认选择。当前 OLA/Ultralytics weights/distribution gate 仍未通过。
 - 超过 22/29 只表示继续投资；正式 release threshold、native runtime package budget 与 Desktop integration 仍需
   单独审批。

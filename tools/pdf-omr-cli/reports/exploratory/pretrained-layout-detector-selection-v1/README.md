@@ -96,6 +96,46 @@ The frozen 640-page slice converted without exclusions:
 This proves only that the input contract is lossless for the selected system objects. It does not count as model
 or metric evidence.
 
+## DETR v1 result
+
+The approved pinned run completed all 10 pre-registered epochs and evaluated the balanced validation exactly once.
+It did not pass the synthetic gate and therefore did not run OLiMPiC.
+
+| Metric               |                      Result |            Gate |
+| -------------------- | --------------------------: | --------------: |
+| topology-exact pages |                   109 / 128 | diagnostic only |
+| 1-staff class exact  |              0 / 40 = 0.000 |         >= 0.85 |
+| 2-staff class exact  |    63 / max(69, 70) = 0.900 |         >= 0.85 |
+| 3-staff class exact  | 366 / max(373, 376) = 0.973 |         >= 0.85 |
+| macro class exact    |                       0.624 |         >= 0.90 |
+
+Fixed-threshold localization confusion, with rows `truth 1/2/3-staff` and columns `predicted 1/2/3-staff/miss`, was
+`[[0,0,1,39],[0,63,0,6],[0,1,366,6]]`. The failure is concentrated rather than a general system-localization
+collapse.
+
+System-box normalized-height five-number summaries (`min / q1 / median / q3 / max`) provide a concrete scale
+explanation:
+
+| Split / class      | Normalized height                            |
+| ------------------ | -------------------------------------------- |
+| train 1-staff      | `0.0132 / 0.0216 / 0.0241 / 0.0259 / 0.0313` |
+| validation 1-staff | `0.0135 / 0.0148 / 0.0209 / 0.0238 / 0.0238` |
+| validation 2-staff | `0.0488 / 0.0689 / 0.0778 / 0.0901 / 0.1225` |
+| validation 3-staff | `0.0842 / 0.1290 / 0.1403 / 0.1535 / 0.2144` |
+
+- raw summary SHA-256: `83a75ea10bad301d458841628a253436638249c026830e29a3934dd898ce49a5`
+- validation predictions SHA-256: `e1ba788af2b3671260a5c940cb0d23b77c18f47f54bee76f6cb8422093935b8c`
+- trained safetensors SHA-256: `3b33d1160ac00a508725d1fab0843bc2541809ff26453ea12df71db67d030061`
+- parameters: 41,502,152
+- decision: `STOP_DETR_V1`
+
+The next hypothesis is materially different and is not authorized by the original DETR probe. The
+[Deformable DETR paper](https://arxiv.org/abs/2010.04159) identifies DETR's limited feature spatial resolution and
+reports its largest benefit on small objects by using multi-scale deformable attention. That mechanism matches the
+observed scale-conditioned miss pattern better than threshold search or more epochs. The alternative is to first
+obtain substantially more rights-cleared 1-staff pages; the current train evidence comes from only 13 pages despite
+containing 88 systems. Stop here for a route decision.
+
 ## Stop conditions
 
 - Stop if the exact model artifact lacks an acceptable, recorded distribution license.

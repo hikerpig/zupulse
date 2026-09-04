@@ -3,7 +3,7 @@ feature: remote-pdf-omr-service
 title: Browser Remote PDF 识谱
 status: current
 delivery: partial
-last_verified: 2026-08-25
+last_verified: 2026-09-04
 hosts:
   - browser
 implementation_paths:
@@ -39,6 +39,8 @@ supersedes: []
 - `#/pdf-omr` 显示实例共享历史；`#/pdf-omr/new` 新建任务；`#/pdf-omr/:jobId` 从 Server 恢复详情。历史首次读取
   20 项并通过基于 immutable `createdAt + jobId` 的 opaque cursor 继续加载，按 `jobId` 去重；每项显示文件名、输入
   类型、最新状态、engine、Attempt 数、最近更新时间与到期日，并对删除做确认。
+- 新建 OMR 页面按当前识别质量优先展示 `LEGATO`、`Rokot`、`Audiveris`，并默认选择其中第一个兼容且可用的
+  engine；capability 返回的其他 engine 保持原相对顺序并排在其后。
 - Browser adapter 通过 native file picker 保存页面内 `File` reference，以单个 multipart request 上传；Server
   流式解析且在 boundary 验证 64 MiB 上限、扩展名与 PDF/PNG/JPEG magic bytes、engine capability 和 mutation
   `Origin`。Browser 不接触 bucket key、Server path 或 credentials。

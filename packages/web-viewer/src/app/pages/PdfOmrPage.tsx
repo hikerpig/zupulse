@@ -22,6 +22,7 @@ type EvidenceTab = "pdf" | "engine" | "score";
 type CommonT = TFunction<"common">;
 
 const STAGES = ["inspect", "recognize", "validate", "export"] as const;
+const ENGINE_PRIORITY: Readonly<Record<string, number>> = { legato: 0, rokot: 1, audiveris: 2 };
 
 export function PdfOmrPage({
   port,
@@ -62,7 +63,10 @@ export function PdfOmrPage({
   const stageDurationsRef = useRef<Partial<Record<(typeof STAGES)[number], number>>>({});
   const attemptStateRef = useRef<string | undefined>(undefined);
 
-  const engines = port?.engines ?? [];
+  const engines = [...(port?.engines ?? [])].sort(
+    (left, right) =>
+      (ENGINE_PRIORITY[left.id] ?? Number.MAX_SAFE_INTEGER) - (ENGINE_PRIORITY[right.id] ?? Number.MAX_SAFE_INTEGER),
+  );
   const input = file ?? snapshot?.input;
   const availableEngines = engines.filter(
     (engine) => engine.available && (input === undefined || engine.inputKinds.includes(input.inputKind)),

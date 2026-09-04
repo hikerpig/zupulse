@@ -3,7 +3,7 @@ feature: desktop-pdf-omr-workbench
 title: Desktop PDF 识谱实验工作台
 status: current
 delivery: partial
-last_verified: 2026-08-16
+last_verified: 2026-09-04
 hosts:
   - desktop
 implementation_paths:
@@ -58,6 +58,8 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
   不会再次消费已失效的 token，也不会重新读取已被替换的外部路径。
 - Main 启动时并行预检已知 engine，将真实 `available`、`version`、`inputKinds` 或 bounded semantic `reason`
   写入 capability handshake；每次 start/retry 会重新预检最新配置，并为该 job 捕获不可变 registry snapshot。
+- OMR 页面按当前识别质量优先展示 `LEGATO`、`Rokot`、`Audiveris`，并默认选择其中第一个兼容且可用的 engine；
+  capability 返回的其他 engine 保持原相对顺序并排在其后。
 - Settings 支持 Main 原生文件或目录选择器，也支持在对应字段粘贴绝对路径。用户手输路径只单向送入 Main；Main
   去除首尾空白、拒绝相对路径，并将候选资源转换为 session-scoped opaque token 与 basename 安全标签。整份
   candidate 只有通过 canonical preflight 后才以 mode `0600` 的版本化 provider document 原子替换；失败保留旧配置，
@@ -201,6 +203,8 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 - 给定 PNG/JPEG，页面只允许选择声明 image capability 的 engine，并可完成同一识别 pipeline。
 - 给定 Desktop 启动，handshake 必须反映 canonical engine inspection 的真实结果；不可用 engine 在开始/重试前
   禁用，并只显示 bounded、path-free 的配置原因。
+- 给定 capability 同时包含 `LEGATO`、`Rokot` 与 `Audiveris`，页面必须按该顺序展示，并默认选择第一个兼容且
+  可用的 engine。
 - 给定 macOS 标准 Audiveris app bundle 且没有显式 executable 配置，Desktop 必须自动发现并通过预检；Settings
   中已验证并保存的显式配置始终优先，且 Desktop 不读取 `PDF_OMR_*` 环境变量。
 - 给定 Browser，Settings 只显示通用设置；给定 Desktop provider capability，Settings 列出 Audiveris、Rokot 与 LEGATO。

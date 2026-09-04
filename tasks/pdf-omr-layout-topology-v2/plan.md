@@ -71,8 +71,10 @@ validation，不能以论文引用代替实证。
 5. [x] 保留二维 instance context，完成最小 `system/staff object-center` target 与 runtime probe。target 在 640/640 pages
        可表达，但 full-resolution 与 stride-4 compact heads 均未通过 synthetic gate；结论为
        `STOP_CUSTOM_OBJECT_HEAD`，没有运行 OLiMPiC。
-6. [ ] 决定下一研究边界：许可可接受的 pretrained object detector target-domain training，或新增 rights-cleared
-       real/semi-synthetic layout data。批准前不安装 detector framework、不下载新 weights。
+6. [ ] 执行许可可接受的 pretrained object detector target-domain training。只读选型已将
+       `facebook/detr-resnet-50` 登记为首选：其公开模型卡标注 Apache-2.0，且 bipartite matching 直接针对当前重复局部峰与
+       缺少唯一实例分配的失败。TorchVision Faster R-CNN 仅作 fallback，因为框架 BSD-3-Clause 不自动覆盖 pretrained
+       weight 的数据衍生条款。批准前不安装 detector framework、不下载新 weights。
 7. [ ] 使用一套冻结的全局后处理重跑全部 29 个 OLiMPiC development pages；不允许 per-work/per-page 参数或人工修正。
 8. [ ] 若通过 investment gate，再验证 PyTorch/ONNX canonical output、overlay、materialization 与 ordered crop hashes
        的重复运行一致性；产品 runtime 仍保持 `STOP`。
@@ -127,11 +129,21 @@ validation，不能以论文引用代替实证。
 - 决策：`STOP_CUSTOM_OBJECT_HEAD`，不运行 OLiMPiC；需要新的 detector dependency/weights 或数据来源批准
 - durable evidence：`tools/pdf-omr-cli/reports/exploratory/layout-object-center-v1/`
 
+当前 pretrained-detector selection checkpoint：
+
+- 首选：`facebook/detr-resnet-50`；目标是验证 pretrained 2D representation + one-to-one object assignment，而非直接选定
+  产品 runtime
+- 最小输出先只预测 `system-1-staff / system-2-staff / system-3-staff`；只有 count gate 通过但局部图像无法恢复 staff
+  centers 时，才增加独立 `staff` class
+- 固定 split、metric 与 stop condition；synthetic gate 未通过不得运行 OLiMPiC
+- 当前环境有 PyTorch 2.13.0，但无 `torchvision`、`transformers`、Detectron2、MMDetection 或 Ultralytics
+- durable evidence：`tools/pdf-omr-cli/reports/exploratory/pretrained-layout-detector-selection-v1/`
+
 ## Open decisions
 
 - `staff center` 是否需要独立 spacing head，还是只在 materialization 前从局部图像估计五线 spacing；先由 balanced
   validation 的最小 prototype 决定，不提前扩展模型。
-- 下一阶段采用哪一项新增研究边界：许可可接受的 pretrained detector，或 rights-cleared real/semi-synthetic layout
-  data。当前 OLA/Ultralytics weights/distribution gate 仍未通过，不能默认选择。
+- 下一阶段采用许可可接受的 pretrained detector；若首选 DETR 在预注册 balanced-validation gate 失败，才重新请求是否扩展到
+  rights-cleared real/semi-synthetic layout data。当前 OLA/Ultralytics weights/distribution gate 仍未通过，不能默认选择。
 - 超过 22/29 只表示继续投资；正式 release threshold、native runtime package budget 与 Desktop integration 仍需
   单独审批。

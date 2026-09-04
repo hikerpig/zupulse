@@ -1,0 +1,38 @@
+{
+  "parameters": { "activeThreshold": 0.5, "height": 768, "staffSigma": 2, "systemSigma": 6 },
+  "schemaVersion": "1.0.0",
+  "selectedRepresentation": "row-center-energy-v1",
+  "sliceSha256": "452d828843d6b432cca80732bb5f668c2b3624b0677c987ccd193072d7bbc774",
+  "splits": {
+    "train": {
+      "centerEnergyCompatiblePageCount": 510,
+      "centerEnergyStaffActiveRowCount": 26330,
+      "centerEnergyStaffComponentExactPageCount": 510,
+      "centerEnergySystemActiveRowCount": 31155,
+      "centerEnergySystemComponentExactPageCount": 510,
+      "filledBandActiveRowCount": 188066,
+      "filledBandComponentExactPageCount": 510,
+      "incompatiblePages": [
+        { "pageIndex": 1, "reason": "layout centers must have strict row order", "scoreId": "6613436" },
+        { "pageIndex": 1, "reason": "layout centers must have strict row order", "scoreId": "6162644" }
+      ],
+      "pageCount": 512,
+      "staffCount": 5319,
+      "systemCount": 2098
+    },
+    "validation": {
+      "centerEnergyCompatiblePageCount": 128,
+      "centerEnergyStaffActiveRowCount": 6485,
+      "centerEnergyStaffComponentExactPageCount": 128,
+      "centerEnergySystemActiveRowCount": 7230,
+      "centerEnergySystemComponentExactPageCount": 128,
+      "filledBandActiveRowCount": 45771,
+      "filledBandComponentExactPageCount": 128,
+      "incompatiblePages": [],
+      "pageCount": 128,
+      "staffCount": 1297,
+      "systemCount": 482
+    }
+  },
+  "status": "target-selected"
+}

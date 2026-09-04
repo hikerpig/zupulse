@@ -61,7 +61,7 @@ validation，不能以论文引用代替实证。
 1. [x] 从既有 OpenScore Lieder eligible source pool 生成 topology 专用、按 work/composer 隔离的 train/validation
        split。优先把包含 1/2-staff systems 的完整 source groups 留给 validation，再对 3-staff 下采样；禁止纳入已登记
        evaluation score IDs，并记录每类 system/page 数量、group overlap check 与 selection hash。
-2. [ ] 在不训练模型的 target-level prototype 中比较两个表示：贴近 OLA 的 `system/staff box objects`，以及贴近 DWD
+2. [x] 在不训练模型的 target-level prototype 中比较两个表示：贴近 OLA 的 `system/staff box objects`，以及贴近 DWD
        的 `system/staff center energy maps`。检查相邻真实 instances 是否保持可分、增强后顺序/bounds 是否合法、target
        是否 byte-identical；只保留更直接满足当前 row-center/count contract 的一种。
 3. [ ] 只训练一个 compact multi-head candidate。训练目标直接对应选定的 instance representation 与 per-system staff
@@ -95,6 +95,15 @@ validation，不能以论文引用代替实证。
 - validation：128 pages；visible systems `1:40 / 2:69 / 3:373`
 - additional validation composers：Duchambge、Farrenc、Puget、Thys
 - composer overlap：0；protected evaluation work overlap：0；双跑 byte-identical
+
+当前 target checkpoint：
+
+- selected representation：`row-center-energy-v1`
+- raw canonical audit SHA-256：`db65c7a5426e8812cb2854cb4ed81426a875ddf6ad29c3aad5c69cd51c9c4dae`
+- validation：128/128 center-compatible，system/staff components 均为 128/128 exact
+- train：510/512 center-compatible；2 个并排或非严格 row-order pages 明确排除，不删除 source artifacts
+- active system target rows：train `188066 -> 31155`；validation `45771 -> 7230`
+- durable evidence：`tools/pdf-omr-cli/reports/exploratory/layout-topology-target-v2/`
 
 ## Open decisions
 

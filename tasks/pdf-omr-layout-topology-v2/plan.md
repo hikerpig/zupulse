@@ -174,6 +174,17 @@ validation，不能以论文引用代替实证。
   `cd31a641f2550d1d2b5863a077911938a94061a716d86790d988a24033c2d464`，model SHA-256
   `ea485227d3508decd8e10cd76c66355a6dce6621985303ffb7c33f681e7c13a2`；决策
   `STOP_DEFORMABLE_DETR_OLA_V1`。
+- 获批的 training-only diagnostic 使用固定 64 页（全部 13 个 1-staff pages + 25 个 2-staff pages + 26 个其余页），
+  selection SHA-256 `904af6cf0cd62922ac7a7a15b401de53a0a871076863d9a0b1cb7ba6593f4e03`。固定 truth-count top-N
+  localization 仅为 systems `84/303 = 0.277`、staffs `154/688 = 0.224`，因此拒绝 calibration-only hypothesis。
+- 未训练同初始化 control 的 top-N localization 为 systems `76/303 = 0.251`、staffs `73/688 = 0.106`：训练只对 staff
+  产生有限改善，对 system 几乎没有改善。训练后 page-max score median 从 control 的 `0.582/0.551` 降至
+  `0.278/0.375`（system/staff）。
+- 同一固定 1-staff training batch 上，初始化到训练后 `loss_ce 3.274 -> 0.441`、`loss_bbox 0.630 -> 0.900`、
+  `loss_giou 1.121 -> 1.121`：分类头主要学会压低 queries，确定性 box regression 未收敛。模型没有 BatchNorm 或模块式
+  Dropout，但有 14 处 `p=0.1` functional dropout；同一 checkpoint 的 stochastic `train()` loss 为 `2.74–4.37`，
+  `eval()` 为 `7.18`，仅禁用 functional dropout 后 `train()` 精确回到 `7.18`。根因结论为 dropout-dependent stochastic
+  matching collapse，而非 threshold calibration、checkpoint serialization 或 rare-class-only failure。
 - durable evidence：`tools/pdf-omr-cli/reports/exploratory/pretrained-layout-detector-selection-v1/`
 
 ## Open decisions
@@ -181,8 +192,10 @@ validation，不能以论文引用代替实证。
 - `staff center` 是否需要独立 spacing head，还是只在 materialization 前从局部图像估计五线 spacing；先由 balanced
   validation 的最小 prototype 决定，不提前扩展模型。
 - OLA-style run 的 0 retained objects 只证明固定 `0.5` protocol 失败，不能在不新增实验边界的前提下区分 confidence
-  calibration、6-epoch under-training 与 ontology/box target 本身失败。后续若继续，应先选择一条可证伪的新边界，而不是在
-  当前 validation 上搜索 threshold 或追加 epochs。
+  calibration、6-epoch under-training 与 ontology/box target 本身失败。training-only diagnostic 已排除 calibration-only、
+  checkpoint serialization 与 rare-class-only explanations，并把失败定位到 dropout-dependent stochastic matching 与未收敛的
+  deterministic box path。后续若继续，应先用不读取 validation 的 zero-dropout miniature control 证伪该根因，而不是在当前
+  validation 上搜索 threshold 或追加 epochs。
 - 下一阶段采用许可可接受的 pretrained detector；若首选 DETR 在预注册 balanced-validation gate 失败，才重新请求是否扩展到
   multi-scale Deformable DETR，或 rights-cleared 1-staff real/semi-synthetic layout data。当前 1-staff 的尺度条件漏检与
   Deformable DETR 论文针对 single-scale DETR limited spatial resolution / small-object weakness 的动机一致，但这是新的

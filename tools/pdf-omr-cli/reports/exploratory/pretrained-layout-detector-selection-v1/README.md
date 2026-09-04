@@ -233,6 +233,39 @@ new pre-registered experiment. Do not search validation thresholds or append epo
 - trained safetensors SHA-256: `ea485227d3508decd8e10cd76c66355a6dce6621985303ffb7c33f681e7c13a2`
 - decision: `STOP_DEFORMABLE_DETR_OLA_V1`
 
+## Training-only failure diagnostic
+
+The approved diagnostic did not reread validation or change the frozen gate. It selected 64 training pages by the
+existing `selectionKey`: all 13 pages containing 1-staff systems, 25 non-overlapping pages containing 2-staff
+systems, and 26 remaining pages. The ordered selection-key SHA-256 is
+`904af6cf0cd62922ac7a7a15b401de53a0a871076863d9a0b1cb7ba6593f4e03`.
+
+Even when each class retained exactly as many highest-scoring queries as there were truth objects, the trained
+model localized only `84/303 = 0.277` systems and `154/688 = 0.224` staffs. No staff page and only two system pages
+were top-N exact. The untrained, identically seeded two-class initialization localized `76/303 = 0.251` systems and
+`73/688 = 0.106` staffs. Training therefore added limited staff signal but almost no system-localization signal; a
+low fixed threshold is not the sole failure.
+
+Confidence also moved in the wrong operational direction. Median per-page maximum sigmoid confidence changed from
+`0.582` to `0.278` for systems and from `0.551` to `0.375` for staffs. All 64 trained-model page maxima were below
+`0.5`. On a fixed four-page 1-staff training batch, classification loss improved from `3.274` to `0.441`, while box
+loss regressed from `0.630` to `0.900` and GIoU loss remained `1.121`. The classifier primarily learned to suppress
+queries while deterministic box regression did not converge.
+
+The train/eval loss discrepancy identifies the mechanism. This model has no BatchNorm or module-form `Dropout`, but
+the pinned Transformers implementation applies `p=0.1` functional dropout at 14 encoder/decoder sites based on
+`self.training`. For the same saved checkpoint and fixed batch, stochastic `train()` loss ranged from `2.74` to
+`4.37`, whereas deterministic `eval()` loss was `7.18`. Keeping `train()` mode but setting only those functional
+dropout probabilities to zero reproduced `7.18` exactly. The failure is therefore a dropout-dependent stochastic
+matching collapse, not checkpoint serialization, threshold-only calibration, or a rare-class-only failure.
+
+- trained-model diagnostic SHA-256: `18e39a0c247ad18951f201f236c1a5602d10f9196bef96576b8490c66ef1ea98`
+- untrained-control diagnostic SHA-256: `554353e740544c1e75b9eabf81d78c0e511897bf7d54053a8526ebf0311cdc6e`
+
+A further experiment should first use a small training-only split to compare zero-dropout training against the
+registered configuration, with deterministic eval box loss and top-N localization as its gate. It must not reuse
+the 128-page validation until that miniature control shows a material deterministic-localization gain.
+
 ## Stop conditions
 
 - Stop if the exact model artifact lacks an acceptable, recorded distribution license.

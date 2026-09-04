@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "runtime-validated-integration-not-approved",
+  "model": {
+    "architecture": "compact-dilated-staff-line-cnn-v2",
+    "sourceCheckpointSha256": "e7f71ae048b91beddcc0ce383bcd51173b891e8e24199950fc1cd4e3c40de02b",
+    "onnxSha256": "7a10294f324367d9a3a0237aec48941d3ac5f4517b7023a6698d260ed48e1951",
+    "onnxSizeBytes": 9355,
+    "weightsLicense": "Zupulse-project-produced",
+    "trainingDataLicense": "CC0-1.0",
+    "trainingDataDeclarationSha256": "04848d1b4ef3fffb67c574c47ef11531d097003e5e05a0fe4fa9098c13d53346"
+  },
+  "runtime": {
+    "researchProbe": {
+      "id": "onnxruntime-python",
+      "version": "1.25.1",
+      "backend": "cpu",
+      "fullRunSeconds": [1.15, 1.18],
+      "averageMillisecondsPerPage": [39.7, 40.7],
+      "maximumResidentSetBytes": [241762304, 250232832]
+    },
+    "productCandidate": {
+      "id": "onnxruntime-node",
+      "version": "1.29.0",
+      "license": "MIT",
+      "npmUnpackedSizeBytes": 296334136,
+      "installedTreeSizeBytes": 299077632,
+      "targetNativeSizeBytes": {
+        "darwin-arm64": 88043128,
+        "win32-x64": 66310760
+      },
+      "targetSupport": ["darwin-arm64", "win32-x64"],
+      "transitiveLicenses": ["BSD-3-Clause", "ISC", "MIT", "MIT OR CC0-1.0"]
+    }
+  },
+  "determinism": {
+    "independentExportCount": 2,
+    "onnxExportsByteIdentical": true,
+    "cpuRunCount": 2,
+    "cpuReportsByteIdentical": true,
+    "cpuReportSha256": "de5bed069fa4be1111825b6bf64eec0437fd3e5339523bdf58ec0bcaf71c6467",
+    "predictionsMatchCanonicalPytorchReport": true,
+    "cropEvidenceMatchesCanonicalPytorchReport": true,
+    "cpuMaterializationReportSha256": "3a99a82d737306e36a39e2f5da5e36e555d6f476620e0af9cbc62402c93b596f"
+  },
+  "admission": {
+    "pageCount": 29,
+    "admittedPageCount": 9,
+    "workCount": 6,
+    "worksWithAdmittedPage": 4
+  },
+  "decision": {
+    "cpuRuntimeValidated": true,
+    "productDependencyApproved": false,
+    "blocker": "target-specific native package size has not been accepted",
+    "allowedNextStep": "shared contract and crop identity proof without product runtime dependency"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "architecture": "tiny-staff-line-unet-v1",
+  "checkpointSha256": "b38394d76cfb84cd92d6da17a564ee3c32ef8f60f46b9cf363c5fd7c960fe4c4",
+  "parameterCount": 29617,
+  "seed": 20260901,
+  "slice": {
+    "sha256": "dc64fe27d26a109ee20736d6e8fe028da44f7e399f0fcc9fd7ef339df26172e3",
+    "trainPageCount": 512,
+    "validationPageCount": 128
+  },
+  "status": "trained-needs-topology-postprocessing",
+  "validation": {
+    "diceByEpoch": [0.4659282066859305, 0.4661919120699167, 0.4631203580647707],
+    "rowEvidenceProbe": {
+      "exactLineCountPages": 11,
+      "horizontalCoverageThreshold": 0.25,
+      "lineF1": 0.8034,
+      "linePrecision": 0.9848,
+      "lineRecall": 0.6784,
+      "pageCount": 128,
+      "probabilityThreshold": 0.9,
+      "yTolerancePixels": 2
+    }
+  }
+}

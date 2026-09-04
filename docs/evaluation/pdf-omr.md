@@ -418,6 +418,30 @@ adapter-normalization decision 为 `STOP`，`alignDraftParts` 不修改，compar
 选择要删除的 part。durable evidence 位于
 `tools/pdf-omr-cli/reports/exploratory/olimpic-legato-topology-audit-v1/`。
 
+## 2026-09-04 compact shared detector 结论
+
+按用户指定边界，训练与 detector evaluation 均整份排除 declared staff count 超过 3 的 score。最终
+`compact-dilated-staff-line-cnn-v2` 只有 1,841 parameters，在 OLiMPiC real-scanned development 上从 classic
+detector 的 0/29 提升到 9/29 exact pages、覆盖 4/6 works；两次 inference、boundary materialization 与 crop hashes
+均一致。它证明 learned staff-line evidence 方向有效，但 31.0% exact-page coverage 仍不足发布。
+
+通过同一个 `buildSharedDetectorSystemInputs` 入口，9 个 admitted pages 只物化一次并生成 36 个 system PDFs；Rokot 与
+LEGATO 的真实运行拥有完全相同的 36 个 ordered input hashes。Rokot 固定 `previous-prediction-headers-v1`（L/M/K），
+33/36 完成 normalize，但全部含 blocking diagnostics；LEGATO 35/36 完成 normalize，最终只有 1/36 达到
+`ready-with-warnings`。这批输入有 35 个 3-staff system，因此结果同时确认：detector 不应丢弃第三谱表，但 Rokot
+当前 recognition contract 无法可靠表达第三谱表。
+
+本批 detector-derived crops 没有逐-system 对齐 MusicXML truth，不能计算新的 symbolic F1。已有 46-item
+source-independent GT 结果仍用于比较 recognition quality：LEGATO Joint F1 `0.2690` 高于 Rokot `0.2285`，但
+LEGATO process success `26/46` 低于 Rokot `45/46`。结合新 shared-input readiness，若优化 recognition，应优先
+LEGATO 的 time-signature、tie 与 output topology；Rokot 继续固定 L/M/K，不再投入 header-context ablation。
+
+ONNX CPU correctness、determinism、latency、RSS、license 与目标平台支持已经验证；但
+`onnxruntime-node@1.29.0` 的 target-native 增量约 macOS arm64 88 MB / Windows x64 66 MB，尚未接受。因此产品
+runtime 仍为 `STOP`。完整 evidence 位于
+`tools/pdf-omr-cli/reports/development/olimpic-shared-detector-cross-engine-v1/` 和
+`tools/pdf-omr-cli/reports/exploratory/staff-line-runtime-gate-v1/`。
+
 ## 若未来重启
 
 2026-08-17 的 source-independent system-crop 扩样已经执行：46 attempted 中 Rokot 45 success、LEGATO 26

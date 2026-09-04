@@ -31,8 +31,8 @@ const bboxSchema = z
 const systemSchema = z
   .object({
     systemIndex: z.number().int().nonnegative(),
-    staffLayout: z.enum(["single-staff", "grand-staff"]),
-    staffCount: z.union([z.literal(1), z.literal(2)]),
+    staffLayout: z.enum(["single-staff", "grand-staff", "three-staff"]),
+    staffCount: z.union([z.literal(1), z.literal(2), z.literal(3)]),
     pixelBBox: bboxSchema,
     pdfPointBBox: bboxSchema,
     cropSha256: sha256Schema,

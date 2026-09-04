@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "completed-research-only-not-release-eligible",
+  "detector": {
+    "id": "learned-staff-system-v1",
+    "model": "compact-dilated-staff-line-cnn-v2",
+    "pageCount": 29,
+    "admittedPageCount": 9,
+    "works": 6,
+    "worksWithAdmittedPage": 4,
+    "validOutputPageCount": 27,
+    "failureClusters": {
+      "systemCountMismatchPages": 12,
+      "sameCountWrongOrderedCentersPages": 8,
+      "zeroSystemPages": 2
+    }
+  },
+  "sharedInputs": {
+    "admittedPageCount": 9,
+    "systemInputCount": 36,
+    "staffCountDistribution": {
+      "2": 1,
+      "3": 35
+    },
+    "manifestSha256": "43f1370328c49ff0bc6870ecf1bd29f60bf0f5d14c73a28bc822f12b79ff4d8b",
+    "materializationRuns": 2,
+    "directoriesByteIdentical": true,
+    "consumerInputProjectionSha256": {
+      "legato": "0d2d975042503d2c2ca0f0e84bbb8bfda5b8da999e3287bde48ce9c570cb10fc",
+      "rokot": "0d2d975042503d2c2ca0f0e84bbb8bfda5b8da999e3287bde48ce9c570cb10fc"
+    },
+    "allConsumerInputsIdentical": true
+  },
+  "recognition": {
+    "symbolicMetricsAvailable": false,
+    "symbolicMetricsLimitation": "detector-derived crops do not have system-aligned MusicXML truth",
+    "rokot": {
+      "version": "7add305aade6fb3a64ad4dde77d410fa68381089",
+      "modelSha256": "df53948ada1a4a584b4c7c81cc7e3293d3457f2e5ec9688271693459eb950f25",
+      "contextPolicy": "previous-prediction-headers-v1",
+      "attempted": 36,
+      "recognizedAndNormalized": 33,
+      "failed": 3,
+      "failures": {
+        "abc-conversion-failed": 1,
+        "unknown-rokot-voice": 2
+      },
+      "normalizedWithBlockingDiagnostics": 33,
+      "endToEndReady": 0,
+      "runReportSha256": "7a480b5b3871265c1e626a87dcee49a54754be8bbc4df80336468f8b86da1213",
+      "readinessProbeSha256": "a27973bbd2e68c8a18c4681dd89665371d5ad71808a9156d5e0623613eae634f"
+    },
+    "legato": {
+      "version": "8c1de27e414f487fe59086547aaae23b868ed6ca",
+      "modelSha256": "cdeafc9ab30eba74e1c87f0722f869aa9c00d4c4d5986561d4abfeccd6f9cfcc",
+      "attempted": 36,
+      "recognizedAndNormalized": 35,
+      "failed": 1,
+      "failures": {
+        "empty-page-part": 1
+      },
+      "normalizedWithBlockingDiagnostics": 32,
+      "normalizationClean": 3,
+      "cleanResultsBlockedByValidation": 2,
+      "endToEndReady": 1,
+      "runReportSha256": "5fce799cb5aa295411bedcdfda50c429ce7ccf2211aafbf0893d4e6d8e0ce079",
+      "readinessProbeSha256": "a54f95eb0f2662b3d186f4d96df4ddd1036eb4954216b894a64608b79bb8069b"
+    }
+  },
+  "decision": {
+    "releaseEligible": false,
+    "productRuntimeEnabled": false,
+    "reasons": [
+      "detector exact-page coverage is 9/29",
+      "cross-engine end-to-end readiness is at most 1/36",
+      "onnxruntime-node target-native package size is not accepted"
+    ],
+    "nextDetectorWork": "mine only the 20 real-scan failure pages for missing-line and connector-grouping hard cases",
+    "nextRecognitionWork": "prioritize LEGATO time-signature and unresolved-tie structure; keep Rokot L/M/K fixed"
+  }
+}

@@ -9,7 +9,7 @@ export const LEARNED_LAYOUT_VALIDATION_PARAMETERS = {
   outputSchemaVersion: "1.0.0",
   targetWidth: 1400,
   cropPaddingMultiplier: 4,
-  maximumStaffCount: 32,
+  maximumStaffCount: 3,
   maximumStaffSpacingDeviationRatio: 0.35,
 } as const;
 

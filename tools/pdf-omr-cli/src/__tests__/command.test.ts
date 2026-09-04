@@ -91,4 +91,21 @@ describe("pdf OMR CLI", () => {
       context: { command: "recognize", inputScope: "page-fragment" },
     });
   });
+
+  it("accepts an explicit three-staff system crop for Rokot", async () => {
+    await expect(
+      runPdfOmrCommand([
+        "recognize",
+        "missing.pdf",
+        "--engine",
+        "rokot",
+        "--output",
+        "run",
+        "--input-scope",
+        "system-crop",
+        "--staff-layout",
+        "three-staff",
+      ]),
+    ).rejects.toMatchObject({ code: "INVALID_INPUT", context: { reason: "unreadable-input" } });
+  });
 });

@@ -1,0 +1,26 @@
+{
+  "artifactVerification": {
+    "augmentedPageCount": 5100,
+    "eligiblePageCount": 5628,
+    "verifiedFileCount": 32184
+  },
+  "boundaries": {
+    "evaluationIdsUsed": false,
+    "holdoutRead": false,
+    "maximumStaffCount": 3
+  },
+  "datasetId": "openscore-lieder-staff-line-segmentation-v1",
+  "manifestSha256": "c9cfdea3b7af3842de9acb68c0b8e2ca838eefdc747e42c3cd208ac7e186b94b",
+  "scoreCounts": {
+    "excludedAboveMaximum": 108,
+    "selected": 1169,
+    "train": 1038,
+    "validation": 131
+  },
+  "status": "build-complete",
+  "systemCountsByStaffCount": {
+    "1": 128,
+    "2": 868,
+    "3": 18839
+  }
+}

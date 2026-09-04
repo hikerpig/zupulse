@@ -7,8 +7,11 @@ import argparse
 import hashlib
 import json
 import math
+import re
 import subprocess
+from collections import defaultdict
 from dataclasses import dataclass
+from io import BytesIO
 from pathlib import Path
 
 import numpy as np
@@ -17,7 +20,6 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, __version__ as pill
 from extract_musescore_layout_truth import extract_layout_page, extract_score_staff_count
 from probe_musescore_layout_renderer import (
     PINNED_MUSESCORE_VERSION,
-    RASTER_EXPORT_DPI,
     TARGET_RASTER_WIDTH,
     exported_pages,
     require_musescore_version,
@@ -26,6 +28,8 @@ from probe_musescore_layout_renderer import (
 
 DATASET_ID = "openscore-lieder-staff-line-segmentation-v1"
 DEFAULT_SEED = 20260829
+MAX_STAFF_COUNT = 3
+PINNED_RESVG_VERSION = "0.48.1"
 
 
 @dataclass(frozen=True)
@@ -97,10 +101,62 @@ def build_render_jobs(
         jobs.append(
             {
                 "in": str((source_root / item["sourcePath"]).absolute()),
-                "out": [str((render_root / "page.svg").absolute()), str((render_root / "page.png").absolute())],
+                "out": [str((render_root / "page.svg").absolute())],
             }
         )
     return jobs
+
+
+def build_resvg_command(
+    resvg_executable: Path, font_directory: Path, svg_path: Path
+) -> list[str]:
+    return [
+        str(resvg_executable),
+        "-w",
+        str(TARGET_RASTER_WIDTH),
+        "--background",
+        "#fff",
+        "--skip-system-fonts",
+        "--use-fonts-dir",
+        str(font_directory),
+        "--resources-dir",
+        str(svg_path.parent),
+        "-",
+        "-c",
+    ]
+
+
+def canonicalize_svg_paint_order(content: bytes) -> bytes:
+    """Stabilize MuseScore's nondeterministic order within each SVG paint class."""
+    lines = content.splitlines(keepends=True)
+    class_slots: dict[bytes, list[int]] = defaultdict(list)
+    for index, line in enumerate(lines):
+        match = re.search(rb'class="([^"]+)"', line)
+        if match:
+            class_slots[match.group(1)].append(index)
+    for indexes in class_slots.values():
+        ordered = sorted(lines[index] for index in indexes)
+        for index, line in zip(indexes, ordered, strict=True):
+            lines[index] = line
+    return b"".join(lines)
+
+
+def select_staff_bounded_items(
+    items: list[dict[str, str]], source_root: Path, *, max_staff_count: int
+) -> tuple[list[dict[str, object]], dict[str, int]]:
+    if max_staff_count < 1:
+        raise ValueError("maximum staff count must be positive")
+    selected = []
+    excluded: dict[str, int] = {}
+    for item in items:
+        source_path = source_root / item["sourcePath"]
+        staff_count = extract_score_staff_count(source_path.read_text(encoding="utf-8"))
+        if staff_count > max_staff_count:
+            key = str(staff_count)
+            excluded[key] = excluded.get(key, 0) + 1
+            continue
+        selected.append({**item, "declaredStaffCount": staff_count})
+    return selected, excluded
 
 
 def draw_staff_line_mask(annotation: dict[str, object], size: tuple[int, int]) -> Image.Image:
@@ -249,8 +305,44 @@ def _run(argv: list[str]) -> str:
     return result.stdout
 
 
+def _run_bytes(argv: list[str], *, input_bytes: bytes | None = None) -> bytes:
+    result = subprocess.run(argv, check=False, capture_output=True, input=input_bytes)
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"command failed ({result.returncode}): {' '.join(argv)}\n{result.stderr.decode(errors='replace').strip()}"
+        )
+    return result.stdout
+
+
+def _rasterize_svg(svg_path: Path, *, resvg_executable: Path, font_directory: Path) -> Image.Image:
+    stable_svg = canonicalize_svg_paint_order(svg_path.read_bytes())
+    png_bytes = _run_bytes(
+        build_resvg_command(resvg_executable, font_directory, svg_path), input_bytes=stable_svg
+    )
+    with Image.open(BytesIO(png_bytes)) as rendered:
+        rendered.load()
+        if rendered.width != TARGET_RASTER_WIDTH:
+            raise ValueError(f"resvg raster width must be {TARGET_RASTER_WIDTH}, got {rendered.width}")
+        return rendered.convert("L")
+
+
+def _font_declaration(font_directory: Path) -> tuple[int, str]:
+    files = sorted(path for path in font_directory.rglob("*") if path.is_file())
+    if not files:
+        raise ValueError(f"font directory is empty: {font_directory}")
+    declaration = [
+        {"path": path.relative_to(font_directory).as_posix(), "sha256": sha256(path.read_bytes())}
+        for path in files
+    ]
+    return len(files), sha256(canonical_json(declaration))
+
+
 def preflight_rendered_layouts(
-    items: list[dict[str, str]], source_root: Path, output_root: Path
+    items: list[dict[str, str]],
+    source_root: Path,
+    output_root: Path,
+    *,
+    max_staff_count: int | None = None,
 ) -> dict[str, object]:
     page_count = 0
     eligible_page_count = 0
@@ -274,6 +366,10 @@ def preflight_rendered_layouts(
                 raise ValueError(f"layout truth failed for score {score_id} page {page_index + 1}: {error}") from error
             eligible_page_count += 1
             for system in annotation["systems"]:
+                if max_staff_count is not None and system["staffCount"] > max_staff_count:
+                    raise ValueError(
+                        f"layout truth exceeded {max_staff_count} staves for score {score_id} page {page_index + 1}"
+                    )
                 system_count += 1
                 staff_count = str(system["staffCount"])
                 systems_by_staff_count[staff_count] = systems_by_staff_count.get(staff_count, 0) + 1
@@ -331,21 +427,27 @@ def build_dataset(
     source_plan_path: Path,
     source_root: Path,
     musescore_executable: Path,
+    resvg_executable: Path,
+    font_directory: Path,
     output_root: Path,
     seed: int,
     batch_size: int,
     max_items: int | None,
     resume_from_rendered: bool = False,
+    filter_existing_artifacts: bool = False,
 ) -> dict[str, object]:
-    if output_root.exists() and not resume_from_rendered:
+    if resume_from_rendered and filter_existing_artifacts:
+        raise ValueError("resume and filter-existing modes are mutually exclusive")
+    reuses_output = resume_from_rendered or filter_existing_artifacts
+    if output_root.exists() and not reuses_output:
         raise ValueError(f"dataset output already exists: {output_root}")
-    if not output_root.exists() and resume_from_rendered:
+    if not output_root.exists() and reuses_output:
         raise ValueError(f"rendered dataset output does not exist: {output_root}")
     if batch_size < 1 or max_items is not None and max_items < 1:
         raise ValueError("build limits must be positive")
     plan_bytes = source_plan_path.read_bytes()
     plan = json.loads(plan_bytes)
-    all_items = validate_source_plan(plan)
+    source_plan_items = validate_source_plan(plan)
     source = plan.get("source")
     if not isinstance(source, dict) or not isinstance(source.get("revision"), str):
         raise ValueError("source revision is missing")
@@ -354,17 +456,24 @@ def build_dataset(
     if actual_revision != source_revision:
         raise ValueError(f"source revision mismatch: expected {source_revision}, got {actual_revision}")
     version = require_musescore_version(_run([str(musescore_executable), "--version"]))
-    items = all_items[:max_items] if max_items is not None else all_items
+    resvg_version = _run([str(resvg_executable), "--version"]).strip()
+    if resvg_version != PINNED_RESVG_VERSION:
+        raise ValueError(f"dataset builder requires resvg {PINNED_RESVG_VERSION}, got: {resvg_version}")
+    font_file_count, font_declaration_sha = _font_declaration(font_directory)
+    staff_bounded_items, excluded_scores_by_staff_count = select_staff_bounded_items(
+        source_plan_items, source_root, max_staff_count=MAX_STAFF_COUNT
+    )
+    items = staff_bounded_items[:max_items] if max_items is not None else staff_bounded_items
     resolved_source_root = source_root.resolve()
     for item in items:
         source_path = (source_root / item["sourcePath"]).resolve()
         if not source_path.is_relative_to(resolved_source_root) or not source_path.is_file():
             raise ValueError(f"source score is missing or escapes root: {item['sourcePath']}")
 
-    output_root.mkdir(parents=True, exist_ok=resume_from_rendered)
+    output_root.mkdir(parents=True, exist_ok=reuses_output)
     jobs = build_render_jobs(items, source_root, output_root)
     jobs_root = output_root / "jobs"
-    if not resume_from_rendered:
+    if not reuses_output:
         jobs_root.mkdir()
         for batch_index in range(0, len(jobs), batch_size):
             batch = jobs[batch_index : batch_index + batch_size]
@@ -373,10 +482,48 @@ def build_dataset(
                     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
             job_path = jobs_root / f"batch-{batch_index // batch_size + 1:04d}.json"
             job_path.write_bytes(canonical_json(batch))
-            _run([str(musescore_executable), "-f", "-r", str(RASTER_EXPORT_DPI), "-j", str(job_path)])
+            _run([str(musescore_executable), "-f", "-j", str(job_path)])
 
-    preflight = preflight_rendered_layouts(items, source_root, output_root)
+    preflight = preflight_rendered_layouts(
+        items, source_root, output_root, max_staff_count=MAX_STAFF_COUNT
+    )
     print(json.dumps({"preflight": preflight}, sort_keys=True), flush=True)
+
+    selection = {
+        "fullBuild": max_items is None,
+        "sourcePlanScoreCount": len(source_plan_items),
+        "scoreCount": len(items),
+        "trainScoreCount": sum(item["split"] == "train" for item in items),
+        "validationScoreCount": sum(item["split"] == "validation" for item in items),
+        "maxStaffCount": MAX_STAFF_COUNT,
+        "excludedScoreCount": len(source_plan_items) - len(staff_bounded_items),
+        "excludedScoresByDeclaredStaffCount": excluded_scores_by_staff_count,
+        "pageCount": preflight["pageCount"],
+        "eligiblePageCount": preflight["eligiblePageCount"],
+        "preflight": preflight,
+    }
+    if filter_existing_artifacts:
+        existing_manifest = json.loads((output_root / "manifest.json").read_bytes())
+        if (
+            existing_manifest.get("source", {}).get("sourcePlanSha256") != sha256(plan_bytes)
+            or existing_manifest.get("augmentation", {}).get("baseSeed") != seed
+        ):
+            raise ValueError("existing manifest source or augmentation seed differs")
+        existing_items = {
+            item["scoreId"]: item for item in existing_manifest.get("items", []) if isinstance(item, dict)
+        }
+        selected_manifest_items = []
+        for item in items:
+            existing_item = existing_items.get(item["scoreId"])
+            if existing_item is None or existing_item.get("declaredStaffCount") != item["declaredStaffCount"]:
+                raise ValueError(f"existing manifest is missing selected score {item['scoreId']}")
+            selected_manifest_items.append(existing_item)
+        manifest = {**existing_manifest, "selection": selection, "items": selected_manifest_items}
+        (output_root / "manifest.json").write_bytes(canonical_json(manifest))
+        verification = verify_manifest_artifacts(manifest, output_root)
+        print(json.dumps({"artifactVerification": verification}, sort_keys=True), flush=True)
+        print(json.dumps(selection, sort_keys=True), flush=True)
+        return manifest
 
     manifest_items = []
     for item in items:
@@ -386,12 +533,11 @@ def build_dataset(
         render_root = score_root / "render"
         source_text = (source_root / item["sourcePath"]).read_text(encoding="utf-8")
         staff_count = extract_score_staff_count(source_text)
+        if staff_count != item["declaredStaffCount"]:
+            raise ValueError(f"declared staff count changed for score {score_id}")
         svg_pages = exported_pages(render_root, "svg")
-        raster_pages = exported_pages(render_root, "png")
-        if len(svg_pages) != len(raster_pages):
-            raise ValueError(f"SVG/raster page count differs for score {score_id}")
         manifest_pages = []
-        for page_index, (svg_path, raster_path) in enumerate(zip(svg_pages, raster_pages, strict=True)):
+        for page_index, svg_path in enumerate(svg_pages):
             svg_bytes = svg_path.read_bytes()
             if b'class="StaffLines"' not in svg_bytes:
                 manifest_pages.append(
@@ -399,12 +545,9 @@ def build_dataset(
                 )
                 continue
             annotation = extract_layout_page(svg_bytes.decode("utf-8"), page_index=page_index, staff_count=staff_count)
-            with Image.open(raster_path) as exported:
-                exported.load()
-                height = round(exported.height * TARGET_RASTER_WIDTH / exported.width)
-                canonical_image = exported.convert("L").resize(
-                    (TARGET_RASTER_WIDTH, height), Image.Resampling.LANCZOS
-                )
+            canonical_image = _rasterize_svg(
+                svg_path, resvg_executable=resvg_executable, font_directory=font_directory
+            )
             clean_root = score_root / "pages" / f"page-{page_index + 1}"
             clean_image_path = clean_root.with_suffix(".png")
             clean_mask_path = clean_root.with_suffix(".mask.png")
@@ -462,21 +605,19 @@ def build_dataset(
         },
         "renderer": {
             "musescoreVersion": version,
-            "imageResolutionDpi": RASTER_EXPORT_DPI,
             "targetRasterWidth": TARGET_RASTER_WIDTH,
             "pillowVersion": pillow_version,
             "numpyVersion": np.__version__,
+            "svgRasterizer": {
+                "id": "resvg",
+                "version": resvg_version,
+                "skipSystemFonts": True,
+                "bundledFontFileCount": font_file_count,
+                "bundledFontDeclarationSha256": font_declaration_sha,
+            },
         },
         "augmentation": {"baseSeed": seed, "variantsPerTrainPage": 1, "validationAugmented": False},
-        "selection": {
-            "fullBuild": max_items is None,
-            "scoreCount": len(items),
-            "trainScoreCount": sum(item["split"] == "train" for item in items),
-            "validationScoreCount": sum(item["split"] == "validation" for item in items),
-            "pageCount": sum(item["pageCount"] for item in manifest_items),
-            "eligiblePageCount": sum(page["eligibleForTraining"] for item in manifest_items for page in item["pages"]),
-            "preflight": preflight,
-        },
+        "selection": selection,
         "boundaries": {"holdoutRead": False, "evaluationIdsUsed": False},
         "items": manifest_items,
     }
@@ -493,21 +634,27 @@ def main() -> None:
     parser.add_argument("--source-plan", type=Path, required=True)
     parser.add_argument("--source-root", type=Path, required=True)
     parser.add_argument("--musescore-executable", type=Path, required=True)
+    parser.add_argument("--resvg-executable", type=Path, required=True)
+    parser.add_argument("--font-directory", type=Path, required=True)
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--max-items", type=int)
     parser.add_argument("--resume-from-rendered", action="store_true")
+    parser.add_argument("--filter-existing-artifacts", action="store_true")
     args = parser.parse_args()
     build_dataset(
         source_plan_path=args.source_plan,
         source_root=args.source_root,
         musescore_executable=args.musescore_executable,
+        resvg_executable=args.resvg_executable,
+        font_directory=args.font_directory,
         output_root=args.output_root,
         seed=args.seed,
         batch_size=args.batch_size,
         max_items=args.max_items,
         resume_from_rendered=args.resume_from_rendered,
+        filter_existing_artifacts=args.filter_existing_artifacts,
     )
 
 

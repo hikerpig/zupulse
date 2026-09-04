@@ -17,7 +17,10 @@ from build_openscore_layout_dataset import (
     augmentation_seed,
     augment_training_page,
     build_render_jobs,
+    build_resvg_command,
+    canonicalize_svg_paint_order,
     canonical_json,
+    select_staff_bounded_items,
     validate_source_plan,
     verify_manifest_artifacts,
 )
@@ -115,20 +118,67 @@ class BuildOpenScoreLayoutDatasetTest(unittest.TestCase):
             [
                 {
                     "in": "/source/scores/a.mscx",
-                    "out": [
-                        "/output/canonical/train/a/render/page.svg",
-                        "/output/canonical/train/a/render/page.png",
-                    ],
+                    "out": ["/output/canonical/train/a/render/page.svg"],
                 },
                 {
                     "in": "/source/scores/b.mscx",
-                    "out": [
-                        "/output/canonical/validation/b/render/page.svg",
-                        "/output/canonical/validation/b/render/page.png",
-                    ],
+                    "out": ["/output/canonical/validation/b/render/page.svg"],
                 },
             ],
         )
+
+    def test_builds_resvg_command_with_only_bundled_fonts(self) -> None:
+        command = build_resvg_command(
+            Path("/opt/resvg"), Path("/fonts"), Path("/input/page.svg")
+        )
+
+        self.assertEqual(
+            command,
+            [
+                "/opt/resvg",
+                "-w",
+                "1400",
+                "--background",
+                "#fff",
+                "--skip-system-fonts",
+                "--use-fonts-dir",
+                "/fonts",
+                "--resources-dir",
+                "/input",
+                "-",
+                "-c",
+            ],
+        )
+
+    def test_canonicalizes_elements_within_class_slots_only(self) -> None:
+        first = b"""<svg>\n<path class=\"Note\" d=\"b\"/>\n<rect class=\"StaffLines\"/>\n<path class=\"Note\" d=\"a\"/>\n</svg>\n"""
+        second = b"""<svg>\n<path class=\"Note\" d=\"a\"/>\n<rect class=\"StaffLines\"/>\n<path class=\"Note\" d=\"b\"/>\n</svg>\n"""
+
+        canonical = canonicalize_svg_paint_order(first)
+
+        self.assertEqual(canonical, canonicalize_svg_paint_order(second))
+        self.assertEqual(
+            canonical,
+            b"""<svg>\n<path class=\"Note\" d=\"a\"/>\n<rect class=\"StaffLines\"/>\n<path class=\"Note\" d=\"b\"/>\n</svg>\n""",
+        )
+
+    def test_excludes_entire_scores_declaring_more_than_three_staves(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            source_root = Path(directory)
+            items = []
+            for score_id, staff_count in [("two", 2), ("three", 3), ("four", 4)]:
+                source_path = f"scores/{score_id}.mscx"
+                path = source_root / source_path
+                path.parent.mkdir(parents=True, exist_ok=True)
+                parts = "".join(f'<Part><Staff id="{index + 1}"/></Part>' for index in range(staff_count))
+                path.write_text(f"<museScore><Score>{parts}</Score></museScore>", encoding="utf-8")
+                items.append({"scoreId": score_id, "sourcePath": source_path, "split": "train"})
+
+            selected, excluded = select_staff_bounded_items(items, source_root, max_staff_count=3)
+
+            self.assertEqual([item["scoreId"] for item in selected], ["two", "three"])
+            self.assertEqual([item["declaredStaffCount"] for item in selected], [2, 3])
+            self.assertEqual(excluded, {"4": 1})
 
     def test_verifies_artifact_hashes_and_forbids_validation_augmentation(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

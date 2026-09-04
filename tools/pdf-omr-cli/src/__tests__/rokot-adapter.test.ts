@@ -232,6 +232,29 @@ describe("Rokot recognition adapter", () => {
     expect(segmentation.systems[0]!.staffLineYs).toEqual([]);
   });
 
+  it("retains a declared three-staff crop while reporting Rokot's unsupported third staff", async () => {
+    const context = await createContext();
+    const inputPath = join(context.directory, "three-staff-crop.pdf");
+    await writeFile(inputPath, pdf([{ width: 200, height: 150, content: "" }]));
+    const adapter = createAdapter(context);
+
+    const recognition = await adapter.recognize({
+      inputPath,
+      outputDirectory: join(context.directory, "three-staff-crop"),
+      inputScope: "system-crop",
+      staffLayout: "three-staff",
+    });
+
+    const bundle = parseRokotSystemBundle(recognition.normalizationBytes);
+    expect(bundle.systems[0]!.source).toMatchObject({ staffLayout: "three-staff", staffCount: 3 });
+    const draft = adapter.normalize(recognition);
+    expect(draft.parts[0]!.staves).toHaveLength(3);
+    expect(draft.parts[0]!.staves[2]!.measures.every((measure) => measure.voices.length === 0)).toBe(true);
+    expect(draft.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "ROKOT_UNSUPPORTED_STAFF_TOPOLOGY", severity: "blocking" }),
+    );
+  });
+
   it("recognizes isolated single-staff systems when the layout is declared", async () => {
     const context = await createContext({ staffLayout: "single-staff" });
     const inputPath = join(context.directory, "melody.pdf");

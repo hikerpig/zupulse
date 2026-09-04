@@ -24,7 +24,7 @@ describe("full-page segmentation pilot", () => {
         return [renderedPage(0), renderedPage(1)];
       },
       segmentPage(page: RenderedPdfPage) {
-        return segmentation(page.pageIndex);
+        return segmentation(page.pageIndex, page.pageIndex === 1 ? 3 : 2);
       },
     };
 
@@ -321,7 +321,7 @@ function gradientRenderedPage(): RenderedPdfPage {
   };
 }
 
-function segmentation(pageIndex: number): StaffSystemSegmentation {
+function segmentation(pageIndex: number, staffCount: 2 | 3 = 2): StaffSystemSegmentation {
   return {
     detectorVersion: "rokot-staff-system-v2",
     parameters: {
@@ -342,8 +342,8 @@ function segmentation(pageIndex: number): StaffSystemSegmentation {
     },
     systems: [
       {
-        staffLayout: "grand-staff",
-        staffCount: 2,
+        staffLayout: staffCount === 2 ? "grand-staff" : "three-staff",
+        staffCount,
         pageIndex,
         systemIndex: 0,
         pageRenderSha256: `${pageIndex}`.repeat(64),
@@ -352,7 +352,7 @@ function segmentation(pageIndex: number): StaffSystemSegmentation {
         pdfPointBBox: { x: 0, y: 0, width: 2, height: 2 },
         cropPixels: new Uint8Array(16).fill(255),
         cropSha256: "a".repeat(64),
-        staffLineYs: [0, 1, 2, 3, 4, 6, 7, 8, 9, 10],
+        staffLineYs: Array.from({ length: staffCount * 5 }, (_, index) => index),
       },
     ],
   };

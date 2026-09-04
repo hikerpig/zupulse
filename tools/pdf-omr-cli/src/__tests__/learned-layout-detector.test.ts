@@ -72,6 +72,26 @@ describe("materializeLearnedLayoutPage", () => {
     );
   });
 
+  it("fails closed when a learned system contains more than three staffs", () => {
+    const input = page(0, 1400, 100);
+    const lineYs = [
+      0.12, 0.13, 0.14, 0.15, 0.16, 0.2, 0.21, 0.22, 0.23, 0.24, 0.28, 0.29, 0.3, 0.31, 0.32, 0.36, 0.37, 0.38, 0.39,
+      0.4,
+    ];
+    const output = {
+      schemaVersion: "1.0.0",
+      pageIndex: 0,
+      systems: [system(0, 0.1, 0.35, lineYs)],
+    };
+
+    expect(() => materializeLearnedLayoutPage(input, output)).toThrow(
+      expect.objectContaining({
+        code: "ENGINE_OUTPUT_INVALID",
+        context: expect.objectContaining({ stage: "learned-output-schema", pageIndex: 0 }),
+      }),
+    );
+  });
+
   it("fails closed when a staff-line point escapes its system bbox", () => {
     const input = page(0, 1400, 100);
     const output = {

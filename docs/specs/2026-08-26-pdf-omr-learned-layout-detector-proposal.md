@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: implemented
 date: 2026-08-26
 owner: Engineering
 scope: PDF OMR CLI development experiment only
@@ -120,3 +120,28 @@ augmentation、training 或 model/runtime integration。后续 renderer probe �
 synthetic validation 不能替代现有 real-scanned OLiMPiC admission，frozen holdout 不变。
 
 可复算 plan 位于 `tools/pdf-omr-cli/corpus/openscore-lieder-layout-train-v1/`。
+
+## 2026-09-04 implementation outcome
+
+本 development experiment 已按不超过 3 staff 的边界完成。最终训练集合在渲染前排除 source 声明超过 3 staff 的
+108 份 score，保留 1,038 train / 131 validation scores；固定的 512/128 page slice 训练出 1,841-parameter
+`compact-dilated-staff-line-cnn-v2`。synthetic validation 的完整五线重建为 124/128 exact pages。
+
+真实扫描 OLiMPiC development 上，learned detector 从 classic baseline 的 0/29 提升到 9/29 exact pages，覆盖
+4/6 works；27/29 pages 产生合法 boundary output，双跑 raw output 与 crop hashes 一致。20 个未准入页中 12 页
+system count 不符，8 页 count 相同但 ordered centers 不符，因此该结果只通过 viability gate，不达到发布阈值。
+
+模型已确定性导出为 9,355-byte ONNX。CPU-only ONNX Runtime 对 29 页的 predictions 和 TypeScript crop evidence 与
+PyTorch/MPS canonical result 完全一致；独立进程级 probe 为 1.15–1.18 秒、峰值 RSS 242–250 MB。候选
+`onnxruntime-node@1.29.0` 是 MIT 且支持当前 macOS arm64 / Windows x64 目标，但 target native files 仍增加约
+88/66 MB，未获得明确 package-size 接受，因此产品 runtime 保持 `STOP`。
+
+shared input probe 把 9 个 admitted pages 物化为同一批 36 个 deterministic single-system PDFs；Rokot 与 LEGATO
+实际运行的 ordered input SHA projection 完全相同。Rokot 33/36 normalize、但 0/36 readiness-ready；LEGATO
+35/36 normalize、1/36 `ready-with-warnings`。其中 35/36 inputs 是 3-staff，暴露了 Rokot 只能可靠表达前两谱表的
+明确 capability gap。Rokot context policy 始终保持 `previous-prediction-headers-v1`（L/M/K）。
+
+因此本 proposal 的研究实现已完成，但产品启用条件未满足。durable evidence 位于
+`tools/pdf-omr-cli/reports/development/olimpic-learned-layout-v1/`、
+`tools/pdf-omr-cli/reports/exploratory/staff-line-runtime-gate-v1/` 与
+`tools/pdf-omr-cli/reports/development/olimpic-shared-detector-cross-engine-v1/`。

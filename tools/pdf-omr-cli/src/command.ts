@@ -28,7 +28,7 @@ const usage = [
   "  fuse --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --output <run-dir>",
   "  apply-fusion --run <fusion-run-dir> --decisions <decisions.json> --output <run-dir>",
   "  rebuild-from-midi --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --musescore <executable> --output <run-dir>",
-  "  recognize <input.pdf> --engine <audiveris|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff>]",
+  "  recognize <input.pdf> --engine <audiveris|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff|three-staff>]",
   "  validate <draft.json> --output <diagnostics.json>",
   "  analyze <draft.json> --output <harmony.json>",
   "  export-musicxml <draft.json> --output <score.mxl>",
@@ -173,7 +173,7 @@ export async function runPdfOmrCommand(
         { context: { command: "recognize" } },
       );
     }
-    if (staffLayout !== undefined && !["auto", "single-staff", "grand-staff"].includes(staffLayout)) {
+    if (staffLayout !== undefined && !["auto", "single-staff", "grand-staff", "three-staff"].includes(staffLayout)) {
       throw new PdfOmrError("INVALID_CLI_ARGUMENT", "unknown staff layout", {
         context: { command: "recognize", staffLayout },
       });
@@ -198,7 +198,9 @@ export async function runPdfOmrCommand(
       cwd: context.cwd ?? process.cwd(),
       engineRegistry: context.engineRegistry ?? createEngineRegistry(),
       ...(inputScope === undefined ? {} : { inputScope: inputScope as "full-page" | "system-crop" }),
-      ...(staffLayout === undefined ? {} : { staffLayout: staffLayout as "auto" | "single-staff" | "grand-staff" }),
+      ...(staffLayout === undefined
+        ? {}
+        : { staffLayout: staffLayout as "auto" | "single-staff" | "grand-staff" | "three-staff" }),
       ...(context.signal === undefined ? {} : { signal: context.signal }),
     });
   }

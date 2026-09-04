@@ -1,0 +1,31 @@
+{
+  "architecture": "compact-dilated-staff-line-cnn-v2",
+  "checkpointSha256": "e7f71ae048b91beddcc0ce383bcd51173b891e8e24199950fc1cd4e3c40de02b",
+  "parameterCount": 1841,
+  "seed": 20260901,
+  "slice": {
+    "sha256": "dc64fe27d26a109ee20736d6e8fe028da44f7e399f0fcc9fd7ef339df26172e3",
+    "trainPageCount": 512,
+    "validationPageCount": 128
+  },
+  "status": "synthetic-line-gate-passed",
+  "validation": {
+    "diceByEpoch": [0.7436050856485963, 0.73794334102422, 0.7691619824618101],
+    "filteredRowEvidence": {
+      "exactLinePages": 124,
+      "lineF1": 0.9984,
+      "linePrecision": 1.0,
+      "lineRecall": 0.9968,
+      "pageCount": 128
+    },
+    "rawRowEvidence": {
+      "exactLinePages": 88,
+      "horizontalCoverageThreshold": 0.3,
+      "lineF1": 0.9938,
+      "linePrecision": 0.9883,
+      "lineRecall": 0.9994,
+      "probabilityThreshold": 0.9,
+      "yTolerancePixels": 2
+    }
+  }
+}

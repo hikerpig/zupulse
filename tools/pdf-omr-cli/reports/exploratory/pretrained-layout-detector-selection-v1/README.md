@@ -154,6 +154,44 @@ The proposed run must retain the frozen split, metric definition, score threshol
 optimizer, and one-time validation protocol from DETR v1. Only architecture and initialization may change. This
 isolates whether multi-scale spatial resolution fixes the 1-staff miss pattern.
 
+## Deformable DETR result
+
+The approved DocLayNet-initialized run completed the same 10-epoch protocol on CPU. MPS was rejected during smoke
+because PyTorch 2.8 does not implement `grid_sampler_2d_backward`; its documented CPU fallback was slower than a
+fully CPU run. The final validation failed the synthetic gate and did not run OLiMPiC.
+
+| Metric               | Single-scale DETR | DocLayNet Deformable DETR |            Gate |
+| -------------------- | ----------------: | ------------------------: | --------------: |
+| topology-exact pages |         109 / 128 |                  46 / 128 | diagnostic only |
+| 1-staff class exact  |             0.000 |                     0.000 |         >= 0.85 |
+| 2-staff class exact  |             0.900 |                     0.739 |         >= 0.85 |
+| 3-staff class exact  |             0.973 |                     0.673 |         >= 0.85 |
+| macro class exact    |             0.624 |                     0.471 |         >= 0.90 |
+
+Fixed-threshold localization confusion for the multi-scale run was
+`[[0,0,0,40],[0,51,3,15],[0,1,251,121]]`. Multi-scale features did not recover any 1-staff systems and also
+regressed the common classes. Therefore the scale-only hypothesis is rejected rather than repaired with threshold,
+epoch, or model-source search.
+
+- source revision: `c5946fb892bd99f527c0dd69577b9e9e55364f8f`
+- source `README.md` SHA-256: `1eccacf4a44a5e977ee5db38b777ac186375c7ac02f594ece5e7efdf4cb8363c`
+- source `config.json` SHA-256: `01d2bd3356abd64b84b837294782b28a4052f1a36b19e3a9c7d84f75ee15d5e6`
+- source `preprocessor_config.json` SHA-256:
+  `48aaaeafe0e746877c41969391577458d8164ef1b22050fd3c330f713f81c556`
+- source `model.safetensors` SHA-256: `e3861d34685d3b36e5f38370597daf98fb2f98a852cfa5c125035057ded06809`
+- raw summary SHA-256: `653db33f6be0a4dfeff7b3a88376526431941c45f0db164ae120828858d614c8`
+- validation predictions SHA-256: `6ec6bd2cf9e15c5808742b8e4353986fde8402005fb204ed474ed188fcad33f6`
+- trained safetensors SHA-256: `82724e15447210adbcd5de47a8b04b3ffe15b39d3e783ec83c5c02013d8b532a`
+- parameters: 41,023,217
+- decision: `STOP_DEFORMABLE_DETR_COUNT_CLASS_V1`
+
+The new hypothesis changes the target ontology rather than the detector family: predict class-agnostic `system`
+and `staff` boxes, then count matched staff centers inside each system. This is the direct OLA-style decomposition
+that the original research basis described. It removes the confound where the rare semantic class is also the
+smallest box class: the same frozen train split contains only 88 1-staff system labels from 13 pages, but contains
+2,098 systems and 5,319 staffs as class-agnostic objects. Validation contains 482 systems and 1,297 staffs. This
+boundary is not authorized by either count-conditioned probe, so stop for approval.
+
 ## Stop conditions
 
 - Stop if the exact model artifact lacks an acceptable, recorded distribution license.

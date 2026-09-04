@@ -75,8 +75,11 @@ validation，不能以论文引用代替实证。
        `facebook/detr-resnet-50` 登记为首选：其公开模型卡标注 Apache-2.0，且 bipartite matching 直接针对当前重复局部峰与
        缺少唯一实例分配的失败。固定 10-epoch run 达到 109/128 topology-exact，但 1-staff 为 0/40、macro class exact
        为 0.624，结论 `STOP_DETR_V1`；没有运行 OLiMPiC。
-7. [ ] 使用一套冻结的全局后处理重跑全部 29 个 OLiMPiC development pages；不允许 per-work/per-page 参数或人工修正。
-8. [ ] 若通过 investment gate，再验证 PyTorch/ONNX canonical output、overlay、materialization 与 ordered crop hashes
+7. [x] 执行获批的 DocLayNet-pretrained multi-scale Deformable DETR。保持其余 protocol 不变后仅达到 46/128
+       topology-exact，class exact 为 `1:0.000 / 2:0.739 / 3:0.673`；结论
+       `STOP_DEFORMABLE_DETR_COUNT_CLASS_V1`，没有运行 OLiMPiC。
+8. [ ] 使用一套冻结的全局后处理重跑全部 29 个 OLiMPiC development pages；不允许 per-work/per-page 参数或人工修正。
+9. [ ] 若通过 investment gate，再验证 PyTorch/ONNX canonical output、overlay、materialization 与 ordered crop hashes
        的重复运行一致性；产品 runtime 仍保持 `STOP`。
 
 ## Acceptance criteria
@@ -146,6 +149,10 @@ validation，不能以论文引用代替实证。
   median 分别为 `0.0778 / 0.1403`
 - trained safetensors SHA-256：`3b33d1160ac00a508725d1fab0843bc2541809ff26453ea12df71db67d030061`；raw
   summary SHA-256：`83a75ea10bad301d458841628a253436638249c026830e29a3934dd898ce49a5`
+- DocLayNet Deformable DETR：46/128 topology-exact；class exact `1:0.000 / 2:0.739 / 3:0.673`；macro
+  `0.471`；`STOP_DEFORMABLE_DETR_COUNT_CLASS_V1`
+- multi-scale 没有修复 1-staff 且回归常见类，拒绝 scale-only hypothesis；trained safetensors SHA-256
+  `82724e15447210adbcd5de47a8b04b3ffe15b39d3e783ec83c5c02013d8b532a`
 - durable evidence：`tools/pdf-omr-cli/reports/exploratory/pretrained-layout-detector-selection-v1/`
 
 ## Open decisions
@@ -159,5 +166,8 @@ validation，不能以论文引用代替实证。
   `Aryn/deformable-detr-DocLayNet@c5946fb892bd99f527c0dd69577b9e9e55364f8f`，以 document-layout pretrained
   representation 验证 multi-scale 假设；Apache-2.0 的 `SenseTime/deformable-detr` 仅作 COCO-domain control。当前
   OLA/Ultralytics weights/distribution gate 仍未通过。
+- 新候选是否把 ontology 改为 class-agnostic `system + staff` objects，再由 containment/count 确定 1/2/3-staff。它直接对应
+  OLA 的分层 objects，也把训练证据从 13 pages / 88 rare class systems 转换为 2,098 system 与 5,319 staff objects；但这是
+  新的 target/model contract，必须先获批准。
 - 超过 22/29 只表示继续投资；正式 release threshold、native runtime package budget 与 Desktop integration 仍需
   单独审批。

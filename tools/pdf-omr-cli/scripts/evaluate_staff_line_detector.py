@@ -9,13 +9,33 @@ import json
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from staff_line_reconstruction import SystemEvidence, extract_row_peaks, group_staffs_by_connectors, select_complete_staffs
+from validate_layout_diagnostic_truth import validate_diagnostic_truth
 
 
 MODEL_SIZE = (512, 768)
 ARCHITECTURE = "compact-dilated-staff-line-cnn-v2"
+
+
+def classify_failure(
+    oracle_staff_counts: list[int],
+    reconstructed_staff_counts: list[int],
+    grouped_staff_counts: list[int],
+    *,
+    grouped_matches: bool,
+) -> str | None:
+    expected = [3] * len(oracle_staff_counts)
+    if grouped_matches:
+        return None
+    if any(actual < required for actual, required in zip(oracle_staff_counts, expected, strict=True)):
+        return "mask-insufficient"
+    if any(actual < required for actual, required in zip(reconstructed_staff_counts, expected, strict=True)):
+        return "line-reconstruction-loss"
+    if grouped_staff_counts != expected:
+        return "grouping-loss"
+    return "boundary-order-loss"
 
 
 def systems_match_truth(
@@ -32,6 +52,59 @@ def systems_match_truth(
         if not truth_top <= center <= truth_bottom:
             return False
     return True
+
+
+def staff_counts_by_truth_band(
+    staffs: list[object], truth: list[dict[str, object]], *, truth_page_height: int
+) -> list[int]:
+    result = []
+    for expected in truth:
+        bbox = expected["boundingBox"]
+        top = bbox["top"] / truth_page_height * MODEL_SIZE[1]
+        bottom = (bbox["top"] + bbox["height"]) / truth_page_height * MODEL_SIZE[1]
+        result.append(sum(top <= (staff.lines[0] + staff.lines[-1]) / 2 <= bottom for staff in staffs))
+    return result
+
+
+def systems_match_diagnostic_topology(
+    systems: list[SystemEvidence], truth: list[dict[str, object]], *, truth_page_height: int
+) -> bool:
+    if len(systems) != len(truth):
+        return False
+    for system, expected in zip(systems, truth, strict=True):
+        bbox = expected["boundingBox"]
+        top = bbox["top"] / truth_page_height * MODEL_SIZE[1]
+        bottom = (bbox["top"] + bbox["height"]) / truth_page_height * MODEL_SIZE[1]
+        if len(system.staffs) != 3:
+            return False
+        if any(not top <= (staff.lines[0] + staff.lines[-1]) / 2 <= bottom for staff in system.staffs):
+            return False
+    return True
+
+
+def save_oracle_overlay(
+    image: Image.Image,
+    truth_page: dict[str, object],
+    oracle_staffs: list[object],
+    systems: list[SystemEvidence],
+    output_path: Path,
+) -> str:
+    overlay = image.convert("RGB")
+    draw = ImageDraw.Draw(overlay)
+    for expected in truth_page["systems"]:
+        bbox = expected["boundingBox"]
+        top = round(bbox["top"] / truth_page["height"] * MODEL_SIZE[1])
+        bottom = round((bbox["top"] + bbox["height"]) / truth_page["height"] * MODEL_SIZE[1])
+        draw.rectangle((0, top, MODEL_SIZE[0] - 1, bottom), outline=(0, 180, 0), width=2)
+    for staff in oracle_staffs:
+        center = round((staff.lines[0] + staff.lines[-1]) / 2)
+        draw.line((0, center, MODEL_SIZE[0] - 1, center), fill=(0, 80, 220), width=1)
+    for system in systems:
+        center = round((system.top + system.bottom) / 2)
+        draw.line((0, center, MODEL_SIZE[0] - 1, center), fill=(220, 0, 0), width=2)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    overlay.save(output_path, format="PNG", optimize=False, compress_level=9)
+    return sha256(output_path.read_bytes())
 
 
 def sha256(content: bytes) -> str:
@@ -63,9 +136,19 @@ def main() -> None:
     parser.add_argument("--corpus-root", type=Path, required=True)
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--diagnostic-truth", type=Path)
+    parser.add_argument("--debug-overlay-root", type=Path)
     parser.add_argument("--runtime", choices=("pytorch", "onnxruntime"), default="pytorch")
     parser.add_argument("--device", default="auto")
     args = parser.parse_args()
+
+    diagnostic_truth_bytes = args.diagnostic_truth.read_bytes() if args.diagnostic_truth is not None else None
+    diagnostic_truth = json.loads(diagnostic_truth_bytes) if diagnostic_truth_bytes is not None else None
+    if diagnostic_truth is not None:
+        validate_diagnostic_truth(diagnostic_truth, args.corpus_root)
+    diagnostic_by_work = (
+        {item["workId"]: item for item in diagnostic_truth["items"]} if diagnostic_truth is not None else {}
+    )
 
     render_manifest_bytes = (args.render_root / "manifest.json").read_bytes()
     render_manifest = json.loads(render_manifest_bytes)
@@ -96,6 +179,8 @@ def main() -> None:
     report_items = []
     admitted_page_count = 0
     works_with_admitted_page = 0
+    topology_exact_page_count = 0
+    failure_class_counts: dict[str, int] = {}
     for item in render_manifest["items"]:
         work_id = item["itemId"].removeprefix("olimpic-").removesuffix("-full-page")
         mapping_path = args.corpus_root / "dev" / work_id / "source-mapping.json"
@@ -103,6 +188,11 @@ def main() -> None:
         mapping = json.loads(mapping_bytes)
         pages = []
         work_admitted_pages = 0
+        diagnostic_pages = (
+            {page["samplePage"]: page for page in diagnostic_by_work[work_id]["pages"]}
+            if work_id in diagnostic_by_work
+            else {}
+        )
         for page, truth_page in zip(item["pages"], mapping["pages"], strict=True):
             with Image.open(args.render_root / page["path"]) as source:
                 image = source.convert("L").resize(MODEL_SIZE, Image.Resampling.BILINEAR)
@@ -115,8 +205,7 @@ def main() -> None:
             matches = systems_match_truth(raw_systems, truth_page["systems"], truth_page_height=truth_page["height"])
             admitted_page_count += int(matches)
             work_admitted_pages += int(matches)
-            pages.append(
-                {
+            page_record: dict[str, object] = {
                     "pageIndex": page["pageIndex"],
                     "renderSha256": page["renderSha256"],
                     "status": "admitted" if matches else "not-admitted",
@@ -128,7 +217,46 @@ def main() -> None:
                         "systems": raw_systems,
                     },
                 }
-            )
+            if diagnostic_truth is not None:
+                diagnostic_page = diagnostic_pages[truth_page["samplePage"]]
+                expected_staff_counts = [system["visibleStaffCount"] for system in diagnostic_page["systems"]]
+                if expected_staff_counts != [3] * len(truth_page["systems"]):
+                    raise ValueError("this oracle evaluator currently requires three-staff diagnostic truth")
+                oracle_staffs = select_complete_staffs(
+                    extract_row_peaks(probability, probability_threshold=0.5, coverage_threshold=0.1)
+                )
+                oracle_counts = staff_counts_by_truth_band(
+                    oracle_staffs, truth_page["systems"], truth_page_height=truth_page["height"]
+                )
+                reconstructed_counts = staff_counts_by_truth_band(
+                    staffs, truth_page["systems"], truth_page_height=truth_page["height"]
+                )
+                topology_matches = systems_match_diagnostic_topology(
+                    systems, truth_page["systems"], truth_page_height=truth_page["height"]
+                )
+                failure_class = classify_failure(
+                    oracle_counts,
+                    reconstructed_counts,
+                    [len(system.staffs) for system in systems],
+                    grouped_matches=topology_matches,
+                )
+                topology_exact_page_count += int(topology_matches)
+                if failure_class is not None:
+                    failure_class_counts[failure_class] = failure_class_counts.get(failure_class, 0) + 1
+                page_record["diagnostic"] = {
+                    "topologyExact": topology_matches,
+                    "primaryFailureClass": failure_class,
+                    "expectedStaffCounts": expected_staff_counts,
+                    "oracleStaffCounts": oracle_counts,
+                    "reconstructedStaffCounts": reconstructed_counts,
+                    "groupedStaffCounts": [len(system.staffs) for system in systems],
+                }
+                if args.debug_overlay_root is not None:
+                    overlay_path = args.debug_overlay_root / work_id / f"page-{page['pageIndex'] + 1}.png"
+                    page_record["debugOverlaySha256"] = save_oracle_overlay(
+                        image, truth_page, oracle_staffs, systems, overlay_path
+                    )
+            pages.append(page_record)
         works_with_admitted_page += int(work_admitted_pages > 0)
         report_items.append(
             {"itemId": item["itemId"], "sourceMappingSha256": sha256(mapping_bytes), "admittedPageCount": work_admitted_pages, "pages": pages}
@@ -150,11 +278,24 @@ def main() -> None:
             "maximumStaffCount": 3,
         },
         "renderManifestSha256": sha256(render_manifest_bytes),
+        **(
+            {"diagnosticTruthSha256": sha256(diagnostic_truth_bytes)}
+            if diagnostic_truth_bytes is not None
+            else {}
+        ),
         "summary": {
             "pageCount": sum(len(item["pages"]) for item in report_items),
             "admittedPageCount": admitted_page_count,
             "workCount": len(report_items),
             "worksWithAdmittedPage": works_with_admitted_page,
+            **(
+                {
+                    "topologyExactPageCount": topology_exact_page_count,
+                    "failureClassCounts": failure_class_counts,
+                }
+                if diagnostic_truth is not None
+                else {}
+            ),
         },
         "items": report_items,
     }

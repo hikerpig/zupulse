@@ -442,6 +442,27 @@ runtime 仍为 `STOP`。完整 evidence 位于
 `tools/pdf-omr-cli/reports/development/olimpic-shared-detector-cross-engine-v1/` 和
 `tools/pdf-omr-cli/reports/exploratory/staff-line-runtime-gate-v1/`。
 
+## 2026-09-04 layout topology oracle 与 multi-head checkpoint
+
+后续人工复核发现，上述 `9/29` admission 只比较 system 数量与 ordered center，没有比较每个 system 的
+`staffCount` 或 constituent staff 位置。新增的 development-only sidecar 覆盖 6 works、29 pages、121 systems；
+这些 system 均为 voice + piano grand staff，共 3 个可见 staff。按增强 topology metric 重算后，旧候选实际为
+`0/29` exact；29 页的首要失败类全部为 `mask-insufficient`，因此停止继续调 global row collapse 与 connector。
+
+按预先约定的 conditional fallback，只训练了一个 `compact-layout-unet-v1` multi-head 候选。它有 30,090
+parameters，同时输出 staff-line 与 system-band logits。固定 system-band post-processing 在相同 29 页达到
+`22/29` topology-exact，并覆盖 `6/6 works`；29/29 页均通过现有 TypeScript schema、ordering、bounds、
+staff topology 与 crop materialization。两次 ONNX CPU evaluation 和 materialization 逐字节一致，candidate report
+SHA-256 为 `f63c3eae2bede7c2d6fc5f08534938740553022a06a637ff9a9713e19d51ed35`，materialization
+SHA-256 为 `ef1624021539cc1a06f2d59fdf914f9678b61037347cd09f2c935d2550c257a3`。
+
+这个 checkpoint 仍有明确限制：staff-line validation Dice 只有 `0.4577`；候选利用本 development corpus
+全部为 3-staff 的事实固定输出 `staffCount=3`，尚不是通用 staff-count detector；7 个失败页仍未恢复；也没有
+system-aligned MusicXML truth 可用于下游 recognition 指标。因此它只满足继续研究的 `20/29` investment
+checkpoint，不批准 Desktop/runtime 集成，不新增 `onnxruntime-node`，产品决策保持 `STOP`。完整 evidence 位于
+`tools/pdf-omr-cli/reports/development/olimpic-layout-oracle-v1/` 与
+`tools/pdf-omr-cli/reports/development/olimpic-layout-multihead-v1/`。
+
 ## 若未来重启
 
 2026-08-17 的 source-independent system-crop 扩样已经执行：46 attempted 中 Rokot 45 success、LEGATO 26

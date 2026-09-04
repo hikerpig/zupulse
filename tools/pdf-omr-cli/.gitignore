@@ -1,2 +1,4 @@
 reports/development/*
 !reports/development/olimpic-real-multisystem-v1/
+!reports/development/olimpic-layout-oracle-v1/
+!reports/development/olimpic-layout-multihead-v1/

@@ -20,6 +20,11 @@ split；原始 source archive 保留在外部 cache，不提交 Git。`6586696` 
 
 合计 6 works、29 pages、121 systems。精确规则和 archive hashes 见 `selection.json`。
 
+`diagnostic-topology.json` 是 development-only 人工复核 sidecar，记录全部 121 个 system 的可见五线谱
+数量，并绑定每份 `source-mapping.json` 的 SHA-256。它只用于 detector oracle 与 topology evaluation，
+不得进入 runtime inference；其 canonical SHA-256 为
+`977ae09486dd420bfaa7089fd7e071c03d65cbecf01a8af72f58c6a8e8b3526f`。
+
 `real-multisystem-manifest.json` 将 `6007571` 单独固定为真实 full-page multi-system development case；
 `real-multisystem-case.json` 绑定输入、truth、source mapping hashes，以及 4 页/15 systems 的 evaluation-only
 预期。source mapping 不进入 runtime segmentation。

@@ -36,6 +36,7 @@ PINNED_RESVG_VERSION = "0.48.1"
 class AugmentedPage:
     image: Image.Image
     mask: Image.Image
+    system_mask: Image.Image
     annotation: dict[str, object]
     spec: dict[str, object]
 
@@ -171,6 +172,20 @@ def draw_staff_line_mask(annotation: dict[str, object], size: tuple[int, int]) -
     return mask
 
 
+def draw_system_band_mask(annotation: dict[str, object], size: tuple[int, int]) -> Image.Image:
+    width, height = size
+    mask = Image.new("L", size, 0)
+    draw = ImageDraw.Draw(mask)
+    for system in annotation["systems"]:
+        bbox = system["normalizedBBox"]
+        left = round(bbox["x"] * (width - 1))
+        top = round(bbox["y"] * (height - 1))
+        right = round((bbox["x"] + bbox["width"]) * (width - 1))
+        bottom = round((bbox["y"] + bbox["height"]) * (height - 1))
+        draw.rectangle((left, top, right, bottom), fill=255)
+    return mask
+
+
 def augment_training_page(image: Image.Image, annotation: dict[str, object], *, seed: int) -> AugmentedPage:
     grayscale = image.convert("L")
     width, height = grayscale.size
@@ -200,6 +215,14 @@ def augment_training_page(image: Image.Image, annotation: dict[str, object], *, 
     clean_mask = draw_staff_line_mask(annotation, grayscale.size)
     transformed_mask = clean_mask.transform(
         clean_mask.size,
+        Image.Transform.PERSPECTIVE,
+        coefficients,
+        resample=Image.Resampling.NEAREST,
+        fillcolor=0,
+    )
+    clean_system_mask = draw_system_band_mask(annotation, grayscale.size)
+    transformed_system_mask = clean_system_mask.transform(
+        clean_system_mask.size,
         Image.Transform.PERSPECTIVE,
         coefficients,
         resample=Image.Resampling.NEAREST,
@@ -241,7 +264,7 @@ def augment_training_page(image: Image.Image, annotation: dict[str, object], *, 
         "noiseSigma": round(noise_sigma, 8),
         "occlusionCount": occlusion_count,
     }
-    return AugmentedPage(transformed_image, transformed_mask, transformed_annotation, spec)
+    return AugmentedPage(transformed_image, transformed_mask, transformed_system_mask, transformed_annotation, spec)
 
 
 def _homography(source: np.ndarray, destination: np.ndarray) -> np.ndarray:
@@ -404,7 +427,7 @@ def verify_manifest_artifacts(manifest: dict[str, object], output_root: Path) ->
             for variant_name, variant in variants:
                 if not isinstance(variant, dict):
                     raise ValueError(f"eligible page is missing {variant_name} artifacts")
-                for artifact_name in ["image", "mask", "annotation"]:
+                for artifact_name in ["image", "mask", "systemMask", "annotation"]:
                     relative_path = variant.get(f"{artifact_name}Path")
                     expected_sha = variant.get(f"{artifact_name}Sha256")
                     if not isinstance(relative_path, str) or not isinstance(expected_sha, str):
@@ -551,9 +574,13 @@ def build_dataset(
             clean_root = score_root / "pages" / f"page-{page_index + 1}"
             clean_image_path = clean_root.with_suffix(".png")
             clean_mask_path = clean_root.with_suffix(".mask.png")
+            clean_system_mask_path = clean_root.with_suffix(".system-mask.png")
             clean_annotation_path = clean_root.with_suffix(".json")
             clean_image_sha = _save_png(canonical_image, clean_image_path)
             clean_mask_sha = _save_png(draw_staff_line_mask(annotation, canonical_image.size), clean_mask_path)
+            clean_system_mask_sha = _save_png(
+                draw_system_band_mask(annotation, canonical_image.size), clean_system_mask_path
+            )
             annotation_bytes = canonical_json(annotation)
             clean_annotation_path.write_bytes(annotation_bytes)
             page_record: dict[str, object] = {
@@ -568,6 +595,8 @@ def build_dataset(
                     "imageSha256": clean_image_sha,
                     "maskPath": clean_mask_path.relative_to(output_root).as_posix(),
                     "maskSha256": clean_mask_sha,
+                    "systemMaskPath": clean_system_mask_path.relative_to(output_root).as_posix(),
+                    "systemMaskSha256": clean_system_mask_sha,
                     "annotationPath": clean_annotation_path.relative_to(output_root).as_posix(),
                     "annotationSha256": sha256(annotation_bytes),
                 },
@@ -578,6 +607,7 @@ def build_dataset(
                 augmented_root = output_root / "augmented" / score_id / f"page-{page_index + 1}"
                 augmented_image_path = augmented_root.with_suffix(".png")
                 augmented_mask_path = augmented_root.with_suffix(".mask.png")
+                augmented_system_mask_path = augmented_root.with_suffix(".system-mask.png")
                 augmented_annotation_path = augmented_root.with_suffix(".json")
                 augmented_annotation_bytes = canonical_json(augmented.annotation)
                 augmented_annotation_path.parent.mkdir(parents=True, exist_ok=True)
@@ -588,6 +618,8 @@ def build_dataset(
                     "imageSha256": _save_png(augmented.image, augmented_image_path),
                     "maskPath": augmented_mask_path.relative_to(output_root).as_posix(),
                     "maskSha256": _save_png(augmented.mask, augmented_mask_path),
+                    "systemMaskPath": augmented_system_mask_path.relative_to(output_root).as_posix(),
+                    "systemMaskSha256": _save_png(augmented.system_mask, augmented_system_mask_path),
                     "annotationPath": augmented_annotation_path.relative_to(output_root).as_posix(),
                     "annotationSha256": sha256(augmented_annotation_bytes),
                 }

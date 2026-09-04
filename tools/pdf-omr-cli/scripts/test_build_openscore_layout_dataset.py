@@ -20,6 +20,7 @@ from build_openscore_layout_dataset import (
     build_resvg_command,
     canonicalize_svg_paint_order,
     canonical_json,
+    draw_system_band_mask,
     select_staff_bounded_items,
     validate_source_plan,
     verify_manifest_artifacts,
@@ -47,6 +48,13 @@ def _annotation() -> dict[str, object]:
 
 
 class BuildOpenScoreLayoutDatasetTest(unittest.TestCase):
+    def test_system_band_mask_covers_the_annotated_system_bbox(self) -> None:
+        mask = np.asarray(draw_system_band_mask(_annotation(), (200, 300)))
+
+        self.assertGreater(mask[75:100, 40:160].min(), 0)
+        self.assertEqual(mask[:70].max(), 0)
+        self.assertEqual(mask[105:].max(), 0)
+
     def test_seed_is_stable_and_page_specific(self) -> None:
         first = augmentation_seed(20260829, "4904021", 0)
 
@@ -65,11 +73,13 @@ class BuildOpenScoreLayoutDatasetTest(unittest.TestCase):
         self.assertEqual(first.spec, second.spec)
         self.assertEqual(first.image.tobytes(), second.image.tobytes())
         self.assertEqual(first.mask.tobytes(), second.mask.tobytes())
+        self.assertEqual(first.system_mask.tobytes(), second.system_mask.tobytes())
         self.assertEqual(canonical_json(first.annotation), canonical_json(second.annotation))
         self.assertNotEqual(first.annotation, _annotation())
         self.assertEqual(first.image.size, (200, 300))
         self.assertEqual(first.mask.size, (200, 300))
         self.assertGreater(np.count_nonzero(np.asarray(first.mask)), 0)
+        self.assertGreater(np.count_nonzero(np.asarray(first.system_mask)), 0)
         for system in first.annotation["systems"]:
             bbox = system["normalizedBBox"]
             self.assertGreaterEqual(bbox["x"], 0)
@@ -184,7 +194,7 @@ class BuildOpenScoreLayoutDatasetTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             variant = {}
-            for artifact_name in ["image", "mask", "annotation"]:
+            for artifact_name in ["image", "mask", "systemMask", "annotation"]:
                 content = artifact_name.encode()
                 path = root / f"{artifact_name}.bin"
                 path.write_bytes(content)
@@ -201,7 +211,7 @@ class BuildOpenScoreLayoutDatasetTest(unittest.TestCase):
 
             result = verify_manifest_artifacts(manifest, root)
 
-            self.assertEqual(result, {"eligiblePageCount": 1, "augmentedPageCount": 0, "verifiedFileCount": 3})
+            self.assertEqual(result, {"eligiblePageCount": 1, "augmentedPageCount": 0, "verifiedFileCount": 4})
             manifest["items"][0]["pages"][0]["augmented"] = variant
             with self.assertRaisesRegex(ValueError, "validation page must not contain augmentation"):
                 verify_manifest_artifacts(manifest, root)

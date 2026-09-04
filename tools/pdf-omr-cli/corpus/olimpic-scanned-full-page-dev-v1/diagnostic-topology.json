@@ -1,0 +1,672 @@
+{
+  "schemaVersion": "1.0.0",
+  "reviewBasis": "human-visible-five-line-staff-count",
+  "reviewNote": "Counts reviewed from the 29 rendered development pages; all systems contain voice plus two piano staffs.",
+  "items": [
+    {
+      "workId": "4945954",
+      "sourceMappingSha256": "779212afa38bc1055305210e3bbc90929a5359ffb0a3c553a8a3d309e2634f7b",
+      "pages": [
+        {
+          "samplePage": 1,
+          "systems": [
+            {
+              "sampleVariant": "p1-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p1-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p1-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p1-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 2,
+          "systems": [
+            {
+              "sampleVariant": "p2-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 3,
+          "systems": [
+            {
+              "sampleVariant": "p3-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workId": "4976604",
+      "sourceMappingSha256": "8a23e13c5a5d816cd8f01ebca33312baf770f3a272207ae2ba94fba0dbfc2000",
+      "pages": [
+        {
+          "samplePage": 1,
+          "systems": [
+            {
+              "sampleVariant": "p1-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p1-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p1-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p1-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 2,
+          "systems": [
+            {
+              "sampleVariant": "p2-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s4",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s5",
+              "visibleStaffCount": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workId": "4985990",
+      "sourceMappingSha256": "09fdf7ea913898bd21778db8b7ca6910af1c1961cd6ea15582c82d85ceb7d2aa",
+      "pages": [
+        {
+          "samplePage": 1,
+          "systems": [
+            {
+              "sampleVariant": "p1-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p1-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p1-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p1-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 2,
+          "systems": [
+            {
+              "sampleVariant": "p2-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s4",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s5",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 3,
+          "systems": [
+            {
+              "sampleVariant": "p3-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s4",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s5",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 4,
+          "systems": [
+            {
+              "sampleVariant": "p4-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p4-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p4-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p4-s4",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p4-s5",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 5,
+          "systems": [
+            {
+              "sampleVariant": "p5-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p5-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p5-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p5-s4",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p5-s5",
+              "visibleStaffCount": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workId": "5862368",
+      "sourceMappingSha256": "ea01dd12ae4d9a35194e34f7808eb43f3bd9d73b0456205d8fe24c504ed23845",
+      "pages": [
+        {
+          "samplePage": 1,
+          "systems": [
+            {
+              "sampleVariant": "p1-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p1-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p1-s3",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 2,
+          "systems": [
+            {
+              "sampleVariant": "p2-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 3,
+          "systems": [
+            {
+              "sampleVariant": "p3-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 4,
+          "systems": [
+            {
+              "sampleVariant": "p4-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p4-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p4-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p4-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 5,
+          "systems": [
+            {
+              "sampleVariant": "p5-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p5-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p5-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p5-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 6,
+          "systems": [
+            {
+              "sampleVariant": "p6-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p6-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p6-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p6-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 7,
+          "systems": [
+            {
+              "sampleVariant": "p7-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p7-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p7-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p7-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workId": "6007571",
+      "sourceMappingSha256": "8b88f3975aa3a25f76718504b539493a264a109f0b5a6c9779b081c9b9aaf6c1",
+      "pages": [
+        {
+          "samplePage": 1,
+          "systems": [
+            {
+              "sampleVariant": "p1-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p1-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p1-s3",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 2,
+          "systems": [
+            {
+              "sampleVariant": "p2-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 3,
+          "systems": [
+            {
+              "sampleVariant": "p3-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 4,
+          "systems": [
+            {
+              "sampleVariant": "p4-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p4-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p4-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p4-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workId": "6011095",
+      "sourceMappingSha256": "88729454db56db2b9cc12f4d592fc5c5026e748a10cdff526d7f82b43bc9c96c",
+      "pages": [
+        {
+          "samplePage": 1,
+          "systems": [
+            {
+              "sampleVariant": "p1-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p1-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p1-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p1-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 2,
+          "systems": [
+            {
+              "sampleVariant": "p2-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p2-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 3,
+          "systems": [
+            {
+              "sampleVariant": "p3-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s4",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p3-s5",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 4,
+          "systems": [
+            {
+              "sampleVariant": "p4-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p4-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p4-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p4-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 5,
+          "systems": [
+            {
+              "sampleVariant": "p5-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p5-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p5-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p5-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 6,
+          "systems": [
+            {
+              "sampleVariant": "p6-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p6-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p6-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p6-s4",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p6-s5",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 7,
+          "systems": [
+            {
+              "sampleVariant": "p7-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p7-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p7-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p7-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        },
+        {
+          "samplePage": 8,
+          "systems": [
+            {
+              "sampleVariant": "p8-s1",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p8-s2",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p8-s3",
+              "visibleStaffCount": 3
+            },
+            {
+              "sampleVariant": "p8-s4",
+              "visibleStaffCount": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

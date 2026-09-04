@@ -1,0 +1,3775 @@
+{
+  "candidateReportSha256": "f63c3eae2bede7c2d6fc5f08534938740553022a06a637ff9a9713e19d51ed35",
+  "detectorVersion": "learned-staff-system-v1",
+  "items": [
+    {
+      "itemId": "olimpic-4945954-full-page",
+      "pages": [
+        {
+          "pageIndex": 0,
+          "renderSha256": "83b5785643ed532ac1041a3cfb5812a26f6cba67710fd363a735ba44700f832c",
+          "status": "not-admitted",
+          "systemCount": 5,
+          "systems": [
+            {
+              "cropSha256": "f9662e647814b2cdd6db8ab284a74e9e96e0b7a20a2aae637c6756d7612deb6a",
+              "pixelBBox": {
+                "height": 255,
+                "width": 1400,
+                "x": 0,
+                "y": 248
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                293,
+                300,
+                306,
+                312,
+                318,
+                363,
+                370,
+                376,
+                382,
+                388,
+                433,
+                440,
+                446,
+                452,
+                458
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "dfdaf42b36511fe91576481e10df409056ba0bde7d5ac98afb55fbf2d2df6a02",
+              "pixelBBox": {
+                "height": 255,
+                "width": 1400,
+                "x": 0,
+                "y": 546
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                591,
+                597,
+                603,
+                610,
+                616,
+                661,
+                667,
+                673,
+                680,
+                686,
+                731,
+                737,
+                744,
+                750,
+                756
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "89cb88d56137b879b7bbce105c525957a7d647d6f18b844ac1cfa5af80294054",
+              "pixelBBox": {
+                "height": 255,
+                "width": 1400,
+                "x": 0,
+                "y": 814
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                859,
+                866,
+                872,
+                878,
+                884,
+                930,
+                936,
+                942,
+                948,
+                954,
+                1000,
+                1006,
+                1012,
+                1018,
+                1024
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "0ca2562c49bfd03935bc88db1ce7a5180be7c86d1b613a387554332b1dc71d2b",
+              "pixelBBox": {
+                "height": 255,
+                "width": 1400,
+                "x": 0,
+                "y": 1105
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1150,
+                1156,
+                1162,
+                1168,
+                1175,
+                1220,
+                1226,
+                1232,
+                1238,
+                1245,
+                1290,
+                1296,
+                1302,
+                1309,
+                1315
+              ],
+              "systemIndex": 3
+            },
+            {
+              "cropSha256": "af48b07be5f83a048eb74772cb9e359ee3804980d9f0180c6a9a2aad879d1543",
+              "pixelBBox": {
+                "height": 255,
+                "width": 1400,
+                "x": 0,
+                "y": 1517
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1562,
+                1568,
+                1575,
+                1581,
+                1587,
+                1632,
+                1638,
+                1645,
+                1651,
+                1657,
+                1702,
+                1709,
+                1715,
+                1721,
+                1727
+              ],
+              "systemIndex": 4
+            }
+          ]
+        },
+        {
+          "pageIndex": 1,
+          "renderSha256": "459692a02f33e0fb6d26c76c2525e3d30c1e0fa1785e00c2120b1fcc3da9f483",
+          "status": "admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "f0891cc2cd57c1eb8a41c88b010bd0e606c193f02524fe1a3cecb6a2816be245",
+              "pixelBBox": {
+                "height": 262,
+                "width": 1400,
+                "x": 0,
+                "y": 132
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                178,
+                184,
+                190,
+                197,
+                203,
+                250,
+                257,
+                263,
+                269,
+                276,
+                323,
+                329,
+                336,
+                342,
+                348
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "dc97f3398f5bbb14a17bd6d89dc0c186ea454d5c94f4d290a77863360f0828af",
+              "pixelBBox": {
+                "height": 263,
+                "width": 1400,
+                "x": 0,
+                "y": 594
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                640,
+                647,
+                653,
+                659,
+                666,
+                713,
+                719,
+                726,
+                732,
+                739,
+                786,
+                792,
+                798,
+                805,
+                811
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "c1cc7f2da92b3992f9a0484b985215b90e58ba840efe21f1734b70806f2cbfe3",
+              "pixelBBox": {
+                "height": 263,
+                "width": 1400,
+                "x": 0,
+                "y": 1067
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1113,
+                1120,
+                1126,
+                1132,
+                1139,
+                1186,
+                1192,
+                1199,
+                1205,
+                1211,
+                1258,
+                1265,
+                1271,
+                1278,
+                1284
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "9e8c3ce2f46e1ff9e96784f8978e37d9efc4a6d5b91b70bf16efe1d5215abcb1",
+              "pixelBBox": {
+                "height": 263,
+                "width": 1400,
+                "x": 0,
+                "y": 1550
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1596,
+                1603,
+                1609,
+                1615,
+                1622,
+                1669,
+                1675,
+                1682,
+                1688,
+                1694,
+                1741,
+                1748,
+                1754,
+                1761,
+                1767
+              ],
+              "systemIndex": 3
+            }
+          ]
+        },
+        {
+          "pageIndex": 2,
+          "renderSha256": "83fb7cc901bde5acf49ecf7a8051ce96a7a826c17ead436b1aa89946299fa999",
+          "status": "admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "b11d139e4b860b8ff9332b2bd733b5cd124d7963f2ecb85d6f314b30d75ad9ba",
+              "pixelBBox": {
+                "height": 263,
+                "width": 1400,
+                "x": 0,
+                "y": 140
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                185,
+                192,
+                198,
+                205,
+                211,
+                258,
+                265,
+                271,
+                278,
+                284,
+                331,
+                337,
+                344,
+                350,
+                357
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "76f5a56e3391fec9b54b0cd08c84aaae01ca25c2220fd409cefdf18b1120be72",
+              "pixelBBox": {
+                "height": 263,
+                "width": 1400,
+                "x": 0,
+                "y": 634
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                680,
+                686,
+                692,
+                699,
+                705,
+                752,
+                759,
+                765,
+                772,
+                778,
+                825,
+                832,
+                838,
+                844,
+                851
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "05a2731befbef95dcddb89c67ecee3c36f4168fc8925a36d3cf865af458bfa60",
+              "pixelBBox": {
+                "height": 263,
+                "width": 1400,
+                "x": 0,
+                "y": 1095
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1141,
+                1147,
+                1154,
+                1160,
+                1166,
+                1214,
+                1220,
+                1226,
+                1233,
+                1239,
+                1286,
+                1293,
+                1299,
+                1306,
+                1312
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "109557e79c645bebc244337af267f72bc372927d707be773d2f3f205658bef61",
+              "pixelBBox": {
+                "height": 263,
+                "width": 1400,
+                "x": 0,
+                "y": 1551
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1597,
+                1603,
+                1610,
+                1616,
+                1623,
+                1670,
+                1676,
+                1682,
+                1689,
+                1695,
+                1742,
+                1749,
+                1755,
+                1762,
+                1768
+              ],
+              "systemIndex": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "itemId": "olimpic-4976604-full-page",
+      "pages": [
+        {
+          "pageIndex": 0,
+          "renderSha256": "7f8c549cd7f82c152068e9920ce5cea046b0502bf4c05487ace46d1f98cc5a29",
+          "status": "admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "e5f31740508fdc8f27ca514ffecbb3dddbbdf9168fc487471ca1660f9a7efebb",
+              "pixelBBox": {
+                "height": 277,
+                "width": 1400,
+                "x": 0,
+                "y": 378
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                428,
+                435,
+                442,
+                448,
+                455,
+                503,
+                510,
+                517,
+                523,
+                530,
+                578,
+                585,
+                592,
+                598,
+                605
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "812de4319705424826699d93342f1a0d86d073b2b90a94194dcf4aca912bb61f",
+              "pixelBBox": {
+                "height": 278,
+                "width": 1400,
+                "x": 0,
+                "y": 795
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                846,
+                853,
+                859,
+                866,
+                872,
+                921,
+                928,
+                934,
+                941,
+                947,
+                996,
+                1002,
+                1009,
+                1016,
+                1022
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "c02af7916dd6bf8d3e43687c7078ea6e53a71d507d188a94c987511797f90dc4",
+              "pixelBBox": {
+                "height": 277,
+                "width": 1400,
+                "x": 0,
+                "y": 1119
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1170,
+                1176,
+                1183,
+                1189,
+                1196,
+                1244,
+                1251,
+                1258,
+                1264,
+                1271,
+                1319,
+                1326,
+                1333,
+                1339,
+                1346
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "e0080ddec3eb132c88cc699248e0ba616b64ffe9e9f7cd78bf014ac6e0623e3c",
+              "pixelBBox": {
+                "height": 278,
+                "width": 1400,
+                "x": 0,
+                "y": 1539
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1590,
+                1596,
+                1603,
+                1609,
+                1616,
+                1665,
+                1671,
+                1678,
+                1684,
+                1691,
+                1740,
+                1746,
+                1753,
+                1759,
+                1766
+              ],
+              "systemIndex": 3
+            }
+          ]
+        },
+        {
+          "pageIndex": 1,
+          "renderSha256": "60b853c97cff4caf25593d5605454ae726ce2595ef16a77c4e160da2037a21a1",
+          "status": "admitted",
+          "systemCount": 5,
+          "systems": [
+            {
+              "cropSha256": "7b1a3a1f83752b688fa66f4408233f15a13225c54b3689eeab8df679480efe34",
+              "pixelBBox": {
+                "height": 278,
+                "width": 1400,
+                "x": 0,
+                "y": 216
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                267,
+                273,
+                280,
+                287,
+                293,
+                342,
+                348,
+                355,
+                361,
+                368,
+                417,
+                423,
+                430,
+                436,
+                443
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "6326450c88f7d87c6778b6a9281a42d9edb0c51c64eab9bf0e007b875c312b90",
+              "pixelBBox": {
+                "height": 278,
+                "width": 1400,
+                "x": 0,
+                "y": 615
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                666,
+                673,
+                679,
+                686,
+                692,
+                741,
+                747,
+                754,
+                761,
+                767,
+                816,
+                822,
+                829,
+                836,
+                842
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "3e7fab6da76b010d1fae0d345031c059741d0d2ca668d40095caeb748ce3f8c3",
+              "pixelBBox": {
+                "height": 277,
+                "width": 1400,
+                "x": 0,
+                "y": 908
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                958,
+                965,
+                971,
+                978,
+                985,
+                1033,
+                1040,
+                1046,
+                1053,
+                1060,
+                1108,
+                1115,
+                1121,
+                1128,
+                1135
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "b60710653cffff95cb816585b4d108e630975a8481ffc90551eda80dad28b46f",
+              "pixelBBox": {
+                "height": 269,
+                "width": 1400,
+                "x": 0,
+                "y": 1309
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1360,
+                1367,
+                1373,
+                1380,
+                1386,
+                1435,
+                1442,
+                1448,
+                1455,
+                1461,
+                1510,
+                1517,
+                1523,
+                1530,
+                1536
+              ],
+              "systemIndex": 3
+            },
+            {
+              "cropSha256": "58ed5a87a9053f35dc128d275c771cbf02aea7763beb6db66028eaeccf58c29b",
+              "pixelBBox": {
+                "height": 270,
+                "width": 1400,
+                "x": 0,
+                "y": 1578
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1621,
+                1628,
+                1634,
+                1641,
+                1647,
+                1696,
+                1703,
+                1709,
+                1716,
+                1722,
+                1771,
+                1777,
+                1784,
+                1791,
+                1797
+              ],
+              "systemIndex": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "itemId": "olimpic-4985990-full-page",
+      "pages": [
+        {
+          "pageIndex": 0,
+          "renderSha256": "df960b3ecb8e22d86caa93ca2e7274264d08c64c8db206cd218baaf2511f584f",
+          "status": "admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "36fb7eb30c4e2d316d386be18d444b9262ed03dd6e7c54ae01f1c6740ad6dd5b",
+              "pixelBBox": {
+                "height": 252,
+                "width": 1400,
+                "x": 0,
+                "y": 519
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                564,
+                570,
+                576,
+                582,
+                588,
+                633,
+                639,
+                645,
+                651,
+                657,
+                702,
+                708,
+                714,
+                720,
+                726
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "0ad62bb869d4b749fb7bc71153df6a123b52defcfc1f15f690726ee675ec48b9",
+              "pixelBBox": {
+                "height": 252,
+                "width": 1400,
+                "x": 0,
+                "y": 840
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                885,
+                891,
+                897,
+                903,
+                909,
+                954,
+                960,
+                966,
+                972,
+                978,
+                1023,
+                1029,
+                1035,
+                1041,
+                1047
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "f1fb71d94cf019addee25e37f3f1a4869f0d63f9f1eae0526e626d96c75aed95",
+              "pixelBBox": {
+                "height": 252,
+                "width": 1400,
+                "x": 0,
+                "y": 1154
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1199,
+                1205,
+                1211,
+                1217,
+                1223,
+                1268,
+                1274,
+                1280,
+                1286,
+                1292,
+                1337,
+                1343,
+                1349,
+                1355,
+                1361
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "d11d643c9685f087d7de51f68f464d6a2cf61820754685084e7068faeba66d2a",
+              "pixelBBox": {
+                "height": 252,
+                "width": 1400,
+                "x": 0,
+                "y": 1473
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1518,
+                1524,
+                1530,
+                1536,
+                1542,
+                1587,
+                1593,
+                1599,
+                1605,
+                1611,
+                1656,
+                1662,
+                1668,
+                1674,
+                1680
+              ],
+              "systemIndex": 3
+            }
+          ]
+        },
+        {
+          "pageIndex": 1,
+          "renderSha256": "1d7f37ab69e48ffc261e6aa0143b35f2c71ea6ec12e0484743688cc0b1c6e032",
+          "status": "admitted",
+          "systemCount": 5,
+          "systems": [
+            {
+              "cropSha256": "94bae0ba1def33ba58622fab5e64cf93599f987efdce81743d9d8bf4d35d5376",
+              "pixelBBox": {
+                "height": 252,
+                "width": 1400,
+                "x": 0,
+                "y": 171
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                216,
+                222,
+                228,
+                234,
+                241,
+                285,
+                291,
+                297,
+                303,
+                309,
+                354,
+                360,
+                366,
+                372,
+                378
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "e6fbd97c8b5bb1e90887f91deca8383d97c4ff92ef3b1392908649675d824118",
+              "pixelBBox": {
+                "height": 252,
+                "width": 1400,
+                "x": 0,
+                "y": 531
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                576,
+                582,
+                588,
+                594,
+                600,
+                645,
+                651,
+                657,
+                663,
+                669,
+                714,
+                720,
+                726,
+                732,
+                738
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "923cbc308ab316ae8d6a151a962e33e5eef421646c0a155ed920395d66cc57db",
+              "pixelBBox": {
+                "height": 251,
+                "width": 1400,
+                "x": 0,
+                "y": 826
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                871,
+                877,
+                883,
+                889,
+                895,
+                940,
+                946,
+                952,
+                958,
+                964,
+                1008,
+                1014,
+                1021,
+                1027,
+                1033
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "da4d166a873a143e9c2ee32a3d05eae1ac274397a1bf81dec8b358ffb03ef4a2",
+              "pixelBBox": {
+                "height": 251,
+                "width": 1400,
+                "x": 0,
+                "y": 1169
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1213,
+                1220,
+                1226,
+                1232,
+                1238,
+                1282,
+                1288,
+                1294,
+                1301,
+                1307,
+                1351,
+                1357,
+                1363,
+                1369,
+                1375
+              ],
+              "systemIndex": 3
+            },
+            {
+              "cropSha256": "f45c454b308a4ab68d9b172ae42397872a340acbb1414bc6919fbd15c71f655f",
+              "pixelBBox": {
+                "height": 252,
+                "width": 1400,
+                "x": 0,
+                "y": 1468
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1513,
+                1519,
+                1525,
+                1531,
+                1537,
+                1582,
+                1588,
+                1594,
+                1600,
+                1606,
+                1651,
+                1657,
+                1663,
+                1669,
+                1675
+              ],
+              "systemIndex": 4
+            }
+          ]
+        },
+        {
+          "pageIndex": 2,
+          "renderSha256": "12699ecaec8ae4cb2c0776d6c2fcc88fdc7f8b734097d5ff9b8b7e924c9843c4",
+          "status": "admitted",
+          "systemCount": 5,
+          "systems": [
+            {
+              "cropSha256": "f04497da47b65d4f79f6ec3711f42ee790671938bddb2fa3bccc8f3b8b5b78ff",
+              "pixelBBox": {
+                "height": 251,
+                "width": 1400,
+                "x": 0,
+                "y": 186
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                231,
+                237,
+                243,
+                249,
+                255,
+                299,
+                306,
+                312,
+                318,
+                324,
+                368,
+                374,
+                380,
+                387,
+                393
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "582c996bf57681e7b9d8b8ab87e072f1254823dbcf1701866babfe30bcc9f051",
+              "pixelBBox": {
+                "height": 251,
+                "width": 1400,
+                "x": 0,
+                "y": 493
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                537,
+                544,
+                550,
+                556,
+                562,
+                606,
+                612,
+                618,
+                625,
+                631,
+                675,
+                681,
+                687,
+                693,
+                699
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "93f72ce901db19db3e27d8923089bd7f53e6643ced26462d9dd74dae69ddc435",
+              "pixelBBox": {
+                "height": 252,
+                "width": 1400,
+                "x": 0,
+                "y": 835
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                880,
+                886,
+                892,
+                898,
+                905,
+                949,
+                955,
+                961,
+                967,
+                973,
+                1018,
+                1024,
+                1030,
+                1036,
+                1042
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "34fb37a7a28ed0727c80d02bd44c5091fadbd0e326b2ca70c6a08c4b529cd4ac",
+              "pixelBBox": {
+                "height": 252,
+                "width": 1400,
+                "x": 0,
+                "y": 1111
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1156,
+                1162,
+                1168,
+                1174,
+                1180,
+                1225,
+                1231,
+                1237,
+                1243,
+                1249,
+                1294,
+                1300,
+                1306,
+                1312,
+                1318
+              ],
+              "systemIndex": 3
+            },
+            {
+              "cropSha256": "eacae4d053d23c4860bb8b080c64260dec041d787dca7223acf281ae36bbdf66",
+              "pixelBBox": {
+                "height": 251,
+                "width": 1400,
+                "x": 0,
+                "y": 1466
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1511,
+                1517,
+                1523,
+                1529,
+                1535,
+                1580,
+                1586,
+                1592,
+                1598,
+                1604,
+                1648,
+                1654,
+                1661,
+                1667,
+                1673
+              ],
+              "systemIndex": 4
+            }
+          ]
+        },
+        {
+          "pageIndex": 3,
+          "renderSha256": "039bea0e55777cadb919dbadb08b945e8d2bc2456b1207a255b277ebd22b1f54",
+          "status": "admitted",
+          "systemCount": 5,
+          "systems": [
+            {
+              "cropSha256": "90c1b91e0f1bc66819be981f9f11f64f07a3d8c941647c121940c7ca0854aebc",
+              "pixelBBox": {
+                "height": 252,
+                "width": 1400,
+                "x": 0,
+                "y": 193
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                238,
+                244,
+                250,
+                256,
+                262,
+                307,
+                313,
+                319,
+                325,
+                331,
+                376,
+                382,
+                388,
+                394,
+                400
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "aa6eb7bf1318d13e96f162aa41a53cc8b780eef6ad390d22368c7efc0167a0ea",
+              "pixelBBox": {
+                "height": 251,
+                "width": 1400,
+                "x": 0,
+                "y": 498
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                542,
+                548,
+                554,
+                560,
+                567,
+                611,
+                617,
+                623,
+                629,
+                635,
+                680,
+                686,
+                692,
+                698,
+                704
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "51c2fcd8039e57dcf43b6f965704095e59591fe3b180f49f7ea5a2e8fc062c39",
+              "pixelBBox": {
+                "height": 252,
+                "width": 1400,
+                "x": 0,
+                "y": 840
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                885,
+                891,
+                897,
+                903,
+                909,
+                954,
+                960,
+                966,
+                972,
+                978,
+                1023,
+                1029,
+                1035,
+                1041,
+                1047
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "72d5032ee7c805c0e08fbac5d23661eb8f2d84a19db175273385e3322029367f",
+              "pixelBBox": {
+                "height": 252,
+                "width": 1400,
+                "x": 0,
+                "y": 1135
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1180,
+                1186,
+                1192,
+                1198,
+                1204,
+                1249,
+                1255,
+                1261,
+                1267,
+                1273,
+                1318,
+                1324,
+                1330,
+                1336,
+                1342
+              ],
+              "systemIndex": 3
+            },
+            {
+              "cropSha256": "abe00b315a685e358961ad9d003cd2b87a4bf07cc74e4253ac2d0ee5f6461a7d",
+              "pixelBBox": {
+                "height": 252,
+                "width": 1400,
+                "x": 0,
+                "y": 1432
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1477,
+                1483,
+                1489,
+                1495,
+                1501,
+                1546,
+                1552,
+                1558,
+                1564,
+                1570,
+                1615,
+                1621,
+                1627,
+                1633,
+                1639
+              ],
+              "systemIndex": 4
+            }
+          ]
+        },
+        {
+          "pageIndex": 4,
+          "renderSha256": "7918a0970d35979a6f8b35fce6e08e5a969b00ed1e00e4c135a0faec0a67bd8c",
+          "status": "admitted",
+          "systemCount": 5,
+          "systems": [
+            {
+              "cropSha256": "d2b1886ad37c3235f000a4dedf1bdecdb0f3c1ccadd3c08434db01d5aed1af67",
+              "pixelBBox": {
+                "height": 251,
+                "width": 1400,
+                "x": 0,
+                "y": 198
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                243,
+                249,
+                255,
+                261,
+                267,
+                311,
+                318,
+                324,
+                330,
+                336,
+                380,
+                386,
+                392,
+                399,
+                405
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "21488953a9aeb1a83f679b7b8f6638f71657090732b95a20cd7db459ea818640",
+              "pixelBBox": {
+                "height": 252,
+                "width": 1400,
+                "x": 0,
+                "y": 502
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                547,
+                553,
+                559,
+                565,
+                571,
+                616,
+                622,
+                628,
+                634,
+                640,
+                685,
+                691,
+                697,
+                703,
+                709
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "f74ea1bd99b321e1f3b339a7d09c7acd392ee38e589963e882ab3a689bb2ba8d",
+              "pixelBBox": {
+                "height": 251,
+                "width": 1400,
+                "x": 0,
+                "y": 838
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                883,
+                889,
+                895,
+                901,
+                907,
+                951,
+                958,
+                964,
+                970,
+                976,
+                1020,
+                1026,
+                1033,
+                1039,
+                1045
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "7fbd14b4abd8012d75bb50aff688885a4f921dc27f2c448ce6bbbb510c5eead2",
+              "pixelBBox": {
+                "height": 252,
+                "width": 1400,
+                "x": 0,
+                "y": 1147
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1192,
+                1198,
+                1204,
+                1210,
+                1216,
+                1261,
+                1267,
+                1273,
+                1279,
+                1285,
+                1330,
+                1336,
+                1342,
+                1348,
+                1354
+              ],
+              "systemIndex": 3
+            },
+            {
+              "cropSha256": "c67424b4b21e2fe98a58a1c6607963eac0740f37442c68cdfdeafa2f99306b3e",
+              "pixelBBox": {
+                "height": 251,
+                "width": 1400,
+                "x": 0,
+                "y": 1464
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1508,
+                1514,
+                1520,
+                1527,
+                1533,
+                1577,
+                1583,
+                1589,
+                1595,
+                1601,
+                1646,
+                1652,
+                1658,
+                1664,
+                1670
+              ],
+              "systemIndex": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "itemId": "olimpic-6007571-full-page",
+      "pages": [
+        {
+          "pageIndex": 0,
+          "renderSha256": "4feccd4fabbd0a5147184a192a3509d416db46c5b7fd543a1dc3bdb8372c004a",
+          "status": "admitted",
+          "systemCount": 3,
+          "systems": [
+            {
+              "cropSha256": "b80b70de5875396196a2839b989adb2bdb4ce8c5cd5a1cbabf65ded324b5f6eb",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 638
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                690,
+                697,
+                703,
+                710,
+                717,
+                768,
+                775,
+                782,
+                789,
+                796,
+                847,
+                854,
+                861,
+                868,
+                874
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "a7a87981dce838e47cbed7994e7d64c0788f9d6936c9eb0796172aa17ad8fec9",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1089
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1141,
+                1148,
+                1155,
+                1162,
+                1169,
+                1219,
+                1226,
+                1233,
+                1240,
+                1247,
+                1298,
+                1305,
+                1312,
+                1319,
+                1326
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "c16360fe1d725d4f0630d0d10ff3960370d366d51cd6bec1f71721f864e02b6f",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1636
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1688,
+                1695,
+                1702,
+                1708,
+                1715,
+                1766,
+                1773,
+                1780,
+                1787,
+                1794,
+                1845,
+                1852,
+                1859,
+                1866,
+                1872
+              ],
+              "systemIndex": 2
+            }
+          ]
+        },
+        {
+          "pageIndex": 1,
+          "renderSha256": "6194b26537caae04394ac16988251c815d5a7b5e462a3440b0471dfcb1ab67d6",
+          "status": "not-admitted",
+          "systemCount": 6,
+          "systems": [
+            {
+              "cropSha256": "9f190e920ce888a8de1113f382a54c656281903e2ef171873d92f58d0012a6d6",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 45
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                96,
+                103,
+                110,
+                117,
+                124,
+                175,
+                182,
+                189,
+                196,
+                203,
+                253,
+                260,
+                267,
+                274,
+                281
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "1956b0cebb532c27a836a0b86a8ffab1f356712b84e399b9b4fdc10e54311c01",
+              "pixelBBox": {
+                "height": 282,
+                "width": 1400,
+                "x": 0,
+                "y": 351
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                403,
+                409,
+                416,
+                423,
+                430,
+                481,
+                488,
+                495,
+                502,
+                509,
+                560,
+                567,
+                573,
+                580,
+                587
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "075659fea563e25cb182d5bc799d5399a4cdf58ee21bc019108dbbe014f57aa5",
+              "pixelBBox": {
+                "height": 276,
+                "width": 1400,
+                "x": 0,
+                "y": 633
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                679,
+                686,
+                693,
+                699,
+                706,
+                757,
+                764,
+                771,
+                778,
+                785,
+                836,
+                843,
+                850,
+                857,
+                863
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "d6a733351a44582d96c0700c3d6ce85fdf2171a33962ab6083913af1c4eba005",
+              "pixelBBox": {
+                "height": 282,
+                "width": 1400,
+                "x": 0,
+                "y": 909
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                955,
+                962,
+                969,
+                976,
+                983,
+                1033,
+                1040,
+                1047,
+                1054,
+                1061,
+                1112,
+                1119,
+                1126,
+                1133,
+                1140
+              ],
+              "systemIndex": 3
+            },
+            {
+              "cropSha256": "aec7e3f139d89db2271c7c5330411da8f134cddd5437293085fb21e19c9d3871",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1256
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1308,
+                1315,
+                1321,
+                1328,
+                1335,
+                1386,
+                1393,
+                1400,
+                1407,
+                1414,
+                1465,
+                1472,
+                1479,
+                1485,
+                1492
+              ],
+              "systemIndex": 4
+            },
+            {
+              "cropSha256": "57f595b4b897659a01ea4123ae29b02cac8a32abd19252a0a218375185bdfd35",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1704
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1756,
+                1763,
+                1770,
+                1777,
+                1784,
+                1835,
+                1842,
+                1848,
+                1855,
+                1862,
+                1913,
+                1920,
+                1927,
+                1934,
+                1941
+              ],
+              "systemIndex": 5
+            }
+          ]
+        },
+        {
+          "pageIndex": 2,
+          "renderSha256": "c04a9985c28fd2fee9d3cd40f55ed0dbebeab822f64dd0ba11855df65f65c3e3",
+          "status": "not-admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "9312cab6e9dc4be5217e849529e0ae181236b0e7a977e0ed0b3ce546f4c2d577",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 367
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                419,
+                426,
+                433,
+                440,
+                447,
+                497,
+                504,
+                511,
+                518,
+                525,
+                576,
+                583,
+                590,
+                597,
+                604
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "08506e666ce9023d2fbf93d93a7584d9b6a124a252aadb5c0bd16d993f00bae9",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 909
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                960,
+                967,
+                974,
+                981,
+                988,
+                1039,
+                1046,
+                1053,
+                1060,
+                1067,
+                1117,
+                1124,
+                1131,
+                1138,
+                1145
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "52b98847ccea4f90dcc6ed207ab3eddc7992d7c764fadaa1ef0a66fadbfc0970",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1270
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1321,
+                1328,
+                1335,
+                1342,
+                1349,
+                1400,
+                1407,
+                1414,
+                1421,
+                1428,
+                1478,
+                1485,
+                1492,
+                1499,
+                1506
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "bae29a57cefe72336fc53a51ff77e4b49a5dc0c1d8268be7ab51adf6b02c287e",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1745
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1797,
+                1804,
+                1811,
+                1818,
+                1825,
+                1876,
+                1883,
+                1889,
+                1896,
+                1903,
+                1954,
+                1961,
+                1968,
+                1975,
+                1982
+              ],
+              "systemIndex": 3
+            }
+          ]
+        },
+        {
+          "pageIndex": 3,
+          "renderSha256": "fe4e4e1c181784e0d903cde618f5842c36196229e9a553f93023901f45bc6ac8",
+          "status": "admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "373efe6f8cb6eca1fa6112484148beefeaf2e6187900141256fa2921033abc9a",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 263
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                315,
+                322,
+                329,
+                336,
+                343,
+                394,
+                400,
+                407,
+                414,
+                421,
+                472,
+                479,
+                486,
+                493,
+                500
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "f636e8df4be521bb186d9519c04defd5b4d5bf9971c1ebaf3cfffef1c2f2de9d",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 676
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                728,
+                735,
+                742,
+                749,
+                756,
+                806,
+                813,
+                820,
+                827,
+                834,
+                885,
+                892,
+                899,
+                906,
+                913
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "97ebbc5e7687a96f15553c25014b2b74a9eb51b3de34041d3374dc05023498e8",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1193
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1245,
+                1252,
+                1259,
+                1265,
+                1272,
+                1323,
+                1330,
+                1337,
+                1344,
+                1351,
+                1402,
+                1409,
+                1416,
+                1423,
+                1430
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "2f204458b5e6fb77e633482ae6aeca0e8cc5006134863415ef4d2e679a8da20b",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1617
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1669,
+                1675,
+                1682,
+                1689,
+                1696,
+                1747,
+                1754,
+                1761,
+                1768,
+                1775,
+                1826,
+                1833,
+                1839,
+                1846,
+                1853
+              ],
+              "systemIndex": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "itemId": "olimpic-5862368-full-page",
+      "pages": [
+        {
+          "pageIndex": 0,
+          "renderSha256": "b5d9ea755cbb3f4eeebe76cd013c16df9262b3599479eb2470644975cc8e718c",
+          "status": "admitted",
+          "systemCount": 3,
+          "systems": [
+            {
+              "cropSha256": "729d02a3e5da6cc6b2dc050162c8d08f2945cb7000da2cb2aea2b562b0e2fa17",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 652
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                704,
+                711,
+                719,
+                726,
+                733,
+                785,
+                792,
+                799,
+                807,
+                814,
+                866,
+                873,
+                880,
+                887,
+                895
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "d22288fef3b34977870729fcf1ff2d1ecb899a9515096cbd0e20e737fb2ba7cb",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 1125
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1177,
+                1184,
+                1192,
+                1199,
+                1206,
+                1258,
+                1265,
+                1272,
+                1280,
+                1287,
+                1339,
+                1346,
+                1353,
+                1360,
+                1368
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "d4bdf3ac950aae729e269ef3bdbb70ec619bfe6cab9bef090b4cd0e34d91e942",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 1587
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1639,
+                1646,
+                1653,
+                1660,
+                1668,
+                1720,
+                1727,
+                1734,
+                1741,
+                1748,
+                1801,
+                1808,
+                1815,
+                1822,
+                1829
+              ],
+              "systemIndex": 2
+            }
+          ]
+        },
+        {
+          "pageIndex": 1,
+          "renderSha256": "464a7e1480f3ec253834b648b9ef1804a28b33974f8e459a01335cd418842650",
+          "status": "admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "8dd06b6588b8dd29a86addf577382e7e6e51fd21af9a7cf27a9ea9a896f5b7ac",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 258
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                310,
+                317,
+                325,
+                332,
+                339,
+                391,
+                398,
+                405,
+                413,
+                420,
+                472,
+                479,
+                486,
+                493,
+                501
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "eea8c52861bccbf0e4f03e7051e14dc003b9e0899b4724aa0dc18bf397877339",
+              "pixelBBox": {
+                "height": 294,
+                "width": 1400,
+                "x": 0,
+                "y": 675
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                727,
+                734,
+                741,
+                748,
+                755,
+                808,
+                815,
+                822,
+                829,
+                836,
+                889,
+                896,
+                903,
+                910,
+                917
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "3d66932c1fc6aa33315afa4c301fdc85b8239c2a26aa4e05a73f1f53af213572",
+              "pixelBBox": {
+                "height": 294,
+                "width": 1400,
+                "x": 0,
+                "y": 1207
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1259,
+                1266,
+                1273,
+                1280,
+                1287,
+                1340,
+                1347,
+                1354,
+                1361,
+                1368,
+                1421,
+                1428,
+                1435,
+                1442,
+                1449
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "f95840272ce83deeccc5d42e79d3247ba7e3536104caabe49c9ddfb7ef551064",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 1640
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1692,
+                1700,
+                1707,
+                1714,
+                1721,
+                1773,
+                1780,
+                1788,
+                1795,
+                1802,
+                1854,
+                1861,
+                1868,
+                1876,
+                1883
+              ],
+              "systemIndex": 3
+            }
+          ]
+        },
+        {
+          "pageIndex": 2,
+          "renderSha256": "a25cd925b2ea2a5975e1a945acba92f38f3c2c04ba409b250cee86644cbdfc4f",
+          "status": "admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "4b91d78f20b81c1ee1cf0862b336effa8d104fc048853256c89ed51818f3baf9",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 247
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                299,
+                306,
+                313,
+                320,
+                328,
+                380,
+                387,
+                394,
+                401,
+                408,
+                461,
+                468,
+                475,
+                482,
+                489
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "98795f035a70d24cff3ece58ce17f8ce4bdc9db2fc8bd2f347e7003688f6f24a",
+              "pixelBBox": {
+                "height": 294,
+                "width": 1400,
+                "x": 0,
+                "y": 796
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                848,
+                855,
+                862,
+                869,
+                876,
+                929,
+                936,
+                943,
+                950,
+                957,
+                1010,
+                1017,
+                1024,
+                1031,
+                1038
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "9f03e4b56584b119f3ad3f52eaef437a76a901d28f6d72ccceabe4cd7637f378",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 1235
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1287,
+                1294,
+                1301,
+                1308,
+                1316,
+                1368,
+                1375,
+                1382,
+                1389,
+                1396,
+                1449,
+                1456,
+                1463,
+                1470,
+                1477
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "426d8386bc8cedfc9fa55e1c5a013d9e4be395c073ec36fef19ffc3ec651e2be",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 1657
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1709,
+                1716,
+                1724,
+                1731,
+                1738,
+                1790,
+                1797,
+                1804,
+                1812,
+                1819,
+                1871,
+                1878,
+                1885,
+                1892,
+                1900
+              ],
+              "systemIndex": 3
+            }
+          ]
+        },
+        {
+          "pageIndex": 3,
+          "renderSha256": "ea2ae11d5ab822391c6694ebb4cdca42e3de2fc07845f16bcac44ee87aad1b1e",
+          "status": "not-admitted",
+          "systemCount": 5,
+          "systems": [
+            {
+              "cropSha256": "8294ab68ed50e126f6231963789f3b4773baf6c53efb68d1dfbcdec092126a64",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 258
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                310,
+                317,
+                325,
+                332,
+                339,
+                391,
+                398,
+                405,
+                413,
+                420,
+                472,
+                479,
+                486,
+                493,
+                501
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "5f84b23363478ccd69da02d8c5a5cd2d8fde09638ae3b80fc9c022540d9f945a",
+              "pixelBBox": {
+                "height": 289,
+                "width": 1400,
+                "x": 0,
+                "y": 556
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                609,
+                616,
+                623,
+                630,
+                637,
+                690,
+                697,
+                704,
+                711,
+                718,
+                770,
+                778,
+                785,
+                792,
+                799
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "0fcdb51e0acdc9e66d96a852cb17c0ab60b1fbabef68a8beaae0a484a58e0252",
+              "pixelBBox": {
+                "height": 291,
+                "width": 1400,
+                "x": 0,
+                "y": 845
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                893,
+                900,
+                907,
+                914,
+                922,
+                974,
+                981,
+                988,
+                995,
+                1002,
+                1055,
+                1062,
+                1069,
+                1076,
+                1083
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "bdb7288c045e746a27140c67e74040b4e97d5b7ad975ae8dcd40b190674c8a45",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 1305
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1357,
+                1365,
+                1372,
+                1379,
+                1386,
+                1438,
+                1445,
+                1453,
+                1460,
+                1467,
+                1519,
+                1526,
+                1533,
+                1541,
+                1548
+              ],
+              "systemIndex": 3
+            },
+            {
+              "cropSha256": "2c06e7bc68cbd94e4851a4f2f6cd926e11413db61a430c4f60a5d53e58884fb8",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 1629
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1681,
+                1688,
+                1695,
+                1703,
+                1710,
+                1762,
+                1769,
+                1776,
+                1783,
+                1791,
+                1843,
+                1850,
+                1857,
+                1864,
+                1871
+              ],
+              "systemIndex": 4
+            }
+          ]
+        },
+        {
+          "pageIndex": 4,
+          "renderSha256": "74a3627914c9c944fd72d4f86ab7bc1e273b99f1aec34c730597a78e969f1d21",
+          "status": "not-admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "99156920010ec1ecf5fd582a48d3888149a1c9dd55ddd8f1a546f24915c01a83",
+              "pixelBBox": {
+                "height": 294,
+                "width": 1400,
+                "x": 0,
+                "y": 219
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                271,
+                278,
+                285,
+                292,
+                299,
+                352,
+                359,
+                366,
+                373,
+                380,
+                433,
+                440,
+                447,
+                454,
+                461
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "f0c799af456a3ec54a531e10c173156d7304a0112b4fde4590ab95bab1deffa2",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 767
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                820,
+                827,
+                834,
+                841,
+                848,
+                901,
+                908,
+                915,
+                922,
+                929,
+                981,
+                989,
+                996,
+                1003,
+                1010
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "49375a9ebe82db81c5659553985f3ff9e5048a0fbe75900b0e3f57af332d9e5b",
+              "pixelBBox": {
+                "height": 294,
+                "width": 1400,
+                "x": 0,
+                "y": 1193
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1245,
+                1252,
+                1259,
+                1266,
+                1273,
+                1326,
+                1333,
+                1340,
+                1347,
+                1354,
+                1407,
+                1414,
+                1421,
+                1428,
+                1435
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "93d124bf9eba4887aa43abfd62508238aaa3a69e284bda745b120350404cba7d",
+              "pixelBBox": {
+                "height": 294,
+                "width": 1400,
+                "x": 0,
+                "y": 1742
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1794,
+                1801,
+                1808,
+                1815,
+                1822,
+                1875,
+                1882,
+                1889,
+                1896,
+                1903,
+                1956,
+                1963,
+                1970,
+                1977,
+                1984
+              ],
+              "systemIndex": 3
+            }
+          ]
+        },
+        {
+          "pageIndex": 5,
+          "renderSha256": "53808ae15d6cba874823156b5c9605dc6d302ac0ddc58d7c7da1c0b90bc9b038",
+          "status": "not-admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "a2dd0fa3ae5b4f2582236c056a6d2a9d4888dfab7cd25dbcbd18f01af010e368",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 255
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                307,
+                315,
+                322,
+                329,
+                336,
+                388,
+                395,
+                403,
+                410,
+                417,
+                469,
+                476,
+                483,
+                491,
+                498
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "b6b06f9831955f386e8a7b29de86e029c8eaaa58f4cdafc1568db83694604de4",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 714
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                766,
+                773,
+                781,
+                788,
+                795,
+                847,
+                854,
+                861,
+                869,
+                876,
+                928,
+                935,
+                942,
+                949,
+                957
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "c56ed2e6cf8aab120f1eda6b91a0d3b596e13f7cae58ba908692da339ec2b849",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 1201
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1253,
+                1260,
+                1268,
+                1275,
+                1282,
+                1334,
+                1341,
+                1348,
+                1356,
+                1363,
+                1415,
+                1422,
+                1429,
+                1436,
+                1444
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "accad83107cf913e68ad8104af3c0124bf73d27a8d7e7a6392713e2723c7594a",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 1753
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1805,
+                1812,
+                1819,
+                1826,
+                1834,
+                1886,
+                1893,
+                1900,
+                1907,
+                1914,
+                1967,
+                1974,
+                1981,
+                1988,
+                1995
+              ],
+              "systemIndex": 3
+            }
+          ]
+        },
+        {
+          "pageIndex": 6,
+          "renderSha256": "549ff6d1d6e6e66fc56a571ababa65abb44c5620b9a9c59da9d366dfca3a0431",
+          "status": "admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "48791334d6285e3d65244f1559245555b95e13bbe26e597e7a0be59e111417e6",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 247
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                299,
+                306,
+                313,
+                320,
+                328,
+                380,
+                387,
+                394,
+                401,
+                408,
+                461,
+                468,
+                475,
+                482,
+                489
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "9ff15b5aef9a86dba164f9c26350d810951dee979c29a8d0031bf939eb91dbf6",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 734
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                786,
+                793,
+                800,
+                807,
+                815,
+                867,
+                874,
+                881,
+                888,
+                895,
+                948,
+                955,
+                962,
+                969,
+                976
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "854388d643e6efbbb37eea3577120a85778cf860c1f704ea681e293a1351223a",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 1204
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1256,
+                1263,
+                1270,
+                1278,
+                1285,
+                1337,
+                1344,
+                1351,
+                1358,
+                1366,
+                1418,
+                1425,
+                1432,
+                1439,
+                1446
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "6dfafdc7c5ffce1eb30d80ea750197ebd2a41e1137e6b9980445d0d99abd8106",
+              "pixelBBox": {
+                "height": 295,
+                "width": 1400,
+                "x": 0,
+                "y": 1598
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1650,
+                1657,
+                1665,
+                1672,
+                1679,
+                1731,
+                1738,
+                1745,
+                1752,
+                1760,
+                1812,
+                1819,
+                1826,
+                1833,
+                1840
+              ],
+              "systemIndex": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "itemId": "olimpic-6011095-full-page",
+      "pages": [
+        {
+          "pageIndex": 0,
+          "renderSha256": "d3f7f1bd28a279ce27d7b91307600cb0cf2286ebbc0a33bf8663be5c9e898ccd",
+          "status": "admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "4b8d22e4d54899d7ad0799623049f39123bd560e8d2020b137b1b44ffdcface4",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 313
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                364,
+                371,
+                378,
+                385,
+                392,
+                443,
+                450,
+                457,
+                464,
+                471,
+                521,
+                528,
+                535,
+                542,
+                549
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "d5088293746bc575b48b73be70ec8cf77df823dac7b16edb8839c50e2fc046db",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 723
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                774,
+                781,
+                788,
+                795,
+                802,
+                853,
+                860,
+                867,
+                874,
+                881,
+                931,
+                938,
+                945,
+                952,
+                959
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "f3ea9a6ebb005caa9e4059215f6ef3c11253b2a5ca9e04e9a08ccff08936e440",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1171
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1223,
+                1230,
+                1237,
+                1244,
+                1251,
+                1301,
+                1308,
+                1315,
+                1322,
+                1329,
+                1380,
+                1387,
+                1394,
+                1401,
+                1408
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "930871fe9ef72068be42cb5900b3bbaef3854f3032bac1799e959bc99ea04232",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1617
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1669,
+                1675,
+                1682,
+                1689,
+                1696,
+                1747,
+                1754,
+                1761,
+                1768,
+                1775,
+                1826,
+                1833,
+                1839,
+                1846,
+                1853
+              ],
+              "systemIndex": 3
+            }
+          ]
+        },
+        {
+          "pageIndex": 1,
+          "renderSha256": "70e3c4d21a6887a8c506edcc52a2a295791c4295952f1af63b129e54f5f5459b",
+          "status": "admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "3611ea6b0d25b7b5782e252ff9c36a7ffeb6539e1b588a0142f2cf16b54e7ad1",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 173
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                225,
+                232,
+                239,
+                246,
+                253,
+                303,
+                310,
+                317,
+                324,
+                331,
+                382,
+                389,
+                396,
+                403,
+                410
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "4496bb22ae87736e280f6d0f974d8bd2e74ef23f7a6c88746c65818bf9bdbc7d",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 654
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                706,
+                713,
+                720,
+                727,
+                734,
+                785,
+                792,
+                798,
+                805,
+                812,
+                863,
+                870,
+                877,
+                884,
+                891
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "72aac54db7cb4357b4da845f7b473f1e49f03c45a9baf1be39c37c8a3c48a8c7",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1117
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1168,
+                1175,
+                1182,
+                1189,
+                1196,
+                1247,
+                1254,
+                1261,
+                1267,
+                1274,
+                1325,
+                1332,
+                1339,
+                1346,
+                1353
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "d91ea3443ace09718f8f2a9b8e94f53e2042f61a3a5db56f63d0f4c5ec9140f3",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1592
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1644,
+                1651,
+                1658,
+                1665,
+                1672,
+                1722,
+                1729,
+                1736,
+                1743,
+                1750,
+                1801,
+                1808,
+                1815,
+                1822,
+                1829
+              ],
+              "systemIndex": 3
+            }
+          ]
+        },
+        {
+          "pageIndex": 2,
+          "renderSha256": "e2acd6c1330f3650ca144ec8525d6a0136017ad730b8ec2d473850c9d5a47c19",
+          "status": "not-admitted",
+          "systemCount": 5,
+          "systems": [
+            {
+              "cropSha256": "1a044b32fa73d7114269eb113ca1fecd4e718d67ca8a4318143921b6fde283f9",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 129
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                181,
+                188,
+                195,
+                202,
+                209,
+                260,
+                267,
+                273,
+                280,
+                287,
+                338,
+                345,
+                352,
+                359,
+                366
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "ab7977c21a60bb41465ab4ce568e5e8640bca0e34cd801dcc90fb434049bbe64",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 624
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                676,
+                683,
+                690,
+                697,
+                704,
+                754,
+                761,
+                768,
+                775,
+                782,
+                833,
+                840,
+                847,
+                854,
+                861
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "745830f031cd63968186764d88765cb9f41e21b09031bd44bfe5ce1bc6ffe9e1",
+              "pixelBBox": {
+                "height": 282,
+                "width": 1400,
+                "x": 0,
+                "y": 988
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1040,
+                1047,
+                1053,
+                1060,
+                1067,
+                1118,
+                1125,
+                1132,
+                1139,
+                1146,
+                1197,
+                1204,
+                1211,
+                1218,
+                1224
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "c656bfe57a6684e57527203631b33055aef2ffca9aedb592eb68d9434d3e1360",
+              "pixelBBox": {
+                "height": 282,
+                "width": 1400,
+                "x": 0,
+                "y": 1270
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1316,
+                1323,
+                1330,
+                1337,
+                1344,
+                1394,
+                1401,
+                1408,
+                1415,
+                1422,
+                1473,
+                1480,
+                1487,
+                1494,
+                1501
+              ],
+              "systemIndex": 3
+            },
+            {
+              "cropSha256": "71f277f4757d3c0c0143349b6aec248429f04401f7ed2fb3b0f35d1b536ee16a",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1622
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1674,
+                1681,
+                1688,
+                1695,
+                1702,
+                1753,
+                1759,
+                1766,
+                1773,
+                1780,
+                1831,
+                1838,
+                1845,
+                1852,
+                1859
+              ],
+              "systemIndex": 4
+            }
+          ]
+        },
+        {
+          "pageIndex": 3,
+          "renderSha256": "0c4a413de9f5091bb13fe8b10d8cbfd9b6918bed580d729bb51d68e21f39cf96",
+          "status": "admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "52e5b8fa14eeb5cff285468519ac9293bb16b5c00dbf93efbb10ba223c70dca5",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 160
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                211,
+                218,
+                225,
+                232,
+                239,
+                290,
+                297,
+                304,
+                310,
+                317,
+                368,
+                375,
+                382,
+                389,
+                396
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "01cb314dc92150a87ab1dd0a0b72fbb9904b3ded600bfd5b2644397df9324f24",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 630
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                681,
+                688,
+                695,
+                702,
+                709,
+                760,
+                767,
+                774,
+                781,
+                788,
+                839,
+                845,
+                852,
+                859,
+                866
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "b0dc5e0f9db92ba87cda24b3a8ce2bc1e905c10bd13fad808b74d69fe27e2f88",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1108
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1160,
+                1167,
+                1174,
+                1181,
+                1188,
+                1238,
+                1245,
+                1252,
+                1259,
+                1266,
+                1317,
+                1324,
+                1331,
+                1338,
+                1345
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "6fce091cea555e93c47317d7c61645616b121b5dfc069ef4f0acf827233d531c",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1579
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1630,
+                1637,
+                1644,
+                1651,
+                1658,
+                1709,
+                1716,
+                1723,
+                1730,
+                1737,
+                1787,
+                1794,
+                1801,
+                1808,
+                1815
+              ],
+              "systemIndex": 3
+            }
+          ]
+        },
+        {
+          "pageIndex": 4,
+          "renderSha256": "b67b472e2a07afba8c8740045c8582f862e26bb5ac14682725cba24b587a0525",
+          "status": "admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "0386fe01522bc87b64ee8a0178287be0c2a50ee1061c5111c011a035d4c7e451",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 140
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                192,
+                199,
+                206,
+                213,
+                220,
+                271,
+                277,
+                284,
+                291,
+                298,
+                349,
+                356,
+                363,
+                370,
+                377
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "996232a3f3323c24757bc1c5b67bcf3a401a056cb7d7139a37107c71e4681df2",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 613
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                665,
+                672,
+                679,
+                686,
+                693,
+                744,
+                750,
+                757,
+                764,
+                771,
+                822,
+                829,
+                836,
+                843,
+                850
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "a750ef5f285da8a143457659d16c6a81db8174654d6b002b72efd05986c751ad",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1144
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1195,
+                1202,
+                1209,
+                1216,
+                1223,
+                1274,
+                1281,
+                1288,
+                1295,
+                1302,
+                1353,
+                1360,
+                1366,
+                1373,
+                1380
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "77824a3618fcd0352c34674caee933441bb931fd83cb1e3572db67a1779bcc20",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1554
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1606,
+                1613,
+                1620,
+                1626,
+                1633,
+                1684,
+                1691,
+                1698,
+                1705,
+                1712,
+                1763,
+                1770,
+                1777,
+                1784,
+                1790
+              ],
+              "systemIndex": 3
+            }
+          ]
+        },
+        {
+          "pageIndex": 5,
+          "renderSha256": "eecefc4e87845603c322d68bbb7430d1cc1697e001fafcfe678339db0a4234a9",
+          "status": "admitted",
+          "systemCount": 5,
+          "systems": [
+            {
+              "cropSha256": "fd687899558f01467037678227e99b03c5643d44fed52066e96862b1684e4c68",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 181
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                233,
+                240,
+                247,
+                254,
+                261,
+                312,
+                318,
+                325,
+                332,
+                339,
+                390,
+                397,
+                404,
+                411,
+                418
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "2bb182f04a66d443026b7bd881754f7665bb472137880c184cbd2dce6452de48",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 551
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                602,
+                609,
+                616,
+                623,
+                630,
+                681,
+                688,
+                695,
+                701,
+                708,
+                759,
+                766,
+                773,
+                780,
+                787
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "00d994a90acdfacb2e5ff489faab349c1b70caed75bafe0652518b7b4dc1e826",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 890
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                941,
+                948,
+                955,
+                962,
+                969,
+                1020,
+                1027,
+                1034,
+                1041,
+                1047,
+                1098,
+                1105,
+                1112,
+                1119,
+                1126
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "e9f8519b1da82dfd5d29e47f5b7ca6099df66b91306e59967c4ded3e3e7f0a9e",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1237
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1288,
+                1295,
+                1302,
+                1309,
+                1316,
+                1367,
+                1374,
+                1381,
+                1388,
+                1395,
+                1446,
+                1452,
+                1459,
+                1466,
+                1473
+              ],
+              "systemIndex": 3
+            },
+            {
+              "cropSha256": "d0fe48505ef8138a3d0aa7d9a994d8151d898c389a060b010b750e5a25f878b0",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1576
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1628,
+                1634,
+                1641,
+                1648,
+                1655,
+                1706,
+                1713,
+                1720,
+                1727,
+                1734,
+                1785,
+                1792,
+                1798,
+                1805,
+                1812
+              ],
+              "systemIndex": 4
+            }
+          ]
+        },
+        {
+          "pageIndex": 6,
+          "renderSha256": "f5f254dffd93d6b279c25a20350b9bb4d9d1aa35abdb888e919229a3a5f10d1b",
+          "status": "admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "8b4856b87406f5289c915b50230c987a882fb94261a84aa200cfe4beea3b9f45",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 168
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                219,
+                226,
+                233,
+                240,
+                247,
+                298,
+                305,
+                312,
+                319,
+                326,
+                376,
+                383,
+                390,
+                397,
+                404
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "c90c6d761bce57fda4ca2351a77d899bdcc55d95b102074bf63ca5492f308229",
+              "pixelBBox": {
+                "height": 287,
+                "width": 1400,
+                "x": 0,
+                "y": 644
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                695,
+                702,
+                709,
+                716,
+                723,
+                774,
+                781,
+                788,
+                794,
+                801,
+                852,
+                859,
+                866,
+                873,
+                880
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "9f92c7201eeba86c2d6b4c4d534cf2a647334cb5cf1b019714718c2dac8ddcb3",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1119
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1171,
+                1178,
+                1185,
+                1192,
+                1199,
+                1249,
+                1256,
+                1263,
+                1270,
+                1277,
+                1328,
+                1335,
+                1342,
+                1349,
+                1356
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "8cf749cbefbd0b47e739da3f9d98abeddc2d31e4fb2f4a2ad943e186f007263c",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1579
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1630,
+                1637,
+                1644,
+                1651,
+                1658,
+                1709,
+                1716,
+                1723,
+                1730,
+                1737,
+                1787,
+                1794,
+                1801,
+                1808,
+                1815
+              ],
+              "systemIndex": 3
+            }
+          ]
+        },
+        {
+          "pageIndex": 7,
+          "renderSha256": "9793c4c417235418308d05762f41d1717f23e26ce9c91550e10ac5ad482073cc",
+          "status": "admitted",
+          "systemCount": 4,
+          "systems": [
+            {
+              "cropSha256": "209f0acb927d9ade44d9d852d0b5ebfcec5b3faa1be8dc2e8126db633f7a4e88",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 165
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                217,
+                224,
+                230,
+                237,
+                244,
+                295,
+                302,
+                309,
+                316,
+                323,
+                374,
+                381,
+                388,
+                394,
+                401
+              ],
+              "systemIndex": 0
+            },
+            {
+              "cropSha256": "fa717aedbd466db5b790616618ad330c3bd56aa942e0ef9a5ca623ea7e8f9b05",
+              "pixelBBox": {
+                "height": 287,
+                "width": 1400,
+                "x": 0,
+                "y": 644
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                695,
+                702,
+                709,
+                716,
+                723,
+                774,
+                781,
+                788,
+                794,
+                801,
+                852,
+                859,
+                866,
+                873,
+                880
+              ],
+              "systemIndex": 1
+            },
+            {
+              "cropSha256": "4b2229b7f3f5a644a1d14423ed96e1f02182c81187524293042af19605d9e4ba",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1119
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1171,
+                1178,
+                1185,
+                1192,
+                1199,
+                1249,
+                1256,
+                1263,
+                1270,
+                1277,
+                1328,
+                1335,
+                1342,
+                1349,
+                1356
+              ],
+              "systemIndex": 2
+            },
+            {
+              "cropSha256": "d4dbc344df63cdec7eb71561accab65d41b38b8959978a9c81b3ccbb8c069a0e",
+              "pixelBBox": {
+                "height": 288,
+                "width": 1400,
+                "x": 0,
+                "y": 1598
+              },
+              "staffCount": 3,
+              "staffLineYs": [
+                1649,
+                1656,
+                1663,
+                1670,
+                1677,
+                1728,
+                1735,
+                1742,
+                1749,
+                1756,
+                1806,
+                1813,
+                1820,
+                1827,
+                1834
+              ],
+              "systemIndex": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "schemaVersion": "1.0.0",
+  "sourceManifestSha256": "4cbd78411f15f73bf548a50f2af125e29c6cc42297b43a8616934a08a2cb0a1f",
+  "summary": {
+    "admittedPageCount": 22,
+    "materializedPageCount": 29,
+    "pageCount": 29
+  }
+}

@@ -9,17 +9,26 @@ import numpy as np
 CLASS_COUNT = 3
 
 
-def decode_predictions(logits: np.ndarray, boxes: np.ndarray, *, threshold: float) -> list[dict[str, float | int]]:
-    if logits.ndim != 2 or boxes.ndim != 2 or logits.shape[1] != CLASS_COUNT + 1 or boxes.shape[1] != 4:
+def decode_predictions(
+    logits: np.ndarray, boxes: np.ndarray, *, threshold: float, activation: str = "softmax"
+) -> list[dict[str, float | int]]:
+    expected_logit_count = CLASS_COUNT + 1 if activation == "softmax" else CLASS_COUNT
+    if activation not in ("softmax", "sigmoid"):
+        raise ValueError("activation must be softmax or sigmoid")
+    if logits.ndim != 2 or boxes.ndim != 2 or logits.shape[1] != expected_logit_count or boxes.shape[1] != 4:
         raise ValueError("logits and boxes have invalid shapes")
     if logits.shape[0] != boxes.shape[0]:
         raise ValueError("query counts must match")
     if not 0 < threshold < 1:
         raise ValueError("threshold must be between zero and one")
-    shifted = logits - logits.max(axis=1, keepdims=True)
-    probability = np.exp(shifted) / np.exp(shifted).sum(axis=1, keepdims=True)
-    labels = probability[:, :CLASS_COUNT].argmax(axis=1)
-    scores = probability[np.arange(len(probability)), labels]
+    if activation == "softmax":
+        shifted = logits - logits.max(axis=1, keepdims=True)
+        probability = np.exp(shifted) / np.exp(shifted).sum(axis=1, keepdims=True)
+        foreground_probability = probability[:, :CLASS_COUNT]
+    else:
+        foreground_probability = 1 / (1 + np.exp(-np.clip(logits, -80, 80)))
+    labels = foreground_probability.argmax(axis=1)
+    scores = foreground_probability[np.arange(len(foreground_probability)), labels]
     result = []
     for label, score, box in zip(labels, scores, boxes, strict=True):
         if score < threshold:

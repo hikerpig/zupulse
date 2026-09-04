@@ -28,6 +28,27 @@ SOURCE_SHA256 = {
     "preprocessor_config.json": "84084dff7cb5f0ab9394adc87f34d813a4e0c3d7ad56aa7d73d775174ffaca3f",
     "pytorch_model.bin": "9400d5a6a433c73bb3440f42daab69a7b728b4bce0922904ac4779cb04e08989",
 }
+MODEL_PROFILES = {
+    "detr": {
+        "activation": "softmax",
+        "architecture": "facebook-detr-resnet-50-layout-v1",
+        "modelType": "detr",
+        "revision": MODEL_REVISION,
+        "sourceFiles": SOURCE_SHA256,
+    },
+    "deformable-detr-doclaynet": {
+        "activation": "sigmoid",
+        "architecture": "aryn-deformable-detr-doclaynet-layout-v1",
+        "modelType": "deformable_detr",
+        "revision": "c5946fb892bd99f527c0dd69577b9e9e55364f8f",
+        "sourceFiles": {
+            "README.md": "1eccacf4a44a5e977ee5db38b777ac186375c7ac02f594ece5e7efdf4cb8363c",
+            "config.json": "01d2bd3356abd64b84b837294782b28a4052f1a36b19e3a9c7d84f75ee15d5e6",
+            "preprocessor_config.json": "48aaaeafe0e746877c41969391577458d8164ef1b22050fd3c330f713f81c556",
+            "model.safetensors": "e3861d34685d3b36e5f38370597daf98fb2f98a852cfa5c125035057ded06809",
+        },
+    },
+}
 
 
 def canonical_json(value: object) -> bytes:
@@ -43,6 +64,17 @@ def validate_source_model(root: Path, expected: dict[str, str] = SOURCE_SHA256) 
     if actual != expected:
         raise ValueError("source model artifact hash mismatch")
     return actual
+
+
+def model_profile(architecture: str) -> dict[str, object]:
+    try:
+        return MODEL_PROFILES[architecture]
+    except KeyError as error:
+        raise ValueError(f"unsupported architecture: {architecture}") from error
+
+
+def cloned_state_dict(model: torch.nn.Module) -> dict[str, torch.Tensor]:
+    return {name: value.detach().cpu().contiguous().clone() for name, value in model.state_dict().items()}
 
 
 def sampling_weights(pages: list[dict[str, object]], *, rare_multiplier: int) -> list[float]:
@@ -86,6 +118,7 @@ def main() -> None:
     parser.add_argument("--slice", type=Path, required=True)
     parser.add_argument("--source-model", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--architecture", choices=tuple(MODEL_PROFILES), default="detr")
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
@@ -101,9 +134,24 @@ def main() -> None:
         raise ValueError(f"output already exists: {args.output}")
     if args.epochs < 1 or args.batch_size < 1 or args.shortest_edge < 1 or args.longest_edge < args.shortest_edge:
         raise ValueError("training dimensions and counts are invalid")
-    source_files = validate_source_model(args.source_model)
+    profile = model_profile(args.architecture)
+    source_files = validate_source_model(args.source_model, profile["sourceFiles"])
 
-    from transformers import DetrConfig, DetrForObjectDetection, DetrImageProcessor
+    from transformers import (
+        DeformableDetrConfig,
+        DeformableDetrForObjectDetection,
+        DeformableDetrImageProcessor,
+        DetrConfig,
+        DetrForObjectDetection,
+        DetrImageProcessor,
+    )
+
+    if profile["modelType"] == "detr":
+        config_class, model_class, processor_class = DetrConfig, DetrForObjectDetection, DetrImageProcessor
+    else:
+        config_class = DeformableDetrConfig
+        model_class = DeformableDetrForObjectDetection
+        processor_class = DeformableDetrImageProcessor
 
     random.seed(args.seed)
     np.random.seed(args.seed)
@@ -121,7 +169,7 @@ def main() -> None:
         generator=generator,
     )
 
-    processor = DetrImageProcessor.from_pretrained(args.source_model, local_files_only=True)
+    processor = processor_class.from_pretrained(args.source_model, local_files_only=True)
     processor.size = {"shortest_edge": args.shortest_edge, "longest_edge": args.longest_edge}
 
     def collate(batch: list[tuple[Image.Image, dict[str, object]]]) -> tuple[dict[str, object], list[dict[str, torch.Tensor]]]:
@@ -130,12 +178,12 @@ def main() -> None:
         return {"pixel_values": encoded["pixel_values"], "pixel_mask": encoded["pixel_mask"]}, encoded["labels"]
 
     loader = DataLoader(train, batch_size=args.batch_size, sampler=sampler, collate_fn=collate, num_workers=0)
-    config = DetrConfig.from_pretrained(args.source_model, local_files_only=True)
+    config = config_class.from_pretrained(args.source_model, local_files_only=True)
     config.use_pretrained_backbone = False
     config.num_labels = len(LABELS)
     config.id2label = dict(enumerate(LABELS))
     config.label2id = {label: index for index, label in enumerate(LABELS)}
-    model = DetrForObjectDetection.from_pretrained(
+    model = model_class.from_pretrained(
         args.source_model,
         config=config,
         local_files_only=True,
@@ -189,6 +237,7 @@ def main() -> None:
                 output.logits[0].cpu().numpy(),
                 output.pred_boxes[0].cpu().numpy(),
                 threshold=SCORE_THRESHOLD,
+                activation=profile["activation"],
             )
             page_result = evaluate_page(predictions, annotation)
             page_results.append(page_result)
@@ -204,12 +253,12 @@ def main() -> None:
 
     args.output.mkdir(parents=True)
     model_dir = args.output / "model"
-    model.save_pretrained(model_dir, safe_serialization=True)
+    model.save_pretrained(model_dir, state_dict=cloned_state_dict(model), safe_serialization=True)
     processor.save_pretrained(model_dir)
     raw_bytes = canonical_json(raw_predictions)
     (args.output / "validation-predictions.json").write_bytes(raw_bytes)
     summary = {
-        "architecture": "facebook-detr-resnet-50-layout-v1",
+        "architecture": profile["architecture"],
         "backboneLearningRate": args.backbone_learning_rate,
         "batchSize": args.batch_size,
         "datasetManifestSha256": sha256(args.dataset_root / "manifest.json"),
@@ -220,7 +269,7 @@ def main() -> None:
         "labels": list(LABELS),
         "learningRate": args.learning_rate,
         "metrics": metrics,
-        "modelRevision": MODEL_REVISION,
+        "modelRevision": profile["revision"],
         "modelSha256": sha256(model_dir / "model.safetensors"),
         "packageVersions": {
             name: importlib.metadata.version(name)

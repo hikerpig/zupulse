@@ -38,7 +38,7 @@ class LayoutDetrMetricsTest(unittest.TestCase):
             dtype=np.float32,
         )
 
-        predictions = decode_predictions(logits, boxes, threshold=0.5)
+        predictions = decode_predictions(logits, boxes, threshold=0.5, activation="softmax")
 
         self.assertEqual([item["label"] for item in predictions], [0, 2])
         self.assertAlmostEqual(predictions[0]["centerY"], 0.2, places=6)
@@ -66,7 +66,16 @@ class LayoutDetrMetricsTest(unittest.TestCase):
 
     def test_rejects_mismatched_query_shapes(self) -> None:
         with self.assertRaisesRegex(ValueError, "query counts must match"):
-            decode_predictions(np.zeros((2, 4)), np.zeros((1, 4)), threshold=0.5)
+            decode_predictions(np.zeros((2, 4)), np.zeros((1, 4)), threshold=0.5, activation="softmax")
+
+    def test_decodes_deformable_detr_sigmoid_logits_at_same_threshold(self) -> None:
+        logits = np.array([[0.0, -2.0, -3.0], [-2.0, 2.0, -3.0]], dtype=np.float32)
+        boxes = np.array([[0.5, 0.2, 0.8, 0.1], [0.5, 0.7, 0.8, 0.1]], dtype=np.float32)
+
+        predictions = decode_predictions(logits, boxes, threshold=0.5, activation="sigmoid")
+
+        self.assertEqual([item["label"] for item in predictions], [0, 1])
+        self.assertAlmostEqual(predictions[0]["score"], 0.5, places=6)
 
     def test_summarizes_class_exact_with_false_positive_denominator(self) -> None:
         summary = summarize_pages(

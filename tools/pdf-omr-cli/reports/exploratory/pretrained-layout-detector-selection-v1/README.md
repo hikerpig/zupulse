@@ -136,6 +136,24 @@ observed scale-conditioned miss pattern better than threshold search or more epo
 obtain substantially more rights-cleared 1-staff pages; the current train evidence comes from only 13 pages despite
 containing 88 systems. Stop here for a route decision.
 
+## Proposed next boundary
+
+If the multi-scale route is approved, prefer
+[`Aryn/deformable-detr-DocLayNet`](https://huggingface.co/Aryn/deformable-detr-DocLayNet) revision
+`c5946fb892bd99f527c0dd69577b9e9e55364f8f` over a second COCO-only initialization. Its model card marks the
+checkpoint Apache-2.0, provides a safe 165 MB `model.safetensors`, and identifies DocLayNet as its training domain.
+DocLayNet itself uses the Community Data License Agreement – Permissive 1.0. The document-layout prior is a
+plausible transfer advantage, not established evidence for music scores.
+
+Keep [`SenseTime/deformable-detr`](https://huggingface.co/SenseTime/deformable-detr) as the control/fallback. Its
+model card also marks the checkpoint Apache-2.0 and documents COCO 2017 training, but it would repeat the same
+natural-image source domain as DETR v1. Both candidates are natively supported by the already isolated Transformers
+environment; neither has been downloaded.
+
+The proposed run must retain the frozen split, metric definition, score threshold, input resolution, sampling,
+optimizer, and one-time validation protocol from DETR v1. Only architecture and initialization may change. This
+isolates whether multi-scale spatial resolution fixes the 1-staff miss pattern.
+
 ## Stop conditions
 
 - Stop if the exact model artifact lacks an acceptable, recorded distribution license.

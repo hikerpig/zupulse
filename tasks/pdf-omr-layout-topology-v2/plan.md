@@ -155,6 +155,9 @@ validation，不能以论文引用代替实证。
 - 下一阶段采用许可可接受的 pretrained detector；若首选 DETR 在预注册 balanced-validation gate 失败，才重新请求是否扩展到
   multi-scale Deformable DETR，或 rights-cleared 1-staff real/semi-synthetic layout data。当前 1-staff 的尺度条件漏检与
   Deformable DETR 论文针对 single-scale DETR limited spatial resolution / small-object weakness 的动机一致，但这是新的
-  architecture/weights 边界，不能默认选择。当前 OLA/Ultralytics weights/distribution gate 仍未通过。
+  architecture/weights 边界，不能默认选择。若批准，首选 Apache-2.0 的
+  `Aryn/deformable-detr-DocLayNet@c5946fb892bd99f527c0dd69577b9e9e55364f8f`，以 document-layout pretrained
+  representation 验证 multi-scale 假设；Apache-2.0 的 `SenseTime/deformable-detr` 仅作 COCO-domain control。当前
+  OLA/Ultralytics weights/distribution gate 仍未通过。
 - 超过 22/29 只表示继续投资；正式 release threshold、native runtime package budget 与 Desktop integration 仍需
   单独审批。

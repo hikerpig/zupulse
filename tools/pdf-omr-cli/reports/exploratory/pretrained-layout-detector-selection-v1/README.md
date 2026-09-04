@@ -58,6 +58,23 @@ Primary sources:
    `staff` object class in a single registered follow-up. Otherwise stop.
 6. Run the 29-page OLiMPiC development set only after the synthetic gate passes. The frozen holdout remains unread.
 
+## Target adapter checkpoint
+
+The dependency-free `layout_detr_targets.py` adapter converts the existing normalized topology annotations to the
+COCO detection input accepted by `DetrImageProcessor`. It validates bounds, positive box dimensions, supported
+staff counts, and agreement between `staffCount` and the number of staff-line polylines before emitting a target.
+Objects are sorted by `(y, x)` and use count-conditioned class IDs `0..2`.
+
+The frozen 640-page slice converted without exclusions:
+
+| Split      | Pages | 1-staff objects | 2-staff objects | 3-staff objects | Canonical target SHA-256                                           |
+| ---------- | ----: | --------------: | --------------: | --------------: | ------------------------------------------------------------------ |
+| train      |   512 |              88 |             799 |           1,211 | `a62d86ec7f983b51c33b20dadb05ba18e7cbfe71bb9ecebd30895cf2577bb93d` |
+| validation |   128 |              40 |              69 |             373 | `85f37998cb021c6eee3d7e2aa32a9ebefa1ec58bf3c3b806a4843cae4ec696ce` |
+
+This proves only that the input contract is lossless for the selected system objects. It does not count as model
+or metric evidence.
+
 ## Stop conditions
 
 - Stop if the exact model artifact lacks an acceptable, recorded distribution license.

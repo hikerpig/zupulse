@@ -137,6 +137,9 @@ validation，不能以论文引用代替实证。
   centers 时，才增加独立 `staff` class
 - 固定 split、metric 与 stop condition；synthetic gate 未通过不得运行 OLiMPiC
 - 当前环境有 PyTorch 2.13.0，但无 `torchvision`、`transformers`、Detectron2、MMDetection 或 Ultralytics
+- dependency-free DETR COCO target adapter 已通过全部 640 pages：train target SHA-256
+  `a62d86ec7f983b51c33b20dadb05ba18e7cbfe71bb9ecebd30895cf2577bb93d`，validation target SHA-256
+  `85f37998cb021c6eee3d7e2aa32a9ebefa1ec58bf3c3b806a4843cae4ec696ce`
 - durable evidence：`tools/pdf-omr-cli/reports/exploratory/pretrained-layout-detector-selection-v1/`
 
 ## Open decisions

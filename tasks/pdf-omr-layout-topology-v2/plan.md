@@ -68,10 +68,13 @@ validation，不能以论文引用代替实证。
        synthetic gate 停止；没有运行 OLiMPiC，也没有继续搜索 threshold/gap/partition penalty。
 4. [x] 在 balanced synthetic validation 报告 system-center exact、staff-count exact 和 topology-exact。staff-center
        evidence 通过，但完整 topology 和 1-staff 类别失败，结论为 `STOP_ROW_ENERGY`。
-5. [ ] 保留二维 instance context，做最小 `system/staff box-object` target 与 runtime probe；先复用现有 PyTorch，不新增
-       Ultralytics、torchvision 或产品 dependency。只有该表示在 synthetic validation 过 gate 才运行 OLiMPiC。
-6. [ ] 使用一套冻结的全局后处理重跑全部 29 个 OLiMPiC development pages；不允许 per-work/per-page 参数或人工修正。
-7. [ ] 若通过 investment gate，再验证 PyTorch/ONNX canonical output、overlay、materialization 与 ordered crop hashes
+5. [x] 保留二维 instance context，完成最小 `system/staff object-center` target 与 runtime probe。target 在 640/640 pages
+       可表达，但 full-resolution 与 stride-4 compact heads 均未通过 synthetic gate；结论为
+       `STOP_CUSTOM_OBJECT_HEAD`，没有运行 OLiMPiC。
+6. [ ] 决定下一研究边界：许可可接受的 pretrained object detector target-domain training，或新增 rights-cleared
+       real/semi-synthetic layout data。批准前不安装 detector framework、不下载新 weights。
+7. [ ] 使用一套冻结的全局后处理重跑全部 29 个 OLiMPiC development pages；不允许 per-work/per-page 参数或人工修正。
+8. [ ] 若通过 investment gate，再验证 PyTorch/ONNX canonical output、overlay、materialization 与 ordered crop hashes
        的重复运行一致性；产品 runtime 仍保持 `STOP`。
 
 ## Acceptance criteria
@@ -116,9 +119,19 @@ validation，不能以论文引用代替实证。
 - 决策：`STOP_ROW_ENERGY`，不运行 OLiMPiC；下一步转向保留二维 context 的 box-object target
 - durable evidence：`tools/pdf-omr-cli/reports/exploratory/layout-topology-row-energy-v1/`
 
+当前 object-center candidate checkpoint：
+
+- 2D target component exact：train 512/512、validation 128/128
+- full-resolution focal head：10 epochs，0/128 exact pages
+- stride-4 focal head：23,764 parameters，10 epochs，最佳 3/128 exact pages；1-staff 为 0 exact
+- 决策：`STOP_CUSTOM_OBJECT_HEAD`，不运行 OLiMPiC；需要新的 detector dependency/weights 或数据来源批准
+- durable evidence：`tools/pdf-omr-cli/reports/exploratory/layout-object-center-v1/`
+
 ## Open decisions
 
 - `staff center` 是否需要独立 spacing head，还是只在 materialization 前从局部图像估计五线 spacing；先由 balanced
   validation 的最小 prototype 决定，不提前扩展模型。
+- 下一阶段采用哪一项新增研究边界：许可可接受的 pretrained detector，或 rights-cleared real/semi-synthetic layout
+  data。当前 OLA/Ultralytics weights/distribution gate 仍未通过，不能默认选择。
 - 超过 22/29 只表示继续投资；正式 release threshold、native runtime package budget 与 Desktop integration 仍需
   单独审批。

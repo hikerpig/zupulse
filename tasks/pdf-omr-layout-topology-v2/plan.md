@@ -64,12 +64,14 @@ validation，不能以论文引用代替实证。
 2. [x] 在不训练模型的 target-level prototype 中比较两个表示：贴近 OLA 的 `system/staff box objects`，以及贴近 DWD
        的 `system/staff center energy maps`。检查相邻真实 instances 是否保持可分、增强后顺序/bounds 是否合法、target
        是否 byte-identical；只保留更直接满足当前 row-center/count contract 的一种。
-3. [ ] 只训练一个 compact multi-head candidate。训练目标直接对应选定的 instance representation 与 per-system staff
-       count，不再以 filled system rectangle Dice 作为主要优化目标。
-4. [ ] 先在 balanced synthetic validation 报告 system-center exact、staff-count macro exact 和 topology-exact；若
-       1/2/3 任一类别明显失效，停止，不运行 OLiMPiC 调参。
-5. [ ] 使用一套冻结的全局后处理重跑全部 29 个 OLiMPiC development pages；不允许 per-work/per-page 参数或人工修正。
-6. [ ] 若通过 investment gate，再验证 PyTorch/ONNX canonical output、overlay、materialization 与 ordered crop hashes
+3. [x] 训练 compact row-energy prototype，并在 isolated failure 后做一次 count-conditioned warm-start correction。两者均在
+       synthetic gate 停止；没有运行 OLiMPiC，也没有继续搜索 threshold/gap/partition penalty。
+4. [x] 在 balanced synthetic validation 报告 system-center exact、staff-count exact 和 topology-exact。staff-center
+       evidence 通过，但完整 topology 和 1-staff 类别失败，结论为 `STOP_ROW_ENERGY`。
+5. [ ] 保留二维 instance context，做最小 `system/staff box-object` target 与 runtime probe；先复用现有 PyTorch，不新增
+       Ultralytics、torchvision 或产品 dependency。只有该表示在 synthetic validation 过 gate 才运行 OLiMPiC。
+6. [ ] 使用一套冻结的全局后处理重跑全部 29 个 OLiMPiC development pages；不允许 per-work/per-page 参数或人工修正。
+7. [ ] 若通过 investment gate，再验证 PyTorch/ONNX canonical output、overlay、materialization 与 ordered crop hashes
        的重复运行一致性；产品 runtime 仍保持 `STOP`。
 
 ## Acceptance criteria
@@ -104,6 +106,15 @@ validation，不能以论文引用代替实证。
 - train：510/512 center-compatible；2 个并排或非严格 row-order pages 明确排除，不删除 source artifacts
 - active system target rows：train `188066 -> 31155`；validation `45771 -> 7230`
 - durable evidence：`tools/pdf-omr-cli/reports/exploratory/layout-topology-target-v2/`
+
+当前 row-energy candidate checkpoint：
+
+- two-head prototype：staff-center 121/128 page exact；oracle-band count `1:40/40 / 2:69/69 / 3:366/373`；
+  system-center 8/128 page exact
+- count-conditioned warm correction：动态规划 topology 70/128；system exact
+  `1:3/40 / 2:39/69 / 3:206/373`
+- 决策：`STOP_ROW_ENERGY`，不运行 OLiMPiC；下一步转向保留二维 context 的 box-object target
+- durable evidence：`tools/pdf-omr-cli/reports/exploratory/layout-topology-row-energy-v1/`
 
 ## Open decisions
 

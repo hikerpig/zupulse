@@ -30,12 +30,18 @@ def build_center_energy_targets(
     if min(height, system_sigma, staff_sigma) < 1:
         raise ValueError("target height and sigmas must be positive")
     system_centers = []
+    system_centers_by_staff_count = {count: [] for count in (1, 2, 3)}
     staff_centers = []
     for system in annotation["systems"]:
         bbox = system["normalizedBBox"]
-        system_centers.append(_row(bbox["y"] + bbox["height"] / 2, height))
+        staff_count = system["staffCount"]
+        if staff_count not in system_centers_by_staff_count:
+            raise ValueError("staffCount must be between one and three")
+        system_center = _row(bbox["y"] + bbox["height"] / 2, height)
+        system_centers.append(system_center)
+        system_centers_by_staff_count[staff_count].append(system_center)
         lines = system["staffLinePolylines"]
-        if len(lines) != system["staffCount"] * 5:
+        if len(lines) != staff_count * 5:
             raise ValueError("staff-line topology does not match staffCount")
         for index in range(0, len(lines), 5):
             middle_line = lines[index + 2]
@@ -48,5 +54,8 @@ def build_center_energy_targets(
         "systemCenters": system_centers,
         "staffCenters": staff_centers,
         "systemEnergy": _energy(system_centers, height, system_sigma),
+        "systemEnergyByStaffCount": np.stack(
+            [_energy(system_centers_by_staff_count[count], height, system_sigma) for count in (1, 2, 3)]
+        ),
         "staffEnergy": _energy(staff_centers, height, staff_sigma),
     }

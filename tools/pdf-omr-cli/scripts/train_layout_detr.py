@@ -15,8 +15,8 @@ import torch
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
-from layout_detr_metrics import decode_predictions, evaluate_page, summarize_pages
-from layout_detr_targets import LABELS, build_detr_coco_annotation
+from layout_detr_metrics import decode_predictions, evaluate_ola_page, evaluate_page, summarize_ola_pages, summarize_pages
+from layout_detr_targets import OLA_LABELS, LABELS, build_detr_coco_annotation, build_ola_detr_coco_annotation
 from train_staff_line_segmenter import choose_device
 
 
@@ -28,25 +28,43 @@ SOURCE_SHA256 = {
     "preprocessor_config.json": "84084dff7cb5f0ab9394adc87f34d813a4e0c3d7ad56aa7d73d775174ffaca3f",
     "pytorch_model.bin": "9400d5a6a433c73bb3440f42daab69a7b728b4bce0922904ac4779cb04e08989",
 }
+DOCLAYNET_REVISION = "c5946fb892bd99f527c0dd69577b9e9e55364f8f"
+DOCLAYNET_SOURCE_SHA256 = {
+    "README.md": "1eccacf4a44a5e977ee5db38b777ac186375c7ac02f594ece5e7efdf4cb8363c",
+    "config.json": "01d2bd3356abd64b84b837294782b28a4052f1a36b19e3a9c7d84f75ee15d5e6",
+    "preprocessor_config.json": "48aaaeafe0e746877c41969391577458d8164ef1b22050fd3c330f713f81c556",
+    "model.safetensors": "e3861d34685d3b36e5f38370597daf98fb2f98a852cfa5c125035057ded06809",
+}
 MODEL_PROFILES = {
     "detr": {
         "activation": "softmax",
         "architecture": "facebook-detr-resnet-50-layout-v1",
+        "labels": LABELS,
+        "metricMode": "count-conditioned",
         "modelType": "detr",
         "revision": MODEL_REVISION,
         "sourceFiles": SOURCE_SHA256,
+        "targetMode": "count-conditioned",
     },
     "deformable-detr-doclaynet": {
         "activation": "sigmoid",
         "architecture": "aryn-deformable-detr-doclaynet-layout-v1",
+        "labels": LABELS,
+        "metricMode": "count-conditioned",
         "modelType": "deformable_detr",
-        "revision": "c5946fb892bd99f527c0dd69577b9e9e55364f8f",
-        "sourceFiles": {
-            "README.md": "1eccacf4a44a5e977ee5db38b777ac186375c7ac02f594ece5e7efdf4cb8363c",
-            "config.json": "01d2bd3356abd64b84b837294782b28a4052f1a36b19e3a9c7d84f75ee15d5e6",
-            "preprocessor_config.json": "48aaaeafe0e746877c41969391577458d8164ef1b22050fd3c330f713f81c556",
-            "model.safetensors": "e3861d34685d3b36e5f38370597daf98fb2f98a852cfa5c125035057ded06809",
-        },
+        "revision": DOCLAYNET_REVISION,
+        "sourceFiles": DOCLAYNET_SOURCE_SHA256,
+        "targetMode": "count-conditioned",
+    },
+    "deformable-detr-doclaynet-ola": {
+        "activation": "sigmoid",
+        "architecture": "aryn-deformable-detr-doclaynet-ola-layout-v1",
+        "labels": OLA_LABELS,
+        "metricMode": "ola",
+        "modelType": "deformable_detr",
+        "revision": DOCLAYNET_REVISION,
+        "sourceFiles": DOCLAYNET_SOURCE_SHA256,
+        "targetMode": "ola",
     },
 }
 
@@ -84,9 +102,13 @@ def sampling_weights(pages: list[dict[str, object]], *, rare_multiplier: int) ->
 
 
 class LayoutDetrDataset(Dataset[tuple[Image.Image, dict[str, object]]]):
-    def __init__(self, root: Path, pages: list[dict[str, object]]) -> None:
+    def __init__(self, root: Path, pages: list[dict[str, object]], *, target_mode: str) -> None:
         self.root = root.resolve()
         self.pages = pages
+        self.target_builder = {
+            "count-conditioned": build_detr_coco_annotation,
+            "ola": build_ola_detr_coco_annotation,
+        }[target_mode]
 
     def __len__(self) -> int:
         return len(self.pages)
@@ -105,7 +127,7 @@ class LayoutDetrDataset(Dataset[tuple[Image.Image, dict[str, object]]]):
         with Image.open(image_path) as source:
             image = source.convert("RGB")
         annotation = json.loads(annotation_path.read_bytes())
-        return image, build_detr_coco_annotation(annotation, image_id=index, image_size=image.size), annotation
+        return image, self.target_builder(annotation, image_id=index, image_size=image.size), annotation
 
     def __getitem__(self, index: int) -> tuple[Image.Image, dict[str, object]]:
         image, target, _ = self.load(index)
@@ -135,6 +157,7 @@ def main() -> None:
     if args.epochs < 1 or args.batch_size < 1 or args.shortest_edge < 1 or args.longest_edge < args.shortest_edge:
         raise ValueError("training dimensions and counts are invalid")
     profile = model_profile(args.architecture)
+    labels = profile["labels"]
     source_files = validate_source_model(args.source_model, profile["sourceFiles"])
 
     from transformers import (
@@ -159,8 +182,8 @@ def main() -> None:
     torch.use_deterministic_algorithms(True)
     slice_bytes = args.slice.read_bytes()
     plan = json.loads(slice_bytes)
-    train = LayoutDetrDataset(args.dataset_root, plan["train"])
-    validation = LayoutDetrDataset(args.dataset_root, plan["validation"])
+    train = LayoutDetrDataset(args.dataset_root, plan["train"], target_mode=profile["targetMode"])
+    validation = LayoutDetrDataset(args.dataset_root, plan["validation"], target_mode=profile["targetMode"])
     generator = torch.Generator().manual_seed(args.seed)
     sampler = WeightedRandomSampler(
         sampling_weights(plan["train"], rare_multiplier=args.rare_multiplier),
@@ -180,9 +203,9 @@ def main() -> None:
     loader = DataLoader(train, batch_size=args.batch_size, sampler=sampler, collate_fn=collate, num_workers=0)
     config = config_class.from_pretrained(args.source_model, local_files_only=True)
     config.use_pretrained_backbone = False
-    config.num_labels = len(LABELS)
-    config.id2label = dict(enumerate(LABELS))
-    config.label2id = {label: index for index, label in enumerate(LABELS)}
+    config.num_labels = len(labels)
+    config.id2label = dict(enumerate(labels))
+    config.label2id = {label: index for index, label in enumerate(labels)}
     model = model_class.from_pretrained(
         args.source_model,
         config=config,
@@ -206,13 +229,13 @@ def main() -> None:
     for epoch in range(args.epochs):
         model.train()
         losses = []
-        for inputs, labels in loader:
+        for inputs, batch_labels in loader:
             optimizer.zero_grad(set_to_none=True)
-            labels = [{name: value.to(device) for name, value in item.items()} for item in labels]
+            batch_labels = [{name: value.to(device) for name, value in item.items()} for item in batch_labels]
             output = model(
                 pixel_values=inputs["pixel_values"].to(device),
                 pixel_mask=inputs["pixel_mask"].to(device),
-                labels=labels,
+                labels=batch_labels,
             )
             output.loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 0.1)
@@ -238,8 +261,13 @@ def main() -> None:
                 output.pred_boxes[0].cpu().numpy(),
                 threshold=SCORE_THRESHOLD,
                 activation=profile["activation"],
+                class_count=len(labels),
             )
-            page_result = evaluate_page(predictions, annotation)
+            page_result = (
+                evaluate_ola_page(predictions, annotation)
+                if profile["metricMode"] == "ola"
+                else evaluate_page(predictions, annotation)
+            )
             page_results.append(page_result)
             raw_predictions.append(
                 {
@@ -248,7 +276,7 @@ def main() -> None:
                     "scoreId": plan["validation"][index]["scoreId"],
                 }
             )
-    metrics = summarize_pages(page_results)
+    metrics = summarize_ola_pages(page_results) if profile["metricMode"] == "ola" else summarize_pages(page_results)
     metrics["gatePassed"] = metrics["macroClassExact"] >= 0.9 and min(metrics["classExact"]) >= 0.85
 
     args.output.mkdir(parents=True)
@@ -266,7 +294,7 @@ def main() -> None:
         "epochs": args.epochs,
         "history": history,
         "imageSize": {"longestEdge": args.longest_edge, "shortestEdge": args.shortest_edge},
-        "labels": list(LABELS),
+        "labels": list(labels),
         "learningRate": args.learning_rate,
         "metrics": metrics,
         "modelRevision": profile["revision"],
@@ -281,6 +309,7 @@ def main() -> None:
         "seed": args.seed,
         "sliceSha256": hashlib.sha256(slice_bytes).hexdigest(),
         "sourceFiles": source_files,
+        "targetMode": profile["targetMode"],
         "trainPageCount": len(train),
         "validationPageCount": len(validation),
         "validationPredictionsSha256": hashlib.sha256(raw_bytes).hexdigest(),

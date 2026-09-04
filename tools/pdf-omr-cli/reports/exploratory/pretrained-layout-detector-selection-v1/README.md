@@ -190,7 +190,32 @@ and `staff` boxes, then count matched staff centers inside each system. This is 
 that the original research basis described. It removes the confound where the rare semantic class is also the
 smallest box class: the same frozen train split contains only 88 1-staff system labels from 13 pages, but contains
 2,098 systems and 5,319 staffs as class-agnostic objects. Validation contains 482 systems and 1,297 staffs. This
-boundary is not authorized by either count-conditioned probe, so stop for approval.
+boundary was approved as the next probe.
+
+## Pre-registered OLA-style probe
+
+Train the original pinned DocLayNet Deformable DETR checkpoint with exactly two foreground classes, `system` and
+`staff`. Derive each predicted system's staff count by assigning retained staff centers to containing predicted
+system boxes. This follows OLA's hierarchical object decomposition while retaining the already licensed and pinned
+DocLayNet initialization; it does not reuse either failed count-conditioned checkpoint.
+
+The fixed training protocol is CPU, 6 epochs, batch size 4, 512-pixel shortest edge, 768-pixel longest edge, AdamW
+with `1e-4` detector/transformer learning rate, `1e-5` backbone learning rate, and `1e-4` weight decay. Sampling is
+uniform (`rareMultiplier=1`): after removing count-conditioned labels there is no rare training class, so repeating
+the 13 pages that happen to contain 1-staff systems would distort the object distribution rather than balance it.
+The score threshold remains `0.5`, and validation is read exactly once after epoch 6.
+
+The balanced-validation gate remains staff-count macro exact >= 0.90 and every derived 1/2/3-staff class exact >=
+0.85. System/staff object localization and topology-exact pages are reported as diagnostics. If the gate fails,
+stop without OLiMPiC evaluation or threshold/epoch search. If it passes, freeze the containment assembly and run all
+29 OLiMPiC development pages; the frozen holdout remains unread.
+
+The dependency-free target adapter converted all pages without exclusions. Train emits 2,098 `system` and 5,319
+`staff` objects (canonical target SHA-256
+`574294e42ec2b70badbd636c8a1b6dadbb4d917bf1918b734f99f6dbe881dcc0`); validation emits 482 `system` and 1,297
+`staff` objects (SHA-256 `f27b8f6833002565fa438770e202db297a0871cb9821446c23b795c1bed189e8`). Every one of the
+6,616 staff-box centers lies inside its owning truth system box. A two-page, one-epoch CPU smoke completed training,
+one-time validation, safe serialization, and canonical summary output; its accuracy is not model-quality evidence.
 
 ## Stop conditions
 

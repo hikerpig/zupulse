@@ -78,9 +78,14 @@ validation，不能以论文引用代替实证。
 7. [x] 执行获批的 DocLayNet-pretrained multi-scale Deformable DETR。保持其余 protocol 不变后仅达到 46/128
        topology-exact，class exact 为 `1:0.000 / 2:0.739 / 3:0.673`；结论
        `STOP_DEFORMABLE_DETR_COUNT_CLASS_V1`，没有运行 OLiMPiC。
-8. [ ] 使用一套冻结的全局后处理重跑全部 29 个 OLiMPiC development pages；不允许 per-work/per-page 参数或人工修正。
-9. [ ] 若通过 investment gate，再验证 PyTorch/ONNX canonical output、overlay、materialization 与 ordered crop hashes
-       的重复运行一致性；产品 runtime 仍保持 `STOP`。
+8. [ ] 执行获批的 OLA-style `system + staff` Deformable DETR probe：从原始 DocLayNet checkpoint 重新训练两个
+       class-agnostic object classes，以 staff center containment/count 恢复每个 system 的 `staffCount`。固定同一 split、
+       `0.5` threshold、512/768 image size、AdamW 与 batch size 4；改为 6 epochs，并因 ontology 中已无 rare class 而采用
+       uniform sampling（`rareMultiplier=1`）。只在训练结束后读取一次 balanced validation。
+9. [ ] 若 OLA-style probe 达到 staff-count macro exact >= 0.90 且 1/2/3-staff 各类 >= 0.85，使用同一套冻结全局
+       assembly 重跑全部 29 个 OLiMPiC development pages；否则停止并汇报，不搜索 threshold、epoch 或 page-specific 参数。
+10. [ ] 若通过 investment gate，再验证 PyTorch/ONNX canonical output、overlay、materialization 与 ordered crop hashes
+        的重复运行一致性；产品 runtime 仍保持 `STOP`。
 
 ## Acceptance criteria
 
@@ -153,6 +158,15 @@ validation，不能以论文引用代替实证。
   `0.471`；`STOP_DEFORMABLE_DETR_COUNT_CLASS_V1`
 - multi-scale 没有修复 1-staff 且回归常见类，拒绝 scale-only hypothesis；trained safetensors SHA-256
   `82724e15447210adbcd5de47a8b04b3ffe15b39d3e783ec83c5c02013d8b532a`
+- 已批准下一候选：OLA-style class-agnostic `system + staff` objects。它不再把 smallest box 与 rare semantic class 绑定；
+  训练证据为 2,098 systems + 5,319 staffs，而不是仅来自 13 pages 的 88 个 1-staff labels。
+- 预注册训练 protocol：从原始 DocLayNet checkpoint 初始化，CPU、6 epochs、batch 4、uniform sampling、固定
+  `0.5` threshold；一次性 balanced-validation gate，失败不运行 OLiMPiC。
+- OLA target audit：train `2,098 systems / 5,319 staffs`，canonical SHA-256
+  `574294e42ec2b70badbd636c8a1b6dadbb4d917bf1918b734f99f6dbe881dcc0`；validation
+  `482 systems / 1,297 staffs`，canonical SHA-256
+  `f27b8f6833002565fa438770e202db297a0871cb9821446c23b795c1bed189e8`。全部 6,616 个 staff centers 位于所属
+  truth system bbox；2-page / 1-epoch CPU smoke 已完成 train、validation、safe serialization 与 summary 输出。
 - durable evidence：`tools/pdf-omr-cli/reports/exploratory/pretrained-layout-detector-selection-v1/`
 
 ## Open decisions
@@ -166,8 +180,5 @@ validation，不能以论文引用代替实证。
   `Aryn/deformable-detr-DocLayNet@c5946fb892bd99f527c0dd69577b9e9e55364f8f`，以 document-layout pretrained
   representation 验证 multi-scale 假设；Apache-2.0 的 `SenseTime/deformable-detr` 仅作 COCO-domain control。当前
   OLA/Ultralytics weights/distribution gate 仍未通过。
-- 新候选是否把 ontology 改为 class-agnostic `system + staff` objects，再由 containment/count 确定 1/2/3-staff。它直接对应
-  OLA 的分层 objects，也把训练证据从 13 pages / 88 rare class systems 转换为 2,098 system 与 5,319 staff objects；但这是
-  新的 target/model contract，必须先获批准。
 - 超过 22/29 只表示继续投资；正式 release threshold、native runtime package budget 与 Desktop integration 仍需
   单独审批。

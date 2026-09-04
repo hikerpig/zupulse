@@ -23,6 +23,7 @@ class TrainLayoutDetrTest(unittest.TestCase):
         ]
 
         self.assertEqual(sampling_weights(pages, rare_multiplier=4), [1.0, 4.0, 1.0])
+        self.assertEqual(sampling_weights(pages, rare_multiplier=1), [1.0, 1.0, 1.0])
 
     def test_rejects_invalid_sampling_multiplier(self) -> None:
         with self.assertRaisesRegex(ValueError, "rare multiplier"):
@@ -51,6 +52,15 @@ class TrainLayoutDetrTest(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "unsupported architecture"):
             model_profile("unknown")
+
+    def test_selects_ola_deformable_doclaynet_profile(self) -> None:
+        profile = model_profile("deformable-detr-doclaynet-ola")
+
+        self.assertEqual(profile["activation"], "sigmoid")
+        self.assertEqual(profile["labels"], ("system", "staff"))
+        self.assertEqual(profile["metricMode"], "ola")
+        self.assertEqual(profile["targetMode"], "ola")
+        self.assertEqual(profile["revision"], "c5946fb892bd99f527c0dd69577b9e9e55364f8f")
 
     def test_clones_shared_parameters_for_safe_serialization(self) -> None:
         shared = torch.nn.Linear(2, 2)

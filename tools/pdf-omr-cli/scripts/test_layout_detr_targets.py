@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from layout_detr_targets import LABELS, build_detr_coco_annotation
+from layout_detr_targets import OLA_LABELS, LABELS, build_detr_coco_annotation, build_ola_detr_coco_annotation
 
 
 def _system(*, x: float, y: float, width: float, height: float, staff_count: int) -> dict[str, object]:
@@ -18,7 +18,49 @@ def _system(*, x: float, y: float, width: float, height: float, staff_count: int
     }
 
 
+def _ola_system(*, x: float, y: float, width: float, height: float, staff_ys: list[float]) -> dict[str, object]:
+    lines = []
+    for staff_y in staff_ys:
+        for offset in (0.0, 0.01, 0.02, 0.03, 0.04):
+            lines.append([{"x": x, "y": staff_y + offset}, {"x": x + width, "y": staff_y + offset}])
+    return {
+        "staffCount": len(staff_ys),
+        "normalizedBBox": {"x": x, "y": y, "width": width, "height": height},
+        "staffLinePolylines": lines,
+    }
+
+
 class LayoutDetrTargetsTest(unittest.TestCase):
+    def test_builds_hierarchical_system_and_staff_objects(self) -> None:
+        annotation = {
+            "systems": [
+                _ola_system(x=0.5, y=0.1, width=0.4, height=0.2, staff_ys=[0.11, 0.21]),
+                _ola_system(x=0.1, y=0.1, width=0.3, height=0.1, staff_ys=[0.12]),
+            ]
+        }
+
+        target = build_ola_detr_coco_annotation(annotation, image_id=2, image_size=(1000, 500))
+
+        self.assertEqual(OLA_LABELS, ("system", "staff"))
+        self.assertEqual(
+            [(item["category_id"], [round(value, 6) for value in item["bbox"]]) for item in target["annotations"]],
+            [
+                (0, [100.0, 50.0, 300.0, 50.0]),
+                (1, [100.0, 60.0, 300.0, 20.0]),
+                (0, [500.0, 50.0, 400.0, 100.0]),
+                (1, [500.0, 55.0, 400.0, 20.0]),
+                (1, [500.0, 105.0, 400.0, 20.0]),
+            ],
+        )
+        self.assertEqual([item["id"] for item in target["annotations"]], [2000, 2001, 2002, 2003, 2004])
+
+    def test_ola_target_rejects_invalid_staff_points(self) -> None:
+        system = _ola_system(x=0.1, y=0.1, width=0.8, height=0.2, staff_ys=[0.12])
+        system["staffLinePolylines"][0][0]["x"] = 1.1
+
+        with self.assertRaisesRegex(ValueError, "staff-line point must be inside the page"):
+            build_ola_detr_coco_annotation({"systems": [system]}, image_id=1, image_size=(100, 100))
+
     def test_builds_sorted_coco_boxes_with_count_conditioned_classes(self) -> None:
         annotation = {
             "systems": [

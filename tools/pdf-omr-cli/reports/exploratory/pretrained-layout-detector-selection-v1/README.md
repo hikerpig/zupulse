@@ -64,6 +64,21 @@ a truth system only when its center lies inside the truth box and its 1/2/3-staf
 is the unweighted mean of the three classes. A page is topology-exact only when its complete reading-ordered
 prediction sequence has the same length, matching class, and an in-box center for every truth system.
 
+Frozen training protocol: 10 epochs, batch size 4, 512-pixel shortest edge, 768-pixel longest edge, AdamW with
+`1e-4` detector/transformer learning rate, `1e-5` backbone learning rate and `1e-4` weight decay. Pages containing
+the rare 1-staff class receive 4x sampling weight. Validation is not evaluated between epochs and therefore cannot
+select an epoch. The isolated environment pins Python 3.13.3, Pillow 11.1.0, SciPy 1.16.1, timm 1.0.19, PyTorch
+2.8.0, TorchVision 0.23.0, and Transformers 4.54.0.
+
+Pinned source revision: `557a3b6fcdb1be415f074c22da2e16ab4f7e8265`.
+
+| Artifact                   | SHA-256                                                            |
+| -------------------------- | ------------------------------------------------------------------ |
+| `README.md`                | `bc7d74d96a9101113c06be3a90975510dd19671382eb6fdfc5d1edbb042a723b` |
+| `config.json`              | `e7bcf3992363f27717a863f14b193140ad2e41d4338ee012730e58a92cae17e6` |
+| `preprocessor_config.json` | `84084dff7cb5f0ab9394adc87f34d813a4e0c3d7ad56aa7d73d775174ffaca3f` |
+| `pytorch_model.bin`        | `9400d5a6a433c73bb3440f42daab69a7b728b4bce0922904ac4779cb04e08989` |
+
 ## Target adapter checkpoint
 
 The dependency-free `layout_detr_targets.py` adapter converts the existing normalized topology annotations to the

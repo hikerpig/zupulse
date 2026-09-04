@@ -58,6 +58,12 @@ Primary sources:
    `staff` object class in a single registered follow-up. Otherwise stop.
 6. Run the 29-page OLiMPiC development set only after the synthetic gate passes. The frozen holdout remains unread.
 
+Frozen metric protocol: retain queries whose best foreground softmax score is at least `0.5`; a prediction matches
+a truth system only when its center lies inside the truth box and its 1/2/3-staff class agrees. `classExact` is
+`matched / max(truth, predicted)` so false positives and false negatives both reduce the score. `macroClassExact`
+is the unweighted mean of the three classes. A page is topology-exact only when its complete reading-ordered
+prediction sequence has the same length, matching class, and an in-box center for every truth system.
+
 ## Target adapter checkpoint
 
 The dependency-free `layout_detr_targets.py` adapter converts the existing normalized topology annotations to the

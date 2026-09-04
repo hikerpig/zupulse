@@ -27,3 +27,26 @@ Synthetic validation 的 system-band Dice 为 `0.9297`，staff-line Dice 仅 `0.
 system-band 定位在这个 development corpus 上跨过 `20/29` investment checkpoint；它没有解决通用
 staff-count/line reconstruction，也没有 system-aligned MusicXML quality evidence。产品决策保持 `STOP`，
 不新增 `onnxruntime-node`，不修改 App、Bridge 或 detector default。
+
+## 失败页诊断与下一候选边界
+
+22/29 之后的 7 个失败页不是单一 NMS 参数问题：4 页产生额外 system peaks，另 3 页数量正确但 ordered center
+落在 truth band 外。增大 Gaussian sigma 能修复部分稀疏 work，却会合并其他 dense work 的真实相邻 systems；使用
+peak valley depth 或二维 mask connected component 做全局 merge 也无法分离两类边界，并会回归已通过页面。因此不把
+这些 truth-aware ablation 写入 evaluator。
+
+二维概率审计显示，当前 system head 在多个真实页面的相邻 systems 之间仍输出大面积高概率连通区域。filled system
+rectangle 在 synthetic validation 上的高 Dice 没有转化为 real-domain system separation。与此同时，现有 staff
+head 即使使用 oracle system bands，在原 128-page synthetic validation 上最佳也只有 `49/439` systems、`1/128`
+pages 的 staff count 完全正确；直接对原图做长水平线投影的最佳结果也只有 `73/439` systems、`6/128` pages。
+两条路径都不足以替换固定 `staffCount=3`。
+
+因此下一候选不再调当前 row-score 后处理，而是先建立覆盖 1/2/3-staff 的 balanced validation slice，再直接监督
+互不粘连的 `system center` 与 `staff center/count`。只有 staff-count macro exact 与各类别下限先通过 synthetic
+gate，才允许用一套冻结的全局参数重跑 29 个 OLiMPiC development pages。执行状态见
+`tasks/pdf-omr-layout-topology-v2/plan.md`。
+
+既有 composer-grouped validation 本身不能承担这个 gate：528 个 eligible pages 只包含 `1:1 / 2:52 / 3:1772`
+visible-staff systems，且 131 个 validation works 全部 declared 3-staff。新 candidate 必须从完整 eligible source
+pool 重新建立按 work/composer 隔离的 topology split，并优先把稀缺 1/2-staff source groups 留作 validation；不得把
+原 training pages 直接抽出后继续复用旧模型结果。

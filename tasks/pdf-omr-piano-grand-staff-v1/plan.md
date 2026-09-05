@@ -80,5 +80,8 @@ system crops，并在同一套 crops 上报告 Rokot/LEGATO 质量。不为超�
 
 ## Open decisions
 
-- MuseScore OMR Benchmark ID 4/9 clean PDF 是否并入同一 development 分母：测量 K331 之后再决定，不挡第一刀。
+- MuseScore OMR Benchmark ID 4/9 clean PDF：交给
+  `tasks/pdf-omr-piano-grand-staff-segmentation-v1/plan.md`，本测量 slice 已关闭。
 - UNet 的 ONNX / `onnxruntime-node` 体积仍不自动进入产品。
+- 后续 segmentation identity 见
+  `docs/specs/2026-09-05-pdf-omr-piano-grand-staff-segmentation.md`。

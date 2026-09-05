@@ -1,0 +1,292 @@
+{
+  "checkpointSha256": "f7996a2b7796c552346fc1fc13ca4b57e95dfb6ce53491a9b3e85b9428384341",
+  "decision": "STOP_SCAN_DOMAIN_V1",
+  "evalReportSha256": "04da08773d3334ecf3dcb41580351725ba15c982c4d1bbaf437b5423b067865c",
+  "overlap": { "b-only": 3, "both": 11, "neither": 4, "unet-only": 11 },
+  "pages": [
+    {
+      "bStatus": "admitted",
+      "detectedSystemCount": 4,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-4945954-full-page",
+      "pageIndex": 0,
+      "relation": "b-only",
+      "unetStatus": "not-admitted"
+    },
+    {
+      "bStatus": "not-admitted",
+      "detectedSystemCount": 5,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-4945954-full-page",
+      "pageIndex": 1,
+      "relation": "unet-only",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "admitted",
+      "detectedSystemCount": 4,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-4945954-full-page",
+      "pageIndex": 2,
+      "relation": "both",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "admitted",
+      "detectedSystemCount": 4,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-4976604-full-page",
+      "pageIndex": 0,
+      "relation": "both",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "admitted",
+      "detectedSystemCount": 5,
+      "expectedSystemCount": 5,
+      "itemId": "olimpic-4976604-full-page",
+      "pageIndex": 1,
+      "relation": "both",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "not-admitted",
+      "detectedSystemCount": 4,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-4985990-full-page",
+      "pageIndex": 0,
+      "relation": "unet-only",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "admitted",
+      "detectedSystemCount": 5,
+      "expectedSystemCount": 5,
+      "itemId": "olimpic-4985990-full-page",
+      "pageIndex": 1,
+      "relation": "both",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "admitted",
+      "detectedSystemCount": 5,
+      "expectedSystemCount": 5,
+      "itemId": "olimpic-4985990-full-page",
+      "pageIndex": 2,
+      "relation": "both",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "not-admitted",
+      "detectedSystemCount": 5,
+      "expectedSystemCount": 5,
+      "itemId": "olimpic-4985990-full-page",
+      "pageIndex": 3,
+      "relation": "unet-only",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "admitted",
+      "detectedSystemCount": 5,
+      "expectedSystemCount": 5,
+      "itemId": "olimpic-4985990-full-page",
+      "pageIndex": 4,
+      "relation": "both",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "not-admitted",
+      "detectedSystemCount": 4,
+      "expectedSystemCount": 3,
+      "itemId": "olimpic-6007571-full-page",
+      "pageIndex": 0,
+      "relation": "unet-only",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "not-admitted",
+      "detectedSystemCount": 5,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-6007571-full-page",
+      "pageIndex": 1,
+      "relation": "neither",
+      "unetStatus": "not-admitted"
+    },
+    {
+      "bStatus": "admitted",
+      "detectedSystemCount": 4,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-6007571-full-page",
+      "pageIndex": 2,
+      "relation": "b-only",
+      "unetStatus": "not-admitted"
+    },
+    {
+      "bStatus": "not-admitted",
+      "detectedSystemCount": 5,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-6007571-full-page",
+      "pageIndex": 3,
+      "relation": "unet-only",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "not-admitted",
+      "detectedSystemCount": 4,
+      "expectedSystemCount": 3,
+      "itemId": "olimpic-5862368-full-page",
+      "pageIndex": 0,
+      "relation": "unet-only",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "not-admitted",
+      "detectedSystemCount": 4,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-5862368-full-page",
+      "pageIndex": 1,
+      "relation": "unet-only",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "not-admitted",
+      "detectedSystemCount": 5,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-5862368-full-page",
+      "pageIndex": 2,
+      "relation": "unet-only",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "not-admitted",
+      "detectedSystemCount": 5,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-5862368-full-page",
+      "pageIndex": 3,
+      "relation": "neither",
+      "unetStatus": "not-admitted"
+    },
+    {
+      "bStatus": "not-admitted",
+      "detectedSystemCount": 4,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-5862368-full-page",
+      "pageIndex": 4,
+      "relation": "neither",
+      "unetStatus": "not-admitted"
+    },
+    {
+      "bStatus": "not-admitted",
+      "detectedSystemCount": 5,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-5862368-full-page",
+      "pageIndex": 5,
+      "relation": "neither",
+      "unetStatus": "not-admitted"
+    },
+    {
+      "bStatus": "not-admitted",
+      "detectedSystemCount": 5,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-5862368-full-page",
+      "pageIndex": 6,
+      "relation": "unet-only",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "admitted",
+      "detectedSystemCount": 4,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-6011095-full-page",
+      "pageIndex": 0,
+      "relation": "both",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "admitted",
+      "detectedSystemCount": 4,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-6011095-full-page",
+      "pageIndex": 1,
+      "relation": "both",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "admitted",
+      "detectedSystemCount": 5,
+      "expectedSystemCount": 5,
+      "itemId": "olimpic-6011095-full-page",
+      "pageIndex": 2,
+      "relation": "b-only",
+      "unetStatus": "not-admitted"
+    },
+    {
+      "bStatus": "admitted",
+      "detectedSystemCount": 4,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-6011095-full-page",
+      "pageIndex": 3,
+      "relation": "both",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "admitted",
+      "detectedSystemCount": 4,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-6011095-full-page",
+      "pageIndex": 4,
+      "relation": "both",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "not-admitted",
+      "detectedSystemCount": 5,
+      "expectedSystemCount": 5,
+      "itemId": "olimpic-6011095-full-page",
+      "pageIndex": 5,
+      "relation": "unet-only",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "admitted",
+      "detectedSystemCount": 4,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-6011095-full-page",
+      "pageIndex": 6,
+      "relation": "both",
+      "unetStatus": "admitted"
+    },
+    {
+      "bStatus": "not-admitted",
+      "detectedSystemCount": 4,
+      "expectedSystemCount": 4,
+      "itemId": "olimpic-6011095-full-page",
+      "pageIndex": 7,
+      "relation": "unet-only",
+      "unetStatus": "admitted"
+    }
+  ],
+  "repeatedEvalIdentical": true,
+  "runtimeDecision": "stop-before-product-integration",
+  "schemaVersion": "1.0.0",
+  "sliceSha256": "dc64fe27d26a109ee20736d6e8fe028da44f7e399f0fcc9fd7ef339df26172e3",
+  "status": "research-checkpoint-failed",
+  "summary": { "admittedPageCount": 14, "pageCount": 29, "workCount": 6, "worksWithAdmittedPage": 5 },
+  "syntheticValidation": {
+    "excludedTrain": 2,
+    "missingTrain": 8,
+    "missingValidation": 5,
+    "staffLineDice": 0.4422980397939682,
+    "systemBandDice": 0.9120438271953214,
+    "trainPageCount": 502,
+    "validationPageCount": 123
+  },
+  "workAdmittedPageCounts": [
+    { "admittedPageCount": 2, "itemId": "olimpic-4945954-full-page", "pageCount": 3 },
+    { "admittedPageCount": 2, "itemId": "olimpic-4976604-full-page", "pageCount": 2 },
+    { "admittedPageCount": 3, "itemId": "olimpic-4985990-full-page", "pageCount": 5 },
+    { "admittedPageCount": 1, "itemId": "olimpic-6007571-full-page", "pageCount": 4 },
+    { "admittedPageCount": 0, "itemId": "olimpic-5862368-full-page", "pageCount": 7 },
+    { "admittedPageCount": 6, "itemId": "olimpic-6011095-full-page", "pageCount": 8 }
+  ]
+}

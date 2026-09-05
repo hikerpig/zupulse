@@ -1,0 +1,42 @@
+{
+  "decision": "GAP_TARGET_NOOP_ON_LIEDER",
+  "minimumInterSystemGapPx": 8,
+  "modelSize": [512, 768],
+  "repeatedRunIdentical": true,
+  "reportSha256": "a080270377a2d64e8b5d26f296bc4b2b2ddce92647768c754ba513da8855d507",
+  "schemaVersion": "1.0.0",
+  "sliceSha256": "dc64fe27d26a109ee20736d6e8fe028da44f7e399f0fcc9fd7ef339df26172e3",
+  "train": {
+    "excluded": [
+      {
+        "imagePath": "augmented/6613436/page-2.png",
+        "pageIndex": 1,
+        "reason": "gapped system band would be non-positive or miss its center",
+        "scoreId": "6613436",
+        "systemCount": 18
+      },
+      {
+        "imagePath": "augmented/6162644/page-2.png",
+        "pageIndex": 1,
+        "reason": "gapped system band would be non-positive or miss its center",
+        "scoreId": "6162644",
+        "systemCount": 3
+      }
+    ],
+    "excludedPageCount": 2,
+    "gappedPageCount": 0,
+    "minimumBackgroundRowsAmongOk": 21,
+    "okPageCount": 510,
+    "pageCount": 512,
+    "unchangedPageCount": 510
+  },
+  "validation": {
+    "excluded": [],
+    "excludedPageCount": 0,
+    "gappedPageCount": 0,
+    "minimumBackgroundRowsAmongOk": 28,
+    "okPageCount": 128,
+    "pageCount": 128,
+    "unchangedPageCount": 128
+  }
+}

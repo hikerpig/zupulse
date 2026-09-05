@@ -13,7 +13,12 @@ import torch
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent))
-from train_layout_segmenter import LayoutDataset, build_model
+from train_layout_segmenter import (
+    LayoutDataset,
+    build_model,
+    pages_compatible_with_system_gap,
+    pages_with_training_artifacts,
+)
 
 
 class TrainLayoutSegmenterTest(unittest.TestCase):
@@ -52,6 +57,53 @@ class TrainLayoutSegmenterTest(unittest.TestCase):
             self.assertEqual(system_mask.shape, (1, 50, 40))
             self.assertGreater(float(system_mask.sum()), 0)
             self.assertEqual(float(system_mask[:, :5].sum()), 0)
+
+    def test_excludes_side_by_side_pages_from_gapped_training(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "page.json").write_text(
+                json.dumps(
+                    {
+                        "systems": [
+                            {"normalizedBBox": {"x": 0.05, "y": 0.2, "width": 0.4, "height": 0.2}},
+                            {"normalizedBBox": {"x": 0.55, "y": 0.2, "width": 0.4, "height": 0.2}},
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            kept, excluded = pages_compatible_with_system_gap(
+                root,
+                [{"imagePath": "page.json", "pageIndex": 0, "scoreId": "side-by-side"}],
+                (512, 768),
+                minimum_inter_system_gap_px=8,
+            )
+
+            self.assertEqual(kept, [])
+            self.assertEqual(excluded[0]["scoreId"], "side-by-side")
+
+    def test_skips_pages_whose_png_or_mask_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            Image.fromarray(np.full((20, 20), 255, dtype=np.uint8)).save(root / "kept.png")
+            Image.fromarray(np.zeros((20, 20), dtype=np.uint8)).save(root / "kept.mask.png")
+            (root / "kept.json").write_text("{}", encoding="utf-8")
+            (root / "missing.json").write_text("{}", encoding="utf-8")
+            kept, missing = pages_with_training_artifacts(
+                root,
+                [
+                    {"imagePath": "kept.png", "maskPath": "kept.mask.png", "pageIndex": 0, "scoreId": "kept"},
+                    {
+                        "imagePath": "missing.png",
+                        "maskPath": "missing.mask.png",
+                        "pageIndex": 1,
+                        "scoreId": "missing",
+                    },
+                ],
+            )
+
+            self.assertEqual([page["scoreId"] for page in kept], ["kept"])
+            self.assertEqual(missing[0]["scoreId"], "missing")
 
 
 if __name__ == "__main__":

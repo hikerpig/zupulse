@@ -463,6 +463,51 @@ checkpoint，不批准 Desktop/runtime 集成，不新增 `onnxruntime-node`，�
 `tools/pdf-omr-cli/reports/development/olimpic-layout-oracle-v1/` 与
 `tools/pdf-omr-cli/reports/development/olimpic-layout-multihead-v1/`。
 
+## 2026-09-04 DETR v1 OLiMPiC topology probe
+
+随后跳过 1-staff synthetic gate，把冻结的 `facebook-detr-resnet-50-layout-v1` 直接评在同一套 29 个 development
+页上。评测使用与 UNet 相同的 Y-band topology 合同，但 `staffCount` 来自预测 class，而不是写死的 3。固定
+threshold `0.5`、图像 512/768、CPU；两次 run 的 prediction SHA 一致。
+
+结果为 16/29 topology-exact、5/6 works，低于 UNet 的 22/29 与 6/6。localization-only 为 17/29；唯一
+class-mismatch 只有 1 页。预测对象为 `1-staff 0 / 2-staff 10 / 3-staff 112`，对照 121 个 3-staff truth。
+失败以 `center-out-of-band`（9）和 `count-mismatch`（3）为主。与 UNet 的页集合为 both 13、UNet-only 9、
+DETR-only 3、neither 4：DETR 恢复了 `5862368` 的 3 个密集失败页，但把 UNet 全过的 `4985990` 打成 0/5。
+
+因此合成 3-staff exact 0.973 没有迁移到扫描域，DETR v1 不能替换 compact UNet。产品 runtime 保持 `STOP`，
+不把 Deformable DETR 或 OLA-style 再送到这 29 页。完整 evidence 位于
+`tools/pdf-omr-cli/reports/exploratory/detr-v1-olimpic-topology-v1/`。
+
+## 2026-09-05 scan-domain compact UNet
+
+随后按批准的 scan-domain Spec 做了两步。gapped system-band（相邻 system 至少 8 行背景）在冻结 Lieder
+512/128 slice 上是 no-op：510/512 train 与 128/128 validation 的 mask 与 filled-band 相同，只有 2 个并排/
+重叠 train 页 fail closed。因此跳过「只改 target」的 Experiment A 训练。
+
+Experiment B 在同一 architecture 与后处理上，对 train 页加上预注册 scan degradation（show-through、
+blur ≤ 1.8、noise σ ≤ 12、2× down/up）。合成 system-band Dice 0.912；29 页 topology-exact 为 **14/29**、
+5/6 works，`5862368` 掉到 0/7。两次 CPU evaluation report SHA 一致。结论 `STOP_SCAN_DOMAIN_V1`：不搜索
+后处理、不把失败页加入训练、不换 detector 家族。`compact-layout-unet-v1` 的 22/29 仍是当前 research
+baseline，产品 runtime 保持 `STOP`。evidence 位于
+`tools/pdf-omr-cli/reports/exploratory/gapped-system-band-target-v1/` 与
+`tools/pdf-omr-cli/reports/exploratory/layout-scan-domain-b-v1/`。
+
+## 当前结论（2026-09-05）
+
+Lieder 排版谱上训练、再用 OLiMPiC 6 works / 29 页 3-staff mixed 扫描当总闸，这条 layout 线已经结案。不要再
+为超过 22/29 换 detector、改 gap、加合成退化或开 1-staff 门。
+
+| 现状                 | 事实                                                                                                                       |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 产品                 | Desktop PDF OMR 仍是实验工作台；Library 导入质量线未过；runtime `STOP`                                                     |
+| 扫描 layout 最好结果 | `compact-layout-unet-v1` **22/29**、6/6 works；`staffCount` 写死为 3；7 页失败是相邻 system 粘连                           |
+| 更通用的尝试         | DETR v1 16/29；gapped band 在 Lieder 上无新信号；scan-degraded UNet 14/29，且 `5862368` 掉到 0                             |
+| 评测集与产品错位     | 29 页全是人声+钢琴 3-staff；Rokot 合同是 1–2 staff；产品主路径是钢琴大谱表                                                 |
+| 下游识别             | detector 裁出的 36 个 3-staff crop：Rokot 0/36 ready，LEGATO 1/36。K331 钢琴 oracle crop：Joint F1 约 0.38，合法小节约 21% |
+
+因此 layout 不再是当前产品瓶颈。UNet 22/29 只保留为扫描域 research baseline，不进入 Desktop。下一阶段必须换
+分母：合同内 2-staff 钢琴 vertical slice，先测现有 detector 与识别，不为刷 OLiMPiC 再训练。
+
 ## 若未来重启
 
 2026-08-17 的 source-independent system-crop 扩样已经执行：46 attempted 中 Rokot 45 success、LEGATO 26
@@ -471,11 +516,14 @@ GT-free selector gate。该结果把下一优先级收敛为 LEGATO part/topolog
 engine 投票或编写更多 selector 规则。证据位于
 `tools/pdf-omr-cli/reports/exploratory/olimpic-source-independent-cross-engine-v1/`，不改写 frozen holdout `STOP`。
 
-新的 discovery 至少需要：
+新的 discovery 不再以超过 OLiMPiC 22/29 为投资条件。优先合同内 2-staff 钢琴 full-page 与 per-system 识别；
+OLiMPiC mixed 3-staff 只作扫描压力测试。若仍做扫描 layout，必须有评测集以外、许可明确的真实扫描训练页，不能
+再用 Lieder 退化近似。
 
-1. 在已完成的 6-work OLiMPiC real-corpus quick screening 基础上，扩充许可明确、包含更多真实印刷扫描与目标
-   钢琴谱型的 corpus，并继续按 work 冻结 split。
-2. 先解决 render/preprocessing domain gap，再比较 engine；不能用放宽 validator 掩盖错误。
+其他约束不变：
+
+1. 不能用放宽 validator 掩盖错误。
+2. 先解决 render/preprocessing domain gap，再比较 engine。
 3. 将 cancel、峰值 GPU/RSS 和逐阶段 wall time 纳入实际 item metrics。
 4. 对 neural decoder 做可复现性诊断，并单独校准 confidence，禁止跨 engine 直接比较 raw score。
 5. 使用新的 protocol/version；本次 frozen report 保持不可变。

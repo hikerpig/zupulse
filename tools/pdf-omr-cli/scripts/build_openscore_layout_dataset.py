@@ -172,16 +172,106 @@ def draw_staff_line_mask(annotation: dict[str, object], size: tuple[int, int]) -
     return mask
 
 
-def draw_system_band_mask(annotation: dict[str, object], size: tuple[int, int]) -> Image.Image:
+MINIMUM_INTER_SYSTEM_GAP_PX = 8
+SCAN_DOMAIN_BLUR_RADIUS_MAX = 1.8
+SCAN_DOMAIN_NOISE_SIGMA_MAX = 12.0
+SCAN_DOMAIN_SHOW_THROUGH_OPACITY = (0.08, 0.12)
+SCAN_DOMAIN_SHOW_THROUGH_SHIFT_PX = (6, 14)
+
+
+class SystemBandGapError(ValueError):
+    """A page cannot keep the required inter-system gap without a non-positive band."""
+
+
+def inter_system_background_rows(bands: list[tuple[int, int]]) -> list[int]:
+    return [next_top - previous_bottom - 1 for (_previous_top, previous_bottom), (next_top, _next_bottom) in zip(bands, bands[1:], strict=False)]
+
+
+def adjust_vertical_bands(
+    bands: list[tuple[int, int]],
+    *,
+    minimum_gap_px: int,
+    image_height: int,
+) -> list[tuple[int, int]]:
+    if minimum_gap_px < 0:
+        raise ValueError("minimum_gap_px must be non-negative")
+    if image_height < 1:
+        raise ValueError("image_height must be positive")
+    adjusted = []
+    centers = []
+    for top, bottom in bands:
+        if not isinstance(top, int) or not isinstance(bottom, int) or top < 0 or bottom >= image_height or bottom < top:
+            raise ValueError("system band must be an inclusive pixel range inside the image")
+        adjusted.append([top, bottom])
+        centers.append((top + bottom) / 2)
+    if minimum_gap_px == 0 or len(adjusted) < 2:
+        return [(top, bottom) for top, bottom in adjusted]
+    for index in range(len(adjusted) - 1):
+        current_gap = adjusted[index + 1][0] - adjusted[index][1] - 1
+        needed = minimum_gap_px - current_gap
+        if needed <= 0:
+            continue
+        lower_shrink = (needed + 1) // 2
+        upper_shrink = needed // 2
+        adjusted[index][1] -= lower_shrink
+        adjusted[index + 1][0] += upper_shrink
+        lower_top, lower_bottom = adjusted[index]
+        upper_top, upper_bottom = adjusted[index + 1]
+        if (
+            lower_bottom < lower_top
+            or upper_bottom < upper_top
+            or not lower_top <= centers[index] <= lower_bottom
+            or not upper_top <= centers[index + 1] <= upper_bottom
+        ):
+            raise SystemBandGapError("gapped system band would be non-positive or miss its center")
+    return [(top, bottom) for top, bottom in adjusted]
+
+
+def system_band_rectangles(
+    annotation: dict[str, object],
+    size: tuple[int, int],
+    *,
+    minimum_inter_system_gap_px: int = 0,
+) -> list[tuple[int, int, int, int]]:
     width, height = size
-    mask = Image.new("L", size, 0)
-    draw = ImageDraw.Draw(mask)
-    for system in annotation["systems"]:
+    if width < 1 or height < 1:
+        raise ValueError("mask size must be positive")
+    systems = annotation.get("systems")
+    if not isinstance(systems, list):
+        raise ValueError("annotation systems must be a list")
+    raw: list[tuple[int, int, int, int, int, int]] = []
+    for system in systems:
+        if not isinstance(system, dict) or not isinstance(system.get("normalizedBBox"), dict):
+            raise ValueError("system normalizedBBox must be an object")
         bbox = system["normalizedBBox"]
         left = round(bbox["x"] * (width - 1))
         top = round(bbox["y"] * (height - 1))
         right = round((bbox["x"] + bbox["width"]) * (width - 1))
         bottom = round((bbox["y"] + bbox["height"]) * (height - 1))
+        raw.append((top, left, left, top, right, bottom))
+    raw.sort()
+    bands = adjust_vertical_bands(
+        [(top, bottom) for _sort_top, _sort_left, _left, top, _right, bottom in raw],
+        minimum_gap_px=minimum_inter_system_gap_px,
+        image_height=height,
+    )
+    return [
+        (left, new_top, right, new_bottom)
+        for (_sort_top, _sort_left, left, _top, right, _bottom), (new_top, new_bottom) in zip(raw, bands, strict=True)
+    ]
+
+
+def draw_system_band_mask(
+    annotation: dict[str, object],
+    size: tuple[int, int],
+    *,
+    minimum_inter_system_gap_px: int = 0,
+) -> Image.Image:
+    mask = Image.new("L", size, 0)
+    draw = ImageDraw.Draw(mask)
+    for left, top, right, bottom in system_band_rectangles(
+        annotation, size, minimum_inter_system_gap_px=minimum_inter_system_gap_px
+    ):
         draw.rectangle((left, top, right, bottom), fill=255)
     return mask
 
@@ -265,6 +355,28 @@ def augment_training_page(image: Image.Image, annotation: dict[str, object], *, 
         "occlusionCount": occlusion_count,
     }
     return AugmentedPage(transformed_image, transformed_mask, transformed_system_mask, transformed_annotation, spec)
+
+
+def apply_scan_domain_degradation(image: Image.Image, *, seed: int) -> Image.Image:
+    """Apply the pre-registered Experiment B photometric degradation. Boxes are unchanged."""
+
+    grayscale = image.convert("L")
+    width, height = grayscale.size
+    rng = np.random.default_rng(seed)
+    opacity = float(rng.uniform(*SCAN_DOMAIN_SHOW_THROUGH_OPACITY))
+    shift = int(rng.integers(SCAN_DOMAIN_SHOW_THROUGH_SHIFT_PX[0], SCAN_DOMAIN_SHOW_THROUGH_SHIFT_PX[1] + 1))
+    show_through = Image.new("L", grayscale.size, 255)
+    show_through.paste(grayscale, (0, shift))
+    pixels = np.asarray(grayscale, dtype=np.float32) * (1.0 - opacity) + np.asarray(show_through, dtype=np.float32) * opacity
+    degraded = Image.fromarray(np.clip(np.rint(pixels), 0, 255).astype(np.uint8), mode="L")
+    blur_radius = float(rng.uniform(0.0, SCAN_DOMAIN_BLUR_RADIUS_MAX))
+    if blur_radius > 0.05:
+        degraded = degraded.filter(ImageFilter.GaussianBlur(blur_radius))
+    noisy = np.asarray(degraded, dtype=np.float32)
+    noisy += rng.normal(0.0, float(rng.uniform(0.8, SCAN_DOMAIN_NOISE_SIGMA_MAX)), size=noisy.shape)
+    degraded = Image.fromarray(np.clip(np.rint(noisy), 0, 255).astype(np.uint8), mode="L")
+    downsized = degraded.resize((max(1, width // 2), max(1, height // 2)), Image.Resampling.BILINEAR)
+    return downsized.resize((width, height), Image.Resampling.BILINEAR)
 
 
 def _homography(source: np.ndarray, destination: np.ndarray) -> np.ndarray:

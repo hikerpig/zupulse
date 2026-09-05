@@ -129,6 +129,11 @@ explanation:
 - parameters: 41,502,152
 - decision: `STOP_DETR_V1`
 
+A later, separately approved OLiMPiC probe skipped the 1-staff synthetic gate and evaluated this same
+checkpoint on the frozen 29-page development set. It reached 16/29 topology-exact pages and 5/6 works,
+below the `compact-layout-unet-v1` 22/29 baseline, and is recorded as `STOP_DETR_V1_OLIMPIC` in
+`reports/exploratory/detr-v1-olimpic-topology-v1/`.
+
 The next hypothesis is materially different and is not authorized by the original DETR probe. The
 [Deformable DETR paper](https://arxiv.org/abs/2010.04159) identifies DETR's limited feature spatial resolution and
 reports its largest benefit on small objects by using multi-scale deformable attention. That mechanism matches the
@@ -265,6 +270,26 @@ matching collapse, not checkpoint serialization, threshold-only calibration, or 
 A further experiment should first use a small training-only split to compare zero-dropout training against the
 registered configuration, with deterministic eval box loss and top-N localization as its gate. It must not reuse
 the 128-page validation until that miniature control shows a material deterministic-localization gain.
+
+## DETR v1 OLiMPiC result
+
+The approved follow-up loaded the pinned DETR v1 checkpoint and evaluated the 29 OLiMPiC development pages once
+under the frozen `0.5` threshold, without 1-staff gating, threshold search, or holdout access. Staff count came
+from the predicted class. The same Y-band topology contract as `compact-layout-unet-v1` scored 16/29 pages and
+5/6 works; localization-only (ignore class) was 17/29. Predicted objects were `1-staff 0 / 2-staff 10 / 3-staff
+112` against 121 three-staff truth systems. Failure classes were `center-out-of-band 9`, `count-mismatch 3`, and
+`class-mismatch 1`. Two CPU runs produced identical prediction SHA-256
+`dd62611ed161a238ed1c05d23f85af73974f80daef3e33fbe92545413c020096`.
+
+Page overlap with the UNet baseline is `both 13 / unet-only 9 / detr-only 3 / neither 4`. DETR recovered three
+dense `5862368` pages that UNet missed, and lost all five `4985990` pages that UNet admitted. The synthetic
+3-staff class exact of 0.973 did not transfer to the scan domain at the 22/29 investment bar.
+
+- decision: `STOP_DETR_V1_OLIMPIC`
+- durable evidence: `tools/pdf-omr-cli/reports/exploratory/detr-v1-olimpic-topology-v1/`
+
+Do not send Deformable DETR or OLA-style checkpoints to this 29-page set. The remaining layout investment, if
+any, is scan-domain data for the compact UNet's seven failures rather than another detector family.
 
 ## Stop conditions
 

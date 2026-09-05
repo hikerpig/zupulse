@@ -83,10 +83,12 @@ validation，不能以论文引用代替实证。
        `0.5` threshold、512/768 image size、AdamW 与 batch size 4；改为 6 epochs，并因 ontology 中已无 rare class 而采用
        uniform sampling（`rareMultiplier=1`）。只在训练结束后读取一次 balanced validation。训练 loss 从 `11.1181` 降至
        `2.0119`，但固定 threshold 下没有保留任何 validation object，结论 `STOP_DEFORMABLE_DETR_OLA_V1`。
-9. [ ] 若 OLA-style probe 达到 staff-count macro exact >= 0.90 且 1/2/3-staff 各类 >= 0.85，使用同一套冻结全局
-       assembly 重跑全部 29 个 OLiMPiC development pages；否则停止并汇报，不搜索 threshold、epoch 或 page-specific 参数。
-10. [ ] 若通过 investment gate，再验证 PyTorch/ONNX canonical output、overlay、materialization 与 ordered crop hashes
-        的重复运行一致性；产品 runtime 仍保持 `STOP`。
+9. [x] OLA-style probe 未过 synthetic gate，按预注册规则不跑 OLiMPiC。
+10. [x] 另批跳过 1-staff synthetic gate，用冻结 DETR v1 直接跑 29 个 OLiMPiC development pages。topology-exact
+        16/29、works 5/6，低于 UNet 22/29 与 6/6；结论 `STOP_DETR_V1_OLIMPIC`。未搜索 threshold，未读取 holdout。
+11. [x] 不把 Deformable DETR / OLA-style 再送到这 29 页。后续 layout 转到
+        `tasks/pdf-omr-layout-scan-domain-v1/plan.md` 与
+        `docs/specs/2026-09-04-pdf-omr-layout-scan-domain.md`。本 bundle 的通用 1/2/3 detector 目标关闭。
 
 ## Acceptance criteria
 
@@ -186,6 +188,11 @@ validation，不能以论文引用代替实证。
   `eval()` 为 `7.18`，仅禁用 functional dropout 后 `train()` 精确回到 `7.18`。根因结论为 dropout-dependent stochastic
   matching collapse，而非 threshold calibration、checkpoint serialization 或 rare-class-only failure。
 - durable evidence：`tools/pdf-omr-cli/reports/exploratory/pretrained-layout-detector-selection-v1/`
+- DETR v1 OLiMPiC：16/29 topology-exact，5/6 works，localization 17/29；与 UNet overlap `both 13 /
+unet-only 9 / detr-only 3 / neither 4`；`STOP_DETR_V1_OLIMPIC`。predictions SHA-256
+  `dd62611ed161a238ed1c05d23f85af73974f80daef3e33fbe92545413c020096`；canonical report SHA-256
+  `158d70e4018feb6523ac7a1fb6d2d955e93c9e8dfd7fdd7fc95a3f274c897187`。durable evidence：
+  `tools/pdf-omr-cli/reports/exploratory/detr-v1-olimpic-topology-v1/`
 
 ## Open decisions
 
@@ -194,14 +201,8 @@ validation，不能以论文引用代替实证。
 - OLA-style run 的 0 retained objects 只证明固定 `0.5` protocol 失败，不能在不新增实验边界的前提下区分 confidence
   calibration、6-epoch under-training 与 ontology/box target 本身失败。training-only diagnostic 已排除 calibration-only、
   checkpoint serialization 与 rare-class-only explanations，并把失败定位到 dropout-dependent stochastic matching 与未收敛的
-  deterministic box path。后续若继续，应先用不读取 validation 的 zero-dropout miniature control 证伪该根因，而不是在当前
-  validation 上搜索 threshold 或追加 epochs。
-- 下一阶段采用许可可接受的 pretrained detector；若首选 DETR 在预注册 balanced-validation gate 失败，才重新请求是否扩展到
-  multi-scale Deformable DETR，或 rights-cleared 1-staff real/semi-synthetic layout data。当前 1-staff 的尺度条件漏检与
-  Deformable DETR 论文针对 single-scale DETR limited spatial resolution / small-object weakness 的动机一致，但这是新的
-  architecture/weights 边界，不能默认选择。若批准，首选 Apache-2.0 的
-  `Aryn/deformable-detr-DocLayNet@c5946fb892bd99f527c0dd69577b9e9e55364f8f`，以 document-layout pretrained
-  representation 验证 multi-scale 假设；Apache-2.0 的 `SenseTime/deformable-detr` 仅作 COCO-domain control。当前
-  OLA/Ultralytics weights/distribution gate 仍未通过。
+  deterministic box path。该配方不再送到 OLiMPiC。
+- DETR v1 已在跳过 1-staff gate 后评测 OLiMPiC：16/29、5/6 works，不能替换 UNet 22/29。合成 3-staff exact 0.973
+  没有迁移到扫描域。通用 1/2/3 目标在本 bundle 关闭；后续见 `tasks/pdf-omr-layout-scan-domain-v1/plan.md`。
 - 超过 22/29 只表示继续投资；正式 release threshold、native runtime package budget 与 Desktop integration 仍需
   单独审批。

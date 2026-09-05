@@ -227,9 +227,16 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
               },
             ];
       const inputScope = request.inputScope ?? "full-page";
+      const fullPageOptions =
+        inputScope === "system-crop"
+          ? undefined
+          : resolveFullPageSegmentation({
+              ...(request.segmentationId === undefined ? {} : { segmentationId: request.segmentationId }),
+              ...(request.staffLayout === undefined ? {} : { staffLayout: request.staffLayout }),
+            });
       let segmentation: StaffSystemSegmentation;
       try {
-        if (inputScope === "system-crop") {
+        if (fullPageOptions === undefined) {
           if (request.segmentationId !== undefined) {
             throw new PdfOmrError("INVALID_CLI_ARGUMENT", "segmentation identity is full-page only", {
               context: { command: "recognize", inputScope, segmentationId: request.segmentationId },
@@ -237,13 +244,7 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           }
           segmentation = systemCropSegmentation(pages, request.staffLayout);
         } else {
-          segmentation = segmentStaffSystems(
-            pages,
-            resolveFullPageSegmentation({
-              ...(request.segmentationId === undefined ? {} : { segmentationId: request.segmentationId }),
-              ...(request.staffLayout === undefined ? {} : { staffLayout: request.staffLayout }),
-            }),
-          );
+          segmentation = segmentStaffSystems(pages, fullPageOptions);
         }
       } catch (error) {
         await writeSegmentationFailureEvidence(request.outputDirectory, pages, error);
@@ -373,6 +374,17 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           inputScope,
           detectorVersion: segmentation.detectorVersion,
           parameters: segmentation.parameters,
+          ...(request.segmentationId === undefined ? {} : { identity: request.segmentationId }),
+          options:
+            fullPageOptions === undefined
+              ? {
+                  ...(request.staffLayout === undefined ? {} : { staffLayout: request.staffLayout }),
+                }
+              : {
+                  staffLayout: fullPageOptions.staffLayout,
+                  allowFragmentedRuns: fullPageOptions.allowFragmentedRuns === true,
+                  pairAdjacentUnpairedGroups: fullPageOptions.pairAdjacentUnpairedGroups === true,
+                },
           systems: segmentationSystems,
         }),
       );

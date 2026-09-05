@@ -5,7 +5,7 @@ import { createArtifactWriter } from "../artifact-writer";
 import type { EngineRegistry } from "../engine-registry";
 import { PdfOmrError } from "../errors";
 import type { OmrEngineProgress } from "../engines/types";
-import type { StaffLayout } from "../staff-system-segmentation";
+import { resolveFullPageSegmentation, type StaffLayout } from "../staff-system-segmentation";
 import { inspectOmrInputBytes } from "../inspect-pdf";
 import {
   omrRunManifestSchema,
@@ -97,7 +97,10 @@ export async function recognizeCommand(
         version: environment.version,
         ...(environment.modelSha256 === undefined ? {} : { modelSha256: environment.modelSha256 }),
       },
-      parameters: environment.parameters ?? {},
+      parameters: {
+        ...(environment.parameters ?? {}),
+        ...recognizeSegmentationParameters(engineId, context),
+      },
       preprocess: { id: "none", version: "1.0.0" },
       startedAt,
       completedAt: new Date().toISOString(),
@@ -116,4 +119,28 @@ export async function recognizeCommand(
   } finally {
     await rm(workDirectory, { recursive: true, force: true });
   }
+}
+
+function recognizeSegmentationParameters(
+  engineId: string,
+  context: {
+    inputScope?: "full-page" | "system-crop";
+    staffLayout?: StaffLayout;
+    segmentationId?: string;
+  },
+): Record<string, string | number | boolean> {
+  if (engineId !== "rokot") return {};
+  if (context.inputScope === "system-crop") {
+    return context.staffLayout === undefined ? {} : { segmentationStaffLayout: context.staffLayout };
+  }
+  const options = resolveFullPageSegmentation({
+    ...(context.segmentationId === undefined ? {} : { segmentationId: context.segmentationId }),
+    ...(context.staffLayout === undefined ? {} : { staffLayout: context.staffLayout }),
+  });
+  return {
+    segmentationAllowFragmentedRuns: options.allowFragmentedRuns === true,
+    segmentationStaffLayout: options.staffLayout ?? "auto",
+    segmentationPairAdjacentUnpairedGroups: options.pairAdjacentUnpairedGroups === true,
+    ...(context.segmentationId === undefined ? {} : { segmentationId: context.segmentationId }),
+  };
 }

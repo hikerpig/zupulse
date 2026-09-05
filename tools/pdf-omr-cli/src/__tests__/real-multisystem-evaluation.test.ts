@@ -86,6 +86,7 @@ describe("real multi-system evaluation", () => {
         musicXml: { parse: true, structural: true },
       },
       joiningEvidence: joiningEvidence(),
+      source: caseDefinition.source,
     });
 
     expect(result).toMatchObject({
@@ -135,6 +136,7 @@ describe("real multi-system evaluation", () => {
         musicXml: { parse: true, structural: true },
       },
       joiningEvidence: evidence,
+      source: caseDefinition.source,
     });
 
     expect(result).toMatchObject({ status: "NOT_EVALUATED", reason: "invalid-joining-artifact" });
@@ -170,6 +172,82 @@ describe("real multi-system evaluation", () => {
         stage: "staff-system-topology",
         pageIndex: 0,
       },
+    });
+  });
+
+  it("does not admit a succeeded item without the frozen input hash", () => {
+    const result = evaluateRealMultiSystemCase(caseDefinition, {
+      corpusId: caseDefinition.corpusId,
+      engineId: caseDefinition.engineId,
+      item: {
+        itemId: caseDefinition.itemId,
+        status: "succeeded",
+        symbolic: { jointF1: 0.25, validMeasureRate: 0.1 },
+        musicXml: { parse: true, structural: true },
+      },
+      joiningEvidence: joiningEvidence(),
+    });
+
+    expect(result).toMatchObject({ status: "NOT_EVALUATED", reason: "missing-source-hashes" });
+  });
+
+  it("does not admit a succeeded item whose retained draft used different source bytes", () => {
+    const result = evaluateRealMultiSystemCase(caseDefinition, {
+      corpusId: caseDefinition.corpusId,
+      engineId: caseDefinition.engineId,
+      item: {
+        itemId: caseDefinition.itemId,
+        status: "succeeded",
+        symbolic: { jointF1: 0.25, validMeasureRate: 0.1 },
+        musicXml: { parse: true, structural: true },
+      },
+      joiningEvidence: joiningEvidence(),
+      source: { ...caseDefinition.source, inputSha256: "0".repeat(64) },
+    });
+
+    expect(result).toMatchObject({ status: "NOT_EVALUATED", reason: "source-hash-mismatch" });
+  });
+
+  it("binds a succeeded run to the predicted-draft input hash", async () => {
+    const runDirectory = await mkdtemp(join(tmpdir(), "real-multisystem-success-"));
+    temporaryDirectories.push(runDirectory);
+    const itemDirectory = join(runDirectory, "items", caseDefinition.itemId);
+    await mkdir(itemDirectory, { recursive: true });
+    await writeFile(
+      join(runDirectory, "report.json"),
+      JSON.stringify({ metadata: { corpusId: caseDefinition.corpusId, engineId: caseDefinition.engineId } }),
+    );
+    await writeFile(
+      join(itemDirectory, "result.json"),
+      JSON.stringify({
+        itemId: caseDefinition.itemId,
+        status: "succeeded",
+        symbolic: { joint: { f1: 0.25 }, validMeasure: { rate: 0.1 } },
+        runtime: { parse: true, structural: true },
+      }),
+    );
+    await writeFile(join(itemDirectory, "joining.json"), JSON.stringify(joiningEvidence()));
+    await writeFile(
+      join(itemDirectory, "predicted-draft.json"),
+      JSON.stringify({
+        provenance: { inputSha256: caseDefinition.source.inputSha256, engine: { id: "rokot", version: "1" } },
+      }),
+    );
+
+    await expect(evaluateRealMultiSystemRun(caseDefinition, runDirectory)).resolves.toMatchObject({
+      status: "EVALUATED",
+      quality: { jointF1: 0.25, validMeasureRate: 0.1 },
+    });
+
+    await writeFile(
+      join(itemDirectory, "predicted-draft.json"),
+      JSON.stringify({
+        provenance: { inputSha256: "0".repeat(64), engine: { id: "rokot", version: "1" } },
+      }),
+    );
+    await expect(evaluateRealMultiSystemRun(caseDefinition, runDirectory)).resolves.toMatchObject({
+      status: "NOT_EVALUATED",
+      reason: "source-hash-mismatch",
     });
   });
 });

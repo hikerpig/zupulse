@@ -318,6 +318,21 @@ describe("Rokot recognition adapter", () => {
       expect.objectContaining({ staffLayout: "grand-staff", staffCount: 2 }),
       expect.objectContaining({ staffLayout: "grand-staff", staffCount: 2 }),
     ]);
+    const identitySegmentation = JSON.parse(new TextDecoder().decode(recognition.nativeArtifacts[0]!.bytes)) as Record<
+      string,
+      unknown
+    >;
+    expect(identitySegmentation).toMatchObject({
+      identity: "piano-grand-staff-v1",
+      options: { staffLayout: "grand-staff", allowFragmentedRuns: false, pairAdjacentUnpairedGroups: false },
+    });
+    const defaultSegmentation = JSON.parse(
+      new TextDecoder().decode(omittedRecognition.nativeArtifacts[0]!.bytes),
+    ) as Record<string, unknown>;
+    expect(defaultSegmentation).toMatchObject({
+      options: { staffLayout: "auto", allowFragmentedRuns: true, pairAdjacentUnpairedGroups: false },
+    });
+    expect(defaultSegmentation).not.toHaveProperty("identity");
   });
 
   it("skips fully blank PDF pages before segmentation", async () => {

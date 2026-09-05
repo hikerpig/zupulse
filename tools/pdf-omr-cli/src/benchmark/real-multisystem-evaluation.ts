@@ -70,6 +70,14 @@ const evaluationObservationSchema = z
     engineId: z.string().min(1),
     item: z.discriminatedUnion("status", [failureObservationSchema, successObservationSchema]),
     joiningEvidence: z.unknown().optional(),
+    source: z
+      .object({
+        inputSha256: sha256Schema,
+        groundTruthSha256: sha256Schema.optional(),
+        mappingSha256: sha256Schema.optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -78,6 +86,12 @@ export type RealMultiSystemEvaluationObservation = z.input<typeof evaluationObse
 const persistedReportSchema = z
   .object({
     metadata: z.object({ corpusId: z.string().min(1), engineId: z.string().min(1) }).passthrough(),
+  })
+  .passthrough();
+
+const predictedDraftProvenanceSchema = z
+  .object({
+    provenance: z.object({ inputSha256: sha256Schema }).passthrough(),
   })
   .passthrough();
 
@@ -123,6 +137,8 @@ type EvaluationResult =
       status: "NOT_EVALUATED";
       reason:
         | "observation-identity-mismatch"
+        | "source-hash-mismatch"
+        | "missing-source-hashes"
         | "engine-item-failed"
         | "missing-joining-artifact"
         | "invalid-joining-artifact"
@@ -190,6 +206,16 @@ export async function evaluateRealMultiSystemRun(
       if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
       throw error;
     });
+  const predictedDraftBytes = await readFile(join(itemDirectory, "predicted-draft.json"), "utf8").catch(
+    (error: unknown) => {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+      throw error;
+    },
+  );
+  const predictedDraft =
+    predictedDraftBytes === undefined
+      ? undefined
+      : predictedDraftProvenanceSchema.safeParse(JSON.parse(predictedDraftBytes));
   return evaluateRealMultiSystemCase(caseDefinition, {
     corpusId: report.metadata.corpusId,
     engineId: report.metadata.engineId,
@@ -203,6 +229,9 @@ export async function evaluateRealMultiSystemRun(
       musicXml: { parse: result.runtime.parse, structural: result.runtime.structural },
     },
     ...(joiningEvidence === undefined ? {} : { joiningEvidence }),
+    ...(predictedDraft?.success === true
+      ? { source: { inputSha256: predictedDraft.data.provenance.inputSha256 } }
+      : {}),
   });
 }
 
@@ -224,6 +253,20 @@ export function evaluateRealMultiSystemCase(
     observation.item.itemId !== caseDefinition.itemId
   ) {
     return { ...base, status: "NOT_EVALUATED", reason: "observation-identity-mismatch" };
+  }
+  if (observation.item.status === "succeeded") {
+    if (observation.source === undefined) {
+      return { ...base, status: "NOT_EVALUATED", reason: "missing-source-hashes" };
+    }
+    if (
+      observation.source.inputSha256 !== caseDefinition.source.inputSha256 ||
+      (observation.source.groundTruthSha256 !== undefined &&
+        observation.source.groundTruthSha256 !== caseDefinition.source.groundTruthSha256) ||
+      (observation.source.mappingSha256 !== undefined &&
+        observation.source.mappingSha256 !== caseDefinition.source.mappingSha256)
+    ) {
+      return { ...base, status: "NOT_EVALUATED", reason: "source-hash-mismatch" };
+    }
   }
   if (observation.item.status === "failed") {
     return {

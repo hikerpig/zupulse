@@ -277,6 +277,49 @@ describe("Rokot recognition adapter", () => {
     expect(draft.diagnostics).not.toContainEqual(expect.objectContaining({ code: "ROKOT_UNSUPPORTED_STAFF_TOPOLOGY" }));
   });
 
+  it("uses piano-grand-staff-v1 as non-fragmented grand-staff and keeps the omitted path fragmented auto", async () => {
+    const isolated = await createContext({ staffLayout: "single-staff" });
+    const isolatedPath = join(isolated.directory, "isolated.pdf");
+    await writeFile(isolatedPath, singleStaffPdf());
+    await expect(
+      createAdapter(isolated).recognize({
+        inputPath: isolatedPath,
+        outputDirectory: join(isolated.directory, "isolated-identity"),
+        segmentationId: "piano-grand-staff-v1",
+      }),
+    ).rejects.toMatchObject({
+      code: "ENGINE_OUTPUT_INVALID",
+      context: expect.objectContaining({ stage: "grand-staff-pairing" }),
+    });
+
+    const omitted = await createContext({ staffLayout: "single-staff" });
+    const omittedPath = join(omitted.directory, "isolated.pdf");
+    await writeFile(omittedPath, singleStaffPdf());
+    const omittedRecognition = await createAdapter(omitted).recognize({
+      inputPath: omittedPath,
+      outputDirectory: join(omitted.directory, "isolated-default"),
+    });
+    expect(
+      parseRokotSystemBundle(omittedRecognition.normalizationBytes).systems.map((system) => system.source),
+    ).toEqual([
+      expect.objectContaining({ staffLayout: "single-staff", staffCount: 1 }),
+      expect.objectContaining({ staffLayout: "single-staff", staffCount: 1 }),
+    ]);
+
+    const paired = await createContext();
+    const pairedPath = join(paired.directory, "grand.pdf");
+    await writeFile(pairedPath, grandStaffPdf());
+    const recognition = await createAdapter(paired).recognize({
+      inputPath: pairedPath,
+      outputDirectory: join(paired.directory, "grand-identity"),
+      segmentationId: "piano-grand-staff-v1",
+    });
+    expect(parseRokotSystemBundle(recognition.normalizationBytes).systems.map((system) => system.source)).toEqual([
+      expect.objectContaining({ staffLayout: "grand-staff", staffCount: 2 }),
+      expect.objectContaining({ staffLayout: "grand-staff", staffCount: 2 }),
+    ]);
+  });
+
   it("skips fully blank PDF pages before segmentation", async () => {
     const context = await createContext({ staffLayout: "single-staff" });
     const inputPath = join(context.directory, "with-blank.pdf");

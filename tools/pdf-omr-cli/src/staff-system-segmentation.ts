@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { sha256Bytes } from "./canonical-json";
 import { PdfOmrError } from "./errors";
 import type { RenderedPdfPage } from "./render-pdf-pages";
@@ -47,6 +48,53 @@ export type StaffSystemSegmentationOptions = {
 };
 
 export type StaffLayout = "auto" | "single-staff" | "grand-staff" | "three-staff";
+
+export const PIANO_GRAND_STAFF_SEGMENTATION_V1 = {
+  id: "piano-grand-staff-v1",
+  detectorVersion: STAFF_SYSTEM_SEGMENTATION_PARAMETERS.detectorVersion,
+  staffLayout: "grand-staff",
+  allowFragmentedRuns: false,
+  pairAdjacentUnpairedGroups: false,
+} as const;
+
+export type PianoGrandStaffSegmentationId = typeof PIANO_GRAND_STAFF_SEGMENTATION_V1.id;
+
+export const pianoGrandStaffSegmentationIdSchema = z.literal(PIANO_GRAND_STAFF_SEGMENTATION_V1.id);
+
+export function segmentationOptionsForPianoGrandStaffV1(): StaffSystemSegmentationOptions {
+  return {
+    staffLayout: PIANO_GRAND_STAFF_SEGMENTATION_V1.staffLayout,
+    allowFragmentedRuns: PIANO_GRAND_STAFF_SEGMENTATION_V1.allowFragmentedRuns,
+    pairAdjacentUnpairedGroups: PIANO_GRAND_STAFF_SEGMENTATION_V1.pairAdjacentUnpairedGroups,
+  };
+}
+
+export function resolveFullPageSegmentation(request: {
+  segmentationId?: string;
+  staffLayout?: StaffLayout;
+}): StaffSystemSegmentationOptions {
+  if (request.segmentationId === undefined) {
+    return {
+      allowFragmentedRuns: true,
+      ...(request.staffLayout === undefined ? { staffLayout: "auto" } : { staffLayout: request.staffLayout }),
+    };
+  }
+  if (!pianoGrandStaffSegmentationIdSchema.safeParse(request.segmentationId).success) {
+    throw new PdfOmrError("INVALID_CLI_ARGUMENT", "unknown segmentation identity", {
+      context: { command: "recognize", segmentationId: request.segmentationId },
+    });
+  }
+  if (request.staffLayout !== undefined && request.staffLayout !== PIANO_GRAND_STAFF_SEGMENTATION_V1.staffLayout) {
+    throw new PdfOmrError("INVALID_CLI_ARGUMENT", "segmentation identity conflicts with staff layout", {
+      context: {
+        command: "recognize",
+        segmentationId: request.segmentationId,
+        staffLayout: request.staffLayout,
+      },
+    });
+  }
+  return segmentationOptionsForPianoGrandStaffV1();
+}
 
 type StaffGroup = { lines: number[]; spacing: number; coverage: number; firstIndex: number; lastIndex: number };
 type PendingSystem = {

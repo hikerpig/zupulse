@@ -12,7 +12,7 @@ pnpm pdf-omr -- import-midi <input.mid> --output <run-dir>
 pnpm pdf-omr -- fuse --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --output <run-dir>
 pnpm pdf-omr -- apply-fusion --run <fusion-run-dir> --decisions <decisions.json> --output <run-dir>
 pnpm pdf-omr -- rebuild-from-midi --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --musescore <executable> --output <run-dir>
-pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff>]
+pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff|three-staff>] [--segmentation piano-grand-staff-v1]
 pnpm pdf-omr -- validate <draft.json> --output <diagnostics.json>
 pnpm pdf-omr -- analyze <draft.json> --output <harmony.json>
 pnpm pdf-omr -- export-musicxml <draft.json> --output <score.mxl>

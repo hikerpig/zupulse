@@ -19,6 +19,7 @@ import {
 import { encodeRgbaPng, renderPdfPages, type RenderedPdfPage } from "../render-pdf-pages";
 import {
   STAFF_SYSTEM_SEGMENTATION_PARAMETERS,
+  resolveFullPageSegmentation,
   segmentStaffSystems,
   type StaffSystem,
   type StaffSystemSegmentation,
@@ -228,13 +229,22 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
       const inputScope = request.inputScope ?? "full-page";
       let segmentation: StaffSystemSegmentation;
       try {
-        segmentation =
-          inputScope === "system-crop"
-            ? systemCropSegmentation(pages, request.staffLayout)
-            : segmentStaffSystems(pages, {
-                allowFragmentedRuns: true,
-                staffLayout: request.staffLayout ?? "auto",
-              });
+        if (inputScope === "system-crop") {
+          if (request.segmentationId !== undefined) {
+            throw new PdfOmrError("INVALID_CLI_ARGUMENT", "segmentation identity is full-page only", {
+              context: { command: "recognize", inputScope, segmentationId: request.segmentationId },
+            });
+          }
+          segmentation = systemCropSegmentation(pages, request.staffLayout);
+        } else {
+          segmentation = segmentStaffSystems(
+            pages,
+            resolveFullPageSegmentation({
+              ...(request.segmentationId === undefined ? {} : { segmentationId: request.segmentationId }),
+              ...(request.staffLayout === undefined ? {} : { staffLayout: request.staffLayout }),
+            }),
+          );
+        }
       } catch (error) {
         await writeSegmentationFailureEvidence(request.outputDirectory, pages, error);
         throw error;

@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { PdfOmrError } from "./errors";
 import { createEngineRegistry, type EngineRegistry } from "./engine-registry";
+import { resolveFullPageSegmentation, type StaffLayout } from "./staff-system-segmentation";
 import type { RunBenchmarkDependencies } from "./benchmark/run-benchmark";
 import type { FusionReport } from "./fusion/schemas";
 import type { ApplyFusionReport } from "./fusion/writeback-schemas";
@@ -28,7 +29,7 @@ const usage = [
   "  fuse --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --output <run-dir>",
   "  apply-fusion --run <fusion-run-dir> --decisions <decisions.json> --output <run-dir>",
   "  rebuild-from-midi --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --musescore <executable> --output <run-dir>",
-  "  recognize <input.pdf> --engine <audiveris|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff|three-staff>]",
+  "  recognize <input.pdf> --engine <audiveris|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff|three-staff>] [--segmentation piano-grand-staff-v1]",
   "  validate <draft.json> --output <diagnostics.json>",
   "  analyze <draft.json> --output <harmony.json>",
   "  export-musicxml <draft.json> --output <score.mxl>",
@@ -161,15 +162,19 @@ export async function runPdfOmrCommand(
   }
   if (normalized[0] === "recognize") {
     const input = normalized[1];
-    const flags = parseFlags(normalized.slice(2), new Set(["--engine", "--output", "--input-scope", "--staff-layout"]));
+    const flags = parseFlags(
+      normalized.slice(2),
+      new Set(["--engine", "--output", "--input-scope", "--staff-layout", "--segmentation"]),
+    );
     const engineId = flags.get("--engine");
     const output = flags.get("--output");
     const inputScope = flags.get("--input-scope");
     const staffLayout = flags.get("--staff-layout");
+    const segmentationId = flags.get("--segmentation");
     if (input === undefined || engineId === undefined || output === undefined) {
       throw new PdfOmrError(
         "INVALID_CLI_ARGUMENT",
-        "recognize requires <input.pdf> --engine <engine-id> --output <run-dir> [--staff-layout <layout>]",
+        "recognize requires <input.pdf> --engine <engine-id> --output <run-dir> [--staff-layout <layout>] [--segmentation piano-grand-staff-v1]",
         { context: { command: "recognize" } },
       );
     }
@@ -193,6 +198,22 @@ export async function runPdfOmrCommand(
         context: { command: "recognize", engineId },
       });
     }
+    if (segmentationId !== undefined && engineId !== "rokot") {
+      throw new PdfOmrError("INVALID_CLI_ARGUMENT", "segmentation identity is supported only by Rokot", {
+        context: { command: "recognize", engineId },
+      });
+    }
+    if (segmentationId !== undefined && inputScope === "system-crop") {
+      throw new PdfOmrError("INVALID_CLI_ARGUMENT", "segmentation identity is full-page only", {
+        context: { command: "recognize", inputScope, segmentationId },
+      });
+    }
+    if (segmentationId !== undefined) {
+      resolveFullPageSegmentation({
+        segmentationId,
+        ...(staffLayout === undefined ? {} : { staffLayout: staffLayout as StaffLayout }),
+      });
+    }
     const { recognizeCommand } = await import("./commands/recognize");
     return recognizeCommand(input, engineId, output, {
       cwd: context.cwd ?? process.cwd(),
@@ -201,6 +222,7 @@ export async function runPdfOmrCommand(
       ...(staffLayout === undefined
         ? {}
         : { staffLayout: staffLayout as "auto" | "single-staff" | "grand-staff" | "three-staff" }),
+      ...(segmentationId === undefined ? {} : { segmentationId }),
       ...(context.signal === undefined ? {} : { signal: context.signal }),
     });
   }

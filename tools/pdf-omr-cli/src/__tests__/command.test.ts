@@ -108,4 +108,97 @@ describe("pdf OMR CLI", () => {
       ]),
     ).rejects.toMatchObject({ code: "INVALID_INPUT", context: { reason: "unreadable-input" } });
   });
+
+  it("accepts piano-grand-staff-v1 before reading the input and rejects conflicts", async () => {
+    await expect(
+      runPdfOmrCommand([
+        "recognize",
+        "missing.pdf",
+        "--engine",
+        "rokot",
+        "--output",
+        "run",
+        "--segmentation",
+        "piano-grand-staff-v1",
+      ]),
+    ).rejects.toMatchObject({ code: "INVALID_INPUT", context: { reason: "unreadable-input" } });
+    await expect(
+      runPdfOmrCommand([
+        "recognize",
+        "missing.pdf",
+        "--engine",
+        "rokot",
+        "--output",
+        "run",
+        "--segmentation",
+        "piano-grand-staff-v1",
+        "--staff-layout",
+        "grand-staff",
+      ]),
+    ).rejects.toMatchObject({ code: "INVALID_INPUT", context: { reason: "unreadable-input" } });
+    await expect(
+      runPdfOmrCommand([
+        "recognize",
+        "score.pdf",
+        "--engine",
+        "rokot",
+        "--output",
+        "run",
+        "--segmentation",
+        "learned-staff-system-v1",
+      ]),
+    ).rejects.toMatchObject({
+      code: "INVALID_CLI_ARGUMENT",
+      context: { command: "recognize", segmentationId: "learned-staff-system-v1" },
+    });
+    await expect(
+      runPdfOmrCommand([
+        "recognize",
+        "score.pdf",
+        "--engine",
+        "rokot",
+        "--output",
+        "run",
+        "--segmentation",
+        "piano-grand-staff-v1",
+        "--staff-layout",
+        "auto",
+      ]),
+    ).rejects.toMatchObject({
+      code: "INVALID_CLI_ARGUMENT",
+      context: { command: "recognize", segmentationId: "piano-grand-staff-v1", staffLayout: "auto" },
+    });
+    await expect(
+      runPdfOmrCommand([
+        "recognize",
+        "score.pdf",
+        "--engine",
+        "audiveris",
+        "--output",
+        "run",
+        "--segmentation",
+        "piano-grand-staff-v1",
+      ]),
+    ).rejects.toMatchObject({
+      code: "INVALID_CLI_ARGUMENT",
+      context: { command: "recognize", engineId: "audiveris" },
+    });
+    await expect(
+      runPdfOmrCommand([
+        "recognize",
+        "score.pdf",
+        "--engine",
+        "rokot",
+        "--output",
+        "run",
+        "--input-scope",
+        "system-crop",
+        "--segmentation",
+        "piano-grand-staff-v1",
+      ]),
+    ).rejects.toMatchObject({
+      code: "INVALID_CLI_ARGUMENT",
+      context: { command: "recognize", inputScope: "system-crop", segmentationId: "piano-grand-staff-v1" },
+    });
+  });
 });

@@ -377,9 +377,9 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           ...(request.segmentationId === undefined ? {} : { identity: request.segmentationId }),
           options:
             fullPageOptions === undefined
-              ? {
-                  ...(request.staffLayout === undefined ? {} : { staffLayout: request.staffLayout }),
-                }
+              ? request.staffLayout === undefined
+                ? {}
+                : { staffLayout: request.staffLayout }
               : {
                   staffLayout: fullPageOptions.staffLayout,
                   allowFragmentedRuns: fullPageOptions.allowFragmentedRuns === true,

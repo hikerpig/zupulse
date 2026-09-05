@@ -98,7 +98,7 @@ export async function recognizeCommand(
         ...(environment.modelSha256 === undefined ? {} : { modelSha256: environment.modelSha256 }),
       },
       parameters: {
-        ...(environment.parameters ?? {}),
+        ...environment.parameters,
         ...recognizeSegmentationParameters(engineId, context),
       },
       preprocess: { id: "none", version: "1.0.0" },

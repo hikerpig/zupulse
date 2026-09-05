@@ -50,6 +50,7 @@ export function startProcessResourceSampler(
         cpuPercentTotal += usage.cpuPercent;
         peakCpuPercent = Math.max(peakCpuPercent, usage.cpuPercent);
       })
+      .catch(() => undefined)
       .finally(() => {
         pending = undefined;
       });

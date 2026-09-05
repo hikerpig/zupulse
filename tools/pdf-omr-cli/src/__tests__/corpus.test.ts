@@ -57,6 +57,17 @@ describe("PDF OMR corpus protocol", () => {
     });
   });
 
+  it("accepts a detector-provided three-staff system crop", () => {
+    const manifest = validManifest();
+    manifest.items[0]!.inputScope = "system-crop";
+    manifest.items[0]!.staffLayout = "three-staff";
+
+    expect(verifyCorpusManifest(manifest).items[0]).toMatchObject({
+      inputScope: "system-crop",
+      staffLayout: "three-staff",
+    });
+  });
+
   it("rejects a system crop without an explicit staff topology", () => {
     const manifest = validManifest();
     manifest.items[0]!.inputScope = "system-crop";

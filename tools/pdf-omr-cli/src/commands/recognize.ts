@@ -25,6 +25,7 @@ export async function recognizeCommand(
     wasmDirectory?: string;
     inputScope?: "full-page" | "system-crop";
     staffLayout?: StaffLayout;
+    segmentationId?: string;
     signal?: AbortSignal;
     onProgress?: (progress: OmrEngineProgress) => void;
   },
@@ -64,6 +65,7 @@ export async function recognizeCommand(
       ...(context.wasmDirectory === undefined ? {} : { wasmDirectory: context.wasmDirectory }),
       ...(context.inputScope === undefined ? {} : { inputScope: context.inputScope }),
       ...(context.staffLayout === undefined ? {} : { staffLayout: context.staffLayout }),
+      ...(context.segmentationId === undefined ? {} : { segmentationId: context.segmentationId }),
       ...(context.signal === undefined ? {} : { signal: context.signal }),
       ...(context.onProgress === undefined ? {} : { onProgress: context.onProgress }),
     });

@@ -23,6 +23,7 @@ export type OmrRecognitionRequest = {
   standardFontDirectory?: string;
   wasmDirectory?: string;
   staffLayout?: StaffLayout;
+  segmentationId?: string;
   signal?: AbortSignal;
   onProgress?: (progress: OmrEngineProgress) => void;
 };

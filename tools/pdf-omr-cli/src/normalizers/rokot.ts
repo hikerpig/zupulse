@@ -29,8 +29,8 @@ const rokotSystemSchema = z
     systemIndex: z.number().int().nonnegative(),
     source: z
       .object({
-        staffLayout: z.enum(["single-staff", "grand-staff"]),
-        staffCount: z.union([z.literal(1), z.literal(2)]),
+        staffLayout: z.enum(["single-staff", "grand-staff", "three-staff"]),
+        staffCount: z.union([z.literal(1), z.literal(2), z.literal(3)]),
         pixelBbox: pixelBboxSchema,
         pdfPointBbox: pdfPointBboxSchema,
         cropSha256: sha256Schema,
@@ -51,7 +51,8 @@ export const rokotSystemBundleSchema = z
     for (const [index, system] of bundle.systems.entries()) {
       if (
         (system.source.staffLayout === "single-staff" && system.source.staffCount !== 1) ||
-        (system.source.staffLayout === "grand-staff" && system.source.staffCount !== 2)
+        (system.source.staffLayout === "grand-staff" && system.source.staffCount !== 2) ||
+        (system.source.staffLayout === "three-staff" && system.source.staffCount !== 3)
       ) {
         context.addIssue({
           code: "custom",
@@ -216,9 +217,9 @@ export function normalizeRokotOutput(
       }
     }
 
-    const missingPrimaryStaff = !seen.has("1") || (staffCount === 2 && !seen.has("2"));
+    const missingPrimaryStaff = !seen.has("1") || (staffCount >= 2 && !seen.has("2"));
     const unexpectedBassStaff = staffCount === 1 && (seen.has("2") || seen.has("2b"));
-    if (missingPrimaryStaff || unexpectedBassStaff) {
+    if (missingPrimaryStaff || unexpectedBassStaff || staffCount === 3) {
       addDiagnostic(
         diagnostics,
         "ROKOT_UNSUPPORTED_STAFF_TOPOLOGY",
@@ -247,14 +248,12 @@ export function normalizeRokotOutput(
       }
     }
 
-    const primaryCounts = Array.from(
-      { length: staffCount },
-      (_, staffIndex) => parts.get(staffIndex === 0 ? "P1" : "P2")?.staves[0]?.measures.length ?? 0,
+    const primaryCounts = Array.from({ length: staffCount }, (_, staffIndex) =>
+      staffIndex < 2 ? (parts.get(staffIndex === 0 ? "P1" : "P2")?.staves[0]?.measures.length ?? 0) : 0,
     );
     const systemMeasureCount = Math.max(...primaryCounts);
-    const secondaryCounts = Array.from(
-      { length: staffCount },
-      (_, staffIndex) => parts.get(staffIndex === 0 ? "P1b" : "P2b")?.staves[0]?.measures.length,
+    const secondaryCounts = Array.from({ length: staffCount }, (_, staffIndex) =>
+      staffIndex < 2 ? parts.get(staffIndex === 0 ? "P1b" : "P2b")?.staves[0]?.measures.length : undefined,
     ).filter((count): count is number => count !== undefined);
     if (
       primaryCounts.some((count) => count !== systemMeasureCount) ||
@@ -334,9 +333,10 @@ function parsePartVoice(partId: string | null): RokotVoice | undefined {
 function alignedHeaderOnlyMeasureIndexes(
   explicitHeaderOnly: ReadonlyMap<RokotVoice, readonly boolean[]>,
   measureCount: number,
-  staffCount: 1 | 2,
+  staffCount: 1 | 2 | 3,
 ): Set<number> {
   const removable = new Set<number>();
+  if (staffCount === 3) return removable;
   if (!explicitHeaderOnly.has("1") || (staffCount === 2 && !explicitHeaderOnly.has("2"))) return removable;
   for (let index = 0; index < measureCount - 1; index += 1) {
     const values = [...explicitHeaderOnly.values()];
@@ -352,10 +352,12 @@ function joinStaffMeasure(
   globalIndex: number,
   system: RokotSystemBundle["systems"][number],
 ): DraftMeasure {
-  const primaryVoice = staffIndex === 0 ? "1" : "2";
-  const secondaryVoice = staffIndex === 0 ? "1b" : "2b";
-  const primary = parts.get(`P${primaryVoice}`)?.staves[0]?.measures[localIndex];
-  const secondary = parts.get(`P${secondaryVoice}`)?.staves[0]?.measures[localIndex];
+  const primaryVoice = staffIndex === 0 ? "1" : staffIndex === 1 ? "2" : undefined;
+  const secondaryVoice = staffIndex === 0 ? "1b" : staffIndex === 1 ? "2b" : undefined;
+  const primary =
+    primaryVoice === undefined ? undefined : parts.get(`P${primaryVoice}`)?.staves[0]?.measures[localIndex];
+  const secondary =
+    secondaryVoice === undefined ? undefined : parts.get(`P${secondaryVoice}`)?.staves[0]?.measures[localIndex];
   const basis = primary ?? secondary;
   const voices = [
     mapVoice(

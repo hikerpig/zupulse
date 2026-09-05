@@ -44,9 +44,52 @@ export const rokotJoiningEvidenceSchema = z
     rawMeasureBoundaries: z.array(boundarySchema),
     normalizedMeasureBoundaries: z.array(normalizedBoundarySchema),
   })
-  .strict();
+  .strict()
+  .superRefine((evidence, context) => {
+    for (let index = 1; index < evidence.systems.length; index += 1) {
+      const previous = evidence.systems[index - 1]!.source;
+      const current = evidence.systems[index]!.source;
+      const ordered =
+        current.pageIndex > previous.pageIndex ||
+        (current.pageIndex === previous.pageIndex && current.systemIndex > previous.systemIndex);
+      if (!ordered) {
+        context.addIssue({
+          code: "custom",
+          path: ["systems", index, "source"],
+          message: "systems must be unique and ordered by pageIndex and systemIndex",
+        });
+      }
+    }
+  });
 
 export type RokotJoiningEvidence = z.infer<typeof rokotJoiningEvidenceSchema>;
+
+export type RokotJoiningEvidenceSummary = {
+  readonly artifacts: number;
+  readonly singleSystemArtifacts: number;
+  readonly multiSystemArtifacts: number;
+  readonly systems: number;
+  readonly rawMeasureBoundaries: number;
+  readonly normalizedMeasureBoundaries: number;
+  readonly normalizedBoundariesWithoutSource: number;
+};
+
+export function summarizeRokotJoiningEvidence(inputs: readonly RokotJoiningEvidence[]): RokotJoiningEvidenceSummary {
+  const evidence = inputs.map((input) => rokotJoiningEvidenceSchema.parse(input));
+  return {
+    artifacts: evidence.length,
+    singleSystemArtifacts: evidence.filter((item) => item.systems.length === 1).length,
+    multiSystemArtifacts: evidence.filter((item) => item.systems.length > 1).length,
+    systems: evidence.reduce((total, item) => total + item.systems.length, 0),
+    rawMeasureBoundaries: evidence.reduce((total, item) => total + item.rawMeasureBoundaries.length, 0),
+    normalizedMeasureBoundaries: evidence.reduce((total, item) => total + item.normalizedMeasureBoundaries.length, 0),
+    normalizedBoundariesWithoutSource: evidence.reduce(
+      (total, item) =>
+        total + item.normalizedMeasureBoundaries.filter((boundary) => boundary.source === undefined).length,
+      0,
+    ),
+  };
+}
 
 export function buildRokotJoiningEvidence(bundle: RokotSystemBundle, draft: OmrScoreDraft): RokotJoiningEvidence {
   let globalMeasureStart = 0;

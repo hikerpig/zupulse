@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { sha256Bytes } from "./canonical-json";
 import { PdfOmrError } from "./errors";
 import type { RenderedPdfPage } from "./render-pdf-pages";
@@ -21,8 +22,8 @@ export const STAFF_SYSTEM_SEGMENTATION_PARAMETERS = {
 } as const;
 
 export type StaffSystem = {
-  staffLayout: "single-staff" | "grand-staff";
-  staffCount: 1 | 2;
+  staffLayout: "single-staff" | "grand-staff" | "three-staff";
+  staffCount: 1 | 2 | 3;
   pageIndex: number;
   systemIndex: number;
   pageRenderSha256: string;
@@ -43,9 +44,57 @@ export type StaffSystemSegmentation = {
 export type StaffSystemSegmentationOptions = {
   readonly allowFragmentedRuns?: boolean;
   readonly staffLayout?: StaffLayout;
+  readonly pairAdjacentUnpairedGroups?: boolean;
 };
 
-export type StaffLayout = "auto" | "single-staff" | "grand-staff";
+export type StaffLayout = "auto" | "single-staff" | "grand-staff" | "three-staff";
+
+export const PIANO_GRAND_STAFF_SEGMENTATION_V1 = {
+  id: "piano-grand-staff-v1",
+  detectorVersion: STAFF_SYSTEM_SEGMENTATION_PARAMETERS.detectorVersion,
+  staffLayout: "grand-staff",
+  allowFragmentedRuns: false,
+  pairAdjacentUnpairedGroups: false,
+} as const;
+
+export type PianoGrandStaffSegmentationId = typeof PIANO_GRAND_STAFF_SEGMENTATION_V1.id;
+
+export const pianoGrandStaffSegmentationIdSchema = z.literal(PIANO_GRAND_STAFF_SEGMENTATION_V1.id);
+
+export function segmentationOptionsForPianoGrandStaffV1(): StaffSystemSegmentationOptions {
+  return {
+    staffLayout: PIANO_GRAND_STAFF_SEGMENTATION_V1.staffLayout,
+    allowFragmentedRuns: PIANO_GRAND_STAFF_SEGMENTATION_V1.allowFragmentedRuns,
+    pairAdjacentUnpairedGroups: PIANO_GRAND_STAFF_SEGMENTATION_V1.pairAdjacentUnpairedGroups,
+  };
+}
+
+export function resolveFullPageSegmentation(request: {
+  segmentationId?: string;
+  staffLayout?: StaffLayout;
+}): StaffSystemSegmentationOptions {
+  if (request.segmentationId === undefined) {
+    return {
+      allowFragmentedRuns: true,
+      ...(request.staffLayout === undefined ? { staffLayout: "auto" } : { staffLayout: request.staffLayout }),
+    };
+  }
+  if (!pianoGrandStaffSegmentationIdSchema.safeParse(request.segmentationId).success) {
+    throw new PdfOmrError("INVALID_CLI_ARGUMENT", "unknown segmentation identity", {
+      context: { command: "recognize", segmentationId: request.segmentationId },
+    });
+  }
+  if (request.staffLayout !== undefined && request.staffLayout !== PIANO_GRAND_STAFF_SEGMENTATION_V1.staffLayout) {
+    throw new PdfOmrError("INVALID_CLI_ARGUMENT", "segmentation identity conflicts with staff layout", {
+      context: {
+        command: "recognize",
+        segmentationId: request.segmentationId,
+        staffLayout: request.staffLayout,
+      },
+    });
+  }
+  return segmentationOptionsForPianoGrandStaffV1();
+}
 
 type StaffGroup = { lines: number[]; spacing: number; coverage: number; firstIndex: number; lastIndex: number };
 type PendingSystem = {
@@ -69,9 +118,17 @@ export function segmentStaffSystems(
   pages: readonly RenderedPdfPage[],
   options: StaffSystemSegmentationOptions = {},
 ): StaffSystemSegmentation {
+  if (options.staffLayout === "three-staff") {
+    throw ambiguous(0, { stage: "three-staff-requires-provided-system-crop" });
+  }
   const systems: StaffSystem[] = [];
   for (const page of [...pages].sort((left, right) => left.pageIndex - right.pageIndex)) {
-    const detected = detectPageSystems(page, options.allowFragmentedRuns === true, options.staffLayout ?? "auto");
+    const detected = detectPageSystems(
+      page,
+      options.allowFragmentedRuns === true,
+      options.staffLayout ?? "auto",
+      options.pairAdjacentUnpairedGroups === true,
+    );
     const boundaries = detected.map((system, index) => {
       const previous = detected[index - 1];
       const next = detected[index + 1];
@@ -127,6 +184,7 @@ function detectPageSystems(
   page: RenderedPdfPage,
   allowFragmentedRuns: boolean,
   staffLayout: StaffLayout,
+  pairAdjacentUnpairedGroups: boolean,
 ): PendingSystem[] {
   if (page.format !== "rgba" || page.pixels.length !== page.pixelWidth * page.pixelHeight * 4) {
     throw ambiguous(page.pageIndex, { stage: "invalid-rgba" });
@@ -232,6 +290,19 @@ function detectPageSystems(
   );
   result.sort((left, right) => left.top - right.top);
   unpairedGroups = findUnpairedGroups(groups, selectedGroups);
+  if (
+    pairAdjacentUnpairedGroups &&
+    staffLayout === "grand-staff" &&
+    unpairedGroups.length > 0 &&
+    unpairedGroups.length % 2 === 0
+  ) {
+    const ordered = [...unpairedGroups].sort((left, right) => left.lines[0]! - right.lines[0]!);
+    for (let index = 0; index < ordered.length; index += 2) {
+      appendPairs([{ upper: ordered[index]!, lower: ordered[index + 1]!, connectorCoverage: 0 }]);
+    }
+    result.sort((left, right) => left.top - right.top);
+    unpairedGroups = findUnpairedGroups(groups, selectedGroups);
+  }
   if (staffLayout === "auto" && result.length === 0 && unpairedGroups.length > 0) {
     return unpairedGroups.map(singleStaffSystem);
   }

@@ -3,7 +3,10 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { renderPdfPages, type RenderedPdfPage } from "../render-pdf-pages";
 import {
+  PIANO_GRAND_STAFF_SEGMENTATION_V1,
   STAFF_SYSTEM_SEGMENTATION_PARAMETERS,
+  resolveFullPageSegmentation,
+  segmentationOptionsForPianoGrandStaffV1,
   segmentGrandStaffSystems,
   segmentStaffSystems,
 } from "../staff-system-segmentation";
@@ -34,6 +37,24 @@ describe("segmentGrandStaffSystems", () => {
         context: expect.objectContaining({ stage: "grand-staff-pairing", pageIndex: 0 }),
       }),
     );
+  });
+
+  it("can pair remaining grand-staff groups adjacently for development crop materialization", () => {
+    const input = page(0, 200, 220, []);
+    [20, 26, 32, 38, 44, 140, 146, 152, 158, 164].forEach((y) => setBlackRange(input, 10, 190, y));
+
+    const result = segmentStaffSystems([input], {
+      staffLayout: "grand-staff",
+      pairAdjacentUnpairedGroups: true,
+    });
+
+    expect(result.systems).toHaveLength(1);
+    expect(result.systems[0]).toMatchObject({
+      staffLayout: "grand-staff",
+      staffCount: 2,
+      pageIndex: 0,
+      systemIndex: 0,
+    });
   });
 
   it("keeps auto mode fail-closed when a page mixes paired and unpaired staff groups", () => {
@@ -279,6 +300,62 @@ describe("segmentGrandStaffSystems", () => {
         context: expect.objectContaining({ unpairedStaffLineYs: [[116, 122, 128, 134, 140]] }),
       }),
     );
+  });
+});
+
+describe("piano-grand-staff-v1 identity", () => {
+  it("freezes grand-staff non-fragmented options and leaves the omitted path fragmented auto", () => {
+    expect(PIANO_GRAND_STAFF_SEGMENTATION_V1).toEqual({
+      id: "piano-grand-staff-v1",
+      detectorVersion: "rokot-staff-system-v2",
+      staffLayout: "grand-staff",
+      allowFragmentedRuns: false,
+      pairAdjacentUnpairedGroups: false,
+    });
+    expect(segmentationOptionsForPianoGrandStaffV1()).toEqual({
+      staffLayout: "grand-staff",
+      allowFragmentedRuns: false,
+      pairAdjacentUnpairedGroups: false,
+    });
+    expect(resolveFullPageSegmentation({})).toEqual({ allowFragmentedRuns: true, staffLayout: "auto" });
+    expect(resolveFullPageSegmentation({ staffLayout: "grand-staff" })).toEqual({
+      allowFragmentedRuns: true,
+      staffLayout: "grand-staff",
+    });
+    expect(resolveFullPageSegmentation({ segmentationId: "piano-grand-staff-v1" })).toEqual(
+      segmentationOptionsForPianoGrandStaffV1(),
+    );
+    expect(resolveFullPageSegmentation({ segmentationId: "piano-grand-staff-v1", staffLayout: "grand-staff" })).toEqual(
+      segmentationOptionsForPianoGrandStaffV1(),
+    );
+  });
+
+  it("fail-closes unknown identities and conflicting staff layouts", () => {
+    expect(() => resolveFullPageSegmentation({ segmentationId: "learned-staff-system-v1" })).toThrow(
+      expect.objectContaining({
+        code: "INVALID_CLI_ARGUMENT",
+        context: { command: "recognize", segmentationId: "learned-staff-system-v1" },
+      }),
+    );
+    expect(() => resolveFullPageSegmentation({ segmentationId: "piano-grand-staff-v1", staffLayout: "auto" })).toThrow(
+      expect.objectContaining({
+        code: "INVALID_CLI_ARGUMENT",
+        context: {
+          command: "recognize",
+          segmentationId: "piano-grand-staff-v1",
+          staffLayout: "auto",
+        },
+      }),
+    );
+  });
+
+  it("maps the identity onto the same detector call as explicit non-fragmented grand-staff", () => {
+    const input = page(0, 200, 220, [20, 26, 32, 38, 44, 68, 74, 80, 86, 92]);
+    const identity = segmentStaffSystems([input], segmentationOptionsForPianoGrandStaffV1());
+    const explicit = segmentStaffSystems([input], { staffLayout: "grand-staff", allowFragmentedRuns: false });
+    expect(identity).toEqual(explicit);
+    expect(identity.systems).toHaveLength(1);
+    expect(identity.systems[0]).toMatchObject({ staffLayout: "grand-staff", staffCount: 2 });
   });
 });
 

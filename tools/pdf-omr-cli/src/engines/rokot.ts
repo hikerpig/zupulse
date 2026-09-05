@@ -19,11 +19,18 @@ import {
 import { encodeRgbaPng, renderPdfPages, type RenderedPdfPage } from "../render-pdf-pages";
 import {
   STAFF_SYSTEM_SEGMENTATION_PARAMETERS,
+  resolveFullPageSegmentation,
   segmentStaffSystems,
   type StaffSystem,
   type StaffSystemSegmentation,
 } from "../staff-system-segmentation";
 import type { OmrEngineAdapter } from "./types";
+import {
+  BASE_ROKOT_PROMPT,
+  createSystemContextTracker,
+  systemContextParameters,
+  type RokotSystemContextPolicy,
+} from "./rokot-system-context";
 
 const defaultModelRevision = "7add305aade6fb3a64ad4dde77d410fa68381089";
 const defaultModelSha256 = "df53948ada1a4a584b4c7c81cc7e3293d3457f2e5ec9688271693459eb950f25";
@@ -31,7 +38,7 @@ const defaultMmprojSha256 = "1074d47f6fd864bffa9d8843bbae30e6aa696ad0d55535ebd77
 const defaultLlamaBuild = "b10200-5f55650a7";
 const abcConverterVersion = "1.0.1";
 const contextSize = 4096;
-const prompt = "Transcribe this staff to rokot-ABC.";
+const defaultSystemContextPolicy: RokotSystemContextPolicy = "previous-prediction-headers-v1";
 
 export type RokotAdapterOptions = {
   llamaCliPath?: string;
@@ -46,6 +53,7 @@ export type RokotAdapterOptions = {
   environment?: Readonly<Record<string, string>>;
   timeoutMs?: number;
   maxOutputBytes?: number;
+  systemContextPolicy?: RokotSystemContextPolicy;
 };
 
 export type RokotAbcConversionRequest = {
@@ -59,9 +67,11 @@ export type RokotAbcConversionRequest = {
 };
 
 export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapter {
+  const systemContextPolicy = options.systemContextPolicy ?? defaultSystemContextPolicy;
   return {
     async inspectEnvironment(signal) {
       const configuration = requireConfiguration(options);
+      const contextParameters = systemContextParameters(systemContextPolicy);
       const processOptions = {
         ...(options.environment === undefined ? {} : { env: options.environment }),
         ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
@@ -114,8 +124,9 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           llamaCppBuild: actualLlamaBuild,
           maxNewTokens: 1600,
           modelRevision: configuration.modelRevision,
-          prompt,
+          prompt: BASE_ROKOT_PROMPT,
           reasoning: "off",
+          ...contextParameters,
           segmentationAllowFragmentedRuns: true,
           segmentationAllowLandscape: true,
           segmentationStaffLayout: "auto",
@@ -149,7 +160,7 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
           "--image",
           "<system.png>",
           "-p",
-          prompt,
+          "<system-prompt>",
           "-n",
           "1600",
           "--ctx-size",
@@ -218,13 +229,22 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
       const inputScope = request.inputScope ?? "full-page";
       let segmentation: StaffSystemSegmentation;
       try {
-        segmentation =
-          inputScope === "system-crop"
-            ? systemCropSegmentation(pages, request.staffLayout)
-            : segmentStaffSystems(pages, {
-                allowFragmentedRuns: true,
-                staffLayout: request.staffLayout ?? "auto",
-              });
+        if (inputScope === "system-crop") {
+          if (request.segmentationId !== undefined) {
+            throw new PdfOmrError("INVALID_CLI_ARGUMENT", "segmentation identity is full-page only", {
+              context: { command: "recognize", inputScope, segmentationId: request.segmentationId },
+            });
+          }
+          segmentation = systemCropSegmentation(pages, request.staffLayout);
+        } else {
+          segmentation = segmentStaffSystems(
+            pages,
+            resolveFullPageSegmentation({
+              ...(request.segmentationId === undefined ? {} : { segmentationId: request.segmentationId }),
+              ...(request.staffLayout === undefined ? {} : { staffLayout: request.staffLayout }),
+            }),
+          );
+        }
       } catch (error) {
         await writeSegmentationFailureEvidence(request.outputDirectory, pages, error);
         throw error;
@@ -239,8 +259,10 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
       const segmentationSystems: Array<Record<string, unknown>> = [];
       let durationMs = 0;
       const resourceUsages: ProcessResourceUsage[] = [];
+      const systemContext = createSystemContextTracker(systemContextPolicy);
 
       for (const [systemOffset, system] of systems.entries()) {
+        const systemPrompt = systemContext.prompt();
         const stem = systemStem(system.pageIndex, system.systemIndex);
         const pngBytes = encodeRgbaPng(system.pixelBBox.width, system.pixelBBox.height, system.cropPixels);
         const pngPath = join(systemsDirectory, `${stem}.png`);
@@ -259,7 +281,7 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
               "--image",
               pngPath,
               "-p",
-              prompt,
+              systemPrompt,
               "-n",
               "1600",
               "--ctx-size",
@@ -283,12 +305,13 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
         });
         let abc: string;
         try {
-          abc = extractCanonicalAbc(rawAbcBytes, system.staffLayout);
+          abc = extractCanonicalAbc(rawAbcBytes, system.staffLayout, systemPrompt);
         } catch (error) {
           await writeInferenceFailureEvidence(request.outputDirectory, stem, pngBytes, rawAbcBytes, error);
           throw error;
         }
         const abcBytes = new TextEncoder().encode(abc);
+        systemContext.observe(abc);
         await writeFile(canonicalAbcPath, abcBytes, { flag: "wx" });
         const conversion = await convertRokotAbc(
           {
@@ -371,14 +394,14 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
 
 function systemCropSegmentation(
   pages: readonly RenderedPdfPage[],
-  staffLayout: "auto" | "single-staff" | "grand-staff" | undefined,
+  staffLayout: "auto" | "single-staff" | "grand-staff" | "three-staff" | undefined,
 ): StaffSystemSegmentation {
   if (staffLayout === undefined || staffLayout === "auto") {
     throw new PdfOmrError("INVALID_CLI_ARGUMENT", "system crop requires an explicit staff layout", {
       context: { reason: "system-crop-requires-staff-layout" },
     });
   }
-  const staffCount = staffLayout === "single-staff" ? 1 : 2;
+  const staffCount = staffLayout === "single-staff" ? 1 : staffLayout === "grand-staff" ? 2 : 3;
   const systems: StaffSystem[] = [...pages]
     .sort((left, right) => left.pageIndex - right.pageIndex)
     .map((page) => ({
@@ -562,14 +585,18 @@ function parseConverterVersion(output: string): string {
   return "";
 }
 
-function extractCanonicalAbc(bytes: Uint8Array, staffLayout: "single-staff" | "grand-staff"): string {
+function extractCanonicalAbc(
+  bytes: Uint8Array,
+  staffLayout: "single-staff" | "grand-staff" | "three-staff",
+  systemPrompt: string,
+): string {
   let output: string;
   try {
     output = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
     return validateRokotAbc(bytes);
   }
-  const wrapper = `User:\n${prompt}\n\nAssistant:\n`;
+  const wrapper = `User:\n${systemPrompt}\n\nAssistant:\n`;
   const payload = output.startsWith(wrapper) ? output.slice(wrapper.length) : output;
   const canonical = staffLayout === "single-staff" ? canonicalizeUnvoicedSingleStaffAbc(payload) : payload;
   return validateRokotAbc(new TextEncoder().encode(canonical));

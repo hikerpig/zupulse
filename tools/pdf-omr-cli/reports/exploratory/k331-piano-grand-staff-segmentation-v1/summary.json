@@ -1,0 +1,68 @@
+{
+  "cropSha256": [
+    "1767aa479f90976fcc7b74ce9374b00b1498c2c1617aeb89957c794fb593559d",
+    "4bf5a565c99b5016cd6cdde69917e730356d75ce1ec2a0b0a9df387e4de1dd3d",
+    "f9525b45d086b496ccdc6f6982463797fe88d427288a8ec81840e2e4857ac3b6",
+    "c02a203b1dd77f06d368cf955fa24b37ba57e7ccf6f6b40dfbcb1584474a1665",
+    "3dbef2ee956c2b3225775495ca7dfde3e3cabda2837ba9cb802d9f7643e82657",
+    "7a64d5c95d0e699ce9963f0195b368e3e949e951f76e971b5e66f78ad3d06c51",
+    "e9dc9a393d47e1f0d29de946f3ed495b437ecdfb888973a3e509855a3801cf50",
+    "71fdca50ce1a528e63203d6de193190d20b96e1877174b7c9e3eb9296218faa8",
+    "46d8871a4e05d2e353fcac6ce55897a148c8974e31e737824517935d42c21e00",
+    "74f4982eb987c741d16aaef55b54c72af7251704df6c72f4d2911b62879535b3",
+    "d5aac97fbe28b40dfbf7f7d165ee05b7a131c386a5474c2c3e5a91c5cd0e889f",
+    "7e3d8774073f80f343ff11f0503e5184d7009380b87ded897d89636a1ccbea55",
+    "c94ac028e0ed8da656e8da4eecf9b19110b93b3e951c110bec7a249e5f1c8d62",
+    "1b560631203d4fb58a3ddee9572466793dfc071f14609976cadee0ba4355678e",
+    "c69c981027be25a6d35f63ffa6305603aa9ef6953f4273912645a1455491f7d8",
+    "142a2f416547e8c1c9ec3f45c8f5ec775a2ab03ca13e6e430e9f94f2a5fd6353",
+    "873d8942a8f8139347659142bb0f30c17c5b79e68c32110ac3079aac5118f50d",
+    "399934de99084bad96c09b26a010d2c0f3679e7bd73328f5f3ee7ba4140003ee",
+    "6c5e7dfd93e05bf873447b2c0264621c3ac7ac389881e77ff21cdb6f0a0df7aa",
+    "04071cfa64b9300a371003c08f491a34607e8827173ba345c6a42e8e1eb43ac9",
+    "dd8486ea93c1f4380760c68910367efda7b8b1ddc1ede4e96adab2bed7f6f796",
+    "19332c5d15983e37b347653f8ba8df0f409fc02118563c23d9c0033af6f0ce58",
+    "7fb765469d4755792015e2b94f135cb51fff55d027810a50ea821bc782dd4a9b",
+    "017b6ac2b3a68af2296523d7b83c6fab20b2c08d64ee7f49c919564530bae00c",
+    "b97f16f3e400ea1d24375207b7e43a3d14e7c8cdffba2bce740e4d1f35f6abc8",
+    "3e1647783a3388be4063223c597304e6a3cf002dbf96337dce3c79f43dc41437",
+    "a86c5580184b04fd220a9af4078b014d516d1ea4838d113f3cabdcf940a3567c"
+  ],
+  "dualRunMatched": true,
+  "exactPageCount": 6,
+  "expectedSystemCounts": [6, 6, 1, 6, 6, 2],
+  "identity": {
+    "allowFragmentedRuns": false,
+    "detectorVersion": "rokot-staff-system-v2",
+    "id": "piano-grand-staff-v1",
+    "pairAdjacentUnpairedGroups": false,
+    "staffLayout": "grand-staff"
+  },
+  "layoutGate": "pass",
+  "recognition": {
+    "legato": {
+      "status": "gap",
+      "reason": "system-crop entry exists, but joined 27-system symbolic F1 against K331 MXL is not wired"
+    },
+    "rokot": {
+      "durationF1": 0.9483760683760684,
+      "elapsedMs": 97658,
+      "jointF1": 0.3767521367521367,
+      "measuresPerStaff": [137, 137],
+      "modelUnitCount": 27,
+      "onsetF1": 0.9162393162393163,
+      "pitchF1": 0.752537626881344,
+      "policy": "previous-prediction-headers-v1",
+      "rawDiagnosticCount": 85,
+      "validMeasureTotal": 274,
+      "validMeasures": 57
+    },
+    "runtimeDecision": "stop-before-product-integration"
+  },
+  "mappingSha256": "0f9b66aa464d4985087b5dc6c56e530a2f95e20f5c99c09c02c72e935ec1f0e8",
+  "pageCount": 6,
+  "pdfSha256": "22cec1f974dc4bbef64c3e8968e98dcae68d229769d70fa66a21b8c8d56ae8a7",
+  "reportSha256": "c692c043d396e38568ab7e29577555a56ff83bcdbe7d2d41d6dccbcd05a50b57",
+  "schemaVersion": "1.0.0",
+  "systemCount": 27
+}

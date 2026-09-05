@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: implemented
 date: 2026-09-05
 owner: Engineering
 scope: PDF OMR CLI development experiment only
@@ -114,3 +114,11 @@ layout 门（必须全中）：
 - `tools/pdf-omr-cli/reports/exploratory/k331-piano-grand-staff-segmentation-v1/`
 
 不改 `apps/*`。Feature Contract 只在将来真的改变可观察 Desktop 行为时更新。
+
+## Outcome
+
+Layout 门通过：K331 6/6 topology-exact，27 个 2-staff crops，canonical report SHA-256
+`c692c043d396e38568ab7e29577555a56ff83bcdbe7d2d41d6dccbcd05a50b57`。Rokot
+`previous-prediction-headers-v1` Joint F1 `0.3768`、valid `57/274`，与冻结 header-context 对照重合。
+LEGATO 缺 joined 27-system F1 路径，只记缺口。产品 runtime 仍 `STOP`；下一投资是 2-staff 识别，不是
+layout 训练或 Desktop default。

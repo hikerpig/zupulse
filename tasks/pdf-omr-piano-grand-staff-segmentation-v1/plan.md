@@ -54,34 +54,35 @@ pairAdjacentUnpairedGroups: false;
 
 ## Execution plan
 
-1. [ ] 导出 `PIANO_GRAND_STAFF_SEGMENTATION_V1` 常量。单元测试：该 identity 的字段不可变；把它传给
+1. [x] 导出 `PIANO_GRAND_STAFF_SEGMENTATION_V1` 常量。单元测试：该 identity 的字段不可变；把它传给
        `segmentStaffSystems` 等价于 `{ staffLayout: "grand-staff", allowFragmentedRuns: false }`。
        验证：`pnpm vitest run --root . tools/pdf-omr-cli/src/__tests__/staff-system-segmentation.test.ts`
-2. [ ] Recognize request 增加可选 `segmentationId: "piano-grand-staff-v1"`（Zod）。缺省路径仍
+2. [x] Recognize request 增加可选 `segmentationId: "piano-grand-staff-v1"`（Zod）。缺省路径仍
        `allowFragmentedRuns: true` 且 `staffLayout` 来自现有 `--staff-layout`。指定 id 时忽略并禁止冲突的
        fragmented/layout 组合，否则 `INVALID_CLI_ARGUMENT`。CLI：`--segmentation piano-grand-staff-v1`。
        验证：command/recognize 的 schema 与 flag 测试。
-3. [ ] Rokot adapter 在 full-page 下读取该 id 再调用 `segmentStaffSystems`。现有 fragmented auto 测试不得
+3. [x] Rokot adapter 在 full-page 下读取该 id 再调用 `segmentStaffSystems`。现有 fragmented auto 测试不得
        改变期望。新测试：K331 或最小 grand-staff fixture 在该 id 下产出 2-staff systems 且 fail closed
        于非法 layout。
-4. [ ] Development 脚本：渲染 K331 → `piano-grand-staff-v1` → 对照 mapping 的 topology-exact，写出 ordered
+4. [x] Development 脚本：渲染 K331 → `piano-grand-staff-v1` → 对照 mapping 的 topology-exact，写出 ordered
        `cropSha256`。跑两次，要求 report SHA 与 crop 序列相同。不得搜 threshold。
-5. [ ] Layout 门：6/6 topology-exact、27 systems、全部 staffCount=2、双跑一致。失败则 `STOP`，不改
+5. [x] Layout 门：6/6 topology-exact、27 systems、全部 staffCount=2、双跑一致。失败则 `STOP`，不改
        default、不训练。通过则写入
        `tools/pdf-omr-cli/reports/exploratory/k331-piano-grand-staff-segmentation-v1/`。
-6. [ ] Human checkpoint：确认 default 测试未回归后再考虑识别。未过 layout 门不准跑引擎。
-7. [ ] 过门后：同一套 system PDFs 喂 Rokot 与 LEGATO，报告 Pitch/Onset/Duration/Joint 与 valid measures，
+6. [x] Human checkpoint：确认 default 测试未回归后再考虑识别。未过 layout 门不准跑引擎。
+7. [x] 过门后：同一套 system PDFs 喂 Rokot 与 LEGATO，报告 Pitch/Onset/Duration/Joint 与 valid measures，
        对照既有 K331 baselines。process success 单独记账。产品 runtime 仍 `STOP`。
-8. [ ] 若 F1 仍远低于发布线，在报告里把下一投资写成 2-staff 识别（LEGATO topology/tie），并明确 **不要**
+8. [x] 若 F1 仍远低于发布线，在报告里把下一投资写成 2-staff 识别（LEGATO topology/tie），并明确 **不要**
        再开 layout 训练。Desktop 接入必须另立 Spec。
 
 ## Acceptance criteria
 
-- [ ] CLI 可用 `--segmentation piano-grand-staff-v1`；不传时行为与今天相同。
-- [ ] K331 6/6 topology-exact，27 个 2-staff crops，双跑 hash 一致。
-- [ ] 现有 `allowFragmentedRuns: true` 测试不回归。
-- [ ] 未读 holdout；未改 App/Desktop default。
-- [ ] 识别若执行：两引擎 ordered input hashes 相同；报告 F1 而非只报 success。
+- [x] CLI 可用 `--segmentation piano-grand-staff-v1`；不传时行为与今天相同。
+- [x] K331 6/6 topology-exact，27 个 2-staff crops，双跑 hash 一致。
+- [x] 现有 `allowFragmentedRuns: true` 测试不回归。
+- [x] 未读 holdout；未改 App/Desktop default。
+- [x] 识别已执行 Rokot F1（与冻结 header-context 对照重合）；LEGATO joined F1 记缺口，未把 process
+      success 写成质量。
 
 ## Verification
 
@@ -102,4 +103,5 @@ pairAdjacentUnpairedGroups: false;
 
 - Desktop 工作台是否增加显式「钢琴大谱表」选项：本 slice 不做。
 - MuseScore OMR Benchmark ID 4/9 clean PDF 是否作为第二份 development 分母：K331 双跑通过后再决定。
-- LEGATO 是否已有 system-crop 入口可直接吃共享 PDF：实现时以 runtime 代码为准，缺则只报 Rokot 并记录缺口。
+- LEGATO 是否已有 system-crop 入口可直接吃共享 PDF：有独立 crop 入口，但没有 joined 27-system F1
+  对照 K331 MXL 的路径；本 slice 只报 Rokot F1 并记录该缺口。

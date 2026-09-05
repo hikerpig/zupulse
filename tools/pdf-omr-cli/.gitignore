@@ -1,1 +1,3 @@
-reports/development
+reports/development/*
+!reports/development/olimpic-real-multisystem-v1/
+!reports/development/olimpic-full-page-detector-v2/

@@ -157,6 +157,33 @@ describe("recognize command", () => {
         "engine/systems/page-001-system-002.musicxml",
       ]),
     );
+    expect(firstManifest).toMatchObject({
+      parameters: {
+        segmentationAllowFragmentedRuns: true,
+        segmentationStaffLayout: "auto",
+      },
+    });
+    const identityPath = join(directory, "identity");
+    await runPdfOmrCommand(
+      ["recognize", inputPath, "--engine", "rokot", "--output", identityPath, "--segmentation", "piano-grand-staff-v1"],
+      { engineRegistry: registry },
+    );
+    const identityManifest = JSON.parse(await readFile(join(identityPath, "run.json"), "utf8")) as {
+      parameters: Record<string, unknown>;
+    };
+    const identitySegmentation = JSON.parse(
+      await readFile(join(identityPath, "engine/segmentation.json"), "utf8"),
+    ) as Record<string, unknown>;
+    expect(identityManifest.parameters).toMatchObject({
+      segmentationId: "piano-grand-staff-v1",
+      segmentationAllowFragmentedRuns: false,
+      segmentationStaffLayout: "grand-staff",
+      segmentationPairAdjacentUnpairedGroups: false,
+    });
+    expect(identitySegmentation).toMatchObject({
+      identity: "piano-grand-staff-v1",
+      options: { staffLayout: "grand-staff", allowFragmentedRuns: false, pairAdjacentUnpairedGroups: false },
+    });
 
     await expect(
       runPdfOmrCommand(["validate", join(firstPath, "draft.json"), "--output", join(directory, "validation.json")]),

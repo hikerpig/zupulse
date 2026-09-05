@@ -12,7 +12,7 @@ pnpm pdf-omr -- import-midi <input.mid> --output <run-dir>
 pnpm pdf-omr -- fuse --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --output <run-dir>
 pnpm pdf-omr -- apply-fusion --run <fusion-run-dir> --decisions <decisions.json> --output <run-dir>
 pnpm pdf-omr -- rebuild-from-midi --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --musescore <executable> --output <run-dir>
-pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff>]
+pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff|three-staff>] [--segmentation piano-grand-staff-v1]
 pnpm pdf-omr -- validate <draft.json> --output <diagnostics.json>
 pnpm pdf-omr -- analyze <draft.json> --output <harmony.json>
 pnpm pdf-omr -- export-musicxml <draft.json> --output <score.mxl>
@@ -47,8 +47,8 @@ MusicXML。命令仅在重建 Draft 无 blocking diagnostic、可 view/playback�
 
 `recognize` 通过可替换 adapter 调用 Audiveris、LEGATO 或 Rokot，再规范化为 engine-neutral Draft。
 Audiveris 保留原始 MXL/OMR；LEGATO 保留原始 ABC 并同时保留转换后的 MusicXML。Rokot 处理印刷体 single staff 与 piano grand staff，保留逐 system
-crop、ABC、MusicXML fragment 和包含 `staffLayout`/`staffCount` 的 segmentation metadata；它是隔离的本地研究 engine，不代表 App
-已经支持 PDF 导入。
+crop、ABC、MusicXML fragment 和包含 `staffLayout`/`staffCount` 的 segmentation metadata。首个 system 使用基础 prompt；后续 system 会把上一份
+prediction 中格式安全的 `L/M/K` 作为上下文。它是隔离的本地研究 engine，不代表 App 已经支持 PDF 导入。
 
 Audiveris executable 默认从 `PATH` 查找。开发或 CI 可以显式指定：
 
@@ -234,19 +234,20 @@ converter environment 必须安装 `abc-xml-converter==1.0.1`。完整 revision�
 license provenance 见 `engines/rokot-environment.json`；模型和 Python environment 不提交到仓库。
 
 full-page development corpus 的 segmentation pilot 不调用模型，只渲染原始多页 PDF 并逐页运行
-`rokot-staff-system-v1` 的 `grand-staff` mode，用于在 inference 前审计 page/system boundary。该 detector 保留 fragmented-row 检测，
-并允许被密集音符遮断的谱线片段对齐到同一条完整谱线范围；严格直线配对失败后，孤立候选可使用
-曲线花括号覆盖率回退：
+`rokot-staff-system-v2`，用于在 inference 前审计 page/system boundary。schema `3.0.0` 同时记录 immutable render
+SHA 与显式 preprocessing output SHA；可选 variant 为 `none`、`deskew-v1`、`local-contrast-v1` 和
+`adaptive-threshold-v1`：
 
 ```bash
 pnpm exec vite-node tools/pdf-omr-cli/scripts/run_full_page_segmentation_pilot.ts \
   tools/pdf-omr-cli/corpus/olimpic-scanned-full-page-dev-v1/manifest.json \
-  tools/pdf-omr-cli/reports/development/olimpic-scanned-full-page-v1-segmentation-pilot/segmentation.json
+  /tmp/segmentation.json \
+  none
 ```
 
-该脚本保留 render/crop hashes、逐页错误 stage 和 `ambiguous-system-segmentation` context，不写回输入或
-人工修补 crop。full-page protocol、readiness limitation 和两次相同 report hash 见
-`tools/pdf-omr-cli/docs/evaluation.md` 与对应 development report README。
+全量单变量消融使用 `run_full_page_preprocessing_ablation.ts`。两个脚本都保留 render/crop hashes、逐页错误 stage
+和 bounded context，不写回输入或人工修补 crop。full-page protocol、readiness limitation 和 report hash 见
+`tools/pdf-omr-cli/docs/evaluation.md` 与对应 report README。
 
 ## Run artifacts
 
@@ -390,6 +391,13 @@ measure numbers、global measure boundaries 和 normalized measure count。它�
 `systems/*` 和 `predicted-draft.json` 一起复查 joining、measure identity 与 source boundary。
 每个成功 item 还写出 `predicted-validation.json`，直接记录 Harmony/MusicXML readiness 与诊断。development
 失败 item 可保留有界 `failure-debug/`；holdout 不保留该目录。
+
+真实 multi-system development case 使用
+`corpus/olimpic-scanned-full-page-dev-v1/real-multisystem-{manifest,case}.json`。先运行单-item benchmark，再用
+`scripts/evaluate_real_multisystem_case.ts` 检查 exact corpus/engine/item identity、至少两个且顺序唯一的 systems、
+4 页/15 systems 完整性、normalized source coverage，以及 merged MusicXML parse/structural evidence。engine item
+失败、缺少或损坏 `joining.json`、system/page count 不符时一律输出 `NOT_EVALUATED`；不得用 ground truth 或其他
+engine artifact 补齐。
 
 新的真实扫描 intake 位于 `corpus/olimpic-scanned-v1/`，manifest 记录 OLiMPiC release、source split、
 archive/item hashes 与 CC BY-SA 4.0 provenance；该 v1 明确是 `system-crop` scope，不代表 full-page

@@ -118,8 +118,8 @@ describe("validateRokotAbc", () => {
     expectReason(() => validateRokotAbc(new TextEncoder().encode(abc)), "invalid-rokot-abc-envelope");
   });
 
-  it("rejects an unknown declared voice with a stable reason", () => {
-    const abc = validAbc.replace("V:1b", "V:3");
+  it("rejects the malformed voice declaration observed on DCML K310-1", () => {
+    const abc = validAbc.replace("V:1b", "V:1=1/2");
 
     expectReason(() => validateRokotAbc(new TextEncoder().encode(abc)), "unknown-rokot-voice");
   });

@@ -69,7 +69,7 @@ export function createEngineRegistry(
   };
 }
 
-function rokotOptionsFromEnvironment(): RokotAdapterOptions | undefined {
+export function rokotOptionsFromEnvironment(): RokotAdapterOptions | undefined {
   const llamaCliPath = process.env.PDF_OMR_ROKOT_LLAMA_CLI;
   const modelPath = process.env.PDF_OMR_ROKOT_MODEL;
   const mmprojPath = process.env.PDF_OMR_ROKOT_MMPROJ;

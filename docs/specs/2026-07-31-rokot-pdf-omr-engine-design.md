@@ -2,7 +2,7 @@
 status: approved
 date: 2026-07-31
 approved: 2026-07-31
-amended: 2026-08-13
+amended: 2026-08-27
 owner: Engineering
 scope: PDF OMR CLI and local benchmark only
 ---
@@ -106,8 +106,10 @@ pnpm benchmark:pdf-omr -- \
 - `auto` MUST accept a page only when all detected systems have one unambiguous topology；同页混合 topology MUST fail closed.
 - Page rendering MUST use repository-owned `pdfjs-dist`, a white background, and a target width of 1400 px.
 - Inference MUST use `temperature=0`, `max_new_tokens=1600`, `reasoning=off`, and concurrency `1`.
-- Prompt MUST be exactly `Transcribe this staff to rokot-ABC.`.
-- The adapter MUST preserve every crop, ABC fragment, converted MusicXML fragment, and segmentation record.
+- 每份 score 的首个 system prompt MUST be exactly `Transcribe this staff to rokot-ABC.`。后续 system 若上一份
+  canonical ABC 包含安全且唯一的 `L/M/K`，MUST 使用下文锁定的 previous-system header context prompt；否则 MUST
+  回退到首个 system prompt。
+- The adapter MUST preserve every crop, ABC fragment, converted MusicXML fragment, and segmentation record。
 - The adapter MUST NOT invent confidence values because the model does not emit calibrated confidence.
 - The adapter MUST NOT silently repair ambiguous pitches, rhythms, voices, measures, repeats, or system order.
 - Cancellation MUST terminate the current `llama-cli` process tree and MUST NOT commit a succeeded run.
@@ -186,7 +188,7 @@ llama-cli
   -m <model.gguf>
   -mm <mmproj.gguf>
   --image <system.png>
-  -p "Transcribe this staff to rokot-ABC."
+  -p <system-prompt>
   -n 1600
   --temp 0
   --single-turn
@@ -196,17 +198,20 @@ llama-cli
   -o <system.abc>
 ```
 
-`llama-cli` build `b10200-5f55650a7` writes the chat wrapper to `-o` even with `--no-display-prompt`. The adapter
-MUST therefore accept only either a response beginning directly with `%%rokot-abc 0.1` or this exact wrapper:
+首个 system 使用基础 prompt。后续 system 只在上一份 canonical ABC 的 `L` 为正整数分数、`M` 为整数分数或
+`C`/`C|`、且 `K` 为安全 ABC key token 时，使用以下 exact prompt：
 
 ```text
-User:
-Transcribe this staff to rokot-ABC.
-
-Assistant:
+Transcribe this staff to rokot-ABC. The previous system used L:<length>, M:<meter>, K:<key>. If this crop does not print a new meter or key signature, preserve those headers.
 ```
 
-It MUST strip that wrapper before preserving the canonical `.abc` artifact. Any other preamble, repeated role,
+上下文只能来自上一份 prediction，MUST NOT 读取 truth 或其他 engine。当前 crop 的明确 meter/key 可以覆盖上下文；任一
+header 不满足安全格式时，下一 system MUST 回退到基础 prompt，禁止把任意模型文本插入 prompt。
+
+`llama-cli` build `b10200-5f55650a7` writes the chat wrapper to `-o` even with `--no-display-prompt`. The adapter
+MUST therefore accept only either a response beginning directly with `%%rokot-abc 0.1` or `User:`、实际
+`system-prompt`、`Assistant:` 组成的 exact wrapper。It MUST strip that wrapper before preserving the canonical `.abc`
+artifact. Any other preamble, repeated role,
 suffix prose, or additional assistant turn MUST fail rather than be heuristically extracted. The extracted payload
 then undergoes UTF-8 and rokot-ABC envelope validation:
 

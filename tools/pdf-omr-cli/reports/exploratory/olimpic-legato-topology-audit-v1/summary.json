@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "completed-no-safe-adapter-normalization",
+  "decision": "STOP",
+  "source": {
+    "corpusId": "olimpic-source-independent-expanded-development-v1",
+    "role": "development",
+    "engineId": "legato",
+    "benchmarkReportSha256": "f794d717131ac99588ace47d46973cb256ece04eff05de18b33c2bda5a00a413"
+  },
+  "audit": {
+    "reportSha256": "8afa8c5ffef3b35f7ec046a8b0df44195d296af50130edb81cf9806a4238ab5c",
+    "reproducibilityAgreementRate": 1,
+    "failuresAudited": 20,
+    "classifications": {
+      "contentful-extra-part": 13,
+      "duplicate-extra-part": 2,
+      "empty-part": 1,
+      "engine-failure": 4
+    },
+    "partCountMismatch": {
+      "total": 15,
+      "predictedThreeSingleStaffParts": 14,
+      "predictedFourSingleStaffParts": 1,
+      "expectedOnePartTwoStaves": 15
+    }
+  },
+  "safeNormalizationPatterns": 0,
+  "comparableItemsAfterAudit": 26,
+  "nextAction": "Treat LEGATO extra-part admission as a model or processor experiment, not an adapter normalization."
+}

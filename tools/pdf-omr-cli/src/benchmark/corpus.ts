@@ -22,7 +22,7 @@ export const corpusItemSchema = z
     split: z.enum(["development", "holdout"]),
     category: z.string().min(1),
     inputScope: z.enum(["system-crop", "full-page"]).optional(),
-    staffLayout: z.enum(["auto", "single-staff", "grand-staff"]).optional(),
+    staffLayout: z.enum(["auto", "single-staff", "grand-staff", "three-staff"]).optional(),
     benchmarkSuite: z.enum(["contract", "oracle-system", "full-page"]).optional(),
     input: z.object({ path: relativeCorpusPathSchema, sha256: sha256Schema }).strict(),
     groundTruth: z

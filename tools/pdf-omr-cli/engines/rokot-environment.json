@@ -26,6 +26,8 @@
   },
   "decoder": {
     "prompt": "Transcribe this staff to rokot-ABC.",
+    "systemContext": "previous-prediction-headers-v1",
+    "systemContextHeaders": ["L", "M", "K"],
     "maxNewTokens": 1600,
     "temperature": 0,
     "reasoning": "off",

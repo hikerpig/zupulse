@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "corpusId": "olimpic-real-multisystem-dev-v1",
+  "protocolVersion": "1.0.0",
+  "items": [
+    {
+      "id": "olimpic-6007571-full-page",
+      "workId": "olimpic-6007571",
+      "variantId": "full-work",
+      "split": "development",
+      "category": "real-scanned-full-page",
+      "inputScope": "full-page",
+      "benchmarkSuite": "full-page",
+      "input": {
+        "path": "dev/6007571/input.pdf",
+        "sha256": "f89b5ae71c7248a846c09ce3fe70924c67ad16d5a30c62ac043a733c4ccccb9d"
+      },
+      "groundTruth": {
+        "path": "dev/6007571/truth.musicxml",
+        "sha256": "d822ea6011aa393536f8702c57ac79679129ac8720789793b00cb6bbd2298817",
+        "format": "musicxml"
+      },
+      "license": {
+        "id": "CC-BY-SA-4.0",
+        "source": "https://creativecommons.org/licenses/by-sa/4.0/"
+      },
+      "provenance": {
+        "dataset": "OLiMPiC scanned",
+        "release": "1.0 (2024-02-12)",
+        "sampleId": "6007571/full-work",
+        "sourceSplit": "dev",
+        "archiveSha256": "a84091b50154251b66d37b50806f98d8a6d758b4195d2aa9805d1b9cb78e6993"
+      }
+    }
+  ]
+}

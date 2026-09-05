@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "completed-not-evaluated",
+  "decision": "STOP",
+  "case": {
+    "id": "olimpic-6007571-real-multisystem-v1",
+    "caseSha256": "57cc04547a4fc7b4574f536962cd10ac4da6f06f1e4cce79c2f41ae24850f1b0",
+    "manifestSha256": "f2ec8995af6bc68a66fcda62613fbe3fc89c161f54315ec73c4d96a133aec339",
+    "itemId": "olimpic-6007571-full-page",
+    "inputScope": "full-page",
+    "groundTruthPolicy": "evaluation-only",
+    "expected": {
+      "pages": 4,
+      "systems": 15,
+      "minimumSystems": 2
+    }
+  },
+  "run": {
+    "engineId": "rokot",
+    "preprocess": "none",
+    "reportSha256": "fa3e9bb03fa7f60c9e6bff24ca742f1eee24ab05a8a511a574e0490c22b0abe6",
+    "itemStatus": "failed",
+    "error": {
+      "code": "ENGINE_OUTPUT_INVALID",
+      "reason": "ambiguous-system-segmentation",
+      "stage": "staff-system-topology",
+      "pageIndex": 0,
+      "groupCount": 10,
+      "unpairedGroupCount": 6
+    }
+  },
+  "evaluation": {
+    "outputSha256": "bdee65481246ee316e81579d747fabc831278fd4fee5a75875e9373093984f1e",
+    "status": "NOT_EVALUATED",
+    "reason": "engine-item-failed",
+    "multiSystemArtifactProduced": false,
+    "qualityMetricsProduced": false
+  }
+}

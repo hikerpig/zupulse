@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "completed-no-segmentation-admission",
+  "decision": "STOP",
+  "corpus": {
+    "id": "olimpic-scanned-full-page-dev-v1",
+    "role": "development",
+    "manifestSha256": "4cbd78411f15f73bf548a50f2af125e29c6cc42297b43a8616934a08a2cb0a1f",
+    "works": 6,
+    "pages": 29
+  },
+  "experiment": {
+    "render": {
+      "targetWidth": 1400,
+      "allowLandscape": true,
+      "parametersSha256": "58e7ef6593e63bbbc888def5c80df0115babe407bb31ab17a7626ef3464da601"
+    },
+    "preprocess": {
+      "id": "none",
+      "version": "1.0.0",
+      "parametersSha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    "detector": {
+      "id": "rokot-staff-system-v2",
+      "parametersSha256": "dd5197be15407659523973ee76631dd9f5f4ace2942d40ec01ab94389b0a1901"
+    }
+  },
+  "pilot": {
+    "reportSha256": "41565eb8288278913169109556ec56f29728b1fb3391ddab3d3ded4345772390",
+    "reproducibilityAgreementRate": 1,
+    "items": {
+      "attempted": 6,
+      "succeeded": 0,
+      "failed": 6
+    },
+    "pages": {
+      "attempted": 29,
+      "succeeded": 0,
+      "failed": 29
+    },
+    "systems": 0,
+    "failureStages": {
+      "grand-staff-pairing": 29
+    },
+    "staffGroupCountRange": {
+      "minimum": 9,
+      "maximum": 58
+    },
+    "unpairedStaffGroupCountRange": {
+      "minimum": 1,
+      "maximum": 32
+    }
+  },
+  "qualityMetricsEvaluated": false,
+  "nextAction": "Run deterministic preprocessing ablation before proposing a learned layout detector."
+}

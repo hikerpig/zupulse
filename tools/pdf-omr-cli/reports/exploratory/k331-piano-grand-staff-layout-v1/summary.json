@@ -1,0 +1,125 @@
+{
+  "classicVariants": [
+    {
+      "admittedPageCount": 2,
+      "id": "runtime-fragmented-auto",
+      "pages": [
+        { "pageIndex": 0, "staffCounts": null, "stage": "staff-system-topology", "status": "failed", "systemCount": 0 },
+        { "pageIndex": 1, "staffCounts": null, "stage": "staff-system-topology", "status": "failed", "systemCount": 0 },
+        { "pageIndex": 2, "staffCounts": [1, 1], "stage": null, "status": "admitted", "systemCount": 2 },
+        { "pageIndex": 3, "staffCounts": null, "stage": "staff-system-topology", "status": "failed", "systemCount": 0 },
+        { "pageIndex": 4, "staffCounts": null, "stage": "staff-system-topology", "status": "failed", "systemCount": 0 },
+        { "pageIndex": 5, "staffCounts": [2, 2], "stage": null, "status": "admitted", "systemCount": 2 }
+      ]
+    },
+    {
+      "admittedPageCount": 1,
+      "id": "runtime-fragmented-grand-staff",
+      "pages": [
+        { "pageIndex": 0, "staffCounts": null, "stage": "grand-staff-pairing", "status": "failed", "systemCount": 0 },
+        { "pageIndex": 1, "staffCounts": null, "stage": "grand-staff-pairing", "status": "failed", "systemCount": 0 },
+        { "pageIndex": 2, "staffCounts": null, "stage": "grand-staff-pairing", "status": "failed", "systemCount": 0 },
+        { "pageIndex": 3, "staffCounts": null, "stage": "grand-staff-pairing", "status": "failed", "systemCount": 0 },
+        { "pageIndex": 4, "staffCounts": null, "stage": "grand-staff-pairing", "status": "failed", "systemCount": 0 },
+        { "pageIndex": 5, "staffCounts": [2, 2], "stage": null, "status": "admitted", "systemCount": 2 }
+      ]
+    },
+    {
+      "admittedPageCount": 6,
+      "id": "historical-non-fragmented-grand-staff",
+      "pages": [
+        { "pageIndex": 0, "staffCounts": [2, 2, 2, 2, 2, 2], "stage": null, "status": "admitted", "systemCount": 6 },
+        { "pageIndex": 1, "staffCounts": [2, 2, 2, 2, 2, 2], "stage": null, "status": "admitted", "systemCount": 6 },
+        { "pageIndex": 2, "staffCounts": [2], "stage": null, "status": "admitted", "systemCount": 1 },
+        { "pageIndex": 3, "staffCounts": [2, 2, 2, 2, 2, 2], "stage": null, "status": "admitted", "systemCount": 6 },
+        { "pageIndex": 4, "staffCounts": [2, 2, 2, 2, 2, 2], "stage": null, "status": "admitted", "systemCount": 6 },
+        { "pageIndex": 5, "staffCounts": [2, 2], "stage": null, "status": "admitted", "systemCount": 2 }
+      ]
+    },
+    {
+      "admittedPageCount": 3,
+      "id": "pair-adjacent-fragmented-grand-staff",
+      "pages": [
+        { "pageIndex": 0, "staffCounts": null, "stage": "grand-staff-pairing", "status": "failed", "systemCount": 0 },
+        { "pageIndex": 1, "staffCounts": null, "stage": "grand-staff-pairing", "status": "failed", "systemCount": 0 },
+        { "pageIndex": 2, "staffCounts": [2], "stage": null, "status": "admitted", "systemCount": 1 },
+        { "pageIndex": 3, "staffCounts": null, "stage": "grand-staff-pairing", "status": "failed", "systemCount": 0 },
+        { "pageIndex": 4, "staffCounts": [2, 2, 2, 2, 2, 2], "stage": null, "status": "admitted", "systemCount": 6 },
+        { "pageIndex": 5, "staffCounts": [2, 2], "stage": null, "status": "admitted", "systemCount": 2 }
+      ]
+    }
+  ],
+  "decision": "USE_NON_FRAGMENTED_GRAND_STAFF_FOR_PIANO",
+  "expectedSystemCounts": [6, 6, 1, 6, 6, 2],
+  "mappingSha256": "0f9b66aa464d4985087b5dc6c56e530a2f95e20f5c99c09c02c72e935ec1f0e8",
+  "pdfSha256": "22cec1f974dc4bbef64c3e8968e98dcae68d229769d70fa66a21b8c8d56ae8a7",
+  "runtimeDecision": "stop-before-product-integration",
+  "schemaVersion": "1.0.0",
+  "unet": {
+    "admittedPageCount": 3,
+    "pages": [
+      {
+        "detectedSystemCount": 4,
+        "expectedStaffCounts": [2, 2, 2, 2, 2, 2],
+        "expectedSystemCount": 6,
+        "pageIndex": 0,
+        "predictedStaffCounts": [2, 2, 2, 2],
+        "primaryFailureClass": "count-mismatch",
+        "renderSha256": "87217cf3d1358dad3fb86a7febe4f74db2484e7ddba39a42b6f95d7d715a3750",
+        "status": "not-admitted"
+      },
+      {
+        "detectedSystemCount": 6,
+        "expectedStaffCounts": [2, 2, 2, 2, 2, 2],
+        "expectedSystemCount": 6,
+        "pageIndex": 1,
+        "predictedStaffCounts": [2, 2, 2, 2, 2, 2],
+        "primaryFailureClass": null,
+        "renderSha256": "db117992babadbedf96b6fe243b7e76e4b49fb8584bfed5009e86dc85a87c5f5",
+        "status": "admitted"
+      },
+      {
+        "detectedSystemCount": 1,
+        "expectedStaffCounts": [2],
+        "expectedSystemCount": 1,
+        "pageIndex": 2,
+        "predictedStaffCounts": [2],
+        "primaryFailureClass": null,
+        "renderSha256": "820ac45cce51c876c4633de7fe2ab6415a2293af8999159ebd7c0ff12b3c1c3c",
+        "status": "admitted"
+      },
+      {
+        "detectedSystemCount": 6,
+        "expectedStaffCounts": [2, 2, 2, 2, 2, 2],
+        "expectedSystemCount": 6,
+        "pageIndex": 3,
+        "predictedStaffCounts": [2, 2, 2, 2, 2, 2],
+        "primaryFailureClass": null,
+        "renderSha256": "c28e465325a0c6fdc958b569d0e7fc3ef0c5b2f6a81f47acc9ebaa784ba5f8c8",
+        "status": "admitted"
+      },
+      {
+        "detectedSystemCount": 5,
+        "expectedStaffCounts": [2, 2, 2, 2, 2, 2],
+        "expectedSystemCount": 6,
+        "pageIndex": 4,
+        "predictedStaffCounts": [2, 2, 2, 2, 2],
+        "primaryFailureClass": "count-mismatch",
+        "renderSha256": "92fa86d71b1bd61bb747424c95c9cc34412e9bbffba94f91e89ba28fe3c8acf6",
+        "status": "not-admitted"
+      },
+      {
+        "detectedSystemCount": 1,
+        "expectedStaffCounts": [2, 2],
+        "expectedSystemCount": 2,
+        "pageIndex": 5,
+        "predictedStaffCounts": [2],
+        "primaryFailureClass": "count-mismatch",
+        "renderSha256": "6bc77cbbd1fee26541bac8f268d4d7a89c08454e8500d7a01ed95d32b4775c31",
+        "status": "not-admitted"
+      }
+    ],
+    "repeatedRunIdentical": true,
+    "reportSha256": "2f239be433f2f75c1049f22a57e3528da2159e6854611a71e5637f244ae7af6f"
+  }
+}

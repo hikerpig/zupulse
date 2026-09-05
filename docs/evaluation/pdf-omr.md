@@ -268,6 +268,163 @@ artifacts，合并 Draft 含 56 measures 且无 diagnostics，总墙钟约 48 �
 因此中止了该次 development probe。该结果证明 8 页输入合同与流式执行可用，不证明复杂 8 页整谱能在当前
 一小时 timeout 内完成；复杂度和 max-length 仍需由真实 corpus 单独评估。
 
+## 2026-08-26 Detector v2 real full-page baseline
+
+新的 versioned segmentation pilot 使用当前 `rokot-staff-system-v2` 重跑既有
+`olimpic-scanned-full-page-dev-v1` development inputs。两次独立运行生成 byte-identical canonical report，
+SHA-256 为 `41565eb8288278913169109556ec56f29728b1fb3391ddab3d3ded4345772390`。
+
+6/6 works、29/29 pages 均在 `grand-staff-pairing` fail closed，0 systems 发布；每页检测到 9–58 个 staff-group
+candidates，仍有 1–32 个 unpaired groups。结果证明 quick profile 的 synthetic full-page 改善不能外推到真实
+整页扫描。该 pilot 未调用 recognition engine，也未生成 symbolic/Harmony metrics，因此只维持
+real-scanned full-page layout `STOP`，不能解释为 Rokot 或 LEGATO note-level quality。
+
+下一步使用同一 development inputs 做 `none`、deskew、local contrast 与 adaptive threshold 的单变量 ablation。
+不得降低 pairing gate、忽略 unpaired groups、人工 crop 或修改历史 protocol。durable summary 位于
+`tools/pdf-omr-cli/reports/development/olimpic-full-page-detector-v2/`。
+
+### Deterministic preprocessing ablation
+
+上述 ablation 已于 2026-08-26 完成。四个 variant 两次运行均各自生成相同 canonical SHA；但 `none`、deskew、
+local contrast、adaptive threshold 的 segmentation success 都是 0/29，全部仍在 `grand-staff-pairing` fail closed，
+system count 均为 0。deskew 改变 13 pages，local contrast 与 adaptive threshold 各改变 29 pages。由于没有任何
+admission 提升，T08 决策为 `STOP`，runtime default 保持 `none`，不修改 detector 或 Rokot adapter。
+
+同一轮 joining census 读取既有 45 个 Rokot success artifacts：45/45 都是单个 `system-crop`，multi-system
+denominator 为 0；153 个 raw/normalized boundaries 数量一致且 provenance 无缺失。该证据不能评价跨 system
+header continuity，故 T09 同样 `STOP`，`normalizeRokotOutput` 不修改。完整结果位于
+`tools/pdf-omr-cli/reports/exploratory/olimpic-quality-optimization-v1/`。
+
+随后新增 `olimpic-6007571-real-multisystem-v1` development case，单独绑定真实扫描派生输入、MusicXML truth、
+source mapping hashes 与 4 页/15 systems 预期。case evaluator 只接受 exact Rokot benchmark item 的
+`joining.json` 和 quality artifacts；ground truth/source mapping 不进入 runtime segmentation，也不能替代失败结果。
+2026-08-26 的真实单-item run 在第 0 页 `staff-system-topology` 以
+`ENGINE_OUTPUT_INVALID / ambiguous-system-segmentation` fail closed，因此结果为
+`NOT_EVALUATED / engine-item-failed`，没有 multi-system artifact 或 quality metrics。当前 T09 仍为 `STOP`；该用例
+已经固化了真实 joining admission boundary。
+
+## 2026-08-27 Rokot page-scope ablation
+
+在 timing-ready 的 OLiMPiC development work `6007571` 上，使用相同 4 页真实扫描输入与 MusicXML truth 比较了
+整页直接 Rokot 和 15 个 oracle system crops 后逐 system Rokot。整页通过 development-only `system-crop`
+bypass 直接进入模型；oracle crops 使用冻结 `source-mapping.json` bbox 物化，再由现有 normalizer joining。
+
+oracle variant 的每 staff measure count 为 55，接近 truth 的 57；direct-page 为 93。oracle 的 Pitch/Duration/Joint
+F1 为 `0.3622 / 0.2744 / 0.0147`，direct-page 为 `0.1645 / 0.2408 / 0.0043`；diagnostics 从 407 降到 304，
+wall time 从约 107.5 秒降到 76.6 秒，但 Onset F1 从 `0.2870` 降到 `0.1837`。两侧 valid measure rate 均为 0。
+
+后续页面复核确认该 work 的每个 source system 都是 vocal staff + piano grand staff 的 3-staff mixed topology，超出
+当前 Rokot 1–2 staff 合同；本实验两侧却都声明为 `grand-staff`。因此结果降级为 `NOT_ELIGIBLE`，不能隔离证明输入
+粒度优劣，也不提升任一路线为 runtime candidate。后续必须改用合同内纯 single-staff 或 piano grand-staff 页面重跑。
+完整摘要位于 `tools/pdf-omr-cli/reports/exploratory/rokot-page-scope-ablation-v1/`。
+
+同日使用合同内的 K331 纯钢琴 grand-staff fixture 重做配对实验。整页 direct-page 与历史已复核 27 system crops 使用
+相同 Rokot model、prompt 与 decoder。verified-system variant 的 measure count 为 138/138，更接近 truth 的
+137/137；Pitch/Onset/Duration/Joint F1 为 `0.4919 / 0.7632 / 0.7182 / 0.1567`，均高于 direct-page 的
+`0.3407 / 0.5820 / 0.5486 / 0.0750`。valid measures 从 `0/274` 提升到 `19/274`，diagnostics 从 362 降到
+193，但 wall time 从约 129.4 秒增至 200.2 秒。
+
+该结果支持继续 per-system transcription，并把下一优化边界收敛到 system context、measure/staff alignment 与 joining。
+随后在相同 27 crops 上增加无 truth 的 previous-system header context probe：首个 system 保持原 prompt，后续只携带上一
+prediction 中唯一合法的 `L/M/K`。measure count 达到 137/137，diagnostics 降至 148，Pitch/Onset/Duration/Joint F1
+达到 `0.7525 / 0.9162 / 0.9484 / 0.3768`，valid measures 提升至 `57/274`（`20.80%`）。
+
+该 context 已集成到 Rokot runtime：只传播格式安全的 `L/M/K`，任一 header 不安全时回退到基础 prompt。它仍会传播
+音乐上错误但格式合法的 header；本轮中途产生
+`K:G` 后持续传播，因此下一步必须在第二个合同内 work 上以相同协议复现。当前
+`rokot-staff-system-v2 + allowFragmentedRuns=true` 在 K331 第 1 页仍以 `grand-staff-pairing` fail closed；本轮为隔离
+transcription 使用历史 `rokot-grand-staff-v1` 已复核 crops，不宣称当前 full-page detector 已恢复。完整摘要位于
+`tools/pdf-omr-cli/reports/exploratory/k331-page-scope-ablation-v1/`。
+
+## 2026-08-27 Rokot header-context ablation
+
+同一份 K331 27-system crop PDF 上比较了当前 `L/M/K` runtime、只传 `L/M`、冻结首个 `K`、以及 key 跳变后暂停传
+`K` 的 consensus。物化使用 `rokot-staff-system-v2` 且 `allowFragmentedRuns=false`，系统数为 `6/6/1/6/6/2`；
+baseline Joint F1 `0.3768`、valid measures `57/274` 复现了上一轮 `L/M/K` 结果。
+
+`previous-lm-headers-v1` 最优：Pitch/Joint F1 为 `0.9296 / 0.4922`，valid measures `117/274`（`42.70%`），staff /
+voice / tie / tuplet F1 为 `0.8482 / 0.4935 / 0.8460 / 0.8474`。predicted key 从卡住的 `C→G` 变为 `C/A` 交替，
+与 K.331-3 的书面 A 调一致。冻结首个 `K:C` 没有帮助；consensus 介于 baseline 与 L/M-only 之间。onset/duration
+几乎不变。Joint 与 voice F1 始终接近，因此下一优化边界是 voice 归属和双谱表 duration mismatch，而不是继续增加
+header 文本。
+
+合同内第二份 work 只能使用 development `melody-eight`：四个 policy 的 Draft hash 与全部 symbolic F1 均为满分且
+彼此相同。仓库没有第二份 development piano grand-staff truth；`piano-clean` 是 holdout，OLiMPiC full-page
+development 为 mixed topology。因此 L/M-only 还不能替换 runtime default。完整摘要位于
+`tools/pdf-omr-cli/reports/exploratory/rokot-header-context-ablation-v1/`。
+
+## 2026-08-28 DCML Mozart piano header-context
+
+用 DCML Mozart v2.3 `reviewed` MSCX、MuseScore 4.7.4 导出的 derived-controlled PDF/MXL 复现 L/M/K vs 只传
+`L/M`。谱面不进入 Git。
+
+`K310-1`（A 小调）物化 44 个 oracle crops 后，在第 7 个 crop 因 `V:1=1/2` 触发 `unknown-rokot-voice`，整谱
+fail closed，不能进入质量比较。
+
+`K280-1`（F 大调）完成 48 个 crops。`L/M/K` 的 Pitch/Joint/valid 为 `0.7500 / 0.4131 / 48/288`，key 从 `C` 卡住到
+`G`；只传 `L/M` 虽写出 `F`，但三项都下降到 `0.4730 / 0.1929 / 39/288`，小节数还变成 148。因此 K331 的 L/M-only
+收益没有在第二份合同内钢琴谱上复现，runtime default 保持 `L/M/K`。摘要位于
+`tools/pdf-omr-cli/reports/exploratory/rokot-header-context-dcml-piano-v1/`。
+
+## 2026-08-29 Piano corpus suitability 与 MuseScore clean probe
+
+DCML Mozart v2.3 的 `MS3` 渲染带 harmony labels，`reviewed` 还包含红色审校音符，因此不能未经确定性清洗就作为
+普通 clean OMR 页面。仓库已登记的 5 份 ASAP v1.1 piano MusicXML 在当前 ground-truth audit 中为 0/5 ready；
+经 MuseScore 4.7.4 重导 MXL 后仍为 0/5，暂不能直接进入现有 gate。
+
+MuseScore 官方 OMR Benchmark 提供 1,077 对 CC0 augmented PDF + MSCZ。对前 12 个 IDs 的最小 pilot 检出 5 个
+`piano / 1 part × 2 staves`，其中 IDs 4、9 的 MSCZ 经 MuseScore 重导后为 2/5 readiness-ready。两份官方 augmented
+PDF 均在当前 detector 的 `staff-groups=0` fail closed；同源 MSCZ 重渲染 clean PDF 后则分别物化 15 与 4 个 systems，
+并完成 header-context 对照。
+
+ID 4 上只传 `L/M` 把 Pitch/Joint/valid 从 `0.8686 / 0.4238 / 46/184` 提升到
+`0.9266 / 0.4623 / 69/184`；ID 9 的 Pitch 与 valid 不变，Joint 从 `0.3683` 小幅下降到 `0.3538`。结合 K331
+提升与 K280 回归，当前 runtime default 继续保持 `L/M/K`。两个 clean case 作为 development evidence 保留，
+augmented PDF 只记录 layout admission failure，不混入 transcription quality。完整结果位于
+`tools/pdf-omr-cli/reports/exploratory/piano-corpus-suitability-v1/`。
+
+## 2026-08-26 LEGATO topology failure audit
+
+既有 46-item OLiMPiC development run 的 20 个 LEGATO failures 已通过 immutable artifacts 审计。分类为
+13 个 `contentful-extra-part`、2 个 `duplicate-extra-part`、1 个 `empty-part` 和 4 个 engine failures。
+15 个 `part-count-mismatch` 都以 `1 part × 2 staves` 为 expected topology；LEGATO 产生 14 个
+`3 parts × 1 staff` 和一个 `4 parts × 1 staff`。
+
+13 个 contentful extra-part cases 显然不能通过 adapter 丢弃。两个 duplicate cases 也没有形成唯一无损映射：
+一个剩余 upper part 使用 percussion clef，另一个删除重复 bass 后仍有三个 contentful parts。因此 T05
+adapter-normalization decision 为 `STOP`，`alignDraftParts` 不修改，comparable 仍为 26/46。后续若继续该方向，
+必须作为 LEGATO model/processor output-topology experiment，而不能根据 ground truth、part order 或 pitch range
+选择要删除的 part。durable evidence 位于
+`tools/pdf-omr-cli/reports/exploratory/olimpic-legato-topology-audit-v1/`。
+
+## 2026-09-05 layout 训练线结案
+
+为 OLiMPiC 29 页 3-staff mixed 扫描训练 layout（staff-line CNN、UNet、DETR、OLA、scan-domain）已经关闭。
+该评测集不是产品分母：Rokot 合同是 1–2 staff，产品主路径是钢琴大谱表。不把任何 learned detector 接入
+Desktop，不新增 `onnxruntime-node`。中间失败细节不保留为当前事实源。
+
+## 2026-09-05 piano-grand-staff-v1
+
+K331 六页 truth 为 `6/6/1/6/6/2`（27 个 2-staff）。runtime `allowFragmentedRuns=true` 最多 2/6 页。
+同一 `rokot-staff-system-v2` 在 **non-fragmented grand-staff** 下 6/6。CLI 现提供显式 identity
+`piano-grand-staff-v1`；省略时仍是 fragmented auto。Desktop default 不变。
+
+该 identity 双跑 27 个 crop hash 一致。Rokot `previous-prediction-headers-v1` Joint F1 `0.3768`、valid
+`57/274`，与冻结 header-context 对照重合。LEGATO 没有 joined 27-system F1 路径，本轮未报数字。产品
+runtime 保持 `STOP`。下一投资是 2-staff 识别，不是再训练 layout。
+
+- Spec：`docs/specs/2026-09-05-pdf-omr-piano-grand-staff-segmentation.md`
+- Evidence：`tools/pdf-omr-cli/reports/exploratory/k331-piano-grand-staff-segmentation-v1/`
+
+## 当前结论（2026-09-05）
+
+| 现状         | 事实                                                                                       |
+| ------------ | ------------------------------------------------------------------------------------------ |
+| 产品         | Desktop PDF OMR 仍是实验工作台；Library 导入质量线未过；runtime `STOP`                     |
+| 扫描 3-staff | classic detector 0/29；不为该分母再训练 layout                                             |
+| 钢琴 layout  | `piano-grand-staff-v1` 在 K331 上 6/6、27 个 2-staff crops，双跑一致；不改 Desktop default |
+| 钢琴识别     | Rokot header-context Joint F1 `0.3768`，valid `57/274`。未达发布线                         |
+
 ## 若未来重启
 
 2026-08-17 的 source-independent system-crop 扩样已经执行：46 attempted 中 Rokot 45 success、LEGATO 26
@@ -276,15 +433,16 @@ GT-free selector gate。该结果把下一优先级收敛为 LEGATO part/topolog
 engine 投票或编写更多 selector 规则。证据位于
 `tools/pdf-omr-cli/reports/exploratory/olimpic-source-independent-cross-engine-v1/`，不改写 frozen holdout `STOP`。
 
-新的 discovery 至少需要：
+新的 discovery 优先合同内 2-staff 钢琴 full-page 与 per-system 识别；OLiMPiC mixed 3-staff 只作扫描压力测试。
 
-1. 在已完成的 6-work OLiMPiC real-corpus quick screening 基础上，扩充许可明确、包含更多真实印刷扫描与目标
-   钢琴谱型的 corpus，并继续按 work 冻结 split。
-2. 先解决 render/preprocessing domain gap，再比较 engine；不能用放宽 validator 掩盖错误。
+其他约束不变：
+
+1. 不能用放宽 validator 掩盖错误。
+2. 先解决 render/preprocessing domain gap，再比较 engine。
 3. 将 cancel、峰值 GPU/RSS 和逐阶段 wall time 纳入实际 item metrics。
 4. 对 neural decoder 做可复现性诊断，并单独校准 confidence，禁止跨 engine 直接比较 raw score。
 5. 使用新的 protocol/version；本次 frozen report 保持不可变。
 6. 若纳入 Rokot，先实现确定性的 system segmentation 与 joining，并在 development corpus 上冻结
    crop、decoder、metric implementation 和 model revision，再读取新 holdout。
 
-本阶段没有修改 `apps/*`，也没有定义 UI、Bridge、Repository 或持久化模型。
+Desktop 工作台默认展示顺序改为 LEGATO → Rokot → Audiveris，但不改变 Library、Bridge 或产品发布门槛。

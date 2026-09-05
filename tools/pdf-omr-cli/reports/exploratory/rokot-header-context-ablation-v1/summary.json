@@ -1,0 +1,330 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "development-evidence",
+  "baselinePolicy": "previous-prediction-headers-v1",
+  "probePolicies": ["previous-lm-headers-v1", "first-system-key-v1", "key-consensus-v1"],
+  "decision": "previous-lm-headers-v1-best-on-k331-runtime-default-unchanged",
+  "nextOptimizationBoundary": "voice-assignment-and-staff-duration-mismatch-after-stopping-key-propagation",
+  "works": [
+    {
+      "work": {
+        "category": "derived-controlled-grand-staff",
+        "groundTruthSha256": "cf358b873205d72b9a67cada92cc4ac11480a35fc092a25eb181eaa305c3d3f4",
+        "id": "mozart-k331-3",
+        "inputSha256": "22cec1f974dc4bbef64c3e8968e98dcae68d229769d70fa66a21b8c8d56ae8a7",
+        "staffLayout": "grand-staff"
+      },
+      "materialization": {
+        "derivedPdfSha256": "2332e248d8ef40466b7442e6a9e89eafbc3475e902d08c2896a28a910928e15a",
+        "detectorAllowFragmentedRuns": false,
+        "systemCount": 27,
+        "systemsPerPage": [6, 6, 1, 6, 6, 2]
+      },
+      "groundTruth": {
+        "diagnosticCodes": ["MISSING_EVENT_TIMING", "VOICE_DURATION_MISMATCH"],
+        "measuresPerStaff": [137, 137],
+        "readiness": {
+          "harmony": "blocked",
+          "musicXml": "blocked"
+        }
+      },
+      "variants": {
+        "previous-prediction-headers-v1": {
+          "policy": "previous-prediction-headers-v1",
+          "draftSha256": "a1ac445d357ef1af01fab67f942adebcd4dc5adb219695ae397d48d7e1117fba",
+          "elapsedMs": 101316,
+          "modelUnitCount": 27,
+          "measuresPerStaff": [137, 137],
+          "predictedKeys": ["C", "G"],
+          "keySequence": "CCCCCCCCGGGGGGGGGGGGGGGGGGG",
+          "rawDiagnosticCount": 85,
+          "rawDiagnosticsByCode": {
+            "MISSING_EVENT_TIMING": 42,
+            "ROKOT_MEASURE_DURATION_MISMATCH": 42,
+            "ROKOT_STAFF_MEASURE_COUNT_MISMATCH": 1
+          },
+          "validatedDiagnosticCount": 148,
+          "validatedDiagnosticsByCode": {
+            "MISSING_EVENT_TIMING": 42,
+            "ROKOT_MEASURE_DURATION_MISMATCH": 42,
+            "ROKOT_STAFF_MEASURE_COUNT_MISMATCH": 1,
+            "VOICE_DURATION_MISMATCH": 63
+          },
+          "readiness": {
+            "harmony": "blocked",
+            "musicXml": "blocked"
+          },
+          "symbolic": {
+            "durationF1": 0.9483760683760684,
+            "jointF1": 0.3767521367521367,
+            "onsetF1": 0.9162393162393163,
+            "pitchF1": 0.752537626881344,
+            "staffF1": 0.6871794871794872,
+            "tieF1": 0.6811340567028351,
+            "tupletF1": 0.6825341267063353,
+            "validMeasureRate": 0.20802919708029197,
+            "validMeasures": 57,
+            "validMeasureTotal": 274,
+            "voiceF1": 0.3781196581196582
+          }
+        },
+        "previous-lm-headers-v1": {
+          "policy": "previous-lm-headers-v1",
+          "draftSha256": "ae9d0ff8603a7c5f69b4525ea709da3efdf08aafa22beaa2ad12c345ba4371ac",
+          "elapsedMs": 103065,
+          "modelUnitCount": 27,
+          "measuresPerStaff": [137, 137],
+          "predictedKeys": ["C", "A"],
+          "keySequence": "CCCCCAAAAAAAACCCCAAAAAAAAAA",
+          "rawDiagnosticCount": 85,
+          "rawDiagnosticsByCode": {
+            "MISSING_EVENT_TIMING": 38,
+            "ROKOT_MEASURE_DURATION_MISMATCH": 47
+          },
+          "validatedDiagnosticCount": 149,
+          "validatedDiagnosticsByCode": {
+            "MISSING_EVENT_TIMING": 38,
+            "ROKOT_MEASURE_DURATION_MISMATCH": 47,
+            "VOICE_DURATION_MISMATCH": 64
+          },
+          "readiness": {
+            "harmony": "blocked",
+            "musicXml": "blocked"
+          },
+          "symbolic": {
+            "durationF1": 0.94213750850919,
+            "jointF1": 0.4921715452688904,
+            "onsetF1": 0.9155888359428183,
+            "pitchF1": 0.929616724738676,
+            "staffF1": 0.8481960517358748,
+            "tieF1": 0.845993031358885,
+            "tupletF1": 0.8473867595818816,
+            "validMeasureRate": 0.42700729927007297,
+            "validMeasures": 117,
+            "validMeasureTotal": 274,
+            "voiceF1": 0.49353301565690944
+          }
+        },
+        "first-system-key-v1": {
+          "policy": "first-system-key-v1",
+          "draftSha256": "b83f4a9c76636e22fd245054f8e50a5d6de7b18a2422947e9150299360e8dfa8",
+          "elapsedMs": 137675,
+          "modelUnitCount": 27,
+          "measuresPerStaff": [137, 137],
+          "predictedKeys": ["C", "G"],
+          "keySequence": "CCCCCCCCGCCCCCCCCCGCCCGGGCG",
+          "rawDiagnosticCount": 84,
+          "rawDiagnosticsByCode": {
+            "MISSING_EVENT_TIMING": 42,
+            "ROKOT_MEASURE_DURATION_MISMATCH": 42
+          },
+          "validatedDiagnosticCount": 144,
+          "validatedDiagnosticsByCode": {
+            "MISSING_EVENT_TIMING": 42,
+            "ROKOT_MEASURE_DURATION_MISMATCH": 42,
+            "VOICE_DURATION_MISMATCH": 60
+          },
+          "readiness": {
+            "harmony": "blocked",
+            "musicXml": "blocked"
+          },
+          "symbolic": {
+            "durationF1": 0.9464653397391901,
+            "jointF1": 0.36650652024708313,
+            "onsetF1": 0.9169526424159231,
+            "pitchF1": 0.7374693305292673,
+            "staffF1": 0.67124227865477,
+            "tieF1": 0.663161584297231,
+            "tupletF1": 0.6645636172450051,
+            "validMeasureRate": 0.20802919708029197,
+            "validMeasures": 57,
+            "validMeasureTotal": 274,
+            "voiceF1": 0.3678792038435141
+          }
+        },
+        "key-consensus-v1": {
+          "policy": "key-consensus-v1",
+          "draftSha256": "cacf43217bf2b8f1326a9c36739814cb17e028c4c8abd91d90d9b4ad0328a98b",
+          "elapsedMs": 110252,
+          "modelUnitCount": 27,
+          "measuresPerStaff": [137, 137],
+          "predictedKeys": ["C", "G", "A"],
+          "keySequence": "CCCCCCCCGAAAAGCCCCGAAAAAAAG",
+          "rawDiagnosticCount": 85,
+          "rawDiagnosticsByCode": {
+            "MISSING_EVENT_TIMING": 38,
+            "ROKOT_MEASURE_DURATION_MISMATCH": 47
+          },
+          "validatedDiagnosticCount": 150,
+          "validatedDiagnosticsByCode": {
+            "MISSING_EVENT_TIMING": 38,
+            "ROKOT_MEASURE_DURATION_MISMATCH": 47,
+            "VOICE_DURATION_MISMATCH": 65
+          },
+          "readiness": {
+            "harmony": "blocked",
+            "musicXml": "blocked"
+          },
+          "symbolic": {
+            "durationF1": 0.9401767505098573,
+            "jointF1": 0.44323589394969415,
+            "onsetF1": 0.9157036029911625,
+            "pitchF1": 0.8567445102823283,
+            "staffF1": 0.7763426240652617,
+            "tieF1": 0.7737887765772046,
+            "tupletF1": 0.7751829905890555,
+            "validMeasureRate": 0.3467153284671533,
+            "validMeasures": 95,
+            "validMeasureTotal": 274,
+            "voiceF1": 0.4445955132562882
+          }
+        }
+      }
+    },
+    {
+      "work": {
+        "category": "synthetic-clean-single-staff",
+        "groundTruthSha256": "715ab0bcf08bf52b04775318e6e38fe25d117008464a31e317f73b03853e1911",
+        "id": "melody-eight",
+        "inputSha256": "0a98374406b5ab1e45bc6ddb88c7b293763afdcb7dcb975cfd166d46bf0491e0",
+        "staffLayout": "single-staff"
+      },
+      "materialization": {
+        "derivedPdfSha256": "c69ba34ea38bd84d6c709e707f369ed7675985d8a3a6b549e2c9132406f2e459",
+        "detectorAllowFragmentedRuns": true,
+        "systemCount": 2,
+        "systemsPerPage": [2]
+      },
+      "groundTruth": {
+        "diagnosticCodes": [],
+        "measuresPerStaff": [8],
+        "readiness": {
+          "harmony": "ready",
+          "musicXml": "ready"
+        }
+      },
+      "variants": {
+        "previous-prediction-headers-v1": {
+          "policy": "previous-prediction-headers-v1",
+          "draftSha256": "046b692d1d014db8ac7c489fdd204a77c1ec1005a5cb16b19a40f5b21b85226e",
+          "elapsedMs": 4309,
+          "modelUnitCount": 2,
+          "measuresPerStaff": [8],
+          "predictedKeys": ["C"],
+          "keySequence": "CC",
+          "rawDiagnosticCount": 0,
+          "rawDiagnosticsByCode": {},
+          "validatedDiagnosticCount": 0,
+          "validatedDiagnosticsByCode": {},
+          "readiness": {
+            "harmony": "ready",
+            "musicXml": "ready"
+          },
+          "symbolic": {
+            "durationF1": 1,
+            "jointF1": 1,
+            "onsetF1": 1,
+            "pitchF1": 1,
+            "staffF1": 1,
+            "tieF1": 1,
+            "tupletF1": 1,
+            "validMeasureRate": 1,
+            "validMeasures": 8,
+            "validMeasureTotal": 8,
+            "voiceF1": 1
+          }
+        },
+        "previous-lm-headers-v1": {
+          "policy": "previous-lm-headers-v1",
+          "draftSha256": "046b692d1d014db8ac7c489fdd204a77c1ec1005a5cb16b19a40f5b21b85226e",
+          "elapsedMs": 4341,
+          "modelUnitCount": 2,
+          "measuresPerStaff": [8],
+          "predictedKeys": ["C"],
+          "keySequence": "CC",
+          "rawDiagnosticCount": 0,
+          "rawDiagnosticsByCode": {},
+          "validatedDiagnosticCount": 0,
+          "validatedDiagnosticsByCode": {},
+          "readiness": {
+            "harmony": "ready",
+            "musicXml": "ready"
+          },
+          "symbolic": {
+            "durationF1": 1,
+            "jointF1": 1,
+            "onsetF1": 1,
+            "pitchF1": 1,
+            "staffF1": 1,
+            "tieF1": 1,
+            "tupletF1": 1,
+            "validMeasureRate": 1,
+            "validMeasures": 8,
+            "validMeasureTotal": 8,
+            "voiceF1": 1
+          }
+        },
+        "first-system-key-v1": {
+          "policy": "first-system-key-v1",
+          "draftSha256": "046b692d1d014db8ac7c489fdd204a77c1ec1005a5cb16b19a40f5b21b85226e",
+          "elapsedMs": 4323,
+          "modelUnitCount": 2,
+          "measuresPerStaff": [8],
+          "predictedKeys": ["C"],
+          "keySequence": "CC",
+          "rawDiagnosticCount": 0,
+          "rawDiagnosticsByCode": {},
+          "validatedDiagnosticCount": 0,
+          "validatedDiagnosticsByCode": {},
+          "readiness": {
+            "harmony": "ready",
+            "musicXml": "ready"
+          },
+          "symbolic": {
+            "durationF1": 1,
+            "jointF1": 1,
+            "onsetF1": 1,
+            "pitchF1": 1,
+            "staffF1": 1,
+            "tieF1": 1,
+            "tupletF1": 1,
+            "validMeasureRate": 1,
+            "validMeasures": 8,
+            "validMeasureTotal": 8,
+            "voiceF1": 1
+          }
+        },
+        "key-consensus-v1": {
+          "policy": "key-consensus-v1",
+          "draftSha256": "046b692d1d014db8ac7c489fdd204a77c1ec1005a5cb16b19a40f5b21b85226e",
+          "elapsedMs": 4851,
+          "modelUnitCount": 2,
+          "measuresPerStaff": [8],
+          "predictedKeys": ["C"],
+          "keySequence": "CC",
+          "rawDiagnosticCount": 0,
+          "rawDiagnosticsByCode": {},
+          "validatedDiagnosticCount": 0,
+          "validatedDiagnosticsByCode": {},
+          "readiness": {
+            "harmony": "ready",
+            "musicXml": "ready"
+          },
+          "symbolic": {
+            "durationF1": 1,
+            "jointF1": 1,
+            "onsetF1": 1,
+            "pitchF1": 1,
+            "staffF1": 1,
+            "tieF1": 1,
+            "tupletF1": 1,
+            "validMeasureRate": 1,
+            "validMeasures": 8,
+            "validMeasureTotal": 8,
+            "voiceF1": 1
+          }
+        }
+      }
+    }
+  ]
+}

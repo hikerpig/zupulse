@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "development-evidence",
+  "source": {
+    "inputSha256": "22cec1f974dc4bbef64c3e8968e98dcae68d229769d70fa66a21b8c8d56ae8a7",
+    "groundTruthSha256": "cf358b873205d72b9a67cada92cc4ac11480a35fc092a25eb181eaa305c3d3f4",
+    "pageCount": 6,
+    "truthMeasuresPerStaff": [137, 137]
+  },
+  "verifiedSystemMaterialization": {
+    "detectorVersion": "rokot-grand-staff-v1",
+    "segmentationSha256": "62c96e6a38e16960f15ec6c3845f728f2db4aa5a1ef1b250a5f35b5251d3c584",
+    "derivedPdfSha256": "ff1d1cdcbb4b6a985c2e0f7d27d9b5fb5907f38f4474720b73e3061055084158",
+    "systemsPerPage": [6, 6, 1, 6, 6, 2],
+    "systemCount": 27
+  },
+  "engine": {
+    "id": "rokot",
+    "modelRevision": "7add305aade6fb3a64ad4dde77d410fa68381089",
+    "maxNewTokens": 1600,
+    "contextSize": 4096,
+    "prompt": "Transcribe this staff to rokot-ABC."
+  },
+  "variants": {
+    "directPage": {
+      "draftSha256": "4cfff591f1c915c51cb66adee6f06635fce25822affe08e261966c25b3cf3efc",
+      "elapsedMs": 129402,
+      "modelUnitCount": 6,
+      "measuresPerStaff": [140, 140],
+      "diagnosticCount": 362,
+      "symbolic": {
+        "pitchF1": 0.34070796460176994,
+        "onsetF1": 0.582049564634963,
+        "durationF1": 0.5485599464166109,
+        "jointF1": 0.07501674480910918,
+        "validMeasures": 0,
+        "validMeasureTotal": 274,
+        "validMeasureRate": 0
+      }
+    },
+    "verifiedSystems": {
+      "draftSha256": "73db3cf276fb1ab81fba1cbffedd638a072204eb6e5340b2094b6ca801f776a0",
+      "elapsedMs": 200173,
+      "modelUnitCount": 27,
+      "measuresPerStaff": [138, 138],
+      "diagnosticCount": 193,
+      "symbolic": {
+        "pitchF1": 0.4918612880396319,
+        "onsetF1": 0.7632027257240205,
+        "durationF1": 0.7182282793867121,
+        "jointF1": 0.1567291311754685,
+        "validMeasures": 19,
+        "validMeasureTotal": 274,
+        "validMeasureRate": 0.06934306569343066
+      }
+    },
+    "previousSystemHeaderContext": {
+      "draftSha256": "ce725562772a576a6bc6a83ae6a03d361c49138ca3f7cd48375cb6db7d4871e1",
+      "modelUnitCount": 27,
+      "contextSource": "previous prediction L/M/K only",
+      "measuresPerStaff": [137, 137],
+      "diagnosticCount": 148,
+      "symbolic": {
+        "pitchF1": 0.752537626881344,
+        "onsetF1": 0.9162393162393163,
+        "durationF1": 0.9483760683760684,
+        "jointF1": 0.3767521367521367,
+        "validMeasures": 57,
+        "validMeasureTotal": 274,
+        "validMeasureRate": 0.20802919708029197
+      }
+    },
+    "integratedRuntimeVerification": {
+      "draftSha256": "6060c1769d8b7dad9a84a6d2d58ef752d1851eb7d6f8d49d599cffdb17ea1932",
+      "elapsedMs": 126427,
+      "modelUnitCount": 27,
+      "measuresPerStaff": [137, 137],
+      "diagnosticCount": 148,
+      "symbolic": {
+        "pitchF1": 0.7527107380202869,
+        "onsetF1": 0.9149299624188589,
+        "durationF1": 0.9484113426716774,
+        "jointF1": 0.37649470447557226,
+        "validMeasures": 57,
+        "validMeasureTotal": 274,
+        "validMeasureRate": 0.20802919708029197
+      }
+    }
+  },
+  "currentDetectorObservation": {
+    "detectorVersion": "rokot-staff-system-v2",
+    "allowFragmentedRuns": true,
+    "status": "failed",
+    "pageIndex": 0,
+    "stage": "grand-staff-pairing",
+    "groupCount": 16,
+    "unpairedGroupCount": 5
+  },
+  "decision": "previous-system-header-context-integrated",
+  "nextOptimizationBoundary": "replicate-context-on-a-second-contract-valid-work-and-fix-full-page-segmentation"
+}

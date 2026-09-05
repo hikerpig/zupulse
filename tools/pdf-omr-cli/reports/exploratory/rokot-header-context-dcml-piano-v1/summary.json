@@ -1,0 +1,162 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "development-evidence",
+  "baselinePolicy": "previous-prediction-headers-v1",
+  "probePolicies": ["previous-lm-headers-v1"],
+  "decision": "lm-only-did-not-replicate-on-k280-runtime-default-unchanged",
+  "nextOptimizationBoundary": "do-not-promote-lm-only-without-another-completed-piano-work",
+  "works": [
+    {
+      "work": {
+        "id": "mozart-k310-1",
+        "category": "derived-controlled-grand-staff",
+        "inputSha256": "1a4982916730cefd5f3d8d3041baa1a66354a9f78823067b7d5c428644502708",
+        "groundTruthSha256": "c65a81728fec865fc98e56b636d92190eac7495041b826a781754a1c9ce1dfd9",
+        "staffLayout": "grand-staff"
+      },
+      "source": {
+        "dataset": "DCMLab/mozart_piano_sonatas",
+        "revision": "v2.3",
+        "license": "CC-BY-NC-SA-4.0",
+        "mscx": "reviewed/K310-1_reviewed.mscx",
+        "generator": "MuseScore Studio 4.7.4"
+      },
+      "materialization": {
+        "detectorAllowFragmentedRuns": false,
+        "pairAdjacentUnpairedGroups": true,
+        "systemCount": 44,
+        "systemsPerPage": [5, 2, 6, 7, 6, 6, 2, 6, 4]
+      },
+      "status": "failed",
+      "error": {
+        "code": "ENGINE_OUTPUT_INVALID",
+        "reason": "unknown-rokot-voice",
+        "crop": "page-007-system-001",
+        "voiceToken": "1=1/2"
+      }
+    },
+    {
+      "groundTruth": {
+        "diagnosticCodes": ["MISSING_EVENT_TIMING", "VOICE_DURATION_MISMATCH"],
+        "measuresPerStaff": [144, 144],
+        "readiness": {
+          "harmony": "blocked",
+          "musicXml": "blocked"
+        }
+      },
+      "materialization": {
+        "derivedPdfSha256": "af6f3a7073c25fb5af5e19188150780d415814fd0f1541c892f95ac0aa019531",
+        "detectorAllowFragmentedRuns": false,
+        "pairAdjacentUnpairedGroups": true,
+        "systemCount": 48,
+        "systemsPerPage": [5, 6, 6, 6, 6, 6, 6, 6, 1]
+      },
+      "variants": {
+        "previous-prediction-headers-v1": {
+          "draftSha256": "b2dfcae9e701f28a3b3b8a4f477d16ca58d6a6edd0bbaf9095d7f193a322bce9",
+          "elapsedMs": 168714,
+          "keySequence": "CCCCCCCCCCCCCCCCCCCCCGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+          "measuresPerStaff": [144, 144],
+          "modelUnitCount": 48,
+          "policy": "previous-prediction-headers-v1",
+          "predictedKeys": ["C", "G"],
+          "rawDiagnosticCount": 56,
+          "rawDiagnosticsByCode": {
+            "MISSING_EVENT_TIMING": 20,
+            "ROKOT_MEASURE_DURATION_MISMATCH": 34,
+            "ROKOT_STAFF_MEASURE_COUNT_MISMATCH": 1,
+            "ROKOT_SYSTEM_BOUNDARY_AMBIGUOUS": 1
+          },
+          "readiness": {
+            "harmony": "blocked",
+            "musicXml": "blocked"
+          },
+          "symbolic": {
+            "durationF1": 0.8979694158937077,
+            "jointF1": 0.41313612434194036,
+            "onsetF1": 0.9079969917272499,
+            "pitchF1": 0.7500000000000001,
+            "staffF1": 0.6914013537227375,
+            "tieF1": 0.6705336426914154,
+            "tupletF1": 0.6728538283062645,
+            "validMeasureRate": 0.16666666666666666,
+            "validMeasures": 48,
+            "validMeasureTotal": 288,
+            "voiceF1": 0.41514163950864874
+          },
+          "validatedDiagnosticCount": 107,
+          "validatedDiagnosticsByCode": {
+            "MISSING_CLEF": 5,
+            "MISSING_EVENT_TIMING": 20,
+            "MISSING_KEY_SIGNATURE": 4,
+            "MISSING_MEASURE_DURATION": 4,
+            "MISSING_TIME_SIGNATURE": 4,
+            "ROKOT_MEASURE_DURATION_MISMATCH": 34,
+            "ROKOT_STAFF_MEASURE_COUNT_MISMATCH": 1,
+            "ROKOT_SYSTEM_BOUNDARY_AMBIGUOUS": 1,
+            "VOICE_DURATION_MISMATCH": 34
+          }
+        },
+        "previous-lm-headers-v1": {
+          "draftSha256": "56657588d10e6bc86537d4a1505798bb8dabf3a35e3df33df6ef39eb1b53b3d0",
+          "elapsedMs": 175339,
+          "keySequence": "CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+          "measuresPerStaff": [148, 148],
+          "modelUnitCount": 48,
+          "policy": "previous-lm-headers-v1",
+          "predictedKeys": ["C", "F"],
+          "rawDiagnosticCount": 59,
+          "rawDiagnosticsByCode": {
+            "MISSING_EVENT_TIMING": 20,
+            "ROKOT_MEASURE_DURATION_MISMATCH": 35,
+            "ROKOT_STAFF_MEASURE_COUNT_MISMATCH": 3,
+            "ROKOT_SYSTEM_BOUNDARY_AMBIGUOUS": 1
+          },
+          "readiness": {
+            "harmony": "blocked",
+            "musicXml": "blocked"
+          },
+          "symbolic": {
+            "durationF1": 0.587010411502231,
+            "jointF1": 0.1928606841844323,
+            "onsetF1": 0.6807139315815568,
+            "pitchF1": 0.4729885057471264,
+            "staffF1": 0.34655428854734754,
+            "tieF1": 0.3402298850574712,
+            "tupletF1": 0.3402298850574712,
+            "validMeasureRate": 0.13541666666666666,
+            "validMeasures": 39,
+            "validMeasureTotal": 288,
+            "voiceF1": 0.19781854238968766
+          },
+          "validatedDiagnosticCount": 123,
+          "validatedDiagnosticsByCode": {
+            "MISSING_CLEF": 9,
+            "MISSING_EVENT_TIMING": 20,
+            "MISSING_KEY_SIGNATURE": 8,
+            "MISSING_MEASURE_DURATION": 8,
+            "MISSING_TIME_SIGNATURE": 8,
+            "ROKOT_MEASURE_DURATION_MISMATCH": 35,
+            "ROKOT_STAFF_MEASURE_COUNT_MISMATCH": 3,
+            "ROKOT_SYSTEM_BOUNDARY_AMBIGUOUS": 1,
+            "VOICE_DURATION_MISMATCH": 31
+          }
+        }
+      },
+      "work": {
+        "category": "derived-controlled-grand-staff",
+        "groundTruthSha256": "9cd0a08fbf53b90e06f3e4a01befcaf5887f3150cee316cfdbb518c75a26c088",
+        "id": "mozart-k280-1",
+        "inputSha256": "2baf43e56cc0bc5546b6a75e12f4a8ade6d8abe43ca488f91302e84c67892e12",
+        "staffLayout": "grand-staff"
+      },
+      "source": {
+        "dataset": "DCMLab/mozart_piano_sonatas",
+        "revision": "v2.3",
+        "license": "CC-BY-NC-SA-4.0",
+        "mscx": "reviewed/K280-1_reviewed.mscx",
+        "generator": "MuseScore Studio 4.7.4"
+      }
+    }
+  ]
+}

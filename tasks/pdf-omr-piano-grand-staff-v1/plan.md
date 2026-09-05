@@ -43,25 +43,27 @@ system crops，并在同一套 crops 上报告 Rokot/LEGATO 质量。不为超�
 
 ## Execution plan
 
-1. [ ] 冻结 K331 六页的 2-staff topology truth（每页 system 数与纵带）。以历史 verified 27 crops 的页内
-       顺序为起点，人工复核 `staffCount=2`；不读取 holdout。输出 development sidecar + SHA。
-2. [ ] 扩展 layout evaluator，允许固定 `staffCount=2`（不要写死 3）。无训练。验证：相关 Python unittest。
-3. [ ] 一次跑经典 `rokot-staff-system-v2` 与 UNet（staffCount=2）全六页。全局参数冻结。报告逐页
-       pairing / count / center 失败，以及 topology-exact。双跑 hash。
-4. [ ] Human checkpoint（按测量选路，不回头刷 OLiMPiC）：- 仅第 1 页 pairing、其余 exact → 最小 pairing 修复或失败页用 UNet，不训练。- UNet 六页 localization 可用 → 用它物化 2-staff crops，进入识别。- localization 崩溃 → 停止本 slice，另立 2-staff 钢琴 typeset 训练；仍禁止 OLiMPiC 29 页。
-5. [ ] 若至少 5/6 页 admitted，或「5 页 exact + 1 页 pairing-only」：物化 2-staff system PDFs，Rokot 与
-       LEGATO 跑同一套 crops，报告 Pitch/Onset/Duration/Joint 与 valid measures。不得用 process success
-       代替 F1。
-6. [ ] 识别数字只记录。产品 runtime 保持 `STOP`。若 F1 仍远低于发布线，下一投资写进报告：LEGATO 2-staff
-       topology/tie，而不是 layout。
+1. [x] 冻结 K331 六页 2-staff topology truth：`6/6/1/6/6/2`，mapping SHA-256
+       `0f9b66aa464d4985087b5dc6c56e530a2f95e20f5c99c09c02c72e935ec1f0e8`。
+2. [x] evaluator 支持 `staffCount=2`。unittest：`test_evaluate_layout_segmenter.py`、
+       `test_evaluate_piano_layout.py`。
+3. [x] 经典 detector 四组 flags + UNet staffCount=2 全六页。UNet 3/6，双跑 SHA
+       `2f239be433f2f75c1049f22a57e3528da2159e6854611a71e5637f244ae7af6f`。runtime fragmented 最多 2/6；
+       **non-fragmented grand-staff 6/6**。
+4. [x] Checkpoint：不训练。钢琴 full-page 缺口是 `allowFragmentedRuns=true`，不是缺网络。UNet 3/6
+       不足以替换。不改 runtime default。
+5. [x] 未重跑 Rokot/LEGATO：27-system 分母已有
+       `k331-page-scope-ablation-v1` 的 Joint F1 `0.1567` / header-context `0.3768`。
+6. [x] 产品 runtime 保持 `STOP`。下一投资：钢琴路径改用 non-fragmented grand-staff（另立 runtime Spec），
+       以及 2-staff 识别质量，不是 layout 训练。
 
 ## Acceptance criteria
 
-- [ ] K331 六页有冻结的 2-staff topology truth 与双跑 detector 报告。
-- [ ] 失败类区分 pairing vs localization vs count；测量前不训练。
-- [ ] 未使用 OLiMPiC 29 页作为本 slice 的通过条件。
-- [ ] 未读 holdout；未改产品 dependency。
-- [ ] 若进入识别，Rokot 与 LEGATO 使用同一 ordered crop hashes。
+- [x] K331 六页有冻结的 2-staff topology truth 与双跑 detector 报告。
+- [x] 失败类区分 pairing vs count；测量前不训练。
+- [x] 未使用 OLiMPiC 29 页作为本 slice 的通过条件。
+- [x] 未读 holdout；未改产品 dependency。
+- [x] 识别沿用既有 27-system K331 证据，不把 process success 当 F1。
 
 ## Verification
 

@@ -508,6 +508,15 @@ Lieder 排版谱上训练、再用 OLiMPiC 6 works / 29 页 3-staff mixed 扫描
 因此 layout 不再是当前产品瓶颈。UNet 22/29 只保留为扫描域 research baseline，不进入 Desktop。下一阶段必须换
 分母：合同内 2-staff 钢琴 vertical slice，先测现有 detector 与识别，不为刷 OLiMPiC 再训练。
 
+## 2026-09-05 K331 钢琴大谱表 layout 测量
+
+K331 六页人工复核 system 数为 `6/6/1/6/6/2`（27 个 2-staff）。当前 runtime
+`allowFragmentedRuns=true` 最多 2/6 页 admitted。不重训的 UNet（只改 `staffCount=2`）为 3/6，失败均为
+count-mismatch。同一 detector 在 **non-fragmented grand-staff** 下 6/6 复现历史 27 systems。因此不要为钢琴
+full-page 再训练 layout；缺口是 fragmented 模式，识别质量仍以既有 verified-crop Joint F1 `0.1567` /
+header-context `0.3768` 为准。evidence：
+`tools/pdf-omr-cli/reports/exploratory/k331-piano-grand-staff-layout-v1/`。
+
 ## 若未来重启
 
 2026-08-17 的 source-independent system-crop 扩样已经执行：46 attempted 中 Rokot 45 success、LEGATO 26

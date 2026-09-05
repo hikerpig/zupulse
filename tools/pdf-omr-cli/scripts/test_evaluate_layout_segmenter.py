@@ -9,7 +9,12 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent))
-from evaluate_layout_segmenter import detect_system_centers, raw_system_candidate, systems_match_topology
+from evaluate_layout_segmenter import (
+    detect_system_centers,
+    raw_system_candidate,
+    relative_staff_line_ys,
+    systems_match_topology,
+)
 
 
 class EvaluateLayoutSegmenterTest(unittest.TestCase):
@@ -28,7 +33,21 @@ class EvaluateLayoutSegmenterTest(unittest.TestCase):
 
         self.assertEqual(candidate["staffCount"], 3)
         self.assertEqual(len(candidate["staffLinePolylines"]), 15)
+        self.assertEqual(
+            relative_staff_line_ys(3),
+            [0.1, 0.13, 0.16, 0.19, 0.22, 0.44, 0.47, 0.5, 0.53, 0.56, 0.78, 0.81, 0.84, 0.87, 0.9],
+        )
         self.assertTrue(systems_match_topology([candidate], [{"boundingBox": {"top": 350, "height": 100}}], 768))
+
+    def test_candidate_can_emit_two_staff_topology(self) -> None:
+        candidate = raw_system_candidate(384, confidence=0.8, page_index=2, staff_count=2)
+
+        self.assertEqual(candidate["staffCount"], 2)
+        self.assertEqual(len(candidate["staffLinePolylines"]), 10)
+        self.assertEqual(len(relative_staff_line_ys(2)), 10)
+        self.assertTrue(
+            systems_match_topology([candidate], [{"boundingBox": {"top": 350, "height": 100}}], 768, [2])
+        )
 
     def test_topology_match_rejects_wrong_count_center_or_staff_count(self) -> None:
         truth = [{"boundingBox": {"top": 300, "height": 120}}]

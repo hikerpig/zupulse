@@ -1,0 +1,83 @@
+{
+  "expectedSystemCounts": [6, 6, 1, 6, 6, 2],
+  "pages": [
+    {
+      "height": 1981,
+      "pageIndex": 0,
+      "renderSha256": "87217cf3d1358dad3fb86a7febe4f74db2484e7ddba39a42b6f95d7d715a3750",
+      "systems": [
+        { "boundingBox": { "height": 254, "left": 0, "top": 227, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 231, "left": 0, "top": 486, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 252, "left": 0, "top": 722, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 255, "left": 0, "top": 978, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 300, "left": 0, "top": 1237, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 271, "left": 0, "top": 1542, "width": 1400 }, "visibleStaffCount": 2 }
+      ],
+      "width": 1400
+    },
+    {
+      "height": 1981,
+      "pageIndex": 1,
+      "renderSha256": "db117992babadbedf96b6fe243b7e76e4b49fb8584bfed5009e86dc85a87c5f5",
+      "systems": [
+        { "boundingBox": { "height": 254, "left": 0, "top": 101, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 273, "left": 0, "top": 383, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 250, "left": 0, "top": 683, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 262, "left": 0, "top": 960, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 256, "left": 0, "top": 1249, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 281, "left": 0, "top": 1532, "width": 1400 }, "visibleStaffCount": 2 }
+      ],
+      "width": 1400
+    },
+    {
+      "height": 1981,
+      "pageIndex": 2,
+      "renderSha256": "820ac45cce51c876c4633de7fe2ab6415a2293af8999159ebd7c0ff12b3c1c3c",
+      "systems": [{ "boundingBox": { "height": 272, "left": 0, "top": 101, "width": 1400 }, "visibleStaffCount": 2 }],
+      "width": 1400
+    },
+    {
+      "height": 1981,
+      "pageIndex": 3,
+      "renderSha256": "c28e465325a0c6fdc958b569d0e7fc3ef0c5b2f6a81f47acc9ebaa784ba5f8c8",
+      "systems": [
+        { "boundingBox": { "height": 254, "left": 0, "top": 101, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 252, "left": 0, "top": 386, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 254, "left": 0, "top": 669, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 278, "left": 0, "top": 954, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 279, "left": 0, "top": 1263, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 241, "left": 0, "top": 1572, "width": 1400 }, "visibleStaffCount": 2 }
+      ],
+      "width": 1400
+    },
+    {
+      "height": 1981,
+      "pageIndex": 4,
+      "renderSha256": "92fa86d71b1bd61bb747424c95c9cc34412e9bbffba94f91e89ba28fe3c8acf6",
+      "systems": [
+        { "boundingBox": { "height": 279, "left": 0, "top": 146, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 255, "left": 0, "top": 445, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 256, "left": 0, "top": 720, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 239, "left": 0, "top": 995, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 285, "left": 0, "top": 1253, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 256, "left": 0, "top": 1557, "width": 1400 }, "visibleStaffCount": 2 }
+      ],
+      "width": 1400
+    },
+    {
+      "height": 1981,
+      "pageIndex": 5,
+      "renderSha256": "6bc77cbbd1fee26541bac8f268d4d7a89c08454e8500d7a01ed95d32b4775c31",
+      "systems": [
+        { "boundingBox": { "height": 266, "left": 0, "top": 101, "width": 1400 }, "visibleStaffCount": 2 },
+        { "boundingBox": { "height": 266, "left": 0, "top": 612, "width": 1400 }, "visibleStaffCount": 2 }
+      ],
+      "width": 1400
+    }
+  ],
+  "pdfSha256": "22cec1f974dc4bbef64c3e8968e98dcae68d229769d70fa66a21b8c8d56ae8a7",
+  "reviewBasis": "human-visible-five-line-staff-count",
+  "reviewNote": "Counts reviewed from rendered K331 pages; all systems are piano grand staff. BBoxes from non-fragmented grand-staff detector that reproduces 6/6/1/6/6/2.",
+  "schemaVersion": "1.0.0",
+  "workId": "mozart-k331-3"
+}

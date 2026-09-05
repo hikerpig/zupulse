@@ -1,6 +1,7 @@
 ---
-status: proposed
+status: implemented
 date: 2026-09-05
+approved: 2026-09-05
 owner: Engineering
 scope: PDF OMR CLI development experiment only
 depends_on: 2026-08-26-pdf-omr-learned-layout-detector-proposal.md
@@ -70,3 +71,9 @@ Rokot 0/36 ready、LEGATO 1/36。产品是钢琴练习，合同是 1–2 staff�
 - pairing-only：最小 grand-staff pairing 修复或对失败页使用 UNet，不训练。
 - localization 崩溃：另立 2-staff 钢琴 typeset 训练 Spec，训练数据不得使用 OLiMPiC 29 页。
 - layout 已够、F1 仍低：下一投资是 LEGATO 2-staff 的 time-signature / tie / output topology，不是 layout。
+
+## 2026-09-05 implementation outcome
+
+测量完成，未训练。K331 六页 truth 为 `6/6/1/6/6/2`。runtime fragmented 最多 2/6；UNet staffCount=2 为
+3/6。non-fragmented grand-staff 为 6/6。决策：不为钢琴再训 layout；下一步若改代码，是钢琴路径使用
+non-fragmented grand-staff，以及识别质量。产品 runtime 保持 `STOP`。

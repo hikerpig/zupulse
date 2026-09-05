@@ -58,31 +58,26 @@ def detect_system_centers(
     return sorted(selected)
 
 
-def raw_system_candidate(center_y: int, *, confidence: float, page_index: int) -> dict[str, object]:
+def relative_staff_line_ys(staff_count: int) -> list[float]:
+    if staff_count == 3:
+        return [0.1, 0.13, 0.16, 0.19, 0.22, 0.44, 0.47, 0.5, 0.53, 0.56, 0.78, 0.81, 0.84, 0.87, 0.9]
+    if staff_count == 2:
+        return [0.22, 0.25, 0.28, 0.31, 0.34, 0.66, 0.69, 0.72, 0.75, 0.78]
+    if staff_count == 1:
+        return [0.44, 0.47, 0.5, 0.53, 0.56]
+    raise ValueError("staff_count must be 1, 2, or 3")
+
+
+def raw_system_candidate(
+    center_y: int, *, confidence: float, page_index: int, staff_count: int = FIXED_RESEARCH_STAFF_COUNT
+) -> dict[str, object]:
     normalized_center = center_y / MODEL_SIZE[1]
     top = max(0.0, normalized_center - SYSTEM_BOX_HEIGHT / 2)
     bottom = min(1.0, normalized_center + SYSTEM_BOX_HEIGHT / 2)
     if bottom - top < SYSTEM_BOX_HEIGHT:
         top = max(0.0, bottom - SYSTEM_BOX_HEIGHT)
         bottom = min(1.0, top + SYSTEM_BOX_HEIGHT)
-    relative_line_ys = [
-        0.1,
-        0.13,
-        0.16,
-        0.19,
-        0.22,
-        0.44,
-        0.47,
-        0.5,
-        0.53,
-        0.56,
-        0.78,
-        0.81,
-        0.84,
-        0.87,
-        0.9,
-    ]
-    line_ys = [top + relative * (bottom - top) for relative in relative_line_ys]
+    line_ys = [top + relative * (bottom - top) for relative in relative_staff_line_ys(staff_count)]
     return {
         "pageIndex": page_index,
         "confidence": round(confidence, 10),
@@ -92,10 +87,8 @@ def raw_system_candidate(center_y: int, *, confidence: float, page_index: int) -
             "width": 0.9,
             "height": round(bottom - top, 10),
         },
-        "staffCount": FIXED_RESEARCH_STAFF_COUNT,
-        "staffLinePolylines": [
-            [{"x": 0.05, "y": round(y, 10)}, {"x": 0.95, "y": round(y, 10)}] for y in line_ys
-        ],
+        "staffCount": staff_count,
+        "staffLinePolylines": [[{"x": 0.05, "y": round(y, 10)}, {"x": 0.95, "y": round(y, 10)}] for y in line_ys],
     }
 
 
@@ -151,7 +144,10 @@ def main() -> None:
     parser.add_argument("--debug-overlay-root", type=Path)
     parser.add_argument("--runtime", choices=("pytorch", "onnxruntime"), default="pytorch")
     parser.add_argument("--device", default="auto")
+    parser.add_argument("--staff-count", type=int, default=FIXED_RESEARCH_STAFF_COUNT)
     args = parser.parse_args()
+    if args.staff_count not in (1, 2, 3):
+        raise ValueError("staff-count must be 1, 2, or 3")
 
     truth_bytes = args.diagnostic_truth.read_bytes()
     diagnostic_truth = json.loads(truth_bytes)
@@ -212,12 +208,17 @@ def main() -> None:
                 minimum_score=MINIMUM_CENTER_SCORE,
             )
             smoothed = gaussian_smooth_1d(row_score, GAUSSIAN_SIGMA)
-            raw_systems = [
-                raw_system_candidate(center, confidence=float(smoothed[center]), page_index=page["pageIndex"])
-                for center in centers
-            ]
             diagnostic_page = diagnostic_pages[truth_page["samplePage"]]
             expected_staff_counts = [system["visibleStaffCount"] for system in diagnostic_page["systems"]]
+            raw_systems = [
+                raw_system_candidate(
+                    center,
+                    confidence=float(smoothed[center]),
+                    page_index=page["pageIndex"],
+                    staff_count=args.staff_count,
+                )
+                for center in centers
+            ]
             matches = systems_match_topology(
                 raw_systems, truth_page["systems"], truth_page["height"], expected_staff_counts
             )
@@ -260,7 +261,7 @@ def main() -> None:
             "gaussianSigma": GAUSSIAN_SIGMA,
             "minimumCenterDistance": MINIMUM_CENTER_DISTANCE,
             "minimumCenterScore": MINIMUM_CENTER_SCORE,
-            "fixedResearchStaffCount": FIXED_RESEARCH_STAFF_COUNT,
+            "fixedResearchStaffCount": args.staff_count,
             "systemBoxHeight": SYSTEM_BOX_HEIGHT,
         },
         "diagnosticTruthSha256": sha256(truth_bytes),

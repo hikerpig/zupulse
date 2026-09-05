@@ -1,5 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { runPdfOmrCommand } from "../command";
+import type { EngineRegistry } from "../engine-registry";
+
+const unusedRokotRegistry: EngineRegistry = {
+  get() {
+    return {
+      inspectEnvironment: async () => {
+        throw new Error("unused");
+      },
+      recognize: async () => {
+        throw new Error("unused");
+      },
+      normalize: () => {
+        throw new Error("unused");
+      },
+    };
+  },
+};
 
 describe("pdf OMR CLI", () => {
   it("returns help without loading an OMR engine", async () => {
@@ -94,47 +111,47 @@ describe("pdf OMR CLI", () => {
 
   it("accepts an explicit three-staff system crop for Rokot", async () => {
     await expect(
-      runPdfOmrCommand([
-        "recognize",
-        "missing.pdf",
-        "--engine",
-        "rokot",
-        "--output",
-        "run",
-        "--input-scope",
-        "system-crop",
-        "--staff-layout",
-        "three-staff",
-      ]),
+      runPdfOmrCommand(
+        [
+          "recognize",
+          "missing.pdf",
+          "--engine",
+          "rokot",
+          "--output",
+          "run",
+          "--input-scope",
+          "system-crop",
+          "--staff-layout",
+          "three-staff",
+        ],
+        { engineRegistry: unusedRokotRegistry },
+      ),
     ).rejects.toMatchObject({ code: "INVALID_INPUT", context: { reason: "unreadable-input" } });
   });
 
   it("accepts piano-grand-staff-v1 before reading the input and rejects conflicts", async () => {
     await expect(
-      runPdfOmrCommand([
-        "recognize",
-        "missing.pdf",
-        "--engine",
-        "rokot",
-        "--output",
-        "run",
-        "--segmentation",
-        "piano-grand-staff-v1",
-      ]),
+      runPdfOmrCommand(
+        ["recognize", "missing.pdf", "--engine", "rokot", "--output", "run", "--segmentation", "piano-grand-staff-v1"],
+        { engineRegistry: unusedRokotRegistry },
+      ),
     ).rejects.toMatchObject({ code: "INVALID_INPUT", context: { reason: "unreadable-input" } });
     await expect(
-      runPdfOmrCommand([
-        "recognize",
-        "missing.pdf",
-        "--engine",
-        "rokot",
-        "--output",
-        "run",
-        "--segmentation",
-        "piano-grand-staff-v1",
-        "--staff-layout",
-        "grand-staff",
-      ]),
+      runPdfOmrCommand(
+        [
+          "recognize",
+          "missing.pdf",
+          "--engine",
+          "rokot",
+          "--output",
+          "run",
+          "--segmentation",
+          "piano-grand-staff-v1",
+          "--staff-layout",
+          "grand-staff",
+        ],
+        { engineRegistry: unusedRokotRegistry },
+      ),
     ).rejects.toMatchObject({ code: "INVALID_INPUT", context: { reason: "unreadable-input" } });
     await expect(
       runPdfOmrCommand([

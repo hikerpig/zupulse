@@ -1,7 +1,7 @@
 # PDF OMR CLI
 
-该 package 是 PDF → `OmrScoreDraft` → Harmony/MusicXML 与 benchmark 的命令行实验层。当前不接入
-`apps/*`，也不承诺这里的 Draft 会直接成为 App 领域模型。
+该 package 是 PDF → `OmrScoreDraft` → Harmony/MusicXML 与 benchmark 的命令行实验层。Desktop 和
+Remote Recognition Service 复用其中的运行时；实验命令不因此成为 App 默认能力，Draft 也不直接成为 App 领域模型。
 
 ## 当前命令
 
@@ -115,6 +115,41 @@ LEGATO 本地 engine 接受一至 32 页 PDF。runner 流式渲染并逐页使�
 默认 inference timeout 为 60 分钟。CUDA 与 MPS 使用 float16 推理，CPU 按 checkpoint config dtype
 加载；这与官方 Demo 的 GPU half-precision 路径一致，同时避免 MPS 上的 float32 attention OOM 和
 mixed bfloat16/float32 Metal crash。
+
+### 可选音高旁路
+
+在上述 LEGATO 环境配置完成后，可显式启用只读源谱检查：
+
+```bash
+pnpm pdf-omr -- recognize input.pdf --engine legato --output result-shadow \
+  --pitch-shadow-python /absolute/path/to/legato-venv/bin/python
+```
+
+`--pitch-shadow-python` 只适用于 LEGATO。提取器复用 PyMuPDF，不加载模型、不读取历史报告或参考答案；
+识别和提取使用同一份本次输入副本。省略该参数时不运行提取器，也不增加 artifact 或参数。
+Desktop、Remote 和 benchmark 没有启用此选项。
+
+旁路增加 `pitch-shadow/source.json` 和 `pitch-shadow/report.json`，并把它们的哈希写入 `run.json`。
+报告绑定输入、canonical Draft、提取器脚本哈希和 PyMuPDF 版本。提取失败时只写报告，
+`reason=extractor-unavailable` 和有界 `failureStage` 说明失败阶段；脚本无法读取时 `extractorSha256=null`。
+子进程上限为 30 秒、输出上限为 4 MiB；取消仍返回 `INTERRUPTED`。输出不含原始异常或绝对路径。
+
+首版仅处理能完整定位的双谱表向量几何及 MScore/Leland 符头、明确的 G/F 谱号。所有页、system 和
+小节必须完整顺序对应；不做按音高寻找对齐。候选仅限单声部、无重叠，且前后音高相符的孤立内部差异。
+未知记号、源曲线、临时升降号、tie、tuplet、数量不符和对应歧义均不提建议。
+`suggestedDiatonic` 只有 step/octave，不代表已确认 alter、sounding MIDI、节奏或可回写性；
+`writebackReady` 固定为 `false`，原始 Draft、diagnostics 和导出结果不修改。
+
+本版是默认关闭的接入切片，不是历史纠错收益的生产迁移。当前两首开发谱仍被字体、记号或小节线范围拒绝，
+尚无真实曲目的正向建议闭环证据；不能据此声称识别准确率提高。下一步应补齐源几何覆盖证据，
+再冻结独立曲目的评测协议，不以这两首曲目上的覆盖率替代泛化验证。
+
+提取器的无模型回归检查：
+
+```bash
+python3 -m unittest discover -s tools/pdf-omr-cli/engines -p 'test_pitch_shadow.py'
+pnpm test tools/pdf-omr-cli/src/__tests__/pitch-shadow.test.ts tools/pdf-omr-cli/src/__tests__/pitch-shadow-command.test.ts
+```
 
 development-only 的 decoder 筛选会顺序运行 `beam=1/2/4`。每个 variant 在一个串行 worker 中只加载一次模型，
 `comparison.json` 记录测量值和评测集合是否一致，不自动作 promotion 决策：

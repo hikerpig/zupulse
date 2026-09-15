@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { createArtifactWriter } from "../artifact-writer";
@@ -26,10 +26,16 @@ export async function recognizeCommand(
     inputScope?: "full-page" | "system-crop";
     staffLayout?: StaffLayout;
     segmentationId?: string;
+    pitchShadowPython?: string;
     signal?: AbortSignal;
     onProgress?: (progress: OmrEngineProgress) => void;
   },
 ): Promise<PdfOmrRecognizeReport> {
+  if (context.pitchShadowPython !== undefined && (engineId !== "legato" || !context.pitchShadowPython.trim())) {
+    throw new PdfOmrError("INVALID_CLI_ARGUMENT", "pitch shadow requires LEGATO and a Python executable", {
+      context: { command: "recognize", engineId },
+    });
+  }
   const adapter = context.engineRegistry.get(engineId);
   const inputPath = resolve(context.cwd, input);
   let bytes: Uint8Array;
@@ -58,8 +64,11 @@ export async function recognizeCommand(
         context: { reason: "unsupported-engine-input-kind", inputKind: inputReport.source.inputKind },
       });
     }
+    // Shadow and inference must observe the same bytes even if the original path changes during recognition.
+    const recognitionInput = context.pitchShadowPython === undefined ? inputPath : join(workDirectory, "input.pdf");
+    if (context.pitchShadowPython !== undefined) await writeFile(recognitionInput, bytes, { flag: "wx", mode: 0o600 });
     const raw = await adapter.recognize({
-      inputPath,
+      inputPath: recognitionInput,
       outputDirectory: workDirectory,
       ...(context.standardFontDirectory === undefined ? {} : { standardFontDirectory: context.standardFontDirectory }),
       ...(context.wasmDirectory === undefined ? {} : { wasmDirectory: context.wasmDirectory }),
@@ -88,6 +97,13 @@ export async function recognizeCommand(
     }
     const draftSha256 = await writer.writeJson("draft.json", draft);
     await writer.writeJson("diagnostics.json", draft.diagnostics);
+    if (context.pitchShadowPython !== undefined) {
+      const { runPitchShadow } = await import("../run-pitch-shadow");
+      const shadow = await runPitchShadow(recognitionInput, draft, context.pitchShadowPython, context.signal);
+      if ("source" in shadow) await writer.writeJson("pitch-shadow/source.json", shadow.source);
+      await writer.writeJson("pitch-shadow/report.json", shadow.report);
+      if (context.signal?.aborted) throw new PdfOmrError("INTERRUPTED", "pitch shadow cancelled");
+    }
     const manifest = omrRunManifestSchema.parse({
       schemaVersion: "1.0.0",
       runId,
@@ -100,6 +116,7 @@ export async function recognizeCommand(
       parameters: {
         ...environment.parameters,
         ...recognizeSegmentationParameters(engineId, context),
+        ...(context.pitchShadowPython === undefined ? {} : { pitchShadow: "legato-diatonic-shadow-v1" }),
       },
       preprocess: { id: "none", version: "1.0.0" },
       startedAt,

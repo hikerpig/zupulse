@@ -30,6 +30,7 @@ const usage = [
   "  apply-fusion --run <fusion-run-dir> --decisions <decisions.json> --output <run-dir>",
   "  rebuild-from-midi --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --musescore <executable> --output <run-dir>",
   "  recognize <input.pdf> --engine <audiveris|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff>] [--segmentation piano-grand-staff-v1]",
+  "    LEGATO-only optional evidence: --pitch-shadow-python <python-with-pymupdf> (report-only; no corrections)",
   "  validate <draft.json> --output <diagnostics.json>",
   "  analyze <draft.json> --output <harmony.json>",
   "  export-musicxml <draft.json> --output <score.mxl>",
@@ -164,13 +165,19 @@ export async function runPdfOmrCommand(
     const input = normalized[1];
     const flags = parseFlags(
       normalized.slice(2),
-      new Set(["--engine", "--output", "--input-scope", "--staff-layout", "--segmentation"]),
+      new Set(["--engine", "--output", "--input-scope", "--staff-layout", "--segmentation", "--pitch-shadow-python"]),
     );
     const engineId = flags.get("--engine");
     const output = flags.get("--output");
     const inputScope = flags.get("--input-scope");
     const staffLayout = flags.get("--staff-layout");
     const segmentationId = flags.get("--segmentation");
+    const pitchShadowPython = flags.get("--pitch-shadow-python");
+    if (pitchShadowPython !== undefined && (engineId !== "legato" || !pitchShadowPython.trim())) {
+      throw new PdfOmrError("INVALID_CLI_ARGUMENT", "pitch shadow requires LEGATO and a Python executable", {
+        context: { command: "recognize", engineId },
+      });
+    }
     if (input === undefined || engineId === undefined || output === undefined) {
       throw new PdfOmrError(
         "INVALID_CLI_ARGUMENT",
@@ -221,6 +228,7 @@ export async function runPdfOmrCommand(
       ...(inputScope === undefined ? {} : { inputScope: inputScope as "full-page" | "system-crop" }),
       ...(staffLayout === undefined ? {} : { staffLayout: staffLayout as "auto" | "single-staff" | "grand-staff" }),
       ...(segmentationId === undefined ? {} : { segmentationId }),
+      ...(pitchShadowPython === undefined ? {} : { pitchShadowPython }),
       ...(context.signal === undefined ? {} : { signal: context.signal }),
     });
   }

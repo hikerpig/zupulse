@@ -3,7 +3,7 @@ feature: desktop-pdf-omr-workbench
 title: Desktop PDF 识谱实验工作台
 status: current
 delivery: partial
-last_verified: 2026-09-04
+last_verified: 2026-09-14
 hosts:
   - desktop
 implementation_paths:
@@ -20,6 +20,8 @@ implementation_paths:
   - packages/web-viewer/src/features/pdf-omr
   - packages/web-viewer/src/features/application-settings
   - tools/pdf-omr-cli/src/draft-gap-fill.ts
+  - tools/pdf-omr-cli/src/normalizers/audiveris.ts
+  - tools/pdf-omr-cli/src/validate-draft.ts
 supersedes: []
 ---
 
@@ -106,6 +108,12 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
   不进入 Renderer。
 - LEGATO 归一化会用 implicit rest 填补 voice 中未被解释的间隙或未满小节（OMR 丢拍），每处填补记录一条
   `IMPLICIT_REST_FILL` warning diagnostic；重叠等结构性冲突仍保持 blocking 并阻断导出。
+- Draft 的 tie 必须在同一 part、staff、voice、pitch 上精确衔接前一事件的结束位置。跨小节衔接仅允许
+  从前一小节末到紧邻小节起点；跳过间隔、缺失 endpoint 或用新 start 覆盖未闭合链均为 blocking。
+  校验器不自动接线、重编号声部或修改音符；readiness 不证明识别结果与源谱一致。
+- 共享 MusicXML normalizer 会保留小节起点后续 `attributes` 块中明确声明的分谱表谱号，包括写完上谱表后
+  `backup` 回起点再声明下谱表的情况；不会猜测缺失谱号或修改音符。后续小节中途的谱号声明不提前应用到
+  整小节；Draft 的每小节单一 clef 仍不完整表达小节中途的谱号变化。
 - Runtime 未自行提交 terminal event 时，Main 会补发带 semantic `errorCode` 的 terminal failed event，确保页面从
   running 恢复到可重试状态，并在诊断区展示错误代码和用户可读原因。
 - `failed` 或 `cancelled` 可在重新选择兼容 engine 后对当前输入重试；成功结果尚未导出时重新选择输入会先请求确认。
@@ -170,6 +178,8 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 8. Recognition configuration paths remain Main-only; Renderer receives only closed provider fields, opaque tokens, safe labels,
    semantic status and bounded reasons.
 9. An active job MUST retain its registry snapshot when a provider configuration is saved or cleared.
+10. A tie continuation or endpoint MUST be temporally adjacent to its open predecessor in the same
+    part/staff/voice/pitch; a later independent chain MUST NOT conceal a missing endpoint.
 
 字段约束见 [`packages/web-core/src/bridge/schemas.ts`](../../../packages/web-core/src/bridge/schemas.ts)，运行时端口
 见 [`packages/web-viewer/src/features/pdf-omr/pdf-omr-port.ts`](../../../packages/web-viewer/src/features/pdf-omr/pdf-omr-port.ts)。
@@ -232,6 +242,9 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 
 ## 相关资料
 
+- CLI research now retains only Rokot's L/M/K context policy and 1–2 staff inputs. The opt-in
+  `piano-grand-staff-v1` profile does not change the Desktop default. Retired OLiMPiC evaluators are recoverable
+  from commit `7cef7bc1`; their removal does not establish improved recognition quality.
 - 当前架构入口：[`docs/architecture/README.md`](../../architecture/README.md)
 - 当前 UI 契约：[`DESIGN.md`](../../../DESIGN.md)
 - 图片导入与 MIDI 修正规格：

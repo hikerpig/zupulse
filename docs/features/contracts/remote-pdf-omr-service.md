@@ -3,7 +3,7 @@ feature: remote-pdf-omr-service
 title: Browser Remote PDF 识谱
 status: current
 delivery: partial
-last_verified: 2026-09-04
+last_verified: 2026-09-14
 hosts:
   - browser
 implementation_paths:
@@ -50,6 +50,9 @@ supersedes: []
   retry 在同一 Job 下创建新 Attempt并复用 input object；启动时 running/cancelling 变为 `interrupted`，queued 保留。
 - Server 只有在 MXL 与 manifest 写入并回读 hash 成功后才发布 `succeeded`。上传中断、部分 result publish、
   `deleting` 和过期 Job 通过启动或每小时 reconciliation 收敛；任务 temp root 在启动时清理。
+- 共享 CLI validator 会阻断同一 part、staff、voice、pitch 上不连续或缺失 endpoint 的 tie，后续新链不能
+  掩盖旧链的缺口。该检查不自动修谱，也不证明源谱识别准确率；验证实现及回归见
+  `tools/pdf-omr-cli/src/validate-draft.ts` 和 `tools/pdf-omr-cli/src/__tests__/validate-draft.test.ts`。
 - SSE 每次连接先发送当前完整 snapshot，后续只发送受约束 snapshot facts；native `EventSource` 负责断线重连。
   Browser adapter 暴露 `connecting / connected / reconnecting`；重连时页面保留最后一份 snapshot，显示持久提示和
   手动刷新。合法 snapshot 恢复 connected。页面不显示 queue position、上传百分比、stdout、stderr、绝对路径或

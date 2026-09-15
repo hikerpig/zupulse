@@ -16,6 +16,30 @@
 
 ## 评测可信度边界
 
+### Development-only voice identity view
+
+`src/benchmark/voice-identity.ts` 的 `evaluateVoiceIdentity` 提供独立 `voice-identity-v1` 比较视图，
+不接入默认 benchmark/gate，不改变 `computeSymbolicMetrics` 的整数 voice 比较。
+调用者必须传入 part alignment 之前的原始 predicted/expected Draft，以及 item ID 和 expected measure interval。
+区间必须覆盖每条 GT staff 的连续小节；预测多出的小节事件仍留在 false-positive 分母，不按区间裁掉。
+
+Source voice 身份为 `(originalPartId, voiceIndex)`，跨 staff 保持同一身份。对齐 part/staff 后，
+以所有非 voice Joint 字段的 multiset 交集为边权，做整个 item 固定的正权一对一匹配。
+精确 bitmask DP 同时检测多解；每侧最多 12 个非空 source voices、20,000 个 events，超限返回
+`unavailable`，不做近似匹配。仅有休止符的声部保留，空 voice container 不参与匹配。
+
+唯一对应返回 legacy Joint/Rest/exact staff-measure 与 adjusted Joint/Notes/Rests/exact staff-measure；
+多解返回 `ambiguous`，不输出 adjusted 或任意选择的 mapping。无正权边对应唯一空映射，按实际事件数计错。
+输出包含输入 canonical Draft hashes、source namespaces、note/rest 分母和原因，并经 `voiceIdentityReportSchema`
+校验。身份或 topology 不可用时不伪造 legacy/adjusted 分数；只有完成 part alignment 后才能提供 legacy。
+
+这属于 `measurement correction`，不是识别改进。汇总必须保留 attempted/unique/ambiguous/unavailable
+计数与共同可评 item IDs。映射只用于监督评测，禁止写回预测或送入 inference。
+当前规则以本节和 `src/benchmark/voice-identity.ts` 为准，反例与验证见
+`src/__tests__/voice-identity.test.ts`；已完成的设计 Spec 不再重复保留。
+
+### Canonical benchmark boundary
+
 Benchmark 在每个 item 运行 engine 前，先对 ground-truth Draft 执行同一套 `validateDraft`。如果 Harmony 或
 MusicXML readiness 为 `blocked`，该 item 只写出 `ground-truth-validation.json`、`evaluation-limitation.json`
 和 `error.json`，不生成 symbolic / Harmony pseudo-metrics；报告会将其计为
@@ -275,16 +299,11 @@ joining/timing diagnostics，同时当前 K331 ground-truth Draft 本身也不�
 失败状态，不伪造 Harmony delta。小型结构化聚合见
 `reports/development/k331-rokot/summary.json`，解释见同目录 `README.md`；完整 run、模型和 cache 不进入 Git。
 
-## Rokot header-context ablation
+## 当前钢琴研究入口
 
-2026-08-27 在同一份 27-system K331 crop PDF 上比较了 `L/M/K`、只传 `L/M`、冻结首个 `K` 与 key-consensus。
-`previous-lm-headers-v1` 把 Pitch/Joint F1 从 `0.7525 / 0.3768` 提升到 `0.9296 / 0.4922`，valid measures 从
-`57/274` 提升到 `117/274`；voice F1 与 joint F1 保持接近。melody-eight 四个 policy 结果完全相同。runtime
-default 仍为 `L/M/K`。摘要位于 `reports/exploratory/rokot-header-context-ablation-v1/`。
-
-2026-08-28 用 DCML Mozart derived-controlled 对照：`K310-1` 在 `unknown-rokot-voice` fail closed；`K280-1` 上
-只传 `L/M` 的 Pitch/Joint 从 `0.7500 / 0.4131` 降到 `0.4730 / 0.1929`。K331 的 L/M-only 收益未复现。摘要位于
-`reports/exploratory/rokot-header-context-dcml-piano-v1/`。
+当前基线、指标口径与历史对照统一见
+[evaluation index](../../../docs/evaluation/pdf-omr.md#当前钢琴-development-基线2026-09-05)。
+本页保留其他历史 protocol 的使用说明，不重复维护 header-context 数字或下一步计划。
 
 ## Rokot public pianoform quick development run
 

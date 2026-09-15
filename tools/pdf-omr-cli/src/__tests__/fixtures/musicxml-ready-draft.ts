@@ -25,7 +25,7 @@ export function musicXmlReadyDraft(): OmrScoreDraft {
                       {
                         type: "note",
                         id: "n1",
-                        onset: { numerator: 0, denominator: 1 },
+                        onset: { numerator: 3, denominator: 4 },
                         duration: { numerator: 1, denominator: 4 },
                         writtenPitch: { step: "C", alter: 0, octave: 4 },
                         soundingMidi: 60,
@@ -35,7 +35,7 @@ export function musicXmlReadyDraft(): OmrScoreDraft {
                       {
                         type: "rest",
                         id: "r1",
-                        onset: { numerator: 1, denominator: 4 },
+                        onset: { numerator: 0, denominator: 1 },
                         duration: { numerator: 3, denominator: 4 },
                       },
                     ],

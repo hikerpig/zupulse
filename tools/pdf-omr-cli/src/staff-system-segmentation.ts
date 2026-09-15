@@ -22,8 +22,8 @@ export const STAFF_SYSTEM_SEGMENTATION_PARAMETERS = {
 } as const;
 
 export type StaffSystem = {
-  staffLayout: "single-staff" | "grand-staff" | "three-staff";
-  staffCount: 1 | 2 | 3;
+  staffLayout: "single-staff" | "grand-staff";
+  staffCount: 1 | 2;
   pageIndex: number;
   systemIndex: number;
   pageRenderSha256: string;
@@ -47,7 +47,7 @@ export type StaffSystemSegmentationOptions = {
   readonly pairAdjacentUnpairedGroups?: boolean;
 };
 
-export type StaffLayout = "auto" | "single-staff" | "grand-staff" | "three-staff";
+export type StaffLayout = "auto" | "single-staff" | "grand-staff";
 
 export const PIANO_GRAND_STAFF_SEGMENTATION_V1 = {
   id: "piano-grand-staff-v1",
@@ -118,9 +118,6 @@ export function segmentStaffSystems(
   pages: readonly RenderedPdfPage[],
   options: StaffSystemSegmentationOptions = {},
 ): StaffSystemSegmentation {
-  if (options.staffLayout === "three-staff") {
-    throw ambiguous(0, { stage: "three-staff-requires-provided-system-crop" });
-  }
   const systems: StaffSystem[] = [];
   for (const page of [...pages].sort((left, right) => left.pageIndex - right.pageIndex)) {
     const detected = detectPageSystems(

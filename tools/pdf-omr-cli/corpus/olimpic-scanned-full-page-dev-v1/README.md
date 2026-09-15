@@ -20,9 +20,7 @@ split；原始 source archive 保留在外部 cache，不提交 Git。`6586696` 
 
 合计 6 works、29 pages、121 systems。精确规则和 archive hashes 见 `selection.json`。
 
-`real-multisystem-manifest.json` 将 `6007571` 单独固定为真实 full-page multi-system development case；
-`real-multisystem-case.json` 绑定输入、truth、source mapping hashes，以及 4 页/15 systems 的 evaluation-only
-预期。source mapping 不进入 runtime segmentation。
+已关闭的单例 multi-system evaluator 与 case 配置保留在 commit `7cef7bc1`；本目录继续保留原始 corpus truth。
 
 ## Reproduce selection
 

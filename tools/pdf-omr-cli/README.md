@@ -12,7 +12,7 @@ pnpm pdf-omr -- import-midi <input.mid> --output <run-dir>
 pnpm pdf-omr -- fuse --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --output <run-dir>
 pnpm pdf-omr -- apply-fusion --run <fusion-run-dir> --decisions <decisions.json> --output <run-dir>
 pnpm pdf-omr -- rebuild-from-midi --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --musescore <executable> --output <run-dir>
-pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff|three-staff>] [--segmentation piano-grand-staff-v1]
+pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff>] [--segmentation piano-grand-staff-v1]
 pnpm pdf-omr -- validate <draft.json> --output <diagnostics.json>
 pnpm pdf-omr -- analyze <draft.json> --output <harmony.json>
 pnpm pdf-omr -- export-musicxml <draft.json> --output <score.mxl>
@@ -233,21 +233,8 @@ unvoiced ABC 确定性规范化为 `V:1`；grand staff 仍 fail closed。
 converter environment 必须安装 `abc-xml-converter==1.0.1`。完整 revision、hash、decoder 参数和
 license provenance 见 `engines/rokot-environment.json`；模型和 Python environment 不提交到仓库。
 
-full-page development corpus 的 segmentation pilot 不调用模型，只渲染原始多页 PDF 并逐页运行
-`rokot-staff-system-v2`，用于在 inference 前审计 page/system boundary。schema `3.0.0` 同时记录 immutable render
-SHA 与显式 preprocessing output SHA；可选 variant 为 `none`、`deskew-v1`、`local-contrast-v1` 和
-`adaptive-threshold-v1`：
-
-```bash
-pnpm exec vite-node tools/pdf-omr-cli/scripts/run_full_page_segmentation_pilot.ts \
-  tools/pdf-omr-cli/corpus/olimpic-scanned-full-page-dev-v1/manifest.json \
-  /tmp/segmentation.json \
-  none
-```
-
-全量单变量消融使用 `run_full_page_preprocessing_ablation.ts`。两个脚本都保留 render/crop hashes、逐页错误 stage
-和 bounded context，不写回输入或人工修补 crop。full-page protocol、readiness limitation 和 report hash 见
-`tools/pdf-omr-cli/docs/evaluation.md` 与对应 report README。
+已关闭的 full-page preprocessing 与 OLiMPiC 单例评测可从 `7cef7bc1` 恢复。
+当前钢琴基线与历史证据入口见 `docs/evaluation/pdf-omr.md`。
 
 ## Run artifacts
 
@@ -391,13 +378,6 @@ measure numbers、global measure boundaries 和 normalized measure count。它�
 `systems/*` 和 `predicted-draft.json` 一起复查 joining、measure identity 与 source boundary。
 每个成功 item 还写出 `predicted-validation.json`，直接记录 Harmony/MusicXML readiness 与诊断。development
 失败 item 可保留有界 `failure-debug/`；holdout 不保留该目录。
-
-真实 multi-system development case 使用
-`corpus/olimpic-scanned-full-page-dev-v1/real-multisystem-{manifest,case}.json`。先运行单-item benchmark，再用
-`scripts/evaluate_real_multisystem_case.ts` 检查 exact corpus/engine/item identity、至少两个且顺序唯一的 systems、
-4 页/15 systems 完整性、normalized source coverage，以及 merged MusicXML parse/structural evidence。engine item
-失败、缺少或损坏 `joining.json`、system/page count 不符时一律输出 `NOT_EVALUATED`；不得用 ground truth 或其他
-engine artifact 补齐。
 
 新的真实扫描 intake 位于 `corpus/olimpic-scanned-v1/`，manifest 记录 OLiMPiC release、source split、
 archive/item hashes 与 CC BY-SA 4.0 provenance；该 v1 明确是 `system-crop` scope，不代表 full-page

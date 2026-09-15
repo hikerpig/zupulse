@@ -48,7 +48,7 @@ const report = {
   schemaVersion: "1.0.0" as const,
   status: "development-evidence" as const,
   baselinePolicy: "previous-prediction-headers-v1",
-  probePolicies: ["previous-lm-headers-v1", "first-system-key-v1", "key-consensus-v1"],
+  probePolicies: [],
   works: observations,
 };
 const bytes = new TextEncoder().encode(canonicalJson(report));

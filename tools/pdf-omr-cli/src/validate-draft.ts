@@ -4,6 +4,11 @@ import type { OmrScoreDraft } from "./schemas";
 type Diagnostic = OmrScoreDraft["diagnostics"][number];
 type Readiness = "blocked" | "ready-with-warnings" | "ready";
 type Scope = "harmony" | "musicXml";
+type TieEnd = {
+  measureIndex: number;
+  onset: ExactRational;
+  measureDuration: ExactRational | undefined;
+};
 
 export type DraftValidationReport = {
   schemaVersion: "1.0.0";
@@ -27,7 +32,7 @@ export function validateDraft(
   for (const part of draft.parts) {
     const measureCounts = new Set(part.staves.map((staff) => staff.measures.length));
     if (measureCounts.size > 1) add(diagnostics, "STAFF_MEASURE_COUNT_MISMATCH", "staff measure counts do not align");
-    const openTies = new Set<string>();
+    const openTies = new Map<string, TieEnd>();
     for (const staff of part.staves) {
       for (const measure of staff.measures) {
         if (measure.timeSignature === undefined) {
@@ -80,6 +85,11 @@ export function validateDraft(
               }
               if (!sameOnset || compareRational(end, previousEnd) > 0) previousEnd = end;
               previousOnset = onset;
+              inspectPitchAndTie(event, part.id, staff.index, voice.index, openTies, diagnostics, {
+                measureIndex: measure.index,
+                onset: end,
+                measureDuration: measure.duration,
+              });
             } catch {
               add(
                 diagnostics,
@@ -87,7 +97,6 @@ export function validateDraft(
                 `event ${event.id} cannot be projected to bounded exact ticks`,
               );
             }
-            inspectPitchAndTie(event, part.id, staff.index, voice.index, openTies, diagnostics);
             inspectSource(event, options.pages, diagnostics);
           }
           if (measure.duration !== undefined && compareRational(previousEnd, measure.duration) !== 0) {
@@ -96,7 +105,7 @@ export function validateDraft(
         }
       }
     }
-    for (const tie of openTies) add(diagnostics, "UNRESOLVED_TIE", `tie ${tie} has no endpoint`);
+    for (const tie of openTies.keys()) add(diagnostics, "UNRESOLVED_TIE", `tie ${tie} has no endpoint`);
   }
 
   return {
@@ -114,8 +123,9 @@ function inspectPitchAndTie(
   partId: string,
   staffIndex: number,
   voiceIndex: number,
-  openTies: Set<string>,
+  openTies: Map<string, TieEnd>,
   diagnostics: Diagnostic[],
+  end: TieEnd,
 ): void {
   if (event.type !== "note") return;
   if (event.writtenPitch === undefined && event.soundingMidi === undefined) {
@@ -126,12 +136,24 @@ function inspectPitchAndTie(
     event.soundingMidi?.toString() ??
     `${event.writtenPitch!.step}${event.writtenPitch!.alter}:${event.writtenPitch!.octave}`;
   const key = `${partId}:${staffIndex}:${voiceIndex}:${pitch}`;
-  if (event.tie === "start") openTies.add(key);
-  if (event.tie === "continue" && !openTies.has(key)) {
-    add(diagnostics, "INVALID_TIE", `continued tie ${key} has no start`);
+  const previous = openTies.get(key);
+  if (event.tie === "continue" || event.tie === "end") {
+    // Pitch membership alone lets a later independent chain conceal a missing endpoint.
+    const adjacent =
+      previous !== undefined &&
+      ((previous.measureIndex === end.measureIndex && compareRational(previous.onset, event.onset) === 0) ||
+        (previous.measureIndex + 1 === end.measureIndex &&
+          previous.measureDuration !== undefined &&
+          compareRational(previous.onset, previous.measureDuration) === 0 &&
+          event.onset.numerator === 0));
+    if (!adjacent) add(diagnostics, "INVALID_TIE", `tie ${key} has no adjacent start in measure ${end.measureIndex}`);
+    openTies.delete(key);
+  } else if (previous !== undefined) {
+    add(diagnostics, "INVALID_TIE", `tie ${key} is missing an endpoint before measure ${end.measureIndex}`);
+    openTies.delete(key);
   }
-  if (event.tie === "end") {
-    if (!openTies.delete(key)) add(diagnostics, "INVALID_TIE", `ended tie ${key} has no start`);
+  if (event.tie === "start" || event.tie === "continue") {
+    openTies.set(key, end);
   }
 }
 

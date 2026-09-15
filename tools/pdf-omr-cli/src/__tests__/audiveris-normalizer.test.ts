@@ -7,6 +7,52 @@ import { validateDraft } from "../validate-draft";
 const fixture = fileURLToPath(new URL("fixtures/audiveris-output.musicxml", import.meta.url));
 
 describe("Audiveris MusicXML normalizer", () => {
+  it("reads a second staff's onset clef after backup and carries it to the next measure", () => {
+    const xml = `<score-partwise><part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list>
+      <part id="P1"><measure number="1"><attributes><divisions>1</divisions><staves>2</staves>
+      <time><beats>4</beats><beat-type>4</beat-type></time><key><fifths>0</fifths></key>
+      <clef number="1"><sign>G</sign><line>2</line></clef></attributes>
+      <note><pitch><step>C</step><octave>5</octave></pitch><duration>4</duration><voice>1</voice><staff>1</staff></note>
+      <backup><duration>4</duration></backup>
+      <attributes><clef number="2"><sign>F</sign><line>4</line></clef></attributes>
+      <note><pitch><step>C</step><octave>3</octave></pitch><duration>4</duration><voice>2</voice><staff>2</staff></note>
+      </measure><measure number="2">
+      <note><rest/><duration>4</duration><voice>1</voice><staff>1</staff></note><backup><duration>4</duration></backup>
+      <note><rest/><duration>4</duration><voice>2</voice><staff>2</staff></note></measure></part></score-partwise>`;
+    const draft = normalizeAudiverisMusicXml(new TextEncoder().encode(xml));
+    expect(draft.parts[0]!.staves[0]!.measures.map((m) => m.clef)).toEqual([
+      { sign: "G", line: 2 },
+      { sign: "G", line: 2 },
+    ]);
+    expect(draft.parts[0]!.staves[1]!.measures.map((m) => m.clef)).toEqual([
+      { sign: "F", line: 4 },
+      { sign: "F", line: 4 },
+    ]);
+    expect(draft.parts[0]!.staves[1]!.measures[0]!.voices[0]!.events[0]).toMatchObject({
+      writtenPitch: { step: "C", alter: 0, octave: 3 },
+      onset: { numerator: 0, denominator: 1 },
+      duration: { numerator: 1, denominator: 1 },
+    });
+    expect(validateDraft(draft).readiness.musicXml).toBe("ready");
+  });
+
+  it("does not hoist a later mid-measure clef to the measure onset", () => {
+    const xml = `<score-partwise><part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list>
+      <part id="P1"><measure number="1"><attributes><divisions>1</divisions>
+      <time><beats>4</beats><beat-type>4</beat-type></time><key><fifths>0</fifths></key>
+      <clef><sign>F</sign><line>4</line></clef></attributes>
+      <note><pitch><step>C</step><octave>3</octave></pitch><duration>2</duration><voice>1</voice></note>
+      <attributes><clef><sign>G</sign><line>2</line></clef></attributes>
+      <note><pitch><step>C</step><octave>5</octave></pitch><duration>2</duration><voice>1</voice></note>
+      </measure></part></score-partwise>`;
+    const measure = normalizeAudiverisMusicXml(new TextEncoder().encode(xml)).parts[0]!.staves[0]!.measures[0]!;
+    expect(measure.clef).toEqual({ sign: "F", line: 4 });
+    expect(measure.voices[0]!.events.map((e) => e.onset)).toEqual([
+      { numerator: 0, denominator: 1 },
+      { numerator: 1, denominator: 2 },
+    ]);
+  });
+
   it("preserves parts, staves, voices, notes, rests, ties, tuplets and repeats", async () => {
     const bytes = await readFile(fixture);
 

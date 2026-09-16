@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import {
-  createEngineRegistry,
+  createProductionEngineRegistry,
   resolveBundledLegatoRunnerPath,
   type EngineRegistry,
 } from "@zupulse/pdf-omr-cli/pipeline";
@@ -151,7 +151,7 @@ export class RecognitionProviderSettings {
     const audiveris = configurations.audiveris;
     const rokot = configurations.rokot;
     const legato = configurations.legato;
-    return createEngineRegistry({
+    return createProductionEngineRegistry({
       environmentFallback: false,
       audiverisExecutable:
         audiveris?.providerId === "audiveris" ? audiveris.executable : this.automaticAudiverisExecutable,

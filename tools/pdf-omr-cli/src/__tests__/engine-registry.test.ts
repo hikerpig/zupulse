@@ -1,7 +1,52 @@
-import { describe, expect, it } from "vitest";
-import { createEngineRegistry } from "../engine-registry";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createEngineRegistry, createProductionEngineRegistry } from "../engine-registry";
 
 describe("engine registry", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("enables production correction by default and captures the kill switch in the registry", () => {
+    const legato = {
+      pythonExecutable: "/configured/python",
+      runnerPath: "/runner.py",
+      repositoryPath: "/repository",
+      repositoryRevision: "revision",
+      modelPath: "/model.safetensors",
+      modelSha256: "a".repeat(64),
+      baseModelPath: "/base",
+    };
+    vi.stubEnv("PDF_OMR_LEGATO_SOURCE_PITCH_CORRECTION", undefined);
+    const enabled = createProductionEngineRegistry({ legato, environmentFallback: false });
+    vi.stubEnv("PDF_OMR_LEGATO_SOURCE_PITCH_CORRECTION", "0");
+    const disabled = createProductionEngineRegistry({ legato, environmentFallback: false });
+    expect(enabled.get("legato").pitchCorrectionPython).toBe(legato.pythonExecutable);
+    expect(disabled.get("legato").pitchCorrectionPython).toBeUndefined();
+    expect(enabled.get("audiveris").pitchCorrectionPython).toBeUndefined();
+    expect(createEngineRegistry({ legato }).get("legato").pitchCorrectionPython).toBeUndefined();
+  });
+
+  it("captures the configured LEGATO Python only when source correction is enabled", () => {
+    const legato = {
+      pythonExecutable: "/configured/python",
+      runnerPath: "/runner.py",
+      repositoryPath: "/repository",
+      repositoryRevision: "revision",
+      modelPath: "/model.safetensors",
+      modelSha256: "a".repeat(64),
+      baseModelPath: "/base",
+    };
+    const enabled = createEngineRegistry({ legato, environmentFallback: false, legatoSourcePitchCorrection: true }).get(
+      "legato",
+    );
+    expect(enabled.pitchCorrectionPython).toBe(legato.pythonExecutable);
+    expect(
+      createEngineRegistry({ legato, legatoSourcePitchCorrection: false }).get("legato").pitchCorrectionPython,
+    ).toBeUndefined();
+    expect(createEngineRegistry({ legato }).get("legato").pitchCorrectionPython).toBeUndefined();
+    expect(
+      createEngineRegistry({ legatoSourcePitchCorrection: true }).get("audiveris").pitchCorrectionPython,
+    ).toBeUndefined();
+  });
+
   it("rejects removed engines as unknown arguments", () => {
     expect(() => createEngineRegistry().get("transcoda")).toThrow(
       expect.objectContaining({ code: "INVALID_CLI_ARGUMENT", context: { engineId: "transcoda" } }),

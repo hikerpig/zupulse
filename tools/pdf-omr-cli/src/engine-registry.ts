@@ -14,6 +14,16 @@ export function resolveBundledLegatoRunnerPath(): string {
   return fileURLToPath(new URL("../engines/legato-runner.py", import.meta.url));
 }
 
+export function createProductionEngineRegistry(
+  options: Omit<NonNullable<Parameters<typeof createEngineRegistry>[0]>, "legatoSourcePitchCorrection"> = {},
+): EngineRegistry {
+  // Capture rollout policy per registry; keep CLI/benchmark baselines opt-in.
+  return createEngineRegistry({
+    ...options,
+    legatoSourcePitchCorrection: process.env.PDF_OMR_LEGATO_SOURCE_PITCH_CORRECTION !== "0",
+  });
+}
+
 export function createEngineRegistry(
   options: {
     audiverisExecutable?: string;
@@ -21,6 +31,7 @@ export function createEngineRegistry(
     legato?: LegatoAdapterOptions;
     legatoWorkerMode?: boolean;
     legatoPageContextMode?: "none" | "previous-page-abc";
+    legatoSourcePitchCorrection?: boolean;
     rokot?: RokotAdapterOptions;
     environmentFallback?: boolean;
   } = {},
@@ -44,11 +55,15 @@ export function createEngineRegistry(
             context: { reason: "missing-legato-configuration" },
           });
         }
-        return createLegatoAdapter({
+        const adapter = createLegatoAdapter({
           ...configured,
           ...(options.legatoWorkerMode === undefined ? {} : { workerMode: options.legatoWorkerMode }),
           ...(options.legatoPageContextMode === undefined ? {} : { pageContextMode: options.legatoPageContextMode }),
         });
+        // Both hosts already capture this registry per job. Reuse its Python, without a second path/config channel.
+        return options.legatoSourcePitchCorrection === true
+          ? { ...adapter, pitchCorrectionPython: configured.pythonExecutable }
+          : adapter;
       }
       if (engineId === "rokot") {
         const configured =

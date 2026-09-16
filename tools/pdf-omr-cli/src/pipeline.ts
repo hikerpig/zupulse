@@ -12,7 +12,12 @@ import { omrRunManifestSchema, type PdfOmrValidateReport } from "./schemas";
 export { PdfOmrError } from "./errors";
 export { runEngineProcess } from "./engine-runner";
 export { renderPdfPages, readPdfPageCount, encodeRgbaPng } from "./render-pdf-pages";
-export { createEngineRegistry, resolveBundledLegatoRunnerPath } from "./engine-registry";
+export {
+  createEngineRegistry,
+  createProductionEngineRegistry,
+  resolveBundledLegatoRunnerPath,
+} from "./engine-registry";
+export { readSourcePitchEvidence } from "./source-pitch-evidence";
 export type { EngineRegistry } from "./engine-registry";
 export type { OmrEngineAdapter } from "./engines/types";
 export type { OmrScoreDraft } from "./schemas";
@@ -50,6 +55,7 @@ export type PdfOmrPipelineRequest = {
   engineId: string;
   outputDirectory: string;
   engineRegistry?: EngineRegistry;
+  pitchCorrectionPython?: string;
   standardFontDirectory?: string;
   wasmDirectory?: string;
   signal?: AbortSignal;
@@ -110,6 +116,7 @@ export async function runPdfOmrPipeline(input: PdfOmrPipelineRequest): Promise<P
     await recognizeCommand(input.inputPath, input.engineId, artifacts.recognitionDirectory, {
       cwd: outputDirectory,
       engineRegistry: input.engineRegistry ?? createEngineRegistry(),
+      ...(input.pitchCorrectionPython === undefined ? {} : { pitchCorrectionPython: input.pitchCorrectionPython }),
       ...(input.standardFontDirectory === undefined ? {} : { standardFontDirectory: input.standardFontDirectory }),
       ...(input.wasmDirectory === undefined ? {} : { wasmDirectory: input.wasmDirectory }),
       ...(input.signal === undefined ? {} : { signal: input.signal }),

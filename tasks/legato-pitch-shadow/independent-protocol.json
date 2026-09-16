@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "legato-source-pitch-independent-v1",
+  "status": "frozen-before-input-materialization",
+  "upstream": {
+    "repository": "https://github.com/CPJKU/vienna4x22",
+    "revision": "1033ade0899bfd03a89f370c9ad5d8443ddccd3e",
+    "license": "CC-BY-4.0",
+    "attribution": "Vienna 4x22 Piano Corpus, Werner Goebl; symbolic score updates by CPJKU",
+    "licensePath": "LICENSE"
+  },
+  "works": ["Chopin_op10_no3", "Chopin_op38", "Schubert_D783_no15"],
+  "excludedWorkFamilies": ["Mozart_K331", "Mozart_K280", "score-4", "score-9"],
+  "selection": "All non-Mozart works in the frozen upstream inventory; no filtering using predictions or truth.",
+  "inputs": {
+    "originalPdfPattern": "pdf/{work}.pdf",
+    "musicXmlPattern": "musicxml/{work}.musicxml",
+    "renderer": "MuseScore4 4.7.4",
+    "renderCommand": "mscore -o {work}.rendered.pdf {work}.musicxml",
+    "primaryRecognitionInput": "rendered PDF, complete excerpt without cropping or notation edits",
+    "originalPdfRole": "source-admission audit, not a replacement chosen after observing results",
+    "hashes": "Materialization MUST record SHA-256 for original PDFs, MusicXML and rendered PDFs before truth evaluation."
+  },
+  "candidateSha256": {
+    "tools/pdf-omr-cli/engines/pitch_shadow.py": "ac30b5a8066aaa1ad897e0651679e5ca9c0be9faa300aa47fb98aa8e0a57763a",
+    "tools/pdf-omr-cli/src/pitch-shadow.ts": "0dfec9fdf1f89141ed9d6bfd138519a870779660eeb8aa1d5ac1ff0c81d4c937",
+    "tools/pdf-omr-cli/src/apply-source-pitch-corrections.ts": "c9ef8b5a58a4843a55185eb3cb8e583e043543c1ea1b2c793df3030dde8f53e8"
+  },
+  "execution": {
+    "engine": "legato",
+    "configuration": "current production adapter defaults; no decoder, context or model ablations",
+    "decoder": { "maxLength": 2048, "numBeams": 1, "repetitionPenalty": 1.1 },
+    "pageContextMode": "none",
+    "modelSha256": "cdeafc9ab30eba74e1c87f0722f869aa9c00d4c4d5986561d4abfeccd6f9cfcc",
+    "trainingAllowed": false,
+    "workerConcurrency": 1,
+    "maximumInferenceRunsPerWork": 1,
+    "maximumInferenceMinutesPerWork": 60,
+    "sourceAdmissionFirst": true,
+    "allSourceRejectedAction": "Record not-evaluable and do not spend inference budget or claim a no-regression pass."
+  },
+  "gates": {
+    "minimumAdmittedWorks": 2,
+    "minimumComparedStaffMeasures": 30,
+    "minimumCorrectedNotes": 3,
+    "minimumWorksWithCorrectedNotes": 2,
+    "maximumIncorrectSourcePitches": 0,
+    "maximumIncorrectCorrections": 0,
+    "maximumPreviouslyCorrectNotesLost": 0,
+    "wholeWorkMetrics": "Pitch TP/F1 and strict staff-measure match MUST NOT regress for any evaluated work.",
+    "structuralAndExportValidationRequired": true,
+    "failurePolicy": "Any unmet gate prevents default activation. Rejected works stay in the denominator and evidence report.",
+    "tuningPolicy": "No candidate changes after inspecting these inputs or truth may be evaluated as independent using this protocol."
+  }
+}

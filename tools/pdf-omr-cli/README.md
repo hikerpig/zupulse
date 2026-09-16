@@ -1,7 +1,7 @@
 # PDF OMR CLI
 
-该 package 是 PDF → `OmrScoreDraft` → Harmony/MusicXML 与 benchmark 的命令行实验层。当前不接入
-`apps/*`，也不承诺这里的 Draft 会直接成为 App 领域模型。
+该 package 是 PDF → `OmrScoreDraft` → Harmony/MusicXML 与 benchmark 的命令行实验层。Desktop 和
+Remote Recognition Service 复用其中的运行时；实验命令不因此成为 App 默认能力，Draft 也不直接成为 App 领域模型。
 
 ## 当前命令
 
@@ -12,7 +12,7 @@ pnpm pdf-omr -- import-midi <input.mid> --output <run-dir>
 pnpm pdf-omr -- fuse --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --output <run-dir>
 pnpm pdf-omr -- apply-fusion --run <fusion-run-dir> --decisions <decisions.json> --output <run-dir>
 pnpm pdf-omr -- rebuild-from-midi --musicxml <score.musicxml|score.mxl> --midi <score-export.mid> --musescore <executable> --output <run-dir>
-pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff|three-staff>] [--segmentation piano-grand-staff-v1]
+pnpm pdf-omr -- recognize <input.pdf> --engine <audiveris|legato|rokot> --output <run-dir> [--input-scope <full-page|system-crop>] [--staff-layout <auto|single-staff|grand-staff>] [--segmentation piano-grand-staff-v1]
 pnpm pdf-omr -- validate <draft.json> --output <diagnostics.json>
 pnpm pdf-omr -- analyze <draft.json> --output <harmony.json>
 pnpm pdf-omr -- export-musicxml <draft.json> --output <score.mxl>
@@ -115,6 +115,69 @@ LEGATO 本地 engine 接受一至 32 页 PDF。runner 流式渲染并逐页使�
 默认 inference timeout 为 60 分钟。CUDA 与 MPS 使用 float16 推理，CPU 按 checkpoint config dtype
 加载；这与官方 Demo 的 GPU half-precision 路径一致，同时避免 MPS 上的 float32 attention OOM 和
 mixed bfloat16/float32 Metal crash。
+
+### 可选音高旁路
+
+在上述 LEGATO 环境配置完成后，可显式启用只读源谱检查：
+
+```bash
+pnpm pdf-omr -- recognize input.pdf --engine legato --output result-shadow \
+  --pitch-shadow-python /absolute/path/to/legato-venv/bin/python
+```
+
+`--pitch-shadow-python` 只适用于 LEGATO。提取器复用 PyMuPDF，不加载模型、不读取历史报告或参考答案；
+识别和提取使用同一份本次输入副本。省略该参数时不运行提取器，也不增加 artifact 或参数。
+Desktop、Remote 和 benchmark 没有启用此选项。
+
+旁路增加 `pitch-shadow/source.json` 和 `pitch-shadow/report.json`，并把它们的哈希写入 `run.json`。
+报告绑定输入、canonical Draft、提取器脚本哈希和 PyMuPDF 版本。提取失败时只写报告，
+`reason=extractor-unavailable` 和有界 `failureStage` 说明失败阶段；脚本无法读取时 `extractorSha256=null`。
+子进程上限为 30 秒、输出上限为 4 MiB；取消仍返回 `INTERRUPTED`。输出不含原始异常或绝对路径。
+为支持 Electron ASAR，提取器先把已计算哈希的脚本字节物化到私有临时目录，再交给外部 Python；结束后清理副本。
+
+当前策略 `legato-source-pitch-shadow-v2` 处理能完整定位的双谱表向量几何、MScore/Leland 符头与明确的 G/F
+谱号，解析标准调号、基本临时升降号及其小节内作用范围。所有页、system 和小节必须完整顺序对应，不按
+预测音高寻找对齐。单声部内允许具有唯一音高顺序的和弦；候选为孤立差异，自然音级变化要求内部邻音锚点，
+或同和弦未变化音符与另一时刻的锚点。未知记号、源曲线、tie、tuplet、移调、数量不符和对应歧义均放弃修改。
+无法归属的升降号使该页对应谱表的调号证据失效，未知八度记号拒绝整页，避免沿用过期音高上下文。
+系统边缘编号若超出原位置限制，必须由同页多个系统的实际小节计数一致性确认；孤立数字不据此放行。
+明确的完整表情文字、大括号和已定义力度字符不参与音高归属；混合指令、未知字符和不匹配的括号仍拒绝。
+
+报告的 `suggestedPitch` 包含 step/octave/alter，`suggestedSoundingMidi` 由源谱音高计算，不证明源节奏。
+只读模式仍保持 `writebackReady=false`，不修改 Draft、diagnostics 或导出结果。
+
+实验性应用模式使用另一个互斥参数：
+
+```bash
+pnpm pdf-omr -- recognize input.pdf --engine legato --output result-corrected \
+  --pitch-correction-python /absolute/path/to/legato-venv/bin/python
+```
+
+应用模式保留 `raw-draft.json` 和原生 engine artifacts，将源证据和修改报告写入 `pitch-correction/`。
+只修改 written pitch 与 sounding MIDI；候选必须通过 Draft 校验及 MusicXML parse/view/playback/structural
+round-trip，否则 `draft.json` 保持原始结果。报告区分 `suggestions`、`outcome` 和 `appliedCount`，所有文件均绑定
+到 `run.json` 哈希。共享 programmatic pipeline 可显式传入 `pitchCorrectionPython`，最终验证与导出读取修正后的
+`draft.json`；CLI 和 benchmark 默认关闭，Desktop 与 Remote 默认启用现有保守规则。
+宿主也可在创建 registry 时显式设置 `legatoSourcePitchCorrection: true`，复用该任务 LEGATO 配置中的 Python；
+不向 Renderer 或 manifest 暴露路径。产品宿主统一使用 `createProductionEngineRegistry`；
+启动时设置 `PDF_OMR_LEGATO_SOURCE_PITCH_CORRECTION=0` 并重启 Desktop 或 Server，可关闭自动纠错。
+未设置或非 `0` 时启用；开关随 registry 捕获，不改变活动任务。它不是 CLI 显式纠错参数的全局禁用开关。
+Desktop 引擎路径仍只读取已保存配置。显式只读旁路仍优先于 registry 自动纠错。
+
+开发谱 score-9 原始模型输出回放已产生并应用一处 C4 → B3 修正，通过导出回环；score-4 因预测与源谱分别为
+99/92 小节仍拒绝。此结果不是新的模型推理或独立评测。其他真实谱预检仍有记号、布局及小节线拒绝，
+独立作品正向收益尚未验证。本次按用户批准受控接入，不把开发谱收益当作跨作品准确率证明。
+源提取失败或无法唯一对应时不修改 Draft；原始 Draft 已有阻塞错误时，正常验证仍可能失败。
+Remote 必须保留并校验纠错证据，证据超过 32 MiB 或持久化失败时任务失败，不发布不可审计的结果。
+当前执行证据与下一步见
+[`tasks/legato-pitch-shadow/todo.md`](../../tasks/legato-pitch-shadow/todo.md)。
+
+提取器的无模型回归检查：
+
+```bash
+python3 -m unittest discover -s tools/pdf-omr-cli/engines -p 'test_pitch_shadow.py'
+pnpm test tools/pdf-omr-cli/src/__tests__/pitch-shadow.test.ts tools/pdf-omr-cli/src/__tests__/pitch-shadow-command.test.ts
+```
 
 development-only 的 decoder 筛选会顺序运行 `beam=1/2/4`。每个 variant 在一个串行 worker 中只加载一次模型，
 `comparison.json` 记录测量值和评测集合是否一致，不自动作 promotion 决策：
@@ -233,21 +296,8 @@ unvoiced ABC 确定性规范化为 `V:1`；grand staff 仍 fail closed。
 converter environment 必须安装 `abc-xml-converter==1.0.1`。完整 revision、hash、decoder 参数和
 license provenance 见 `engines/rokot-environment.json`；模型和 Python environment 不提交到仓库。
 
-full-page development corpus 的 segmentation pilot 不调用模型，只渲染原始多页 PDF 并逐页运行
-`rokot-staff-system-v2`，用于在 inference 前审计 page/system boundary。schema `3.0.0` 同时记录 immutable render
-SHA 与显式 preprocessing output SHA；可选 variant 为 `none`、`deskew-v1`、`local-contrast-v1` 和
-`adaptive-threshold-v1`：
-
-```bash
-pnpm exec vite-node tools/pdf-omr-cli/scripts/run_full_page_segmentation_pilot.ts \
-  tools/pdf-omr-cli/corpus/olimpic-scanned-full-page-dev-v1/manifest.json \
-  /tmp/segmentation.json \
-  none
-```
-
-全量单变量消融使用 `run_full_page_preprocessing_ablation.ts`。两个脚本都保留 render/crop hashes、逐页错误 stage
-和 bounded context，不写回输入或人工修补 crop。full-page protocol、readiness limitation 和 report hash 见
-`tools/pdf-omr-cli/docs/evaluation.md` 与对应 report README。
+已关闭的 full-page preprocessing 与 OLiMPiC 单例评测可从 `7cef7bc1` 恢复。
+当前钢琴基线与历史证据入口见 `docs/evaluation/pdf-omr.md`。
 
 ## Run artifacts
 
@@ -391,13 +441,6 @@ measure numbers、global measure boundaries 和 normalized measure count。它�
 `systems/*` 和 `predicted-draft.json` 一起复查 joining、measure identity 与 source boundary。
 每个成功 item 还写出 `predicted-validation.json`，直接记录 Harmony/MusicXML readiness 与诊断。development
 失败 item 可保留有界 `failure-debug/`；holdout 不保留该目录。
-
-真实 multi-system development case 使用
-`corpus/olimpic-scanned-full-page-dev-v1/real-multisystem-{manifest,case}.json`。先运行单-item benchmark，再用
-`scripts/evaluate_real_multisystem_case.ts` 检查 exact corpus/engine/item identity、至少两个且顺序唯一的 systems、
-4 页/15 systems 完整性、normalized source coverage，以及 merged MusicXML parse/structural evidence。engine item
-失败、缺少或损坏 `joining.json`、system/page count 不符时一律输出 `NOT_EVALUATED`；不得用 ground truth 或其他
-engine artifact 补齐。
 
 新的真实扫描 intake 位于 `corpus/olimpic-scanned-v1/`，manifest 记录 OLiMPiC release、source split、
 archive/item hashes 与 CC BY-SA 4.0 provenance；该 v1 明确是 `system-crop` scope，不代表 full-page

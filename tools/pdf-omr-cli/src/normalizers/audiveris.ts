@@ -81,6 +81,16 @@ function normalizePart(
   let timeSignature: { numerator: number; denominator: number } | undefined;
   let keySignature: { fifths: number } | undefined;
   const clefs = new Map<number, { sign: "G" | "F" | "C" | "percussion" | "TAB" | "none"; line?: number }>();
+  const readClefs = (attributes: XmlElement) => {
+    for (const clef of childElements(attributes, "clef")) {
+      const staffIndex = positiveInteger(clef.getAttribute("number")) ?? 1;
+      const sign = childText(clef, "sign");
+      const line = integerText(clef, "line");
+      if (isClefSign(sign)) {
+        clefs.set(staffIndex - 1, { sign, ...(line === undefined ? {} : { line }) });
+      }
+    }
+  };
   let staffCount = 1;
   const normalizedMeasures: Array<
     Array<{
@@ -109,14 +119,7 @@ function normalizePart(
       const fifthCount = fifths === undefined ? undefined : integerText(fifths, "fifths");
       if (fifthCount !== undefined && fifthCount >= -7 && fifthCount <= 7) keySignature = { fifths: fifthCount };
       staffCount = Math.max(staffCount, integerText(attributes, "staves") ?? 1);
-      for (const clef of childElements(attributes, "clef")) {
-        const staffIndex = positiveInteger(clef.getAttribute("number")) ?? 1;
-        const sign = childText(clef, "sign");
-        const line = integerText(clef, "line");
-        if (isClefSign(sign)) {
-          clefs.set(staffIndex - 1, { sign, ...(line === undefined ? {} : { line }) });
-        }
-      }
+      readClefs(attributes);
     }
     if (divisions === undefined) addDiagnostic(diagnostics, "MISSING_DIVISIONS", measureIndex);
     if (timeSignature === undefined) addDiagnostic(diagnostics, "MISSING_TIME_SIGNATURE", measureIndex);
@@ -127,6 +130,8 @@ function normalizePart(
     let cursorUnits = 0;
     let noteIndex = 0;
     for (const item of childElements(measure)) {
+      // Separate staff declarations can follow a backup to onset; later mid-measure clefs cannot be hoisted.
+      if (item.nodeName === "attributes" && item !== attributes && cursorUnits === 0) readClefs(item);
       if (item.nodeName === "backup" || item.nodeName === "forward") {
         const amount = integerText(item, "duration");
         if (amount !== undefined) cursorUnits += item.nodeName === "backup" ? -amount : amount;

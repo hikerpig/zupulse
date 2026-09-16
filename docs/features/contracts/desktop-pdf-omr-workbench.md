@@ -3,7 +3,7 @@ feature: desktop-pdf-omr-workbench
 title: Desktop PDF 识谱实验工作台
 status: current
 delivery: partial
-last_verified: 2026-09-04
+last_verified: 2026-09-16
 hosts:
   - desktop
 implementation_paths:
@@ -20,6 +20,8 @@ implementation_paths:
   - packages/web-viewer/src/features/pdf-omr
   - packages/web-viewer/src/features/application-settings
   - tools/pdf-omr-cli/src/draft-gap-fill.ts
+  - tools/pdf-omr-cli/src/normalizers/audiveris.ts
+  - tools/pdf-omr-cli/src/validate-draft.ts
 supersedes: []
 ---
 
@@ -46,13 +48,18 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
   配置原因，并在用户开始任务前禁用不可用 engine。
 - 用户可从任意 route 的 Header 齿轮进入共享 `#/settings`；Browser 只显示通用语言与主题，Desktop 额外通过
   `recognitionProviderSettings` capability 显示四种本地识谱 provider。
-- Desktop 不读取 `PDF_OMR_*` 环境变量。没有手动配置 Audiveris 时，Main 依次检查用户级和系统级 app bundle，
+- Desktop 不从环境变量读取引擎路径；只读取下述自动纠错关闭开关。没有手动配置 Audiveris 时，Main 依次检查用户级和系统级 app bundle，
   再回退到 `PATH`；Rokot 与 LEGATO 没有持久化配置时保持未配置。独立 CLI 仍支持环境变量自动化。
 
 ## 当前已实现行为
 
 ### 成功路径
 
+- LEGATO 默认用同一输入副本和已保存的 Python 配置执行源谱音高检查，只应用完整音高证据与唯一对应支持的修改。
+  原始 Draft、engine artifacts、源证据和修改报告保留在任务目录；候选必须通过校验和导出回环。
+  不支持的输入、提取失败或候选校验失败保留原 Draft；取消仍终止任务，原 Draft 的阻塞错误不被豁免。
+  启动时设置 `PDF_OMR_LEGATO_SOURCE_PITCH_CORRECTION=0` 并重启可关闭自动纠错；开关随 job registry 捕获。
+  Bridge 和 UI 不增加开关或路径；CLI 与 benchmark 默认仍不启用。
 - Main 消费一次性输入 token 后，通过已打开的文件描述符重新校验文件 identity、regular-file 类型和 64 MiB 上限，
   再复制到 job-scoped 临时输入目录并调用 programmatic `pdf-omr-cli` pipeline；失败或取消后的 retry 使用这份稳定副本，
   不会再次消费已失效的 token，也不会重新读取已被替换的外部路径。
@@ -106,6 +113,12 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
   不进入 Renderer。
 - LEGATO 归一化会用 implicit rest 填补 voice 中未被解释的间隙或未满小节（OMR 丢拍），每处填补记录一条
   `IMPLICIT_REST_FILL` warning diagnostic；重叠等结构性冲突仍保持 blocking 并阻断导出。
+- Draft 的 tie 必须在同一 part、staff、voice、pitch 上精确衔接前一事件的结束位置。跨小节衔接仅允许
+  从前一小节末到紧邻小节起点；跳过间隔、缺失 endpoint 或用新 start 覆盖未闭合链均为 blocking。
+  校验器不自动接线、重编号声部或修改音符；readiness 不证明识别结果与源谱一致。
+- 共享 MusicXML normalizer 会保留小节起点后续 `attributes` 块中明确声明的分谱表谱号，包括写完上谱表后
+  `backup` 回起点再声明下谱表的情况；不会猜测缺失谱号或修改音符。后续小节中途的谱号声明不提前应用到
+  整小节；Draft 的每小节单一 clef 仍不完整表达小节中途的谱号变化。
 - Runtime 未自行提交 terminal event 时，Main 会补发带 semantic `errorCode` 的 terminal failed event，确保页面从
   running 恢复到可重试状态，并在诊断区展示错误代码和用户可读原因。
 - `failed` 或 `cancelled` 可在重新选择兼容 engine 后对当前输入重试；成功结果尚未导出时重新选择输入会先请求确认。
@@ -170,6 +183,8 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 8. Recognition configuration paths remain Main-only; Renderer receives only closed provider fields, opaque tokens, safe labels,
    semantic status and bounded reasons.
 9. An active job MUST retain its registry snapshot when a provider configuration is saved or cleared.
+10. A tie continuation or endpoint MUST be temporally adjacent to its open predecessor in the same
+    part/staff/voice/pitch; a later independent chain MUST NOT conceal a missing endpoint.
 
 字段约束见 [`packages/web-core/src/bridge/schemas.ts`](../../../packages/web-core/src/bridge/schemas.ts)，运行时端口
 见 [`packages/web-viewer/src/features/pdf-omr/pdf-omr-port.ts`](../../../packages/web-viewer/src/features/pdf-omr/pdf-omr-port.ts)。
@@ -181,12 +196,16 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 - 部分落地：中间 evidence 只显示结构化 facts，不展开未知二进制 artifact。
 - 自动化边界：Desktop E2E 使用临时 fake Audiveris executable 覆盖 stage observation、validated MXL、transient
   preview 和 native export；它不代表真实 external engine 的质量或环境可用性，CI 仍不绑定任何外部 engine。
+- LEGATO 源谱纠错按用户批准受控默认启用，但独立作品正向收益尚未验证，两批冻结准入均为 0/3。
+  开发谱 score-9 已通过 Desktop runtime 默认入口回放并修正一音；这不是新的模型推理或真实模型 UI 验收。
+  ASAR 提取资源已验证物化到私有目录执行。
+  当前能力与限制见 [CLI 音高旁路](../../../tools/pdf-omr-cli/README.md#可选音高旁路)。
 
 ## 明确非目标
 
 - iPad、批量任务、benchmark、模型下载或 Browser 端 engine 环境编辑 UI。Browser Remote 能力的当前边界见
   [`remote-pdf-omr-service.md`](remote-pdf-omr-service.md)。
-- 无人审核自动修复、missing-note insertion、note deletion、真人演奏 MIDI、自动加入 Library、修改 Managed Score
+- 现有保守源谱音高规则以外的无人审核自动修复、missing-note insertion、note deletion、真人演奏 MIDI、自动加入 Library、修改 Managed Score
   Copy 或注册 PDF/image/MIDI `ScoreFormat`。
 - 多页 TIFF、HEIC、多张图片自动合并、云端 alignment 或远程模型处理。
 - 分发或授权任何第三方 engine、model、repository、token 或 license。
@@ -206,7 +225,7 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 - 给定 capability 同时包含 `LEGATO`、`Rokot` 与 `Audiveris`，页面必须按该顺序展示，并默认选择第一个兼容且
   可用的 engine。
 - 给定 macOS 标准 Audiveris app bundle 且没有显式 executable 配置，Desktop 必须自动发现并通过预检；Settings
-  中已验证并保存的显式配置始终优先，且 Desktop 不读取 `PDF_OMR_*` 环境变量。
+  中已验证并保存的显式配置始终优先，且 Desktop 不从 `PDF_OMR_*` 环境变量读取引擎路径。
 - 给定 Browser，Settings 只显示通用设置；给定 Desktop provider capability，Settings 列出 Audiveris、Rokot 与 LEGATO。
   Main 返回的 Bridge response 与已保存配置 DOM 不包含绝对路径；用户粘贴的路径只允许作为未保存的
   单向 request 输入，不能由 Main 回显。
@@ -232,6 +251,9 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 
 ## 相关资料
 
+- CLI research now retains only Rokot's L/M/K context policy and 1–2 staff inputs. The opt-in
+  `piano-grand-staff-v1` profile does not change the Desktop default. Retired OLiMPiC evaluators are recoverable
+  from commit `7cef7bc1`; their removal does not establish improved recognition quality.
 - 当前架构入口：[`docs/architecture/README.md`](../../architecture/README.md)
 - 当前 UI 契约：[`DESIGN.md`](../../../DESIGN.md)
 - 图片导入与 MIDI 修正规格：

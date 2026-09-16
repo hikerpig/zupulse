@@ -7,6 +7,24 @@ import { runPdfOmrCommand } from "../command";
 import { exportMusicXmlCommand } from "../commands/export-musicxml";
 
 describe("validate and export commands", () => {
+  it("does not publish an MXL when a tie skips a rest", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "pdf-omr-invalid-tie-"));
+    const inputPath = join(directory, "draft.json");
+    const outputPath = join(directory, "score.mxl");
+    const draft = musicXmlReadyDraft();
+    const events = draft.parts[0]!.staves[0]!.measures[0]!.voices[0]!.events;
+    events[0]!.onset = { numerator: 0, denominator: 1 };
+    events[1]!.onset = { numerator: 1, denominator: 4 };
+    const original = JSON.stringify(draft);
+    await writeFile(inputPath, original);
+
+    await expect(runPdfOmrCommand(["export-musicxml", inputPath, "--output", outputPath])).rejects.toMatchObject({
+      code: "PROJECTION_OR_EXPORT_FAILED",
+    });
+    await expect(access(outputPath)).rejects.toBeDefined();
+    expect(await readFile(inputPath, "utf8")).toBe(original);
+  });
+
   it("writes diagnostics and independent readiness for a blocked Draft", async () => {
     const directory = await mkdtemp(join(tmpdir(), "pdf-omr-validate-"));
     const inputPath = join(directory, "draft.json");

@@ -89,7 +89,7 @@ function parseArgs(input: readonly string[]): {
   const fragmented = flags.get("--fragmented") ?? "false";
   const pairAdjacent = flags.get("--pair-adjacent") ?? "false";
   const category = flags.get("--category") ?? "derived-controlled-grand-staff";
-  const policyList = flags.get("--policies") ?? "previous-prediction-headers-v1,previous-lm-headers-v1";
+  const policyList = flags.get("--policies") ?? "previous-prediction-headers-v1";
   if (
     output === undefined ||
     id === undefined ||

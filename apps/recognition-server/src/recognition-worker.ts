@@ -4,6 +4,7 @@ import { join } from "node:path";
 import {
   PdfOmrError,
   runPdfOmrPipeline,
+  readSourcePitchEvidence,
   type PdfOmrPipelineRequest,
   type PdfOmrPipelineResult,
 } from "@zupulse/pdf-omr-cli/pipeline";
@@ -78,6 +79,13 @@ export class RecognitionWorker {
       pipelineCompleted = true;
       const resultPath = join(outputDirectory, result.artifacts.musicXml);
       const diagnostics = await readDiagnostics(join(outputDirectory, result.artifacts.validation));
+      const sourcePitchEvidence =
+        result.engine.id === "legato"
+          ? await readSourcePitchEvidence(
+              join(outputDirectory, result.artifacts.recognitionDirectory),
+              claimed.inputSha256,
+            )
+          : undefined;
       await assertFileHash(resultPath, result.outputSha256);
       const stored = await this.objects.putFile(resultObjectKey, resultPath, result.outputSha256);
       await this.objects.materialize(resultObjectKey, join(runDirectory, "published-result.mxl"), result.outputSha256);
@@ -86,6 +94,8 @@ export class RecognitionWorker {
           schemaVersion: "1.0.0",
           outputSha256: result.outputSha256,
           validation: { readiness: result.validation.readiness, diagnostics },
+          // Keeping evidence in the existing private object gives it the same publication and deletion lifecycle.
+          ...(sourcePitchEvidence === undefined ? {} : { sourcePitchEvidence }),
         }),
       );
       const manifestSha256 = createHash("sha256").update(manifestBytes).digest("hex");

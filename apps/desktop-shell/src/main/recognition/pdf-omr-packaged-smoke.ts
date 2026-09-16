@@ -10,17 +10,20 @@ import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DesktopPdfOmrRuntime } from "./pdf-omr-runtime";
+import { z } from "zod";
 
 export type PdfOmrPackagedSmokeResult = {
   pipelineStatus: "succeeded";
   pageCount: number;
   absolutePathLeaked: boolean;
   processTreeCancelled: boolean;
+  sourcePitchExtraction?: boolean;
 };
 
 export async function runPdfOmrPackagedSmoke(options: {
   standardFontDirectory: string;
   wasmDirectory: string;
+  pitchPython?: string;
 }): Promise<PdfOmrPackagedSmokeResult> {
   const directory = await mkdtemp(join(tmpdir(), "zupulse-pdf-omr-packaged-smoke-"));
   const inputPath = join(directory, "input.pdf");
@@ -38,12 +41,39 @@ export async function runPdfOmrPackagedSmoke(options: {
       outputDirectory,
       engineRegistry: registryWith(smokeAdapter()),
     });
+    if (options.pitchPython !== undefined) {
+      const adapter = smokeAdapter();
+      const extractionOutput = join(directory, "pitch-run");
+      await runtime.run({
+        inputPath,
+        engineId: "legato",
+        outputDirectory: extractionOutput,
+        engineRegistry: {
+          get: () => ({
+            ...adapter,
+            pitchCorrectionPython: options.pitchPython!,
+            inspectEnvironment: async () => ({ ...(await adapter.inspectEnvironment()), id: "legato" }),
+          }),
+        },
+      });
+      const evidencePath = join(extractionOutput, "recognition/pitch-correction/source.json");
+      const evidence = await readFile(evidencePath, "utf8").catch(() => undefined);
+      const schema = z.object({
+        inputSha256: z.literal(pipeline.input.inputSha256),
+        extractorVersion: z.string().min(1),
+        pages: z.tuple([z.object({ reason: z.literal("unsupported-staff-layout") })]),
+      });
+      if (evidence === undefined || !schema.safeParse(JSON.parse(evidence)).success) {
+        throw new Error("packaged source pitch extractor did not execute");
+      }
+    }
     const processTreeCancelled = await verifyProcessTreeCancellation(directory);
     return {
       pipelineStatus: pipeline.status,
       pageCount: pipeline.input.pageCount,
       absolutePathLeaked: JSON.stringify(pipeline).includes(directory),
       processTreeCancelled,
+      ...(options.pitchPython === undefined ? {} : { sourcePitchExtraction: true }),
     };
   } finally {
     await rm(directory, { recursive: true, force: true });

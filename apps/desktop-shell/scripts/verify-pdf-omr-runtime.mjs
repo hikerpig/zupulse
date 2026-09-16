@@ -8,13 +8,15 @@ await access(target.executable);
 await access(target.asar);
 
 const smokeEntry = `${target.asar}/dist/main/pdf-omr-packaged-smoke-entry.cjs`;
-const result = await run(target.executable, [smokeEntry]);
+const pitchPython = process.argv[2];
+const result = await run(target.executable, [smokeEntry, ...(pitchPython === undefined ? [] : [pitchPython])]);
 const report = JSON.parse(result.stdout.trim());
 const expected = {
   pipelineStatus: "succeeded",
   pageCount: 1,
   absolutePathLeaked: false,
   processTreeCancelled: true,
+  ...(pitchPython === undefined ? {} : { sourcePitchExtraction: true }),
 };
 if (JSON.stringify(report) !== JSON.stringify(expected)) {
   throw new Error(`Unexpected packaged PDF OMR runtime report: ${JSON.stringify(report)}`);

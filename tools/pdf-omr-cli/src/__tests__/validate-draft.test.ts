@@ -3,6 +3,51 @@ import type { OmrScoreDraft } from "../schemas";
 import { validateDraft } from "../validate-draft";
 
 describe("Draft validator", () => {
+  it.each([
+    ["an untied endpoint hidden by a later chain", ["start", undefined, "start", "end"]],
+    ["a new start before the old chain ends", ["start", "start", "end"]],
+    ["a late endpoint after an untied note", ["start", undefined, "end"]],
+  ] as const)("blocks %s", (_description, ties) => {
+    const draft = tiedMeasures(ties);
+    const report = validateDraft(draft);
+    expect(report.readiness).toEqual({ harmony: "blocked", musicXml: "blocked" });
+    expect(report.diagnostics).toEqual(expect.arrayContaining([expect.objectContaining({ code: "INVALID_TIE" })]));
+  });
+
+  it("blocks an endpoint separated by a whole rest measure", () => {
+    const draft = tiedMeasures(["start", undefined, "end"]);
+    draft.parts[0]!.staves[0]!.measures[1]!.voices[0]!.events = [
+      {
+        type: "rest",
+        id: "rest",
+        onset: { numerator: 0, denominator: 1 },
+        duration: { numerator: 1, denominator: 1 },
+      },
+    ];
+    expect(validateDraft(draft).readiness.musicXml).toBe("blocked");
+  });
+
+  it("blocks a late endpoint in the same measure", () => {
+    const draft = tiedMeasures([undefined]);
+    draft.parts[0]!.staves[0]!.measures[0]!.voices[0]!.events = [
+      { ...note("start", 0, 1, 4, "C", 4), tie: "start" },
+      note("between", 1, 4, 4, "D", 4),
+      { ...note("end", 1, 2, 2, "C", 4), tie: "end" },
+    ];
+    expect(validateDraft(draft).readiness.musicXml).toBe("blocked");
+  });
+
+  it("accepts adjacent within-measure and cross-measure chord continuations", () => {
+    const draft = tiedMeasures([undefined, "end"]);
+    draft.parts[0]!.staves[0]!.measures[0]!.voices[0]!.events = [
+      { ...note("start", 0, 1, 2, "C", 4), tie: "start" },
+      note("chord", 0, 1, 2, "E", 4),
+      { ...note("continue", 1, 2, 2, "C", 4), tie: "continue" },
+      note("other", 1, 2, 2, "G", 4),
+    ];
+    expect(validateDraft(draft).diagnostics).toEqual([]);
+  });
+
   it("reports exact voice overlap and duration mismatches", () => {
     const draft = scoreDraft([note("n1", 0, 1, 2, "C", 4), note("n2", 1, 4, 1, 2, "E", 4)]);
 
@@ -84,6 +129,17 @@ describe("Draft validator", () => {
     expect(report.readiness).toEqual({ harmony: "blocked", musicXml: "blocked" });
   });
 });
+
+function tiedMeasures(ties: readonly ("start" | "continue" | "end" | undefined)[]): OmrScoreDraft {
+  const draft = scoreDraft([], { keySignature: { fifths: 0 }, clef: { sign: "G", line: 2 } });
+  const measure = draft.parts[0]!.staves[0]!.measures[0]!;
+  draft.parts[0]!.staves[0]!.measures = ties.map((tie, index) => ({
+    ...measure,
+    index,
+    voices: [{ index: 1, events: [{ ...note(`n${index}`, 0, 1, 1, "C", 4), ...(tie === undefined ? {} : { tie }) }] }],
+  }));
+  return draft;
+}
 
 function scoreDraft(
   events: OmrScoreDraft["parts"][number]["staves"][number]["measures"][number]["voices"][number]["events"],

@@ -260,7 +260,7 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
       const segmentationSystems: Array<Record<string, unknown>> = [];
       let durationMs = 0;
       const resourceUsages: ProcessResourceUsage[] = [];
-      const systemContext = createSystemContextTracker(systemContextPolicy);
+      const systemContext = createSystemContextTracker();
 
       for (const [systemOffset, system] of systems.entries()) {
         const systemPrompt = systemContext.prompt();
@@ -406,14 +406,14 @@ export function createRokotAdapter(options: RokotAdapterOptions): OmrEngineAdapt
 
 function systemCropSegmentation(
   pages: readonly RenderedPdfPage[],
-  staffLayout: "auto" | "single-staff" | "grand-staff" | "three-staff" | undefined,
+  staffLayout: "auto" | "single-staff" | "grand-staff" | undefined,
 ): StaffSystemSegmentation {
-  if (staffLayout === undefined || staffLayout === "auto") {
+  if (staffLayout !== "single-staff" && staffLayout !== "grand-staff") {
     throw new PdfOmrError("INVALID_CLI_ARGUMENT", "system crop requires an explicit staff layout", {
       context: { reason: "system-crop-requires-staff-layout" },
     });
   }
-  const staffCount = staffLayout === "single-staff" ? 1 : staffLayout === "grand-staff" ? 2 : 3;
+  const staffCount = staffLayout === "single-staff" ? 1 : 2;
   const systems: StaffSystem[] = [...pages]
     .sort((left, right) => left.pageIndex - right.pageIndex)
     .map((page) => ({
@@ -599,7 +599,7 @@ function parseConverterVersion(output: string): string {
 
 function extractCanonicalAbc(
   bytes: Uint8Array,
-  staffLayout: "single-staff" | "grand-staff" | "three-staff",
+  staffLayout: "single-staff" | "grand-staff",
   systemPrompt: string,
 ): string {
   let output: string;

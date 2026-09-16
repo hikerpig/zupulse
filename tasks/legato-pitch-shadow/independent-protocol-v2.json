@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "legato-source-pitch-independent-v2",
+  "status": "frozen-before-input-materialization",
+  "upstream": {
+    "repository": "https://github.com/musetrainer/library",
+    "revision": "9128876f6164d96997c877a2be843349a32bdabb",
+    "license": "Upstream README describes a public-domain collection; individual edition rights are not independently verified. Local evaluation only; do not redistribute source files.",
+    "licensePath": "README.md"
+  },
+  "works": ["Bach_Minuet_in_G_Major_BWV_Anh._114", "Erik_Satie_-_Gymnopedie_No.1", "Waltz_in_A_MinorChopin"],
+  "selection": "Three named solo-piano works from three composers in the metadata inventory, before opening score content. No replacements based on admission or predictions. No Mozart or Vienna4x22 development works.",
+  "inputs": {
+    "musicXmlPattern": "scores/{work}.mxl",
+    "renderer": "MuseScore4 4.7.4",
+    "primaryRecognitionInput": "Complete rendered work, no cropping, omission, notation edits or alternate editions.",
+    "hashes": "Materialization MUST record all input and rendered PDF SHA-256 values before truth evaluation."
+  },
+  "candidateSha256": {
+    "tools/pdf-omr-cli/engines/pitch_shadow.py": "3c458dc55f4ad8536217e970dd8da78311df1c1be4ab4caa8aa669d906c9725f",
+    "tools/pdf-omr-cli/src/pitch-shadow.ts": "0dfec9fdf1f89141ed9d6bfd138519a870779660eeb8aa1d5ac1ff0c81d4c937",
+    "tools/pdf-omr-cli/src/apply-source-pitch-corrections.ts": "c9ef8b5a58a4843a55185eb3cb8e583e043543c1ea1b2c793df3030dde8f53e8"
+  },
+  "execution": {
+    "engine": "legato",
+    "decoder": { "maxLength": 2048, "numBeams": 1, "repetitionPenalty": 1.1 },
+    "pageContextMode": "none",
+    "modelSha256": "cdeafc9ab30eba74e1c87f0722f869aa9c00d4c4d5986561d4abfeccd6f9cfcc",
+    "baseModel": "local llama-3.2-11b-vision-only-448, unchanged from development-v2",
+    "trainingAllowed": false,
+    "workerConcurrency": 1,
+    "maximumInferenceRunsPerWork": 1,
+    "maximumInferenceMinutesPerWork": 60,
+    "sourceAdmissionFirst": true,
+    "allSourceRejectedAction": "Record not-evaluable; no inference or zero-regression claim."
+  },
+  "gates": {
+    "minimumAdmittedWorks": 2,
+    "minimumComparedStaffMeasures": 30,
+    "minimumCorrectedNotes": 3,
+    "minimumWorksWithCorrectedNotes": 2,
+    "maximumIncorrectSourcePitches": 0,
+    "maximumIncorrectCorrections": 0,
+    "maximumPreviouslyCorrectNotesLost": 0,
+    "wholeWorkMetrics": "Pitch TP/F1 and strict staff-measure match MUST NOT regress for any evaluated work.",
+    "structuralAndExportValidationRequired": true,
+    "failurePolicy": "Any unmet gate prevents default activation. Rejected works remain in the denominator.",
+    "tuningPolicy": "No candidate changes after inspecting inputs or truth may reuse this batch as independent."
+  }
+}

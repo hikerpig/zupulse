@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import { createMusicXmlAdapter } from "@zupulse/web-core";
 import { normalizeAudiverisMusicXml } from "./normalizers/audiveris";
 import { compareRational, normalizeRational } from "./rational";
@@ -219,7 +220,7 @@ function compareValue(
   expected: unknown,
   actual: unknown,
 ): void {
-  if (JSON.stringify(expected) === JSON.stringify(actual)) return;
+  if (isDeepStrictEqual(expected, actual)) return;
   differences.push({
     code,
     path,

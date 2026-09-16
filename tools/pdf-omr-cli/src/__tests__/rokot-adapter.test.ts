@@ -232,29 +232,6 @@ describe("Rokot recognition adapter", () => {
     expect(segmentation.systems[0]!.staffLineYs).toEqual([]);
   });
 
-  it("retains a declared three-staff crop while reporting Rokot's unsupported third staff", async () => {
-    const context = await createContext();
-    const inputPath = join(context.directory, "three-staff-crop.pdf");
-    await writeFile(inputPath, pdf([{ width: 200, height: 150, content: "" }]));
-    const adapter = createAdapter(context);
-
-    const recognition = await adapter.recognize({
-      inputPath,
-      outputDirectory: join(context.directory, "three-staff-crop"),
-      inputScope: "system-crop",
-      staffLayout: "three-staff",
-    });
-
-    const bundle = parseRokotSystemBundle(recognition.normalizationBytes);
-    expect(bundle.systems[0]!.source).toMatchObject({ staffLayout: "three-staff", staffCount: 3 });
-    const draft = adapter.normalize(recognition);
-    expect(draft.parts[0]!.staves).toHaveLength(3);
-    expect(draft.parts[0]!.staves[2]!.measures.every((measure) => measure.voices.length === 0)).toBe(true);
-    expect(draft.diagnostics).toContainEqual(
-      expect.objectContaining({ code: "ROKOT_UNSUPPORTED_STAFF_TOPOLOGY", severity: "blocking" }),
-    );
-  });
-
   it("recognizes isolated single-staff systems when the layout is declared", async () => {
     const context = await createContext({ staffLayout: "single-staff" });
     const inputPath = join(context.directory, "melody.pdf");
@@ -473,77 +450,6 @@ describe("Rokot recognition adapter", () => {
     expect(calls.map((args) => args[args.indexOf("-p") + 1])).toEqual([
       "Transcribe this staff to rokot-ABC.",
       "Transcribe this staff to rokot-ABC.",
-    ]);
-  });
-
-  it("omits predicted keys from the next prompt when the L/M-only policy is selected", async () => {
-    const context = await createContext();
-    const inputPath = join(context.directory, "score.pdf");
-    await writeFile(inputPath, grandStaffPdf());
-
-    await createRokotAdapter({
-      ...adapterOptions(context),
-      systemContextPolicy: "previous-lm-headers-v1",
-    }).recognize({
-      inputPath,
-      outputDirectory: join(context.directory, "lm-only"),
-    });
-
-    const calls = (await readFile(context.llamaLogPath, "utf8"))
-      .trim()
-      .split("\n")
-      .map((line) => JSON.parse(line) as string[]);
-    expect(calls.map((args) => args[args.indexOf("-p") + 1])).toEqual([
-      "Transcribe this staff to rokot-ABC.",
-      "Transcribe this staff to rokot-ABC. The previous system used L:1/8, M:2/4. If this crop does not print a new meter signature, preserve those headers.",
-    ]);
-  });
-
-  it("freezes the first predicted key instead of propagating a later key jump", async () => {
-    const context = await createContext({ llamaMode: "shifting-key" });
-    const inputPath = join(context.directory, "score.pdf");
-    await writeFile(inputPath, threeGrandStaffPdf());
-
-    await createRokotAdapter({
-      ...adapterOptions(context),
-      systemContextPolicy: "first-system-key-v1",
-    }).recognize({
-      inputPath,
-      outputDirectory: join(context.directory, "first-key"),
-    });
-
-    const calls = (await readFile(context.llamaLogPath, "utf8"))
-      .trim()
-      .split("\n")
-      .map((line) => JSON.parse(line) as string[]);
-    expect(calls.map((args) => args[args.indexOf("-p") + 1])).toEqual([
-      "Transcribe this staff to rokot-ABC.",
-      "Transcribe this staff to rokot-ABC. The previous system used L:1/8, M:2/4, K:C. If this crop does not print a new meter or key signature, preserve those headers.",
-      "Transcribe this staff to rokot-ABC. The previous system used L:1/8, M:2/4, K:C. If this crop does not print a new meter or key signature, preserve those headers.",
-    ]);
-  });
-
-  it("omits K after a predicted key jump until two consecutive keys agree", async () => {
-    const context = await createContext({ llamaMode: "shifting-key" });
-    const inputPath = join(context.directory, "score.pdf");
-    await writeFile(inputPath, threeGrandStaffPdf());
-
-    await createRokotAdapter({
-      ...adapterOptions(context),
-      systemContextPolicy: "key-consensus-v1",
-    }).recognize({
-      inputPath,
-      outputDirectory: join(context.directory, "consensus"),
-    });
-
-    const calls = (await readFile(context.llamaLogPath, "utf8"))
-      .trim()
-      .split("\n")
-      .map((line) => JSON.parse(line) as string[]);
-    expect(calls.map((args) => args[args.indexOf("-p") + 1])).toEqual([
-      "Transcribe this staff to rokot-ABC.",
-      "Transcribe this staff to rokot-ABC. The previous system used L:1/8, M:2/4, K:C. If this crop does not print a new meter or key signature, preserve those headers.",
-      "Transcribe this staff to rokot-ABC. The previous system used L:1/8, M:2/4. If this crop does not print a new meter signature, preserve those headers.",
     ]);
   });
 
@@ -815,14 +721,6 @@ function singleStaffPdf(): Uint8Array {
 function grandStaffPdf(): Uint8Array {
   return grandStaffSystemsPdf([
     [220, 216, 212, 208, 204, 190, 186, 182, 178, 174],
-    [110, 106, 102, 98, 94, 80, 76, 72, 68, 64],
-  ]);
-}
-
-function threeGrandStaffPdf(): Uint8Array {
-  return grandStaffSystemsPdf([
-    [350, 346, 342, 338, 334, 320, 316, 312, 308, 304],
-    [230, 226, 222, 218, 214, 200, 196, 192, 188, 184],
     [110, 106, 102, 98, 94, 80, 76, 72, 68, 64],
   ]);
 }

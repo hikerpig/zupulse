@@ -109,7 +109,7 @@ describe("pdf OMR CLI", () => {
     });
   });
 
-  it("accepts an explicit three-staff system crop for Rokot", async () => {
+  it("rejects unsupported three-staff input before reading the PDF", async () => {
     await expect(
       runPdfOmrCommand(
         [
@@ -126,7 +126,7 @@ describe("pdf OMR CLI", () => {
         ],
         { engineRegistry: unusedRokotRegistry },
       ),
-    ).rejects.toMatchObject({ code: "INVALID_INPUT", context: { reason: "unreadable-input" } });
+    ).rejects.toMatchObject({ code: "INVALID_CLI_ARGUMENT", context: { staffLayout: "three-staff" } });
   });
 
   it("accepts piano-grand-staff-v1 before reading the input and rejects conflicts", async () => {

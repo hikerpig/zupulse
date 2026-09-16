@@ -124,7 +124,7 @@ function counts<T>(predicted: readonly T[], expected: readonly T[], key: (value:
   });
 }
 
-function withRates(input: { truePositive: number; falsePositive: number; falseNegative: number }): MetricCounts {
+export function withRates(input: { truePositive: number; falsePositive: number; falseNegative: number }): MetricCounts {
   const precisionDenominator = input.truePositive + input.falsePositive;
   const recallDenominator = input.truePositive + input.falseNegative;
   const precision =
@@ -135,7 +135,7 @@ function withRates(input: { truePositive: number; falsePositive: number; falseNe
   return { ...input, precision, recall, f1 };
 }
 
-function flattenEvents(draft: OmrScoreDraft): SymbolicEvent[] {
+export function flattenEvents(draft: OmrScoreDraft): SymbolicEvent[] {
   return draft.parts.flatMap((part) =>
     part.staves.flatMap((staff) =>
       staff.measures.flatMap((measure) =>

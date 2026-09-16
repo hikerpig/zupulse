@@ -50,6 +50,7 @@ export type PdfOmrPipelineRequest = {
   engineId: string;
   outputDirectory: string;
   engineRegistry?: EngineRegistry;
+  pitchCorrectionPython?: string;
   standardFontDirectory?: string;
   wasmDirectory?: string;
   signal?: AbortSignal;
@@ -110,6 +111,7 @@ export async function runPdfOmrPipeline(input: PdfOmrPipelineRequest): Promise<P
     await recognizeCommand(input.inputPath, input.engineId, artifacts.recognitionDirectory, {
       cwd: outputDirectory,
       engineRegistry: input.engineRegistry ?? createEngineRegistry(),
+      ...(input.pitchCorrectionPython === undefined ? {} : { pitchCorrectionPython: input.pitchCorrectionPython }),
       ...(input.standardFontDirectory === undefined ? {} : { standardFontDirectory: input.standardFontDirectory }),
       ...(input.wasmDirectory === undefined ? {} : { wasmDirectory: input.wasmDirectory }),
       ...(input.signal === undefined ? {} : { signal: input.signal }),

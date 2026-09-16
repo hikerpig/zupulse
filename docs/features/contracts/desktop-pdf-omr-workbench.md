@@ -191,8 +191,9 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 - 部分落地：中间 evidence 只显示结构化 facts，不展开未知二进制 artifact。
 - 自动化边界：Desktop E2E 使用临时 fake Audiveris executable 覆盖 stage observation、validated MXL、transient
   preview 和 native export；它不代表真实 external engine 的质量或环境可用性，CI 仍不绑定任何外部 engine。
-- 独立 CLI 的 `recognize --pitch-shadow-python` 可生成默认关闭的 LEGATO 自然音级差异报告，
-  不修改 Draft 或导出，不代表已交付自动纠错。Desktop 不传递该选项，Bridge 和 UI 不提供入口；
+- 独立 CLI 的 `recognize --pitch-shadow-python` 可生成默认关闭的 LEGATO 完整源谱音高建议；
+  `--pitch-correction-python` 可在保留原始 Draft、校验和导出回环通过后应用修改，共享 pipeline 支持显式传参。
+  Desktop 尚未传递这些选项，Bridge 和 UI 不提供入口；独立作品正向收益与默认准入仍未完成。
   当前能力与限制见 [CLI 音高旁路](../../../tools/pdf-omr-cli/README.md#可选音高旁路)。
 
 ## 明确非目标

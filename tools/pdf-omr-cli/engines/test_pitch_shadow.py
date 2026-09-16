@@ -50,14 +50,14 @@ class PitchShadowTests(unittest.TestCase):
             data["glyphs"][2] = (font, "\ue0a4", 80, y)
             self.assertNotEqual(extract_page(**data)["reason"], "supported")
 
-    def test_curve_and_accidental_reject_only_intersecting_measure(self):
+    def test_curve_is_local_but_unresolved_accidental_invalidates_staff_key(self):
         data = page_data()
         data["curves"] = [(60, 110, 110, 119)]
         data["glyphs"].append(("MScore", "\ue262", 330, 180))
         result = extract_page(**data)
         self.assertEqual(result["measures"][0]["reason"], "source-curve")
-        self.assertEqual(result["measures"][1]["reason"], "supported")
-        self.assertEqual(result["measures"][3]["reason"], "unsupported-notation")
+        self.assertEqual(result["measures"][1]["reason"], "unresolved-key")
+        self.assertEqual(result["measures"][3]["reason"], "unresolved-accidental")
 
     def test_unassigned_or_ambiguous_head_rejects_page(self):
         data = page_data()
@@ -77,6 +77,103 @@ class PitchShadowTests(unittest.TestCase):
             data = page_data()
             data["glyphs"].append(glyph)
             self.assertNotEqual(extract_page(**data)["reason"], "supported")
+
+    def test_compound_final_bar_is_one_boundary(self):
+        data = page_data()
+        data["lines"][-1] = (578.75, 100, 578.75, 180)
+        data["lines"].append((573.45, 100, 573.45, 180))
+        result = extract_page(**data)
+        self.assertEqual(result["reason"], "supported")
+        self.assertEqual(len(result["measures"]), 4)
+
+    def test_compound_bar_must_not_swallow_a_note(self):
+        data = page_data()
+        data["lines"].append((574, 100, 574, 180))
+        data["glyphs"].append(("MScore", "\ue0a4", 577, 120))
+        self.assertEqual(extract_page(**data)["reason"], "ambiguous-barlines")
+
+    def test_explicit_start_repeat_prefix_is_not_an_empty_measure(self):
+        data = page_data()
+        data["lines"] += [(50, 100, 50, 180), (55.3, 100, 55.3, 180)]
+        data["glyphs"] += [("MScore", "\ue044", 59, y) for y in [107.5, 112.5, 167.5, 172.5]]
+        result = extract_page(**data)
+        self.assertEqual(result["reason"], "supported")
+        self.assertEqual(len(result["measures"]), 4)
+        self.assertEqual(result["measures"][0]["heads"][0]["x"], 80)
+
+    def test_metronome_mark_requires_matching_numeric_text_outside_staff(self):
+        data = page_data()
+        mark = ("BravuraText", "\ueca5", 80, 90)
+        text = [("FreeSerifBold", c, 90 + i * 4, 90) for i, c in enumerate("=120")]
+        data["glyphs"] += [mark, *text]
+        data["text_spans"] = [{"text": "=120", "glyphs": text, "bbox": [90, 82, 106, 92]}]
+        self.assertEqual(extract_page(**data)["reason"], "supported")
+        data["text_spans"] = []
+        self.assertNotEqual(extract_page(**data)["reason"], "supported")
+
+    def test_measure_number_must_be_wholly_before_clef_and_above_staff(self):
+        for x, y, expected in [(18, 90, "supported"), (40, 90, "unsupported-notation"), (18, 115, "unsupported-notation")]:
+            data = page_data()
+            glyphs = [("FreeSerif", "8", x, y)]
+            data["glyphs"] += glyphs
+            data["text_spans"] = [{"text": "8", "glyphs": glyphs, "bbox": [x, y-8, x+5, y+2]}]
+            self.assertEqual(extract_page(**data)["reason"], expected)
+
+    def test_known_non_pitch_symbols_do_not_block_source_pitch(self):
+        for char in ["\ue4a2", "\ue4a3", "\ue240", "\ue4c0", "\ue520", "\ue083"]:
+            data = page_data()
+            data["glyphs"].append(("MScore", char, 100, 105))
+            result = extract_page(**data)
+            self.assertEqual(result["measures"][0]["reason"], "supported", hex(ord(char)))
+
+    def test_source_key_signature_and_local_accidental_have_separate_scope(self):
+        data = page_data()
+        data["glyphs"][2] = ("MScore", "\ue0a4", 80, 110)  # B4.
+        data["glyphs"][4] = ("MScore", "\ue0a4", 350, 110)
+        data["glyphs"] += [("MScore", "\ue260", 45, 110), ("MScore", "\ue261", 337, 110)]
+        result = extract_page(**data)
+        self.assertEqual(result["measures"][0]["heads"][0]["alter"], -1)
+        self.assertEqual(result["measures"][2]["heads"][0]["alter"], 0)
+
+    def test_accidental_carries_within_measure_but_resets_at_barline(self):
+        data = page_data()
+        data["glyphs"][4] = ("MScore", "\ue0a4", 350, 120)
+        data["glyphs"] += [("MScore", "\ue262", 67, 120), ("MScore", "\ue0a4", 200, 120)]
+        result = extract_page(**data)
+        self.assertEqual([h["alter"] for h in result["measures"][0]["heads"]], [1, 1])
+        self.assertEqual(result["measures"][2]["heads"][0]["alter"], 0)
+
+    def test_unknown_key_pattern_abstains_instead_of_assuming_c_major(self):
+        data = page_data()
+        data["glyphs"].append(("MScore", "\ue260", 45, 120))  # E flat is not the first standard key accidental.
+        result = extract_page(**data)
+        self.assertEqual(result["measures"][0]["reason"], "unresolved-key")
+        self.assertIsNone(result["measures"][2]["heads"][0]["alter"])
+
+    def test_unmatched_accidental_cannot_disappear(self):
+        data = page_data()
+        data["glyphs"].append(("MScore", "\ue262", 337, 115))
+        result = extract_page(**data)
+        self.assertEqual(result["measures"][2]["reason"], "unresolved-accidental")
+
+    def test_ledger_line_accidental_is_not_dropped_by_staff_bounds(self):
+        data = page_data()
+        data["glyphs"][4] = ("MScore", "\ue0a4", 350, 87.5)
+        data["glyphs"].append(("MScore", "\ue262", 337, 87.5))
+        result = extract_page(**data)
+        self.assertEqual(result["measures"][2]["heads"][0]["alter"], 1)
+
+    def test_unresolved_accidental_cannot_leave_stale_key_context(self):
+        data = page_data()
+        data["glyphs"].append(("MScore", "\ue262", 200, 115))
+        result = extract_page(**data)
+        self.assertIsNone(result["measures"][2]["heads"][0]["alter"])
+        self.assertIsNone(result["endKeys"][0])
+
+    def test_music_font_ottava_rejects_page_not_only_its_start_measure(self):
+        data = page_data()
+        data["glyphs"].append(("MScore", "\ue510", 200, 95))
+        self.assertEqual(extract_page(**data)["reason"], "unsupported-notation")
 
 
 if __name__ == "__main__":

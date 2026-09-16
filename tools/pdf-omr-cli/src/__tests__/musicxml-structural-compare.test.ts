@@ -49,4 +49,19 @@ describe("Draft/MusicXML structural comparator", () => {
 
     await expect(compareDraftMusicXml(draft, bytes)).resolves.toMatchObject({ structural: true });
   });
+
+  it("compares semantic objects independently of JSON property insertion order", async () => {
+    const draft = musicXmlReadyDraft();
+    for (const measure of draft.parts[0]!.staves[0]!.measures) {
+      for (const event of measure.voices[0]!.events) {
+        if (event.type === "note" && event.writtenPitch) {
+          const { step, octave, alter } = event.writtenPitch;
+          event.writtenPitch = { octave, step, alter };
+        }
+      }
+    }
+    await expect(compareDraftMusicXml(draft, generateMusicXml(draft, { container: "mxl" }))).resolves.toMatchObject({
+      structural: true,
+    });
+  });
 });

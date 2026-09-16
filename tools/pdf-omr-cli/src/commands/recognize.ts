@@ -27,11 +27,16 @@ export async function recognizeCommand(
     staffLayout?: StaffLayout;
     segmentationId?: string;
     pitchShadowPython?: string;
+    pitchCorrectionPython?: string;
     signal?: AbortSignal;
     onProgress?: (progress: OmrEngineProgress) => void;
   },
 ): Promise<PdfOmrRecognizeReport> {
-  if (context.pitchShadowPython !== undefined && (engineId !== "legato" || !context.pitchShadowPython.trim())) {
+  const evidencePython = context.pitchCorrectionPython ?? context.pitchShadowPython;
+  if (
+    (context.pitchShadowPython !== undefined && context.pitchCorrectionPython !== undefined) ||
+    (evidencePython !== undefined && (engineId !== "legato" || !evidencePython.trim()))
+  ) {
     throw new PdfOmrError("INVALID_CLI_ARGUMENT", "pitch shadow requires LEGATO and a Python executable", {
       context: { command: "recognize", engineId },
     });
@@ -65,8 +70,8 @@ export async function recognizeCommand(
       });
     }
     // Shadow and inference must observe the same bytes even if the original path changes during recognition.
-    const recognitionInput = context.pitchShadowPython === undefined ? inputPath : join(workDirectory, "input.pdf");
-    if (context.pitchShadowPython !== undefined) await writeFile(recognitionInput, bytes, { flag: "wx", mode: 0o600 });
+    const recognitionInput = evidencePython === undefined ? inputPath : join(workDirectory, "input.pdf");
+    if (evidencePython !== undefined) await writeFile(recognitionInput, bytes, { flag: "wx", mode: 0o600 });
     const raw = await adapter.recognize({
       inputPath: recognitionInput,
       outputDirectory: workDirectory,
@@ -79,7 +84,7 @@ export async function recognizeCommand(
       ...(context.onProgress === undefined ? {} : { onProgress: context.onProgress }),
     });
     const normalizedDraft = adapter.normalize(raw);
-    const draft = omrScoreDraftSchema.parse({
+    let draft = omrScoreDraftSchema.parse({
       ...normalizedDraft,
       provenance: {
         engine: {
@@ -95,15 +100,33 @@ export async function recognizeCommand(
     for (const artifact of raw.nativeArtifacts) {
       await writer.writeBytes(`engine/${artifact.relativePath}`, artifact.bytes);
     }
-    const draftSha256 = await writer.writeJson("draft.json", draft);
-    await writer.writeJson("diagnostics.json", draft.diagnostics);
-    if (context.pitchShadowPython !== undefined) {
+    if (evidencePython !== undefined) {
       const { runPitchShadow } = await import("../run-pitch-shadow");
-      const shadow = await runPitchShadow(recognitionInput, draft, context.pitchShadowPython, context.signal);
-      if ("source" in shadow) await writer.writeJson("pitch-shadow/source.json", shadow.source);
-      await writer.writeJson("pitch-shadow/report.json", shadow.report);
+      const shadow = await runPitchShadow(recognitionInput, draft, evidencePython, context.signal);
+      const evidenceDirectory = context.pitchCorrectionPython === undefined ? "pitch-shadow" : "pitch-correction";
+      if (shadow.source) await writer.writeJson(`${evidenceDirectory}/source.json`, shadow.source);
+      if (context.pitchCorrectionPython !== undefined) {
+        await writer.writeJson("raw-draft.json", draft);
+        const { applySourcePitchCorrections } = await import("../apply-source-pitch-corrections");
+        const correction =
+          shadow.source && shadow.report.extractorSha256
+            ? await applySourcePitchCorrections(draft, shadow.source, shadow.report.extractorSha256)
+            : undefined;
+        if (correction) draft = correction.draft;
+        await writer.writeJson(`${evidenceDirectory}/report.json`, {
+          ...shadow.report,
+          mode: "apply",
+          writebackReady: correction?.reason === "applied",
+          outcome: correction?.reason ?? shadow.report.reason,
+          appliedCount: correction?.applied.length ?? 0,
+        });
+      } else {
+        await writer.writeJson(`${evidenceDirectory}/report.json`, shadow.report);
+      }
       if (context.signal?.aborted) throw new PdfOmrError("INTERRUPTED", "pitch shadow cancelled");
     }
+    const draftSha256 = await writer.writeJson("draft.json", draft);
+    await writer.writeJson("diagnostics.json", draft.diagnostics);
     const manifest = omrRunManifestSchema.parse({
       schemaVersion: "1.0.0",
       runId,
@@ -116,7 +139,8 @@ export async function recognizeCommand(
       parameters: {
         ...environment.parameters,
         ...recognizeSegmentationParameters(engineId, context),
-        ...(context.pitchShadowPython === undefined ? {} : { pitchShadow: "legato-diatonic-shadow-v1" }),
+        ...(context.pitchShadowPython === undefined ? {} : { pitchShadow: "legato-source-pitch-shadow-v2" }),
+        ...(context.pitchCorrectionPython === undefined ? {} : { pitchCorrection: "legato-source-pitch-shadow-v2" }),
       },
       preprocess: { id: "none", version: "1.0.0" },
       startedAt,

@@ -16,6 +16,8 @@ const reasonSchema = z.enum([
   "rotated-page",
   "unsupported-notation",
   "source-curve",
+  "unresolved-key",
+  "unresolved-accidental",
 ]);
 const indexSchema = z.number().int().nonnegative();
 const sourceMeasureSchema = z
@@ -23,6 +25,7 @@ const sourceMeasureSchema = z
     systemIndex: indexSchema,
     staffIndex: z.union([z.literal(0), z.literal(1)]),
     measureIndex: indexSchema,
+    keyFifths: z.number().int().min(-7).max(7).nullable(),
     reason: reasonSchema,
     heads: z
       .array(
@@ -32,6 +35,7 @@ const sourceMeasureSchema = z
             y: z.number().finite().nonnegative(),
             gap: z.number().min(3).max(8),
             diatonic: z.number().int().min(0).max(69),
+            alter: z.number().int().min(-1).max(1).nullable(),
           })
           .strict(),
       )
@@ -64,9 +68,46 @@ type Suggestion = {
   voiceIndex: number;
   eventId: string;
   before: Pitch;
-  suggestedDiatonic: Omit<Pitch, "alter">;
+  suggestedPitch: Pitch;
+  suggestedSoundingMidi: number;
   source: { pageIndex: number; systemIndex: number; staffIndex: number; measureIndex: number; x: number; y: number };
 };
+type Measure = OmrScoreDraft["parts"][number]["staves"][number]["measures"][number];
+type Note = Extract<Measure["voices"][number]["events"][number], { type: "note" }>;
+const natural = (p: Pitch) => p.octave * 7 + "CDEFGAB".indexOf(p.step);
+const midi = (p: Pitch) => 12 * (p.octave + 1) + [0, 2, 4, 5, 7, 9, 11]["CDEFGAB".indexOf(p.step)]! + p.alter;
+
+function pairOrderedHeads(notes: Note[], heads: SourceMeasure["heads"]) {
+  const times = [...new Set(notes.map((n) => n.onset.numerator / n.onset.denominator))].sort((a, b) => a - b);
+  const groups = times.map((time) =>
+    notes
+      .filter((n) => n.onset.numerator / n.onset.denominator === time)
+      .sort((a, b) => natural(a.writtenPitch!) - natural(b.writtenPitch!)),
+  );
+  const source: SourceMeasure["heads"][] = [];
+  for (const head of [...heads].sort((a, b) => a.x - b.x)) {
+    const previous = source.at(-1);
+    if (previous && head.x - previous[0]!.x <= 0.5 * Math.min(head.gap, previous[0]!.gap)) previous.push(head);
+    else source.push([head]);
+  }
+  if (groups.length !== source.length) return undefined;
+  for (const [i, group] of groups.entries()) {
+    const visual = source[i]!;
+    visual.sort((a, b) => a.diatonic - b.diatonic);
+    if (
+      group.length !== visual.length ||
+      new Set(group.map((n) => natural(n.writtenPitch!))).size !== group.length ||
+      new Set(visual.map((h) => h.diatonic)).size !== visual.length
+    )
+      return undefined;
+    if (
+      i > 0 &&
+      groups[i - 1]!.some((n) => times[i - 1]! + n.duration.numerator / n.duration.denominator > times[i]! + 1e-9)
+    )
+      return undefined;
+  }
+  return { notes: groups.flat(), heads: source.flat() };
+}
 
 export function buildPitchShadowReport(draft: OmrScoreDraft, input: PitchSource, extractorSha256: string) {
   const source = pitchSourceSchema.parse(input);
@@ -76,7 +117,7 @@ export function buildPitchShadowReport(draft: OmrScoreDraft, input: PitchSource,
   }
   const report = {
     schemaVersion: "1.0.0",
-    policy: "legato-diatonic-shadow-v1",
+    policy: "legato-source-pitch-shadow-v2",
     mode: "shadow",
     writebackReady: false,
     inputSha256: source.inputSha256,
@@ -129,48 +170,67 @@ export function buildPitchShadowReport(draft: OmrScoreDraft, input: PitchSource,
         continue;
       }
       const voice = measure.voices[0]!;
-      const notes = voice.events
+      const unorderedNotes = voice.events
         .filter((n) => n.type === "note")
         .sort((a, b) => a.onset.numerator / a.onset.denominator - b.onset.numerator / b.onset.denominator);
-      if (notes.some((n) => n.tie || n.tuplet || !n.writtenPitch || n.soundingMidi === undefined)) {
+      if (unorderedNotes.some((n) => n.tie || n.tuplet || !n.writtenPitch || n.soundingMidi === undefined)) {
         reject("protected-or-missing-pitch");
         continue;
       }
-      const heads = [...evidence.heads].sort((a, b) => a.x - b.x);
-      if (notes.length !== heads.length) {
+      if (unorderedNotes.some((n) => n.soundingMidi !== midi(n.writtenPitch!))) {
+        reject("unsupported-transposition");
+        continue;
+      }
+      if (evidence.keyFifths === null || evidence.heads.some((h) => h.alter === null)) {
+        reject("uncertain-source-alter");
+        continue;
+      }
+      if (unorderedNotes.length !== evidence.heads.length) {
         reject("note-count");
         continue;
       }
-      if (
-        heads.some((h, i) => i > 0 && h.x - heads[i - 1]!.x <= 0.5 * Math.min(h.gap, heads[i - 1]!.gap)) ||
-        notes.some(
-          (n, i) =>
-            i > 0 &&
-            n.onset.numerator / n.onset.denominator <=
-              notes[i - 1]!.onset.numerator / notes[i - 1]!.onset.denominator +
-                notes[i - 1]!.duration.numerator / notes[i - 1]!.duration.denominator -
-                1e-9,
-        )
-      ) {
+      const pairing = pairOrderedHeads(unorderedNotes, evidence.heads);
+      if (!pairing) {
         reject("ambiguous-note-order");
         continue;
       }
+      const { notes, heads } = pairing;
       const changed = notes.flatMap((n, i) =>
-        n.writtenPitch!.octave * 7 + "CDEFGAB".indexOf(n.writtenPitch!.step) === heads[i]!.diatonic ? [] : [i],
+        natural(n.writtenPitch!) === heads[i]!.diatonic && n.writtenPitch!.alter === heads[i]!.alter ? [] : [i],
       );
       if (!changed.length) {
         decision.reason = "consistent";
         continue;
       }
-      // An isolated inner difference has matching neighbors; wholesale pitch/rank reassignment is not evidence.
-      if (changed.length !== 1 || changed[0] === 0 || changed[0] === notes.length - 1) {
+      // A boundary chord needs both an unchanged chord mate and another time group as anchors.
+      // A lone boundary note has no such evidence; do not infer a missing/shifted note from pitch alone.
+      const naturalChanged = changed.some((i) => natural(notes[i]!.writtenPitch!) !== heads[i]!.diatonic);
+      const candidate = notes[changed[0]!]!;
+      const time = (n: Note) => n.onset.numerator / n.onset.denominator;
+      const chordAnchored =
+        notes.some((n) => n !== candidate && time(n) === time(candidate)) &&
+        notes.some((n) => time(n) !== time(candidate));
+      if (
+        changed.length !== 1 ||
+        (naturalChanged && !chordAnchored && (changed[0] === 0 || changed[0] === notes.length - 1))
+      ) {
         reject("unanchored-discrepancy");
         continue;
       }
       const i = changed[0]!,
         note = notes[i]!,
         head = heads[i]!;
-      decision.reason = "diatonic-discrepancy";
+      const suggestedPitch: Pitch = {
+        step: "CDEFGAB"[head.diatonic % 7] as Pitch["step"],
+        octave: Math.floor(head.diatonic / 7),
+        alter: head.alter!,
+      };
+      const suggestedSoundingMidi = midi(suggestedPitch);
+      if (suggestedSoundingMidi < 0 || suggestedSoundingMidi > 127) {
+        reject("midi-out-of-range");
+        continue;
+      }
+      decision.reason = "source-pitch-discrepancy";
       report.suggestions.push({
         partId: part.id,
         staffIndex: staff.index,
@@ -178,10 +238,8 @@ export function buildPitchShadowReport(draft: OmrScoreDraft, input: PitchSource,
         voiceIndex: voice.index,
         eventId: note.id,
         before: { ...note.writtenPitch! },
-        suggestedDiatonic: {
-          step: "CDEFGAB"[head.diatonic % 7] as Pitch["step"],
-          octave: Math.floor(head.diatonic / 7),
-        },
+        suggestedPitch,
+        suggestedSoundingMidi,
         source: {
           pageIndex: evidence.pageIndex,
           systemIndex: evidence.systemIndex,

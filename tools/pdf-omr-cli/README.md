@@ -134,15 +134,32 @@ Desktop、Remote 和 benchmark 没有启用此选项。
 `reason=extractor-unavailable` 和有界 `failureStage` 说明失败阶段；脚本无法读取时 `extractorSha256=null`。
 子进程上限为 30 秒、输出上限为 4 MiB；取消仍返回 `INTERRUPTED`。输出不含原始异常或绝对路径。
 
-首版仅处理能完整定位的双谱表向量几何及 MScore/Leland 符头、明确的 G/F 谱号。所有页、system 和
-小节必须完整顺序对应；不做按音高寻找对齐。候选仅限单声部、无重叠，且前后音高相符的孤立内部差异。
-未知记号、源曲线、临时升降号、tie、tuplet、数量不符和对应歧义均不提建议。
-`suggestedDiatonic` 只有 step/octave，不代表已确认 alter、sounding MIDI、节奏或可回写性；
-`writebackReady` 固定为 `false`，原始 Draft、diagnostics 和导出结果不修改。
+当前策略 `legato-source-pitch-shadow-v2` 处理能完整定位的双谱表向量几何、MScore/Leland 符头与明确的 G/F
+谱号，解析标准调号、基本临时升降号及其小节内作用范围。所有页、system 和小节必须完整顺序对应，不按
+预测音高寻找对齐。单声部内允许具有唯一音高顺序的和弦；候选为孤立差异，自然音级变化要求内部邻音锚点，
+或同和弦未变化音符与另一时刻的锚点。未知记号、源曲线、tie、tuplet、移调、数量不符和对应歧义均放弃修改。
+无法归属的升降号使该页对应谱表的调号证据失效，未知八度记号拒绝整页，避免沿用过期音高上下文。
 
-本版是默认关闭的接入切片，不是历史纠错收益的生产迁移。当前两首开发谱仍被字体、记号或小节线范围拒绝，
-尚无真实曲目的正向建议闭环证据；不能据此声称识别准确率提高。下一步应补齐源几何覆盖证据，
-再冻结独立曲目的评测协议，不以这两首曲目上的覆盖率替代泛化验证。
+报告的 `suggestedPitch` 包含 step/octave/alter，`suggestedSoundingMidi` 由源谱音高计算，不证明源节奏。
+只读模式仍保持 `writebackReady=false`，不修改 Draft、diagnostics 或导出结果。
+
+实验性应用模式使用另一个互斥参数：
+
+```bash
+pnpm pdf-omr -- recognize input.pdf --engine legato --output result-corrected \
+  --pitch-correction-python /absolute/path/to/legato-venv/bin/python
+```
+
+应用模式保留 `raw-draft.json` 和原生 engine artifacts，将源证据和修改报告写入 `pitch-correction/`。
+只修改 written pitch 与 sounding MIDI；候选必须通过 Draft 校验及 MusicXML parse/view/playback/structural
+round-trip，否则 `draft.json` 保持原始结果。报告区分 `suggestions`、`outcome` 和 `appliedCount`，所有文件均绑定
+到 `run.json` 哈希。共享 programmatic pipeline 可显式传入 `pitchCorrectionPython`，最终验证与导出读取修正后的
+`draft.json`；Desktop、Remote 和 benchmark 尚未传入该参数，默认仍关闭。
+
+开发谱 score-9 原始模型输出回放已产生并应用一处 C4 → B3 修正，通过导出回环；score-4 因预测与源谱分别为
+99/92 小节仍拒绝。此结果不是新的模型推理或独立评测。其他真实谱预检仍有记号、布局及小节线拒绝，
+独立作品正向收益尚未验证，不能据此开启生产默认。当前执行证据与下一步见
+[`tasks/legato-pitch-shadow/todo.md`](../../tasks/legato-pitch-shadow/todo.md)。
 
 提取器的无模型回归检查：
 

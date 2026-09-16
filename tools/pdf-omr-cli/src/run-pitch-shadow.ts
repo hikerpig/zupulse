@@ -40,7 +40,7 @@ export async function runPitchShadow(
     return {
       report: {
         schemaVersion: "1.0.0",
-        policy: "legato-diatonic-shadow-v1",
+        policy: "legato-source-pitch-shadow-v2",
         mode: "shadow",
         writebackReady: false,
         inputSha256: draft.provenance?.inputSha256,

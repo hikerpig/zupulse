@@ -3,6 +3,8 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { runPdfOmrCommand } from "../command";
+import { runPdfOmrPipeline } from "../pipeline";
+import { normalizeAudiverisMusicXml } from "../normalizers/audiveris";
 import { sha256Bytes } from "../canonical-json";
 import type { EngineRegistry } from "../engine-registry";
 import type { OmrScoreDraft } from "../schemas";
@@ -38,6 +40,10 @@ const registry: EngineRegistry = {
             measures: [
               {
                 index: 0,
+                timeSignature: { numerator: 3, denominator: 4 },
+                duration: { numerator: 3, denominator: 4 },
+                keySignature: { fifths: 0 },
+                clef: { sign: "G", line: 2 },
                 voices: [
                   {
                     index: 1,
@@ -71,9 +77,59 @@ async function setup(script: string) {
 const input = resolve("tools/pdf-omr-cli/corpus/smoke/input.pdf");
 const sourceScript = `const fs = require('node:fs'); const crypto = require('node:crypto');
 const inputSha256 = crypto.createHash('sha256').update(fs.readFileSync(process.argv[3])).digest('hex');
-console.log(JSON.stringify({schemaVersion:'1.0.0', inputSha256, extractorVersion:'fake', pages:[{reason:'supported',measures:[0,1].map(staffIndex=>({systemIndex:0,staffIndex,measureIndex:0,reason:'supported',heads:[30,32,32].map((diatonic,i)=>({x:50+i*20,y:100,gap:5,diatonic}))}))}]}));`;
+console.log(JSON.stringify({schemaVersion:'1.0.0', inputSha256, extractorVersion:'fake', pages:[{reason:'supported',measures:[0,1].map(staffIndex=>({systemIndex:0,staffIndex,measureIndex:0,keyFifths:0,reason:'supported',heads:[30,32,32].map((diatonic,i)=>({x:50+i*20,y:100,gap:5,diatonic,alter:0}))}))}]}));`;
 
 describe("recognize pitch shadow opt-in", () => {
+  it("exports the corrected Draft through the shared programmatic pipeline", async () => {
+    const { directory, python } = await setup(sourceScript);
+    const outputDirectory = join(directory, "pipeline");
+    const result = await runPdfOmrPipeline({
+      inputPath: input,
+      engineId: "legato",
+      outputDirectory,
+      engineRegistry: registry,
+      pitchCorrectionPython: python,
+    });
+    expect(result.status).toBe("succeeded");
+    const exported = normalizeAudiverisMusicXml(await readFile(join(outputDirectory, "score.mxl")));
+    const note = exported.parts[0]!.staves[0]!.measures[0]!.voices[0]!.events[1]!;
+    expect(note).toMatchObject({ type: "note", writtenPitch: { step: "G", octave: 4, alter: 0 }, soundingMidi: 67 });
+  });
+
+  it("applies corrections only when explicitly selected and preserves the original Draft", async () => {
+    const { directory, python } = await setup(sourceScript);
+    const result = await runPdfOmrCommand(
+      [
+        "recognize",
+        input,
+        "--engine",
+        "legato",
+        "--output",
+        join(directory, "apply"),
+        "--pitch-correction-python",
+        python,
+      ],
+      { engineRegistry: registry },
+    );
+    expect(result.status).toBe("succeeded");
+    const original = JSON.parse(await readFile(join(directory, "apply/raw-draft.json"), "utf8"));
+    const corrected = JSON.parse(await readFile(join(directory, "apply/draft.json"), "utf8"));
+    expect(original.parts[0].staves[0].measures[0].voices[0].events[1].writtenPitch.step).toBe("F");
+    expect(corrected.parts[0].staves[0].measures[0].voices[0].events[1].writtenPitch.step).toBe("G");
+    const report = JSON.parse(await readFile(join(directory, "apply/pitch-correction/report.json"), "utf8"));
+    expect(report).toMatchObject({ mode: "apply", outcome: "applied", appliedCount: 2 });
+    const manifest = JSON.parse(await readFile(join(directory, "apply/run.json"), "utf8"));
+    for (const file of [
+      "raw-draft.json",
+      "draft.json",
+      "pitch-correction/report.json",
+      "pitch-correction/source.json",
+    ]) {
+      expect(manifest.artifactSha256[file]).toBe(sha256Bytes(await readFile(join(directory, "apply", file))));
+    }
+    expect(report.draftSha256).toBe(manifest.artifactSha256["raw-draft.json"]);
+  });
+
   it("adds hash-bound evidence without changing default Draft or diagnostics", async () => {
     const { directory, python } = await setup(sourceScript);
     const run = (name: string, flags: string[] = []) =>
@@ -92,7 +148,7 @@ describe("recognize pitch shadow opt-in", () => {
     expect(report.reason, JSON.stringify(report)).toBe("completed");
     expect(report.suggestions).toHaveLength(2);
     const manifest = JSON.parse(await readFile(join(directory, "shadow/run.json"), "utf8"));
-    expect(manifest.parameters.pitchShadow).toBe("legato-diatonic-shadow-v1");
+    expect(manifest.parameters.pitchShadow).toBe("legato-source-pitch-shadow-v2");
     for (const file of ["pitch-shadow/report.json", "pitch-shadow/source.json"]) {
       expect(manifest.artifactSha256[file]).toBe(sha256Bytes(await readFile(join(directory, "shadow", file))));
     }
@@ -146,7 +202,7 @@ describe("recognize pitch shadow opt-in", () => {
     expect(report.suggestions).toHaveLength(2);
   });
 
-  it("keeps cancellation terminal instead of converting it to a shadow rejection", async () => {
+  it.each(["--pitch-shadow-python", "--pitch-correction-python"])("keeps cancellation terminal: %s", async (flag) => {
     const { directory, python } = await setup(sourceScript);
     const abort = new AbortController();
     const cancelling: EngineRegistry = {
@@ -159,20 +215,65 @@ describe("recognize pitch shadow opt-in", () => {
       }),
     };
     await expect(
-      runPdfOmrCommand(
-        ["recognize", input, "--engine", "legato", "--output", join(directory, "run"), "--pitch-shadow-python", python],
-        { engineRegistry: cancelling, signal: abort.signal },
-      ),
+      runPdfOmrCommand(["recognize", input, "--engine", "legato", "--output", join(directory, "run"), flag, python], {
+        engineRegistry: cancelling,
+        signal: abort.signal,
+      }),
     ).rejects.toMatchObject({ code: "INTERRUPTED" });
     expect(await readdir(join(directory, "run"))).not.toContain("run.json");
   });
 
-  it("rejects the flag on other engines before reading input", async () => {
+  it.each(["--pitch-shadow-python", "--pitch-correction-python"])(
+    "rejects other engines before reading input: %s",
+    async (flag) => {
+      await expect(
+        runPdfOmrCommand(["recognize", "missing.pdf", "--engine", "rokot", "--output", "run", flag, "python3"], {
+          engineRegistry: registry,
+        }),
+      ).rejects.toMatchObject({ code: "INVALID_CLI_ARGUMENT", context: { engineId: "rokot" } });
+    },
+  );
+
+  it("falls back to identical raw output when correction evidence is unavailable", async () => {
+    const { directory, python } = await setup("process.exit(7)");
+    await runPdfOmrCommand(
+      [
+        "recognize",
+        input,
+        "--engine",
+        "legato",
+        "--output",
+        join(directory, "run"),
+        "--pitch-correction-python",
+        python,
+      ],
+      { engineRegistry: registry },
+    );
+    expect(await readFile(join(directory, "run/draft.json"), "utf8")).toBe(
+      await readFile(join(directory, "run/raw-draft.json"), "utf8"),
+    );
+    const report = JSON.parse(await readFile(join(directory, "run/pitch-correction/report.json"), "utf8"));
+    expect(report).toMatchObject({ outcome: "extractor-unavailable", appliedCount: 0, writebackReady: false });
+    expect(JSON.stringify(report)).not.toContain(directory);
+  });
+
+  it("rejects simultaneous shadow and correction before touching input or outputs", async () => {
     await expect(
       runPdfOmrCommand(
-        ["recognize", "missing.pdf", "--engine", "rokot", "--output", "run", "--pitch-shadow-python", "python3"],
+        [
+          "recognize",
+          "missing.pdf",
+          "--engine",
+          "legato",
+          "--output",
+          "unused",
+          "--pitch-shadow-python",
+          "python3",
+          "--pitch-correction-python",
+          "python3",
+        ],
         { engineRegistry: registry },
       ),
-    ).rejects.toMatchObject({ code: "INVALID_CLI_ARGUMENT", context: { engineId: "rokot" } });
+    ).rejects.toMatchObject({ code: "INVALID_CLI_ARGUMENT" });
   });
 });

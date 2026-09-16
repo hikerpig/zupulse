@@ -1,12 +1,12 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { extname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
-const [output, python, renderer] = process.argv.slice(2);
+const [output, python, renderer, protocolPath] = process.argv.slice(2);
 if (!output || !python || !renderer)
-  throw new Error("usage: materialize-independent.mjs <new-output-root> <python> <mscore>");
-const protocolBytes = await readFile(new URL("./independent-protocol.json", import.meta.url));
+  throw new Error("usage: materialize-independent.mjs <new-output-root> <python> <mscore> [protocol.json]");
+const protocolBytes = await readFile(protocolPath ?? new URL("./independent-protocol.json", import.meta.url));
 const protocol = JSON.parse(protocolBytes);
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 for (const [path, expected] of Object.entries(protocol.candidateSha256)) {
@@ -20,27 +20,32 @@ const persist = async (name, bytes) => {
   artifacts[name] = hash(bytes);
 };
 const download = async (upstreamPath, name) => {
-  const url = `https://raw.githubusercontent.com/CPJKU/vienna4x22/${protocol.upstream.revision}/${upstreamPath}`;
+  const repository = protocol.upstream.repository.replace("https://github.com/", "https://raw.githubusercontent.com/");
+  const url = `${repository}/${protocol.upstream.revision}/${upstreamPath}`;
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Download failed: ${response.status} ${upstreamPath}`);
   const bytes = Buffer.from(await response.arrayBuffer());
   if (bytes.byteLength > 4 * 1024 * 1024) throw new Error("unexpected upstream size");
   await persist(name, bytes);
 };
-await download("LICENSE", "LICENSE");
+await download(protocol.upstream.licensePath, protocol.upstream.licensePath);
 const results = [];
 for (const work of protocol.works) {
   await mkdir(join(root, work));
-  await download(`musicxml/${work}.musicxml`, `${work}/source.musicxml`);
-  await download(`pdf/${work}.pdf`, `${work}/original.pdf`);
+  const musicXmlPath = protocol.inputs.musicXmlPattern.replace("{work}", work);
+  const localScore = `${work}/source${extname(musicXmlPath)}`;
+  await download(musicXmlPath, localScore);
+  if (protocol.inputs.originalPdfPattern) {
+    await download(protocol.inputs.originalPdfPattern.replace("{work}", work), `${work}/original.pdf`);
+  }
   const pdf = join(root, work, "rendered.pdf");
-  const rendered = spawnSync("rtk", ["proxy", renderer, "-o", pdf, join(root, work, "source.musicxml")], {
+  const rendered = spawnSync("rtk", ["proxy", renderer, "-o", pdf, join(root, localScore)], {
     encoding: "utf8",
     timeout: 120_000,
   });
   if (rendered.status !== 0) throw new Error(`Renderer failed: ${work} ${(rendered.stderr ?? "").slice(-1000)}`);
   artifacts[`${work}/rendered.pdf`] = hash(await readFile(pdf));
-  for (const variant of ["original", "rendered"]) {
+  for (const variant of protocol.inputs.originalPdfPattern ? ["original", "rendered"] : ["rendered"]) {
     const extraction = spawnSync(
       "rtk",
       ["proxy", python, "tools/pdf-omr-cli/engines/pitch_shadow.py", join(root, work, `${variant}.pdf`)],

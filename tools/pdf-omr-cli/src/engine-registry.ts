@@ -21,6 +21,7 @@ export function createEngineRegistry(
     legato?: LegatoAdapterOptions;
     legatoWorkerMode?: boolean;
     legatoPageContextMode?: "none" | "previous-page-abc";
+    legatoSourcePitchCorrection?: boolean;
     rokot?: RokotAdapterOptions;
     environmentFallback?: boolean;
   } = {},
@@ -44,11 +45,15 @@ export function createEngineRegistry(
             context: { reason: "missing-legato-configuration" },
           });
         }
-        return createLegatoAdapter({
+        const adapter = createLegatoAdapter({
           ...configured,
           ...(options.legatoWorkerMode === undefined ? {} : { workerMode: options.legatoWorkerMode }),
           ...(options.legatoPageContextMode === undefined ? {} : { pageContextMode: options.legatoPageContextMode }),
         });
+        // Both hosts already capture this registry per job. Reuse its Python, without a second path/config channel.
+        return options.legatoSourcePitchCorrection === true
+          ? { ...adapter, pitchCorrectionPython: configured.pythonExecutable }
+          : adapter;
       }
       if (engineId === "rokot") {
         const configured =

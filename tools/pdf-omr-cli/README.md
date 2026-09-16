@@ -133,6 +133,7 @@ Desktop、Remote 和 benchmark 没有启用此选项。
 报告绑定输入、canonical Draft、提取器脚本哈希和 PyMuPDF 版本。提取失败时只写报告，
 `reason=extractor-unavailable` 和有界 `failureStage` 说明失败阶段；脚本无法读取时 `extractorSha256=null`。
 子进程上限为 30 秒、输出上限为 4 MiB；取消仍返回 `INTERRUPTED`。输出不含原始异常或绝对路径。
+为支持 Electron ASAR，提取器先把已计算哈希的脚本字节物化到私有临时目录，再交给外部 Python；结束后清理副本。
 
 当前策略 `legato-source-pitch-shadow-v2` 处理能完整定位的双谱表向量几何、MScore/Leland 符头与明确的 G/F
 谱号，解析标准调号、基本临时升降号及其小节内作用范围。所有页、system 和小节必须完整顺序对应，不按
@@ -155,6 +156,8 @@ pnpm pdf-omr -- recognize input.pdf --engine legato --output result-corrected \
 round-trip，否则 `draft.json` 保持原始结果。报告区分 `suggestions`、`outcome` 和 `appliedCount`，所有文件均绑定
 到 `run.json` 哈希。共享 programmatic pipeline 可显式传入 `pitchCorrectionPython`，最终验证与导出读取修正后的
 `draft.json`；Desktop、Remote 和 benchmark 尚未传入该参数，默认仍关闭。
+宿主也可在创建 registry 时显式设置 `legatoSourcePitchCorrection: true`，复用该任务 LEGATO 配置中的 Python；
+不向 Renderer 或 manifest 暴露路径。该开关尚未在产品配置中启用；显式只读旁路仍优先于 registry 自动纠错。
 
 开发谱 score-9 原始模型输出回放已产生并应用一处 C4 → B3 修正，通过导出回环；score-4 因预测与源谱分别为
 99/92 小节仍拒绝。此结果不是新的模型推理或独立评测。其他真实谱预检仍有记号、布局及小节线拒绝，

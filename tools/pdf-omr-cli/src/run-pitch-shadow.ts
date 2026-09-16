@@ -1,4 +1,6 @@
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { canonicalJson, sha256Bytes } from "./canonical-json";
 import { runEngineProcess } from "./engine-runner";
@@ -15,13 +17,19 @@ export async function runPitchShadow(
   const runnerPath = fileURLToPath(new URL("../engines/pitch_shadow.py", import.meta.url));
   let extractorSha256: string | null = null;
   let failureStage = "extractor-resource";
+  let runtimeDirectory: string | undefined;
   try {
-    extractorSha256 = sha256Bytes(await readFile(runnerPath));
+    const scriptBytes = await readFile(runnerPath);
+    extractorSha256 = sha256Bytes(scriptBytes);
+    // Electron can read ASAR resources, but external Python cannot; execute the exact hashed bytes outside it.
+    runtimeDirectory = await mkdtemp(join(tmpdir(), "pdf-omr-pitch-"));
+    const executableScript = join(runtimeDirectory, "pitch_shadow.py");
+    await writeFile(executableScript, scriptBytes, { flag: "wx", mode: 0o600 });
     failureStage = "extractor-process";
     const result = await runEngineProcess(
       {
         command: pythonExecutable,
-        args: [runnerPath, inputPath],
+        args: [executableScript, inputPath],
         timeoutMs: 30_000,
         maxOutputBytes: 4 * 1024 * 1024,
       },
@@ -52,5 +60,10 @@ export async function runPitchShadow(
         decisions: [],
       },
     };
+  } finally {
+    if (runtimeDirectory !== undefined) {
+      // Cleanup failure must not replace cancellation or a valid fallback result.
+      await rm(runtimeDirectory, { recursive: true, force: true }).catch(() => {});
+    }
   }
 }

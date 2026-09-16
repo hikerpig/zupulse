@@ -32,16 +32,20 @@ export async function recognizeCommand(
     onProgress?: (progress: OmrEngineProgress) => void;
   },
 ): Promise<PdfOmrRecognizeReport> {
-  const evidencePython = context.pitchCorrectionPython ?? context.pitchShadowPython;
+  const requestedPython = context.pitchCorrectionPython ?? context.pitchShadowPython;
   if (
     (context.pitchShadowPython !== undefined && context.pitchCorrectionPython !== undefined) ||
-    (evidencePython !== undefined && (engineId !== "legato" || !evidencePython.trim()))
+    (requestedPython !== undefined && (engineId !== "legato" || !requestedPython.trim()))
   ) {
     throw new PdfOmrError("INVALID_CLI_ARGUMENT", "pitch shadow requires LEGATO and a Python executable", {
       context: { command: "recognize", engineId },
     });
   }
   const adapter = context.engineRegistry.get(engineId);
+  const correctionPython =
+    context.pitchCorrectionPython ??
+    (engineId === "legato" && context.pitchShadowPython === undefined ? adapter.pitchCorrectionPython : undefined);
+  const evidencePython = correctionPython ?? context.pitchShadowPython;
   const inputPath = resolve(context.cwd, input);
   let bytes: Uint8Array;
   try {
@@ -103,9 +107,9 @@ export async function recognizeCommand(
     if (evidencePython !== undefined) {
       const { runPitchShadow } = await import("../run-pitch-shadow");
       const shadow = await runPitchShadow(recognitionInput, draft, evidencePython, context.signal);
-      const evidenceDirectory = context.pitchCorrectionPython === undefined ? "pitch-shadow" : "pitch-correction";
+      const evidenceDirectory = correctionPython === undefined ? "pitch-shadow" : "pitch-correction";
       if (shadow.source) await writer.writeJson(`${evidenceDirectory}/source.json`, shadow.source);
-      if (context.pitchCorrectionPython !== undefined) {
+      if (correctionPython !== undefined) {
         await writer.writeJson("raw-draft.json", draft);
         const { applySourcePitchCorrections } = await import("../apply-source-pitch-corrections");
         const correction =
@@ -140,7 +144,7 @@ export async function recognizeCommand(
         ...environment.parameters,
         ...recognizeSegmentationParameters(engineId, context),
         ...(context.pitchShadowPython === undefined ? {} : { pitchShadow: "legato-source-pitch-shadow-v2" }),
-        ...(context.pitchCorrectionPython === undefined ? {} : { pitchCorrection: "legato-source-pitch-shadow-v2" }),
+        ...(correctionPython === undefined ? {} : { pitchCorrection: "legato-source-pitch-shadow-v2" }),
       },
       preprocess: { id: "none", version: "1.0.0" },
       startedAt,

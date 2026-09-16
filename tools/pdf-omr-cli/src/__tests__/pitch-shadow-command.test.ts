@@ -1,4 +1,4 @@
-import { chmod, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { access, chmod, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -80,6 +80,60 @@ const inputSha256 = crypto.createHash('sha256').update(fs.readFileSync(process.a
 console.log(JSON.stringify({schemaVersion:'1.0.0', inputSha256, extractorVersion:'fake', pages:[{reason:'supported',measures:[0,1].map(staffIndex=>({systemIndex:0,staffIndex,measureIndex:0,keyFifths:0,reason:'supported',heads:[30,32,32].map((diatonic,i)=>({x:50+i*20,y:100,gap:5,diatonic,alter:0}))}))}]}));`;
 
 describe("recognize pitch shadow opt-in", () => {
+  it("rejects invalid correction flags before resolving an unavailable engine", async () => {
+    await expect(
+      runPdfOmrCommand(
+        ["recognize", "missing.pdf", "--engine", "rokot", "--output", "unused", "--pitch-correction-python", "python3"],
+        {
+          engineRegistry: {
+            get: () => {
+              throw new Error("engine must not be resolved");
+            },
+          },
+        },
+      ),
+    ).rejects.toMatchObject({ code: "INVALID_CLI_ARGUMENT" });
+  });
+
+  it("uses the Python captured by the LEGATO registry without a second host configuration", async () => {
+    const { directory, python } = await setup(sourceScript);
+    const captured: EngineRegistry = { get: () => ({ ...registry.get("legato"), pitchCorrectionPython: python }) };
+    const outputDirectory = join(directory, "captured");
+    await runPdfOmrPipeline({ inputPath: input, engineId: "legato", outputDirectory, engineRegistry: captured });
+    const exported = normalizeAudiverisMusicXml(await readFile(join(outputDirectory, "score.mxl")));
+    expect(exported.parts[0]!.staves[0]!.measures[0]!.voices[0]!.events[1]!).toMatchObject({
+      writtenPitch: { step: "G", octave: 4, alter: 0 },
+    });
+  });
+
+  it("executes an isolated extractor file outside the application archive and removes it afterwards", async () => {
+    const { directory, python } = await setup(sourceScript);
+    const marker = join(directory, "extractor-path.txt");
+    await writeFile(
+      python,
+      `#!/usr/bin/env node\nrequire('node:fs').writeFileSync(${JSON.stringify(marker)}, process.argv[2]);\n${sourceScript}\n`,
+    );
+    await runPdfOmrCommand(
+      [
+        "recognize",
+        input,
+        "--engine",
+        "legato",
+        "--output",
+        join(directory, "run"),
+        "--pitch-correction-python",
+        python,
+      ],
+      { engineRegistry: registry },
+    );
+    const extractorPath = await readFile(marker, "utf8");
+    expect(extractorPath).not.toContain("tools/pdf-omr-cli/engines");
+    expect(extractorPath).not.toContain(".asar/");
+    await expect(access(extractorPath)).rejects.toMatchObject({ code: "ENOENT" });
+    const report = JSON.parse(await readFile(join(directory, "run/pitch-correction/report.json"), "utf8"));
+    expect(report.extractorSha256).toBe(sha256Bytes(await readFile("tools/pdf-omr-cli/engines/pitch_shadow.py")));
+  });
+
   it("exports the corrected Draft through the shared programmatic pipeline", async () => {
     const { directory, python } = await setup(sourceScript);
     const outputDirectory = join(directory, "pipeline");

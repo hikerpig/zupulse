@@ -88,6 +88,7 @@ Zupulse account、用户级授权、CORS、公开 object URL、横向扩容或�
 
 - 共享 CLI pipeline 已支持显式启用 LEGATO 源谱音高修正，但 Remote 尚未传入选项，默认输出不变；
   独立评测与生产默认接入仍在进行，不能把 CLI 回放收益视为 Remote 已交付能力。
+  默认准入前仍需持久保存原始 Draft 与纠错证据；当前 worker 清理临时目录后只保留输入、结果 MXL 和摘要 manifest。
 - 自动化已覆盖 SQLite restart/FIFO/retry/delete、running cancellation、S3 command/hash boundary、HTTP/SSE、Browser
   adapter 与 fake-Service Browser journey；尚未在 CI 中运行真实 MinIO/R2/AWS S3 conformance 或真实外部 OMR engine。
 - reconciliation 清理有 SQLite 引用的 transition/expired objects；尚不扫描 bucket 中完全无引用的历史 object。

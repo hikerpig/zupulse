@@ -17,3 +17,15 @@ describe("runPdfOmrPackagedSmoke", () => {
     });
   }, 5000);
 });
+
+describe("packaged source pitch extraction smoke gate", () => {
+  it("does not pass the extractor gate merely because fallback recognition succeeded", async () => {
+    await expect(
+      runPdfOmrPackagedSmoke({
+        standardFontDirectory: resolve("node_modules/pdfjs-dist/standard_fonts"),
+        wasmDirectory: resolve("node_modules/pdfjs-dist/wasm"),
+        pitchPython: resolve("missing-smoke-python"),
+      }),
+    ).rejects.toThrow("packaged source pitch extractor did not execute");
+  });
+});

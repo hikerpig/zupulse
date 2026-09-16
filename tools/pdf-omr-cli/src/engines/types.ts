@@ -69,6 +69,8 @@ export type OmrRawRecognition = {
 };
 
 export type OmrEngineAdapter = {
+  /** Main-only runtime configuration, never included in manifests or Renderer payloads. */
+  pitchCorrectionPython?: string;
   inspectEnvironment(signal?: AbortSignal): Promise<OmrEngineEnvironment>;
   recognize(request: OmrRecognitionRequest): Promise<OmrRawRecognition>;
   normalize(recognition: OmrRawRecognition): OmrScoreDraft;

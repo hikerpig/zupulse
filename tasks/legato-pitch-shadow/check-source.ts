@@ -1,12 +1,12 @@
 import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { sha256Bytes } from "../../tools/pdf-omr-cli/src/canonical-json";
 import { fillVoiceGapsWithRests } from "../../tools/pdf-omr-cli/src/draft-gap-fill";
 import { normalizeAudiverisMusicXml } from "../../tools/pdf-omr-cli/src/normalizers/audiveris";
 import { runPitchShadow } from "../../tools/pdf-omr-cli/src/run-pitch-shadow";
 import { applySourcePitchCorrections } from "../../tools/pdf-omr-cli/src/apply-source-pitch-corrections";
 
-const [pdf, rawMusicXml, python] = process.argv.slice(2);
+const [pdf, rawMusicXml, python, desktopOutput] = process.argv.slice(2);
 if (!pdf || !rawMusicXml || !python) throw new Error("usage: check-source.ts <source.pdf> <raw.musicxml> <python>");
 const draft = fillVoiceGapsWithRests(normalizeAudiverisMusicXml(await readFile(rawMusicXml)));
 draft.provenance = {
@@ -23,11 +23,53 @@ const counts = (reasons: string[]) =>
     sum[reason] = (sum[reason] ?? 0) + 1;
     return sum;
   }, {});
+let desktopReplay: unknown;
+if (desktopOutput) {
+  const { DesktopPdfOmrRuntime } = await import("../../apps/desktop-shell/src/main/recognition/pdf-omr-runtime");
+  const bytes = await readFile(rawMusicXml);
+  const runtime = new DesktopPdfOmrRuntime({
+    standardFontDirectory: resolve("node_modules/pdfjs-dist/standard_fonts"),
+    wasmDirectory: resolve("node_modules/pdfjs-dist/wasm"),
+    engineRegistry: {
+      get: () => ({
+        pitchCorrectionPython: python,
+        inspectEnvironment: async () => ({
+          id: "legato",
+          version: "raw-output-replay",
+          executable: "replay",
+          commandTemplate: [],
+          license: { id: "development-replay", source: "existing-engine-artifact" },
+        }),
+        recognize: async () => ({
+          normalizationBytes: bytes,
+          nativeArtifacts: [{ relativePath: "converted.musicxml", bytes }],
+          diagnostics: [],
+          durationMs: 0,
+        }),
+        normalize: (raw) => fillVoiceGapsWithRests(normalizeAudiverisMusicXml(raw.normalizationBytes)),
+      }),
+    },
+  });
+  const pipeline = await runtime.run({
+    inputPath: resolve(pdf),
+    engineId: "legato",
+    outputDirectory: resolve(desktopOutput),
+  });
+  const report = JSON.parse(await readFile(join(desktopOutput, "recognition/pitch-correction/report.json"), "utf8"));
+  desktopReplay = {
+    status: pipeline.status,
+    outputSha256: pipeline.outputSha256,
+    outcome: report.outcome,
+    appliedCount: report.appliedCount,
+    idle: !runtime.isRunning(),
+  };
+}
 console.log(
   JSON.stringify(
     {
       inputSha256: draft.provenance.inputSha256,
       rawMusicXmlSha256: sha256Bytes(await readFile(rawMusicXml)),
+      ...(desktopReplay === undefined ? {} : { desktopReplay }),
       draftMeasures: draft.parts.flatMap((part) =>
         part.staves.map((staff) => ({ part: part.id, staff: staff.index, count: staff.measures.length })),
       ),

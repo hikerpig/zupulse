@@ -194,6 +194,7 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 - 独立 CLI 的 `recognize --pitch-shadow-python` 可生成默认关闭的 LEGATO 完整源谱音高建议；
   `--pitch-correction-python` 可在保留原始 Draft、校验和导出回环通过后应用修改，共享 pipeline 支持显式传参。
   Desktop 尚未传递这些选项，Bridge 和 UI 不提供入口；独立作品正向收益与默认准入仍未完成。
+  registry 已支持复用任务 LEGATO Python 的内部开关，但产品配置保持关闭；ASAR 提取资源已验证物化到私有目录执行。
   当前能力与限制见 [CLI 音高旁路](../../../tools/pdf-omr-cli/README.md#可选音高旁路)。
 
 ## 明确非目标

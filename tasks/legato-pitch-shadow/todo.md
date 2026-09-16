@@ -124,7 +124,8 @@ pnpm exec vite-node tasks/legato-pitch-shadow/check-source.ts \
 - `node apps/desktop-shell/scripts/verify-pdf-omr-runtime.mjs /absolute/path/to/legato-venv/bin/python`：
   已使用真实 PyMuPDF 1.26.3 通过 ASAR 内资源执行验证。检查源证据及输入哈希，提取失败回退不能使此 gate 通过。
   输入是确定性非谱面 PDF，因此验证提取执行与安全拒绝，不验证打包后的正向纠错或 UI。
-- 本轮尚未运行宿主 UI E2E，也未推送 PR、合并或发布。
+- 尚未运行宿主 UI E2E，未合并或发布。代码及两批独立准入失败记录已推送至 PR #70，
+  PR 标题与说明已更新为默认关闭的 opt-in 接入，并明确标记生产默认验收未通过。
 
 ## 下一步与停止条件
 

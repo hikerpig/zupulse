@@ -1,6 +1,7 @@
 import unittest
+from types import SimpleNamespace
 
-from pitch_shadow import extract_page
+from pitch_shadow import drawing_lines, extract_page
 
 
 def page_data():
@@ -13,6 +14,16 @@ def page_data():
 
 
 class PitchShadowTests(unittest.TestCase):
+    def test_dashed_expression_extent_is_not_continuous_staff_geometry(self):
+        def drawing(y, dashes):
+            return {"dashes": dashes, "items": [("l", SimpleNamespace(x=20, y=y), SimpleNamespace(x=580, y=y))]}
+
+        for dashes in ["[ 3 3 ] 0", "[3] 0", None, "unknown"]:
+            with self.subTest(dashes=dashes):
+                self.assertEqual(drawing_lines([drawing(100, "[] 0"), drawing(125, dashes)]),
+                                 [(20, 100, 580, 100)])
+        self.assertEqual(drawing_lines([drawing(100, "[ ] 2")]), [(20, 100, 580, 100)])
+
     def test_extracts_explicit_clefs_and_source_positions(self):
         result = extract_page(**page_data())
         self.assertEqual(result["reason"], "supported")

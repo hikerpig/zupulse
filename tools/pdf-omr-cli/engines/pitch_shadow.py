@@ -291,6 +291,13 @@ def extract_page(width, height, lines, glyphs, curves, raster, text_spans=(), in
     return {"reason": "supported", "measures": measures, "endKeys": end_keys}
 
 
+def drawing_lines(drawings):
+    # A dashed expression line exposes its full extent as one PDF line, not continuous staff ink.
+    return [(p.x, p.y, q.x, q.y) for d in drawings
+            if re.fullmatch(r"\[\s*\]\s+\S+", d.get("dashes") or "")
+            for item in d["items"] if item[0] == "l" for p, q in [item[1:]]]
+
+
 def extract_pdf(path):
     import fitz
 
@@ -303,8 +310,7 @@ def extract_pdf(path):
             raise ValueError("page-limit")
         for page in document:
             drawings = page.get_drawings()
-            lines = [(p.x, p.y, q.x, q.y) for d in drawings for item in d["items"]
-                     if item[0] == "l" for p, q in [item[1:]]]
+            lines = drawing_lines(drawings)
             curves = [list(d["rect"]) for d in drawings if any(item[0] == "c" for item in d["items"])]
             blocks = page.get_text("rawdict")["blocks"]
             glyphs = [(s["font"], c["c"], *c["origin"]) for b in blocks if "lines" in b

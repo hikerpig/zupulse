@@ -13,6 +13,7 @@ export { PdfOmrError } from "./errors";
 export { runEngineProcess } from "./engine-runner";
 export { renderPdfPages, readPdfPageCount, encodeRgbaPng } from "./render-pdf-pages";
 export { createEngineRegistry, resolveBundledLegatoRunnerPath } from "./engine-registry";
+export { readSourcePitchEvidence } from "./source-pitch-evidence";
 export type { EngineRegistry } from "./engine-registry";
 export type { OmrEngineAdapter } from "./engines/types";
 export type { OmrScoreDraft } from "./schemas";

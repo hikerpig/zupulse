@@ -10,6 +10,18 @@
 - 修复导出结构比较器将 JSON 属性插入顺序误判为音高差异的问题，增加独立回归。
 - registry 支持 `legatoSourcePitchCorrection`，将任务配置中的 Python 传给共享纠错流程，不需要第二条宿主路径配置。
   产品配置尚未开启此开关。提取脚本物化到私有临时目录，避免外部 Python 无法读取 ASAR 资源。
+- Remote 在现有私有结果 manifest 中保存原始 Draft、最终 Draft、原始 XML 和纠错证据；验证身份、哈希和
+  32 MiB 总预算。保存失败不发布结果，删除与过期清理沿用原有对象生命周期，公开 snapshot 不增加证据。
+
+## 独立源谱准入
+
+`independent-protocol.json` 在下载谱面前冻结 Vienna 4x22 的三首非 Mozart 作品、上游版本、候选代码哈希、
+推理配置、预算和验收门槛。`materialize-independent.mjs` 可在新目录下载固定源谱并执行准入。
+本次产物位于 `tmp/pdfs/legato-independent-v1/`，文件哈希见 `materialization.json`，准入结果见 `admission.json`。
+
+三首原版 PDF 均为栅格内容；三首 MuseScore 4.7.4 重排版均因未知记号或谱表布局拒绝。
+实际准入为 0/3，状态为 `not-evaluable`，未启动模型推理、未读取 truth 比较，也不能计为零回归。
+不得降低既定门槛或调整候选后继续把这些作品算作独立验收集。
 
 ## 真实输出回放
 
@@ -46,7 +58,8 @@ pnpm exec vite-node tasks/legato-pitch-shadow/check-source.ts \
 - CLI/共享 pipeline 测试：15 项通过，覆盖修正 MXL、原始产物保留、默认不变、失败回退、互斥参数、取消、registry 传参及脚本副本清理。
   使用假 engine/提取进程，不代表真实模型或宿主接入。
 - MusicXML 属性顺序回归：4 项通过。
-- `pnpm verify:fast`：通过 context、arch、design、docs、i18n、format、lint、typecheck；278 个测试文件、1,403 项测试通过。
+- Remote worker 与证据读取测试：17 项通过，覆盖哈希、输入身份、预算、路径白名单、发布失败、删除和过期清理。
+- `pnpm verify:fast`：通过 context、arch、design、docs、i18n、format、lint、typecheck；279 个测试文件、1,416 项测试通过。
 - registry 测试：6 项通过；打包 smoke 单测：2 项通过，保留原有真实进程树取消回归。
 - 最终记录更新后再次检查格式、文档和 `git diff --check`。
 - `pnpm desktop:build`：通过 Main、Preload、Renderer 构建。
@@ -58,10 +71,9 @@ pnpm exec vite-node tasks/legato-pitch-shadow/check-source.ts \
 
 ## 下一步与停止条件
 
-1. 冻结未参与规则选择的独立作品、原始推理配置、预算与验收协议，再读取评测 truth。
-   报告实际覆盖、正确修改、错误修改、原本正确音符受损及整曲严格匹配；开发谱不能充当 holdout。
-2. 验证两个宿主完整路径并补齐 Remote 原始证据持久化。当前 worker 仅发布 MXL 和摘要 manifest，随后删除临时目录；
-   原始 Draft、源证据与修改清单不能在上线后随临时目录丢失。持久化需覆盖发布失败、删除与过期清理。
+1. 定位独立源谱全部拒绝的覆盖边界，再决定是否值得扩展源提取器。若据此修改规则，这三首转为开发样本，
+   必须另冻结独立作品及验收协议；不得以安全拒绝代替正确修改和无损证据。
+2. 验证两个宿主完整路径；Remote 证据生命周期测试不等于真实对象存储或真实模型验收。
 3. 运行真实生产路径正例及宿主预览/导出验证；独立门槛通过后才启用经过验证的输入范围。
 4. 更新契约与 PR，分别报告代码集成、PR 推送与实际发布状态。
 

@@ -14,6 +14,16 @@ export function resolveBundledLegatoRunnerPath(): string {
   return fileURLToPath(new URL("../engines/legato-runner.py", import.meta.url));
 }
 
+export function createProductionEngineRegistry(
+  options: Omit<NonNullable<Parameters<typeof createEngineRegistry>[0]>, "legatoSourcePitchCorrection"> = {},
+): EngineRegistry {
+  // Capture rollout policy per registry; keep CLI/benchmark baselines opt-in.
+  return createEngineRegistry({
+    ...options,
+    legatoSourcePitchCorrection: process.env.PDF_OMR_LEGATO_SOURCE_PITCH_CORRECTION !== "0",
+  });
+}
+
 export function createEngineRegistry(
   options: {
     audiverisExecutable?: string;

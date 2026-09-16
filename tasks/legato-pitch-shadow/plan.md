@@ -13,18 +13,19 @@
 完成生产识别流程接入，不以“默认关闭的报告”“测试通过”或“真实谱全部拒绝”作为完成条件。
 上一轮已验证旁路接线。本轮起继续沿同一条线推进，不训练模型，不增加节奏修正或补漏。
 
-1. 用源位置和字符语义修复真实 PDF 的错误拒绝，保留未知谱号、八度与对应歧义的保护。
-2. 从原始 PDF 自动获得完整 written pitch 所需证据，只在唯一对应时生成修改；原始 Draft 和修改清单必须保留。
-3. 冻结独立作品、配置和验收协议；比较原始输出与候选，记录错误修改和整曲指标，再决定默认准入范围。
-4. 接入共享 LEGATO 运行时及 Desktop/Remote 配置和打包路径，复用已配置 Python，失败回退原识别结果。
-5. 验证真实输入到应用结果的端到端路径、默认/禁用/不支持输入、取消及导出，更新契约和 PR。
+用户再次批准“先接入生产”，按现有保守规则受控启用，不继续扩展解析器。两批独立准入失败保持原结论，
+不作为本轮代码接入的阻断条件，也不计作独立收益或零回归。
+
+1. 测试先行：Desktop 与 Remote 使用共享生产 registry，默认启用，环境变量 `0` 关闭；CLI 与 benchmark 不变。
+2. 验证默认修正、关闭、不支持输入、提取失败、回退、取消及证据保留；通过 Desktop runtime 回放真实开发谱。
+3. 运行相关测试、完整构建与打包 smoke；更新 Feature Contracts、PR 和执行证据，区分代码交付与发布。
 
 ## Completion evidence
 
 - Source extraction and correction MUST run from the current input, without historical reports, ground truth, or manual endpoints.
 - Qualified inputs MUST exercise actual corrections through the production path; a report-only sidecar is insufficient.
 - Raw artifacts MUST remain immutable. Every applied change MUST be source-bound and pass structural/export validation.
-- Independent evaluation MUST show no loss of previously correct notes in its frozen scope, with positive correction evidence.
+- Frozen independent evaluation failures MUST remain unchanged and MUST NOT be presented as positive or zero-regression evidence.
 - Desktop and Remote entry points, packaged resources, fallback and cancellation MUST have direct verification.
 - Default activation MUST be limited to the verified input scope; unsupported inputs MUST retain normal recognition.
 - Completion MUST distinguish repository integration, PR delivery, and actual release/deployment state.

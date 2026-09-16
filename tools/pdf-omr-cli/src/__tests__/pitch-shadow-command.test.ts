@@ -1,16 +1,17 @@
 import { access, chmod, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { runPdfOmrCommand } from "../command";
 import { runPdfOmrPipeline } from "../pipeline";
 import { normalizeAudiverisMusicXml } from "../normalizers/audiveris";
 import { sha256Bytes } from "../canonical-json";
-import type { EngineRegistry } from "../engine-registry";
+import { createProductionEngineRegistry, type EngineRegistry } from "../engine-registry";
 import type { OmrScoreDraft } from "../schemas";
 
 const directories: string[] = [];
 afterEach(async () => {
+  vi.unstubAllEnvs();
   await Promise.all(directories.splice(0).map((p) => rm(p, { recursive: true, force: true })));
 });
 const registry: EngineRegistry = {
@@ -80,6 +81,59 @@ const inputSha256 = crypto.createHash('sha256').update(fs.readFileSync(process.a
 console.log(JSON.stringify({schemaVersion:'1.0.0', inputSha256, extractorVersion:'fake', pages:[{reason:'supported',measures:[0,1].map(staffIndex=>({systemIndex:0,staffIndex,measureIndex:0,keyFifths:0,reason:'supported',heads:[30,32,32].map((diatonic,i)=>({x:50+i*20,y:100,gap:5,diatonic,alter:0}))}))}]}));`;
 
 describe("recognize pitch shadow opt-in", () => {
+  it.each([
+    { name: "default", flag: undefined, script: sourceScript, step: "G", outcome: "applied" },
+    { name: "disabled", flag: "0", script: sourceScript, step: "F", outcome: undefined },
+    {
+      name: "extractor failure",
+      flag: undefined,
+      script: "process.exit(7)",
+      step: "F",
+      outcome: "extractor-unavailable",
+    },
+    {
+      name: "unsupported source",
+      flag: undefined,
+      script: sourceScript.replace(/pages:.*$/, "pages:[{reason:'unsupported-staff-layout',measures:[]}]}));"),
+      step: "F",
+      outcome: "unchanged",
+    },
+  ])("exports production $name without explicit correction arguments", async ({ flag, script, step, outcome }) => {
+    vi.stubEnv("PDF_OMR_LEGATO_SOURCE_PITCH_CORRECTION", flag);
+    const { directory, python } = await setup(script);
+    const production = createProductionEngineRegistry({
+      environmentFallback: false,
+      legato: {
+        pythonExecutable: python,
+        runnerPath: "/runner.py",
+        repositoryPath: "/repository",
+        repositoryRevision: "revision",
+        modelPath: "/model.safetensors",
+        modelSha256: "a".repeat(64),
+        baseModelPath: "/base",
+      },
+    });
+    const replay: EngineRegistry = { get: () => ({ ...production.get("legato"), ...registry.get("legato") }) };
+    const outputDirectory = join(directory, "production");
+    await runPdfOmrPipeline({ inputPath: input, engineId: "legato", outputDirectory, engineRegistry: replay });
+    const exported = normalizeAudiverisMusicXml(await readFile(join(outputDirectory, "score.mxl")));
+    expect(exported.parts[0]!.staves[0]!.measures[0]!.voices[0]!.events[1]!).toMatchObject({ writtenPitch: { step } });
+    const recognition = join(outputDirectory, "recognition");
+    if (outcome === undefined) {
+      expect(await readdir(recognition)).not.toContain("pitch-correction");
+    } else {
+      expect(JSON.parse(await readFile(join(recognition, "pitch-correction/report.json"), "utf8"))).toMatchObject({
+        outcome,
+      });
+      const raw = JSON.parse(await readFile(join(recognition, "raw-draft.json"), "utf8"));
+      expect(raw.parts[0].staves[0].measures[0].voices[0].events[1].writtenPitch.step).toBe("F");
+      if (step === "F")
+        expect(await readFile(join(recognition, "draft.json"), "utf8")).toBe(
+          await readFile(join(recognition, "raw-draft.json"), "utf8"),
+        );
+    }
+  });
+
   it("rejects invalid correction flags before resolving an unavailable engine", async () => {
     await expect(
       runPdfOmrCommand(
@@ -256,26 +310,41 @@ describe("recognize pitch shadow opt-in", () => {
     expect(report.suggestions).toHaveLength(2);
   });
 
-  it.each(["--pitch-shadow-python", "--pitch-correction-python"])("keeps cancellation terminal: %s", async (flag) => {
-    const { directory, python } = await setup(sourceScript);
-    const abort = new AbortController();
-    const cancelling: EngineRegistry = {
-      get: () => ({
-        ...registry.get("legato"),
-        recognize: async () => {
-          abort.abort();
-          return { normalizationBytes: new Uint8Array(), nativeArtifacts: [], diagnostics: [], durationMs: 0 };
-        },
-      }),
-    };
-    await expect(
-      runPdfOmrCommand(["recognize", input, "--engine", "legato", "--output", join(directory, "run"), flag, python], {
-        engineRegistry: cancelling,
-        signal: abort.signal,
-      }),
-    ).rejects.toMatchObject({ code: "INTERRUPTED" });
-    expect(await readdir(join(directory, "run"))).not.toContain("run.json");
-  });
+  it.each(["--pitch-shadow-python", "--pitch-correction-python", undefined])(
+    "keeps cancellation terminal: %s",
+    async (flag) => {
+      const { directory, python } = await setup(sourceScript);
+      const abort = new AbortController();
+      const cancelling: EngineRegistry = {
+        get: () => ({
+          ...registry.get("legato"),
+          ...(flag === undefined ? { pitchCorrectionPython: python } : {}),
+          recognize: async () => {
+            abort.abort();
+            return { normalizationBytes: new Uint8Array(), nativeArtifacts: [], diagnostics: [], durationMs: 0 };
+          },
+        }),
+      };
+      await expect(
+        runPdfOmrCommand(
+          [
+            "recognize",
+            input,
+            "--engine",
+            "legato",
+            "--output",
+            join(directory, "run"),
+            ...(flag === undefined ? [] : [flag, python]),
+          ],
+          {
+            engineRegistry: cancelling,
+            signal: abort.signal,
+          },
+        ),
+      ).rejects.toMatchObject({ code: "INTERRUPTED" });
+      expect(await readdir(join(directory, "run"))).not.toContain("run.json");
+    },
+  );
 
   it.each(["--pitch-shadow-python", "--pitch-correction-python"])(
     "rejects other engines before reading input: %s",

@@ -29,7 +29,7 @@ status: approved
 
 先验证原始 PDF 到旁路报告的自动闭环，再冻结未参与调参的独立曲目、原始识别配置、预算和验收协议。
 评价必须同时报告建议覆盖、错误建议、原本正确音符受损及整曲严格匹配；测试通过不等于识别收益。
-独立证据不足时保持默认关闭。节奏、补漏和模型训练不在范围内。
+原计划在独立证据不足时保持默认关闭；该发布限制已由下文的受控接入决定替代。节奏、补漏和模型训练不在范围内。
 
 ## 生产接入目标（2026-09-16 批准）
 
@@ -42,5 +42,17 @@ Python 环境，不要求用户额外执行 CLI 或准备中间报告。不支�
   correspondence failures, and unsupported transposition MUST abstain.
 - Source analysis failures MUST fall back to normal recognition; cancellation MUST remain terminal.
 - Applied candidates MUST preserve timing, voice identity and note counts, and pass validation and export gates.
-- Default activation MUST follow frozen independent evaluation and an actual production-path positive correction test.
+- Default activation MUST follow the controlled rollout policy below and a production-runtime positive correction test.
 - Report-only behavior MUST remain distinguishable from correction and MUST NOT be counted as production completion.
+
+## 受控接入决定（2026-09-16 再次批准）
+
+用户明确要求“先接入生产”。Desktop 与 Remote 默认启用现有保守规则，不扩大源谱解析器或调整纠错阈值。
+两批独立作品准入仍为 0/3，保留原协议和失败证据；这代表覆盖不足，不是收益或零回归证明，也不再阻断本次接线。
+
+- Product hosts MUST use the production registry; CLI and benchmark defaults MUST remain unchanged.
+- `PDF_OMR_LEGATO_SOURCE_PITCH_CORRECTION=0` MUST disable automatic correction for newly created registries.
+  Existing job snapshots MUST remain unchanged. Operators MUST restart the host after changing its launch environment.
+- Unsupported inputs and source extraction failures MUST retain the raw Draft. Validation or export rejection MUST roll back corrections.
+- Remote evidence persistence failures MUST remain terminal; corrected results MUST NOT be published without auditable evidence.
+- Release notes MUST distinguish code integration, deployment, development-sample gains, and unverified independent generalization.

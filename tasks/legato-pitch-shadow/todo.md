@@ -1,6 +1,30 @@
 # 执行状态
 
-## 已完成（2026-09-16）
+## 当前状态：受控生产接入（2026-09-16）
+
+用户再次批准“先接入生产”。Desktop 与 Remote 入口已改为共享生产 registry，默认启用现有保守纠错；
+启动环境设 `PDF_OMR_LEGATO_SOURCE_PITCH_CORRECTION=0` 并重启可关闭。CLI 和 benchmark 默认不变。
+未扩展解析器、阈值或训练范围。下文的默认关闭、独立门槛阻断属于本次批准前的历史状态，不再定义当前发布策略。
+
+- 默认开关及 Desktop 保存配置测试 10 项通过；纠错、回退、证据与 Remote worker 测试通过，
+  其中纠错命令测试最终增至 20 项，包含自动启用后的取消回归。
+- `check-source.ts` 的 Desktop 回放现从真实 provider settings 取得 registry，只替换模型推理为原始 XML 回放。
+  score-9 开启时 `applied=1`，关闭时 `applied=0`，两者均完成验证与 MXL 导出。不是新的模型推理或 UI 验收。
+- 本次产物：`tmp/pdfs/legato-production/desktop-default-on-20260916/` 与 `desktop-default-off-20260916/`。
+  开启 MXL SHA-256 为 `655e4702d613ef11589864d76451ccd25652f277fceff4f6be6bce5edd20dfc5`；
+  关闭为 `5b0696c87489c2c17cd36d6c47c91143672f6ac2d5ae86011ba99f861fd5a743`。
+- 两批独立准入仍为 0/3，未证明跨作品收益或零回归。Remote 的 32 MiB 证据上限、完整性和持久化失败仍阻断发布。
+- `pnpm verify` 通过：279 个文件、1,422 项测试及 Browser/Desktop 构建；随后增加的取消用例通过纠错命令
+  20 项定向测试。`pnpm --filter @zupulse/recognition-server typecheck`、`pnpm lint`、`pnpm format:check`
+  和 `git diff --check` 通过。初次 lint 发现回放脚本误用值导入的类型，改为 `import type` 后复验通过。
+- `pnpm verify:e2e` 通过：Browser 20 项普通旅程、1 项远程识谱旅程，Desktop 12 项旅程。
+  这些使用既有 fake engine/service，不是实际模型 UI 质量验收。Python 提取器单测 29 项通过。
+- `pnpm desktop:verify:pdf-omr-runtime` 通过 macOS arm64 打包、运行时及进程树取消检查；
+  `node apps/desktop-shell/scripts/verify-pdf-omr-runtime.mjs /Users/hikerpig/.cache/zupulse/pdf-omr/legato-venv/bin/python`
+  通过真实 PyMuPDF 的 ASAR 资源提取检查，输入为非谱面 PDF，只验证执行及安全拒绝。
+- 最终 `pnpm verify:fast` 通过：279 个测试文件、1,423 项测试；文档、格式、类型和 lint 检查通过。
+
+## 历史实现与评测（受控启用前）
 
 - 源提取支持连续谱线、复合小节线、明确起始反复线、位置限定的速度/小节编号、标准调号及基本临时升降号。
 - 完整音高建议支持单声部内唯一和弦对应；保持数量不符、曲线、tie、tuplet、未知记号与移调保护。
@@ -137,11 +161,9 @@ pnpm exec vite-node tasks/legato-pitch-shadow/check-source.ts \
 - 尚未运行宿主 UI E2E，未合并或发布。代码及两批独立准入失败记录已推送至 PR #70，
   PR 标题与说明已更新为默认关闭的 opt-in 接入，并明确标记生产默认验收未通过。
 
-## 下一步与停止条件
+## 本轮剩余交付
 
-1. 确认是否扩大为新的源谱解析器研发阶段。当前默认启用门槛未通过；不继续换曲或放宽验收。
-2. 验证两个宿主完整路径；Remote 证据生命周期测试不等于真实对象存储或真实模型验收。
-3. 运行真实生产路径正例及宿主预览/导出验证；独立门槛通过后才启用经过验证的输入范围。
-4. 更新契约与 PR，分别报告代码集成、PR 推送与实际发布状态。
+构建、打包 smoke、宿主回归及契约更新已完成。本轮代码交付到 PR #70；实际合并、Desktop 发布与服务部署
+不属于已验证事实，需按发布流程执行。
 
-生产接入目标仍未完成。不得用默认关闭、所有独立谱拒绝、合成测试通过或单首开发谱收益代替默认准入。
+不继续换曲或放宽规则。Remote 生命周期测试不等于真实对象存储验收；代码合入不等于服务部署或 Desktop 发布。

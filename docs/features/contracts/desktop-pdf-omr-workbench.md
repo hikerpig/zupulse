@@ -3,7 +3,7 @@ feature: desktop-pdf-omr-workbench
 title: Desktop PDF 识谱实验工作台
 status: current
 delivery: partial
-last_verified: 2026-09-14
+last_verified: 2026-09-16
 hosts:
   - desktop
 implementation_paths:
@@ -48,13 +48,18 @@ ADR 与当前架构文档优先于历史规格。“进行中的目标差异”�
   配置原因，并在用户开始任务前禁用不可用 engine。
 - 用户可从任意 route 的 Header 齿轮进入共享 `#/settings`；Browser 只显示通用语言与主题，Desktop 额外通过
   `recognitionProviderSettings` capability 显示四种本地识谱 provider。
-- Desktop 不读取 `PDF_OMR_*` 环境变量。没有手动配置 Audiveris 时，Main 依次检查用户级和系统级 app bundle，
+- Desktop 不从环境变量读取引擎路径；只读取下述自动纠错关闭开关。没有手动配置 Audiveris 时，Main 依次检查用户级和系统级 app bundle，
   再回退到 `PATH`；Rokot 与 LEGATO 没有持久化配置时保持未配置。独立 CLI 仍支持环境变量自动化。
 
 ## 当前已实现行为
 
 ### 成功路径
 
+- LEGATO 默认用同一输入副本和已保存的 Python 配置执行源谱音高检查，只应用完整音高证据与唯一对应支持的修改。
+  原始 Draft、engine artifacts、源证据和修改报告保留在任务目录；候选必须通过校验和导出回环。
+  不支持的输入、提取失败或候选校验失败保留原 Draft；取消仍终止任务，原 Draft 的阻塞错误不被豁免。
+  启动时设置 `PDF_OMR_LEGATO_SOURCE_PITCH_CORRECTION=0` 并重启可关闭自动纠错；开关随 job registry 捕获。
+  Bridge 和 UI 不增加开关或路径；CLI 与 benchmark 默认仍不启用。
 - Main 消费一次性输入 token 后，通过已打开的文件描述符重新校验文件 identity、regular-file 类型和 64 MiB 上限，
   再复制到 job-scoped 临时输入目录并调用 programmatic `pdf-omr-cli` pipeline；失败或取消后的 retry 使用这份稳定副本，
   不会再次消费已失效的 token，也不会重新读取已被替换的外部路径。
@@ -191,17 +196,16 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 - 部分落地：中间 evidence 只显示结构化 facts，不展开未知二进制 artifact。
 - 自动化边界：Desktop E2E 使用临时 fake Audiveris executable 覆盖 stage observation、validated MXL、transient
   preview 和 native export；它不代表真实 external engine 的质量或环境可用性，CI 仍不绑定任何外部 engine。
-- 独立 CLI 的 `recognize --pitch-shadow-python` 可生成默认关闭的 LEGATO 完整源谱音高建议；
-  `--pitch-correction-python` 可在保留原始 Draft、校验和导出回环通过后应用修改，共享 pipeline 支持显式传参。
-  Desktop 尚未传递这些选项，Bridge 和 UI 不提供入口；独立作品正向收益与默认准入仍未完成。
-  registry 已支持复用任务 LEGATO Python 的内部开关，但产品配置保持关闭；ASAR 提取资源已验证物化到私有目录执行。
+- LEGATO 源谱纠错按用户批准受控默认启用，但独立作品正向收益尚未验证，两批冻结准入均为 0/3。
+  开发谱 score-9 已通过 Desktop runtime 默认入口回放并修正一音；这不是新的模型推理或真实模型 UI 验收。
+  ASAR 提取资源已验证物化到私有目录执行。
   当前能力与限制见 [CLI 音高旁路](../../../tools/pdf-omr-cli/README.md#可选音高旁路)。
 
 ## 明确非目标
 
 - iPad、批量任务、benchmark、模型下载或 Browser 端 engine 环境编辑 UI。Browser Remote 能力的当前边界见
   [`remote-pdf-omr-service.md`](remote-pdf-omr-service.md)。
-- 无人审核自动修复、missing-note insertion、note deletion、真人演奏 MIDI、自动加入 Library、修改 Managed Score
+- 现有保守源谱音高规则以外的无人审核自动修复、missing-note insertion、note deletion、真人演奏 MIDI、自动加入 Library、修改 Managed Score
   Copy 或注册 PDF/image/MIDI `ScoreFormat`。
 - 多页 TIFF、HEIC、多张图片自动合并、云端 alignment 或远程模型处理。
 - 分发或授权任何第三方 engine、model、repository、token 或 license。
@@ -221,7 +225,7 @@ fusion no-regression gates。`blocked` readiness 禁用 preview/export，并保�
 - 给定 capability 同时包含 `LEGATO`、`Rokot` 与 `Audiveris`，页面必须按该顺序展示，并默认选择第一个兼容且
   可用的 engine。
 - 给定 macOS 标准 Audiveris app bundle 且没有显式 executable 配置，Desktop 必须自动发现并通过预检；Settings
-  中已验证并保存的显式配置始终优先，且 Desktop 不读取 `PDF_OMR_*` 环境变量。
+  中已验证并保存的显式配置始终优先，且 Desktop 不从 `PDF_OMR_*` 环境变量读取引擎路径。
 - 给定 Browser，Settings 只显示通用设置；给定 Desktop provider capability，Settings 列出 Audiveris、Rokot 与 LEGATO。
   Main 返回的 Bridge response 与已保存配置 DOM 不包含绝对路径；用户粘贴的路径只允许作为未保存的
   单向 request 输入，不能由 Main 回显。

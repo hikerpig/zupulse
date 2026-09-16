@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, rm } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { createEngineRegistry, PdfOmrError, runPdfOmrPipeline } from "@zupulse/pdf-omr-cli/pipeline";
+import { createProductionEngineRegistry, PdfOmrError, runPdfOmrPipeline } from "@zupulse/pdf-omr-cli/pipeline";
 import type { RecognitionEngineOption } from "@zupulse/web-core";
 import { config as loadEnvironment } from "dotenv";
 import { createRecognitionHttpServer } from "./http-server";
@@ -29,7 +29,7 @@ const objects = createS3RecognitionObjectStore({
     ? {}
     : { endpoint: process.env.RECOGNITION_S3_ENDPOINT, forcePathStyle: true }),
 });
-const registry = createEngineRegistry();
+const registry = createProductionEngineRegistry();
 const engines = await inspectEngines(registry);
 if (!engines.some((engine) => engine.available)) throw new Error("No recognition engine is available");
 await verifyObjectStorage(objects);
@@ -88,7 +88,9 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
   });
 }
 
-async function inspectEngines(registry: ReturnType<typeof createEngineRegistry>): Promise<RecognitionEngineOption[]> {
+async function inspectEngines(
+  registry: ReturnType<typeof createProductionEngineRegistry>,
+): Promise<RecognitionEngineOption[]> {
   const definitions = [
     { id: "audiveris", inputKinds: ["pdf", "image"] },
     { id: "transcoda", inputKinds: ["pdf"] },

@@ -50,7 +50,10 @@ supersedes: []
   retry 在同一 Job 下创建新 Attempt并复用 input object；启动时 running/cancelling 变为 `interrupted`，queued 保留。
 - Server 只有在 MXL 与 manifest 写入并回读 hash 成功后才发布 `succeeded`。上传中断、部分 result publish、
   `deleting` 和过期 Job 通过启动或每小时 reconciliation 收敛；任务 temp root 在启动时清理。
-- 显式启用 LEGATO 源谱纠错的任务将原始 Draft、最终 Draft、原始 MusicXML、运行清单、修改报告及可用源证据
+- LEGATO 默认通过生产 registry 启用保守源谱音高纠错，复用已配置 Python；启动时设置
+  `PDF_OMR_LEGATO_SOURCE_PITCH_CORRECTION=0` 并重启 Server 可关闭，其他 engine 不受影响。
+  不支持输入或源提取失败保留原 Draft，候选校验与导出回环失败时回退，取消仍终止任务。
+- 启用 LEGATO 源谱纠错的任务将原始 Draft、最终 Draft、原始 MusicXML、运行清单、修改报告及可用源证据
   嵌入私有结果 manifest。保存前校验输入身份和产物 SHA-256，原始证据总量上限为 32 MiB；失败时不发布结果。
   证据随结果对象删除或过期清理，不进入 HTTP/SSE snapshot，也不改变 Browser 下载的 MXL。
 - 共享 CLI validator 会阻断同一 part、staff、voice、pitch 上不连续或缺失 endpoint 的 tie，后续新链不能
@@ -89,8 +92,8 @@ Zupulse account、用户级授权、CORS、公开 object URL、横向扩容或�
 
 ## 进行中的目标差异
 
-- 共享 CLI pipeline 已支持显式启用 LEGATO 源谱音高修正，但 Remote 尚未传入选项，默认输出不变；
-  独立评测与生产默认接入仍在进行，不能把 CLI 回放收益视为 Remote 已交付能力。
+- 生产代码已默认接入 LEGATO 源谱纠错，但独立作品正向收益仍未验证，两批冻结准入均为 0/3；
+  不能把开发谱回放收益视为跨作品准确率证明，也不能把代码接入视为服务已部署。
   纠错证据持久化已由 worker、SQLite 和内存对象存储测试覆盖；尚未验证真实对象存储上的纠错完整路径。
 - 自动化已覆盖 SQLite restart/FIFO/retry/delete、running cancellation、S3 command/hash boundary、HTTP/SSE、Browser
   adapter 与 fake-Service Browser journey；尚未在 CI 中运行真实 MinIO/R2/AWS S3 conformance 或真实外部 OMR engine。

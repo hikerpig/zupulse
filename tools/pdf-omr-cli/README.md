@@ -157,13 +157,19 @@ pnpm pdf-omr -- recognize input.pdf --engine legato --output result-corrected \
 只修改 written pitch 与 sounding MIDI；候选必须通过 Draft 校验及 MusicXML parse/view/playback/structural
 round-trip，否则 `draft.json` 保持原始结果。报告区分 `suggestions`、`outcome` 和 `appliedCount`，所有文件均绑定
 到 `run.json` 哈希。共享 programmatic pipeline 可显式传入 `pitchCorrectionPython`，最终验证与导出读取修正后的
-`draft.json`；Desktop、Remote 和 benchmark 尚未传入该参数，默认仍关闭。
+`draft.json`；CLI 和 benchmark 默认关闭，Desktop 与 Remote 默认启用现有保守规则。
 宿主也可在创建 registry 时显式设置 `legatoSourcePitchCorrection: true`，复用该任务 LEGATO 配置中的 Python；
-不向 Renderer 或 manifest 暴露路径。该开关尚未在产品配置中启用；显式只读旁路仍优先于 registry 自动纠错。
+不向 Renderer 或 manifest 暴露路径。产品宿主统一使用 `createProductionEngineRegistry`；
+启动时设置 `PDF_OMR_LEGATO_SOURCE_PITCH_CORRECTION=0` 并重启 Desktop 或 Server，可关闭自动纠错。
+未设置或非 `0` 时启用；开关随 registry 捕获，不改变活动任务。它不是 CLI 显式纠错参数的全局禁用开关。
+Desktop 引擎路径仍只读取已保存配置。显式只读旁路仍优先于 registry 自动纠错。
 
 开发谱 score-9 原始模型输出回放已产生并应用一处 C4 → B3 修正，通过导出回环；score-4 因预测与源谱分别为
 99/92 小节仍拒绝。此结果不是新的模型推理或独立评测。其他真实谱预检仍有记号、布局及小节线拒绝，
-独立作品正向收益尚未验证，不能据此开启生产默认。当前执行证据与下一步见
+独立作品正向收益尚未验证。本次按用户批准受控接入，不把开发谱收益当作跨作品准确率证明。
+源提取失败或无法唯一对应时不修改 Draft；原始 Draft 已有阻塞错误时，正常验证仍可能失败。
+Remote 必须保留并校验纠错证据，证据超过 32 MiB 或持久化失败时任务失败，不发布不可审计的结果。
+当前执行证据与下一步见
 [`tasks/legato-pitch-shadow/todo.md`](../../tasks/legato-pitch-shadow/todo.md)。
 
 提取器的无模型回归检查：

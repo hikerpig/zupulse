@@ -5,6 +5,7 @@ import { fillVoiceGapsWithRests } from "../../tools/pdf-omr-cli/src/draft-gap-fi
 import { normalizeAudiverisMusicXml } from "../../tools/pdf-omr-cli/src/normalizers/audiveris";
 import { runPitchShadow } from "../../tools/pdf-omr-cli/src/run-pitch-shadow";
 import { applySourcePitchCorrections } from "../../tools/pdf-omr-cli/src/apply-source-pitch-corrections";
+import type { RecognitionProviderConfigurationStore } from "../../apps/desktop-shell/src/main/recognition/provider-configuration-store";
 
 const [pdf, rawMusicXml, python, desktopOutput] = process.argv.slice(2);
 if (!pdf || !rawMusicXml || !python) throw new Error("usage: check-source.ts <source.pdf> <raw.musicxml> <python>");
@@ -26,13 +27,30 @@ const counts = (reasons: string[]) =>
 let desktopReplay: unknown;
 if (desktopOutput) {
   const { DesktopPdfOmrRuntime } = await import("../../apps/desktop-shell/src/main/recognition/pdf-omr-runtime");
+  const { RecognitionProviderSettings } =
+    await import("../../apps/desktop-shell/src/main/recognition/provider-settings");
+  const settings = await RecognitionProviderSettings.create({
+    store: {
+      loadAll: async () => ({
+        legato: {
+          providerId: "legato",
+          python,
+          repository: "/replay",
+          model: "/replay/model",
+          baseModel: "/replay/base",
+        },
+      }),
+    } as RecognitionProviderConfigurationStore,
+    automaticAudiverisExecutable: "/unused",
+  });
+  const captured = settings.createRegistrySnapshot().get("legato");
   const bytes = await readFile(rawMusicXml);
   const runtime = new DesktopPdfOmrRuntime({
     standardFontDirectory: resolve("node_modules/pdfjs-dist/standard_fonts"),
     wasmDirectory: resolve("node_modules/pdfjs-dist/wasm"),
     engineRegistry: {
       get: () => ({
-        pitchCorrectionPython: python,
+        ...captured,
         inspectEnvironment: async () => ({
           id: "legato",
           version: "raw-output-replay",
@@ -55,12 +73,14 @@ if (desktopOutput) {
     engineId: "legato",
     outputDirectory: resolve(desktopOutput),
   });
-  const report = JSON.parse(await readFile(join(desktopOutput, "recognition/pitch-correction/report.json"), "utf8"));
+  const report = captured.pitchCorrectionPython
+    ? JSON.parse(await readFile(join(desktopOutput, "recognition/pitch-correction/report.json"), "utf8"))
+    : undefined;
   desktopReplay = {
     status: pipeline.status,
     outputSha256: pipeline.outputSha256,
-    outcome: report.outcome,
-    appliedCount: report.appliedCount,
+    outcome: report?.outcome ?? "disabled",
+    appliedCount: report?.appliedCount ?? 0,
     idle: !runtime.isRunning(),
   };
 }

@@ -49,12 +49,25 @@ def is_repeat_prefix(upper, lower, edges, glyphs):
     return True
 
 
-def header_glyphs(staves, glyphs, spans):
+def header_glyphs(staves, glyphs, spans, regions):
     ignored = set()
+    # SMuFL U+E000 is a brace; require its source endpoint to match a complete grand staff.
+    for upper, lower in zip(staves[::2], staves[1::2]):
+        top, gap, left, _ = upper
+        bottom = lower[0] + 4 * lower[1]
+        ignored.update(g for g in glyphs if g[0] in {"MScore", "Leland"} and g[1] == "\ue000"
+                       and left - 2 * gap <= g[2] < left and abs(g[3] - bottom) <= .2 * gap)
+    numbered = []
+    measure_starts = [sum(1 for system, staff, *_ in regions if system < index and staff == 0)
+                      for index in range(len(staves) // 2)]
     for span in spans:
+        # Match a complete non-pitch expression, never a prefix that could hide an octave instruction.
+        if span["text"].strip().casefold() in {"a tempo", "andantino", "cresc.", "decresc."}:
+            ignored.update(span["glyphs"])
+            continue
         x0, _, x1, y1 = span["bbox"]
         y = span["glyphs"][0][3] if span["glyphs"] else y1
-        for top, gap, left, right in staves[::2]:
+        for system, (top, gap, left, right) in enumerate(staves[::2]):
             if not top - 3 * gap <= y <= top - gap or not left - 2 * gap <= x0 < right:
                 continue
             clefs = [x for font, char, x, yy in glyphs if font in {"MScore", "Leland"}
@@ -63,11 +76,23 @@ def header_glyphs(staves, glyphs, spans):
             if (re.fullmatch(r"[1-9][0-9]*", span["text"].strip()) and clefs
                     and x0 <= left and x1 < min(clefs) + .2 * gap):
                 ignored.update(span["glyphs"])
+            if (re.fullmatch(r"[1-9][0-9]{0,3}", span["text"].strip()) and clefs
+                    and abs(x0 - left) <= .2 * gap and x1 <= left + 3 * gap
+                    and abs(y - (top - 2 * gap)) <= .25 * gap and y1 < top - gap):
+                number = int(span["text"].strip())
+                # Bare octave labels remain ambiguous even at a system's left margin.
+                if number not in {8, 15, 22}:
+                    numbered.append((system, number - measure_starts[system], span["glyphs"]))
             if re.fullmatch(r"\s*=\s*[1-9][0-9]{0,2}\s*", span["text"]):
                 marks = [g for g in glyphs if g[0] in {"BravuraText", "MScore", "Leland"}
                          and g[1] == "\ueca5" and 0 < x0 - g[2] <= 2 * gap and abs(y - g[3]) < .2 * gap]
                 if len(marks) == 1:
                     ignored.update([*span["glyphs"], marks[0]])
+    # Glyph overhang can cross the clef origin; source bar counts provide independent evidence of numbering.
+    if (len(numbered) >= 2 and len({system for system, _, _ in numbered}) == len(numbered)
+            and len({offset for _, offset, _ in numbered}) == 1):
+        for _, _, chars in numbered:
+            ignored.update(chars)
     return ignored
 
 
@@ -200,7 +225,7 @@ def extract_page(width, height, lines, glyphs, curves, raster, text_spans=(), in
                 regions.append((system, staff, measure, a, b, t, g))
                 measures.append({"systemIndex": system, "staffIndex": staff, "measureIndex": measure,
                                  "reason": "supported", "heads": []})
-    ignored = header_glyphs(staves, glyphs, text_spans)
+    ignored = header_glyphs(staves, glyphs, text_spans, regions)
     for span in text_spans:
         if span["glyphs"] and all(g in ignored for g in span["glyphs"]):
             continue
@@ -213,9 +238,11 @@ def extract_page(width, height, lines, glyphs, curves, raster, text_spans=(), in
     clefs = {}
     assigned_accidentals = {}
     # SMuFL non-pitch alphabet, verified against metadata/glyphnames.json; no ottava or accidental ranges.
-    non_pitch = {"\ue044", "\ue240", "\ue241", "\ue4a2", "\ue4a3", "\ue4c0", "\ue520", "\ue521", "\ue522",
+    non_pitch = {"\ue044", "\ue240", "\ue241", "\ue4a0", "\ue4a1", "\ue4a2", "\ue4a3", "\ue4c0",
                  "\ue4e3", "\ue4e4", "\ue4e5", "\ue4e6", "\ue4e7", "\ue4e8", "\ue4e9", "\ue4f4", "\ue1e7"}
     non_pitch.update(chr(value) for value in range(0xE080, 0xE08A))
+    # https://smufl.formats.music/latest/tables/dynamics.html defines E520-E549, including composed mf/pp.
+    non_pitch.update(chr(value) for value in range(0xE520, 0xE54A))
     for font, char, x, y in sorted(glyphs, key=lambda item: item[2]):
         if (font, char, x, y) in ignored or font in {"MScore", "Leland"} and char in non_pitch:
             continue

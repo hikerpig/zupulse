@@ -120,11 +120,70 @@ class PitchShadowTests(unittest.TestCase):
             self.assertEqual(extract_page(**data)["reason"], expected)
 
     def test_known_non_pitch_symbols_do_not_block_source_pitch(self):
-        for char in ["\ue4a2", "\ue4a3", "\ue240", "\ue4c0", "\ue520", "\ue083"]:
+        for char in ["\ue4a0", "\ue4a1", "\ue4a2", "\ue4a3", "\ue240", "\ue4c0", "\ue520", "\ue083"]:
             data = page_data()
             data["glyphs"].append(("MScore", char, 100, 105))
             result = extract_page(**data)
+            self.assertEqual(result["reason"], "supported", hex(ord(char)))
             self.assertEqual(result["measures"][0]["reason"], "supported", hex(ord(char)))
+
+    def test_margin_measure_numbers_require_source_count_agreement(self):
+        for numbers, expected in [((16, 18), "supported"), ((16, 19), "unsupported-notation"),
+                                  ((8, 10), "unsupported-notation")]:
+            with self.subTest(numbers=numbers):
+                data = page_data()
+                data["lines"] += [(x, y + 200, xx, yy + 200) for x, y, xx, yy in list(data["lines"])]
+                data["glyphs"] += [(font, char, x, y + 200) for font, char, x, y in list(data["glyphs"])]
+                data["text_spans"] = []
+                for number, y in zip(numbers, [90, 290]):
+                    text = str(number)
+                    glyphs = [("FreeSerif", c, 20.3 + i * 4, y) for i, c in enumerate(text)]
+                    data["glyphs"] += glyphs
+                    data["text_spans"].append({"text": text, "glyphs": glyphs,
+                                               "bbox": [20.3, y - 8, 20.3 + len(text) * 4, y + 2]})
+                self.assertEqual(extract_page(**data)["reason"], expected)
+
+    def test_isolated_margin_number_is_not_proof_of_a_measure_label(self):
+        data = page_data()
+        glyphs = [("FreeSerif", c, 20.3 + i * 4, 90) for i, c in enumerate("16")]
+        data["glyphs"] += glyphs
+        data["text_spans"] = [{"text": "16", "glyphs": glyphs, "bbox": [20.3, 82, 28.3, 92]}]
+        self.assertEqual(extract_page(**data)["reason"], "unsupported-notation")
+
+    def test_complete_non_pitch_expression_does_not_hide_mixed_instructions(self):
+        for text, expected in [("a tempo", "supported"), ("Andantino", "supported"),
+                               ("cresc.", "supported"), ("decresc.", "supported"),
+                               ("cresc. 8va", "unsupported-notation"),
+                               ("a tempo 15ma", "unsupported-notation"),
+                               ("8", "unsupported-notation"), ("unknown", "unsupported-notation")]:
+            with self.subTest(text=text):
+                data = page_data()
+                glyphs = [("FreeSerif", c, 100 + i * 4, 140) for i, c in enumerate(text)]
+                data["glyphs"] += glyphs
+                data["text_spans"] = [{"text": text, "glyphs": glyphs,
+                                       "bbox": [100, 132, 100 + len(text) * 4, 142]}]
+                self.assertEqual(extract_page(**data)["reason"], expected)
+
+    def test_system_brace_requires_known_font_and_matching_lower_staff_endpoint(self):
+        for font, x, y, expected in [("Leland", 14, 180, "supported"),
+                                     ("Other", 14, 180, "unassigned-glyph"),
+                                     ("Leland", 14, 160, "unassigned-glyph"),
+                                     ("Leland", 80, 180, "unsupported-notation")]:
+            with self.subTest(font=font, x=x, y=y):
+                data = page_data()
+                data["glyphs"].append((font, "\ue000", x, y))
+                self.assertEqual(extract_page(**data)["reason"], expected)
+
+    def test_defined_dynamic_glyphs_need_no_pitch_staff_assignment(self):
+        baseline = extract_page(**page_data())
+        for codepoint in range(0xE520, 0xE54A):
+            data = page_data()
+            data["glyphs"].append(("Leland", chr(codepoint), 200, 140))
+            self.assertEqual(extract_page(**data), baseline, hex(codepoint))
+        for codepoint in (0xE510, 0xE54A):
+            data = page_data()
+            data["glyphs"].append(("Leland", chr(codepoint), 200, 140))
+            self.assertNotEqual(extract_page(**data)["reason"], "supported")
 
     def test_source_key_signature_and_local_accidental_have_separate_scope(self):
         data = page_data()

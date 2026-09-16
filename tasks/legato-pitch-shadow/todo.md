@@ -36,8 +36,34 @@
 - op.38 第二页提取到 41 条长水平线，违反每个完整双谱表系统 10 条谱线的条件。
   尚未确认多出一条的具体来源，不应直接丢弃它或放宽取模条件。
 
-下一步先完整分类这些拒绝项，分别验证非音高文字与真实谱线分组的可判定边界，再写失败测试。
-不逐曲加入数字、任意文字或几何例外；规则改变后使用新的独立验收集。当前生产候选及默认开关未变。
+旧候选的追踪入口固定对应提交 `d68dcc8`；候选哈希改变后该脚本会主动拒绝，不能用新规则覆盖原准入结论。
+
+### 开发候选更新
+
+已按先失败后修复的顺序，增加编号一致性、完整非音高表情文字、系统大括号和 SMuFL 力度字符支持。
+新增编号放行要求至少两个系统的编号与源小节计数具有相同偏移；孤立、冲突编号及裸八度数字仍拒绝。
+表情文字仅接受完整的 `a tempo`、`Andantino`、`cresc.`、`decresc.`，不按前缀吞掉附加指令。
+大括号必须使用已知字体，位于系统左侧，并与下谱表底线对齐；力度字符覆盖标准已定义区间，不包含保留码点。
+字形语义依据 [SMuFL 大括号](https://smufl.formats.music/latest/tables/staff-brackets-and-dividers.html)、
+[重音](https://smufl.formats.music/latest/tables/articulation.html) 与
+[力度字符](https://smufl.formats.music/latest/tables/dynamics.html)。
+
+Schubert 开发回归现在可提取 66 个谱表小节、336 个符头，其中 25 个小节通过源证据检查。
+这是提取覆盖，不是正确修改或识别提升；三首作品均已退出独立验收用途。Chopin 的其他文字、跨页孤立编号和
+op.38 第二页长水平线分组尚未解决，默认开关保持关闭。没有改变原始协议和产物。
+
+Schubert 真实推理已完成一次，使用默认解码参数和本地 `llama-3.2-11b-vision-only-448` 基座。
+输出目录为 `tmp/pdfs/legato-production/schubert-development-v2/`；原始 XML SHA-256 为
+`628b6ed899bac9d2faaef19c935e4fc7636f7269c84013dbc81a5548ccd6ed75`。
+源与预测各谱表均为 33 小节，生成 6 条降号修正建议，但 `outcome=validation-failed`、`appliedCount=0`。
+`draft.json` 与 `raw-draft.json` 哈希相同：`109d3df7694fbeb8b383d28ccf4f9c0ad60b7460ec1e6fbc8441b0757b7b14f2`。
+原始 Draft 的独立 `validate` 命令以 7 退出，已有 8 条 `INVALID_TIE`，均在上谱表；并非应用修正后才出现。
+没有放宽校验、移除 tie 或把建议计作已应用收益。本次 `recognize succeeded` 不代表可导出或生产可用。
+
+源证据交叉检查：按源小节顺序、谱表和 `(diatonic, alter)` 多重集合，与生成 PDF 的原始 MusicXML 直接比较。
+25 个可用谱表小节包含 131 个符头，集合差异为 0；该检查不验证时值、事件对应或模型准确率。
+将该 MusicXML 直接交给现有 normalizer 会因第 16 小节下谱表负 onset 失败；未改写源谱绕过此问题。
+因此本轮只报告受限的源音高核对，不报告完整 truth Draft 评测。
 
 ## 真实输出回放
 
@@ -69,7 +95,7 @@ pnpm exec vite-node tasks/legato-pitch-shadow/check-source.ts \
 
 ## 验证
 
-- Python 源提取单测：23 项通过，不依赖模型。
+- Python 源提取单测：28 项通过，不依赖模型，新增规则均先验证失败测试。
 - TS 建议与应用测试：21 项通过，包含唯一地址保护、真实导出回环及原始对象不变。
 - CLI/共享 pipeline 测试：15 项通过，覆盖修正 MXL、原始产物保留、默认不变、失败回退、互斥参数、取消、registry 传参及脚本副本清理。
   使用假 engine/提取进程，不代表真实模型或宿主接入。
